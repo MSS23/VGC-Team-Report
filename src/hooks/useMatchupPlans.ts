@@ -95,10 +95,23 @@ function deduplicateBring(bring: GamePlan["bring"]): GamePlan["bring"] {
   }) as GamePlan["bring"];
 }
 
+/** Decode HTML entities that may have been stored from PokéPaste titles */
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+}
+
 function loadAndMigrate(raw: string): MatchupPlan[] {
   const parsed: LegacyPlan[] = JSON.parse(raw);
   return parsed.map(migratePlan).map((plan) => ({
     ...plan,
+    opponentLabel: decodeHtmlEntities(plan.opponentLabel),
     gamePlans: plan.gamePlans.map((gp) => ({
       ...gp,
       bring: deduplicateBring(gp.bring),
