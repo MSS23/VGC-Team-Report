@@ -278,7 +278,7 @@ export default function Home() {
 
       {/* Report content */}
       <div
-        className={`max-w-7xl mx-auto pb-28 slide-content ${
+        className={`max-w-7xl mx-auto pb-36 slide-content ${
           presentationMode
             ? "px-4 sm:px-8 py-4 sm:py-6"
             : "px-3 sm:px-4 py-4 sm:py-6 creator:px-8 creator:py-8"

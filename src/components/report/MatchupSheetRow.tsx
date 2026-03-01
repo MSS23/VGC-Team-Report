@@ -130,7 +130,7 @@ export function MatchupSheetRow({
       {expanded && (
         <tr>
           <td colSpan={isReadOnly ? 4 : 5} className="p-0">
-            <div className="px-4 py-4 bg-surface-alt/40 border-b border-border space-y-3">
+            <div className="px-4 py-4 bg-surface-alt/40 border-b border-border space-y-3 overflow-visible">
               {/* Game plan header */}
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">

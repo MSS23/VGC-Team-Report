@@ -43,7 +43,7 @@ export function MatchupSheet({
           <p className="text-xs text-text-tertiary mt-1">Add an opponent team below to get started.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-surface shadow-sm">
+        <div className="overflow-x-auto overflow-y-visible rounded-2xl border border-border bg-surface shadow-sm">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-surface-alt border-b border-border">
