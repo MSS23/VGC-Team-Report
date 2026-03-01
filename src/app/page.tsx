@@ -1,65 +1,324 @@
-import Image from "next/image";
+"use client";
+
+import { useMemo, useEffect, useRef, useCallback } from "react";
+import { useTeamReport } from "@/hooks/useTeamReport";
+import { useCreatorMode } from "@/hooks/useCreatorMode";
+import { usePresentationMode } from "@/hooks/usePresentationMode";
+import { useSlideNavigation } from "@/hooks/useSlideNavigation";
+import { usePokemonNotes } from "@/hooks/usePokemonNotes";
+import { useDamageCalcs } from "@/hooks/useDamageCalcs";
+import { useMatchupPlans } from "@/hooks/useMatchupPlans";
+import { useShareUrl } from "@/hooks/useShareUrl";
+import { PasteInput } from "@/components/input/PasteInput";
+import { TeamReport } from "@/components/report/TeamReport";
+import { SlideNavControls } from "@/components/report/SlideNavControls";
+import { Button } from "@/components/ui/Button";
+import { Toggle } from "@/components/ui/Toggle";
 
 export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+  const {
+    paste,
+    setPaste,
+    analysis,
+    parseTeam,
+    reset,
+    warnings,
+  } = useTeamReport();
+
+  const { creatorMode, setCreatorMode } = useCreatorMode();
+  const { presentationMode, setPresentationMode } = usePresentationMode();
+  const { isSharedView, sharedState, copyShareUrl, shareStatus } = useShareUrl();
+
+  const isReadOnly = isSharedView || presentationMode;
+
+  // Build species keys with dedup index for duplicate species
+  const speciesKeys = useMemo(() => {
+    if (!analysis) return [];
+    const counts: Record<string, number> = {};
+    return analysis.pokemon.map((mon) => {
+      const species = mon.parsed.species;
+      counts[species] = (counts[species] ?? 0) + 1;
+      return counts[species] > 1 ? `${species}-${counts[species]}` : species;
+    });
+  }, [analysis]);
+
+  const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, !isSharedView);
+  const { calcs, addCalc, removeCalc, setCalcsFull } = useDamageCalcs(speciesKeys, !isSharedView);
+  const {
+    plans,
+    addPlan,
+    removePlan,
+    addGamePlan,
+    removeGamePlan,
+    updateGamePlanNotes,
+    updateGamePlanBring,
+    setPlansFull,
+  } = useMatchupPlans(speciesKeys, !isSharedView);
+
+  // Individual matchup slides only shown in creator mode (not shared view)
+  const showMatchupSlides = creatorMode && !isSharedView;
+
+  // Total slides: Overview + 6 Pokemon + (N matchup plans if creator) + 1 matchup sheet
+  const totalSlides = analysis
+    ? analysis.pokemon.length + 1 + (showMatchupSlides ? plans.length : 0) + 1
+    : 0;
+
+  const {
+    currentSlide,
+    goToSlide,
+    nextSlide,
+    prevSlide,
+    isFirst,
+    isLast,
+  } = useSlideNavigation({
+    totalSlides,
+    enabled: !!analysis,
+    resetKey: paste,
+    bypassFocusGuard: presentationMode,
+  });
+
+  // Hydration for shared view
+  const hasHydrated = useRef(false);
+
+  // Effect 1: Load paste from shared state
+  useEffect(() => {
+    if (!sharedState) return;
+    setPaste(sharedState.paste);
+    parseTeam(sharedState.paste);
+  }, [sharedState, setPaste, parseTeam]);
+
+  // Effect 2: Hydrate notes, calcs, and plans once analysis is ready
+  useEffect(() => {
+    if (!sharedState || !analysis || hasHydrated.current) return;
+    hasHydrated.current = true;
+    setNotesFull(sharedState.notes);
+    if (sharedState.calcs) setCalcsFull(sharedState.calcs);
+    setPlansFull(
+      sharedState.matchupPlans.map((p) => ({
+        id: crypto.randomUUID(),
+        ...p,
+        gamePlans: p.gamePlans?.map((gp) => ({
+          ...gp,
+          id: crypto.randomUUID(),
+        })),
+      }))
+    );
+  }, [sharedState, analysis, setNotesFull, setCalcsFull, setPlansFull]);
+
+  // Build slide labels for nav dots
+  const slideLabels = useMemo(() => {
+    if (!analysis) return [];
+    const labels = [
+      "Overview",
+      ...analysis.pokemon.map((mon) => mon.parsed.species),
+      ...(showMatchupSlides ? plans.map((p) => `vs. ${p.opponentLabel}`) : []),
+      "Matchups",
+    ];
+    return labels;
+  }, [analysis, plans, showMatchupSlides]);
+
+  const handleAnalyze = (directPaste?: string) => {
+    parseTeam(directPaste ?? paste);
+  };
+
+  const handleShare = useCallback(() => {
+    if (!analysis) return;
+    copyShareUrl({
+      paste,
+      notes,
+      calcs,
+      matchupPlans: plans.map((p) => ({
+        opponentPaste: p.opponentPaste,
+        opponentLabel: p.opponentLabel,
+        gamePlans: p.gamePlans.map((gp) => ({
+          bring: gp.bring,
+          notes: gp.notes,
+        })),
+      })),
+    });
+  }, [analysis, paste, notes, calcs, plans, copyShareUrl]);
+
+  const shareButtonText =
+    shareStatus === "copying"
+      ? "Copying..."
+      : shareStatus === "copied"
+        ? "Copied!"
+        : shareStatus === "error"
+          ? "Failed"
+          : "Share";
+
+  // Show paste input if no analysis and not loading shared view
+  if (!analysis && !sharedState) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-4 sm:p-6">
+        <PasteInput
+          paste={paste}
+          onPasteChange={setPaste}
+          onAnalyze={handleAnalyze}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </main>
+    );
+  }
+
+  // Loading state for shared view
+  if (!analysis && sharedState) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-3 animate-fade-in">
+          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          <p className="text-text-secondary text-sm">Loading shared team...</p>
         </div>
       </main>
-    </div>
+    );
+  }
+
+  // Show report
+  return (
+    <main className="min-h-screen bg-background">
+      {/* Header bar */}
+      <header
+        className={`sticky top-0 z-10 backdrop-blur-xl border-b transition-all duration-300 ${
+          presentationMode
+            ? "bg-transparent border-transparent"
+            : "bg-surface/90 border-border shadow-[0_1px_8px_rgba(0,0,0,0.04)]"
+        }`}
+      >
+        {presentationMode ? (
+          <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-text-secondary">
+              <span className="font-medium text-text-primary">
+                {slideLabels[currentSlide]}
+              </span>
+              <span className="text-text-tertiary">
+                &middot; {currentSlide + 1} / {totalSlides}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPresentationMode(false)}
+              className="text-text-tertiary hover:text-text-primary"
+            >
+              Exit
+            </Button>
+          </div>
+        ) : (
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 creator:px-8 creator:py-4 flex items-center justify-between gap-2">
+            {/* Left: Back button */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {isSharedView ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    window.location.href =
+                      window.location.origin + window.location.pathname;
+                  }}
+                >
+                  <span className="sm:hidden">New</span>
+                  <span className="hidden sm:inline">Build Your Own</span>
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" onClick={reset}>
+                  <span className="hidden sm:inline">← New Team</span>
+                  <span className="sm:hidden">← New</span>
+                </Button>
+              )}
+              {!isSharedView && warnings.length > 0 && (
+                <span className="text-xs text-warning hidden sm:inline">
+                  {warnings.length} warning{warnings.length > 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+
+            {/* Center: Slide indicator (hidden on small screens, shown in nav bar instead) */}
+            <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary">
+              <span className="font-medium text-text-primary">
+                {slideLabels[currentSlide]}
+              </span>
+              <span className="text-text-tertiary">
+                &middot; {currentSlide + 1} / {totalSlides}
+              </span>
+            </div>
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2 sm:gap-4 creator:gap-6 flex-shrink-0">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleShare}
+                disabled={shareStatus === "copying"}
+              >
+                {shareButtonText}
+              </Button>
+
+              {!isSharedView && (
+                <>
+                  <div className="hidden sm:block">
+                    <Toggle
+                      checked={creatorMode}
+                      onChange={setCreatorMode}
+                      label="Creator"
+                    />
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setPresentationMode(true)}
+                  >
+                    <span className="hidden sm:inline">Present</span>
+                    <span className="sm:hidden">▶</span>
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* Report content */}
+      <div
+        className={`max-w-7xl mx-auto pb-28 slide-content ${
+          presentationMode
+            ? "px-4 sm:px-8 py-4 sm:py-6"
+            : "px-3 sm:px-4 py-4 sm:py-6 creator:px-8 creator:py-8"
+        }`}
+        key={currentSlide}
+      >
+        <TeamReport
+          analysis={analysis!}
+          creatorMode={creatorMode}
+          currentSlide={currentSlide}
+          notes={notes}
+          onNoteChange={setNote}
+          calcs={calcs}
+          onAddCalc={addCalc}
+          onRemoveCalc={removeCalc}
+          speciesKeys={speciesKeys}
+          isReadOnly={isReadOnly}
+          isPresentationMode={presentationMode}
+          plans={plans}
+          onGamePlanNotesChange={updateGamePlanNotes}
+          onGamePlanBringChange={updateGamePlanBring}
+          onAddGamePlan={addGamePlan}
+          onRemoveGamePlan={removeGamePlan}
+          onRemovePlan={removePlan}
+          onAddPlan={addPlan}
+        />
+      </div>
+
+      {/* Slide navigation */}
+      <SlideNavControls
+        currentSlide={currentSlide}
+        totalSlides={totalSlides}
+        isFirst={isFirst}
+        isLast={isLast}
+        onPrev={prevSlide}
+        onNext={nextSlide}
+        onGoTo={goToSlide}
+        slideLabels={slideLabels}
+        autoHide={presentationMode}
+      />
+    </main>
   );
 }

@@ -1,0 +1,86 @@
+export type AbilityCategory =
+  | "weather" | "terrain" | "intimidate" | "support"
+  | "speed" | "offensive" | "defensive" | "utility";
+
+export interface AbilityData {
+  name: string;
+  categories: AbilityCategory[];
+}
+
+export const ABILITIES: Record<string, AbilityData> = {
+  "drizzle": { name: "Drizzle", categories: ["weather"] },
+  "drought": { name: "Drought", categories: ["weather"] },
+  "sand-stream": { name: "Sand Stream", categories: ["weather"] },
+  "snow-warning": { name: "Snow Warning", categories: ["weather"] },
+  "orichalcum-pulse": { name: "Orichalcum Pulse", categories: ["weather", "offensive"] },
+  "hadron-engine": { name: "Hadron Engine", categories: ["terrain", "offensive"] },
+  "electric-surge": { name: "Electric Surge", categories: ["terrain"] },
+  "grassy-surge": { name: "Grassy Surge", categories: ["terrain"] },
+  "psychic-surge": { name: "Psychic Surge", categories: ["terrain"] },
+  "misty-surge": { name: "Misty Surge", categories: ["terrain"] },
+  "intimidate": { name: "Intimidate", categories: ["intimidate", "support"] },
+  "inner-focus": { name: "Inner Focus", categories: ["utility"] },
+  "defiant": { name: "Defiant", categories: ["offensive"] },
+  "competitive": { name: "Competitive", categories: ["offensive"] },
+  "clear-body": { name: "Clear Body", categories: ["defensive"] },
+  "white-smoke": { name: "White Smoke", categories: ["defensive"] },
+  "hyper-cutter": { name: "Hyper Cutter", categories: ["defensive"] },
+  "prankster": { name: "Prankster", categories: ["support", "speed"] },
+  "gale-wings": { name: "Gale Wings", categories: ["speed"] },
+  "protosynthesis": { name: "Protosynthesis", categories: ["offensive", "speed"] },
+  "quark-drive": { name: "Quark Drive", categories: ["offensive", "speed"] },
+  "swift-swim": { name: "Swift Swim", categories: ["speed", "weather"] },
+  "chlorophyll": { name: "Chlorophyll", categories: ["speed", "weather"] },
+  "sand-rush": { name: "Sand Rush", categories: ["speed", "weather"] },
+  "slush-rush": { name: "Slush Rush", categories: ["speed", "weather"] },
+  "unburden": { name: "Unburden", categories: ["speed"] },
+  "speed-boost": { name: "Speed Boost", categories: ["speed"] },
+  "multiscale": { name: "Multiscale", categories: ["defensive"] },
+  "sturdy": { name: "Sturdy", categories: ["defensive"] },
+  "levitate": { name: "Levitate", categories: ["defensive"] },
+  "regenerator": { name: "Regenerator", categories: ["defensive", "support"] },
+  "friend-guard": { name: "Friend Guard", categories: ["support", "defensive"] },
+  "fake-out": { name: "Fake Out", categories: ["support"] },
+  "huge-power": { name: "Huge Power", categories: ["offensive"] },
+  "pure-power": { name: "Pure Power", categories: ["offensive"] },
+  "adaptability": { name: "Adaptability", categories: ["offensive"] },
+  "beast-boost": { name: "Beast Boost", categories: ["offensive"] },
+  "mold-breaker": { name: "Mold Breaker", categories: ["offensive"] },
+  "sheer-force": { name: "Sheer Force", categories: ["offensive"] },
+  "technician": { name: "Technician", categories: ["offensive"] },
+  "tough-claws": { name: "Tough Claws", categories: ["offensive"] },
+  "iron-fist": { name: "Iron Fist", categories: ["offensive"] },
+  "supreme-overlord": { name: "Supreme Overlord", categories: ["offensive"] },
+  "good-as-gold": { name: "Good as Gold", categories: ["defensive", "utility"] },
+  "effect-spore": { name: "Effect Spore", categories: ["support"] },
+  "flame-body": { name: "Flame Body", categories: ["support"] },
+  "static": { name: "Static", categories: ["support"] },
+  "poison-point": { name: "Poison Point", categories: ["support"] },
+  "trace": { name: "Trace", categories: ["utility"] },
+  "download": { name: "Download", categories: ["offensive"] },
+  "analytic": { name: "Analytic", categories: ["offensive"] },
+  "armor-tail": { name: "Armor Tail", categories: ["defensive", "support"] },
+  "embody-aspect": { name: "Embody Aspect", categories: ["defensive"] },
+  "vessel-of-ruin": { name: "Vessel of Ruin", categories: ["defensive"] },
+  "sword-of-ruin": { name: "Sword of Ruin", categories: ["offensive"] },
+  "tablets-of-ruin": { name: "Tablets of Ruin", categories: ["defensive"] },
+  "beads-of-ruin": { name: "Beads of Ruin", categories: ["offensive"] },
+  "unseen-fist": { name: "Unseen Fist", categories: ["offensive"] },
+  "zero-to-hero": { name: "Zero to Hero", categories: ["offensive"] },
+  "as-one": { name: "As One", categories: ["offensive"] },
+  "stamina": { name: "Stamina", categories: ["defensive"] },
+  "unaware": { name: "Unaware", categories: ["defensive"] },
+  "water-absorb": { name: "Water Absorb", categories: ["defensive"] },
+  "storm-drain": { name: "Storm Drain", categories: ["defensive", "support"] },
+  "lightning-rod": { name: "Lightning Rod", categories: ["defensive", "support"] },
+  "flash-fire": { name: "Flash Fire", categories: ["defensive"] },
+  "sap-sipper": { name: "Sap Sipper", categories: ["defensive"] },
+  "thick-fat": { name: "Thick Fat", categories: ["defensive"] },
+  "fur-coat": { name: "Fur Coat", categories: ["defensive"] },
+  "ice-scales": { name: "Ice Scales", categories: ["defensive"] },
+};
+
+export function lookupAbility(name: string): AbilityData | null {
+  const key = name.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  return ABILITIES[key] ?? null;
+}

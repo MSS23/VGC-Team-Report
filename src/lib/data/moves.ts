@@ -1,0 +1,1086 @@
+import type { PokemonType } from "@/lib/types/pokemon";
+
+export type MoveCategory = "Physical" | "Special" | "Status";
+export type MoveFlag =
+  | "speed-control" | "trick-room" | "redirection" | "setup"
+  | "pivot" | "disruption" | "priority" | "spread"
+  | "weather" | "terrain" | "protect" | "recovery"
+  | "status-move";
+
+export interface MoveData {
+  name: string;
+  type: PokemonType;
+  category: MoveCategory;
+  power: number | null;
+  flags: MoveFlag[];
+}
+
+export const MOVES: Record<string, MoveData> = {
+  // ---------------------------------------------------------------------------
+  // Protect variants
+  // ---------------------------------------------------------------------------
+  "protect": {
+    name: "Protect",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    flags: ["protect", "status-move"],
+  },
+  "detect": {
+    name: "Detect",
+    type: "Fighting",
+    category: "Status",
+    power: null,
+    flags: ["protect", "status-move"],
+  },
+  "wide-guard": {
+    name: "Wide Guard",
+    type: "Rock",
+    category: "Status",
+    power: null,
+    flags: ["protect", "status-move"],
+  },
+  "quick-guard": {
+    name: "Quick Guard",
+    type: "Fighting",
+    category: "Status",
+    power: null,
+    flags: ["protect", "status-move"],
+  },
+  "kings-shield": {
+    name: "King's Shield",
+    type: "Steel",
+    category: "Status",
+    power: null,
+    flags: ["protect", "status-move"],
+  },
+  "spiky-shield": {
+    name: "Spiky Shield",
+    type: "Grass",
+    category: "Status",
+    power: null,
+    flags: ["protect", "status-move"],
+  },
+  "baneful-bunker": {
+    name: "Baneful Bunker",
+    type: "Poison",
+    category: "Status",
+    power: null,
+    flags: ["protect", "status-move"],
+  },
+  "silk-trap": {
+    name: "Silk Trap",
+    type: "Bug",
+    category: "Status",
+    power: null,
+    flags: ["protect", "status-move"],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Speed control
+  // ---------------------------------------------------------------------------
+  "tailwind": {
+    name: "Tailwind",
+    type: "Flying",
+    category: "Status",
+    power: null,
+    flags: ["speed-control", "status-move"],
+  },
+  "icy-wind": {
+    name: "Icy Wind",
+    type: "Ice",
+    category: "Special",
+    power: 55,
+    flags: ["speed-control", "spread"],
+  },
+  "electroweb": {
+    name: "Electroweb",
+    type: "Electric",
+    category: "Special",
+    power: 55,
+    flags: ["speed-control", "spread"],
+  },
+  "trick-room": {
+    name: "Trick Room",
+    type: "Psychic",
+    category: "Status",
+    power: null,
+    flags: ["trick-room", "speed-control", "status-move"],
+  },
+  "thunder-wave": {
+    name: "Thunder Wave",
+    type: "Electric",
+    category: "Status",
+    power: null,
+    flags: ["speed-control", "disruption", "status-move"],
+  },
+  "scary-face": {
+    name: "Scary Face",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    flags: ["speed-control", "status-move"],
+  },
+  "quash": {
+    name: "Quash",
+    type: "Dark",
+    category: "Status",
+    power: null,
+    flags: ["speed-control", "status-move"],
+  },
+  "after-you": {
+    name: "After You",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    flags: ["speed-control", "status-move"],
+  },
+  "bulldoze": {
+    name: "Bulldoze",
+    type: "Ground",
+    category: "Physical",
+    power: 60,
+    flags: ["speed-control", "spread"],
+  },
+  "mud-shot": {
+    name: "Mud Shot",
+    type: "Ground",
+    category: "Special",
+    power: 55,
+    flags: ["speed-control"],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Setup moves
+  // ---------------------------------------------------------------------------
+  "swords-dance": {
+    name: "Swords Dance",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    flags: ["setup", "status-move"],
+  },
+  "nasty-plot": {
+    name: "Nasty Plot",
+    type: "Dark",
+    category: "Status",
+    power: null,
+    flags: ["setup", "status-move"],
+  },
+  "calm-mind": {
+    name: "Calm Mind",
+    type: "Psychic",
+    category: "Status",
+    power: null,
+    flags: ["setup", "status-move"],
+  },
+  "dragon-dance": {
+    name: "Dragon Dance",
+    type: "Dragon",
+    category: "Status",
+    power: null,
+    flags: ["setup", "status-move"],
+  },
+  "iron-defense": {
+    name: "Iron Defense",
+    type: "Steel",
+    category: "Status",
+    power: null,
+    flags: ["setup", "status-move"],
+  },
+  "bulk-up": {
+    name: "Bulk Up",
+    type: "Fighting",
+    category: "Status",
+    power: null,
+    flags: ["setup", "status-move"],
+  },
+  "belly-drum": {
+    name: "Belly Drum",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    flags: ["setup", "status-move"],
+  },
+  "coaching": {
+    name: "Coaching",
+    type: "Fighting",
+    category: "Status",
+    power: null,
+    flags: ["setup", "status-move"],
+  },
+  "helping-hand": {
+    name: "Helping Hand",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    flags: ["setup", "status-move"],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Priority moves
+  // ---------------------------------------------------------------------------
+  "fake-out": {
+    name: "Fake Out",
+    type: "Normal",
+    category: "Physical",
+    power: 40,
+    flags: ["priority", "disruption"],
+  },
+  "extreme-speed": {
+    name: "Extreme Speed",
+    type: "Normal",
+    category: "Physical",
+    power: 80,
+    flags: ["priority"],
+  },
+  "sucker-punch": {
+    name: "Sucker Punch",
+    type: "Dark",
+    category: "Physical",
+    power: 70,
+    flags: ["priority"],
+  },
+  "mach-punch": {
+    name: "Mach Punch",
+    type: "Fighting",
+    category: "Physical",
+    power: 40,
+    flags: ["priority"],
+  },
+  "aqua-jet": {
+    name: "Aqua Jet",
+    type: "Water",
+    category: "Physical",
+    power: 40,
+    flags: ["priority"],
+  },
+  "ice-shard": {
+    name: "Ice Shard",
+    type: "Ice",
+    category: "Physical",
+    power: 40,
+    flags: ["priority"],
+  },
+  "bullet-punch": {
+    name: "Bullet Punch",
+    type: "Steel",
+    category: "Physical",
+    power: 40,
+    flags: ["priority"],
+  },
+  "quick-attack": {
+    name: "Quick Attack",
+    type: "Normal",
+    category: "Physical",
+    power: 40,
+    flags: ["priority"],
+  },
+  "grassy-glide": {
+    name: "Grassy Glide",
+    type: "Grass",
+    category: "Physical",
+    power: 55,
+    flags: ["priority"],
+  },
+  "shadow-sneak": {
+    name: "Shadow Sneak",
+    type: "Ghost",
+    category: "Physical",
+    power: 40,
+    flags: ["priority"],
+  },
+  "accelerock": {
+    name: "Accelerock",
+    type: "Rock",
+    category: "Physical",
+    power: 40,
+    flags: ["priority"],
+  },
+  "first-impression": {
+    name: "First Impression",
+    type: "Bug",
+    category: "Physical",
+    power: 90,
+    flags: ["priority"],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Pivoting moves
+  // ---------------------------------------------------------------------------
+  "u-turn": {
+    name: "U-turn",
+    type: "Bug",
+    category: "Physical",
+    power: 70,
+    flags: ["pivot"],
+  },
+  "volt-switch": {
+    name: "Volt Switch",
+    type: "Electric",
+    category: "Special",
+    power: 70,
+    flags: ["pivot"],
+  },
+  "flip-turn": {
+    name: "Flip Turn",
+    type: "Water",
+    category: "Physical",
+    power: 60,
+    flags: ["pivot"],
+  },
+  "parting-shot": {
+    name: "Parting Shot",
+    type: "Dark",
+    category: "Status",
+    power: null,
+    flags: ["pivot", "disruption", "status-move"],
+  },
+  "teleport": {
+    name: "Teleport",
+    type: "Psychic",
+    category: "Status",
+    power: null,
+    flags: ["pivot", "status-move"],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Disruption moves
+  // ---------------------------------------------------------------------------
+  "taunt": {
+    name: "Taunt",
+    type: "Dark",
+    category: "Status",
+    power: null,
+    flags: ["disruption", "status-move"],
+  },
+  "encore": {
+    name: "Encore",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    flags: ["disruption", "status-move"],
+  },
+  "will-o-wisp": {
+    name: "Will-O-Wisp",
+    type: "Fire",
+    category: "Status",
+    power: null,
+    flags: ["disruption", "status-move"],
+  },
+  "spore": {
+    name: "Spore",
+    type: "Grass",
+    category: "Status",
+    power: null,
+    flags: ["disruption", "status-move"],
+  },
+  "sleep-powder": {
+    name: "Sleep Powder",
+    type: "Grass",
+    category: "Status",
+    power: null,
+    flags: ["disruption", "status-move"],
+  },
+  "yawn": {
+    name: "Yawn",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    flags: ["disruption", "status-move"],
+  },
+  "rage-powder": {
+    name: "Rage Powder",
+    type: "Bug",
+    category: "Status",
+    power: null,
+    flags: ["redirection", "status-move"],
+  },
+  "follow-me": {
+    name: "Follow Me",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    flags: ["redirection", "status-move"],
+  },
+  "trick": {
+    name: "Trick",
+    type: "Psychic",
+    category: "Status",
+    power: null,
+    flags: ["disruption", "status-move"],
+  },
+  "switcheroo": {
+    name: "Switcheroo",
+    type: "Dark",
+    category: "Status",
+    power: null,
+    flags: ["disruption", "status-move"],
+  },
+  "knock-off": {
+    name: "Knock Off",
+    type: "Dark",
+    category: "Physical",
+    power: 65,
+    flags: ["disruption"],
+  },
+  "haze": {
+    name: "Haze",
+    type: "Ice",
+    category: "Status",
+    power: null,
+    flags: ["disruption", "status-move"],
+  },
+  "clear-smog": {
+    name: "Clear Smog",
+    type: "Poison",
+    category: "Special",
+    power: 50,
+    flags: ["disruption"],
+  },
+  "imprison": {
+    name: "Imprison",
+    type: "Psychic",
+    category: "Status",
+    power: null,
+    flags: ["disruption", "status-move"],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Weather moves
+  // ---------------------------------------------------------------------------
+  "rain-dance": {
+    name: "Rain Dance",
+    type: "Water",
+    category: "Status",
+    power: null,
+    flags: ["weather", "status-move"],
+  },
+  "sunny-day": {
+    name: "Sunny Day",
+    type: "Fire",
+    category: "Status",
+    power: null,
+    flags: ["weather", "status-move"],
+  },
+  "sandstorm": {
+    name: "Sandstorm",
+    type: "Rock",
+    category: "Status",
+    power: null,
+    flags: ["weather", "status-move"],
+  },
+  "snowscape": {
+    name: "Snowscape",
+    type: "Ice",
+    category: "Status",
+    power: null,
+    flags: ["weather", "status-move"],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Terrain moves
+  // ---------------------------------------------------------------------------
+  "electric-terrain": {
+    name: "Electric Terrain",
+    type: "Electric",
+    category: "Status",
+    power: null,
+    flags: ["terrain", "status-move"],
+  },
+  "grassy-terrain": {
+    name: "Grassy Terrain",
+    type: "Grass",
+    category: "Status",
+    power: null,
+    flags: ["terrain", "status-move"],
+  },
+  "psychic-terrain": {
+    name: "Psychic Terrain",
+    type: "Psychic",
+    category: "Status",
+    power: null,
+    flags: ["terrain", "status-move"],
+  },
+  "misty-terrain": {
+    name: "Misty Terrain",
+    type: "Fairy",
+    category: "Status",
+    power: null,
+    flags: ["terrain", "status-move"],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Recovery moves
+  // ---------------------------------------------------------------------------
+  "recover": {
+    name: "Recover",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    flags: ["recovery", "status-move"],
+  },
+  "roost": {
+    name: "Roost",
+    type: "Flying",
+    category: "Status",
+    power: null,
+    flags: ["recovery", "status-move"],
+  },
+  "moonlight": {
+    name: "Moonlight",
+    type: "Fairy",
+    category: "Status",
+    power: null,
+    flags: ["recovery", "status-move"],
+  },
+  "synthesis": {
+    name: "Synthesis",
+    type: "Grass",
+    category: "Status",
+    power: null,
+    flags: ["recovery", "status-move"],
+  },
+  "leech-seed": {
+    name: "Leech Seed",
+    type: "Grass",
+    category: "Status",
+    power: null,
+    flags: ["recovery", "disruption", "status-move"],
+  },
+  "draining-kiss": {
+    name: "Draining Kiss",
+    type: "Fairy",
+    category: "Special",
+    power: 50,
+    flags: ["recovery"],
+  },
+  "drain-punch": {
+    name: "Drain Punch",
+    type: "Fighting",
+    category: "Physical",
+    power: 75,
+    flags: ["recovery"],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Spread moves (hits both opponents)
+  // ---------------------------------------------------------------------------
+  "earthquake": {
+    name: "Earthquake",
+    type: "Ground",
+    category: "Physical",
+    power: 100,
+    flags: ["spread"],
+  },
+  "rock-slide": {
+    name: "Rock Slide",
+    type: "Rock",
+    category: "Physical",
+    power: 75,
+    flags: ["spread"],
+  },
+  "surf": {
+    name: "Surf",
+    type: "Water",
+    category: "Special",
+    power: 90,
+    flags: ["spread"],
+  },
+  "discharge": {
+    name: "Discharge",
+    type: "Electric",
+    category: "Special",
+    power: 80,
+    flags: ["spread"],
+  },
+  "heat-wave": {
+    name: "Heat Wave",
+    type: "Fire",
+    category: "Special",
+    power: 95,
+    flags: ["spread"],
+  },
+  "blizzard": {
+    name: "Blizzard",
+    type: "Ice",
+    category: "Special",
+    power: 110,
+    flags: ["spread"],
+  },
+  "dazzling-gleam": {
+    name: "Dazzling Gleam",
+    type: "Fairy",
+    category: "Special",
+    power: 80,
+    flags: ["spread"],
+  },
+  "muddy-water": {
+    name: "Muddy Water",
+    type: "Water",
+    category: "Special",
+    power: 90,
+    flags: ["spread"],
+  },
+  "snarl": {
+    name: "Snarl",
+    type: "Dark",
+    category: "Special",
+    power: 55,
+    flags: ["spread", "disruption"],
+  },
+  "lava-plume": {
+    name: "Lava Plume",
+    type: "Fire",
+    category: "Special",
+    power: 80,
+    flags: ["spread"],
+  },
+  "hyper-voice": {
+    name: "Hyper Voice",
+    type: "Normal",
+    category: "Special",
+    power: 90,
+    flags: ["spread"],
+  },
+  "brutal-swing": {
+    name: "Brutal Swing",
+    type: "Dark",
+    category: "Physical",
+    power: 60,
+    flags: ["spread"],
+  },
+  "breaking-swipe": {
+    name: "Breaking Swipe",
+    type: "Dragon",
+    category: "Physical",
+    power: 60,
+    flags: ["spread", "disruption"],
+  },
+  "make-it-rain": {
+    name: "Make It Rain",
+    type: "Steel",
+    category: "Special",
+    power: 120,
+    flags: ["spread"],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Physical attacks
+  // ---------------------------------------------------------------------------
+  "close-combat": {
+    name: "Close Combat",
+    type: "Fighting",
+    category: "Physical",
+    power: 120,
+    flags: [],
+  },
+  "headlong-rush": {
+    name: "Headlong Rush",
+    type: "Ground",
+    category: "Physical",
+    power: 120,
+    flags: [],
+  },
+  "sacred-sword": {
+    name: "Sacred Sword",
+    type: "Fighting",
+    category: "Physical",
+    power: 90,
+    flags: [],
+  },
+  "wicked-blow": {
+    name: "Wicked Blow",
+    type: "Dark",
+    category: "Physical",
+    power: 80,
+    flags: [],
+  },
+  "surging-strikes": {
+    name: "Surging Strikes",
+    type: "Water",
+    category: "Physical",
+    power: 25,
+    flags: [],
+  },
+  "ice-punch": {
+    name: "Ice Punch",
+    type: "Ice",
+    category: "Physical",
+    power: 75,
+    flags: [],
+  },
+  "fire-punch": {
+    name: "Fire Punch",
+    type: "Fire",
+    category: "Physical",
+    power: 75,
+    flags: [],
+  },
+  "thunder-punch": {
+    name: "Thunder Punch",
+    type: "Electric",
+    category: "Physical",
+    power: 75,
+    flags: [],
+  },
+  "wild-charge": {
+    name: "Wild Charge",
+    type: "Electric",
+    category: "Physical",
+    power: 90,
+    flags: [],
+  },
+  "brave-bird": {
+    name: "Brave Bird",
+    type: "Flying",
+    category: "Physical",
+    power: 120,
+    flags: [],
+  },
+  "flare-blitz": {
+    name: "Flare Blitz",
+    type: "Fire",
+    category: "Physical",
+    power: 120,
+    flags: [],
+  },
+  "iron-head": {
+    name: "Iron Head",
+    type: "Steel",
+    category: "Physical",
+    power: 80,
+    flags: [],
+  },
+  "aqua-tail": {
+    name: "Aqua Tail",
+    type: "Water",
+    category: "Physical",
+    power: 90,
+    flags: [],
+  },
+  "outrage": {
+    name: "Outrage",
+    type: "Dragon",
+    category: "Physical",
+    power: 120,
+    flags: [],
+  },
+  "dragon-claw": {
+    name: "Dragon Claw",
+    type: "Dragon",
+    category: "Physical",
+    power: 80,
+    flags: [],
+  },
+  "crunch": {
+    name: "Crunch",
+    type: "Dark",
+    category: "Physical",
+    power: 80,
+    flags: [],
+  },
+  "play-rough": {
+    name: "Play Rough",
+    type: "Fairy",
+    category: "Physical",
+    power: 90,
+    flags: [],
+  },
+  "power-whip": {
+    name: "Power Whip",
+    type: "Grass",
+    category: "Physical",
+    power: 120,
+    flags: [],
+  },
+  "seed-bomb": {
+    name: "Seed Bomb",
+    type: "Grass",
+    category: "Physical",
+    power: 80,
+    flags: [],
+  },
+  "gunk-shot": {
+    name: "Gunk Shot",
+    type: "Poison",
+    category: "Physical",
+    power: 120,
+    flags: [],
+  },
+  "stone-edge": {
+    name: "Stone Edge",
+    type: "Rock",
+    category: "Physical",
+    power: 100,
+    flags: [],
+  },
+  "waterfall": {
+    name: "Waterfall",
+    type: "Water",
+    category: "Physical",
+    power: 80,
+    flags: [],
+  },
+  "wood-hammer": {
+    name: "Wood Hammer",
+    type: "Grass",
+    category: "Physical",
+    power: 120,
+    flags: [],
+  },
+  "high-horsepower": {
+    name: "High Horsepower",
+    type: "Ground",
+    category: "Physical",
+    power: 95,
+    flags: [],
+  },
+  "body-press": {
+    name: "Body Press",
+    type: "Fighting",
+    category: "Physical",
+    power: 80,
+    flags: [],
+  },
+  "poltergeist": {
+    name: "Poltergeist",
+    type: "Ghost",
+    category: "Physical",
+    power: 110,
+    flags: [],
+  },
+  "tachyon-cutter": {
+    name: "Tachyon Cutter",
+    type: "Steel",
+    category: "Special",
+    power: 50,
+    flags: [],
+  },
+  "mighty-cleave": {
+    name: "Mighty Cleave",
+    type: "Rock",
+    category: "Physical",
+    power: 95,
+    flags: [],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Special attacks
+  // ---------------------------------------------------------------------------
+  "moonblast": {
+    name: "Moonblast",
+    type: "Fairy",
+    category: "Special",
+    power: 95,
+    flags: [],
+  },
+  "shadow-ball": {
+    name: "Shadow Ball",
+    type: "Ghost",
+    category: "Special",
+    power: 80,
+    flags: [],
+  },
+  "thunderbolt": {
+    name: "Thunderbolt",
+    type: "Electric",
+    category: "Special",
+    power: 90,
+    flags: [],
+  },
+  "ice-beam": {
+    name: "Ice Beam",
+    type: "Ice",
+    category: "Special",
+    power: 90,
+    flags: [],
+  },
+  "flamethrower": {
+    name: "Flamethrower",
+    type: "Fire",
+    category: "Special",
+    power: 90,
+    flags: [],
+  },
+  "energy-ball": {
+    name: "Energy Ball",
+    type: "Grass",
+    category: "Special",
+    power: 90,
+    flags: [],
+  },
+  "psychic": {
+    name: "Psychic",
+    type: "Psychic",
+    category: "Special",
+    power: 90,
+    flags: [],
+  },
+  "dark-pulse": {
+    name: "Dark Pulse",
+    type: "Dark",
+    category: "Special",
+    power: 80,
+    flags: [],
+  },
+  "flash-cannon": {
+    name: "Flash Cannon",
+    type: "Steel",
+    category: "Special",
+    power: 80,
+    flags: [],
+  },
+  "aura-sphere": {
+    name: "Aura Sphere",
+    type: "Fighting",
+    category: "Special",
+    power: 80,
+    flags: [],
+  },
+  "focus-blast": {
+    name: "Focus Blast",
+    type: "Fighting",
+    category: "Special",
+    power: 120,
+    flags: [],
+  },
+  "hydro-pump": {
+    name: "Hydro Pump",
+    type: "Water",
+    category: "Special",
+    power: 110,
+    flags: [],
+  },
+  "fire-blast": {
+    name: "Fire Blast",
+    type: "Fire",
+    category: "Special",
+    power: 110,
+    flags: [],
+  },
+  "thunder": {
+    name: "Thunder",
+    type: "Electric",
+    category: "Special",
+    power: 110,
+    flags: [],
+  },
+  "hurricane": {
+    name: "Hurricane",
+    type: "Flying",
+    category: "Special",
+    power: 110,
+    flags: [],
+  },
+  "draco-meteor": {
+    name: "Draco Meteor",
+    type: "Dragon",
+    category: "Special",
+    power: 130,
+    flags: [],
+  },
+  "overheat": {
+    name: "Overheat",
+    type: "Fire",
+    category: "Special",
+    power: 130,
+    flags: [],
+  },
+  "leaf-storm": {
+    name: "Leaf Storm",
+    type: "Grass",
+    category: "Special",
+    power: 130,
+    flags: [],
+  },
+  "psyshock": {
+    name: "Psyshock",
+    type: "Psychic",
+    category: "Special",
+    power: 80,
+    flags: [],
+  },
+  "mystical-fire": {
+    name: "Mystical Fire",
+    type: "Fire",
+    category: "Special",
+    power: 75,
+    flags: ["disruption"],
+  },
+  "astral-barrage": {
+    name: "Astral Barrage",
+    type: "Ghost",
+    category: "Special",
+    power: 120,
+    flags: ["spread"],
+  },
+  "bitter-malice": {
+    name: "Bitter Malice",
+    type: "Ghost",
+    category: "Special",
+    power: 75,
+    flags: ["disruption"],
+  },
+  "expanding-force": {
+    name: "Expanding Force",
+    type: "Psychic",
+    category: "Special",
+    power: 80,
+    flags: [],
+  },
+  "stored-power": {
+    name: "Stored Power",
+    type: "Psychic",
+    category: "Special",
+    power: 20,
+    flags: [],
+  },
+  "steam-eruption": {
+    name: "Steam Eruption",
+    type: "Water",
+    category: "Special",
+    power: 110,
+    flags: [],
+  },
+  "water-spout": {
+    name: "Water Spout",
+    type: "Water",
+    category: "Special",
+    power: 150,
+    flags: ["spread"],
+  },
+  "eruption": {
+    name: "Eruption",
+    type: "Fire",
+    category: "Special",
+    power: 150,
+    flags: ["spread"],
+  },
+  "earth-power": {
+    name: "Earth Power",
+    type: "Ground",
+    category: "Special",
+    power: 90,
+    flags: [],
+  },
+  "sludge-bomb": {
+    name: "Sludge Bomb",
+    type: "Poison",
+    category: "Special",
+    power: 90,
+    flags: [],
+  },
+  "air-slash": {
+    name: "Air Slash",
+    type: "Flying",
+    category: "Special",
+    power: 75,
+    flags: [],
+  },
+};
+
+export function lookupMove(name: string): MoveData | null {
+  const key = name.toLowerCase().replace(/\s+/g, "-");
+  return MOVES[key] ?? null;
+}
