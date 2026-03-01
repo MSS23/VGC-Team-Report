@@ -52,7 +52,16 @@ export async function GET(request: NextRequest) {
       const html = await htmlRes.text();
       const titleMatch = html.match(/<h1>(.*?)<\/h1>/i) ?? html.match(/<title>(.*?)<\/title>/i);
       if (titleMatch) {
-        const raw = titleMatch[1].trim();
+        // Decode HTML entities (&#39; → ', &amp; → &, etc.)
+        const raw = titleMatch[1]
+          .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+          .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&quot;/g, '"')
+          .replace(/&apos;/g, "'")
+          .trim();
         // Only use if it's not a generic/empty title
         if (raw && raw.toLowerCase() !== "untitled" && raw !== "pokepast.es") {
           title = raw;
