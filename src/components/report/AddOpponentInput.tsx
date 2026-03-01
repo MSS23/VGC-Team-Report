@@ -35,10 +35,10 @@ export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
     try {
       const result = await fetchPokePaste(paste);
       setPaste(result.paste);
-      // Auto-fill label from PokéPaste title or paste header
-      if (!label.trim() && result.title) {
+      // Always update label to match the newly fetched paste
+      if (result.title) {
         setLabel(result.title);
-      } else if (!label.trim()) {
+      } else {
         const parsed = parseShowdownPaste(result.paste);
         if (parsed.teamName) setLabel(parsed.teamName);
       }
