@@ -13,6 +13,12 @@ interface PokemonDropdownProps {
   takenIndices?: (number | null)[];
 }
 
+interface DropdownPosition {
+  top?: number;
+  bottom?: number;
+  left: number;
+}
+
 export function PokemonDropdown({
   yourPokemon,
   selectedIndex,
@@ -22,14 +28,19 @@ export function PokemonDropdown({
 }: PokemonDropdownProps) {
   const [open, setOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<DropdownPosition>({ left: 0 });
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
+  // Close on outside click (check both wrapper and menu since menu is fixed/portalled)
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const inWrapper = wrapperRef.current?.contains(target);
+      const inMenu = menuRef.current?.contains(target);
+      if (!inWrapper && !inMenu) {
         setOpen(false);
       }
     }
@@ -37,13 +48,28 @@ export function PokemonDropdown({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  // Decide open direction based on available space
+  // Close on scroll (fixed position would drift from anchor)
+  useEffect(() => {
+    if (!open) return;
+    const handleScroll = () => setOpen(false);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, [open]);
+
+  // Calculate fixed position from button's viewport rect
   const handleToggle = useCallback(() => {
     if (!open && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      const dropdownHeight = Math.min(yourPokemon.length * 40 + 16, 300);
-      setOpenUpward(spaceBelow < dropdownHeight && rect.top > dropdownHeight);
+      const dropdownH = Math.min(yourPokemon.length * 44 + 16, 320);
+
+      if (spaceBelow >= dropdownH) {
+        setPosition({ top: rect.bottom + 4, left: rect.left + rect.width / 2 });
+        setOpenUpward(false);
+      } else {
+        setPosition({ bottom: window.innerHeight - rect.top + 4, left: rect.left + rect.width / 2 });
+        setOpenUpward(true);
+      }
     }
     setOpen((prev) => !prev);
   }, [open, yourPokemon.length]);
@@ -68,7 +94,7 @@ export function PokemonDropdown({
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={wrapperRef} className="relative">
       <button
         ref={buttonRef}
         type="button"
@@ -94,9 +120,13 @@ export function PokemonDropdown({
 
       {open && (
         <div
-          className={`absolute left-1/2 -translate-x-1/2 z-[100] bg-surface border border-border rounded-xl shadow-xl min-w-[160px] py-1 overflow-y-auto max-h-[300px] ${
-            openUpward ? "bottom-full mb-1" : "top-full mt-1"
-          }`}
+          ref={menuRef}
+          className="fixed z-[9999] -translate-x-1/2 bg-surface border border-border rounded-xl shadow-xl min-w-[160px] py-1 overflow-y-auto max-h-[320px]"
+          style={
+            openUpward
+              ? { bottom: position.bottom, left: position.left }
+              : { top: position.top, left: position.left }
+          }
         >
           {selected !== null && (
             <button
@@ -112,27 +142,34 @@ export function PokemonDropdown({
           )}
           {yourPokemon.map((mon, index) => {
             const isTaken = index !== selectedIndex && takenIndices.includes(index);
+            const isSelected = index === selectedIndex;
+            const isDisabled = isTaken || isSelected;
             return (
               <button
                 key={index}
                 type="button"
-                disabled={isTaken}
+                disabled={isDisabled}
                 onClick={() => {
                   onChange(index);
                   setOpen(false);
                 }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
-                  isTaken
-                    ? "opacity-30 cursor-not-allowed"
-                    : index === selectedIndex
-                      ? "bg-accent/10"
-                      : "hover:bg-surface-alt"
+                  isSelected
+                    ? "bg-accent/10 cursor-default"
+                    : isTaken
+                      ? "opacity-30 cursor-not-allowed"
+                      : "hover:bg-surface-alt cursor-pointer"
                 }`}
               >
                 <PokemonSprite species={mon.parsed.species} size={28} />
-                <span className="text-xs text-text-primary truncate">
+                <span className={`text-xs truncate flex-1 ${
+                  isSelected ? "text-accent font-semibold" : "text-text-primary"
+                }`}>
                   {mon.parsed.species}
                 </span>
+                {isSelected && (
+                  <span className="text-accent text-xs flex-shrink-0">&#10003;</span>
+                )}
               </button>
             );
           })}
