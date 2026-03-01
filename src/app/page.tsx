@@ -30,6 +30,15 @@ export default function Home() {
   const { isSharedView, sharedState, copyShareUrl, shareStatus } = useShareUrl();
 
   const isReadOnly = isSharedView || presentationMode;
+  // Shared views look like presentation mode (dark polished theme) without fullscreen
+  const isPresentationStyle = presentationMode || isSharedView;
+
+  // Apply presentation styling for shared views (dark theme CSS)
+  useEffect(() => {
+    if (isSharedView) {
+      document.documentElement.setAttribute("data-presentation-mode", "");
+    }
+  }, [isSharedView]);
 
   // Build species keys with dedup index for duplicate species
   const speciesKeys = useMemo(() => {
@@ -178,12 +187,12 @@ export default function Home() {
       {/* Header bar */}
       <header
         className={`sticky top-0 z-10 backdrop-blur-xl border-b transition-all duration-300 ${
-          presentationMode
+          isPresentationStyle
             ? "bg-transparent border-transparent"
             : "bg-surface/90 border-border shadow-[0_1px_8px_rgba(0,0,0,0.04)]"
         }`}
       >
-        {presentationMode ? (
+        {isPresentationStyle ? (
           <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-text-secondary">
               <span className="font-medium text-text-primary">
@@ -193,38 +202,39 @@ export default function Home() {
                 &middot; {currentSlide + 1} / {totalSlides}
               </span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setPresentationMode(false)}
-              className="text-text-tertiary hover:text-text-primary"
-            >
-              Exit
-            </Button>
+            {isSharedView ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  window.location.href =
+                    window.location.origin + window.location.pathname;
+                }}
+                className="text-text-tertiary hover:text-text-primary"
+              >
+                <span className="sm:hidden">New</span>
+                <span className="hidden sm:inline">Build Your Own</span>
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPresentationMode(false)}
+                className="text-text-tertiary hover:text-text-primary"
+              >
+                Exit
+              </Button>
+            )}
           </div>
         ) : (
           <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 creator:px-8 creator:py-4 flex items-center justify-between gap-2">
             {/* Left: Back button */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {isSharedView ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    window.location.href =
-                      window.location.origin + window.location.pathname;
-                  }}
-                >
-                  <span className="sm:hidden">New</span>
-                  <span className="hidden sm:inline">Build Your Own</span>
-                </Button>
-              ) : (
-                <Button variant="ghost" size="sm" onClick={reset}>
-                  <span className="hidden sm:inline">← New Team</span>
-                  <span className="sm:hidden">← New</span>
-                </Button>
-              )}
-              {!isSharedView && warnings.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={reset}>
+                <span className="hidden sm:inline">&larr; New Team</span>
+                <span className="sm:hidden">&larr; New</span>
+              </Button>
+              {warnings.length > 0 && (
                 <span className="text-xs text-warning hidden sm:inline">
                   {warnings.length} warning{warnings.length > 1 ? "s" : ""}
                 </span>
@@ -252,25 +262,21 @@ export default function Home() {
                 {shareButtonText}
               </Button>
 
-              {!isSharedView && (
-                <>
-                  <div className="hidden sm:block">
-                    <Toggle
-                      checked={creatorMode}
-                      onChange={setCreatorMode}
-                      label="Creator"
-                    />
-                  </div>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => setPresentationMode(true)}
-                  >
-                    <span className="hidden sm:inline">Present</span>
-                    <span className="sm:hidden">▶</span>
-                  </Button>
-                </>
-              )}
+              <div className="hidden sm:block">
+                <Toggle
+                  checked={creatorMode}
+                  onChange={setCreatorMode}
+                  label="Creator"
+                />
+              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setPresentationMode(true)}
+              >
+                <span className="hidden sm:inline">Present</span>
+                <span className="sm:hidden">▶</span>
+              </Button>
             </div>
           </div>
         )}
@@ -279,7 +285,7 @@ export default function Home() {
       {/* Report content */}
       <div
         className={`max-w-7xl mx-auto pb-36 slide-content ${
-          presentationMode
+          isPresentationStyle
             ? "px-4 sm:px-8 py-4 sm:py-6"
             : "px-3 sm:px-4 py-4 sm:py-6 creator:px-8 creator:py-8"
         }`}
@@ -296,7 +302,7 @@ export default function Home() {
           onRemoveCalc={removeCalc}
           speciesKeys={speciesKeys}
           isReadOnly={isReadOnly}
-          isPresentationMode={presentationMode}
+          isPresentationMode={isPresentationStyle}
           plans={plans}
           onGamePlanNotesChange={updateGamePlanNotes}
           onGamePlanBringChange={updateGamePlanBring}
@@ -317,7 +323,7 @@ export default function Home() {
         onNext={nextSlide}
         onGoTo={goToSlide}
         slideLabels={slideLabels}
-        autoHide={presentationMode}
+        autoHide={isPresentationStyle}
       />
     </main>
   );
