@@ -6,6 +6,7 @@ import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
 import { CalcInput } from "./CalcInput";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
+import { NATURES } from "@/lib/data/natures";
 
 interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;
@@ -73,6 +74,7 @@ export function PokemonDetailSlide({
 }: PokemonDetailSlideProps) {
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
+  const natureData = NATURES[parsed.nature];
 
   const statLabels = {
     hp: "HP",
@@ -163,7 +165,7 @@ export function PokemonDetailSlide({
                     onClick={onToggleShiny}
                     title={shiny ? "Show normal sprite" : "Show shiny sprite"}
                     aria-label={shiny ? "Disable shiny sprite" : "Enable shiny sprite"}
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
+                    className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
                       shiny
                         ? "bg-amber-400/20 text-amber-500 border-amber-400/40"
                         : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary"
@@ -178,7 +180,7 @@ export function PokemonDetailSlide({
                     onClick={onToggleAnimated}
                     title={animated ? "Show static sprite" : "Show animated sprite"}
                     aria-label={animated ? "Switch to static sprite" : "Switch to animated sprite"}
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
+                    className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
                       animated
                         ? "bg-accent/15 text-accent border-accent/30"
                         : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary"
@@ -258,7 +260,7 @@ export function PokemonDetailSlide({
         {data && (
           <div>
             <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3">
-              Stats <span className="normal-case tracking-normal font-normal text-text-tertiary/70">({parsed.nature})</span>
+              Stats <span className="normal-case tracking-normal font-normal text-text-tertiary/70">({parsed.nature}{natureData?.plus ? ` +${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.plus]}` : ""}{natureData?.minus ? ` -${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.minus]}` : ""})</span>
             </h3>
             <div className="space-y-2 stagger-stats">
               {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map(
@@ -272,7 +274,9 @@ export function PokemonDetailSlide({
 
                   return (
                     <div key={stat} className="flex items-center gap-2 sm:gap-3">
-                      <span className="text-xs sm:text-sm font-semibold text-text-tertiary w-7 sm:w-8 text-right uppercase">
+                      <span className={`text-xs sm:text-sm font-semibold w-7 sm:w-8 text-right uppercase ${
+                        natureData?.plus === stat ? "text-red-500" : natureData?.minus === stat ? "text-blue-500" : "text-text-tertiary"
+                      }`}>
                         {statLabels[stat]}
                       </span>
                       <div className="flex-1 h-3 sm:h-4 bg-surface-alt rounded-full overflow-hidden presenting:h-5">

@@ -271,6 +271,18 @@ function GamePlanSection({
 
   const dragType = `application/x-gameplan-${gamePlan.id}`;
 
+  const speciesLabels = useMemo(() => {
+    const totals: Record<string, number> = {};
+    yourPokemon.forEach(mon => { totals[mon.parsed.species] = (totals[mon.parsed.species] ?? 0) + 1; });
+    const counts: Record<string, number> = {};
+    return yourPokemon.map(mon => {
+      const s = mon.parsed.species;
+      if (totals[s] <= 1) return s;
+      counts[s] = (counts[s] ?? 0) + 1;
+      return `${s} (${counts[s]})`;
+    });
+  }, [yourPokemon]);
+
   const handleDragStart = (e: React.DragEvent, bringIdx: number) => {
     e.dataTransfer.setData(dragType, String(bringIdx));
     e.dataTransfer.effectAllowed = "move";
@@ -371,6 +383,7 @@ function GamePlanSection({
                         takenIndices={gamePlan.bring.filter((_, i) => i !== bringIdx)}
                         draggable={hasSelection && !isReadOnly}
                         onDragStart={(e) => handleDragStart(e, bringIdx)}
+                        speciesLabels={speciesLabels}
                       />
                     </div>
                   );

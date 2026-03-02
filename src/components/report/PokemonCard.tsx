@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
+import { NATURES } from "@/lib/data/natures";
 
 interface PokemonCardProps {
   pokemon: AnalyzedPokemon;
@@ -24,18 +25,31 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
   const spriteSize = creatorMode ? 96 : 72;
+  const natureData = NATURES[parsed.nature];
 
   return (
-    <Card className={`p-4 sm:p-5 creator:p-6 flex flex-col gap-3 creator:gap-4 ${isMvp ? "ring-1 ring-amber-400/40 shadow-amber-500/10" : ""}`}>
+    <Card className={`p-4 sm:p-5 creator:p-6 flex flex-col gap-3 creator:gap-4 transition-all duration-200 ${
+      isMvp ? "ring-2 ring-amber-400/50 shadow-lg shadow-amber-400/10" : ""
+    }`}>
+      {/* MVP Banner */}
+      {isMvp && (
+        <div className="flex items-center gap-1.5 -mb-1">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-amber-500">
+            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+          </svg>
+          <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Team MVP</span>
+        </div>
+      )}
+
       {/* Header: Sprite + Name + Types */}
       <div className="flex items-start gap-3 creator:gap-4">
-        <div className="flex-shrink-0 relative group/sprite">
+        <div className="flex-shrink-0">
           <button
             type="button"
             onClick={onToggleAnimated}
             title={animated ? "Switch to static sprite" : "Switch to animated GIF"}
             aria-label={animated ? "Switch to static sprite" : "Switch to animated sprite"}
-            className="block cursor-pointer rounded-xl transition-transform hover:scale-105 active:scale-95 min-w-[44px] min-h-[44px]"
+            className="block cursor-pointer rounded-xl transition-transform hover:scale-105 active:scale-95"
           >
             <PokemonSprite
               species={parsed.species}
@@ -44,29 +58,9 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               shiny={shiny}
             />
           </button>
-          {onToggleShiny && (
-            <button
-              type="button"
-              onClick={onToggleShiny}
-              title={shiny ? "Show normal sprite" : "Show shiny sprite"}
-              aria-label={shiny ? "Disable shiny sprite" : "Enable shiny sprite"}
-              className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wide border transition-all min-w-[44px] min-h-[44px] flex items-center justify-center ${
-                shiny
-                  ? "bg-amber-400/25 text-amber-500 border-amber-400/50"
-                  : "bg-surface text-text-tertiary/60 border-border-subtle hover:text-text-tertiary"
-              }`}
-            >
-              {shiny ? "\u2728" : "Shiny"}
-            </button>
-          )}
-          {isMvp && (
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center shadow-sm shadow-amber-400/30">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" /></svg>
-            </div>
-          )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <h3 className="text-base font-bold text-text-primary creator:text-xl truncate leading-tight">
               {parsed.species}
             </h3>
@@ -75,22 +69,44 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                 {parsed.gender === "M" ? "\u2642" : "\u2640"}
               </span>
             )}
-            {!isReadOnly && onToggleMvp && (
-              <button
-                type="button"
-                onClick={onToggleMvp}
-                className={`p-1 rounded-md transition-all duration-200 ${
-                  isMvp
-                    ? "text-amber-500 hover:bg-amber-500/10"
-                    : "text-text-tertiary/40 hover:text-amber-400 hover:bg-amber-400/10"
-                }`}
-                title={isMvp ? "Remove MVP" : "Set as MVP"}
-                aria-label={isMvp ? "Remove MVP" : "Set as MVP"}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill={isMvp ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                  <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-                </svg>
-              </button>
+            {/* Action buttons: MVP star + Shiny sparkle */}
+            {!isReadOnly && (
+              <div className="flex items-center ml-auto">
+                {onToggleMvp && (
+                  <button
+                    type="button"
+                    onClick={onToggleMvp}
+                    className={`p-2 rounded-lg transition-all duration-200 ${
+                      isMvp
+                        ? "text-amber-500 bg-amber-500/10"
+                        : "text-text-tertiary/40 hover:text-amber-400 hover:bg-amber-400/5"
+                    }`}
+                    title={isMvp ? "Remove MVP" : "Set as MVP"}
+                    aria-label={isMvp ? "Remove MVP" : "Set as MVP"}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill={isMvp ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+                    </svg>
+                  </button>
+                )}
+                {onToggleShiny && (
+                  <button
+                    type="button"
+                    onClick={onToggleShiny}
+                    className={`p-2 rounded-lg transition-all duration-200 ${
+                      shiny
+                        ? "text-amber-500 bg-amber-500/10"
+                        : "text-text-tertiary/40 hover:text-amber-400 hover:bg-amber-400/5"
+                    }`}
+                    title={shiny ? "Show normal sprite" : "Show shiny sprite"}
+                    aria-label={shiny ? "Disable shiny sprite" : "Enable shiny sprite"}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill={shiny ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2L14 10L22 12L14 14L12 22L10 14L2 12L10 10Z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
@@ -160,7 +176,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
       {data && (
         <div>
           <h4 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-2 creator:mb-2.5">
-            Stats <span className="normal-case tracking-normal font-normal text-text-tertiary/70">({parsed.nature})</span>
+            Stats <span className="normal-case tracking-normal font-normal text-text-tertiary/70">({parsed.nature}{natureData?.plus ? ` +${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.plus]}` : ""}{natureData?.minus ? ` -${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.minus]}` : ""})</span>
           </h4>
           <div className="space-y-1.5 stagger-stats">
             {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map((stat) => {
@@ -174,7 +190,9 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
 
               return (
                 <div key={stat} className="flex items-center gap-2">
-                  <span className="text-[10px] font-semibold text-text-tertiary w-7 text-right uppercase">
+                  <span className={`text-[10px] font-semibold w-7 text-right uppercase ${
+                    natureData?.plus === stat ? "text-red-500" : natureData?.minus === stat ? "text-blue-500" : "text-text-tertiary"
+                  }`}>
                     {labels[stat]}
                   </span>
                   <div className="flex-1 h-1.5 bg-surface-alt rounded-full overflow-hidden creator:h-2">

@@ -55,16 +55,17 @@ export function SlideNavControls({
         {/* Center: Dots + counter */}
         <div className="flex flex-col items-center gap-1.5 min-w-0 flex-1">
           {/* Dots */}
-          <div className="hidden sm:flex items-center gap-1.5 max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden py-0.5">
+          <div className="flex items-center gap-1 sm:gap-1.5 max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden py-0.5">
             {Array.from({ length: totalSlides }, (_, i) => (
               <button
                 key={i}
                 onClick={() => onGoTo(i)}
                 title={slideLabels[i]}
+                aria-label={`Go to ${slideLabels[i]}`}
                 className={`rounded-full transition-all duration-300 flex-shrink-0 ${
                   i === currentSlide
-                    ? "w-4 h-2.5 bg-accent shadow-sm shadow-accent/40"
-                    : "w-2 h-2 bg-border hover:bg-text-tertiary hover:scale-125"
+                    ? "w-3 sm:w-4 h-2 sm:h-2.5 bg-accent shadow-sm shadow-accent/40"
+                    : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-border hover:bg-text-tertiary hover:scale-125"
                 }`}
               />
             ))}

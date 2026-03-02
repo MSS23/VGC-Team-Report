@@ -440,6 +440,7 @@ export default function Home() {
                 size="sm"
                 onClick={() => exportAsPng(`slide-${currentSlide + 1}.png`)}
                 title="Export slide as image"
+                aria-label="Export slide as image"
                 className="text-text-secondary hover:text-text-primary hidden sm:inline-flex"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -450,7 +451,8 @@ export default function Home() {
               <button
                 onClick={startWalkthrough}
                 title="Help & walkthrough"
-                className="w-7 h-7 items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium hidden sm:flex"
+                aria-label="Help and walkthrough"
+                className="w-7 h-7 items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-sm font-medium hidden sm:flex"
               >
                 ?
               </button>
@@ -468,6 +470,7 @@ export default function Home() {
                   type="button"
                   onClick={() => setCreatorMode(!creatorMode)}
                   title={creatorMode ? "Creator Mode on" : "Creator Mode off"}
+                  aria-label={creatorMode ? "Disable Creator Mode" : "Enable Creator Mode"}
                   className={`sm:hidden p-1.5 rounded-lg border text-xs font-bold transition-colors ${
                     creatorMode
                       ? "bg-accent/15 text-accent border-accent/30"
@@ -485,6 +488,7 @@ export default function Home() {
                 size="sm"
                 onClick={() => setPresentationMode(true)}
                 data-walkthrough="present-button"
+                aria-label="Start presentation"
               >
                 <span className="hidden sm:inline">Present</span>
                 <span className="sm:hidden">▶</span>

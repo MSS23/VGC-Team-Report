@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     description: "Build, share, and present professional VGC team reports",
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: { url: "/favicon.svg", type: "image/svg+xml" },
   },
 };
 
