@@ -11,7 +11,7 @@ export function TypeBadge({ type, className = "" }: TypeBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-[3px] text-[10px] font-bold uppercase tracking-wider rounded-md leading-none ${className}`}
+      className={`inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider rounded-md leading-none ${className}`}
       style={{
         backgroundColor: colors.bg,
         color: colors.text,

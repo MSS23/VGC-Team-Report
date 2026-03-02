@@ -117,7 +117,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                       {entry.hasSpeedBoost ? entry.boostedSpe : entry.baseSpe}
                     </span>
                     {entry.hasSpeedBoost && (
-                      <span className="text-[10px] text-amber-500/60 ml-0.5">
+                      <span className="text-xs text-amber-500/60 ml-0.5">
                         scarf
                       </span>
                     )}

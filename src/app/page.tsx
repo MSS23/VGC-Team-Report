@@ -491,7 +491,7 @@ export default function Home() {
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-1.5 sm:gap-3 creator:gap-6 flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 creator:gap-4 flex-shrink-0">
               <Button
                 variant="secondary"
                 size="sm"
@@ -502,46 +502,49 @@ export default function Home() {
               >
                 {shareButtonText}
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => exportAsPng(`slide-${currentSlide + 1}.png`)}
-                title="Export slide as image"
-                aria-label="Export slide as image"
-                className="text-text-secondary hover:text-text-primary hidden sm:inline-flex"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => exportAllSlides(totalSlides, goToSlide, slideLabels)}
-                disabled={exportStatus === "exporting-all"}
-                title="Export all slides as ZIP"
-                aria-label="Export all slides as ZIP"
-                className="text-text-secondary hover:text-text-primary hidden sm:inline-flex"
-              >
-                {exportStatus === "exporting-all" ? (
-                  <span className="text-xs tabular-nums">{exportProgress.current}/{exportProgress.total}</span>
-                ) : (
+              {/* Export & help — grouped behind md breakpoint */}
+              <div className="hidden md:flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => exportAsPng(`slide-${currentSlide + 1}.png`)}
+                  title="Export slide as image"
+                  aria-label="Export slide as image"
+                  className="text-text-secondary hover:text-text-primary"
+                >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
+                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                    <circle cx="12" cy="13" r="4" />
                   </svg>
-                )}
-              </Button>
-              <button
-                onClick={startWalkthrough}
-                title="Help & walkthrough"
-                aria-label="Help and walkthrough"
-                className="w-7 h-7 items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-sm font-medium hidden sm:flex"
-              >
-                ?
-              </button>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => exportAllSlides(totalSlides, goToSlide, slideLabels)}
+                  disabled={exportStatus === "exporting-all"}
+                  title="Export all slides as ZIP"
+                  aria-label="Export all slides as ZIP"
+                  className="text-text-secondary hover:text-text-primary"
+                >
+                  {exportStatus === "exporting-all" ? (
+                    <span className="text-xs tabular-nums">{exportProgress.current}/{exportProgress.total}</span>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                  )}
+                </Button>
+                <button
+                  onClick={startWalkthrough}
+                  title="Help & walkthrough"
+                  aria-label="Help and walkthrough"
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-sm font-medium"
+                >
+                  ?
+                </button>
+              </div>
 
               {/* Global GIF toggle: icon-only on mobile, icon+text on sm+ */}
               <button

@@ -99,7 +99,7 @@ export function TeamOverview({
         )
       ) : (
         <div>
-          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-3">
             Tournament Info
           </h3>
           <div className="flex flex-wrap gap-3">
@@ -138,7 +138,7 @@ export function TeamOverview({
 
       {/* Team Summary */}
       <div>
-        <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-3">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-3">
           Team Summary
         </h3>
         {isReadOnly ? (

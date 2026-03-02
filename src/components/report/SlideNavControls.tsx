@@ -64,20 +64,20 @@ export function SlideNavControls({
                 aria-label={`Go to ${slideLabels[i]}`}
                 className={`rounded-full transition-all duration-300 flex-shrink-0 ${
                   i === currentSlide
-                    ? "w-2.5 sm:w-3 h-1.5 sm:h-2 bg-accent shadow-sm shadow-accent/40"
-                    : "w-1 sm:w-1.5 h-1 sm:h-1.5 bg-border hover:bg-text-tertiary hover:scale-125"
+                    ? "w-3 sm:w-3.5 h-2 sm:h-2.5 bg-accent shadow-sm shadow-accent/40"
+                    : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-border hover:bg-text-tertiary hover:scale-125"
                 }`}
               />
             ))}
           </div>
           {/* Label + counter */}
-          <span className="text-[10px] sm:text-xs text-text-tertiary truncate hidden sm:inline">
+          <span className="text-xs text-text-tertiary truncate hidden sm:inline">
             <span className="font-semibold text-text-primary">{slideLabels[currentSlide]}</span>
             <span className="mx-1 text-border">&middot;</span>
             <span className="tabular-nums">{currentSlide + 1}/{totalSlides}</span>
           </span>
           {/* Mobile: just counter */}
-          <span className="text-[10px] text-text-tertiary tabular-nums sm:hidden">
+          <span className="text-xs text-text-tertiary tabular-nums sm:hidden">
             {currentSlide + 1}/{totalSlides}
           </span>
         </div>

@@ -12,7 +12,7 @@ import { TypeBadge } from "./TypeBadge";
 import { ItemIcon } from "./ItemIcon";
 import { PokemonDropdown } from "./PokemonDropdown";
 import { Button } from "@/components/ui/Button";
-import { GAME_COLORS, getReplayInfo, ReplayIcon, ResultBadge, ResultToggle } from "@/lib/utils/game-plan-helpers";
+import { GAME_COLORS, getReplayInfo, ReplayIcon } from "@/lib/utils/game-plan-helpers";
 
 interface OpponentPokemonInfo {
   parsed: ReturnType<typeof parseShowdownPaste>["pokemon"][number];
@@ -171,33 +171,56 @@ export function MatchupPlanSlide({
 
           {/* Calculated stats when EVs are present */}
           {anyHasEvs && (
-            <div className="mt-4 pt-4 border-t border-border-subtle">
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 sm:gap-5">
+            <div className="mt-5 pt-5 border-t border-border-subtle">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                 {opponentPokemon.map((mon, i) => (
-                  <div key={i} className="text-center">
+                  <div key={i} role="group" aria-label={`${mon.parsed.species} stats`}>
                     {mon.hasEvs && mon.calculatedStats ? (
-                      <div className="space-y-0.5">
-                        <span className="text-xs font-semibold text-text-secondary block mb-1">
-                          {mon.parsed.nature}
-                        </span>
-                        {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map((stat) => {
-                          const value = mon.calculatedStats![stat];
-                          const ev = mon.parsed.evs[stat];
-                          return (
-                            <div key={stat} className="flex items-center justify-center gap-1.5 text-xs">
-                              <span className="text-text-tertiary font-medium w-7 text-right">{STAT_LABELS[stat]}</span>
-                              <span className={`font-mono tabular-nums w-7 text-left ${ev > 0 ? "text-accent font-bold" : "text-text-primary"}`}>
-                                {value}
-                              </span>
-                              {ev > 0 && (
-                                <span className="text-accent/70 text-[10px] font-medium w-6 text-left">+{ev}</span>
-                              )}
-                            </div>
-                          );
-                        })}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <PokemonSprite species={mon.parsed.species} size={28} />
+                          <span className="text-sm font-bold text-text-primary">{mon.parsed.species}</span>
+                          <span className="text-xs font-medium text-text-secondary">({mon.parsed.nature})</span>
+                        </div>
+                        <div className="space-y-1.5" role="list" aria-label="Stat values">
+                          {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map((stat) => {
+                            const value = mon.calculatedStats![stat];
+                            const ev = mon.parsed.evs[stat];
+                            const maxStat = stat === "hp" ? 300 : 250;
+                            const percentage = Math.min((value / maxStat) * 100, 100);
+                            return (
+                              <div key={stat} className="flex items-center gap-2" role="listitem" aria-label={`${STAT_LABELS[stat]}: ${value}${ev > 0 ? `, ${ev} EVs invested` : ""}`}>
+                                <span className="text-xs font-semibold w-8 text-right uppercase text-text-tertiary">
+                                  {STAT_LABELS[stat]}
+                                </span>
+                                <div className="flex-1 h-2 bg-surface-alt rounded-full overflow-hidden" role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${STAT_LABELS[stat]} stat bar`}>
+                                  <div
+                                    className="h-full rounded-full transition-all"
+                                    style={{
+                                      width: `${percentage}%`,
+                                      backgroundColor: ev > 0 ? "var(--accent)" : "#94a3b8",
+                                    }}
+                                  />
+                                </div>
+                                <span className={`text-sm font-mono w-8 text-right tabular-nums ${ev > 0 ? "text-accent font-bold" : "text-text-primary"}`}>
+                                  {value}
+                                </span>
+                                {ev > 0 ? (
+                                  <span className="text-xs text-accent font-semibold w-10 text-left">+{ev}</span>
+                                ) : (
+                                  <span className="w-10" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     ) : (
-                      <span className="text-xs text-text-tertiary">—</span>
+                      <div className="flex items-center gap-2 text-text-tertiary">
+                        <PokemonSprite species={mon.parsed.species} size={28} />
+                        <span className="text-sm">{mon.parsed.species}</span>
+                        <span className="text-xs">— No spread data</span>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -351,11 +374,6 @@ function GamePlanSection({
           <span className="text-base font-semibold text-text-primary">
             Game {index + 1}
           </span>
-          {isReadOnly ? (
-            <ResultBadge result={gamePlan.result ?? null} />
-          ) : (
-            <ResultToggle result={gamePlan.result ?? null} onChange={onResultChange} />
-          )}
           {/* Show selected Pokemon sprites inline when collapsed */}
           {isCollapsed && (
             <div className="flex items-center gap-1 ml-1">

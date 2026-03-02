@@ -105,7 +105,7 @@ export function PokemonDetailSlide({
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
           <span className={`text-xs ${cfg.tagText}`}>{cfg.icon}</span>
-          <span className={`text-[10px] font-semibold uppercase tracking-wider ${cfg.tagText}`}>
+          <span className={`text-xs font-semibold uppercase tracking-wider ${cfg.tagText}`}>
             {cfg.label}
           </span>
         </div>
@@ -165,7 +165,7 @@ export function PokemonDetailSlide({
                     onClick={onToggleShiny}
                     title={shiny ? "Show normal sprite" : "Show shiny sprite"}
                     aria-label={shiny ? "Disable shiny sprite" : "Enable shiny sprite"}
-                    className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border transition-colors ${
                       shiny
                         ? "bg-amber-400/20 text-amber-500 border-amber-400/40"
                         : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary"
@@ -180,7 +180,7 @@ export function PokemonDetailSlide({
                     onClick={onToggleAnimated}
                     title={animated ? "Show static sprite" : "Show animated sprite"}
                     aria-label={animated ? "Switch to static sprite" : "Switch to animated sprite"}
-                    className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border transition-colors ${
                       animated
                         ? "bg-accent/15 text-accent border-accent/30"
                         : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary"
@@ -234,11 +234,11 @@ export function PokemonDetailSlide({
             {/* Non-default IVs */}
             {nonDefaultIvs.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-text-tertiary presenting:text-sm">IVs:</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary presenting:text-sm">IVs:</span>
                 {nonDefaultIvs.map((stat) => (
                   <span
                     key={stat}
-                    className="text-[11px] sm:text-xs font-mono font-medium text-text-tertiary bg-surface-alt px-1.5 sm:px-2 py-0.5 rounded presenting:text-sm presenting:px-2.5 presenting:py-1"
+                    className="text-xs font-mono font-medium text-text-tertiary bg-surface-alt px-2 py-0.5 rounded presenting:text-sm presenting:px-2.5 presenting:py-1"
                   >
                     {parsed.ivs[stat]} {statLabels[stat]}
                   </span>
@@ -250,7 +250,7 @@ export function PokemonDetailSlide({
 
         {/* Moves - 2x2 grid */}
         <div>
-          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3">
             Moves
           </h3>
           <div className="grid grid-cols-2 gap-2 stagger-moves">
@@ -274,7 +274,7 @@ export function PokemonDetailSlide({
         {/* Stats */}
         {data && (
           <div>
-            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-2">
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-2">
               Stats <span className="normal-case tracking-normal font-normal text-text-tertiary/70">({parsed.nature}{natureData?.plus ? ` +${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.plus]}` : ""}{natureData?.minus ? ` -${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.minus]}` : ""})</span>
             </h3>
             <div className="space-y-1 sm:space-y-1.5 stagger-stats">
@@ -290,8 +290,8 @@ export function PokemonDetailSlide({
                   return (
                     <div key={stat} className="flex items-center gap-2">
                       <span className="text-xs font-semibold w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5">
-                        {natureData?.plus === stat && <span className="text-[9px]">{"\u25B2"}</span>}
-                        {natureData?.minus === stat && <span className="text-[9px]">{"\u25BC"}</span>}
+                        {natureData?.plus === stat && <span className="text-[10px]">{"\u25B2"}</span>}
+                        {natureData?.minus === stat && <span className="text-[10px]">{"\u25BC"}</span>}
                         {statLabels[stat]}
                       </span>
                       <div className="flex-1 h-2.5 sm:h-3 bg-surface-alt rounded-full overflow-hidden presenting:h-4">
@@ -332,7 +332,7 @@ export function PokemonDetailSlide({
       <div className="flex flex-col gap-4 sm:gap-6">
         {/* Notes */}
         <div className="flex flex-col gap-2">
-          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm">
             {isPresentationMode ? "Notes" : isReadOnly ? "About This Pokemon" : "Your Explanation"}
           </h3>
           {isReadOnly ? (
@@ -352,7 +352,7 @@ export function PokemonDetailSlide({
 
         {/* Notable Calcs */}
         <div className="flex flex-col gap-3">
-          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm">
             Notable Calcs
           </h3>
 

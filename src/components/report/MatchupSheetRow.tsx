@@ -7,7 +7,7 @@ import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { PokemonSprite } from "./PokemonSprite";
 import { PokemonDropdown } from "./PokemonDropdown";
 import { Button } from "@/components/ui/Button";
-import { GAME_COLORS, getReplayInfo, ReplayIcon, ResultBadge, ResultToggle } from "@/lib/utils/game-plan-helpers";
+import { GAME_COLORS, getReplayInfo, ReplayIcon } from "@/lib/utils/game-plan-helpers";
 
 interface MatchupSheetRowProps {
   plan: MatchupPlan;
@@ -68,11 +68,6 @@ export function MatchupSheetRow({
         .filter(Boolean)
     : [];
 
-  // Collect results for preview
-  const resultPreview = plan.gamePlans
-    .map((gp) => gp.result)
-    .filter((r): r is "W" | "L" | "T" => r != null);
-
   return (
     <div className="bg-surface border border-border rounded-2xl shadow-sm">
       {/* Collapsed header — clickable to expand */}
@@ -108,13 +103,6 @@ export function MatchupSheetRow({
 
         {/* Right side: results + bring preview + plan count + expand arrow */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          {resultPreview.length > 0 && (
-            <div className="hidden sm:flex items-center gap-1">
-              {resultPreview.map((r, i) => (
-                <ResultBadge key={i} result={r} />
-              ))}
-            </div>
-          )}
           {bringPreview.length > 0 && (
             <div className="hidden sm:flex items-center gap-0.5">
               {bringPreview.map((species, i) => (
@@ -302,11 +290,6 @@ function InlineGamePlan({
             <span className="text-base font-semibold text-text-primary">
               Game {index + 1}
             </span>
-            {isReadOnly ? (
-              <ResultBadge result={gamePlan.result ?? null} />
-            ) : (
-              <ResultToggle result={gamePlan.result ?? null} onChange={onResultChange} />
-            )}
           </div>
           {!isReadOnly && canDelete && (
             <button
