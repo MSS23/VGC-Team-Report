@@ -2,10 +2,14 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 
+export type GameResult = "W" | "L" | "T" | null;
+
 export interface GamePlan {
   id: string;
   bring: [number | null, number | null, number | null, number | null];
   notes: string;
+  replays: string[];
+  result?: GameResult;
 }
 
 export interface MatchupPlan {
@@ -13,6 +17,8 @@ export interface MatchupPlan {
   opponentPaste: string;
   opponentLabel: string;
   gamePlans: GamePlan[];
+  /** Whether this matchup gets its own dedicated slide (default true) */
+  showSlide?: boolean;
 }
 
 // Legacy types for migration from old format
@@ -25,6 +31,7 @@ interface LegacyPlan {
   id: string;
   opponentPaste: string;
   opponentLabel: string;
+  showSlide?: boolean;
   notes?: string;
   selectedIndices?: number[];
   planA?: GamePlanSlots;
@@ -37,6 +44,7 @@ function createGamePlan(): GamePlan {
     id: crypto.randomUUID(),
     bring: [null, null, null, null],
     notes: "",
+    replays: [],
   };
 }
 
@@ -47,7 +55,11 @@ function migratePlan(plan: LegacyPlan): MatchupPlan {
       id: plan.id,
       opponentPaste: plan.opponentPaste,
       opponentLabel: plan.opponentLabel,
-      gamePlans: plan.gamePlans,
+      showSlide: plan.showSlide,
+      gamePlans: plan.gamePlans.map((gp) => ({
+        ...gp,
+        replays: gp.replays ?? [],
+      })),
     };
   }
 
@@ -72,6 +84,7 @@ function migratePlan(plan: LegacyPlan): MatchupPlan {
         id: crypto.randomUUID(),
         bring,
         notes: plan.notes ?? "",
+        replays: [],
       },
     ],
   };
@@ -115,6 +128,7 @@ function loadAndMigrate(raw: string): MatchupPlan[] {
     gamePlans: plan.gamePlans.map((gp) => ({
       ...gp,
       bring: deduplicateBring(gp.bring),
+      replays: gp.replays ?? [],
     })),
   }));
 }
@@ -202,6 +216,23 @@ export function useMatchupPlans(speciesKeys: string[], persist = true) {
     []
   );
 
+  const updateGamePlanReplays = useCallback(
+    (matchupId: string, gamePlanId: string, replays: string[]) => {
+      setPlans((prev) =>
+        prev.map((p) => {
+          if (p.id !== matchupId) return p;
+          return {
+            ...p,
+            gamePlans: p.gamePlans.map((gp) =>
+              gp.id === gamePlanId ? { ...gp, replays } : gp
+            ),
+          };
+        })
+      );
+    },
+    []
+  );
+
   const updateGamePlanBring = useCallback(
     (matchupId: string, gamePlanId: string, bringIndex: 0 | 1 | 2 | 3, pokemonIndex: number | null) => {
       setPlans((prev) =>
@@ -252,6 +283,44 @@ export function useMatchupPlans(speciesKeys: string[], persist = true) {
     []
   );
 
+  const updateGamePlanResult = useCallback(
+    (matchupId: string, gamePlanId: string, result: GameResult) => {
+      setPlans((prev) =>
+        prev.map((p) => {
+          if (p.id !== matchupId) return p;
+          return {
+            ...p,
+            gamePlans: p.gamePlans.map((gp) =>
+              gp.id === gamePlanId ? { ...gp, result } : gp
+            ),
+          };
+        })
+      );
+    },
+    []
+  );
+
+  const togglePlanSlide = useCallback((id: string) => {
+    setPlans((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, showSlide: p.showSlide === false ? true : false } : p
+      )
+    );
+  }, []);
+
+  const reorderPlans = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (fromIndex === toIndex) return;
+      setPlans((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(fromIndex, 1);
+        next.splice(toIndex, 0, moved);
+        return next;
+      });
+    },
+    []
+  );
+
   const setPlansFull = useCallback((newPlans: LegacyPlan[]) => {
     setPlans(newPlans.map(migratePlan));
   }, []);
@@ -263,8 +332,12 @@ export function useMatchupPlans(speciesKeys: string[], persist = true) {
     addGamePlan,
     removeGamePlan,
     updateGamePlanNotes,
+    updateGamePlanReplays,
     updateGamePlanBring,
     reorderGamePlanBring,
+    updateGamePlanResult,
+    togglePlanSlide,
+    reorderPlans,
     setPlansFull,
   };
 }

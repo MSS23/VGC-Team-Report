@@ -13,6 +13,7 @@ export function useShareUrl() {
   const [isSharedView, setIsSharedView] = useState(false);
   const [sharedState, setSharedState] = useState<ShareableState | null>(null);
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
+  const [urlWarning, setUrlWarning] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // On mount: check URL hash for shared data
@@ -33,9 +34,15 @@ export function useShareUrl() {
 
   const copyShareUrl = useCallback(async (state: ShareableState) => {
     setShareStatus("copying");
+    setUrlWarning(null);
     try {
       const encoded = await encodeShareState(state);
       const url = `${window.location.origin}${window.location.pathname}#data=${encoded}`;
+
+      if (url.length > 10000) {
+        setUrlWarning(`Share URL is very long (${Math.round(url.length / 1000)}KB). Some browsers may truncate it. Consider reducing notes or calcs.`);
+      }
+
       await navigator.clipboard.writeText(url);
       setShareStatus("copied");
 
@@ -48,5 +55,5 @@ export function useShareUrl() {
     }
   }, []);
 
-  return { isSharedView, sharedState, copyShareUrl, shareStatus };
+  return { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning };
 }

@@ -1,28 +1,27 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { MatchupPlan, GamePlan } from "@/hooks/useMatchupPlans";
+import type { MatchupPlan, GamePlan, GameResult } from "@/hooks/useMatchupPlans";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { PokemonSprite } from "./PokemonSprite";
 import { PokemonDropdown } from "./PokemonDropdown";
 import { Button } from "@/components/ui/Button";
-
-const GAME_COLORS = [
-  { badge: "bg-blue-500/20 text-blue-400 border-blue-500/30", accent: "border-l-blue-500" },
-  { badge: "bg-amber-500/20 text-amber-400 border-amber-500/30", accent: "border-l-amber-500" },
-  { badge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", accent: "border-l-emerald-500" },
-] as const;
+import { GAME_COLORS, getReplayInfo, ReplayIcon, ResultBadge, ResultToggle } from "@/lib/utils/game-plan-helpers";
 
 interface MatchupSheetRowProps {
   plan: MatchupPlan;
   rowNumber: number;
   yourPokemon: AnalyzedPokemon[];
   isReadOnly: boolean;
+  showSlide?: boolean;
+  onToggleSlide?: () => void;
   onRemove: () => void;
   onGamePlanNotesChange: (gamePlanId: string, notes: string) => void;
+  onGamePlanReplaysChange: (gamePlanId: string, replays: string[]) => void;
   onGamePlanBringChange: (gamePlanId: string, bringIndex: 0 | 1 | 2 | 3, pokemonIndex: number | null) => void;
   onReorderBring: (gamePlanId: string, fromIndex: 0 | 1 | 2 | 3, toIndex: 0 | 1 | 2 | 3) => void;
+  onResultChange: (gamePlanId: string, result: GameResult) => void;
   onAddGamePlan: () => void;
   onRemoveGamePlan: (gamePlanId: string) => void;
 }
@@ -32,10 +31,14 @@ export function MatchupSheetRow({
   rowNumber,
   yourPokemon,
   isReadOnly,
+  showSlide = true,
+  onToggleSlide,
   onRemove,
   onGamePlanNotesChange,
+  onGamePlanReplaysChange,
   onGamePlanBringChange,
   onReorderBring,
+  onResultChange,
   onAddGamePlan,
   onRemoveGamePlan,
 }: MatchupSheetRowProps) {
@@ -54,6 +57,11 @@ export function MatchupSheetRow({
         .map((idx) => yourPokemon[idx]?.parsed.species)
         .filter(Boolean)
     : [];
+
+  // Collect results for preview
+  const resultPreview = plan.gamePlans
+    .map((gp) => gp.result)
+    .filter((r): r is "W" | "L" | "T" => r != null);
 
   return (
     <div className="bg-surface border border-border rounded-2xl shadow-sm">
@@ -79,7 +87,7 @@ export function MatchupSheetRow({
           </span>
 
           {/* Opponent sprites */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 overflow-x-auto max-w-[180px] sm:max-w-none">
             {opponentPokemon.map((species, i) => (
               <div key={i} className="w-7 h-7 flex items-center justify-center flex-shrink-0">
                 <PokemonSprite species={species} size={26} />
@@ -88,8 +96,15 @@ export function MatchupSheetRow({
           </div>
         </div>
 
-        {/* Right side: bring preview + plan count + expand arrow */}
+        {/* Right side: results + bring preview + plan count + expand arrow */}
         <div className="flex items-center gap-3 flex-shrink-0">
+          {resultPreview.length > 0 && (
+            <div className="hidden sm:flex items-center gap-1">
+              {resultPreview.map((r, i) => (
+                <ResultBadge key={i} result={r} />
+              ))}
+            </div>
+          )}
           {bringPreview.length > 0 && (
             <div className="hidden sm:flex items-center gap-0.5">
               {bringPreview.map((species, i) => (
@@ -108,19 +123,46 @@ export function MatchupSheetRow({
           </span>
         </div>
 
-        {/* Remove button */}
+        {/* Slide visibility toggle + Remove button */}
         {!isReadOnly && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onRemove(); }}
-            className="text-text-tertiary hover:text-red-400 p-1.5 rounded-lg hover:bg-red-400/10 transition-colors flex-shrink-0"
-            title="Remove matchup"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {onToggleSlide && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onToggleSlide(); }}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  showSlide
+                    ? "text-accent hover:bg-accent/10"
+                    : "text-text-tertiary hover:bg-surface-alt"
+                }`}
+                title={showSlide ? "Has dedicated slide — click to hide" : "No dedicated slide — click to show"}
+              >
+                {showSlide ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+                    <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                )}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onRemove(); }}
+              className="text-text-tertiary hover:text-red-400 p-1.5 rounded-lg hover:bg-red-400/10 transition-colors"
+              title="Remove matchup"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
         )}
       </div>
 
@@ -129,7 +171,7 @@ export function MatchupSheetRow({
         <div className="px-4 sm:px-5 py-4 border-t border-border space-y-3">
           {/* Game plan header */}
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary">
               Game Plans ({plan.gamePlans.length}/3)
             </span>
             {!isReadOnly && plan.gamePlans.length < 3 && (
@@ -154,8 +196,10 @@ export function MatchupSheetRow({
               isReadOnly={isReadOnly}
               canDelete={plan.gamePlans.length > 1}
               onNotesChange={(notes) => onGamePlanNotesChange(gp.id, notes)}
+              onReplaysChange={(replays) => onGamePlanReplaysChange(gp.id, replays)}
               onBringChange={(bringIdx, pokIdx) => onGamePlanBringChange(gp.id, bringIdx, pokIdx)}
               onReorderBring={(fromIdx, toIdx) => onReorderBring(gp.id, fromIdx, toIdx)}
+              onResultChange={(result) => onResultChange(gp.id, result)}
               onDelete={() => onRemoveGamePlan(gp.id)}
             />
           ))}
@@ -172,8 +216,10 @@ interface InlineGamePlanProps {
   isReadOnly: boolean;
   canDelete: boolean;
   onNotesChange: (notes: string) => void;
+  onReplaysChange: (replays: string[]) => void;
   onBringChange: (bringIndex: 0 | 1 | 2 | 3, pokemonIndex: number | null) => void;
   onReorderBring: (fromIndex: 0 | 1 | 2 | 3, toIndex: 0 | 1 | 2 | 3) => void;
+  onResultChange: (result: GameResult) => void;
   onDelete: () => void;
 }
 
@@ -184,12 +230,15 @@ function InlineGamePlan({
   isReadOnly,
   canDelete,
   onNotesChange,
+  onReplaysChange,
   onBringChange,
   onReorderBring,
+  onResultChange,
   onDelete,
 }: InlineGamePlanProps) {
   const color = GAME_COLORS[index] ?? GAME_COLORS[0];
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [replayInput, setReplayInput] = useState("");
 
   const dragType = `application/x-gameplan-${gamePlan.id}`;
 
@@ -231,6 +280,11 @@ function InlineGamePlan({
             <span className="text-sm font-semibold text-text-primary">
               Game {index + 1}
             </span>
+            {isReadOnly ? (
+              <ResultBadge result={gamePlan.result ?? null} />
+            ) : (
+              <ResultToggle result={gamePlan.result ?? null} onChange={onResultChange} />
+            )}
           </div>
           {!isReadOnly && canDelete && (
             <button
@@ -247,7 +301,7 @@ function InlineGamePlan({
         <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4">
           {/* Bring Four */}
           <div>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary block mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
               Bring Four
             </span>
             <div className="grid grid-cols-4 gap-2">
@@ -278,24 +332,112 @@ function InlineGamePlan({
             </div>
           </div>
 
-          {/* Notes */}
-          <div>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary block mb-2">
-              Notes
-            </span>
-            {isReadOnly ? (
-              <div className="w-full min-h-[5rem] p-3 bg-surface-alt border border-border-subtle rounded-lg text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
-                {gamePlan.notes || "No notes."}
+          {/* Notes + Replays */}
+          <div className="flex flex-col gap-3">
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
+                Notes
+              </span>
+              {isReadOnly ? (
+                <div className="w-full min-h-[5rem] p-3 bg-surface-alt border border-border-subtle rounded-lg text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
+                  {gamePlan.notes || "No notes."}
+                </div>
+              ) : (
+                <textarea
+                  value={gamePlan.notes}
+                  onChange={(e) => onNotesChange(e.target.value)}
+                  placeholder="Why are you bringing these four? What's the win condition?"
+                  className="w-full min-h-[5rem] p-3 bg-surface-alt border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+                  spellCheck={false}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
+            </div>
+
+            {/* Replays */}
+            {(gamePlan.replays.length > 0 || !isReadOnly) && (
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
+                  Replays
+                </span>
+                {gamePlan.replays.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {gamePlan.replays.map((url, i) => {
+                      const info = getReplayInfo(url);
+                      return (
+                        <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-alt border border-border-subtle rounded-lg text-xs">
+                          <ReplayIcon type={info.type} />
+                          {isReadOnly ? (
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-accent hover:underline"
+                            >
+                              {info.label}
+                            </a>
+                          ) : (
+                            <>
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-accent hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {info.label}
+                              </a>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onReplaysChange(gamePlan.replays.filter((_, j) => j !== i));
+                                }}
+                                className="text-text-tertiary hover:text-red-400 transition-colors"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="18" y1="6" x2="6" y2="18" />
+                                  <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                              </button>
+                            </>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                {!isReadOnly && (
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="url"
+                      value={replayInput}
+                      onChange={(e) => setReplayInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && replayInput.trim()) {
+                          e.preventDefault();
+                          onReplaysChange([...gamePlan.replays, replayInput.trim()]);
+                          setReplayInput("");
+                        }
+                      }}
+                      placeholder="Paste replay URL..."
+                      className="flex-1 min-w-0 px-2.5 py-1.5 bg-surface-alt border border-border-subtle rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (replayInput.trim()) {
+                          onReplaysChange([...gamePlan.replays, replayInput.trim()]);
+                          setReplayInput("");
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-accent/10 text-accent text-xs font-medium rounded-lg hover:bg-accent/20 transition-colors flex-shrink-0"
+                    >
+                      Add
+                    </button>
+                  </div>
+                )}
               </div>
-            ) : (
-              <textarea
-                value={gamePlan.notes}
-                onChange={(e) => onNotesChange(e.target.value)}
-                placeholder="Why are you bringing these four? What's the win condition?"
-                className="w-full min-h-[5rem] p-3 bg-surface-alt border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
-                spellCheck={false}
-                onClick={(e) => e.stopPropagation()}
-              />
             )}
           </div>
         </div>

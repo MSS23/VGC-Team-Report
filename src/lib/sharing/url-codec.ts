@@ -3,11 +3,14 @@ import type { CalcEntry } from "@/hooks/useDamageCalcs";
 export interface SerializedGamePlan {
   bring: [number | null, number | null, number | null, number | null];
   notes: string;
+  replays?: string[];
+  result?: "W" | "L" | "T" | null;
 }
 
 export interface SerializedMatchupPlan {
   opponentPaste: string;
   opponentLabel: string;
+  showSlide?: boolean;
   gamePlans?: SerializedGamePlan[];
   // Legacy fields for backward compat
   notes?: string;
@@ -22,7 +25,12 @@ export interface ShareableState {
   calcs?: Record<string, CalcEntry[]>;
   roles?: Record<string, string>;
   teamSummary?: string;
+  tournamentName?: string;
+  placement?: string;
+  record?: string;
+  mvpIndex?: number | null;
   matchupPlans: SerializedMatchupPlan[];
+  spriteSettings?: Record<string, { shiny?: boolean; animated?: boolean }>;
 }
 
 function toBase64Url(bytes: Uint8Array): string {

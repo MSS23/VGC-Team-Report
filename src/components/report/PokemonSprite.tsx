@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getSpriteUrl, getSpriteFallbackUrl } from "@/lib/utils/sprite-url";
 import type { SpriteVariant } from "@/lib/utils/sprite-url";
 
@@ -9,6 +9,7 @@ interface PokemonSpriteProps {
   size?: number;
   className?: string;
   variant?: SpriteVariant;
+  shiny?: boolean;
 }
 
 /**
@@ -23,19 +24,25 @@ export function PokemonSprite({
   size = 64,
   className = "",
   variant = "ani",
+  shiny = false,
 }: PokemonSpriteProps) {
   const [fallback, setFallback] = useState<FallbackStage>("primary");
+
+  // Reset fallback when species or shiny changes so reordered Pokemon retry the GIF
+  useEffect(() => {
+    setFallback("primary");
+  }, [species, shiny]);
 
   let src: string;
   let isAnimated = false;
 
   switch (fallback) {
     case "primary":
-      src = getSpriteUrl(species, variant);
+      src = getSpriteUrl(species, variant, shiny);
       isAnimated = variant !== "gen5";
       break;
     case "static":
-      src = getSpriteUrl(species, "gen5");
+      src = getSpriteUrl(species, "gen5", shiny);
       break;
     case "substitute":
       src = getSpriteFallbackUrl("gen5");
@@ -48,6 +55,7 @@ export function PokemonSprite({
       alt={species}
       width={size}
       height={size}
+      loading="lazy"
       className={`${isAnimated ? "" : "pixelated"} object-contain ${className}`}
       style={isAnimated ? { maxWidth: size, maxHeight: size } : { imageRendering: "pixelated", maxWidth: size, maxHeight: size }}
       onError={() => {

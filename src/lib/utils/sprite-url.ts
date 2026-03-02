@@ -66,11 +66,15 @@ const SLUG_OVERRIDES: Record<string, string> = {
 
 export type SpriteVariant = "gen5ani" | "ani" | "gen5";
 
-export function getSpriteUrl(species: string, variant: SpriteVariant = "gen5ani"): string {
+function variantPath(variant: SpriteVariant, shiny: boolean): string {
+  return shiny ? `${variant}-shiny` : variant;
+}
+
+export function getSpriteUrl(species: string, variant: SpriteVariant = "gen5ani", shiny = false): string {
   const slug = toSlug(species);
   const resolved = SLUG_OVERRIDES[slug] ?? slug;
   const ext = variant === "gen5" ? "png" : "gif";
-  return `${BASE_URL}/${variant}/${resolved}.${ext}`;
+  return `${BASE_URL}/${variantPath(variant, shiny)}/${resolved}.${ext}`;
 }
 
 export function getSpriteFallbackUrl(variant: SpriteVariant = "gen5"): string {

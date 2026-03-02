@@ -95,36 +95,106 @@ body {
   --accent-surface: #312e81;
 }
 
+/* ====================================================================
+   ANIMATIONS
+   ==================================================================== */
+
+/* Slide content entrance in presentation mode */
 [data-presentation-mode] .slide-content {
-  animation: slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes slide-in {
-  from { opacity: 0; transform: translateX(24px); }
+  from { opacity: 0; transform: translateX(40px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fade-in-scale {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
 
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.8); }
+  70% { transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bar-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent); }
+  50% { box-shadow: 0 0 16px 2px color-mix(in srgb, var(--accent) 20%, transparent); }
+}
+
 .animate-fade-in {
-  animation: fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Stat bar fill animation */
+.animate-bar-fill {
+  animation: bar-fill 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: left;
 }
 
 /* Stagger children animations */
 .stagger-children > * {
-  animation: fade-in-scale 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fade-in-scale 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 70ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 140ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 210ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 280ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 350ms; }
+
+/* Stagger moves */
+.stagger-moves > * {
+  animation: pop-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stagger-moves > *:nth-child(1) { animation-delay: 50ms; }
+.stagger-moves > *:nth-child(2) { animation-delay: 120ms; }
+.stagger-moves > *:nth-child(3) { animation-delay: 190ms; }
+.stagger-moves > *:nth-child(4) { animation-delay: 260ms; }
+
+/* Stagger stats */
+.stagger-stats > * {
+  animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stagger-stats > *:nth-child(1) { animation-delay: 80ms; }
+.stagger-stats > *:nth-child(2) { animation-delay: 140ms; }
+.stagger-stats > *:nth-child(3) { animation-delay: 200ms; }
+.stagger-stats > *:nth-child(4) { animation-delay: 260ms; }
+.stagger-stats > *:nth-child(5) { animation-delay: 320ms; }
+.stagger-stats > *:nth-child(6) { animation-delay: 380ms; }

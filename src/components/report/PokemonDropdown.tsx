@@ -45,7 +45,7 @@ export function PokemonDropdown({
 
   if (isReadOnly) {
     return (
-      <div className="flex flex-col items-center gap-0.5 w-[72px] sm:w-[80px] min-h-[56px] sm:min-h-[60px] justify-center">
+      <div className="flex flex-col items-center gap-0.5 w-[60px] sm:w-[80px] min-h-[52px] sm:min-h-[60px] justify-center">
         {selected ? (
           <>
             <PokemonSprite species={selected.parsed.species} size={36} />
@@ -67,7 +67,7 @@ export function PokemonDropdown({
         onClick={() => setOpen((prev) => !prev)}
         draggable={draggable}
         onDragStart={onDragStart}
-        className={`flex flex-col items-center gap-0.5 w-[72px] sm:w-[80px] min-h-[56px] sm:min-h-[60px] justify-center rounded-xl border border-border-subtle hover:border-accent/50 transition-all bg-surface p-1 hover:shadow-sm ${
+        className={`flex flex-col items-center gap-0.5 w-[60px] sm:w-[80px] min-h-[52px] sm:min-h-[60px] justify-center rounded-xl border border-border-subtle hover:border-accent/50 transition-all bg-surface p-1 hover:shadow-sm ${
           draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
         }`}
       >
@@ -90,7 +90,7 @@ export function PokemonDropdown({
 
       {open && (
         <div
-          className="absolute z-50 left-1/2 -translate-x-1/2 top-full mt-1 bg-surface border border-border rounded-xl shadow-xl min-w-[160px] py-1 overflow-y-auto max-h-[320px]"
+          className="absolute z-50 left-0 sm:left-1/2 sm:-translate-x-1/2 top-full mt-1 bg-surface border border-border rounded-xl shadow-xl min-w-[140px] sm:min-w-[160px] py-1 overflow-y-auto max-h-[320px]"
         >
           {selected !== null && (
             <button

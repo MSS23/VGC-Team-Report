@@ -17,6 +17,10 @@ interface PokemonDetailSlideProps {
   slideNumber: number;
   isReadOnly?: boolean;
   isPresentationMode?: boolean;
+  shiny?: boolean;
+  animated?: boolean;
+  onToggleShiny?: () => void;
+  onToggleAnimated?: () => void;
 }
 
 const CATEGORY_CONFIG = {
@@ -62,6 +66,10 @@ export function PokemonDetailSlide({
   slideNumber,
   isReadOnly = false,
   isPresentationMode = false,
+  shiny = false,
+  animated = true,
+  onToggleShiny,
+  onToggleAnimated,
 }: PokemonDetailSlideProps) {
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
@@ -104,7 +112,7 @@ export function PokemonDetailSlide({
           return (
             <div
               key={globalIndex}
-              className={`group flex items-start gap-2 px-3 py-2 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} rounded-xl`}
+              className={`group flex items-start gap-2 px-3 py-2 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} rounded-xl transition-colors`}
             >
               <span className={`${cfg.iconColor} text-xs mt-0.5 flex-shrink-0`}>&#9656;</span>
               <span className="flex-1 text-sm text-text-primary leading-relaxed presenting:text-base">
@@ -132,16 +140,54 @@ export function PokemonDetailSlide({
       <div className="flex flex-col gap-4 sm:gap-6">
         {/* Header: Sprite + Name + Types */}
         <div className="flex items-start gap-3 sm:gap-6">
-          <PokemonSprite
-            species={parsed.species}
-            size={isPresentationMode ? 224 : 120}
-            className="flex-shrink-0 sm:hidden"
-          />
-          <PokemonSprite
-            species={parsed.species}
-            size={isPresentationMode ? 224 : 160}
-            className="flex-shrink-0 hidden sm:block"
-          />
+          <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
+            <PokemonSprite
+              species={parsed.species}
+              size={isPresentationMode ? 224 : 120}
+              className="sm:hidden"
+              variant={animated ? "ani" : "gen5"}
+              shiny={shiny}
+            />
+            <PokemonSprite
+              species={parsed.species}
+              size={isPresentationMode ? 224 : 160}
+              className="hidden sm:block"
+              variant={animated ? "ani" : "gen5"}
+              shiny={shiny}
+            />
+            {(onToggleShiny || onToggleAnimated) && (
+              <div className="flex items-center gap-1">
+                {onToggleShiny && (
+                  <button
+                    type="button"
+                    onClick={onToggleShiny}
+                    title={shiny ? "Show normal sprite" : "Show shiny sprite"}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
+                      shiny
+                        ? "bg-amber-400/20 text-amber-500 border-amber-400/40"
+                        : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary"
+                    }`}
+                  >
+                    Shiny
+                  </button>
+                )}
+                {onToggleAnimated && (
+                  <button
+                    type="button"
+                    onClick={onToggleAnimated}
+                    title={animated ? "Show static sprite" : "Show animated sprite"}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
+                      animated
+                        ? "bg-accent/15 text-accent border-accent/30"
+                        : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary"
+                    }`}
+                  >
+                    GIF
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           <div className="flex flex-col gap-1.5 sm:gap-2 pt-1 sm:pt-2 min-w-0">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <h2 className="text-2xl sm:text-3xl font-bold text-text-primary presenting:text-4xl truncate">
@@ -185,17 +231,17 @@ export function PokemonDetailSlide({
 
         {/* Moves - 2x2 grid */}
         <div>
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2 sm:mb-3">
+          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3">
             Moves
           </h3>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 stagger-moves">
             {parsed.moves.map((move) => {
               const typeStyle = getMoveTypeStyle(move);
               return (
                 <div
                   key={move}
-                  className={`px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl text-xs sm:text-sm font-semibold text-text-primary text-center presenting:text-base presenting:py-4 shadow-sm ${
-                    typeStyle ? "" : "bg-surface border-border"
+                  className={`px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl text-xs sm:text-sm font-semibold text-text-primary text-center presenting:text-base presenting:py-4 transition-colors ${
+                    typeStyle ? "shadow-sm" : "bg-surface border-border"
                   }`}
                   style={typeStyle ?? undefined}
                 >
@@ -209,10 +255,10 @@ export function PokemonDetailSlide({
         {/* Stats */}
         {data && (
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2 sm:mb-3">
-              Stats ({parsed.nature})
+            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3">
+              Stats <span className="normal-case tracking-normal font-normal text-text-tertiary/70">({parsed.nature})</span>
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-2 stagger-stats">
               {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map(
                 (stat) => {
                   const value = calculatedStats[stat];
@@ -224,29 +270,29 @@ export function PokemonDetailSlide({
 
                   return (
                     <div key={stat} className="flex items-center gap-2 sm:gap-3">
-                      <span className="text-xs sm:text-sm font-medium text-text-tertiary w-7 sm:w-8 text-right">
+                      <span className="text-xs sm:text-sm font-semibold text-text-tertiary w-7 sm:w-8 text-right uppercase">
                         {statLabels[stat]}
                       </span>
                       <div className="flex-1 h-3 sm:h-4 bg-surface-alt rounded-full overflow-hidden presenting:h-5">
                         <div
-                          className="h-full rounded-full transition-all duration-500"
+                          className="h-full rounded-full animate-bar-fill"
                           style={{
                             width: `${percentage}%`,
                             backgroundColor: isBoosted ? "#f59e0b" : ev > 0 ? "#6366f1" : "#cbd5e1",
                           }}
                         />
                       </div>
-                      <span className={`text-sm sm:text-base font-mono w-8 sm:w-10 text-right ${
+                      <span className={`text-sm sm:text-base font-mono w-8 sm:w-10 text-right tabular-nums ${
                         isBoosted ? "text-amber-500 font-semibold" : "text-text-secondary"
                       }`}>
                         {displayValue}
                       </span>
                       {isBoosted ? (
-                        <span className="text-xs sm:text-sm text-amber-500 font-medium w-10 sm:w-12" title={`${value} × ${itemBoost.multiplier}`}>
+                        <span className="text-xs sm:text-sm text-amber-500 font-medium whitespace-nowrap" title={`${value} × ${itemBoost.multiplier}`}>
                           {value} ×{itemBoost.multiplier}
                         </span>
                       ) : ev > 0 ? (
-                        <span className="text-xs sm:text-sm text-accent font-medium w-10 sm:w-12">
+                        <span className="text-xs sm:text-sm text-accent font-semibold w-10 sm:w-12">
                           +{ev}
                         </span>
                       ) : (
@@ -268,7 +314,7 @@ export function PokemonDetailSlide({
       <div className="flex flex-col gap-4 sm:gap-6">
         {/* Notes */}
         <div className="flex flex-col gap-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary presenting:text-sm">
+          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm">
             {isPresentationMode ? "Notes" : isReadOnly ? "About This Pokemon" : "Your Explanation"}
           </h3>
           {isReadOnly ? (
@@ -288,7 +334,7 @@ export function PokemonDetailSlide({
 
         {/* Notable Calcs */}
         <div className="flex flex-col gap-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary presenting:text-sm">
+          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm">
             Notable Calcs
           </h3>
 
@@ -298,9 +344,13 @@ export function PokemonDetailSlide({
               {renderCalcGroup(defensiveCalcs, "defensive", calcs)}
               {renderCalcGroup(speedCalcs, "speed", calcs)}
             </div>
+          ) : isReadOnly ? (
+            <div className="flex items-center justify-center py-8 sm:py-12 text-text-tertiary presenting:py-16 bg-surface-alt/50 rounded-2xl border border-border-subtle">
+              <p className="text-sm presenting:text-base">No notable calcs added.</p>
+            </div>
           ) : (
             <p className="text-sm text-text-tertiary italic">
-              {isReadOnly ? "No notable calcs." : "Add damage calcs, speed benchmarks, and other key numbers."}
+              Add damage calcs, speed benchmarks, and other key numbers.
             </p>
           )}
 

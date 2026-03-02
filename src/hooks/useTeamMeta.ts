@@ -5,6 +5,10 @@ import { useState, useCallback, useEffect, useRef } from "react";
 interface TeamMeta {
   roles: Record<string, string>;
   summary: string;
+  tournamentName?: string;
+  placement?: string;
+  record?: string;
+  mvpIndex?: number | null;
 }
 
 function buildTeamKey(speciesKeys: string[]): string {
@@ -60,6 +64,10 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
 
   const roles = meta.roles;
   const summary = meta.summary;
+  const tournamentName = meta.tournamentName;
+  const placement = meta.placement;
+  const record = meta.record;
+  const mvpIndex = meta.mvpIndex ?? null;
 
   const setRole = useCallback((species: string, text: string) => {
     setMeta((prev) => ({ ...prev, roles: { ...prev.roles, [species]: text } }));
@@ -69,9 +77,28 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
     setMeta((prev) => ({ ...prev, summary: text }));
   }, []);
 
+  const setTournamentName = useCallback((text: string) => {
+    setMeta((prev) => ({ ...prev, tournamentName: text }));
+  }, []);
+
+  const setPlacement = useCallback((text: string) => {
+    setMeta((prev) => ({ ...prev, placement: text }));
+  }, []);
+
+  const setRecord = useCallback((text: string) => {
+    setMeta((prev) => ({ ...prev, record: text }));
+  }, []);
+
+  const setMvpIndex = useCallback((index: number | null) => {
+    setMeta((prev) => ({ ...prev, mvpIndex: index }));
+  }, []);
+
   const setMetaFull = useCallback((newMeta: TeamMeta) => {
     setMeta(newMeta);
   }, []);
 
-  return { roles, summary, setRole, setSummary, setMetaFull };
+  return {
+    roles, summary, tournamentName, placement, record, mvpIndex,
+    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setMetaFull,
+  };
 }

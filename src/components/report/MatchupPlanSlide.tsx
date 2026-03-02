@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { MatchupPlan, GamePlan } from "@/hooks/useMatchupPlans";
+import type { MatchupPlan, GamePlan, GameResult } from "@/hooks/useMatchupPlans";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { StatSpread } from "@/lib/types/pokemon";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
@@ -11,6 +11,7 @@ import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
 import { PokemonDropdown } from "./PokemonDropdown";
 import { Button } from "@/components/ui/Button";
+import { GAME_COLORS, getReplayInfo, ReplayIcon, ResultBadge, ResultToggle } from "@/lib/utils/game-plan-helpers";
 
 interface OpponentPokemonInfo {
   parsed: ReturnType<typeof parseShowdownPaste>["pokemon"][number];
@@ -24,6 +25,7 @@ interface MatchupPlanSlideProps {
   yourPokemon: AnalyzedPokemon[];
   isReadOnly: boolean;
   onGamePlanNotesChange: (matchupId: string, gamePlanId: string, notes: string) => void;
+  onGamePlanReplaysChange: (matchupId: string, gamePlanId: string, replays: string[]) => void;
   onGamePlanBringChange: (
     matchupId: string,
     gamePlanId: string,
@@ -36,6 +38,7 @@ interface MatchupPlanSlideProps {
     fromIndex: 0 | 1 | 2 | 3,
     toIndex: 0 | 1 | 2 | 3
   ) => void;
+  onGamePlanResultChange: (matchupId: string, gamePlanId: string, result: GameResult) => void;
   onAddGamePlan: (matchupId: string) => void;
   onRemoveGamePlan: (matchupId: string, gamePlanId: string) => void;
   onRemove: (id: string) => void;
@@ -52,8 +55,10 @@ export function MatchupPlanSlide({
   yourPokemon,
   isReadOnly,
   onGamePlanNotesChange,
+  onGamePlanReplaysChange,
   onGamePlanBringChange,
   onReorderGamePlanBring,
+  onGamePlanResultChange,
   onAddGamePlan,
   onRemoveGamePlan,
   onRemove,
@@ -88,7 +93,7 @@ export function MatchupPlanSlide({
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl sm:text-2xl font-bold text-text-primary">
+        <h2 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">
           vs. {plan.opponentLabel}
         </h2>
         {!isReadOnly && (
@@ -106,7 +111,7 @@ export function MatchupPlanSlide({
       {/* Opponent Team Overview */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary">
             Opponent Team
           </h3>
           {anyHasEvs && (
@@ -181,7 +186,7 @@ export function MatchupPlanSlide({
       {/* Game Plans */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary">
             Game Plans ({plan.gamePlans.length}/3)
           </h3>
           {!isReadOnly && plan.gamePlans.length < 3 && (
@@ -210,12 +215,14 @@ export function MatchupPlanSlide({
               canDelete={plan.gamePlans.length > 1}
               onToggle={() => toggleCollapse(gp.id)}
               onNotesChange={(notes) => onGamePlanNotesChange(plan.id, gp.id, notes)}
+              onReplaysChange={(replays) => onGamePlanReplaysChange(plan.id, gp.id, replays)}
               onBringChange={(bringIndex, pokemonIndex) =>
                 onGamePlanBringChange(plan.id, gp.id, bringIndex, pokemonIndex)
               }
               onReorderBring={(fromIndex, toIndex) =>
                 onReorderGamePlanBring(plan.id, gp.id, fromIndex, toIndex)
               }
+              onResultChange={(result) => onGamePlanResultChange(plan.id, gp.id, result)}
               onDelete={() => onRemoveGamePlan(plan.id, gp.id)}
             />
           );
@@ -236,16 +243,12 @@ interface GamePlanSectionProps {
   canDelete: boolean;
   onToggle: () => void;
   onNotesChange: (notes: string) => void;
+  onReplaysChange: (replays: string[]) => void;
   onBringChange: (bringIndex: 0 | 1 | 2 | 3, pokemonIndex: number | null) => void;
   onReorderBring: (fromIndex: 0 | 1 | 2 | 3, toIndex: 0 | 1 | 2 | 3) => void;
+  onResultChange: (result: GameResult) => void;
   onDelete: () => void;
 }
-
-const GAME_COLORS = [
-  { badge: "bg-blue-500/20 text-blue-400 border-blue-500/30", accent: "border-l-blue-500" },
-  { badge: "bg-amber-500/20 text-amber-400 border-amber-500/30", accent: "border-l-amber-500" },
-  { badge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", accent: "border-l-emerald-500" },
-] as const;
 
 function GamePlanSection({
   gamePlan,
@@ -256,12 +259,15 @@ function GamePlanSection({
   canDelete,
   onToggle,
   onNotesChange,
+  onReplaysChange,
   onBringChange,
   onReorderBring,
+  onResultChange,
   onDelete,
 }: GamePlanSectionProps) {
   const color = GAME_COLORS[index] ?? GAME_COLORS[0];
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [replayInput, setReplayInput] = useState("");
 
   const dragType = `application/x-gameplan-${gamePlan.id}`;
 
@@ -309,6 +315,11 @@ function GamePlanSection({
           <span className="text-sm font-semibold text-text-primary">
             Game {index + 1}
           </span>
+          {isReadOnly ? (
+            <ResultBadge result={gamePlan.result ?? null} />
+          ) : (
+            <ResultToggle result={gamePlan.result ?? null} onChange={onResultChange} />
+          )}
           {/* Show selected Pokemon sprites inline when collapsed */}
           {isCollapsed && (
             <div className="flex items-center gap-1 ml-1">
@@ -367,23 +378,107 @@ function GamePlanSection({
               </div>
             </div>
 
-            {/* Notes */}
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
-                Notes
-              </span>
-              {isReadOnly ? (
-                <div className="w-full min-h-[8rem] p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
-                  {gamePlan.notes || "No notes."}
+            {/* Notes + Replays */}
+            <div className="flex flex-col gap-4">
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
+                  Notes
+                </span>
+                {isReadOnly ? (
+                  <div className="w-full min-h-[8rem] p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
+                    {gamePlan.notes || "No notes."}
+                  </div>
+                ) : (
+                  <textarea
+                    value={gamePlan.notes}
+                    onChange={(e) => onNotesChange(e.target.value)}
+                    placeholder="Why are you bringing these four? What's the win condition?"
+                    className="w-full min-h-[8rem] p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+                    spellCheck={false}
+                  />
+                )}
+              </div>
+
+              {/* Replays */}
+              {(gamePlan.replays.length > 0 || !isReadOnly) && (
+                <div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
+                    Replays
+                  </span>
+                  {gamePlan.replays.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {gamePlan.replays.map((url, i) => {
+                        const info = getReplayInfo(url);
+                        return (
+                          <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-alt border border-border-subtle rounded-lg text-xs">
+                            <ReplayIcon type={info.type} />
+                            {isReadOnly ? (
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-accent hover:underline"
+                              >
+                                {info.label}
+                              </a>
+                            ) : (
+                              <>
+                                <a
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-accent hover:underline"
+                                >
+                                  {info.label}
+                                </a>
+                                <button
+                                  type="button"
+                                  onClick={() => onReplaysChange(gamePlan.replays.filter((_, j) => j !== i))}
+                                  className="text-text-tertiary hover:text-red-400 transition-colors"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                  </svg>
+                                </button>
+                              </>
+                            )}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {!isReadOnly && (
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={replayInput}
+                        onChange={(e) => setReplayInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && replayInput.trim()) {
+                            e.preventDefault();
+                            onReplaysChange([...gamePlan.replays, replayInput.trim()]);
+                            setReplayInput("");
+                          }
+                        }}
+                        placeholder="Paste replay URL..."
+                        className="flex-1 min-w-0 px-3 py-1.5 bg-surface-alt border border-border-subtle rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (replayInput.trim()) {
+                            onReplaysChange([...gamePlan.replays, replayInput.trim()]);
+                            setReplayInput("");
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-accent/10 text-accent text-xs font-medium rounded-lg hover:bg-accent/20 transition-colors flex-shrink-0"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <textarea
-                  value={gamePlan.notes}
-                  onChange={(e) => onNotesChange(e.target.value)}
-                  placeholder="Why are you bringing these four? What's the win condition?"
-                  className="w-full min-h-[8rem] p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
-                  spellCheck={false}
-                />
               )}
             </div>
           </div>
