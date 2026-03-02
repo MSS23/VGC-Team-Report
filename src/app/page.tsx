@@ -4,6 +4,7 @@ import { useMemo, useEffect, useRef, useCallback } from "react";
 import { useTeamReport } from "@/hooks/useTeamReport";
 import { useCreatorMode } from "@/hooks/useCreatorMode";
 import { usePresentationMode } from "@/hooks/usePresentationMode";
+import { useDarkMode } from "@/hooks/useDarkMode";
 import { useSlideNavigation } from "@/hooks/useSlideNavigation";
 import { usePokemonNotes } from "@/hooks/usePokemonNotes";
 import { useDamageCalcs } from "@/hooks/useDamageCalcs";
@@ -27,17 +28,23 @@ export default function Home() {
 
   const { creatorMode, setCreatorMode } = useCreatorMode();
   const { presentationMode, setPresentationMode } = usePresentationMode();
+  const { darkMode, setDarkMode } = useDarkMode(false);
   const { isSharedView, sharedState, copyShareUrl, shareStatus } = useShareUrl();
 
   const isReadOnly = isSharedView || presentationMode;
-  // Shared views look like presentation mode (dark polished theme) without fullscreen
+  // Shared views look like presentation mode (layout sizing) without fullscreen
   const isPresentationStyle = presentationMode || isSharedView;
 
-  // Apply presentation styling for shared views (dark theme CSS)
+  // Apply presentation layout attribute for shared views (sizing, not theme)
   useEffect(() => {
     if (isSharedView) {
       document.documentElement.setAttribute("data-presentation-mode", "");
     }
+    return () => {
+      if (isSharedView) {
+        document.documentElement.removeAttribute("data-presentation-mode");
+      }
+    };
   }, [isSharedView]);
 
   // Build species keys with dedup index for duplicate species
@@ -61,6 +68,7 @@ export default function Home() {
     removeGamePlan,
     updateGamePlanNotes,
     updateGamePlanBring,
+    reorderGamePlanBring,
     setPlansFull,
   } = useMatchupPlans(speciesKeys, !isSharedView);
 
@@ -202,29 +210,36 @@ export default function Home() {
                 &middot; {currentSlide + 1} / {totalSlides}
               </span>
             </div>
-            {isSharedView ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  window.location.href =
-                    window.location.origin + window.location.pathname;
-                }}
-                className="text-text-tertiary hover:text-text-primary"
-              >
-                <span className="sm:hidden">New</span>
-                <span className="hidden sm:inline">Build Your Own</span>
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPresentationMode(false)}
-                className="text-text-tertiary hover:text-text-primary"
-              >
-                Exit
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              <Toggle
+                checked={darkMode}
+                onChange={setDarkMode}
+                label={darkMode ? "Dark" : "Light"}
+              />
+              {isSharedView ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    window.location.href =
+                      window.location.origin + window.location.pathname;
+                  }}
+                  className="text-text-tertiary hover:text-text-primary"
+                >
+                  <span className="sm:hidden">New</span>
+                  <span className="hidden sm:inline">Build Your Own</span>
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPresentationMode(false)}
+                  className="text-text-tertiary hover:text-text-primary"
+                >
+                  Exit
+                </Button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 creator:px-8 creator:py-4 flex items-center justify-between gap-2">
@@ -306,6 +321,7 @@ export default function Home() {
           plans={plans}
           onGamePlanNotesChange={updateGamePlanNotes}
           onGamePlanBringChange={updateGamePlanBring}
+          onReorderGamePlanBring={reorderGamePlanBring}
           onAddGamePlan={addGamePlan}
           onRemoveGamePlan={removeGamePlan}
           onRemovePlan={removePlan}

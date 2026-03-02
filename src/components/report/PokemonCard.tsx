@@ -4,6 +4,7 @@ import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { Card } from "@/components/ui/Card";
 import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
+import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 
 interface PokemonCardProps {
   pokemon: AnalyzedPokemon;
@@ -65,14 +66,20 @@ export function PokemonCard({ pokemon, creatorMode }: PokemonCardProps) {
           Moves
         </h4>
         <div className="grid grid-cols-2 gap-1.5">
-          {parsed.moves.map((move) => (
-            <span
-              key={move}
-              className="text-xs text-text-primary creator:text-sm truncate px-2.5 py-1.5 bg-surface-alt/60 rounded-lg"
-            >
-              {move}
-            </span>
-          ))}
+          {parsed.moves.map((move) => {
+            const typeStyle = getMoveTypeStyle(move);
+            return (
+              <span
+                key={move}
+                className={`text-xs text-text-primary creator:text-sm truncate px-2.5 py-1.5 rounded-lg border ${
+                  typeStyle ? "" : "bg-surface-alt/60 border-transparent"
+                }`}
+                style={typeStyle ?? undefined}
+              >
+                {move}
+              </span>
+            );
+          })}
         </div>
       </div>
 

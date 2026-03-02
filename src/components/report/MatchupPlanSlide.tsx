@@ -30,6 +30,12 @@ interface MatchupPlanSlideProps {
     bringIndex: 0 | 1 | 2 | 3,
     pokemonIndex: number | null
   ) => void;
+  onReorderGamePlanBring: (
+    matchupId: string,
+    gamePlanId: string,
+    fromIndex: 0 | 1 | 2 | 3,
+    toIndex: 0 | 1 | 2 | 3
+  ) => void;
   onAddGamePlan: (matchupId: string) => void;
   onRemoveGamePlan: (matchupId: string, gamePlanId: string) => void;
   onRemove: (id: string) => void;
@@ -47,6 +53,7 @@ export function MatchupPlanSlide({
   isReadOnly,
   onGamePlanNotesChange,
   onGamePlanBringChange,
+  onReorderGamePlanBring,
   onAddGamePlan,
   onRemoveGamePlan,
   onRemove,
@@ -206,6 +213,9 @@ export function MatchupPlanSlide({
               onBringChange={(bringIndex, pokemonIndex) =>
                 onGamePlanBringChange(plan.id, gp.id, bringIndex, pokemonIndex)
               }
+              onReorderBring={(fromIndex, toIndex) =>
+                onReorderGamePlanBring(plan.id, gp.id, fromIndex, toIndex)
+              }
               onDelete={() => onRemoveGamePlan(plan.id, gp.id)}
             />
           );
@@ -227,6 +237,7 @@ interface GamePlanSectionProps {
   onToggle: () => void;
   onNotesChange: (notes: string) => void;
   onBringChange: (bringIndex: 0 | 1 | 2 | 3, pokemonIndex: number | null) => void;
+  onReorderBring: (fromIndex: 0 | 1 | 2 | 3, toIndex: 0 | 1 | 2 | 3) => void;
   onDelete: () => void;
 }
 
@@ -246,12 +257,38 @@ function GamePlanSection({
   onToggle,
   onNotesChange,
   onBringChange,
+  onReorderBring,
   onDelete,
 }: GamePlanSectionProps) {
   const color = GAME_COLORS[index] ?? GAME_COLORS[0];
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, bringIdx: number) => {
+    e.dataTransfer.setData("text/plain", String(bringIdx));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, bringIdx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverIndex(bringIdx);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, toIdx: number) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+    const fromIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
+    if (!isNaN(fromIdx) && fromIdx !== toIdx) {
+      onReorderBring(fromIdx as 0 | 1 | 2 | 3, toIdx as 0 | 1 | 2 | 3);
+    }
+  };
 
   return (
-    <div className={`bg-surface border border-border rounded-2xl overflow-hidden border-l-[3px] ${color.accent}`}>
+    <div className={`bg-surface border border-border rounded-2xl border-l-[3px] ${color.accent}`}>
       {/* Header — always visible */}
       <button
         type="button"
@@ -299,17 +336,30 @@ function GamePlanSection({
                 Bring Four
               </span>
               <div className="grid grid-cols-4 lg:grid-cols-2 gap-3">
-                {([0, 1, 2, 3] as const).map((bringIdx) => (
-                  <div key={bringIdx} className="flex flex-col items-center gap-1">
-                    <PokemonDropdown
-                      yourPokemon={yourPokemon}
-                      selectedIndex={gamePlan.bring[bringIdx]}
-                      onChange={(idx) => onBringChange(bringIdx, idx)}
-                      isReadOnly={isReadOnly}
-                      takenIndices={gamePlan.bring.filter((_, i) => i !== bringIdx)}
-                    />
-                  </div>
-                ))}
+                {([0, 1, 2, 3] as const).map((bringIdx) => {
+                  const hasSelection = gamePlan.bring[bringIdx] !== null;
+                  return (
+                    <div
+                      key={bringIdx}
+                      className={`flex flex-col items-center gap-1 transition-all rounded-xl ${
+                        dragOverIndex === bringIdx ? "ring-2 ring-accent/50 scale-105" : ""
+                      }`}
+                      onDragOver={(e) => handleDragOver(e, bringIdx)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, bringIdx)}
+                    >
+                      <PokemonDropdown
+                        yourPokemon={yourPokemon}
+                        selectedIndex={gamePlan.bring[bringIdx]}
+                        onChange={(idx) => onBringChange(bringIdx, idx)}
+                        isReadOnly={isReadOnly}
+                        takenIndices={gamePlan.bring.filter((_, i) => i !== bringIdx)}
+                        draggable={hasSelection && !isReadOnly}
+                        onDragStart={(e) => handleDragStart(e, bringIdx)}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

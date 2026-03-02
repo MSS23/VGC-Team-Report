@@ -16,6 +16,12 @@ interface MatchupSheetProps {
     bringIndex: 0 | 1 | 2 | 3,
     pokemonIndex: number | null
   ) => void;
+  onReorderGamePlanBring: (
+    matchupId: string,
+    gamePlanId: string,
+    fromIndex: 0 | 1 | 2 | 3,
+    toIndex: 0 | 1 | 2 | 3
+  ) => void;
   onAddGamePlan: (matchupId: string) => void;
   onRemoveGamePlan: (matchupId: string, gamePlanId: string) => void;
   onRemovePlan: (id: string) => void;
@@ -28,6 +34,7 @@ export function MatchupSheet({
   isReadOnly,
   onGamePlanNotesChange,
   onGamePlanBringChange,
+  onReorderGamePlanBring,
   onAddGamePlan,
   onRemoveGamePlan,
   onRemovePlan,
@@ -43,48 +50,28 @@ export function MatchupSheet({
           <p className="text-xs text-text-tertiary mt-1">Add an opponent team below to get started.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto overflow-y-visible rounded-2xl border border-border bg-surface shadow-sm">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-surface-alt border-b border-border">
-                <th className="px-3 py-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary text-center w-12">
-                  #
-                </th>
-                <th className="px-3 py-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary text-left">
-                  Opponent
-                </th>
-                <th className="px-3 py-3 text-xs font-semibold uppercase tracking-wider text-text-tertiary text-center">
-                  Team
-                </th>
-                <th className="px-3 py-3 text-xs font-semibold uppercase tracking-wider text-accent text-center border-l border-border">
-                  Game Plans
-                </th>
-                {!isReadOnly && (
-                  <th className="w-10" />
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {plans.map((plan, index) => (
-                <MatchupSheetRow
-                  key={plan.id}
-                  plan={plan}
-                  rowNumber={index + 1}
-                  yourPokemon={yourPokemon}
-                  isReadOnly={isReadOnly}
-                  onRemove={() => onRemovePlan(plan.id)}
-                  onGamePlanNotesChange={(gamePlanId, notes) =>
-                    onGamePlanNotesChange(plan.id, gamePlanId, notes)
-                  }
-                  onGamePlanBringChange={(gamePlanId, bringIdx, pokIdx) =>
-                    onGamePlanBringChange(plan.id, gamePlanId, bringIdx, pokIdx)
-                  }
-                  onAddGamePlan={() => onAddGamePlan(plan.id)}
-                  onRemoveGamePlan={(gamePlanId) => onRemoveGamePlan(plan.id, gamePlanId)}
-                />
-              ))}
-            </tbody>
-          </table>
+        <div className="flex flex-col gap-3">
+          {plans.map((plan, index) => (
+            <MatchupSheetRow
+              key={plan.id}
+              plan={plan}
+              rowNumber={index + 1}
+              yourPokemon={yourPokemon}
+              isReadOnly={isReadOnly}
+              onRemove={() => onRemovePlan(plan.id)}
+              onGamePlanNotesChange={(gamePlanId, notes) =>
+                onGamePlanNotesChange(plan.id, gamePlanId, notes)
+              }
+              onGamePlanBringChange={(gamePlanId, bringIdx, pokIdx) =>
+                onGamePlanBringChange(plan.id, gamePlanId, bringIdx, pokIdx)
+              }
+              onReorderBring={(gamePlanId, fromIdx, toIdx) =>
+                onReorderGamePlanBring(plan.id, gamePlanId, fromIdx, toIdx)
+              }
+              onAddGamePlan={() => onAddGamePlan(plan.id)}
+              onRemoveGamePlan={(gamePlanId) => onRemoveGamePlan(plan.id, gamePlanId)}
+            />
+          ))}
         </div>
       )}
 

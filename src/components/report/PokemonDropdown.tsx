@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { PokemonSprite } from "./PokemonSprite";
 
@@ -11,12 +11,10 @@ interface PokemonDropdownProps {
   isReadOnly: boolean;
   /** Indices already selected in other bring slots (to prevent duplicates) */
   takenIndices?: (number | null)[];
-}
-
-interface DropdownPosition {
-  top?: number;
-  bottom?: number;
-  left: number;
+  /** Whether this dropdown slot is draggable */
+  draggable?: boolean;
+  /** Drag start handler passed from parent */
+  onDragStart?: (e: React.DragEvent) => void;
 }
 
 export function PokemonDropdown({
@@ -25,54 +23,23 @@ export function PokemonDropdown({
   onChange,
   isReadOnly,
   takenIndices = [],
+  draggable = false,
+  onDragStart,
 }: PokemonDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [openUpward, setOpenUpward] = useState(false);
-  const [position, setPosition] = useState<DropdownPosition>({ left: 0 });
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click (check both wrapper and menu since menu is fixed/portalled)
+  // Close on outside click
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
-      const target = e.target as Node;
-      const inWrapper = wrapperRef.current?.contains(target);
-      const inMenu = menuRef.current?.contains(target);
-      if (!inWrapper && !inMenu) {
+      if (!wrapperRef.current?.contains(e.target as Node)) {
         setOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
-
-  // Close on scroll (fixed position would drift from anchor)
-  useEffect(() => {
-    if (!open) return;
-    const handleScroll = () => setOpen(false);
-    window.addEventListener("scroll", handleScroll, true);
-    return () => window.removeEventListener("scroll", handleScroll, true);
-  }, [open]);
-
-  // Calculate fixed position from button's viewport rect
-  const handleToggle = useCallback(() => {
-    if (!open && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const dropdownH = Math.min(yourPokemon.length * 44 + 16, 320);
-
-      if (spaceBelow >= dropdownH) {
-        setPosition({ top: rect.bottom + 4, left: rect.left + rect.width / 2 });
-        setOpenUpward(false);
-      } else {
-        setPosition({ bottom: window.innerHeight - rect.top + 4, left: rect.left + rect.width / 2 });
-        setOpenUpward(true);
-      }
-    }
-    setOpen((prev) => !prev);
-  }, [open, yourPokemon.length]);
 
   const selected = selectedIndex !== null ? yourPokemon[selectedIndex] : null;
 
@@ -96,10 +63,13 @@ export function PokemonDropdown({
   return (
     <div ref={wrapperRef} className="relative">
       <button
-        ref={buttonRef}
         type="button"
-        onClick={handleToggle}
-        className="flex flex-col items-center gap-0.5 w-[72px] sm:w-[80px] min-h-[56px] sm:min-h-[60px] justify-center rounded-xl border border-border-subtle hover:border-accent/50 transition-all cursor-pointer bg-surface p-1 hover:shadow-sm"
+        onClick={() => setOpen((prev) => !prev)}
+        draggable={draggable}
+        onDragStart={onDragStart}
+        className={`flex flex-col items-center gap-0.5 w-[72px] sm:w-[80px] min-h-[56px] sm:min-h-[60px] justify-center rounded-xl border border-border-subtle hover:border-accent/50 transition-all bg-surface p-1 hover:shadow-sm ${
+          draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+        }`}
       >
         {selected ? (
           <>
@@ -120,13 +90,7 @@ export function PokemonDropdown({
 
       {open && (
         <div
-          ref={menuRef}
-          className="fixed z-[9999] -translate-x-1/2 bg-surface border border-border rounded-xl shadow-xl min-w-[160px] py-1 overflow-y-auto max-h-[320px]"
-          style={
-            openUpward
-              ? { bottom: position.bottom, left: position.left }
-              : { top: position.top, left: position.left }
-          }
+          className="absolute z-50 left-1/2 -translate-x-1/2 top-full mt-1 bg-surface border border-border rounded-xl shadow-xl min-w-[160px] py-1 overflow-y-auto max-h-[320px]"
         >
           {selected !== null && (
             <button

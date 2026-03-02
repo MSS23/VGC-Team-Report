@@ -22,6 +22,7 @@ interface MatchupSheetRowProps {
   onRemove: () => void;
   onGamePlanNotesChange: (gamePlanId: string, notes: string) => void;
   onGamePlanBringChange: (gamePlanId: string, bringIndex: 0 | 1 | 2 | 3, pokemonIndex: number | null) => void;
+  onReorderBring: (gamePlanId: string, fromIndex: 0 | 1 | 2 | 3, toIndex: 0 | 1 | 2 | 3) => void;
   onAddGamePlan: () => void;
   onRemoveGamePlan: (gamePlanId: string) => void;
 }
@@ -34,6 +35,7 @@ export function MatchupSheetRow({
   onRemove,
   onGamePlanNotesChange,
   onGamePlanBringChange,
+  onReorderBring,
   onAddGamePlan,
   onRemoveGamePlan,
 }: MatchupSheetRowProps) {
@@ -54,119 +56,112 @@ export function MatchupSheetRow({
     : [];
 
   return (
-    <>
-      <tr
-        className={`border-b border-border transition-colors cursor-pointer ${
-          expanded ? "bg-surface-alt/70" : "hover:bg-surface-alt/50"
-        }`}
+    <div className="bg-surface border border-border rounded-2xl shadow-sm">
+      {/* Collapsed header — clickable to expand */}
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(!expanded); } }}
+        className={`w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4 transition-colors cursor-pointer select-none ${
+          expanded ? "bg-surface-alt/50 rounded-t-2xl" : "hover:bg-surface-alt/30 rounded-2xl"
+        }`}
       >
         {/* Row number */}
-        <td className="px-3 py-3 text-center text-sm font-semibold text-text-tertiary whitespace-nowrap">
+        <span className="text-sm font-bold text-text-tertiary w-8 flex-shrink-0">
           #{rowNumber}
-        </td>
+        </span>
 
-        {/* Opponent label */}
-        <td className="px-3 py-3 text-sm font-medium text-text-primary min-w-[120px] max-w-[180px]">
-          <div className="truncate" title={plan.opponentLabel}>
+        {/* Opponent info */}
+        <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+          <span className="text-sm font-semibold text-text-primary truncate sm:max-w-[240px]" title={plan.opponentLabel}>
             {plan.opponentLabel}
-          </div>
-        </td>
+          </span>
 
-        {/* Opponent Pokemon sprites */}
-        <td className="px-3 py-3">
-          <div className="flex items-center gap-1 min-w-[192px]">
+          {/* Opponent sprites */}
+          <div className="flex items-center gap-1">
             {opponentPokemon.map((species, i) => (
-              <div key={i} className="w-8 h-8 flex items-center justify-center overflow-hidden flex-shrink-0">
-                <PokemonSprite species={species} size={30} className="max-w-full max-h-full object-contain" />
+              <div key={i} className="w-7 h-7 flex items-center justify-center flex-shrink-0">
+                <PokemonSprite species={species} size={26} />
               </div>
             ))}
           </div>
-        </td>
+        </div>
 
-        {/* Game plans summary + expand */}
-        <td className="px-3 py-3 border-l border-border">
-          <div className="flex items-center gap-3">
-            {bringPreview.length > 0 && (
-              <div className="flex items-center gap-0.5">
-                {bringPreview.map((species, i) => (
-                  <PokemonSprite key={i} species={species} size={24} />
-                ))}
-              </div>
-            )}
-            <span className={`text-xs font-medium transition-colors ${
-              expanded ? "text-accent" : "text-text-tertiary"
-            }`}>
-              {plan.gamePlans.length} plan{plan.gamePlans.length !== 1 ? "s" : ""}
-            </span>
-            <span
-              className="text-text-tertiary text-xs transition-transform"
-              style={{ transform: expanded ? "rotate(0deg)" : "rotate(-90deg)" }}
-            >
-              &#9662;
-            </span>
-          </div>
-        </td>
+        {/* Right side: bring preview + plan count + expand arrow */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {bringPreview.length > 0 && (
+            <div className="hidden sm:flex items-center gap-0.5">
+              {bringPreview.map((species, i) => (
+                <PokemonSprite key={i} species={species} size={22} />
+              ))}
+            </div>
+          )}
+          <span className="text-xs font-medium text-text-tertiary whitespace-nowrap">
+            {plan.gamePlans.length} plan{plan.gamePlans.length !== 1 ? "s" : ""}
+          </span>
+          <span
+            className="text-text-tertiary text-xs transition-transform duration-200"
+            style={{ transform: expanded ? "rotate(0deg)" : "rotate(-90deg)" }}
+          >
+            &#9662;
+          </span>
+        </div>
 
         {/* Remove button */}
         {!isReadOnly && (
-          <td className="px-2 py-3 text-center">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onRemove(); }}
-              className="text-text-tertiary hover:text-red-400 transition-colors p-1 rounded-md hover:bg-red-400/10"
-              title="Remove matchup"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </td>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onRemove(); }}
+            className="text-text-tertiary hover:text-red-400 p-1.5 rounded-lg hover:bg-red-400/10 transition-colors flex-shrink-0"
+            title="Remove matchup"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         )}
-      </tr>
+      </div>
 
       {/* Expanded game plans */}
       {expanded && (
-        <tr>
-          <td colSpan={isReadOnly ? 4 : 5} className="p-0">
-            <div className="px-4 py-4 bg-surface-alt/40 border-b border-border space-y-3 overflow-visible">
-              {/* Game plan header */}
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
-                  Game Plans ({plan.gamePlans.length}/3)
-                </span>
-                {!isReadOnly && plan.gamePlans.length < 3 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onAddGamePlan}
-                    className="text-accent"
-                  >
-                    + Add Game Plan
-                  </Button>
-                )}
-              </div>
+        <div className="px-4 sm:px-5 py-4 border-t border-border space-y-3">
+          {/* Game plan header */}
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
+              Game Plans ({plan.gamePlans.length}/3)
+            </span>
+            {!isReadOnly && plan.gamePlans.length < 3 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onAddGamePlan}
+                className="text-accent"
+              >
+                + Add Game Plan
+              </Button>
+            )}
+          </div>
 
-              {/* Individual game plans */}
-              {plan.gamePlans.map((gp, gpIndex) => (
-                <InlineGamePlan
-                  key={gp.id}
-                  gamePlan={gp}
-                  index={gpIndex}
-                  yourPokemon={yourPokemon}
-                  isReadOnly={isReadOnly}
-                  canDelete={plan.gamePlans.length > 1}
-                  onNotesChange={(notes) => onGamePlanNotesChange(gp.id, notes)}
-                  onBringChange={(bringIdx, pokIdx) => onGamePlanBringChange(gp.id, bringIdx, pokIdx)}
-                  onDelete={() => onRemoveGamePlan(gp.id)}
-                />
-              ))}
-            </div>
-          </td>
-        </tr>
+          {/* Individual game plans */}
+          {plan.gamePlans.map((gp, gpIndex) => (
+            <InlineGamePlan
+              key={gp.id}
+              gamePlan={gp}
+              index={gpIndex}
+              yourPokemon={yourPokemon}
+              isReadOnly={isReadOnly}
+              canDelete={plan.gamePlans.length > 1}
+              onNotesChange={(notes) => onGamePlanNotesChange(gp.id, notes)}
+              onBringChange={(bringIdx, pokIdx) => onGamePlanBringChange(gp.id, bringIdx, pokIdx)}
+              onReorderBring={(fromIdx, toIdx) => onReorderBring(gp.id, fromIdx, toIdx)}
+              onDelete={() => onRemoveGamePlan(gp.id)}
+            />
+          ))}
+        </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -178,6 +173,7 @@ interface InlineGamePlanProps {
   canDelete: boolean;
   onNotesChange: (notes: string) => void;
   onBringChange: (bringIndex: 0 | 1 | 2 | 3, pokemonIndex: number | null) => void;
+  onReorderBring: (fromIndex: 0 | 1 | 2 | 3, toIndex: 0 | 1 | 2 | 3) => void;
   onDelete: () => void;
 }
 
@@ -189,12 +185,38 @@ function InlineGamePlan({
   canDelete,
   onNotesChange,
   onBringChange,
+  onReorderBring,
   onDelete,
 }: InlineGamePlanProps) {
   const color = GAME_COLORS[index] ?? GAME_COLORS[0];
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, bringIdx: number) => {
+    e.dataTransfer.setData("text/plain", String(bringIdx));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, bringIdx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverIndex(bringIdx);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, toIdx: number) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+    const fromIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
+    if (!isNaN(fromIdx) && fromIdx !== toIdx) {
+      onReorderBring(fromIdx as 0 | 1 | 2 | 3, toIdx as 0 | 1 | 2 | 3);
+    }
+  };
 
   return (
-    <div className={`bg-surface border border-border rounded-xl overflow-hidden border-l-[3px] ${color.accent}`}>
+    <div className={`bg-surface border border-border rounded-xl border-l-[3px] ${color.accent}`}>
       <div className="px-4 py-3">
         {/* Game plan header */}
         <div className="flex items-center justify-between mb-3">
@@ -225,16 +247,30 @@ function InlineGamePlan({
               Bring Four
             </span>
             <div className="grid grid-cols-4 gap-2">
-              {([0, 1, 2, 3] as const).map((bringIdx) => (
-                <PokemonDropdown
-                  key={bringIdx}
-                  yourPokemon={yourPokemon}
-                  selectedIndex={gamePlan.bring[bringIdx]}
-                  onChange={(idx) => onBringChange(bringIdx, idx)}
-                  isReadOnly={isReadOnly}
-                  takenIndices={gamePlan.bring.filter((_, i) => i !== bringIdx)}
-                />
-              ))}
+              {([0, 1, 2, 3] as const).map((bringIdx) => {
+                const hasSelection = gamePlan.bring[bringIdx] !== null;
+                return (
+                  <div
+                    key={bringIdx}
+                    onDragOver={(e) => handleDragOver(e, bringIdx)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, bringIdx)}
+                    className={`transition-all rounded-xl ${
+                      dragOverIndex === bringIdx ? "ring-2 ring-accent/50 scale-105" : ""
+                    }`}
+                  >
+                    <PokemonDropdown
+                      yourPokemon={yourPokemon}
+                      selectedIndex={gamePlan.bring[bringIdx]}
+                      onChange={(idx) => onBringChange(bringIdx, idx)}
+                      isReadOnly={isReadOnly}
+                      takenIndices={gamePlan.bring.filter((_, i) => i !== bringIdx)}
+                      draggable={hasSelection && !isReadOnly}
+                      onDragStart={(e) => handleDragStart(e, bringIdx)}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
 

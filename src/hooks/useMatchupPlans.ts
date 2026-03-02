@@ -229,6 +229,29 @@ export function useMatchupPlans(speciesKeys: string[], persist = true) {
     []
   );
 
+  const reorderGamePlanBring = useCallback(
+    (matchupId: string, gamePlanId: string, fromIndex: 0 | 1 | 2 | 3, toIndex: 0 | 1 | 2 | 3) => {
+      if (fromIndex === toIndex) return;
+      setPlans((prev) =>
+        prev.map((p) => {
+          if (p.id !== matchupId) return p;
+          return {
+            ...p,
+            gamePlans: p.gamePlans.map((gp) => {
+              if (gp.id !== gamePlanId) return gp;
+              const bring: GamePlan["bring"] = [...gp.bring];
+              const temp = bring[fromIndex];
+              bring[fromIndex] = bring[toIndex];
+              bring[toIndex] = temp;
+              return { ...gp, bring };
+            }),
+          };
+        })
+      );
+    },
+    []
+  );
+
   const setPlansFull = useCallback((newPlans: LegacyPlan[]) => {
     setPlans(newPlans.map(migratePlan));
   }, []);
@@ -241,6 +264,7 @@ export function useMatchupPlans(speciesKeys: string[], persist = true) {
     removeGamePlan,
     updateGamePlanNotes,
     updateGamePlanBring,
+    reorderGamePlanBring,
     setPlansFull,
   };
 }

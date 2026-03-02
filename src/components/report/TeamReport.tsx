@@ -30,6 +30,7 @@ interface TeamReportProps {
   ) => void;
   onAddGamePlan?: (matchupId: string) => void;
   onRemoveGamePlan?: (matchupId: string, gamePlanId: string) => void;
+  onReorderGamePlanBring?: (matchupId: string, gamePlanId: string, fromIndex: 0 | 1 | 2 | 3, toIndex: 0 | 1 | 2 | 3) => void;
   onRemovePlan?: (id: string) => void;
   onAddPlan?: (paste: string, label: string) => void;
 }
@@ -51,6 +52,7 @@ export function TeamReport({
   onGamePlanBringChange,
   onAddGamePlan,
   onRemoveGamePlan,
+  onReorderGamePlanBring,
   onRemovePlan,
   onAddPlan,
 }: TeamReportProps) {
@@ -102,6 +104,7 @@ export function TeamReport({
           isReadOnly={isReadOnly}
           onGamePlanNotesChange={onGamePlanNotesChange ?? (() => {})}
           onGamePlanBringChange={onGamePlanBringChange ?? (() => {})}
+          onReorderGamePlanBring={onReorderGamePlanBring ?? (() => {})}
           onAddGamePlan={onAddGamePlan ?? (() => {})}
           onRemoveGamePlan={onRemoveGamePlan ?? (() => {})}
           onRemove={onRemovePlan ?? (() => {})}
@@ -121,6 +124,7 @@ export function TeamReport({
         isReadOnly={isReadOnly}
         onGamePlanNotesChange={onGamePlanNotesChange ?? (() => {})}
         onGamePlanBringChange={onGamePlanBringChange ?? (() => {})}
+        onReorderGamePlanBring={onReorderGamePlanBring ?? (() => {})}
         onAddGamePlan={onAddGamePlan ?? (() => {})}
         onRemoveGamePlan={onRemoveGamePlan ?? (() => {})}
         onRemovePlan={onRemovePlan ?? (() => {})}

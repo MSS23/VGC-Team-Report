@@ -80,7 +80,7 @@ body {
   --border: #e5e7eb;
 }
 
-[data-presentation-mode] {
+[data-dark-mode] {
   --background: #0a0f1a;
   --foreground: #f8fafc;
   --surface: #131b2e;

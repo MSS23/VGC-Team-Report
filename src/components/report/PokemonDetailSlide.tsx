@@ -5,6 +5,7 @@ import type { CalcEntry, CalcCategory } from "@/hooks/useDamageCalcs";
 import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
 import { CalcInput } from "./CalcInput";
+import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 
 interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;
@@ -188,14 +189,20 @@ export function PokemonDetailSlide({
             Moves
           </h3>
           <div className="grid grid-cols-2 gap-2">
-            {parsed.moves.map((move) => (
-              <div
-                key={move}
-                className="px-3 sm:px-4 py-2.5 sm:py-3 bg-surface border border-border rounded-xl text-xs sm:text-sm font-semibold text-text-primary text-center presenting:text-base presenting:py-4 shadow-sm"
-              >
-                {move}
-              </div>
-            ))}
+            {parsed.moves.map((move) => {
+              const typeStyle = getMoveTypeStyle(move);
+              return (
+                <div
+                  key={move}
+                  className={`px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl text-xs sm:text-sm font-semibold text-text-primary text-center presenting:text-base presenting:py-4 shadow-sm ${
+                    typeStyle ? "" : "bg-surface border-border"
+                  }`}
+                  style={typeStyle ?? undefined}
+                >
+                  {move}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -250,7 +257,7 @@ export function PokemonDetailSlide({
                 }
               )}
             </div>
-            <p className="text-xs sm:text-sm text-text-secondary mt-3">
+            <p className="text-sm sm:text-base text-text-secondary mt-3 presenting:text-lg presenting:font-medium">
               {parsed.nature} &middot; {evString}
             </p>
           </div>
