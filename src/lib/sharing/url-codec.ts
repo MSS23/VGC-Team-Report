@@ -29,6 +29,7 @@ export interface ShareableState {
   placement?: string;
   record?: string;
   mvpIndex?: number | null;
+  rentalCode?: string;
   matchupPlans: SerializedMatchupPlan[];
   spriteSettings?: Record<string, { shiny?: boolean; animated?: boolean }>;
 }

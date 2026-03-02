@@ -9,6 +9,7 @@ interface TeamMeta {
   placement?: string;
   record?: string;
   mvpIndex?: number | null;
+  rentalCode?: string;
 }
 
 function buildTeamKey(speciesKeys: string[]): string {
@@ -68,6 +69,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
   const placement = meta.placement;
   const record = meta.record;
   const mvpIndex = meta.mvpIndex ?? null;
+  const rentalCode = meta.rentalCode;
 
   const setRole = useCallback((species: string, text: string) => {
     setMeta((prev) => ({ ...prev, roles: { ...prev.roles, [species]: text } }));
@@ -93,12 +95,16 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
     setMeta((prev) => ({ ...prev, mvpIndex: index }));
   }, []);
 
+  const setRentalCode = useCallback((text: string) => {
+    setMeta((prev) => ({ ...prev, rentalCode: text }));
+  }, []);
+
   const setMetaFull = useCallback((newMeta: TeamMeta) => {
     setMeta(newMeta);
   }, []);
 
   return {
-    roles, summary, tournamentName, placement, record, mvpIndex,
-    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setMetaFull,
+    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode,
+    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setMetaFull,
   };
 }

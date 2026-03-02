@@ -1,53 +1,44 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getSpriteUrl, getSpriteFallbackUrl } from "@/lib/utils/sprite-url";
-import type { SpriteVariant } from "@/lib/utils/sprite-url";
+import { useState, useEffect, useMemo } from "react";
+import { getGenThemedSpriteUrls, isGenThemePixelated } from "@/lib/utils/sprite-url";
+import { useTheme } from "@/hooks/useTheme";
 
 interface PokemonSpriteProps {
   species: string;
   size?: number;
   className?: string;
-  variant?: SpriteVariant;
+  animated?: boolean;
   shiny?: boolean;
 }
 
 /**
- * Fallback chain: ani → gen5 static → substitute
- * ani has modern animated GIFs for ALL Pokémon (consistent style).
- * gen5 has static PNGs as a last resort.
+ * Renders a Pokemon sprite that automatically adapts to the current
+ * generation theme. Falls back through multiple sprite sources on error.
  */
-type FallbackStage = "primary" | "static" | "substitute";
-
 export function PokemonSprite({
   species,
   size = 64,
   className = "",
-  variant = "ani",
+  animated = true,
   shiny = false,
 }: PokemonSpriteProps) {
-  const [fallback, setFallback] = useState<FallbackStage>("primary");
+  const { genTheme } = useTheme();
+  const [urlIndex, setUrlIndex] = useState(0);
 
-  // Reset fallback when species or shiny changes so reordered Pokemon retry the GIF
+  // Reset fallback index when inputs change
   useEffect(() => {
-    setFallback("primary");
-  }, [species, shiny]);
+    setUrlIndex(0);
+  }, [species, shiny, animated, genTheme]);
 
-  let src: string;
-  let isAnimated = false;
+  const urls = useMemo(
+    () => getGenThemedSpriteUrls(species, genTheme, animated, shiny),
+    [species, genTheme, animated, shiny],
+  );
 
-  switch (fallback) {
-    case "primary":
-      src = getSpriteUrl(species, variant, shiny);
-      isAnimated = variant !== "gen5";
-      break;
-    case "static":
-      src = getSpriteUrl(species, "gen5", shiny);
-      break;
-    case "substitute":
-      src = getSpriteFallbackUrl("gen5");
-      break;
-  }
+  const src = urls[Math.min(urlIndex, urls.length - 1)];
+  const isGif = src.endsWith(".gif");
+  const pixelated = isGenThemePixelated(genTheme) && !isGif;
 
   return (
     <img
@@ -56,13 +47,14 @@ export function PokemonSprite({
       width={size}
       height={size}
       loading="lazy"
-      className={`${isAnimated ? "" : "pixelated"} object-contain ${className}`}
-      style={isAnimated ? { maxWidth: size, maxHeight: size } : { imageRendering: "pixelated", maxWidth: size, maxHeight: size }}
+      className={`object-contain ${className}`}
+      style={{
+        maxWidth: size,
+        maxHeight: size,
+        ...(pixelated ? { imageRendering: "pixelated" as const } : {}),
+      }}
       onError={() => {
-        setFallback((prev) => {
-          if (prev === "primary") return "static";
-          return "substitute";
-        });
+        setUrlIndex((prev) => Math.min(prev + 1, urls.length - 1));
       }}
     />
   );

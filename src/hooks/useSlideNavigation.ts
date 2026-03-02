@@ -7,9 +7,13 @@ interface UseSlideNavigationOptions {
   enabled: boolean;
   resetKey?: string;
   bypassFocusGuard?: boolean;
+  onEscape?: () => void;
+  onToggleDarkMode?: () => void;
+  onToggleFullscreen?: () => void;
+  onShowHelp?: () => void;
 }
 
-export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocusGuard = false }: UseSlideNavigationOptions) {
+export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocusGuard = false, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp }: UseSlideNavigationOptions) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Reset to slide 0 when team changes (resetKey), or when totalSlides changes if no resetKey
@@ -54,12 +58,24 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
       } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
         setCurrentSlide((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === "Escape" && onEscape) {
+        e.preventDefault();
+        onEscape();
+      } else if ((e.key === "d" || e.key === "D") && onToggleDarkMode) {
+        e.preventDefault();
+        onToggleDarkMode();
+      } else if ((e.key === "f" || e.key === "F") && onToggleFullscreen) {
+        e.preventDefault();
+        onToggleFullscreen();
+      } else if (e.key === "?" && onShowHelp) {
+        e.preventDefault();
+        onShowHelp();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, totalSlides, bypassFocusGuard]);
+  }, [enabled, totalSlides, bypassFocusGuard, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp]);
 
   // Touch swipe listener
   useEffect(() => {

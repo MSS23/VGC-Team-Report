@@ -6,6 +6,7 @@ import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { NATURES } from "@/lib/data/natures";
+import { getUsagePercent } from "@/lib/data/usage-stats";
 
 interface PokemonCardProps {
   pokemon: AnalyzedPokemon;
@@ -26,6 +27,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const types = data?.types ?? [];
   const spriteSize = creatorMode ? 96 : 72;
   const natureData = NATURES[parsed.nature];
+  const usagePercent = getUsagePercent(parsed.species);
 
   return (
     <Card className={`p-4 sm:p-5 creator:p-6 flex flex-col gap-3 creator:gap-4 transition-all duration-200 ${
@@ -54,7 +56,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             <PokemonSprite
               species={parsed.species}
               size={spriteSize}
-              variant={animated ? "ani" : "gen5"}
+              animated={animated}
               shiny={shiny}
             />
           </button>
@@ -123,12 +125,17 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             )}
           </div>
 
-          {/* Item + Ability */}
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2 text-xs text-text-secondary">
+          {/* Item + Ability + Usage */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-2 text-xs text-text-secondary">
             {parsed.item && (
               <span className="font-semibold text-text-primary">@ {parsed.item}</span>
             )}
             {parsed.ability && <span>{parsed.ability}</span>}
+            {usagePercent !== null && (
+              <span className="text-[10px] font-medium text-text-tertiary bg-surface-alt px-1.5 py-0.5 rounded-md" title="VGC usage rate">
+                {usagePercent}%
+              </span>
+            )}
           </div>
 
           {/* Role */}
@@ -175,10 +182,10 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
       {/* Stats */}
       {data && (
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-2 creator:mb-2.5">
+          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-1.5 creator:mb-2">
             Stats <span className="normal-case tracking-normal font-normal text-text-tertiary/70">({parsed.nature}{natureData?.plus ? ` +${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.plus]}` : ""}{natureData?.minus ? ` -${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.minus]}` : ""})</span>
           </h4>
-          <div className="space-y-1.5 stagger-stats">
+          <div className="space-y-1 stagger-stats">
             {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map((stat) => {
               const value = calculatedStats[stat];
               const ev = parsed.evs[stat];
@@ -189,8 +196,8 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               const labels = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" };
 
               return (
-                <div key={stat} className="flex items-center gap-2">
-                  <span className={`text-[10px] font-semibold w-7 text-right uppercase ${
+                <div key={stat} className="flex items-center gap-1.5">
+                  <span className={`text-[10px] font-semibold w-6 text-right uppercase ${
                     natureData?.plus === stat ? "text-red-500" : natureData?.minus === stat ? "text-blue-500" : "text-text-tertiary"
                   }`}>
                     {labels[stat]}
@@ -200,24 +207,26 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                       className="h-full rounded-full animate-bar-fill"
                       style={{
                         width: `${percentage}%`,
-                        backgroundColor: isBoosted ? "#f59e0b" : ev > 0 ? "#6366f1" : "#cbd5e1",
+                        backgroundColor: isBoosted ? "#f59e0b" : ev > 0 ? "var(--accent)" : "#cbd5e1",
                       }}
                     />
                   </div>
-                  <span className={`text-xs font-mono w-7 text-right tabular-nums ${
+                  <span className={`text-[10px] font-mono w-6 text-right tabular-nums ${
                     isBoosted ? "text-amber-500 font-semibold" : "text-text-secondary"
                   }`}>
                     {displayValue}
                   </span>
                   {isBoosted ? (
-                    <span className="text-[10px] text-amber-500 font-medium whitespace-nowrap" title={`${value} × ${itemBoost.multiplier}`}>
+                    <span className="text-[9px] text-amber-500 font-medium w-7" title={`${value} × ${itemBoost.multiplier}`}>
                       ×{itemBoost.multiplier}
                     </span>
                   ) : ev > 0 ? (
-                    <span className="text-[10px] text-accent font-semibold w-8">
+                    <span className="text-[9px] text-accent font-semibold w-7">
                       +{ev}
                     </span>
-                  ) : null}
+                  ) : (
+                    <span className="w-7" />
+                  )}
                 </div>
               );
             })}

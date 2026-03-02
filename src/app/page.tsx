@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useRef, useCallback } from "react";
+import { useMemo, useEffect, useRef, useCallback, useState } from "react";
 import { useTeamReport } from "@/hooks/useTeamReport";
 import { useCreatorMode } from "@/hooks/useCreatorMode";
 import { usePresentationMode } from "@/hooks/usePresentationMode";
@@ -14,10 +14,13 @@ import { useShareUrl } from "@/hooks/useShareUrl";
 import { useExportSlide } from "@/hooks/useExportSlide";
 import { useSpriteSettings } from "@/hooks/useSpriteSettings";
 import { useWalkthrough } from "@/hooks/useWalkthrough";
+import { useTheme, GEN_THEMES } from "@/hooks/useTheme";
 import { PasteInput } from "@/components/input/PasteInput";
 import { TeamReport } from "@/components/report/TeamReport";
 import { SlideNavControls } from "@/components/report/SlideNavControls";
 import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
+import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
+import { QrCodeModal } from "@/components/ui/QrCodeModal";
 import { Button } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
 
@@ -34,8 +37,9 @@ export default function Home() {
   const { creatorMode, setCreatorMode } = useCreatorMode();
   const { presentationMode, setPresentationMode } = usePresentationMode();
   const { darkMode, setDarkMode } = useDarkMode(false);
-  const { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed } = useShareUrl();
-  const { slideRef, exportAsPng } = useExportSlide();
+  const { genTheme, setGenTheme } = useTheme();
+  const { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView, lastShareUrl, dismissQr } = useShareUrl();
+  const { slideRef, exportAsPng, exportAllSlides, exportStatus, exportProgress } = useExportSlide();
   const {
     isActive: walkthroughActive,
     currentStep: walkthroughStep,
@@ -45,6 +49,8 @@ export default function Home() {
     skip: walkthroughSkip,
     start: startWalkthrough,
   } = useWalkthrough({ enabled: !!analysis && !isSharedView && !presentationMode });
+
+  const [showShortcutHint, setShowShortcutHint] = useState(false);
 
   const isReadOnly = isSharedView || presentationMode || !creatorMode;
   const isPresentationStyle = presentationMode;
@@ -63,8 +69,8 @@ export default function Home() {
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, !isSharedView);
   const { calcs, addCalc, removeCalc, setCalcsFull } = useDamageCalcs(speciesKeys, !isSharedView);
   const {
-    roles, summary, tournamentName, placement, record, mvpIndex,
-    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setMetaFull,
+    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode,
+    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setMetaFull,
   } = useTeamMeta(speciesKeys, !isSharedView);
   const {
     plans,
@@ -103,10 +109,18 @@ export default function Home() {
   // Plans that have their own dedicated slide (showSlide defaults to true)
   const visibleSlidePlans = plans.filter((p) => p.showSlide !== false);
 
-  // Total slides: Overview + 6 Pokemon + (N visible matchup plans if creator) + 1 matchup sheet
+  // Total slides: Overview + 6 Pokemon + Speed Tiers + (N visible matchup plans if creator) + 1 matchup sheet
   const totalSlides = analysis
-    ? analysis.pokemon.length + 1 + (showMatchupSlides ? visibleSlidePlans.length : 0) + 1
+    ? analysis.pokemon.length + 2 + (showMatchupSlides ? visibleSlidePlans.length : 0) + 1
     : 0;
+
+  const toggleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen();
+    }
+  }, []);
 
   const {
     currentSlide,
@@ -120,6 +134,10 @@ export default function Home() {
     enabled: !!analysis,
     resetKey: paste,
     bypassFocusGuard: presentationMode,
+    onEscape: presentationMode ? () => setPresentationMode(false) : undefined,
+    onToggleDarkMode: presentationMode ? () => setDarkMode(!darkMode) : undefined,
+    onToggleFullscreen: presentationMode ? toggleFullscreen : undefined,
+    onShowHelp: presentationMode ? () => setShowShortcutHint(true) : undefined,
   });
 
   // Hydration for shared view
@@ -145,6 +163,7 @@ export default function Home() {
       placement: sharedState.placement,
       record: sharedState.record,
       mvpIndex: sharedState.mvpIndex ?? null,
+      rentalCode: sharedState.rentalCode,
     });
     setPlansFull(
       sharedState.matchupPlans.map((p) => ({
@@ -177,6 +196,7 @@ export default function Home() {
     const labels = [
       "Overview",
       ...analysis.pokemon.map((mon) => mon.parsed.species),
+      "Team Analysis",
       ...(showMatchupSlides ? visibleSlidePlans.map((p) => `vs. ${p.opponentLabel}`) : []),
       "Matchups",
     ];
@@ -209,6 +229,7 @@ export default function Home() {
       placement: placement || undefined,
       record: record || undefined,
       mvpIndex: mvpIndex ?? undefined,
+      rentalCode: rentalCode || undefined,
       matchupPlans: plans.map((p) => ({
         opponentPaste: p.opponentPaste,
         opponentLabel: p.opponentLabel,
@@ -222,7 +243,7 @@ export default function Home() {
       })),
       spriteSettings: Object.keys(spriteOverrides).length > 0 ? spriteOverrides : undefined,
     });
-  }, [analysis, paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, plans, speciesKeys, getSpriteConfig, copyShareUrl]);
+  }, [analysis, paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, plans, speciesKeys, getSpriteConfig, copyShareUrl]);
 
   // Share completeness check: require Creator Mode, team summary, and notes for every Pokemon
   const missingForShare = useMemo(() => {
@@ -368,12 +389,24 @@ export default function Home() {
                 &middot; {currentSlide + 1} / {totalSlides}
               </span>
             </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <Toggle
                 checked={darkMode}
                 onChange={setDarkMode}
                 label={darkMode ? "Dark" : "Light"}
               />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  exitSharedView();
+                  setCreatorMode(true);
+                }}
+                title="Fork this team into an editable copy"
+              >
+                <span className="sm:hidden">Fork</span>
+                <span className="hidden sm:inline">Fork & Edit</span>
+              </Button>
               <Button
                 variant="primary"
                 size="sm"
@@ -448,6 +481,25 @@ export default function Home() {
                   <circle cx="12" cy="13" r="4" />
                 </svg>
               </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => exportAllSlides(totalSlides, goToSlide, slideLabels)}
+                disabled={exportStatus === "exporting-all"}
+                title="Export all slides as ZIP"
+                aria-label="Export all slides as ZIP"
+                className="text-text-secondary hover:text-text-primary hidden sm:inline-flex"
+              >
+                {exportStatus === "exporting-all" ? (
+                  <span className="text-xs tabular-nums">{exportProgress.current}/{exportProgress.total}</span>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                )}
+              </Button>
               <button
                 onClick={startWalkthrough}
                 title="Help & walkthrough"
@@ -456,6 +508,27 @@ export default function Home() {
               >
                 ?
               </button>
+
+              {/* Generation theme selector */}
+              <div className="hidden lg:flex items-center gap-0.5 bg-surface-alt/60 rounded-lg p-0.5" title="Generation theme">
+                {GEN_THEMES.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setGenTheme(t.id)}
+                    className={`px-1.5 py-1 rounded-md text-[10px] font-bold tracking-tight transition-all ${
+                      genTheme === t.id
+                        ? "text-white shadow-sm"
+                        : "text-text-tertiary hover:text-text-secondary bg-transparent hover:bg-surface-alt"
+                    }`}
+                    style={genTheme === t.id ? { backgroundColor: t.badge } : undefined}
+                    title={t.label}
+                    aria-label={`Set theme to ${t.label}`}
+                  >
+                    {t.abbr}
+                  </button>
+                ))}
+              </div>
 
               {/* Creator toggle: full Toggle on sm+, compact button on mobile */}
               <div data-walkthrough="creator-toggle">
@@ -515,7 +588,7 @@ export default function Home() {
       {/* Report content */}
       <div
         ref={slideRef}
-        className={`max-w-7xl mx-auto pb-48 slide-content ${
+        className={`max-w-7xl mx-auto pb-20 slide-content ${
           isPresentationStyle
             ? "px-4 sm:px-8 py-4 sm:py-6"
             : "px-3 sm:px-4 py-4 sm:py-6 creator:px-8 creator:py-8"
@@ -542,6 +615,8 @@ export default function Home() {
           onPlacementChange={setPlacement}
           record={record}
           onRecordChange={setRecord}
+          rentalCode={rentalCode}
+          onRentalCodeChange={setRentalCode}
           mvpIndex={mvpIndex}
           onMvpIndexChange={setMvpIndex}
           isReadOnly={isReadOnly}
@@ -586,6 +661,17 @@ export default function Home() {
           onNext={walkthroughNext}
           onSkip={walkthroughSkip}
         />
+      )}
+
+      {/* Keyboard shortcut hint overlay (presentation mode) */}
+      <ShortcutHintOverlay
+        visible={showShortcutHint}
+        onDismiss={() => setShowShortcutHint(false)}
+      />
+
+      {/* QR code modal (after share) */}
+      {lastShareUrl && (
+        <QrCodeModal url={lastShareUrl} onDismiss={dismissQr} />
       )}
     </main>
   );

@@ -7,6 +7,7 @@ import { TypeBadge } from "./TypeBadge";
 import { CalcInput } from "./CalcInput";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { NATURES } from "@/lib/data/natures";
+import { getUsagePercent } from "@/lib/data/usage-stats";
 
 interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;
@@ -75,6 +76,7 @@ export function PokemonDetailSlide({
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
   const natureData = NATURES[parsed.nature];
+  const usagePercent = getUsagePercent(parsed.species);
 
   const statLabels = {
     hp: "HP",
@@ -84,10 +86,6 @@ export function PokemonDetailSlide({
     spd: "SpD",
     spe: "Spe",
   } as const;
-
-  const evString = (["hp", "atk", "def", "spa", "spd", "spe"] as const)
-    .map((s) => parsed.evs[s])
-    .join("/");
 
   const offensiveCalcs = calcs.filter((c) => c.category === "offensive");
   const defensiveCalcs = calcs.filter((c) => c.category === "defensive");
@@ -147,14 +145,14 @@ export function PokemonDetailSlide({
               species={parsed.species}
               size={isPresentationMode ? 224 : 120}
               className="sm:hidden"
-              variant={animated ? "ani" : "gen5"}
+              animated={animated}
               shiny={shiny}
             />
             <PokemonSprite
               species={parsed.species}
               size={isPresentationMode ? 224 : 160}
               className="hidden sm:block"
-              variant={animated ? "ani" : "gen5"}
+              animated={animated}
               shiny={shiny}
             />
             {(onToggleShiny || onToggleAnimated) && (
@@ -221,12 +219,17 @@ export function PokemonDetailSlide({
               )}
             </div>
 
-            {/* Ability + Item */}
-            <div className="flex flex-wrap gap-x-3 sm:gap-x-4 text-sm sm:text-base text-text-secondary presenting:text-lg">
+            {/* Ability + Item + Usage */}
+            <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 text-sm sm:text-base text-text-secondary presenting:text-lg">
               {parsed.ability && <span>{parsed.ability}</span>}
               {parsed.item && (
                 <span className="text-text-primary font-medium">
                   @ {parsed.item}
+                </span>
+              )}
+              {usagePercent !== null && (
+                <span className="text-xs font-medium text-text-tertiary bg-surface-alt px-2 py-0.5 rounded-md" title="VGC usage rate">
+                  {usagePercent}% usage
                 </span>
               )}
             </div>
@@ -259,10 +262,10 @@ export function PokemonDetailSlide({
         {/* Stats */}
         {data && (
           <div>
-            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3">
+            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-2">
               Stats <span className="normal-case tracking-normal font-normal text-text-tertiary/70">({parsed.nature}{natureData?.plus ? ` +${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.plus]}` : ""}{natureData?.minus ? ` -${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.minus]}` : ""})</span>
             </h3>
-            <div className="space-y-2 stagger-stats">
+            <div className="space-y-1 sm:space-y-1.5 stagger-stats">
               {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map(
                 (stat) => {
                   const value = calculatedStats[stat];
@@ -273,45 +276,42 @@ export function PokemonDetailSlide({
                   const percentage = Math.min((displayValue / maxStat) * 100, 100);
 
                   return (
-                    <div key={stat} className="flex items-center gap-2 sm:gap-3">
-                      <span className={`text-xs sm:text-sm font-semibold w-7 sm:w-8 text-right uppercase ${
+                    <div key={stat} className="flex items-center gap-2">
+                      <span className={`text-xs font-semibold w-7 text-right uppercase ${
                         natureData?.plus === stat ? "text-red-500" : natureData?.minus === stat ? "text-blue-500" : "text-text-tertiary"
                       }`}>
                         {statLabels[stat]}
                       </span>
-                      <div className="flex-1 h-3 sm:h-4 bg-surface-alt rounded-full overflow-hidden presenting:h-5">
+                      <div className="flex-1 h-2.5 sm:h-3 bg-surface-alt rounded-full overflow-hidden presenting:h-4">
                         <div
                           className="h-full rounded-full animate-bar-fill"
                           style={{
                             width: `${percentage}%`,
-                            backgroundColor: isBoosted ? "#f59e0b" : ev > 0 ? "#6366f1" : "#cbd5e1",
+                            backgroundColor: isBoosted ? "#f59e0b" : ev > 0 ? "var(--accent)" : "#cbd5e1",
                           }}
                         />
                       </div>
-                      <span className={`text-sm sm:text-base font-mono w-8 sm:w-10 text-right tabular-nums ${
+                      <span className={`text-xs sm:text-sm font-mono w-8 text-right tabular-nums ${
                         isBoosted ? "text-amber-500 font-semibold" : "text-text-secondary"
                       }`}>
                         {displayValue}
                       </span>
                       {isBoosted ? (
-                        <span className="text-xs sm:text-sm text-amber-500 font-medium whitespace-nowrap" title={`${value} × ${itemBoost.multiplier}`}>
-                          {value} ×{itemBoost.multiplier}
+                        <span className="text-[10px] sm:text-xs text-amber-500 font-medium whitespace-nowrap w-12" title={`${value} × ${itemBoost.multiplier}`}>
+                          ×{itemBoost.multiplier}
                         </span>
                       ) : ev > 0 ? (
-                        <span className="text-xs sm:text-sm text-accent font-semibold w-10 sm:w-12">
+                        <span className="text-[10px] sm:text-xs text-accent font-semibold w-12">
                           +{ev}
                         </span>
                       ) : (
-                        <span className="w-10 sm:w-12" />
+                        <span className="w-12" />
                       )}
                     </div>
                   );
                 }
               )}
             </div>
-            <p className="text-sm sm:text-base text-text-secondary mt-3 presenting:text-lg presenting:font-medium">
-              {parsed.nature} &middot; {evString}
-            </p>
           </div>
         )}
       </div>

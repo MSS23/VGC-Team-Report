@@ -64,20 +64,106 @@ const SLUG_OVERRIDES: Record<string, string> = {
   "kommo-o": "kommoo",
 };
 
-export type SpriteVariant = "gen5ani" | "ani" | "gen5";
-
-function variantPath(variant: SpriteVariant, shiny: boolean): string {
-  return shiny ? `${variant}-shiny` : variant;
+function resolveSlug(species: string): string {
+  const slug = toSlug(species);
+  return SLUG_OVERRIDES[slug] ?? slug;
 }
 
+// ─── Legacy exports (kept for any remaining callers) ────────────────
+
+export type SpriteVariant = "gen5ani" | "ani" | "gen5";
+
 export function getSpriteUrl(species: string, variant: SpriteVariant = "gen5ani", shiny = false): string {
-  const slug = toSlug(species);
-  const resolved = SLUG_OVERRIDES[slug] ?? slug;
+  const resolved = resolveSlug(species);
   const ext = variant === "gen5" ? "png" : "gif";
-  return `${BASE_URL}/${variantPath(variant, shiny)}/${resolved}.${ext}`;
+  const folder = shiny ? `${variant}-shiny` : variant;
+  return `${BASE_URL}/${folder}/${resolved}.${ext}`;
 }
 
 export function getSpriteFallbackUrl(variant: SpriteVariant = "gen5"): string {
   const ext = variant === "gen5" ? "png" : "gif";
   return `${BASE_URL}/${variant}/substitute.${ext}`;
+}
+
+// ─── Gen-themed sprite support ──────────────────────────────────────
+
+interface GenSpriteStyle {
+  /** Static sprite folder on Showdown (e.g., "gen1rb", "gen3", "home") */
+  folder: string;
+  /** Shiny static folder, or null if the gen didn't have shinies */
+  shinyFolder: string | null;
+  /** Animated sprite folder (e.g., "gen5ani", "ani") */
+  animated: string;
+  /** Shiny animated folder */
+  animatedShiny: string;
+  /** Whether sprites should use pixelated rendering */
+  pixelated: boolean;
+}
+
+const GEN_SPRITE_STYLES: Record<string, GenSpriteStyle> = {
+  gen1: { folder: "gen1rb",  shinyFolder: null,         animated: "gen5ani", animatedShiny: "gen5ani-shiny", pixelated: true },
+  gen2: { folder: "gen2",    shinyFolder: null,         animated: "gen5ani", animatedShiny: "gen5ani-shiny", pixelated: true },
+  gen3: { folder: "gen3",    shinyFolder: "gen3-shiny", animated: "gen5ani", animatedShiny: "gen5ani-shiny", pixelated: true },
+  gen4: { folder: "gen4",    shinyFolder: "gen4-shiny", animated: "gen5ani", animatedShiny: "gen5ani-shiny", pixelated: true },
+  gen5: { folder: "gen5",    shinyFolder: "gen5-shiny", animated: "gen5ani", animatedShiny: "gen5ani-shiny", pixelated: true },
+  gen6: { folder: "dex",     shinyFolder: "dex-shiny",  animated: "ani",     animatedShiny: "ani-shiny",     pixelated: false },
+  gen7: { folder: "dex",     shinyFolder: "dex-shiny",  animated: "ani",     animatedShiny: "ani-shiny",     pixelated: false },
+  gen8: { folder: "home",    shinyFolder: "home-shiny", animated: "ani",     animatedShiny: "ani-shiny",     pixelated: false },
+  gen9: { folder: "home",    shinyFolder: "home-shiny", animated: "ani",     animatedShiny: "ani-shiny",     pixelated: false },
+};
+
+/**
+ * Returns an ordered list of sprite URLs to try for a given species.
+ * The component should try each URL in order, falling back on 404.
+ *
+ * Gen-specific folders only contain Pokemon from that era (e.g., gen1rb
+ * only has Kanto Pokemon). When a sprite isn't found the fallback chain
+ * ensures we always land on a valid image.
+ */
+export function getGenThemedSpriteUrls(
+  species: string,
+  genTheme: string,
+  animated: boolean,
+  shiny: boolean,
+): string[] {
+  const slug = resolveSlug(species);
+  const style = GEN_SPRITE_STYLES[genTheme] ?? GEN_SPRITE_STYLES.gen9;
+  const urls: string[] = [];
+
+  if (animated) {
+    // 1. Gen-themed animated (e.g., gen5ani for retro themes, ani for modern)
+    urls.push(`${BASE_URL}/${shiny ? style.animatedShiny : style.animated}/${slug}.gif`);
+    // 2. Fallback to the other animated style
+    if (style.animated !== "ani") {
+      urls.push(`${BASE_URL}/${shiny ? "ani-shiny" : "ani"}/${slug}.gif`);
+    }
+    // 3. Static fallback
+    urls.push(`${BASE_URL}/${shiny ? "gen5-shiny" : "gen5"}/${slug}.png`);
+  } else {
+    // 1. Gen-themed static (e.g., gen1rb, gen3, home)
+    const staticFolder = shiny && style.shinyFolder ? style.shinyFolder : style.folder;
+    urls.push(`${BASE_URL}/${staticFolder}/${slug}.png`);
+    // 2. If shiny requested but gen has no shiny folder, try gen5-shiny
+    if (shiny && !style.shinyFolder) {
+      urls.push(`${BASE_URL}/gen5-shiny/${slug}.png`);
+    }
+    // 3. Fallback to gen5 static (broadest pixel coverage)
+    if (style.folder !== "gen5") {
+      urls.push(`${BASE_URL}/${shiny ? "gen5-shiny" : "gen5"}/${slug}.png`);
+    }
+    // 4. Animated fallback
+    urls.push(`${BASE_URL}/${shiny ? "ani-shiny" : "ani"}/${slug}.gif`);
+  }
+
+  // Ultimate fallback — substitute sprite
+  urls.push(`${BASE_URL}/gen5/substitute.png`);
+
+  return urls;
+}
+
+/**
+ * Whether a gen theme uses pixelated (retro) rendering for static sprites.
+ */
+export function isGenThemePixelated(genTheme: string): boolean {
+  return GEN_SPRITE_STYLES[genTheme]?.pixelated ?? false;
 }

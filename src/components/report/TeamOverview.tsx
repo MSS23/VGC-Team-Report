@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { SpriteConfig } from "@/hooks/useSpriteSettings";
 import { PokemonCard } from "./PokemonCard";
@@ -16,6 +19,8 @@ interface TeamOverviewProps {
   onPlacementChange?: (text: string) => void;
   record?: string;
   onRecordChange?: (text: string) => void;
+  rentalCode?: string;
+  onRentalCodeChange?: (text: string) => void;
   mvpIndex?: number | null;
   onMvpIndexChange?: (index: number | null) => void;
   isReadOnly: boolean;
@@ -38,6 +43,8 @@ export function TeamOverview({
   onPlacementChange,
   record,
   onRecordChange,
+  rentalCode,
+  onRentalCodeChange,
   mvpIndex,
   onMvpIndexChange,
   isReadOnly,
@@ -46,12 +53,20 @@ export function TeamOverview({
   onToggleAnimated,
 }: TeamOverviewProps) {
   const hasTournamentInfo = !!(tournamentName || placement || record);
+  const [rentalCopied, setRentalCopied] = useState(false);
+
+  const copyRentalCode = () => {
+    if (!rentalCode) return;
+    navigator.clipboard.writeText(rentalCode);
+    setRentalCopied(true);
+    setTimeout(() => setRentalCopied(false), 2000);
+  };
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
       {/* Tournament Context */}
       {isReadOnly ? (
-        hasTournamentInfo && (
+        (hasTournamentInfo || rentalCode) && (
           <div className="flex items-center gap-3 flex-wrap px-1">
             {tournamentName && (
               <h2 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">
@@ -65,6 +80,20 @@ export function TeamOverview({
             )}
             {record && (
               <span className="text-sm text-text-secondary font-medium">({record})</span>
+            )}
+            {rentalCode && (
+              <button
+                onClick={copyRentalCode}
+                className="flex items-center gap-2 ml-auto px-3 py-1.5 bg-surface border border-border rounded-xl hover:bg-surface-alt transition-colors"
+                title="Copy rental code"
+              >
+                <span className="text-sm font-mono font-bold text-text-primary tracking-wider">
+                  {rentalCode}
+                </span>
+                <span className="text-xs text-text-tertiary">
+                  {rentalCopied ? "Copied!" : "Copy"}
+                </span>
+              </button>
             )}
           </div>
         )
@@ -94,6 +123,14 @@ export function TeamOverview({
               onChange={(e) => onRecordChange?.(e.target.value)}
               placeholder="Record (e.g. 7-2)"
               className="w-[120px] px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+            />
+            <input
+              type="text"
+              value={rentalCode ?? ""}
+              onChange={(e) => onRentalCodeChange?.(e.target.value.toUpperCase())}
+              placeholder="Rental Code"
+              maxLength={20}
+              className="w-[160px] px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-mono font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-wider"
             />
           </div>
         </div>
@@ -151,6 +188,7 @@ export function TeamOverview({
           );
         })}
       </div>
+
     </div>
   );
 }

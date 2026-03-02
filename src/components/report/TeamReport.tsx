@@ -8,6 +8,7 @@ import { TeamOverview } from "./TeamOverview";
 import { MatchupSheet } from "./MatchupSheet";
 import { PokemonDetailSlide } from "./PokemonDetailSlide";
 import { MatchupPlanSlide } from "./MatchupPlanSlide";
+import { SpeedTierChart } from "./SpeedTierChart";
 
 interface TeamReportProps {
   analysis: TeamAnalysis;
@@ -29,6 +30,8 @@ interface TeamReportProps {
   onPlacementChange?: (text: string) => void;
   record?: string;
   onRecordChange?: (text: string) => void;
+  rentalCode?: string;
+  onRentalCodeChange?: (text: string) => void;
   mvpIndex?: number | null;
   onMvpIndexChange?: (index: number | null) => void;
   isReadOnly?: boolean;
@@ -75,6 +78,8 @@ export function TeamReport({
   onPlacementChange,
   record,
   onRecordChange,
+  rentalCode,
+  onRentalCodeChange,
   mvpIndex,
   onMvpIndexChange,
   isReadOnly = false,
@@ -118,6 +123,8 @@ export function TeamReport({
         onPlacementChange={onPlacementChange}
         record={record}
         onRecordChange={onRecordChange}
+        rentalCode={rentalCode}
+        onRentalCodeChange={onRentalCodeChange}
         mvpIndex={mvpIndex ?? null}
         onMvpIndexChange={onMvpIndexChange}
         isReadOnly={isReadOnly}
@@ -153,9 +160,21 @@ export function TeamReport({
     );
   }
 
+  // Speed tier chart slide (after all Pokemon, before matchups)
+  if (currentSlide === pokemonCount + 1) {
+    return (
+      <SpeedTierChart
+        pokemon={analysis.pokemon}
+        speciesKeys={speciesKeys}
+        getSpriteConfig={getSpriteConfig}
+        isPresentationMode={isPresentationMode}
+      />
+    );
+  }
+
   // Per-matchup plan slides (only in creator mode, only visible plans)
   if (showMatchupSlides) {
-    const matchupSlideIndex = currentSlide - pokemonCount - 1;
+    const matchupSlideIndex = currentSlide - pokemonCount - 2;
 
     if (visibleSlidePlans.length > 0 && matchupSlideIndex >= 0 && matchupSlideIndex < visibleSlidePlans.length) {
       const plan = visibleSlidePlans[matchupSlideIndex];
@@ -179,7 +198,7 @@ export function TeamReport({
 
   // Last slide: Matchup sheet (always available — expandable rows for game plans)
   const matchupSlidesCount = showMatchupSlides ? visibleSlidePlans.length : 0;
-  const matchupSheetSlide = pokemonCount + 1 + matchupSlidesCount;
+  const matchupSheetSlide = pokemonCount + 2 + matchupSlidesCount;
   if (currentSlide === matchupSheetSlide) {
     return (
       <MatchupSheet

@@ -15,6 +15,7 @@ export function useShareUrl() {
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
   const [urlWarning, setUrlWarning] = useState<string | null>(null);
   const [decodeFailed, setDecodeFailed] = useState(false);
+  const [lastShareUrl, setLastShareUrl] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // On mount: check URL hash for shared data
@@ -65,6 +66,7 @@ export function useShareUrl() {
       }
 
       await navigator.clipboard.writeText(url);
+      setLastShareUrl(url);
       setShareStatus("copied");
 
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -76,5 +78,13 @@ export function useShareUrl() {
     }
   }, []);
 
-  return { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed };
+  const exitSharedView = useCallback(() => {
+    setIsSharedView(false);
+    // Remove the hash from the URL without reloading
+    history.replaceState(null, "", window.location.pathname);
+  }, []);
+
+  const dismissQr = useCallback(() => setLastShareUrl(null), []);
+
+  return { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView, lastShareUrl, dismissQr };
 }

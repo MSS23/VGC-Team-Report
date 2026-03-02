@@ -1,0 +1,157 @@
+"use client";
+
+import type { AnalyzedPokemon } from "@/lib/types/analysis";
+import { PokemonSprite } from "./PokemonSprite";
+import { TypeCoverageMatrix } from "./TypeCoverageMatrix";
+import type { SpriteConfig } from "@/hooks/useSpriteSettings";
+
+interface SpeedTierChartProps {
+  pokemon: AnalyzedPokemon[];
+  speciesKeys: string[];
+  getSpriteConfig?: (key: string) => SpriteConfig;
+  isPresentationMode?: boolean;
+}
+
+const SPEED_BENCHMARKS = [
+  { value: 222, label: "150 base max+" },
+  { value: 203, label: "130 base max+" },
+  { value: 184, label: "110 base max+" },
+  { value: 150, label: "100 base max" },
+  { value: 127, label: "80 base max" },
+  { value: 97,  label: "50 base max" },
+];
+
+export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode }: SpeedTierChartProps) {
+  const entries = pokemon.map((mon, i) => {
+    const baseSpe = mon.calculatedStats.spe;
+    const isScarfed = mon.itemBoost?.stat === "spe";
+    const boostedSpe = isScarfed ? mon.itemBoost!.boostedValue : baseSpe;
+    const tailwindSpe = baseSpe * 2;
+    return {
+      species: mon.parsed.species,
+      speciesKey: speciesKeys[i],
+      baseSpe,
+      boostedSpe,
+      tailwindSpe,
+      hasSpeedBoost: isScarfed,
+    };
+  }).sort((a, b) => b.boostedSpe - a.boostedSpe);
+
+  // Scale to max boosted speed only (not tailwind) so bars are readable
+  const maxSpeed = Math.max(...entries.map(e => e.boostedSpe), 200);
+
+  const minTeamSpeed = Math.min(...entries.map(e => e.baseSpe));
+  const maxTeamBoosted = Math.max(...entries.map(e => e.boostedSpe));
+  const relevantBenchmarks = SPEED_BENCHMARKS.filter(
+    b => b.value >= minTeamSpeed * 0.8 && b.value <= maxTeamBoosted * 1.05
+  );
+
+  return (
+    <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
+      <div>
+        <h2 className="text-lg sm:text-xl font-bold text-text-primary presenting:text-2xl">
+          Team Analysis
+        </h2>
+        <p className="text-xs sm:text-sm text-text-secondary mt-1">
+          Speed tiers & offensive type coverage
+        </p>
+      </div>
+
+      {/* Speed Tiers Section */}
+      <div className="flex flex-col gap-2">
+        <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary">
+          Speed Tiers
+        </h3>
+
+        <div className="flex flex-col gap-2.5">
+          {entries.map((entry) => {
+            const sc = getSpriteConfig?.(entry.speciesKey);
+            const percent = Math.min((entry.boostedSpe / maxSpeed) * 100, 100);
+            const basePercent = Math.min((entry.baseSpe / maxSpeed) * 100, 100);
+
+            return (
+              <div key={entry.speciesKey} className="flex items-center gap-2 sm:gap-3">
+                {/* Name column — fixed width */}
+                <div className="flex items-center gap-1.5 w-28 sm:w-32 flex-shrink-0 min-w-0">
+                  <PokemonSprite
+                    species={entry.species}
+                    size={isPresentationMode ? 32 : 24}
+                    animated={sc?.animated}
+                    shiny={sc?.shiny}
+                  />
+                  <span className="text-xs sm:text-sm font-semibold text-text-primary truncate">
+                    {entry.species}
+                  </span>
+                </div>
+
+                {/* Bar column */}
+                <div className="flex-1 flex items-center gap-2 min-w-0">
+                  <div className="flex-1 h-6 sm:h-7 bg-surface-alt rounded-lg overflow-hidden relative">
+                    {/* Base bar */}
+                    <div
+                      className={`absolute inset-y-0 left-0 rounded-lg transition-all ${
+                        entry.hasSpeedBoost ? "bg-amber-500/70" : "bg-accent/60"
+                      }`}
+                      style={{ width: `${entry.hasSpeedBoost ? percent : basePercent}%` }}
+                    />
+                    {/* Benchmark lines inside the bar */}
+                    {relevantBenchmarks.map((b) => {
+                      const bp = (b.value / maxSpeed) * 100;
+                      if (bp > 98) return null;
+                      return (
+                        <div
+                          key={b.value}
+                          className="absolute top-0 bottom-0 w-px bg-text-tertiary/20"
+                          style={{ left: `${bp}%` }}
+                          title={`${b.value} — ${b.label}`}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {/* Speed value — fixed width to prevent overlap */}
+                  <div className="w-16 sm:w-20 flex-shrink-0 text-right">
+                    <span className={`text-xs sm:text-sm font-mono font-bold tabular-nums ${
+                      entry.hasSpeedBoost ? "text-amber-500" : "text-text-primary"
+                    }`}>
+                      {entry.hasSpeedBoost ? entry.boostedSpe : entry.baseSpe}
+                    </span>
+                    {entry.hasSpeedBoost && (
+                      <span className="text-[9px] text-amber-500/60 ml-0.5">
+                        scarf
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Tailwind note + Legend */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-[10px] text-text-tertiary">
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded bg-accent/60" />
+            Base
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded bg-amber-500/70" />
+            Scarf / Booster
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-px h-3 bg-text-tertiary/30" />
+            Benchmarks
+          </span>
+          <span className="ml-auto text-text-tertiary/60">
+            Tailwind doubles base speed
+          </span>
+        </div>
+      </div>
+
+      <hr className="border-border" />
+
+      {/* Type Coverage */}
+      <TypeCoverageMatrix pokemon={pokemon} />
+    </div>
+  );
+}
