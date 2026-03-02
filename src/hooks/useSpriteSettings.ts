@@ -97,9 +97,23 @@ export function useSpriteSettings(
     }));
   }, []);
 
+  const toggleAllAnimated = useCallback(() => {
+    setSettings((prev) => {
+      // If any are animated, turn all off; otherwise turn all on
+      const anyAnimated = Object.values(prev).some((s) => s.animated);
+      const next: Record<string, SpriteConfig> = {};
+      for (const key of Object.keys(prev)) {
+        next[key] = { ...prev[key], animated: !anyAnimated };
+      }
+      return next;
+    });
+  }, []);
+
+  const allAnimated = Object.values(settings).length > 0 && Object.values(settings).every((s) => s.animated);
+
   const setSettingsFull = useCallback((newSettings: Record<string, SpriteConfig>) => {
     setSettings(newSettings);
   }, []);
 
-  return { settings, getConfig, toggleShiny, toggleAnimated, setSettingsFull };
+  return { settings, getConfig, toggleShiny, toggleAnimated, toggleAllAnimated, allAnimated, setSettingsFull };
 }

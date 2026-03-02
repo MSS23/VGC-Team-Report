@@ -24,8 +24,15 @@ interface PokemonCardProps {
 export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, onToggleShiny, onToggleAnimated }: PokemonCardProps) {
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
-  const spriteSize = creatorMode ? 96 : 72;
+  const spriteSizeSm = creatorMode ? 80 : 68;
+  const spriteSizeLg = creatorMode ? 112 : 96;
   const natureData = NATURES[parsed.nature];
+
+  // Non-default IVs (not 31)
+  const nonDefaultIvs = (["hp", "atk", "def", "spa", "spd", "spe"] as const).filter(
+    (stat) => parsed.ivs[stat] !== 31
+  );
+  const ivLabels = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as const;
 
   return (
     <Card className={`p-4 sm:p-5 creator:p-6 flex flex-col gap-3 creator:gap-4 transition-all duration-200 ${
@@ -53,7 +60,15 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
           >
             <PokemonSprite
               species={parsed.species}
-              size={spriteSize}
+              size={spriteSizeSm}
+              className="sm:hidden"
+              animated={animated}
+              shiny={shiny}
+            />
+            <PokemonSprite
+              species={parsed.species}
+              size={spriteSizeLg}
+              className="hidden sm:block"
               animated={animated}
               shiny={shiny}
             />
@@ -123,13 +138,27 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             )}
           </div>
 
-          {/* Item + Ability + Usage */}
+          {/* Item + Ability */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-2 text-xs text-text-secondary">
             {parsed.item && (
               <span className="font-semibold text-text-primary">@ {parsed.item}</span>
             )}
             {parsed.ability && <span>{parsed.ability}</span>}
           </div>
+
+          {/* Non-default IVs */}
+          {nonDefaultIvs.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              {nonDefaultIvs.map((stat) => (
+                <span
+                  key={stat}
+                  className="text-[10px] font-mono font-medium text-text-tertiary bg-surface-alt px-1.5 py-0.5 rounded"
+                >
+                  {parsed.ivs[stat]} {ivLabels[stat]}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Role */}
           {onRoleChange && !isReadOnly ? (
@@ -190,9 +219,9 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
 
               return (
                 <div key={stat} className="flex items-center gap-1.5">
-                  <span className={`text-[10px] font-semibold w-6 text-right uppercase ${
-                    natureData?.plus === stat ? "text-red-500" : natureData?.minus === stat ? "text-blue-500" : "text-text-tertiary"
-                  }`}>
+                  <span className="text-[10px] font-semibold w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-px">
+                    {natureData?.plus === stat && <span className="text-[8px]">{"\u25B2"}</span>}
+                    {natureData?.minus === stat && <span className="text-[8px]">{"\u25BC"}</span>}
                     {labels[stat]}
                   </span>
                   <div className="flex-1 h-1.5 bg-surface-alt rounded-full overflow-hidden creator:h-2">

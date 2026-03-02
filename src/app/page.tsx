@@ -101,6 +101,8 @@ export default function Home() {
     getConfig: getSpriteConfig,
     toggleShiny,
     toggleAnimated,
+    toggleAllAnimated,
+    allAnimated,
     setSettingsFull: setSpriteSettingsFull,
   } = useSpriteSettings(speciesKeys, spriteDefaults, !isSharedView);
 
@@ -325,30 +327,46 @@ export default function Home() {
       >
         {isPresentationStyle ? (
           /* Presentation mode: minimal header */
-          <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm text-text-secondary min-w-0">
               {tournamentName && (
                 <>
-                  <span className="font-bold text-text-primary">{tournamentName}</span>
+                  <span className="font-bold text-text-primary truncate">{tournamentName}</span>
                   {placement && (
-                    <span className="text-xs font-semibold text-accent bg-accent-surface px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-semibold text-accent bg-accent-surface px-2 py-0.5 rounded-full flex-shrink-0">
                       {placement}
                     </span>
                   )}
                   {record && (
-                    <span className="text-text-tertiary">({record})</span>
+                    <span className="text-text-tertiary flex-shrink-0">({record})</span>
                   )}
-                  <span className="text-text-tertiary">&middot;</span>
+                  <span className="text-text-tertiary hidden sm:inline">&middot;</span>
                 </>
               )}
-              <span className="font-medium text-text-primary">
+              <span className="font-medium text-text-primary truncate hidden sm:inline">
                 {slideLabels[currentSlide]}
               </span>
-              <span className="text-text-tertiary tabular-nums">
-                &middot; {currentSlide + 1} / {totalSlides}
+              <span className="text-text-tertiary tabular-nums flex-shrink-0">
+                {currentSlide + 1}/{totalSlides}
               </span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={toggleAllAnimated}
+                title={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
+                aria-label={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
+                className={`flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
+                  allAnimated
+                    ? "bg-accent/15 text-accent border-accent/30"
+                    : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary hover:border-border"
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                <span className="hidden sm:inline">GIF</span>
+              </button>
               <Toggle
                 checked={darkMode}
                 onChange={setDarkMode}
@@ -390,6 +408,22 @@ export default function Home() {
               </span>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <button
+                type="button"
+                onClick={toggleAllAnimated}
+                title={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
+                aria-label={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
+                className={`p-1.5 sm:px-3 sm:py-1.5 rounded-lg border transition-all duration-200 sm:flex sm:items-center sm:gap-1.5 ${
+                  allAnimated
+                    ? "bg-accent/15 text-accent border-accent/30"
+                    : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary hover:border-border"
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                <span className="hidden sm:inline text-xs font-semibold">GIF</span>
+              </button>
               <Toggle
                 checked={darkMode}
                 onChange={setDarkMode}
@@ -507,6 +541,39 @@ export default function Home() {
                 className="w-7 h-7 items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-sm font-medium hidden sm:flex"
               >
                 ?
+              </button>
+
+              {/* Global GIF toggle: icon-only on mobile, icon+text on sm+ */}
+              <button
+                type="button"
+                onClick={toggleAllAnimated}
+                title={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
+                aria-label={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
+                className={`sm:hidden p-1.5 rounded-lg border transition-all duration-200 ${
+                  allAnimated
+                    ? "bg-accent/15 text-accent border-accent/30"
+                    : "bg-surface-alt text-text-tertiary border-border-subtle"
+                }`}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={toggleAllAnimated}
+                title={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
+                aria-label={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
+                className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
+                  allAnimated
+                    ? "bg-accent/15 text-accent border-accent/30"
+                    : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary hover:border-border"
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                GIF
               </button>
 
               {/* Generation theme selector */}

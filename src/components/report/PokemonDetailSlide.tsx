@@ -84,6 +84,11 @@ export function PokemonDetailSlide({
     spe: "Spe",
   } as const;
 
+  // Non-default IVs (not 31)
+  const nonDefaultIvs = (["hp", "atk", "def", "spa", "spd", "spe"] as const).filter(
+    (stat) => parsed.ivs[stat] !== 31
+  );
+
   const offensiveCalcs = calcs.filter((c) => c.category === "offensive");
   const defensiveCalcs = calcs.filter((c) => c.category === "defensive");
   const speedCalcs = calcs.filter((c) => c.category === "speed");
@@ -216,7 +221,7 @@ export function PokemonDetailSlide({
               )}
             </div>
 
-            {/* Ability + Item + Usage */}
+            {/* Ability + Item */}
             <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 text-sm sm:text-base text-text-secondary presenting:text-lg">
               {parsed.ability && <span>{parsed.ability}</span>}
               {parsed.item && (
@@ -225,6 +230,21 @@ export function PokemonDetailSlide({
                 </span>
               )}
             </div>
+
+            {/* Non-default IVs */}
+            {nonDefaultIvs.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-text-tertiary presenting:text-sm">IVs:</span>
+                {nonDefaultIvs.map((stat) => (
+                  <span
+                    key={stat}
+                    className="text-[11px] sm:text-xs font-mono font-medium text-text-tertiary bg-surface-alt px-1.5 sm:px-2 py-0.5 rounded presenting:text-sm presenting:px-2.5 presenting:py-1"
+                  >
+                    {parsed.ivs[stat]} {statLabels[stat]}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -269,9 +289,9 @@ export function PokemonDetailSlide({
 
                   return (
                     <div key={stat} className="flex items-center gap-2">
-                      <span className={`text-xs font-semibold w-7 text-right uppercase ${
-                        natureData?.plus === stat ? "text-red-500" : natureData?.minus === stat ? "text-blue-500" : "text-text-tertiary"
-                      }`}>
+                      <span className="text-xs font-semibold w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5">
+                        {natureData?.plus === stat && <span className="text-[9px]">{"\u25B2"}</span>}
+                        {natureData?.minus === stat && <span className="text-[9px]">{"\u25BC"}</span>}
                         {statLabels[stat]}
                       </span>
                       <div className="flex-1 h-2.5 sm:h-3 bg-surface-alt rounded-full overflow-hidden presenting:h-4">
