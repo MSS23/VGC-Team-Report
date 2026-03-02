@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import type { MatchupPlan, GamePlan, GameResult } from "@/hooks/useMatchupPlans";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
@@ -43,6 +43,16 @@ export function MatchupSheetRow({
   onRemoveGamePlan,
 }: MatchupSheetRowProps) {
   const [expanded, setExpanded] = useState(false);
+  const gamePlansRef = useRef<HTMLDivElement>(null);
+  const prevPlanCount = useRef(plan.gamePlans.length);
+
+  useEffect(() => {
+    if (plan.gamePlans.length > prevPlanCount.current && gamePlansRef.current) {
+      const lastChild = gamePlansRef.current.lastElementChild;
+      lastChild?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    prevPlanCount.current = plan.gamePlans.length;
+  }, [plan.gamePlans.length]);
 
   const opponentPokemon = useMemo(() => {
     const parsed = parseShowdownPaste(plan.opponentPaste);
@@ -168,7 +178,7 @@ export function MatchupSheetRow({
 
       {/* Expanded game plans */}
       {expanded && (
-        <div className="px-4 sm:px-5 py-4 border-t border-border space-y-3">
+        <div ref={gamePlansRef} className="px-4 sm:px-5 py-4 border-t border-border space-y-3">
           {/* Game plan header */}
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">

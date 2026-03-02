@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import type { MatchupPlan, GamePlan, GameResult } from "@/hooks/useMatchupPlans";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { StatSpread } from "@/lib/types/pokemon";
@@ -64,6 +64,16 @@ export function MatchupPlanSlide({
   onRemove,
 }: MatchupPlanSlideProps) {
   const [collapsedPlans, setCollapsedPlans] = useState<Set<string>>(new Set());
+  const gamePlansRef = useRef<HTMLDivElement>(null);
+  const prevPlanCount = useRef(plan.gamePlans.length);
+
+  useEffect(() => {
+    if (plan.gamePlans.length > prevPlanCount.current && gamePlansRef.current) {
+      const lastChild = gamePlansRef.current.lastElementChild;
+      lastChild?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    prevPlanCount.current = plan.gamePlans.length;
+  }, [plan.gamePlans.length]);
 
   const opponentPokemon = useMemo<OpponentPokemonInfo[]>(() => {
     const parsed = parseShowdownPaste(plan.opponentPaste);
@@ -184,7 +194,7 @@ export function MatchupPlanSlide({
       </div>
 
       {/* Game Plans */}
-      <div className="flex flex-col gap-4">
+      <div ref={gamePlansRef} className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">
             Game Plans ({plan.gamePlans.length}/3)
