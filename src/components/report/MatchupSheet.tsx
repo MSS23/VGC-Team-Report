@@ -85,15 +85,15 @@ export function MatchupSheet({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h2 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">Matchup Sheet</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">Matchup Sheet</h2>
 
       {plans.length === 0 ? (
         <div className="text-center py-16 text-text-tertiary bg-surface border border-border rounded-2xl shadow-sm">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 text-text-tertiary/50">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14,2 14,8 20,8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
           </svg>
-          <p className="text-sm font-medium">No matchup plans yet</p>
-          <p className="text-xs text-text-tertiary mt-1">Add an opponent team below to get started.</p>
+          <p className="text-base font-medium">No matchup plans yet</p>
+          <p className="text-sm text-text-tertiary mt-1">Add an opponent team below to get started.</p>
         </div>
       ) : (
         <div className="overflow-x-auto"><div className="flex flex-col gap-3">

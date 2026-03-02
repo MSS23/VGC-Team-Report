@@ -6,7 +6,6 @@ import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { NATURES } from "@/lib/data/natures";
-import { getUsagePercent } from "@/lib/data/usage-stats";
 
 interface PokemonCardProps {
   pokemon: AnalyzedPokemon;
@@ -27,7 +26,6 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const types = data?.types ?? [];
   const spriteSize = creatorMode ? 96 : 72;
   const natureData = NATURES[parsed.nature];
-  const usagePercent = getUsagePercent(parsed.species);
 
   return (
     <Card className={`p-4 sm:p-5 creator:p-6 flex flex-col gap-3 creator:gap-4 transition-all duration-200 ${
@@ -131,11 +129,6 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               <span className="font-semibold text-text-primary">@ {parsed.item}</span>
             )}
             {parsed.ability && <span>{parsed.ability}</span>}
-            {usagePercent !== null && (
-              <span className="text-[10px] font-medium text-text-tertiary bg-surface-alt px-1.5 py-0.5 rounded-md" title="VGC usage rate">
-                {usagePercent}%
-              </span>
-            )}
           </div>
 
           {/* Role */}
@@ -207,7 +200,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                       className="h-full rounded-full animate-bar-fill"
                       style={{
                         width: `${percentage}%`,
-                        backgroundColor: isBoosted ? "#f59e0b" : ev > 0 ? "var(--accent)" : "#cbd5e1",
+                        backgroundColor: isBoosted ? "#f59e0b" : ev > 0 ? "var(--accent)" : "#94a3b8",
                       }}
                     />
                   </div>

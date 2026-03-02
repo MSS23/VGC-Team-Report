@@ -86,21 +86,21 @@ export function MatchupSheetRow({
         }`}
       >
         {/* Row number */}
-        <span className="text-sm font-bold text-text-tertiary w-8 flex-shrink-0">
+        <span className="text-base sm:text-lg font-bold text-text-tertiary w-8 flex-shrink-0">
           #{rowNumber}
         </span>
 
         {/* Opponent info */}
         <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <span className="text-sm font-semibold text-text-primary truncate sm:max-w-[240px]" title={plan.opponentLabel}>
+          <span className="text-base sm:text-lg font-semibold text-text-primary truncate sm:max-w-[280px]" title={plan.opponentLabel}>
             {plan.opponentLabel}
           </span>
 
           {/* Opponent sprites */}
-          <div className="flex items-center gap-1 overflow-x-auto max-w-[180px] sm:max-w-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto max-w-[220px] sm:max-w-none">
             {opponentPokemon.map((species, i) => (
-              <div key={i} className="w-7 h-7 flex items-center justify-center flex-shrink-0">
-                <PokemonSprite species={species} size={26} />
+              <div key={i} className="w-9 h-9 flex items-center justify-center flex-shrink-0">
+                <PokemonSprite species={species} size={34} />
               </div>
             ))}
           </div>
@@ -122,7 +122,7 @@ export function MatchupSheetRow({
               ))}
             </div>
           )}
-          <span className="text-xs font-medium text-text-tertiary whitespace-nowrap">
+          <span className="text-sm font-medium text-text-tertiary whitespace-nowrap">
             {plan.gamePlans.length} plan{plan.gamePlans.length !== 1 ? "s" : ""}
           </span>
           <span
@@ -181,7 +181,7 @@ export function MatchupSheetRow({
         <div ref={gamePlansRef} className="px-4 sm:px-5 py-4 border-t border-border space-y-3">
           {/* Game plan header */}
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">
+            <span className="text-sm font-semibold uppercase tracking-widest text-text-tertiary">
               Game Plans ({plan.gamePlans.length}/3)
             </span>
             {!isReadOnly && plan.gamePlans.length < 3 && (
@@ -296,10 +296,10 @@ function InlineGamePlan({
         {/* Game plan header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-md text-[10px] font-bold border ${color.badge}`}>
+            <span className={`inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold border ${color.badge}`}>
               {index + 1}
             </span>
-            <span className="text-sm font-semibold text-text-primary">
+            <span className="text-base font-semibold text-text-primary">
               Game {index + 1}
             </span>
             {isReadOnly ? (
@@ -323,7 +323,7 @@ function InlineGamePlan({
         <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4">
           {/* Bring Four */}
           <div>
-            <span className="text-xs font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
+            <span className="text-sm font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
               Bring Four
             </span>
             <div className="grid grid-cols-4 gap-2">
@@ -358,11 +358,11 @@ function InlineGamePlan({
           {/* Notes + Replays */}
           <div className="flex flex-col gap-3">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
+              <span className="text-sm font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
                 Notes
               </span>
               {isReadOnly ? (
-                <div className="w-full min-h-[5rem] p-3 bg-surface-alt border border-border-subtle rounded-lg text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
+                <div className="w-full min-h-[5rem] p-3 sm:p-4 bg-surface-alt border border-border-subtle rounded-lg text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed">
                   {gamePlan.notes || "No notes."}
                 </div>
               ) : (
@@ -370,7 +370,7 @@ function InlineGamePlan({
                   value={gamePlan.notes}
                   onChange={(e) => onNotesChange(e.target.value)}
                   placeholder="Why are you bringing these four? What's the win condition?"
-                  className="w-full min-h-[5rem] p-3 bg-surface-alt border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+                  className="w-full min-h-[5rem] p-3 sm:p-4 bg-surface-alt border border-border-subtle rounded-lg text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
                   spellCheck={false}
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -380,7 +380,7 @@ function InlineGamePlan({
             {/* Replays */}
             {(gamePlan.replays.length > 0 || !isReadOnly) && (
               <div>
-                <span className="text-xs font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
+                <span className="text-sm font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
                   Replays
                 </span>
                 {gamePlan.replays.length > 0 && (
@@ -388,7 +388,7 @@ function InlineGamePlan({
                     {gamePlan.replays.map((url, i) => {
                       const info = getReplayInfo(url);
                       return (
-                        <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-alt border border-border-subtle rounded-lg text-xs">
+                        <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-alt border border-border-subtle rounded-lg text-sm">
                           <ReplayIcon type={info.type} />
                           {isReadOnly ? (
                             <a

@@ -53,7 +53,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           Team Analysis
         </h2>
         <p className="text-sm sm:text-base text-text-secondary mt-1">
-          Speed tiers & offensive type coverage
+          Speed tiers & type coverage
         </p>
       </div>
 

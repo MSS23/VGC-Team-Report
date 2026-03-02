@@ -9,6 +9,7 @@ import { lookupPokemon } from "@/lib/data/pokemon";
 import { calculateAllStats } from "@/lib/analysis/stat-calculator";
 import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
+import { ItemIcon } from "./ItemIcon";
 import { PokemonDropdown } from "./PokemonDropdown";
 import { Button } from "@/components/ui/Button";
 import { GAME_COLORS, getReplayInfo, ReplayIcon, ResultBadge, ResultToggle } from "@/lib/utils/game-plan-helpers";
@@ -103,7 +104,7 @@ export function MatchupPlanSlide({
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
           vs. {plan.opponentLabel}
         </h2>
         {!isReadOnly && (
@@ -121,36 +122,46 @@ export function MatchupPlanSlide({
       {/* Opponent Team Overview */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary">
             Opponent Team
           </h3>
           {anyHasEvs && (
-            <span className="text-[10px] text-accent font-medium px-2 py-0.5 bg-accent-surface rounded-full">
+            <span className="text-xs text-accent font-medium px-2.5 py-0.5 bg-accent-surface rounded-full">
               Full Spreads
             </span>
           )}
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5">
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4">
+        <div className="bg-surface border border-border rounded-2xl p-4 sm:p-6">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 sm:gap-5">
             {opponentPokemon.map((mon, i) => (
-              <div key={i} className="flex flex-col items-center gap-1.5 text-center">
-                <PokemonSprite species={mon.parsed.species} size={56} />
-                <span className="text-sm font-semibold text-text-primary truncate w-full">
+              <div key={i} className="flex flex-col items-center text-center min-h-0">
+                {/* Sprite — fixed height container for alignment */}
+                <div className="h-[72px] flex items-end justify-center mb-1.5">
+                  <PokemonSprite species={mon.parsed.species} size={72} />
+                </div>
+                {/* Name */}
+                <span className="text-sm sm:text-base font-bold text-text-primary truncate w-full leading-tight">
                   {mon.parsed.species}
                 </span>
-                <div className="flex items-center gap-0.5 flex-wrap justify-center">
+                {/* Types */}
+                <div className="flex items-center gap-0.5 flex-wrap justify-center mt-1.5">
                   {(mon.data?.types ?? []).map((type) => (
                     <TypeBadge key={type} type={type} />
                   ))}
                 </div>
+                {/* Item with icon */}
                 {mon.parsed.item && (
-                  <span className="text-[10px] text-text-secondary truncate w-full">
-                    {mon.parsed.item}
-                  </span>
+                  <div className="flex items-center gap-1 justify-center mt-1.5 w-full">
+                    <ItemIcon item={mon.parsed.item} size={20} />
+                    <span className="text-xs font-medium text-text-primary truncate">
+                      {mon.parsed.item}
+                    </span>
+                  </div>
                 )}
+                {/* Ability */}
                 {mon.parsed.ability && (
-                  <span className="text-[10px] text-text-tertiary truncate w-full">
+                  <span className="text-xs text-text-secondary mt-0.5 truncate w-full">
                     {mon.parsed.ability}
                   </span>
                 )}
@@ -161,29 +172,32 @@ export function MatchupPlanSlide({
           {/* Calculated stats when EVs are present */}
           {anyHasEvs && (
             <div className="mt-4 pt-4 border-t border-border-subtle">
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 sm:gap-5">
                 {opponentPokemon.map((mon, i) => (
                   <div key={i} className="text-center">
                     {mon.hasEvs && mon.calculatedStats ? (
                       <div className="space-y-0.5">
-                        <span className="text-[10px] font-medium text-text-tertiary block">
+                        <span className="text-xs font-semibold text-text-secondary block mb-1">
                           {mon.parsed.nature}
                         </span>
                         {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map((stat) => {
                           const value = mon.calculatedStats![stat];
                           const ev = mon.parsed.evs[stat];
                           return (
-                            <div key={stat} className="flex items-center justify-center gap-1 text-[10px]">
-                              <span className="text-text-tertiary w-6 text-right">{STAT_LABELS[stat]}</span>
-                              <span className={`font-mono ${ev > 0 ? "text-accent font-semibold" : "text-text-secondary"}`}>
+                            <div key={stat} className="flex items-center justify-center gap-1.5 text-xs">
+                              <span className="text-text-tertiary font-medium w-7 text-right">{STAT_LABELS[stat]}</span>
+                              <span className={`font-mono tabular-nums w-7 text-left ${ev > 0 ? "text-accent font-bold" : "text-text-primary"}`}>
                                 {value}
                               </span>
+                              {ev > 0 && (
+                                <span className="text-accent/70 text-[10px] font-medium w-6 text-left">+{ev}</span>
+                              )}
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <span className="text-[10px] text-text-tertiary">—</span>
+                      <span className="text-xs text-text-tertiary">—</span>
                     )}
                   </div>
                 ))}
@@ -196,7 +210,7 @@ export function MatchupPlanSlide({
       {/* Game Plans */}
       <div ref={gamePlansRef} className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary">
             Game Plans ({plan.gamePlans.length}/3)
           </h3>
           {!isReadOnly && plan.gamePlans.length < 3 && (
@@ -331,10 +345,10 @@ function GamePlanSection({
           <span className="text-text-tertiary text-xs transition-transform" style={{ transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)" }}>
             &#9662;
           </span>
-          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold border ${color.badge}`}>
+          <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold border ${color.badge}`}>
             {index + 1}
           </span>
-          <span className="text-sm font-semibold text-text-primary">
+          <span className="text-base font-semibold text-text-primary">
             Game {index + 1}
           </span>
           {isReadOnly ? (
@@ -369,7 +383,7 @@ function GamePlanSection({
           <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4 sm:gap-6">
             {/* Choose Your Four */}
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
+              <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
                 Bring Four
               </span>
               <div className="grid grid-cols-4 lg:grid-cols-2 gap-3">
@@ -404,11 +418,11 @@ function GamePlanSection({
             {/* Notes + Replays */}
             <div className="flex flex-col gap-4">
               <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
+                <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
                   Notes
                 </span>
                 {isReadOnly ? (
-                  <div className="w-full min-h-[8rem] p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
+                  <div className="w-full min-h-[8rem] p-4 sm:p-5 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed">
                     {gamePlan.notes || "No notes."}
                   </div>
                 ) : (
@@ -416,7 +430,7 @@ function GamePlanSection({
                     value={gamePlan.notes}
                     onChange={(e) => onNotesChange(e.target.value)}
                     placeholder="Why are you bringing these four? What's the win condition?"
-                    className="w-full min-h-[8rem] p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+                    className="w-full min-h-[8rem] p-4 sm:p-5 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
                     spellCheck={false}
                   />
                 )}
@@ -425,7 +439,7 @@ function GamePlanSection({
               {/* Replays */}
               {(gamePlan.replays.length > 0 || !isReadOnly) && (
                 <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
+                  <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
                     Replays
                   </span>
                   {gamePlan.replays.length > 0 && (
@@ -433,7 +447,7 @@ function GamePlanSection({
                       {gamePlan.replays.map((url, i) => {
                         const info = getReplayInfo(url);
                         return (
-                          <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-alt border border-border-subtle rounded-lg text-xs">
+                          <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-alt border border-border-subtle rounded-lg text-sm">
                             <ReplayIcon type={info.type} />
                             {isReadOnly ? (
                               <a

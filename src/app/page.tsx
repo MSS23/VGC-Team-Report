@@ -510,24 +510,49 @@ export default function Home() {
               </button>
 
               {/* Generation theme selector */}
-              <div className="hidden lg:flex items-center gap-0.5 bg-surface-alt/60 rounded-lg p-0.5" title="Generation theme">
-                {GEN_THEMES.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setGenTheme(t.id)}
-                    className={`px-1.5 py-1 rounded-md text-[10px] font-bold tracking-tight transition-all ${
-                      genTheme === t.id
-                        ? "text-white shadow-sm"
-                        : "text-text-tertiary hover:text-text-secondary bg-transparent hover:bg-surface-alt"
-                    }`}
-                    style={genTheme === t.id ? { backgroundColor: t.badge } : undefined}
-                    title={t.label}
-                    aria-label={`Set theme to ${t.label}`}
-                  >
-                    {t.abbr}
-                  </button>
-                ))}
+              <div className="hidden lg:flex items-center bg-surface-alt/50 rounded-xl p-1 gap-0.5" title="Generation theme">
+                {GEN_THEMES.map((t) => {
+                  const isActive = genTheme === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setGenTheme(t.id)}
+                      className={`group relative flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 cursor-pointer ${
+                        isActive ? "bg-surface scale-105" : "hover:bg-surface-alt"
+                      }`}
+                      style={isActive ? {
+                        boxShadow: `0 0 0 1.5px ${t.badge}50, 0 2px 8px ${t.badge}25`,
+                      } : undefined}
+                      title={`${t.label} (${t.abbr})`}
+                      aria-label={`Set theme to ${t.label}`}
+                    >
+                      <img
+                        src={`https://play.pokemonshowdown.com/sprites/home/${t.legendary}.png`}
+                        alt={t.label}
+                        width={32}
+                        height={32}
+                        loading="lazy"
+                        className={`object-contain transition-all duration-200 ${
+                          isActive
+                            ? "scale-110"
+                            : "brightness-[0.3] grayscale opacity-50 group-hover:brightness-100 group-hover:grayscale-0 group-hover:opacity-80 group-hover:scale-105"
+                        }`}
+                        style={{
+                          maxWidth: 32,
+                          maxHeight: 32,
+                          ...(isActive ? { filter: `drop-shadow(0 0 6px ${t.badge}80)` } : {}),
+                        }}
+                      />
+                      {isActive && (
+                        <span
+                          className="absolute -bottom-px left-1/2 -translate-x-1/2 h-[2px] w-5 rounded-full"
+                          style={{ backgroundColor: t.badge }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Creator toggle: full Toggle on sm+, compact button on mobile */}

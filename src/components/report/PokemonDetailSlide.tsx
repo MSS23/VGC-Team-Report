@@ -7,7 +7,6 @@ import { TypeBadge } from "./TypeBadge";
 import { CalcInput } from "./CalcInput";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { NATURES } from "@/lib/data/natures";
-import { getUsagePercent } from "@/lib/data/usage-stats";
 
 interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;
@@ -76,8 +75,6 @@ export function PokemonDetailSlide({
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
   const natureData = NATURES[parsed.nature];
-  const usagePercent = getUsagePercent(parsed.species);
-
   const statLabels = {
     hp: "HP",
     atk: "Atk",
@@ -227,11 +224,6 @@ export function PokemonDetailSlide({
                   @ {parsed.item}
                 </span>
               )}
-              {usagePercent !== null && (
-                <span className="text-xs font-medium text-text-tertiary bg-surface-alt px-2 py-0.5 rounded-md" title="VGC usage rate">
-                  {usagePercent}% usage
-                </span>
-              )}
             </div>
           </div>
         </div>
@@ -287,7 +279,7 @@ export function PokemonDetailSlide({
                           className="h-full rounded-full animate-bar-fill"
                           style={{
                             width: `${percentage}%`,
-                            backgroundColor: isBoosted ? "#f59e0b" : ev > 0 ? "var(--accent)" : "#cbd5e1",
+                            backgroundColor: isBoosted ? "#f59e0b" : ev > 0 ? "var(--accent)" : "#94a3b8",
                           }}
                         />
                       </div>

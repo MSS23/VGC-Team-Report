@@ -104,7 +104,7 @@ export function OpponentPokemonCard({
                           className="h-full rounded-full transition-all"
                           style={{
                             width: `${percentage}%`,
-                            backgroundColor: ev > 0 ? "#6366f1" : "#cbd5e1",
+                            backgroundColor: ev > 0 ? "var(--accent)" : "#94a3b8",
                           }}
                         />
                       </div>
