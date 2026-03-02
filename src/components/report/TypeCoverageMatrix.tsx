@@ -44,25 +44,25 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
     if (items.length === 0) return null;
     return (
       <div className="flex flex-col gap-1.5">
-        <span className={`text-[10px] font-bold uppercase tracking-wider ${color}`}>{label}</span>
-        <div className="flex flex-wrap gap-1.5">
+        <span className={`text-xs font-bold uppercase tracking-wider ${color}`}>{label}</span>
+        <div className="flex flex-wrap gap-2">
           {items.map(({ type, count, coverers }) => {
             const tc = TYPE_COLORS[type];
             return (
               <div
                 key={type}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface border border-border-subtle/60"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface border border-border-subtle/60"
                 title={count === 0
                   ? `Nothing hits ${type} super-effectively`
                   : `${coverers.map(i => pokemon[i].parsed.species).join(", ")} → ${type}`}
               >
                 <span
-                  className="px-1.5 py-[1px] text-[9px] font-bold uppercase rounded leading-none"
+                  className="px-1.5 py-0.5 text-[10px] font-bold uppercase rounded leading-none"
                   style={{ backgroundColor: tc.bg, color: tc.text }}
                 >
                   {type}
                 </span>
-                <span className={`text-[11px] font-bold tabular-nums ${
+                <span className={`text-sm font-bold tabular-nums ${
                   count === 0 ? "text-red-400" : count === 1 ? "text-amber-400" : "text-emerald-400"
                 }`}>
                   {count === 0 ? "0" : `${count}`}
@@ -78,10 +78,10 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary mb-0.5">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-0.5">
           Offensive Type Coverage
         </h3>
-        <p className="text-[11px] text-text-tertiary">
+        <p className="text-sm text-text-tertiary">
           Number of team members that hit each type super-effectively
         </p>
       </div>

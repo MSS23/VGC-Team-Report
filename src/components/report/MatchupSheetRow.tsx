@@ -171,7 +171,7 @@ export function MatchupSheetRow({
         <div className="px-4 sm:px-5 py-4 border-t border-border space-y-3">
           {/* Game plan header */}
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary">
+            <span className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">
               Game Plans ({plan.gamePlans.length}/3)
             </span>
             {!isReadOnly && plan.gamePlans.length < 3 && (
@@ -313,7 +313,7 @@ function InlineGamePlan({
         <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4">
           {/* Bring Four */}
           <div>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
+            <span className="text-xs font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
               Bring Four
             </span>
             <div className="grid grid-cols-4 gap-2">
@@ -348,7 +348,7 @@ function InlineGamePlan({
           {/* Notes + Replays */}
           <div className="flex flex-col gap-3">
             <div>
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
+              <span className="text-xs font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
                 Notes
               </span>
               {isReadOnly ? (
@@ -370,7 +370,7 @@ function InlineGamePlan({
             {/* Replays */}
             {(gamePlan.replays.length > 0 || !isReadOnly) && (
               <div>
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
+                <span className="text-xs font-semibold uppercase tracking-widest text-text-tertiary block mb-2">
                   Replays
                 </span>
                 {gamePlan.replays.length > 0 && (

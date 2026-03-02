@@ -49,21 +49,21 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   return (
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
       <div>
-        <h2 className="text-lg sm:text-xl font-bold text-text-primary presenting:text-2xl">
+        <h2 className="text-xl sm:text-2xl font-bold text-text-primary presenting:text-3xl">
           Team Analysis
         </h2>
-        <p className="text-xs sm:text-sm text-text-secondary mt-1">
+        <p className="text-sm sm:text-base text-text-secondary mt-1">
           Speed tiers & offensive type coverage
         </p>
       </div>
 
       {/* Speed Tiers Section */}
       <div className="flex flex-col gap-2">
-        <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">
           Speed Tiers
         </h3>
 
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-3">
           {entries.map((entry) => {
             const sc = getSpriteConfig?.(entry.speciesKey);
             const percent = Math.min((entry.boostedSpe / maxSpeed) * 100, 100);
@@ -72,21 +72,21 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             return (
               <div key={entry.speciesKey} className="flex items-center gap-2 sm:gap-3">
                 {/* Name column — fixed width */}
-                <div className="flex items-center gap-1.5 w-28 sm:w-32 flex-shrink-0 min-w-0">
+                <div className="flex items-center gap-2 w-32 sm:w-40 flex-shrink-0 min-w-0">
                   <PokemonSprite
                     species={entry.species}
-                    size={isPresentationMode ? 32 : 24}
+                    size={isPresentationMode ? 36 : 28}
                     animated={sc?.animated}
                     shiny={sc?.shiny}
                   />
-                  <span className="text-xs sm:text-sm font-semibold text-text-primary truncate">
+                  <span className="text-sm sm:text-base font-semibold text-text-primary truncate">
                     {entry.species}
                   </span>
                 </div>
 
                 {/* Bar column */}
                 <div className="flex-1 flex items-center gap-2 min-w-0">
-                  <div className="flex-1 h-6 sm:h-7 bg-surface-alt rounded-lg overflow-hidden relative">
+                  <div className="flex-1 h-7 sm:h-8 bg-surface-alt rounded-lg overflow-hidden relative">
                     {/* Base bar */}
                     <div
                       className={`absolute inset-y-0 left-0 rounded-lg transition-all ${
@@ -110,14 +110,14 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                   </div>
 
                   {/* Speed value — fixed width to prevent overlap */}
-                  <div className="w-16 sm:w-20 flex-shrink-0 text-right">
-                    <span className={`text-xs sm:text-sm font-mono font-bold tabular-nums ${
+                  <div className="w-18 sm:w-24 flex-shrink-0 text-right">
+                    <span className={`text-sm sm:text-base font-mono font-bold tabular-nums ${
                       entry.hasSpeedBoost ? "text-amber-500" : "text-text-primary"
                     }`}>
                       {entry.hasSpeedBoost ? entry.boostedSpe : entry.baseSpe}
                     </span>
                     {entry.hasSpeedBoost && (
-                      <span className="text-[9px] text-amber-500/60 ml-0.5">
+                      <span className="text-[10px] text-amber-500/60 ml-0.5">
                         scarf
                       </span>
                     )}
@@ -129,7 +129,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         </div>
 
         {/* Tailwind note + Legend */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-[10px] text-text-tertiary">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-text-tertiary">
           <span className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded bg-accent/60" />
             Base

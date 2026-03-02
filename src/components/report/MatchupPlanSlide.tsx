@@ -111,7 +111,7 @@ export function MatchupPlanSlide({
       {/* Opponent Team Overview */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">
             Opponent Team
           </h3>
           {anyHasEvs && (
@@ -126,7 +126,7 @@ export function MatchupPlanSlide({
             {opponentPokemon.map((mon, i) => (
               <div key={i} className="flex flex-col items-center gap-1.5 text-center">
                 <PokemonSprite species={mon.parsed.species} size={56} />
-                <span className="text-xs font-semibold text-text-primary truncate w-full">
+                <span className="text-sm font-semibold text-text-primary truncate w-full">
                   {mon.parsed.species}
                 </span>
                 <div className="flex items-center gap-0.5 flex-wrap justify-center">
@@ -186,7 +186,7 @@ export function MatchupPlanSlide({
       {/* Game Plans */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-text-tertiary">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">
             Game Plans ({plan.gamePlans.length}/3)
           </h3>
           {!isReadOnly && plan.gamePlans.length < 3 && (
@@ -359,7 +359,7 @@ function GamePlanSection({
           <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4 sm:gap-6">
             {/* Choose Your Four */}
             <div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
                 Bring Four
               </span>
               <div className="grid grid-cols-4 lg:grid-cols-2 gap-3">
@@ -394,7 +394,7 @@ function GamePlanSection({
             {/* Notes + Replays */}
             <div className="flex flex-col gap-4">
               <div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
                   Notes
                 </span>
                 {isReadOnly ? (
@@ -415,7 +415,7 @@ function GamePlanSection({
               {/* Replays */}
               {(gamePlan.replays.length > 0 || !isReadOnly) && (
                 <div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
                     Replays
                   </span>
                   {gamePlan.replays.length > 0 && (
