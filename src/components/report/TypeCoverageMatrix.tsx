@@ -123,24 +123,24 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
   ) => {
     if (items.length === 0) return null;
     return (
-      <div className="flex flex-col gap-1.5">
-        <span className={`text-xs font-bold uppercase tracking-wider ${color}`}>{label}</span>
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2">
+        <span className={`text-sm font-bold uppercase tracking-wider ${color}`}>{label}</span>
+        <div className="flex flex-wrap gap-2.5">
           {items.map(({ type, count, indices }) => {
             const tc = TYPE_COLORS[type];
             return (
               <div
                 key={type}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface border border-border-subtle/60"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border-subtle/60"
                 title={getTooltip(type, count, indices)}
               >
                 <span
-                  className="px-1.5 py-0.5 text-[10px] font-bold uppercase rounded leading-none"
+                  className="px-2 py-1 text-xs font-bold uppercase rounded-md leading-none"
                   style={{ backgroundColor: tc.bg, color: tc.text }}
                 >
                   {type}
                 </span>
-                <span className={`text-sm font-bold tabular-nums ${getCountColor(count)}`}>
+                <span className={`text-base font-bold tabular-nums ${getCountColor(count)}`}>
                   {count}
                 </span>
               </div>
@@ -155,10 +155,10 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-0.5">
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-0.5">
             {mode === "offensive" ? "Offensive Type Coverage" : "Defensive Type Coverage"}
           </h3>
-          <p className="text-sm text-text-tertiary">
+          <p className="text-sm sm:text-base text-text-tertiary">
             {mode === "offensive"
               ? "Number of team members that hit each type super-effectively"
               : "Number of team members weak to each attacking type"}
@@ -170,7 +170,7 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
           <button
             type="button"
             onClick={() => setMode("offensive")}
-            className={`px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-md transition-colors ${
+            className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-md transition-colors ${
               mode === "offensive"
                 ? "bg-surface text-text-primary shadow-sm"
                 : "text-text-tertiary hover:text-text-secondary"
@@ -181,7 +181,7 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
           <button
             type="button"
             onClick={() => setMode("defensive")}
-            className={`px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-md transition-colors ${
+            className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-md transition-colors ${
               mode === "defensive"
                 ? "bg-surface text-text-primary shadow-sm"
                 : "text-text-tertiary hover:text-text-secondary"
