@@ -76,11 +76,31 @@ interface PasteInputProps {
   onAnalyze: (directPaste?: string) => void;
 }
 
+function looksLikeShowdownPaste(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  const hasAbility = /\bAbility:/i.test(trimmed);
+  const hasEVs = /\bEVs:/i.test(trimmed);
+  const hasMove = /^- .+/m.test(trimmed);
+  // Must match at least 2 of the 3 markers
+  return [hasAbility, hasEVs, hasMove].filter(Boolean).length >= 2;
+}
+
 export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps) {
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const isUrl = isPokePasteUrl(paste);
+
+  const handleAnalyze = () => {
+    if (paste.trim() && !isUrl && !looksLikeShowdownPaste(paste)) {
+      setValidationError("Invalid format. Paste a Pokémon Showdown team export or PokéPaste URL.");
+      return;
+    }
+    setValidationError(null);
+    onAnalyze();
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -88,7 +108,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
       if (isUrl) {
         handleFetchPaste();
       } else {
-        onAnalyze();
+        handleAnalyze();
       }
     }
   };
@@ -135,7 +155,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
           <div className="absolute -inset-0.5 bg-gradient-to-r from-accent/20 via-purple-500/20 to-accent/20 rounded-[18px] opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur-sm" />
           <textarea
             value={paste}
-            onChange={(e) => { onPasteChange(e.target.value); setFetchError(null); }}
+            onChange={(e) => { onPasteChange(e.target.value); setFetchError(null); setValidationError(null); }}
             onKeyDown={handleKeyDown}
             placeholder="Paste your Pokemon Showdown team export or a pokepast.es URL..."
             className="relative w-full h-64 sm:h-80 p-5 sm:p-6 bg-surface border border-border rounded-2xl text-sm font-mono text-text-primary placeholder:text-text-tertiary resize-none focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/60 transition-all duration-200 shadow-sm"
@@ -148,12 +168,12 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
           )}
         </div>
 
-        {fetchError && (
+        {(fetchError || validationError) && (
           <div className="flex items-center gap-2 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl animate-fade-in">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-400 flex-shrink-0">
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
-            <p className="text-sm text-red-400">{fetchError}</p>
+            <p className="text-sm text-red-400">{fetchError || validationError}</p>
           </div>
         )}
 
@@ -189,7 +209,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
             </Button>
           ) : (
             <Button
-              onClick={() => onAnalyze()}
+              onClick={handleAnalyze}
               disabled={!paste.trim()}
               size="lg"
             >

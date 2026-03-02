@@ -34,7 +34,8 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             type="button"
             onClick={onToggleAnimated}
             title={animated ? "Switch to static sprite" : "Switch to animated GIF"}
-            className="block cursor-pointer rounded-xl transition-transform hover:scale-105 active:scale-95"
+            aria-label={animated ? "Switch to static sprite" : "Switch to animated sprite"}
+            className="block cursor-pointer rounded-xl transition-transform hover:scale-105 active:scale-95 min-w-[44px] min-h-[44px]"
           >
             <PokemonSprite
               species={parsed.species}
@@ -48,7 +49,8 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               type="button"
               onClick={onToggleShiny}
               title={shiny ? "Show normal sprite" : "Show shiny sprite"}
-              className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-px rounded text-[9px] font-bold uppercase tracking-wide border transition-all ${
+              aria-label={shiny ? "Disable shiny sprite" : "Enable shiny sprite"}
+              className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wide border transition-all min-w-[44px] min-h-[44px] flex items-center justify-center ${
                 shiny
                   ? "bg-amber-400/25 text-amber-500 border-amber-400/50"
                   : "bg-surface text-text-tertiary/60 border-border-subtle hover:text-text-tertiary"
@@ -83,6 +85,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                     : "text-text-tertiary/40 hover:text-amber-400 hover:bg-amber-400/10"
                 }`}
                 title={isMvp ? "Remove MVP" : "Set as MVP"}
+                aria-label={isMvp ? "Remove MVP" : "Set as MVP"}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill={isMvp ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
                   <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />

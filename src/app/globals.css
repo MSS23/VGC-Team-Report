@@ -88,9 +88,9 @@ body {
   --border: #2a3a54;
   --border-subtle: #1a2540;
   --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-tertiary: #475569;
-  --accent: #818cf8;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --accent: #a5b4fc;
   --accent-light: #a5b4fc;
   --accent-surface: #312e81;
 }
@@ -198,3 +198,12 @@ body {
 .stagger-stats > *:nth-child(4) { animation-delay: 260ms; }
 .stagger-stats > *:nth-child(5) { animation-delay: 320ms; }
 .stagger-stats > *:nth-child(6) { animation-delay: 380ms; }
+
+/* Slide content fade transition */
+.slide-content {
+  animation: slide-fade-in 0.3s ease-out;
+}
+@keyframes slide-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

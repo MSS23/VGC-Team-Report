@@ -15,6 +15,8 @@ interface PokemonDropdownProps {
   draggable?: boolean;
   /** Drag start handler passed from parent */
   onDragStart?: (e: React.DragEvent) => void;
+  /** Display labels parallel to yourPokemon (e.g. "Incineroar", "Incineroar (2)") */
+  speciesLabels?: string[];
 }
 
 export function PokemonDropdown({
@@ -25,6 +27,7 @@ export function PokemonDropdown({
   takenIndices = [],
   draggable = false,
   onDragStart,
+  speciesLabels,
 }: PokemonDropdownProps) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -50,7 +53,7 @@ export function PokemonDropdown({
           <>
             <PokemonSprite species={selected.parsed.species} size={36} />
             <span className="text-[9px] sm:text-[10px] text-text-secondary truncate w-full text-center leading-tight">
-              {selected.parsed.species}
+              {speciesLabels?.[selectedIndex!] ?? selected.parsed.species}
             </span>
           </>
         ) : (
@@ -75,7 +78,7 @@ export function PokemonDropdown({
           <>
             <PokemonSprite species={selected.parsed.species} size={36} />
             <span className="text-[9px] sm:text-[10px] text-text-secondary truncate w-full text-center leading-tight">
-              {selected.parsed.species}
+              {speciesLabels?.[selectedIndex!] ?? selected.parsed.species}
             </span>
           </>
         ) : (
@@ -129,7 +132,7 @@ export function PokemonDropdown({
                 <span className={`text-xs truncate flex-1 ${
                   isSelected ? "text-accent font-semibold" : "text-text-primary"
                 }`}>
-                  {mon.parsed.species}
+                  {speciesLabels?.[index] ?? mon.parsed.species}
                 </span>
                 {isSelected && (
                   <span className="text-accent text-xs flex-shrink-0">&#10003;</span>

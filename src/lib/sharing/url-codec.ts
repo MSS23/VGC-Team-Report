@@ -78,12 +78,17 @@ export async function encodeShareState(state: ShareableState): Promise<string> {
     offset += chunk.length;
   }
 
-  return toBase64Url(result);
+  return "1:" + toBase64Url(result);
 }
 
 export async function decodeShareState(encoded: string): Promise<ShareableState | null> {
   try {
-    const bytes = fromBase64Url(encoded);
+    // Strip version prefix if present; legacy URLs have no prefix
+    let payload = encoded;
+    if (payload.startsWith("1:")) {
+      payload = payload.slice(2);
+    }
+    const bytes = fromBase64Url(payload);
 
     const ds = new DecompressionStream("deflate-raw");
     const writer = ds.writable.getWriter();

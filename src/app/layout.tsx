@@ -10,6 +10,20 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "VGC Team Report",
   description: "Transform your Pokemon Showdown VGC paste into a clean, professional team report",
+  openGraph: {
+    title: "VGC Team Report",
+    description: "Build, share, and present professional VGC team reports",
+    type: "website",
+    siteName: "VGC Team Report",
+  },
+  twitter: {
+    card: "summary",
+    title: "VGC Team Report",
+    description: "Build, share, and present professional VGC team reports",
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

@@ -192,6 +192,8 @@ export function WalkthroughOverlay({
       {/* Tooltip card */}
       <div
         ref={tooltipRef}
+        role="dialog"
+        aria-label="Walkthrough"
         style={{
           ...tooltipStyle,
           zIndex: 10000,
@@ -216,6 +218,7 @@ export function WalkthroughOverlay({
             {!isLastStep && (
               <button
                 onClick={onSkip}
+                aria-label="Skip walkthrough"
                 className="text-xs text-text-tertiary hover:text-text-secondary px-3 py-1.5 rounded-lg transition-colors"
               >
                 Skip
@@ -223,6 +226,7 @@ export function WalkthroughOverlay({
             )}
             <button
               onClick={onNext}
+              aria-label={isLastStep ? "Finish walkthrough" : "Next step"}
               className="text-xs font-semibold text-white bg-accent hover:bg-accent/90 px-4 py-1.5 rounded-lg transition-colors"
             >
               {isLastStep ? "Done" : "Next"}

@@ -27,6 +27,8 @@ export function SlideNavControls({
 }: SlideNavControlsProps) {
   return (
     <div
+      role="navigation"
+      aria-label="Slide navigation"
       data-walkthrough="slide-nav"
       className={`fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl border-t transition-all duration-300 ${
         autoHide
@@ -41,6 +43,7 @@ export function SlideNavControls({
           size="sm"
           onClick={onPrev}
           disabled={isFirst}
+          aria-label="Previous slide"
           className="min-w-[60px] sm:min-w-[100px]"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="hidden sm:block">
@@ -52,7 +55,7 @@ export function SlideNavControls({
         {/* Center: Dots + counter */}
         <div className="flex flex-col items-center gap-1.5 min-w-0 flex-1">
           {/* Dots */}
-          <div className="hidden sm:flex items-center gap-1.5 max-w-full overflow-x-auto py-0.5">
+          <div className="hidden sm:flex items-center gap-1.5 max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden py-0.5">
             {Array.from({ length: totalSlides }, (_, i) => (
               <button
                 key={i}
@@ -79,6 +82,7 @@ export function SlideNavControls({
           size="sm"
           onClick={onNext}
           disabled={isLast}
+          aria-label="Next slide"
           className="min-w-[60px] sm:min-w-[100px]"
         >
           Next

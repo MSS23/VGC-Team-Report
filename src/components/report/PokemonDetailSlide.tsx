@@ -162,6 +162,7 @@ export function PokemonDetailSlide({
                     type="button"
                     onClick={onToggleShiny}
                     title={shiny ? "Show normal sprite" : "Show shiny sprite"}
+                    aria-label={shiny ? "Disable shiny sprite" : "Enable shiny sprite"}
                     className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
                       shiny
                         ? "bg-amber-400/20 text-amber-500 border-amber-400/40"
@@ -176,6 +177,7 @@ export function PokemonDetailSlide({
                     type="button"
                     onClick={onToggleAnimated}
                     title={animated ? "Show static sprite" : "Show animated sprite"}
+                    aria-label={animated ? "Switch to static sprite" : "Switch to animated sprite"}
                     className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
                       animated
                         ? "bg-accent/15 text-accent border-accent/30"

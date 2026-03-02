@@ -14,6 +14,7 @@ export function useShareUrl() {
   const [sharedState, setSharedState] = useState<ShareableState | null>(null);
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
   const [urlWarning, setUrlWarning] = useState<string | null>(null);
+  const [decodeFailed, setDecodeFailed] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // On mount: check URL hash for shared data
@@ -24,12 +25,32 @@ export function useShareUrl() {
     const encoded = hash.slice("#data=".length);
     if (!encoded) return;
 
+    let settled = false;
+    const timeout = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        setDecodeFailed(true);
+      }
+    }, 5000);
+
     decodeShareState(encoded).then((state) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
       if (state) {
         setIsSharedView(true);
         setSharedState(state);
+      } else {
+        setDecodeFailed(true);
       }
+    }).catch(() => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      setDecodeFailed(true);
     });
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const copyShareUrl = useCallback(async (state: ShareableState) => {
@@ -55,5 +76,5 @@ export function useShareUrl() {
     }
   }, []);
 
-  return { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning };
+  return { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed };
 }

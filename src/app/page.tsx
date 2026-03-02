@@ -34,7 +34,7 @@ export default function Home() {
   const { creatorMode, setCreatorMode } = useCreatorMode();
   const { presentationMode, setPresentationMode } = usePresentationMode();
   const { darkMode, setDarkMode } = useDarkMode(false);
-  const { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning } = useShareUrl();
+  const { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed } = useShareUrl();
   const { slideRef, exportAsPng } = useExportSlide();
   const {
     isActive: walkthroughActive,
@@ -259,14 +259,34 @@ export default function Home() {
     );
   }
 
-  // Loading state for shared view
-  if (!analysis && sharedState) {
+  // Loading / error state for shared view
+  if (!analysis && (sharedState || decodeFailed)) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="flex flex-col items-center gap-3 animate-fade-in">
-          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          <p className="text-text-secondary text-sm">Loading shared team...</p>
-        </div>
+        {decodeFailed ? (
+          <div className="flex flex-col items-center gap-4 animate-fade-in text-center">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+            </div>
+            <p className="text-text-primary font-semibold">Failed to load shared team</p>
+            <p className="text-text-secondary text-sm max-w-xs">The link may be corrupted or expired. Ask the creator for a new link.</p>
+            <button
+              onClick={() => { window.location.href = window.location.origin + window.location.pathname; }}
+              className="mt-2 px-5 py-2 bg-accent text-white rounded-xl font-semibold text-sm hover:bg-accent/90 transition-colors"
+            >
+              Build Your Own
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3 animate-fade-in">
+            <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            <p className="text-text-secondary text-sm">Loading shared team...</p>
+          </div>
+        )}
       </main>
     );
   }

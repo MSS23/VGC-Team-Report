@@ -96,7 +96,7 @@ export function MatchupSheet({
           <p className="text-xs text-text-tertiary mt-1">Add an opponent team below to get started.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="overflow-x-auto"><div className="flex flex-col gap-3">
           {plans.map((plan, index) => (
             <div
               key={plan.id}
@@ -140,7 +140,7 @@ export function MatchupSheet({
               />
             </div>
           ))}
-        </div>
+        </div></div>
       )}
 
       {!isReadOnly && <AddOpponentInput onAdd={onAddPlan} />}
