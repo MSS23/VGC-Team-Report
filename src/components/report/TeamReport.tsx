@@ -18,6 +18,10 @@ interface TeamReportProps {
   onAddCalc: (species: string, text: string, category: CalcCategory) => void;
   onRemoveCalc: (species: string, index: number) => void;
   speciesKeys: string[];
+  roles: Record<string, string>;
+  onRoleChange: (speciesKey: string, text: string) => void;
+  teamSummary: string;
+  onTeamSummaryChange: (text: string) => void;
   isReadOnly?: boolean;
   isPresentationMode?: boolean;
   plans?: MatchupPlan[];
@@ -45,6 +49,10 @@ export function TeamReport({
   onAddCalc,
   onRemoveCalc,
   speciesKeys,
+  roles,
+  onRoleChange,
+  teamSummary,
+  onTeamSummaryChange,
   isReadOnly = false,
   isPresentationMode = false,
   plans = [],
@@ -66,6 +74,12 @@ export function TeamReport({
       <TeamOverview
         pokemon={analysis.pokemon}
         creatorMode={creatorMode}
+        speciesKeys={speciesKeys}
+        roles={roles}
+        onRoleChange={onRoleChange}
+        summary={teamSummary}
+        onSummaryChange={onTeamSummaryChange}
+        isReadOnly={isReadOnly}
       />
     );
   }

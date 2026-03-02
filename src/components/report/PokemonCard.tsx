@@ -9,9 +9,12 @@ import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 interface PokemonCardProps {
   pokemon: AnalyzedPokemon;
   creatorMode: boolean;
+  role?: string;
+  onRoleChange?: (text: string) => void;
+  isReadOnly?: boolean;
 }
 
-export function PokemonCard({ pokemon, creatorMode }: PokemonCardProps) {
+export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly }: PokemonCardProps) {
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
   const spriteSize = creatorMode ? 96 : 72;
@@ -57,6 +60,22 @@ export function PokemonCard({ pokemon, creatorMode }: PokemonCardProps) {
             )}
             {parsed.ability && <span>{parsed.ability}</span>}
           </div>
+
+          {/* Role */}
+          {onRoleChange && !isReadOnly ? (
+            <input
+              type="text"
+              value={role ?? ""}
+              onChange={(e) => onRoleChange(e.target.value)}
+              placeholder="Role..."
+              maxLength={40}
+              className="mt-2 w-full text-xs px-2.5 py-1 bg-surface-alt border border-border-subtle rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+            />
+          ) : role ? (
+            <span className="mt-2 inline-block text-xs font-medium text-accent bg-accent-surface px-2.5 py-1 rounded-lg">
+              {role}
+            </span>
+          ) : null}
         </div>
       </div>
 

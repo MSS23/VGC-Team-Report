@@ -20,6 +20,8 @@ export interface ShareableState {
   paste: string;
   notes: Record<string, string>;
   calcs?: Record<string, CalcEntry[]>;
+  roles?: Record<string, string>;
+  teamSummary?: string;
   matchupPlans: SerializedMatchupPlan[];
 }
 

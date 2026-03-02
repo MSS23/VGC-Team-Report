@@ -9,6 +9,7 @@ import { useSlideNavigation } from "@/hooks/useSlideNavigation";
 import { usePokemonNotes } from "@/hooks/usePokemonNotes";
 import { useDamageCalcs } from "@/hooks/useDamageCalcs";
 import { useMatchupPlans } from "@/hooks/useMatchupPlans";
+import { useTeamMeta } from "@/hooks/useTeamMeta";
 import { useShareUrl } from "@/hooks/useShareUrl";
 import { PasteInput } from "@/components/input/PasteInput";
 import { TeamReport } from "@/components/report/TeamReport";
@@ -60,6 +61,7 @@ export default function Home() {
 
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, !isSharedView);
   const { calcs, addCalc, removeCalc, setCalcsFull } = useDamageCalcs(speciesKeys, !isSharedView);
+  const { roles, summary, setRole, setSummary, setMetaFull } = useTeamMeta(speciesKeys, !isSharedView);
   const {
     plans,
     addPlan,
@@ -104,12 +106,16 @@ export default function Home() {
     parseTeam(sharedState.paste);
   }, [sharedState, setPaste, parseTeam]);
 
-  // Effect 2: Hydrate notes, calcs, and plans once analysis is ready
+  // Effect 2: Hydrate notes, calcs, roles, summary, and plans once analysis is ready
   useEffect(() => {
     if (!sharedState || !analysis || hasHydrated.current) return;
     hasHydrated.current = true;
     setNotesFull(sharedState.notes);
     if (sharedState.calcs) setCalcsFull(sharedState.calcs);
+    setMetaFull({
+      roles: sharedState.roles ?? {},
+      summary: sharedState.teamSummary ?? "",
+    });
     setPlansFull(
       sharedState.matchupPlans.map((p) => ({
         id: crypto.randomUUID(),
@@ -120,7 +126,7 @@ export default function Home() {
         })),
       }))
     );
-  }, [sharedState, analysis, setNotesFull, setCalcsFull, setPlansFull]);
+  }, [sharedState, analysis, setNotesFull, setCalcsFull, setMetaFull, setPlansFull]);
 
   // Build slide labels for nav dots
   const slideLabels = useMemo(() => {
@@ -144,6 +150,8 @@ export default function Home() {
       paste,
       notes,
       calcs,
+      roles,
+      teamSummary: summary,
       matchupPlans: plans.map((p) => ({
         opponentPaste: p.opponentPaste,
         opponentLabel: p.opponentLabel,
@@ -153,7 +161,7 @@ export default function Home() {
         })),
       })),
     });
-  }, [analysis, paste, notes, calcs, plans, copyShareUrl]);
+  }, [analysis, paste, notes, calcs, roles, summary, plans, copyShareUrl]);
 
   const shareButtonText =
     shareStatus === "copying"
@@ -316,6 +324,10 @@ export default function Home() {
           onAddCalc={addCalc}
           onRemoveCalc={removeCalc}
           speciesKeys={speciesKeys}
+          roles={roles}
+          onRoleChange={setRole}
+          teamSummary={summary}
+          onTeamSummaryChange={setSummary}
           isReadOnly={isReadOnly}
           isPresentationMode={isPresentationStyle}
           plans={plans}

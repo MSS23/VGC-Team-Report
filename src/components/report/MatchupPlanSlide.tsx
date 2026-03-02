@@ -263,12 +263,15 @@ function GamePlanSection({
   const color = GAME_COLORS[index] ?? GAME_COLORS[0];
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
+  const dragType = `application/x-gameplan-${gamePlan.id}`;
+
   const handleDragStart = (e: React.DragEvent, bringIdx: number) => {
-    e.dataTransfer.setData("text/plain", String(bringIdx));
+    e.dataTransfer.setData(dragType, String(bringIdx));
     e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e: React.DragEvent, bringIdx: number) => {
+    if (!e.dataTransfer.types.includes(dragType)) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     setDragOverIndex(bringIdx);
@@ -279,9 +282,10 @@ function GamePlanSection({
   };
 
   const handleDrop = (e: React.DragEvent, toIdx: number) => {
+    if (!e.dataTransfer.types.includes(dragType)) return;
     e.preventDefault();
     setDragOverIndex(null);
-    const fromIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
+    const fromIdx = parseInt(e.dataTransfer.getData(dragType), 10);
     if (!isNaN(fromIdx) && fromIdx !== toIdx) {
       onReorderBring(fromIdx as 0 | 1 | 2 | 3, toIdx as 0 | 1 | 2 | 3);
     }
