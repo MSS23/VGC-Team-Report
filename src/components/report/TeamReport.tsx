@@ -101,10 +101,9 @@ export function TeamReport({
   onToggleAnimated,
 }: TeamReportProps) {
   const pokemonCount = analysis.pokemon.length;
-  // Individual matchup slides only in creator mode
-  const showMatchupSlides = creatorMode && !isReadOnly;
-  // Only plans with showSlide !== false get their own slide
+  // Plans with showSlide !== false get their own dedicated slide for all viewers
   const visibleSlidePlans = plans.filter((p) => p.showSlide !== false);
+  const showMatchupSlides = visibleSlidePlans.length > 0;
 
   // Slide 0: Team Overview
   if (currentSlide === 0) {

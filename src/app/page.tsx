@@ -106,10 +106,10 @@ export default function Home() {
     setSettingsFull: setSpriteSettingsFull,
   } = useSpriteSettings(speciesKeys, spriteDefaults, !isSharedView);
 
-  // Individual matchup slides only shown in creator mode (not shared view)
-  const showMatchupSlides = creatorMode && !isSharedView;
   // Plans that have their own dedicated slide (showSlide defaults to true)
+  // Creator controls visibility via the eye toggle — visible plans get slides for everyone
   const visibleSlidePlans = plans.filter((p) => p.showSlide !== false);
+  const showMatchupSlides = visibleSlidePlans.length > 0;
 
   // Total slides: Overview + 6 Pokemon + Speed Tiers + (N visible matchup plans if creator) + 1 matchup sheet
   const totalSlides = analysis
