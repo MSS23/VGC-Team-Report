@@ -224,6 +224,19 @@ export default function Home() {
     });
   }, [analysis, paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, plans, speciesKeys, getSpriteConfig, copyShareUrl]);
 
+  // Share completeness check: require Creator Mode, team summary, and notes for every Pokemon
+  const missingForShare = useMemo(() => {
+    if (!analysis) return [];
+    const missing: string[] = [];
+    if (!creatorMode) missing.push("Enable Creator Mode");
+    if (!summary.trim()) missing.push("Add a team summary");
+    const emptyNotes = speciesKeys.filter((k) => !notes[k]?.trim());
+    if (emptyNotes.length > 0) missing.push(`Add notes for ${emptyNotes.length} Pokemon`);
+    return missing;
+  }, [analysis, creatorMode, summary, notes, speciesKeys]);
+
+  const canShare = missingForShare.length === 0;
+
   const shareButtonText =
     shareStatus === "copying"
       ? "Copying..."
@@ -396,8 +409,9 @@ export default function Home() {
                 variant="secondary"
                 size="sm"
                 onClick={handleShare}
-                disabled={shareStatus === "copying"}
+                disabled={!canShare || shareStatus === "copying"}
                 data-walkthrough="share-button"
+                title={!canShare ? missingForShare.join(" · ") : undefined}
               >
                 {shareButtonText}
               </Button>
