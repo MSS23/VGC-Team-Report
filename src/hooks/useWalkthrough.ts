@@ -15,43 +15,50 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     target: null,
     title: "Welcome to VGC Team Report!",
     description:
-      "Let\u2019s take a quick tour of the key features so you can get the most out of your team analysis.",
+      "Let\u2019s take a quick tour of the key features so you can build and share your team analysis.",
+    placement: "center",
+  },
+  {
+    target: null,
+    title: "How It Works",
+    description:
+      "Your report is a slide deck: Team Overview, one slide per Pok\u00e9mon, a Speed Tier chart, matchup plans for each opponent, and a Matchup Sheet. Navigate slides and fill in your notes, calcs, and game plans.",
     placement: "center",
   },
   {
     target: "slide-nav",
     title: "Slide Navigation",
     description:
-      "Use these controls to move between slides. You can also press the left/right arrow keys or click the dots to jump to a specific slide.",
+      "Use these controls or the left/right arrow keys to move between slides. Click any dot to jump directly to that slide.",
     placement: "above",
+  },
+  {
+    target: "creator-toggle",
+    title: "Lock / Unlock Editing",
+    description:
+      "Editing is unlocked by default. Click the lock button to switch to a clean read-only view. Unlock it again anytime to make changes.",
+    placement: "below",
+    mobileSkip: true,
   },
   {
     target: "share-button",
     title: "Share Your Report",
     description:
-      "Copy a shareable URL that includes your full team report \u2014 notes, matchup plans, and all. Anyone with the link can view it.",
+      "Once you\u2019ve added a team summary and notes for each Pok\u00e9mon, hit Share to copy a URL. Anyone with the link gets a read-only view with a QR code.",
     placement: "below",
-  },
-  {
-    target: "creator-toggle",
-    title: "Creator Mode",
-    description:
-      "Toggle Creator Mode to unlock editing features like matchup plans, game notes, and team roles. Turn it off for a cleaner presentation view.",
-    placement: "below",
-    mobileSkip: true,
   },
   {
     target: "present-button",
     title: "Present Your Team",
     description:
-      "Enter fullscreen presentation mode \u2014 perfect for sharing your team in a call or stream. Press Escape or click Exit to return.",
+      "Enter fullscreen presentation mode \u2014 perfect for team calls or streams. Use arrow keys to navigate, press D for dark mode, F for fullscreen, or ? for all shortcuts.",
     placement: "below",
   },
   {
     target: null,
     title: "You\u2019re all set!",
     description:
-      "That\u2019s everything you need to know. Click the \u24D8 button in the header anytime to replay this walkthrough.",
+      "Start by filling in each Pok\u00e9mon\u2019s notes and calcs, then add matchup plans on the Matchup Sheet slide. Click the ? in the header to replay this guide anytime.",
     placement: "center",
   },
 ];
