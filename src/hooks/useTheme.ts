@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 export type GenTheme = "gen1" | "gen2" | "gen3" | "gen4" | "gen5" | "gen6" | "gen7" | "gen8" | "gen9";
 
@@ -110,46 +110,66 @@ export const GEN_THEMES: { id: GenTheme; abbr: string; label: string; badge: str
   { id: "gen9", abbr: "SV",   label: "Scarlet / Violet",           badge: "#6366f1" },
 ];
 
-const STORAGE_KEY = "vgc-gen-theme";
+// ─── Shared external store so ALL useTheme() callers share state ────
 
-function loadTheme(): GenTheme {
-  if (typeof window === "undefined") return "gen9";
+const STORAGE_KEY = "vgc-gen-theme";
+const listeners = new Set<() => void>();
+
+let currentTheme: GenTheme = "gen9";
+
+// Load from localStorage on module init (client only)
+if (typeof window !== "undefined") {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && stored in GEN_PRESETS) return stored as GenTheme;
+    if (stored && stored in GEN_PRESETS) currentTheme = stored as GenTheme;
   } catch {}
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function getSnapshot(): GenTheme {
+  return currentTheme;
+}
+
+function getServerSnapshot(): GenTheme {
   return "gen9";
 }
 
-function applyTheme(themeId: GenTheme, isDark: boolean) {
+function applyTheme(themeId: GenTheme) {
   const preset = GEN_PRESETS[themeId];
   const root = document.documentElement;
+  const isDark = root.hasAttribute("data-dark-mode");
   root.style.setProperty("--accent", isDark ? preset.accentDark : preset.accent);
   root.style.setProperty("--accent-light", preset.accentLight);
   root.style.setProperty("--accent-surface", isDark ? preset.accentSurfaceDark : preset.accentSurface);
 }
 
+function setTheme(theme: GenTheme) {
+  if (theme === currentTheme) return;
+  currentTheme = theme;
+  try { localStorage.setItem(STORAGE_KEY, theme); } catch {}
+  if (typeof document !== "undefined") applyTheme(theme);
+  listeners.forEach((fn) => fn());
+}
+
+// Apply theme on first load & watch dark mode changes
+if (typeof window !== "undefined") {
+  // Initial apply after DOM ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => applyTheme(currentTheme), { once: true });
+  } else {
+    applyTheme(currentTheme);
+  }
+  // Re-apply when dark mode toggles
+  const observer = new MutationObserver(() => applyTheme(currentTheme));
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-dark-mode"] });
+}
+
 export function useTheme() {
-  const [genTheme, setGenThemeState] = useState<GenTheme>(loadTheme);
-
-  const setGenTheme = useCallback((theme: GenTheme) => {
-    setGenThemeState(theme);
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    const isDark = document.documentElement.hasAttribute("data-dark-mode");
-    applyTheme(genTheme, isDark);
-
-    const observer = new MutationObserver(() => {
-      const dark = document.documentElement.hasAttribute("data-dark-mode");
-      applyTheme(genTheme, dark);
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-dark-mode"] });
-    return () => observer.disconnect();
-  }, [genTheme]);
-
+  const genTheme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const setGenTheme = useCallback((theme: GenTheme) => setTheme(theme), []);
   return { genTheme, setGenTheme };
 }
