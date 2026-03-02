@@ -204,14 +204,7 @@ export function TeamReport({
         plans={plans}
         yourPokemon={analysis.pokemon}
         isReadOnly={isReadOnly}
-        onGamePlanNotesChange={onGamePlanNotesChange ?? (() => {})}
-        onGamePlanReplaysChange={onGamePlanReplaysChange ?? (() => {})}
-        onGamePlanBringChange={onGamePlanBringChange ?? (() => {})}
-        onReorderGamePlanBring={onReorderGamePlanBring ?? (() => {})}
-        onGamePlanResultChange={onGamePlanResultChange ?? (() => {})}
         onReorderPlans={onReorderPlans ?? (() => {})}
-        onAddGamePlan={onAddGamePlan ?? (() => {})}
-        onRemoveGamePlan={onRemoveGamePlan ?? (() => {})}
         onRemovePlan={onRemovePlan ?? (() => {})}
         onAddPlan={onAddPlan ?? (() => {})}
         onTogglePlanSlide={onTogglePlanSlide}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 export function useCreatorMode() {
-  const [creatorMode, setCreatorMode] = useState(false);
+  const [creatorMode, setCreatorMode] = useState(true);
 
   useEffect(() => {
     if (creatorMode) {

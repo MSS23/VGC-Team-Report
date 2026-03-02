@@ -17,14 +17,17 @@ function defaultIvs(): StatSpread {
 function parseStatLine(line: string): Partial<StatSpread> {
   const stats: Partial<StatSpread> = {};
   const statMap: Record<string, keyof StatSpread> = {
-    HP: "hp", Atk: "atk", Def: "def", SpA: "spa", SpD: "spd", Spe: "spe",
+    hp: "hp", atk: "atk", def: "def", spa: "spa", spd: "spd", spe: "spe",
   };
-  const parts = line.split("/").map(s => s.trim());
+  // Normalize non-breaking spaces and other Unicode whitespace to regular spaces
+  const cleaned = line.replace(/[\u00a0\u2000-\u200b\u202f\u205f\u3000]/g, " ");
+  const parts = cleaned.split("/").map(s => s.trim());
   for (const part of parts) {
-    const match = part.match(/^(\d+)\s+(HP|Atk|Def|SpA|SpD|Spe)$/);
+    // Case-insensitive matching with flexible whitespace
+    const match = part.match(/^(\d+)\s+(HP|Atk|Def|SpA|SpD|Spe)$/i);
     if (match) {
       const value = parseInt(match[1], 10);
-      const key = statMap[match[2]];
+      const key = statMap[match[2].toLowerCase()];
       if (key) stats[key] = value;
     }
   }
@@ -99,28 +102,30 @@ function parsePokemonBlock(block: string): { pokemon: ParsedPokemon; warnings: s
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
+    // Normalize non-breaking spaces for matching
+    const cleanLine = line.replace(/[\u00a0]/g, " ");
 
-    if (line.startsWith("Ability:")) {
-      ability = line.slice("Ability:".length).trim();
-    } else if (line.startsWith("Level:")) {
-      level = parseInt(line.slice("Level:".length).trim(), 10) || 50;
-    } else if (line.startsWith("Tera Type:")) {
-      const tt = line.slice("Tera Type:".length).trim();
+    if (/^Ability:\s*/i.test(cleanLine)) {
+      ability = cleanLine.replace(/^Ability:\s*/i, "").trim();
+    } else if (/^Level:\s*/i.test(cleanLine)) {
+      level = parseInt(cleanLine.replace(/^Level:\s*/i, "").trim(), 10) || 50;
+    } else if (/^Tera Type:\s*/i.test(cleanLine)) {
+      const tt = cleanLine.replace(/^Tera Type:\s*/i, "").trim();
       if (POKEMON_TYPES.includes(tt as PokemonType)) {
         teraType = tt as PokemonType;
       }
-    } else if (line.startsWith("Shiny:")) {
-      shiny = line.slice("Shiny:".length).trim().toLowerCase() === "yes";
-    } else if (line.startsWith("EVs:")) {
-      const parsed = parseStatLine(line.slice("EVs:".length).trim());
+    } else if (/^Shiny:\s*/i.test(cleanLine)) {
+      shiny = cleanLine.replace(/^Shiny:\s*/i, "").trim().toLowerCase() === "yes";
+    } else if (/^EVs:\s*/i.test(cleanLine)) {
+      const parsed = parseStatLine(cleanLine.replace(/^EVs:\s*/i, "").trim());
       Object.assign(evs, parsed);
-    } else if (line.startsWith("IVs:")) {
-      const parsed = parseStatLine(line.slice("IVs:".length).trim());
+    } else if (/^IVs:\s*/i.test(cleanLine)) {
+      const parsed = parseStatLine(cleanLine.replace(/^IVs:\s*/i, "").trim());
       Object.assign(ivs, parsed);
-    } else if (line.endsWith("Nature")) {
-      nature = line.replace("Nature", "").trim();
-    } else if (line.startsWith("- ")) {
-      moves.push(line.slice(2).trim());
+    } else if (/Nature\s*$/i.test(cleanLine)) {
+      nature = cleanLine.replace(/\s*Nature\s*$/i, "").trim();
+    } else if (cleanLine.startsWith("- ")) {
+      moves.push(cleanLine.slice(2).trim());
     }
   }
 
@@ -159,16 +164,18 @@ export function parseShowdownPaste(paste: string): ParsedTeam {
   const allWarnings: string[] = [];
   let teamName: string | undefined;
 
+  // Normalize all line endings: \r\n → \n, bare \r → \n
+  const normalized = paste.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
   // Check for team name header: === [format] Team Name === or === Team Name ===
-  const headerMatch = paste.match(/^===\s*(?:\[[^\]]*\]\s*)?(.+?)\s*===\s*$/m);
+  const headerMatch = normalized.match(/^===\s*(?:\[[^\]]*\]\s*)?(.+?)\s*===\s*$/m);
   if (headerMatch) {
     const name = headerMatch[1].trim();
     if (name) teamName = name;
   }
 
   // Split into Pokemon blocks (double newline separated)
-  const blocks = paste
-    .replace(/\r\n/g, "\n")
+  const blocks = normalized
     .split(/\n\s*\n/)
     .map(b => b.trim())
     .filter(Boolean)

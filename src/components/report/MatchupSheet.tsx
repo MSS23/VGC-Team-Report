@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { MatchupPlan, GameResult } from "@/hooks/useMatchupPlans";
+import type { MatchupPlan } from "@/hooks/useMatchupPlans";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { MatchupSheetRow } from "./MatchupSheetRow";
 import { AddOpponentInput } from "./AddOpponentInput";
@@ -12,24 +12,7 @@ interface MatchupSheetProps {
   plans: MatchupPlan[];
   yourPokemon: AnalyzedPokemon[];
   isReadOnly: boolean;
-  onGamePlanNotesChange: (matchupId: string, gamePlanId: string, notes: string) => void;
-  onGamePlanReplaysChange: (matchupId: string, gamePlanId: string, replays: string[]) => void;
-  onGamePlanBringChange: (
-    matchupId: string,
-    gamePlanId: string,
-    bringIndex: 0 | 1 | 2 | 3,
-    pokemonIndex: number | null
-  ) => void;
-  onReorderGamePlanBring: (
-    matchupId: string,
-    gamePlanId: string,
-    fromIndex: 0 | 1 | 2 | 3,
-    toIndex: 0 | 1 | 2 | 3
-  ) => void;
-  onGamePlanResultChange: (matchupId: string, gamePlanId: string, result: GameResult) => void;
   onReorderPlans: (fromIndex: number, toIndex: number) => void;
-  onAddGamePlan: (matchupId: string) => void;
-  onRemoveGamePlan: (matchupId: string, gamePlanId: string) => void;
   onRemovePlan: (id: string) => void;
   onAddPlan: (paste: string, label: string) => void;
   onTogglePlanSlide?: (id: string) => void;
@@ -39,14 +22,7 @@ export function MatchupSheet({
   plans,
   yourPokemon,
   isReadOnly,
-  onGamePlanNotesChange,
-  onGamePlanReplaysChange,
-  onGamePlanBringChange,
-  onReorderGamePlanBring,
-  onGamePlanResultChange,
   onReorderPlans,
-  onAddGamePlan,
-  onRemoveGamePlan,
   onRemovePlan,
   onAddPlan,
   onTogglePlanSlide,
@@ -83,9 +59,19 @@ export function MatchupSheet({
     setDragOverIndex(null);
   };
 
+  const visibleCount = plans.filter((p) => p.showSlide !== false).length;
+  const hiddenCount = plans.length - visibleCount;
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">Matchup Sheet</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">Matchup Sheet</h2>
+        {hiddenCount > 0 && (
+          <span className="text-sm text-text-tertiary">
+            {hiddenCount} hidden
+          </span>
+        )}
+      </div>
 
       {plans.length === 0 ? (
         <div className="text-center py-16 text-text-tertiary bg-surface border border-border rounded-2xl shadow-sm">
@@ -96,7 +82,7 @@ export function MatchupSheet({
           <p className="text-sm text-text-tertiary mt-1">Add an opponent team below to get started.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto"><div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
           {plans.map((plan, index) => (
             <div
               key={plan.id}
@@ -120,27 +106,10 @@ export function MatchupSheet({
                 showSlide={plan.showSlide !== false}
                 onToggleSlide={onTogglePlanSlide ? () => onTogglePlanSlide(plan.id) : undefined}
                 onRemove={() => onRemovePlan(plan.id)}
-                onGamePlanNotesChange={(gamePlanId, notes) =>
-                  onGamePlanNotesChange(plan.id, gamePlanId, notes)
-                }
-                onGamePlanReplaysChange={(gamePlanId, replays) =>
-                  onGamePlanReplaysChange(plan.id, gamePlanId, replays)
-                }
-                onGamePlanBringChange={(gamePlanId, bringIdx, pokIdx) =>
-                  onGamePlanBringChange(plan.id, gamePlanId, bringIdx, pokIdx)
-                }
-                onReorderBring={(gamePlanId, fromIdx, toIdx) =>
-                  onReorderGamePlanBring(plan.id, gamePlanId, fromIdx, toIdx)
-                }
-                onResultChange={(gamePlanId, result) =>
-                  onGamePlanResultChange(plan.id, gamePlanId, result)
-                }
-                onAddGamePlan={() => onAddGamePlan(plan.id)}
-                onRemoveGamePlan={(gamePlanId) => onRemoveGamePlan(plan.id, gamePlanId)}
               />
             </div>
           ))}
-        </div></div>
+        </div>
       )}
 
       {!isReadOnly && <AddOpponentInput onAdd={onAddPlan} />}

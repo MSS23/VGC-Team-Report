@@ -145,12 +145,13 @@ export default function Home() {
   // Hydration for shared view
   const hasHydrated = useRef(false);
 
-  // Effect 1: Load paste from shared state
+  // Effect 1: Load paste from shared state and disable creator mode
   useEffect(() => {
     if (!sharedState) return;
+    setCreatorMode(false);
     setPaste(sharedState.paste);
     parseTeam(sharedState.paste);
-  }, [sharedState, setPaste, parseTeam]);
+  }, [sharedState, setPaste, parseTeam, setCreatorMode]);
 
   // Effect 2: Hydrate notes, calcs, roles, summary, and plans once analysis is ready
   useEffect(() => {
@@ -247,16 +248,15 @@ export default function Home() {
     });
   }, [analysis, paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, plans, speciesKeys, getSpriteConfig, copyShareUrl]);
 
-  // Share completeness check: require Creator Mode, team summary, and notes for every Pokemon
+  // Share completeness check: require team summary and notes for every Pokemon
   const missingForShare = useMemo(() => {
     if (!analysis) return [];
     const missing: string[] = [];
-    if (!creatorMode) missing.push("Enable Creator Mode");
     if (!summary.trim()) missing.push("Add a team summary");
     const emptyNotes = speciesKeys.filter((k) => !notes[k]?.trim());
     if (emptyNotes.length > 0) missing.push(`Add notes for ${emptyNotes.length} Pokemon`);
     return missing;
-  }, [analysis, creatorMode, summary, notes, speciesKeys]);
+  }, [analysis, summary, notes, speciesKeys]);
 
   const canShare = missingForShare.length === 0;
 
@@ -359,7 +359,7 @@ export default function Home() {
                 className={`flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
                   allAnimated
                     ? "bg-accent/15 text-accent border-accent/30"
-                    : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary hover:border-border"
+                    : "bg-surface-alt text-text-secondary border-border hover:text-text-primary"
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -376,7 +376,7 @@ export default function Home() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setPresentationMode(false)}
-                className="text-text-tertiary hover:text-text-primary"
+                className="text-text-secondary hover:text-text-primary"
               >
                 Exit
               </Button>
@@ -416,7 +416,7 @@ export default function Home() {
                 className={`p-1.5 sm:px-3 sm:py-1.5 rounded-lg border transition-all duration-200 sm:flex sm:items-center sm:gap-1.5 ${
                   allAnimated
                     ? "bg-accent/15 text-accent border-accent/30"
-                    : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary hover:border-border"
+                    : "bg-surface-alt text-text-secondary border-border hover:text-text-primary"
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -540,7 +540,7 @@ export default function Home() {
                   onClick={startWalkthrough}
                   title="Help & walkthrough"
                   aria-label="Help and walkthrough"
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-sm font-medium"
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors text-sm font-bold border border-border-subtle hover:border-border"
                 >
                   ?
                 </button>
@@ -555,7 +555,7 @@ export default function Home() {
                 className={`sm:hidden p-1.5 rounded-lg border transition-all duration-200 ${
                   allAnimated
                     ? "bg-accent/15 text-accent border-accent/30"
-                    : "bg-surface-alt text-text-tertiary border-border-subtle"
+                    : "bg-surface-alt text-text-secondary border-border hover:text-text-primary"
                 }`}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -570,7 +570,7 @@ export default function Home() {
                 className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
                   allAnimated
                     ? "bg-accent/15 text-accent border-accent/30"
-                    : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary hover:border-border"
+                    : "bg-surface-alt text-text-secondary border-border hover:text-text-primary hover:border-border"
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -606,7 +606,7 @@ export default function Home() {
                         className={`object-contain transition-all duration-200 ${
                           isActive
                             ? "scale-110"
-                            : "brightness-[0.3] grayscale opacity-50 group-hover:brightness-100 group-hover:grayscale-0 group-hover:opacity-80 group-hover:scale-105"
+                            : "brightness-[0.5] grayscale opacity-60 group-hover:brightness-100 group-hover:grayscale-0 group-hover:opacity-90 group-hover:scale-105"
                         }`}
                         style={{
                           maxWidth: 32,
@@ -625,30 +625,31 @@ export default function Home() {
                 })}
               </div>
 
-              {/* Creator toggle: full Toggle on sm+, compact button on mobile */}
+              {/* Lock/unlock editing button */}
               <div data-walkthrough="creator-toggle">
-                <div className="hidden sm:block">
-                  <Toggle
-                    checked={creatorMode}
-                    onChange={setCreatorMode}
-                    label="Creator"
-                  />
-                </div>
                 <button
                   type="button"
                   onClick={() => setCreatorMode(!creatorMode)}
-                  title={creatorMode ? "Creator Mode on" : "Creator Mode off"}
-                  aria-label={creatorMode ? "Disable Creator Mode" : "Enable Creator Mode"}
-                  className={`sm:hidden p-1.5 rounded-lg border text-xs font-bold transition-colors ${
+                  title={creatorMode ? "Lock editing (read-only)" : "Unlock editing"}
+                  aria-label={creatorMode ? "Lock editing" : "Unlock editing"}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 ${
                     creatorMode
-                      ? "bg-accent/15 text-accent border-accent/30"
-                      : "bg-surface-alt text-text-tertiary border-border-subtle"
+                      ? "bg-accent/15 text-accent border-accent/30 hover:bg-accent/25"
+                      : "bg-surface-alt text-text-secondary border-border hover:text-text-primary hover:border-border"
                   }`}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                  </svg>
+                  {creatorMode ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 019.9-1" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                  )}
+                  <span className="hidden sm:inline">{creatorMode ? "Editing" : "Locked"}</span>
                 </button>
               </div>
               <Button
