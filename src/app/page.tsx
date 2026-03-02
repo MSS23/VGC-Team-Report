@@ -9,6 +9,7 @@ import { useSlideNavigation } from "@/hooks/useSlideNavigation";
 import { usePokemonNotes } from "@/hooks/usePokemonNotes";
 import { useDamageCalcs } from "@/hooks/useDamageCalcs";
 import { useMatchupPlans } from "@/hooks/useMatchupPlans";
+import { useHiddenSlides } from "@/hooks/useHiddenSlides";
 import { useTeamMeta } from "@/hooks/useTeamMeta";
 import { useShareUrl } from "@/hooks/useShareUrl";
 import { useExportSlide } from "@/hooks/useExportSlide";
@@ -106,15 +107,48 @@ export default function Home() {
     setSettingsFull: setSpriteSettingsFull,
   } = useSpriteSettings(speciesKeys, spriteDefaults, !isSharedView);
 
-  // Plans that have their own dedicated slide (showSlide defaults to true)
-  // Creator controls visibility via the eye toggle — visible plans get slides for everyone
-  const visibleSlidePlans = plans.filter((p) => p.showSlide !== false);
-  const showMatchupSlides = visibleSlidePlans.length > 0;
+  const { hiddenSlides, toggleSlide, isHidden, setHiddenFull } = useHiddenSlides(speciesKeys, !isSharedView);
 
-  // Total slides: Overview + 6 Pokemon + Speed Tiers + (N visible matchup plans if creator) + 1 matchup sheet
-  const totalSlides = analysis
-    ? analysis.pokemon.length + 2 + (showMatchupSlides ? visibleSlidePlans.length : 0) + 1
-    : 0;
+  // Build ALL slide keys and labels (including all plans, visibility handled at nav level)
+  const { allSlideKeys, allSlideLabels } = useMemo(() => {
+    if (!analysis) return { allSlideKeys: [] as string[], allSlideLabels: [] as string[] };
+    const keys: string[] = [
+      "overview",
+      ...speciesKeys,
+      "speed-tiers",
+      ...plans.map((p) => `matchup-${p.id}`),
+      "matchup-sheet",
+    ];
+    const labels: string[] = [
+      "Overview",
+      ...analysis.pokemon.map((mon) => mon.parsed.species),
+      "Team Analysis",
+      ...plans.map((p) => `vs. ${p.opponentLabel}`),
+      "Matchups",
+    ];
+    return { allSlideKeys: keys, allSlideLabels: labels };
+  }, [analysis, speciesKeys, plans]);
+
+  // Check if a physical slide index is hidden
+  const isSlideHiddenAt = useCallback((physicalIndex: number) => {
+    const key = allSlideKeys[physicalIndex];
+    if (!key) return false;
+    if (key.startsWith("matchup-") && key !== "matchup-sheet") {
+      const planId = key.slice("matchup-".length);
+      const plan = plans.find((p) => p.id === planId);
+      return plan?.showSlide === false;
+    }
+    return isHidden(key);
+  }, [allSlideKeys, plans, isHidden]);
+
+  // Creator sees all slides; non-creator only sees visible ones
+  const visibleIndices = useMemo(() => {
+    const all = allSlideKeys.map((_, i) => i);
+    if (creatorMode) return all;
+    return all.filter((i) => !isSlideHiddenAt(i));
+  }, [allSlideKeys, creatorMode, isSlideHiddenAt]);
+
+  const totalSlides = visibleIndices.length;
 
   const toggleFullscreen = useCallback(() => {
     if (document.fullscreenElement) {
@@ -141,6 +175,32 @@ export default function Home() {
     onToggleFullscreen: presentationMode ? toggleFullscreen : undefined,
     onShowHelp: presentationMode ? () => setShowShortcutHint(true) : undefined,
   });
+
+  // Map virtual currentSlide → physical slide for TeamReport
+  const physicalSlide = visibleIndices[currentSlide] ?? 0;
+
+  // Slide labels and hidden states derived from visible indices
+  const slideLabels = useMemo(() => {
+    return visibleIndices.map((i) => allSlideLabels[i]);
+  }, [visibleIndices, allSlideLabels]);
+
+  const slideHiddenStates = useMemo(() => {
+    return visibleIndices.map((i) => isSlideHiddenAt(i));
+  }, [visibleIndices, isSlideHiddenAt]);
+
+  // Handle hide toggle for current slide
+  const handleToggleCurrentSlide = useCallback(() => {
+    const physIdx = visibleIndices[currentSlide];
+    if (physIdx === undefined) return;
+    const key = allSlideKeys[physIdx];
+    if (!key) return;
+    if (key.startsWith("matchup-") && key !== "matchup-sheet") {
+      const planId = key.slice("matchup-".length);
+      togglePlanSlide(planId);
+    } else {
+      toggleSlide(key);
+    }
+  }, [currentSlide, visibleIndices, allSlideKeys, togglePlanSlide, toggleSlide]);
 
   // Hydration for shared view
   const hasHydrated = useRef(false);
@@ -191,20 +251,11 @@ export default function Home() {
       }
       setSpriteSettingsFull(merged);
     }
-  }, [sharedState, analysis, speciesKeys, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setSpriteSettingsFull]);
+    if (sharedState.hiddenSlides) {
+      setHiddenFull(sharedState.hiddenSlides);
+    }
+  }, [sharedState, analysis, speciesKeys, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setSpriteSettingsFull, setHiddenFull]);
 
-  // Build slide labels for nav dots
-  const slideLabels = useMemo(() => {
-    if (!analysis) return [];
-    const labels = [
-      "Overview",
-      ...analysis.pokemon.map((mon) => mon.parsed.species),
-      "Team Analysis",
-      ...(showMatchupSlides ? visibleSlidePlans.map((p) => `vs. ${p.opponentLabel}`) : []),
-      "Matchups",
-    ];
-    return labels;
-  }, [analysis, visibleSlidePlans, showMatchupSlides]);
 
   const handleAnalyze = (directPaste?: string) => {
     parseTeam(directPaste ?? paste);
@@ -245,8 +296,9 @@ export default function Home() {
         })),
       })),
       spriteSettings: Object.keys(spriteOverrides).length > 0 ? spriteOverrides : undefined,
+      hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
     });
-  }, [analysis, paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, plans, speciesKeys, getSpriteConfig, copyShareUrl]);
+  }, [analysis, paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, plans, speciesKeys, getSpriteConfig, copyShareUrl, hiddenSlides]);
 
   // Share completeness check: require team summary and notes for every Pokemon
   const missingForShare = useMemo(() => {
@@ -689,12 +741,37 @@ export default function Home() {
             ? "px-4 sm:px-8 py-4 sm:py-6"
             : "px-3 sm:px-4 py-4 sm:py-6 creator:px-8 creator:py-8"
         }`}
-        key={currentSlide}
+        key={physicalSlide}
       >
+        {/* Hidden slide banner for creator */}
+        {creatorMode && isSlideHiddenAt(physicalSlide) && (
+          <div className="flex items-center gap-3 px-4 py-3 mb-5 bg-amber-500/8 border border-amber-500/25 rounded-2xl animate-fade-in">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">This slide is hidden</p>
+              <p className="text-xs text-amber-600/80 dark:text-amber-400/70 mt-0.5">
+                Viewers won&apos;t see it when you share or present. Click <strong>Hidden</strong> below to show it again.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleCurrentSlide}
+              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25 transition-colors border border-amber-500/20"
+            >
+              Show slide
+            </button>
+          </div>
+        )}
         <TeamReport
           analysis={analysis!}
           creatorMode={creatorMode}
-          currentSlide={currentSlide}
+          currentSlide={physicalSlide}
           notes={notes}
           onNoteChange={setNote}
           calcs={calcs}
@@ -728,7 +805,6 @@ export default function Home() {
           onRemoveGamePlan={removeGamePlan}
           onRemovePlan={removePlan}
           onAddPlan={addPlan}
-          onTogglePlanSlide={togglePlanSlide}
           getSpriteConfig={getSpriteConfig}
           onToggleShiny={toggleShiny}
           onToggleAnimated={toggleAnimated}
@@ -746,6 +822,9 @@ export default function Home() {
         onGoTo={goToSlide}
         slideLabels={slideLabels}
         autoHide={presentationMode}
+        hiddenStates={creatorMode ? slideHiddenStates : undefined}
+        onToggleHide={creatorMode ? handleToggleCurrentSlide : undefined}
+        isCurrentHidden={creatorMode ? isSlideHiddenAt(physicalSlide) : false}
       />
 
       {/* Walkthrough overlay */}

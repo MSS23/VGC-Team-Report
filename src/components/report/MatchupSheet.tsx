@@ -15,7 +15,6 @@ interface MatchupSheetProps {
   onReorderPlans: (fromIndex: number, toIndex: number) => void;
   onRemovePlan: (id: string) => void;
   onAddPlan: (paste: string, label: string) => void;
-  onTogglePlanSlide?: (id: string) => void;
 }
 
 export function MatchupSheet({
@@ -25,7 +24,6 @@ export function MatchupSheet({
   onReorderPlans,
   onRemovePlan,
   onAddPlan,
-  onTogglePlanSlide,
 }: MatchupSheetProps) {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -59,19 +57,9 @@ export function MatchupSheet({
     setDragOverIndex(null);
   };
 
-  const visibleCount = plans.filter((p) => p.showSlide !== false).length;
-  const hiddenCount = plans.length - visibleCount;
-
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">Matchup Sheet</h2>
-        {hiddenCount > 0 && (
-          <span className="text-sm text-text-tertiary">
-            {hiddenCount} hidden
-          </span>
-        )}
-      </div>
+      <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">Matchup Sheet</h2>
 
       {plans.length === 0 ? (
         <div className="text-center py-16 text-text-tertiary bg-surface border border-border rounded-2xl shadow-sm">
@@ -103,8 +91,6 @@ export function MatchupSheet({
                 rowNumber={index + 1}
                 yourPokemon={yourPokemon}
                 isReadOnly={isReadOnly}
-                showSlide={plan.showSlide !== false}
-                onToggleSlide={onTogglePlanSlide ? () => onTogglePlanSlide(plan.id) : undefined}
                 onRemove={() => onRemovePlan(plan.id)}
               />
             </div>

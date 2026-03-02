@@ -32,6 +32,7 @@ export interface ShareableState {
   rentalCode?: string;
   matchupPlans: SerializedMatchupPlan[];
   spriteSettings?: Record<string, { shiny?: boolean; animated?: boolean }>;
+  hiddenSlides?: string[];
 }
 
 function toBase64Url(bytes: Uint8Array): string {

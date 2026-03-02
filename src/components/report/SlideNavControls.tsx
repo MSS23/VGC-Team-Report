@@ -12,6 +12,12 @@ interface SlideNavControlsProps {
   onGoTo: (index: number) => void;
   slideLabels: string[];
   autoHide?: boolean;
+  /** Per-dot hidden state (true = hidden slide). Only provided in creator mode. */
+  hiddenStates?: boolean[];
+  /** Toggle hide/show for the current slide. Only provided in creator mode. */
+  onToggleHide?: () => void;
+  /** Whether the current slide is hidden. */
+  isCurrentHidden?: boolean;
 }
 
 export function SlideNavControls({
@@ -24,7 +30,12 @@ export function SlideNavControls({
   onGoTo,
   slideLabels,
   autoHide = false,
+  hiddenStates,
+  onToggleHide,
+  isCurrentHidden = false,
 }: SlideNavControlsProps) {
+  const hiddenCount = hiddenStates?.filter(Boolean).length ?? 0;
+
   return (
     <div
       role="navigation"
@@ -56,21 +67,29 @@ export function SlideNavControls({
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 justify-center overflow-hidden">
           {/* Dots */}
           <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
-            {Array.from({ length: totalSlides }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => onGoTo(i)}
-                title={slideLabels[i]}
-                aria-label={`Go to ${slideLabels[i]}`}
-                className={`rounded-full transition-all duration-300 flex-shrink-0 ${
-                  i === currentSlide
-                    ? "w-3 sm:w-3.5 h-2 sm:h-2.5 bg-accent shadow-sm shadow-accent/40"
-                    : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-border hover:bg-text-tertiary hover:scale-125"
-                }`}
-              />
-            ))}
+            {Array.from({ length: totalSlides }, (_, i) => {
+              const isHidden = hiddenStates?.[i] ?? false;
+              const isCurrent = i === currentSlide;
+              return (
+                <button
+                  key={i}
+                  onClick={() => onGoTo(i)}
+                  title={`${slideLabels[i]}${isHidden ? " (hidden from viewers)" : ""}`}
+                  aria-label={`Go to ${slideLabels[i]}${isHidden ? " (hidden from viewers)" : ""}`}
+                  className={`rounded-full transition-all duration-300 flex-shrink-0 ${
+                    isCurrent
+                      ? isHidden
+                        ? "w-3 sm:w-3.5 h-2 sm:h-2.5 bg-amber-400/70 shadow-sm shadow-amber-400/30 ring-1 ring-amber-400/40"
+                        : "w-3 sm:w-3.5 h-2 sm:h-2.5 bg-accent shadow-sm shadow-accent/40"
+                      : isHidden
+                        ? "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-amber-400/30 hover:bg-amber-400/50"
+                        : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-border hover:bg-text-tertiary hover:scale-125"
+                  }`}
+                />
+              );
+            })}
           </div>
-          {/* Label + counter */}
+          {/* Label + counter (desktop) */}
           <span className="text-xs text-text-tertiary truncate hidden sm:inline">
             <span className="font-semibold text-text-primary">{slideLabels[currentSlide]}</span>
             <span className="mx-1 text-border">&middot;</span>
@@ -81,6 +100,44 @@ export function SlideNavControls({
             {currentSlide + 1}/{totalSlides}
           </span>
         </div>
+
+        {/* Hide/Show slide toggle (creator only) */}
+        {onToggleHide && (
+          <button
+            type="button"
+            onClick={onToggleHide}
+            className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 ${
+              isCurrentHidden
+                ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/25"
+                : "bg-surface-alt text-text-tertiary border-border hover:text-text-secondary hover:bg-surface-alt/80"
+            }`}
+            title={
+              isCurrentHidden
+                ? "This slide is hidden — viewers won't see it when you share or present. Click to make it visible again."
+                : "Click to hide this slide from viewers when you share or present."
+            }
+          >
+            {isCurrentHidden ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
+            <span className="hidden sm:inline">{isCurrentHidden ? "Hidden" : "Visible"}</span>
+            {/* Badge showing hidden count */}
+            {hiddenCount > 0 && !isCurrentHidden && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 flex items-center justify-center px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">
+                {hiddenCount}
+              </span>
+            )}
+          </button>
+        )}
 
         {/* Next button */}
         <Button

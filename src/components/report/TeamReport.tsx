@@ -52,7 +52,6 @@ interface TeamReportProps {
   onReorderPlans?: (fromIndex: number, toIndex: number) => void;
   onRemovePlan?: (id: string) => void;
   onAddPlan?: (paste: string, label: string) => void;
-  onTogglePlanSlide?: (id: string) => void;
   getSpriteConfig?: (key: string) => SpriteConfig;
   onToggleShiny?: (key: string) => void;
   onToggleAnimated?: (key: string) => void;
@@ -95,15 +94,11 @@ export function TeamReport({
   onReorderPlans,
   onRemovePlan,
   onAddPlan,
-  onTogglePlanSlide,
   getSpriteConfig,
   onToggleShiny,
   onToggleAnimated,
 }: TeamReportProps) {
   const pokemonCount = analysis.pokemon.length;
-  // Plans with showSlide !== false get their own dedicated slide for all viewers
-  const visibleSlidePlans = plans.filter((p) => p.showSlide !== false);
-  const showMatchupSlides = visibleSlidePlans.length > 0;
 
   // Slide 0: Team Overview
   if (currentSlide === 0) {
@@ -171,12 +166,12 @@ export function TeamReport({
     );
   }
 
-  // Per-matchup plan slides (only in creator mode, only visible plans)
-  if (showMatchupSlides) {
+  // Per-matchup plan slides (visibility handled by navigation layer)
+  if (plans.length > 0) {
     const matchupSlideIndex = currentSlide - pokemonCount - 2;
 
-    if (visibleSlidePlans.length > 0 && matchupSlideIndex >= 0 && matchupSlideIndex < visibleSlidePlans.length) {
-      const plan = visibleSlidePlans[matchupSlideIndex];
+    if (matchupSlideIndex >= 0 && matchupSlideIndex < plans.length) {
+      const plan = plans[matchupSlideIndex];
       return (
         <MatchupPlanSlide
           plan={plan}
@@ -196,8 +191,7 @@ export function TeamReport({
   }
 
   // Last slide: Matchup sheet (always available — expandable rows for game plans)
-  const matchupSlidesCount = showMatchupSlides ? visibleSlidePlans.length : 0;
-  const matchupSheetSlide = pokemonCount + 2 + matchupSlidesCount;
+  const matchupSheetSlide = pokemonCount + 2 + plans.length;
   if (currentSlide === matchupSheetSlide) {
     return (
       <MatchupSheet
@@ -207,7 +201,6 @@ export function TeamReport({
         onReorderPlans={onReorderPlans ?? (() => {})}
         onRemovePlan={onRemovePlan ?? (() => {})}
         onAddPlan={onAddPlan ?? (() => {})}
-        onTogglePlanSlide={onTogglePlanSlide}
       />
     );
   }
