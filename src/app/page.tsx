@@ -46,7 +46,7 @@ export default function Home() {
     start: startWalkthrough,
   } = useWalkthrough({ enabled: !!analysis && !isSharedView && !presentationMode });
 
-  const isReadOnly = isSharedView || presentationMode;
+  const isReadOnly = isSharedView || presentationMode || !creatorMode;
   const isPresentationStyle = presentationMode;
 
   // Build species keys with dedup index for duplicate species
