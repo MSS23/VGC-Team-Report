@@ -509,7 +509,7 @@ function GamePlanSection({
                   Notes
                 </span>
                 {isReadOnly ? (
-                  <div className="w-full min-h-[8rem] p-4 sm:p-5 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed">
+                  <div className="w-full min-h-[10rem] p-5 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-base sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed">
                     {gamePlan.notes || "No notes."}
                   </div>
                 ) : (
@@ -517,7 +517,7 @@ function GamePlanSection({
                     value={gamePlan.notes}
                     onChange={(e) => onNotesChange(e.target.value)}
                     placeholder="Why are you bringing these four? What's the win condition?"
-                    className="w-full min-h-[8rem] p-4 sm:p-5 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+                    className="w-full min-h-[10rem] p-5 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-base sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
                     spellCheck={false}
                   />
                 )}

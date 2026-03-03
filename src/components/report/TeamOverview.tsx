@@ -134,16 +134,16 @@ export function TeamOverview({
 
       {/* Team Summary */}
       <div>
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-3">
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-3">
           Team Summary
         </h3>
         {isReadOnly ? (
           summary ? (
-            <div className="w-full min-h-[6rem] p-4 sm:p-5 bg-surface border border-border rounded-2xl text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
+            <div className="w-full min-h-[8rem] p-5 sm:p-6 bg-surface border border-border rounded-2xl text-base sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed">
               {summary}
             </div>
           ) : (
-            <div className="w-full p-4 sm:p-5 bg-surface-alt/50 border border-border-subtle rounded-2xl text-sm text-text-tertiary italic">
+            <div className="w-full p-5 sm:p-6 bg-surface-alt/50 border border-border-subtle rounded-2xl text-base text-text-tertiary italic">
               No team summary.
             </div>
           )
@@ -152,7 +152,7 @@ export function TeamOverview({
             value={summary}
             onChange={(e) => onSummaryChange(e.target.value)}
             placeholder="Summarize your team's overall strategy, win conditions, and key synergies..."
-            className="w-full min-h-[6rem] p-4 sm:p-5 bg-surface border border-border rounded-2xl text-sm text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+            className="w-full min-h-[8rem] p-5 sm:p-6 bg-surface border border-border rounded-2xl text-base sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
             spellCheck={false}
           />
         )}
