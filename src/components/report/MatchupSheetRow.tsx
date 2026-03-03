@@ -26,21 +26,30 @@ export function MatchupSheetRow({
     return parsed.pokemon.map((p) => p.species);
   }, [plan.opponentPaste]);
 
-  // Gather bring sprites from first game plan for a quick preview
+  // Gather bring info from first game plan — lead (0,1) and back (2,3)
   const firstPlan = plan.gamePlans[0];
-  const bringPreview = firstPlan
-    ? firstPlan.bring
+  const leadPreview = firstPlan
+    ? ([0, 1] as const)
+        .map((i) => firstPlan.bring[i])
         .filter((idx): idx is number => idx !== null)
         .map((idx) => yourPokemon[idx]?.parsed.species)
         .filter(Boolean)
     : [];
+  const backPreview = firstPlan
+    ? ([2, 3] as const)
+        .map((i) => firstPlan.bring[i])
+        .filter((idx): idx is number => idx !== null)
+        .map((idx) => yourPokemon[idx]?.parsed.species)
+        .filter(Boolean)
+    : [];
+  const hasBringPreview = leadPreview.length > 0 || backPreview.length > 0;
 
   return (
-    <div className="bg-surface border border-border rounded-2xl shadow-sm">
-      <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4">
+    <div className="bg-surface border border-border rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 sm:py-4">
         {/* Row number */}
-        <span className="text-base sm:text-lg font-bold text-text-tertiary w-8 flex-shrink-0">
-          #{rowNumber}
+        <span className="text-sm font-bold text-text-tertiary/60 tabular-nums w-6 flex-shrink-0 text-center">
+          {rowNumber}
         </span>
 
         {/* Opponent info */}
@@ -53,25 +62,41 @@ export function MatchupSheetRow({
           </span>
 
           {/* Opponent sprites */}
-          <div className="flex items-center gap-1.5 overflow-x-auto max-w-[220px] sm:max-w-none">
+          <div className="flex items-center gap-1 overflow-x-auto max-w-[220px] sm:max-w-none">
             {opponentPokemon.map((species, i) => (
-              <div key={i} className="w-9 h-9 flex items-center justify-center flex-shrink-0">
-                <PokemonSprite species={species} size={34} />
+              <div key={i} className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                <PokemonSprite species={species} size={30} />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Right side: bring preview + plan count + actions */}
+        {/* Right side: lead/back preview + plan count + actions */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          {bringPreview.length > 0 && (
-            <div className="hidden sm:flex items-center gap-0.5">
-              {bringPreview.map((species, i) => (
-                <PokemonSprite key={i} species={species} size={22} />
-              ))}
+          {hasBringPreview && (
+            <div className="hidden sm:flex items-center gap-2">
+              {/* Lead preview */}
+              {leadPreview.length > 0 && (
+                <div className="flex items-center gap-0.5">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-blue-400/70 mr-0.5">L</span>
+                  {leadPreview.map((species, i) => (
+                    <PokemonSprite key={i} species={species} size={20} />
+                  ))}
+                </div>
+              )}
+              {/* Back preview */}
+              {backPreview.length > 0 && (
+                <div className="flex items-center gap-0.5">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400/70 mr-0.5">B</span>
+                  {backPreview.map((species, i) => (
+                    <PokemonSprite key={i} species={species} size={20} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
-          <span className="text-sm font-medium text-text-tertiary whitespace-nowrap">
+
+          <span className="text-xs font-medium text-text-tertiary whitespace-nowrap px-2 py-1 bg-surface-alt rounded-md">
             {plan.gamePlans.length} plan{plan.gamePlans.length !== 1 ? "s" : ""}
           </span>
 

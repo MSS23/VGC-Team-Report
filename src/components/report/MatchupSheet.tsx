@@ -59,7 +59,14 @@ export function MatchupSheet({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">Matchup Sheet</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">Matchup Sheet</h2>
+        {plans.length > 0 && (
+          <span className="text-xs font-medium text-text-tertiary px-2.5 py-1 bg-surface-alt rounded-full">
+            {plans.length} matchup{plans.length !== 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
 
       {plans.length === 0 ? (
         <div className="text-center py-16 text-text-tertiary bg-surface border border-border rounded-2xl shadow-sm">

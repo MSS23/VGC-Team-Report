@@ -362,25 +362,51 @@ function GamePlanSection({
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-surface-alt/50 transition-colors"
+        className="w-full flex items-center justify-between px-4 sm:px-5 py-3.5 hover:bg-surface-alt/30 transition-colors rounded-t-2xl"
       >
         <div className="flex items-center gap-3">
-          <span className="text-text-tertiary text-xs transition-transform" style={{ transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)" }}>
-            &#9662;
-          </span>
-          <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold border ${color.badge}`}>
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="currentColor"
+            className="text-text-tertiary/60 transition-transform flex-shrink-0"
+            style={{ transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
+          >
+            <polygon points="0,0 10,5 0,10" />
+          </svg>
+          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold border ${color.badge}`}>
             {index + 1}
           </span>
-          <span className="text-base font-semibold text-text-primary">
+          <span className="text-sm font-semibold text-text-primary">
             Game {index + 1}
           </span>
-          {/* Show selected Pokemon sprites inline when collapsed */}
+          {/* Show lead/back sprites inline when collapsed */}
           {isCollapsed && (
-            <div className="flex items-center gap-1 ml-1">
-              {gamePlan.bring.map((idx, i) =>
-                idx !== null && yourPokemon[idx] ? (
-                  <PokemonSprite key={i} species={yourPokemon[idx].parsed.species} size={20} />
-                ) : null
+            <div className="flex items-center gap-2 ml-1">
+              {/* Lead indicators */}
+              {gamePlan.bring.slice(0, 2).some((idx) => idx !== null) && (
+                <div className="flex items-center gap-0.5">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-blue-400/70">L</span>
+                  {([0, 1] as const).map((i) => {
+                    const idx = gamePlan.bring[i];
+                    return idx !== null && yourPokemon[idx] ? (
+                      <PokemonSprite key={i} species={yourPokemon[idx].parsed.species} size={18} />
+                    ) : null;
+                  })}
+                </div>
+              )}
+              {/* Back indicators */}
+              {gamePlan.bring.slice(2, 4).some((idx) => idx !== null) && (
+                <div className="flex items-center gap-0.5">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400/70">B</span>
+                  {([2, 3] as const).map((i) => {
+                    const idx = gamePlan.bring[i];
+                    return idx !== null && yourPokemon[idx] ? (
+                      <PokemonSprite key={i} species={yourPokemon[idx].parsed.species} size={18} />
+                    ) : null;
+                  })}
+                </div>
               )}
             </div>
           )}
@@ -399,37 +425,80 @@ function GamePlanSection({
       {!isCollapsed && (
         <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-1">
           <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4 sm:gap-6">
-            {/* Choose Your Four */}
-            <div>
-              <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
-                Bring Four
-              </span>
-              <div className="grid grid-cols-4 lg:grid-cols-2 gap-3">
-                {([0, 1, 2, 3] as const).map((bringIdx) => {
-                  const hasSelection = gamePlan.bring[bringIdx] !== null;
-                  return (
-                    <div
-                      key={bringIdx}
-                      className={`flex flex-col items-center gap-1 transition-all rounded-xl ${
-                        dragOverIndex === bringIdx ? "ring-2 ring-accent/50 scale-105" : ""
-                      }`}
-                      onDragOver={(e) => handleDragOver(e, bringIdx)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, bringIdx)}
-                    >
-                      <PokemonDropdown
-                        yourPokemon={yourPokemon}
-                        selectedIndex={gamePlan.bring[bringIdx]}
-                        onChange={(idx) => onBringChange(bringIdx, idx)}
-                        isReadOnly={isReadOnly}
-                        takenIndices={gamePlan.bring.filter((_, i) => i !== bringIdx)}
-                        draggable={hasSelection && !isReadOnly}
-                        onDragStart={(e) => handleDragStart(e, bringIdx)}
-                        speciesLabels={speciesLabels}
-                      />
-                    </div>
-                  );
-                })}
+            {/* Bring Four — Lead / Back split */}
+            <div className="flex flex-row lg:flex-col gap-4">
+              {/* Lead */}
+              <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 border border-border-subtle">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-500/20 text-blue-400">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /></svg>
+                  </span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-blue-400">Lead</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {([0, 1] as const).map((bringIdx) => {
+                    const hasSelection = gamePlan.bring[bringIdx] !== null;
+                    return (
+                      <div
+                        key={bringIdx}
+                        className={`flex flex-col items-center gap-1 transition-all rounded-xl ${
+                          dragOverIndex === bringIdx ? "ring-2 ring-blue-400/50 scale-105" : ""
+                        }`}
+                        onDragOver={(e) => handleDragOver(e, bringIdx)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, bringIdx)}
+                      >
+                        <PokemonDropdown
+                          yourPokemon={yourPokemon}
+                          selectedIndex={gamePlan.bring[bringIdx]}
+                          onChange={(idx) => onBringChange(bringIdx, idx)}
+                          isReadOnly={isReadOnly}
+                          takenIndices={gamePlan.bring.filter((_, i) => i !== bringIdx)}
+                          draggable={hasSelection && !isReadOnly}
+                          onDragStart={(e) => handleDragStart(e, bringIdx)}
+                          speciesLabels={speciesLabels}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Back */}
+              <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 border border-border-subtle">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-500/20 text-amber-400">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                  </span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-amber-400">Back</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {([2, 3] as const).map((bringIdx) => {
+                    const hasSelection = gamePlan.bring[bringIdx] !== null;
+                    return (
+                      <div
+                        key={bringIdx}
+                        className={`flex flex-col items-center gap-1 transition-all rounded-xl ${
+                          dragOverIndex === bringIdx ? "ring-2 ring-amber-400/50 scale-105" : ""
+                        }`}
+                        onDragOver={(e) => handleDragOver(e, bringIdx)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, bringIdx)}
+                      >
+                        <PokemonDropdown
+                          yourPokemon={yourPokemon}
+                          selectedIndex={gamePlan.bring[bringIdx]}
+                          onChange={(idx) => onBringChange(bringIdx, idx)}
+                          isReadOnly={isReadOnly}
+                          takenIndices={gamePlan.bring.filter((_, i) => i !== bringIdx)}
+                          draggable={hasSelection && !isReadOnly}
+                          onDragStart={(e) => handleDragStart(e, bringIdx)}
+                          speciesLabels={speciesLabels}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
