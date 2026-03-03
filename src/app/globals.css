@@ -170,7 +170,7 @@ body {
 
 /* Stagger children animations */
 .stagger-children > * {
-  animation: fade-in-scale 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fade-in-scale 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
 .stagger-children > *:nth-child(2) { animation-delay: 70ms; }
@@ -181,7 +181,7 @@ body {
 
 /* Stagger moves */
 .stagger-moves > * {
-  animation: pop-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: pop-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 .stagger-moves > *:nth-child(1) { animation-delay: 50ms; }
 .stagger-moves > *:nth-child(2) { animation-delay: 120ms; }
@@ -190,7 +190,7 @@ body {
 
 /* Stagger stats */
 .stagger-stats > * {
-  animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 .stagger-stats > *:nth-child(1) { animation-delay: 80ms; }
 .stagger-stats > *:nth-child(2) { animation-delay: 140ms; }

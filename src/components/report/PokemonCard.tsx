@@ -135,12 +135,13 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               type="text"
               value={role ?? ""}
               onChange={(e) => onRoleChange(e.target.value)}
-              placeholder="Role..."
+              placeholder="Role (e.g. Spread Attacker)"
               maxLength={40}
-              className="mt-2 w-full text-xs px-2.5 py-1 bg-surface-alt border border-border-subtle rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+              className="mt-2.5 w-full text-xs font-medium px-3 py-1.5 bg-surface-alt/60 border border-border-subtle rounded-xl text-text-primary placeholder:text-text-tertiary/60 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50 transition-all"
             />
           ) : role ? (
-            <span className="mt-2 inline-block text-xs font-semibold text-accent bg-accent-surface px-2.5 py-1 rounded-lg">
+            <span className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-bold tracking-wide uppercase text-accent bg-accent-surface/80 border border-accent/15 px-3 py-1.5 rounded-full shadow-sm shadow-accent/5">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent/60 flex-shrink-0" />
               {role}
             </span>
           ) : null}

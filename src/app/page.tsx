@@ -56,7 +56,8 @@ export default function Home() {
   const creatorModeBeforePresent = useRef(creatorMode);
 
   // Auto-lock editing when entering presentation, restore on exit
-  useEffect(() => {
+  // useLayoutEffect prevents a brief flash of non-creator layout on exit
+  useLayoutEffect(() => {
     if (presentationMode) {
       creatorModeBeforePresent.current = creatorMode;
       if (creatorMode) setCreatorMode(false);
