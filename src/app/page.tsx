@@ -489,12 +489,12 @@ export default function Home() {
               >
                 {shareButtonText}
               </Button>
-              {/* Help button — visible on md+ */}
+              {/* Help button */}
               <button
                 onClick={startWalkthrough}
                 title="Help & walkthrough"
                 aria-label="Help and walkthrough"
-                className="hidden md:flex w-7 h-7 items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors text-sm font-bold border border-border-subtle hover:border-border"
+                className="flex w-7 h-7 items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors text-sm font-bold border border-border-subtle hover:border-border"
               >
                 ?
               </button>
