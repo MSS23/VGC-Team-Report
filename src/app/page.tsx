@@ -49,6 +49,18 @@ export default function Home() {
   } = useWalkthrough({ enabled: !!analysis && !isSharedView && !presentationMode });
 
   const [showShortcutHint, setShowShortcutHint] = useState(false);
+  const creatorModeBeforePresent = useRef(creatorMode);
+
+  // Auto-lock editing when entering presentation, restore on exit
+  useEffect(() => {
+    if (presentationMode) {
+      creatorModeBeforePresent.current = creatorMode;
+      if (creatorMode) setCreatorMode(false);
+    } else {
+      if (creatorModeBeforePresent.current) setCreatorMode(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presentationMode]);
 
   const isReadOnly = isSharedView || presentationMode || !creatorMode;
   const isPresentationStyle = presentationMode;
