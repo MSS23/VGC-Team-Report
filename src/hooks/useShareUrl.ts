@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   encodeShareState,
   decodeShareState,
@@ -15,7 +15,15 @@ export function useShareUrl() {
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
   const [urlWarning, setUrlWarning] = useState<string | null>(null);
   const [decodeFailed, setDecodeFailed] = useState(false);
+  const [isEditingUnlocked, setIsEditingUnlocked] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hasPasscode = useMemo(
+    () => !!sharedState?.passcodeHash,
+    [sharedState?.passcodeHash]
+  );
+
+  const passcodeHash = sharedState?.passcodeHash ?? null;
 
   // On mount: check URL hash for shared data
   useEffect(() => {
@@ -76,11 +84,28 @@ export function useShareUrl() {
     }
   }, []);
 
+  const unlockEditing = useCallback(() => {
+    setIsEditingUnlocked(true);
+  }, []);
+
   const exitSharedView = useCallback(() => {
     setIsSharedView(false);
+    setIsEditingUnlocked(false);
     // Remove the hash from the URL without reloading
     history.replaceState(null, "", window.location.pathname);
   }, []);
 
-  return { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView };
+  return {
+    isSharedView,
+    sharedState,
+    copyShareUrl,
+    shareStatus,
+    urlWarning,
+    decodeFailed,
+    exitSharedView,
+    isEditingUnlocked,
+    hasPasscode,
+    passcodeHash,
+    unlockEditing,
+  };
 }

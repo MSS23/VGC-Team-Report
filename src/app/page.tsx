@@ -21,6 +21,8 @@ import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
 import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
 import { Button } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
+import { PasscodeModal } from "@/components/ui/PasscodeModal";
+import { hashPasscode, verifyPasscode } from "@/lib/sharing/passcode";
 import type { SpriteConfig } from "@/lib/types/sprites";
 
 export default function Home() {
@@ -37,7 +39,7 @@ export default function Home() {
   const { presentationMode, setPresentationMode } = usePresentationMode();
   const { darkMode, setDarkMode } = useDarkMode(false);
   const { genTheme, setGenTheme } = useTheme();
-  const { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView } = useShareUrl();
+  const { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, hasPasscode, passcodeHash, unlockEditing } = useShareUrl();
   const {
     isActive: walkthroughActive,
     currentStep: walkthroughStep,
@@ -49,6 +51,8 @@ export default function Home() {
   } = useWalkthrough({ enabled: !!analysis && !isSharedView && !presentationMode });
 
   const [showShortcutHint, setShowShortcutHint] = useState(false);
+  const [showPasscodeModal, setShowPasscodeModal] = useState<"set" | "unlock" | null>(null);
+  const [passcodeError, setPasscodeError] = useState<string | null>(null);
   const creatorModeBeforePresent = useRef(creatorMode);
 
   // Auto-lock editing when entering presentation, restore on exit
@@ -62,7 +66,7 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presentationMode]);
 
-  const isReadOnly = isSharedView || presentationMode || !creatorMode;
+  const isReadOnly = (isSharedView && !isEditingUnlocked) || presentationMode || !creatorMode;
   const isPresentationStyle = presentationMode;
 
   // Autosave indicator — flashes "Saved" after user edits
@@ -291,33 +295,66 @@ export default function Home() {
     parseTeam(directPaste ?? paste);
   };
 
-  const handleShare = useCallback(() => {
-    if (!analysis) return;
-    copyShareUrl({
-      paste,
-      notes,
-      calcs,
-      roles,
-      teamSummary: summary,
-      tournamentName: tournamentName || undefined,
-      placement: placement || undefined,
-      record: record || undefined,
-      mvpIndex: mvpIndex ?? undefined,
-      rentalCode: rentalCode || undefined,
-      matchupPlans: plans.map((p) => ({
-        opponentPaste: p.opponentPaste,
-        opponentLabel: p.opponentLabel,
-        showSlide: p.showSlide === false ? false : undefined,
-        gamePlans: p.gamePlans.map((gp) => ({
-          bring: gp.bring,
-          notes: gp.notes,
-          replays: gp.replays.length > 0 ? gp.replays : undefined,
-          result: gp.result ?? undefined,
-        })),
+  const buildShareState = useCallback((extraPasscodeHash?: string) => ({
+    paste,
+    notes,
+    calcs,
+    roles,
+    teamSummary: summary,
+    tournamentName: tournamentName || undefined,
+    placement: placement || undefined,
+    record: record || undefined,
+    mvpIndex: mvpIndex ?? undefined,
+    rentalCode: rentalCode || undefined,
+    matchupPlans: plans.map((p) => ({
+      opponentPaste: p.opponentPaste,
+      opponentLabel: p.opponentLabel,
+      showSlide: p.showSlide === false ? false : undefined,
+      gamePlans: p.gamePlans.map((gp) => ({
+        bring: gp.bring,
+        notes: gp.notes,
+        replays: gp.replays.length > 0 ? gp.replays : undefined,
+        result: gp.result ?? undefined,
       })),
-      hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
-    });
-  }, [analysis, paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, plans, copyShareUrl, hiddenSlides]);
+    })),
+    hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
+    passcodeHash: extraPasscodeHash || undefined,
+  }), [paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, plans, hiddenSlides]);
+
+  const handleShareClick = useCallback(() => {
+    if (!analysis) return;
+    setShowPasscodeModal("set");
+    setPasscodeError(null);
+  }, [analysis]);
+
+  const handleShareWithPasscode = useCallback(async (passcode: string) => {
+    const hash = await hashPasscode(passcode);
+    copyShareUrl(buildShareState(hash));
+    setShowPasscodeModal(null);
+  }, [copyShareUrl, buildShareState]);
+
+  const handleShareNoPasscode = useCallback(() => {
+    copyShareUrl(buildShareState());
+    setShowPasscodeModal(null);
+  }, [copyShareUrl, buildShareState]);
+
+  const handleReshare = useCallback(() => {
+    if (!analysis) return;
+    copyShareUrl(buildShareState(passcodeHash ?? undefined));
+  }, [analysis, copyShareUrl, buildShareState, passcodeHash]);
+
+  const handleUnlockAttempt = useCallback(async (attempt: string) => {
+    if (!passcodeHash) return;
+    const valid = await verifyPasscode(attempt, passcodeHash);
+    if (valid) {
+      unlockEditing();
+      setCreatorMode(true);
+      setShowPasscodeModal(null);
+      setPasscodeError(null);
+    } else {
+      setPasscodeError("Incorrect passcode. Try again.");
+    }
+  }, [passcodeHash, unlockEditing, setCreatorMode]);
 
   // Share completeness check: require team summary and notes for every Pokemon
   const missingForShare = useMemo(() => {
@@ -437,8 +474,63 @@ export default function Home() {
               </Button>
             </div>
           </div>
+        ) : isSharedView && isEditingUnlocked ? (
+          /* Shared view: editing unlocked header */
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm text-text-secondary min-w-0">
+              {tournamentName && (
+                <>
+                  <span className="font-bold text-text-primary truncate">{tournamentName}</span>
+                  {placement && (
+                    <span className="text-xs font-semibold text-accent bg-accent-surface px-2 py-0.5 rounded-full flex-shrink-0">
+                      {placement}
+                    </span>
+                  )}
+                  {record && (
+                    <span className="text-text-tertiary flex-shrink-0">({record})</span>
+                  )}
+                  <span className="text-text-tertiary hidden sm:inline">&middot;</span>
+                </>
+              )}
+              <span className="font-medium text-text-primary hidden sm:inline">
+                {slideLabels[currentSlide]}
+              </span>
+              <span className="text-text-tertiary tabular-nums hidden sm:inline">
+                &middot; {currentSlide + 1} / {totalSlides}
+              </span>
+              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full flex-shrink-0">
+                Editing Unlocked
+              </span>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <Toggle
+                checked={darkMode}
+                onChange={setDarkMode}
+                label={darkMode ? "Dark" : "Light"}
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleReshare}
+                disabled={shareStatus === "copying"}
+              >
+                {shareStatus === "copying" ? "Copying..." : shareStatus === "copied" ? "Copied!" : shareStatus === "error" ? "Failed" : "Re-share"}
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  window.location.href =
+                    window.location.origin + window.location.pathname;
+                }}
+              >
+                <span className="sm:hidden">New</span>
+                <span className="hidden sm:inline">Build Your Own</span>
+              </Button>
+            </div>
+          </div>
         ) : isSharedView ? (
-          /* Shared view: clean read-only header */
+          /* Shared view: read-only header */
           <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-sm text-text-secondary min-w-0">
               {tournamentName && (
@@ -468,6 +560,23 @@ export default function Home() {
                 onChange={setDarkMode}
                 label={darkMode ? "Dark" : "Light"}
               />
+              {hasPasscode && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setShowPasscodeModal("unlock");
+                    setPasscodeError(null);
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                  <span className="hidden sm:inline">Unlock Editing</span>
+                  <span className="sm:hidden">Unlock</span>
+                </Button>
+              )}
               <Button
                 variant="secondary"
                 size="sm"
@@ -537,7 +646,7 @@ export default function Home() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={handleShare}
+                onClick={handleShareClick}
                 disabled={!canShare || shareStatus === "copying"}
                 data-walkthrough="share-button"
                 title={!canShare ? missingForShare.join(" · ") : undefined}
@@ -764,6 +873,21 @@ export default function Home() {
         visible={showShortcutHint}
         onDismiss={() => setShowShortcutHint(false)}
       />
+
+      {/* Passcode modal */}
+      {showPasscodeModal && (
+        <PasscodeModal
+          mode={showPasscodeModal}
+          error={passcodeError}
+          onShareWithPasscode={handleShareWithPasscode}
+          onShareWithout={handleShareNoPasscode}
+          onUnlock={handleUnlockAttempt}
+          onCancel={() => {
+            setShowPasscodeModal(null);
+            setPasscodeError(null);
+          }}
+        />
+      )}
     </main>
   );
 }
