@@ -39,7 +39,7 @@ export default function Home() {
   const { presentationMode, setPresentationMode } = usePresentationMode();
   const { darkMode, setDarkMode } = useDarkMode(false);
   const { genTheme, setGenTheme } = useTheme();
-  const { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, hasPasscode, passcodeHash, unlockEditing } = useShareUrl();
+  const { isSharedView, isSharePending, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, hasPasscode, passcodeHash, unlockEditing } = useShareUrl();
   const {
     isActive: walkthroughActive,
     currentStep: walkthroughStep,
@@ -368,7 +368,7 @@ export default function Home() {
           : "Share";
 
   // Show paste input if no analysis and not loading shared view
-  if (!analysis && !sharedState) {
+  if (!analysis && !sharedState && !isSharePending) {
     return (
       <main className="min-h-screen flex items-center justify-center p-4 sm:p-6">
         <PasteInput
@@ -381,7 +381,7 @@ export default function Home() {
   }
 
   // Loading / error state for shared view
-  if (!analysis && (sharedState || decodeFailed)) {
+  if (!analysis && (sharedState || isSharePending || decodeFailed)) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
         {decodeFailed ? (
@@ -488,6 +488,9 @@ export default function Home() {
               <span className="text-text-tertiary tabular-nums hidden sm:inline">
                 &middot; {currentSlide + 1} / {totalSlides}
               </span>
+              <span className="text-text-tertiary tabular-nums flex-shrink-0 sm:hidden">
+                {currentSlide + 1}/{totalSlides}
+              </span>
               <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full flex-shrink-0">
                 Editing Unlocked
               </span>
@@ -542,6 +545,9 @@ export default function Home() {
               </span>
               <span className="text-text-tertiary tabular-nums hidden sm:inline">
                 &middot; {currentSlide + 1} / {totalSlides}
+              </span>
+              <span className="text-text-tertiary tabular-nums flex-shrink-0 sm:hidden">
+                {currentSlide + 1}/{totalSlides}
               </span>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">

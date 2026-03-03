@@ -9,7 +9,32 @@ import {
 
 type ShareStatus = "idle" | "copying" | "copied" | "error";
 
+/** Synchronously detect share URL from query params or hash (runs before effects). */
+function detectShareParam(): string | null {
+  if (typeof window === "undefined") return null;
+  // Primary: ?s= query param (from server-side redirect)
+  const url = new URL(window.location.href);
+  const s = url.searchParams.get("s");
+  if (s) return s;
+  // Legacy: #id= hash
+  const hash = window.location.hash;
+  if (hash.startsWith("#id=")) return hash.slice("#id=".length) || null;
+  return null;
+}
+
+function detectInlineData(): string | null {
+  if (typeof window === "undefined") return null;
+  const hash = window.location.hash;
+  if (hash.startsWith("#data=")) return hash.slice("#data=".length) || null;
+  return null;
+}
+
 export function useShareUrl() {
+  // Detect share params synchronously so isSharePending is true from first render
+  const [shareId] = useState(detectShareParam);
+  const [inlineData] = useState(detectInlineData);
+  const isSharePending = !!(shareId || inlineData);
+
   const [isSharedView, setIsSharedView] = useState(false);
   const [sharedState, setSharedState] = useState<ShareableState | null>(null);
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
@@ -25,10 +50,8 @@ export function useShareUrl() {
 
   const passcodeHash = sharedState?.passcodeHash ?? null;
 
-  // On mount: check URL hash for #id= (short) or #data= (legacy)
+  // Fetch shared state on mount
   useEffect(() => {
-    const hash = window.location.hash;
-
     let settled = false;
     const timeout = setTimeout(() => {
       if (!settled) {
@@ -49,28 +72,33 @@ export function useShareUrl() {
       }
     };
 
-    if (hash.startsWith("#id=")) {
-      const id = hash.slice("#id=".length);
-      if (!id) return;
-      fetch(`/api/share/${id}`)
+    if (shareId) {
+      fetch(`/api/share/${shareId}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((state) => settle(state as ShareableState | null))
         .catch(() => settle(null));
+
+      // Clean up query param from URL (cosmetic)
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("s")) {
+        url.searchParams.delete("s");
+        const clean = url.pathname + (url.search || "") + url.hash;
+        history.replaceState(null, "", clean);
+      }
+
       return () => clearTimeout(timeout);
     }
 
-    if (hash.startsWith("#data=")) {
-      const encoded = hash.slice("#data=".length);
-      if (!encoded) return;
-      decodeShareState(encoded)
+    if (inlineData) {
+      decodeShareState(inlineData)
         .then((state) => settle(state))
         .catch(() => settle(null));
       return () => clearTimeout(timeout);
     }
 
-    // No share hash — clear timeout
+    // No share params — clear timeout
     clearTimeout(timeout);
-  }, []);
+  }, [shareId, inlineData]);
 
   const copyShareUrl = useCallback(async (state: ShareableState) => {
     setShareStatus("copying");
@@ -123,6 +151,7 @@ export function useShareUrl() {
 
   return {
     isSharedView,
+    isSharePending,
     sharedState,
     copyShareUrl,
     shareStatus,

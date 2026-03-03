@@ -12,6 +12,15 @@ const STORAGE_KEY = "vgc-team-paste";
 
 export type ViewMode = "simple" | "advanced";
 
+/** Check if the current URL indicates a share link (skip localStorage load). */
+function isShareUrl(): boolean {
+  if (typeof window === "undefined") return false;
+  const url = new URL(window.location.href);
+  if (url.searchParams.has("s")) return true;
+  const hash = window.location.hash;
+  return hash.startsWith("#id=") || hash.startsWith("#data=");
+}
+
 function loadSavedPaste(): string {
   try {
     return localStorage.getItem(STORAGE_KEY) ?? "";
@@ -26,10 +35,12 @@ export function useTeamReport() {
   const [viewMode, setViewMode] = useState<ViewMode>("simple");
   const hasAutoLoaded = useRef(false);
 
-  // Auto-load saved paste on mount
+  // Auto-load saved paste on mount (skip if opening a share URL)
   useEffect(() => {
     if (hasAutoLoaded.current) return;
     hasAutoLoaded.current = true;
+
+    if (isShareUrl()) return;
 
     const saved = loadSavedPaste();
     if (saved) {
