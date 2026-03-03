@@ -523,11 +523,11 @@ function GamePlanSection({
                 )}
               </div>
 
-              {/* Replays */}
+              {/* Replays (optional) */}
               {(gamePlan.replays.length > 0 || !isReadOnly) && (
                 <div>
                   <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
-                    Replays
+                    Replays <span className="normal-case tracking-normal font-normal text-text-tertiary/60">(optional)</span>
                   </span>
                   {gamePlan.replays.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-2">
