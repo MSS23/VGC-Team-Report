@@ -3,7 +3,7 @@
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { PokemonSprite } from "./PokemonSprite";
 import { TypeCoverageMatrix } from "./TypeCoverageMatrix";
-import type { SpriteConfig } from "@/hooks/useSpriteSettings";
+import type { SpriteConfig } from "@/lib/types/sprites";
 
 interface SpeedTierChartProps {
   pokemon: AnalyzedPokemon[];

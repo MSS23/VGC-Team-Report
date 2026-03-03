@@ -12,8 +12,6 @@ import { useMatchupPlans } from "@/hooks/useMatchupPlans";
 import { useHiddenSlides } from "@/hooks/useHiddenSlides";
 import { useTeamMeta } from "@/hooks/useTeamMeta";
 import { useShareUrl } from "@/hooks/useShareUrl";
-import { useExportSlide } from "@/hooks/useExportSlide";
-import { useSpriteSettings } from "@/hooks/useSpriteSettings";
 import { useWalkthrough } from "@/hooks/useWalkthrough";
 import { useTheme, GEN_THEMES } from "@/hooks/useTheme";
 import { PasteInput } from "@/components/input/PasteInput";
@@ -21,9 +19,9 @@ import { TeamReport } from "@/components/report/TeamReport";
 import { SlideNavControls } from "@/components/report/SlideNavControls";
 import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
 import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
-import { QrCodeModal } from "@/components/ui/QrCodeModal";
 import { Button } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
+import type { SpriteConfig } from "@/lib/types/sprites";
 
 export default function Home() {
   const {
@@ -39,8 +37,7 @@ export default function Home() {
   const { presentationMode, setPresentationMode } = usePresentationMode();
   const { darkMode, setDarkMode } = useDarkMode(false);
   const { genTheme, setGenTheme } = useTheme();
-  const { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView, lastShareUrl, dismissQr } = useShareUrl();
-  const { slideRef, exportAsPng, exportAllSlides, exportStatus, exportProgress } = useExportSlide();
+  const { isSharedView, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView } = useShareUrl();
   const {
     isActive: walkthroughActive,
     currentStep: walkthroughStep,
@@ -89,23 +86,16 @@ export default function Home() {
     setPlansFull,
   } = useMatchupPlans(speciesKeys, !isSharedView);
 
-  // Sprite shiny/animated defaults from parsed data
-  const spriteDefaults = useMemo(() => {
-    if (!analysis) return {};
-    const d: Record<string, { shiny: boolean }> = {};
-    analysis.pokemon.forEach((mon, i) => {
-      d[speciesKeys[i]] = { shiny: mon.parsed.shiny };
-    });
-    return d;
-  }, [analysis, speciesKeys]);
-  const {
-    getConfig: getSpriteConfig,
-    toggleShiny,
-    toggleAnimated,
-    toggleAllAnimated,
-    allAnimated,
-    setSettingsFull: setSpriteSettingsFull,
-  } = useSpriteSettings(speciesKeys, spriteDefaults, !isSharedView);
+  // Sprite config from parsed data — shiny from paste, always animated
+  const getSpriteConfig = useCallback(
+    (key: string): SpriteConfig => {
+      if (!analysis) return { shiny: false, animated: true };
+      const idx = speciesKeys.indexOf(key);
+      const shiny = idx >= 0 ? analysis.pokemon[idx]?.parsed.shiny ?? false : false;
+      return { shiny, animated: true };
+    },
+    [analysis, speciesKeys]
+  );
 
   const { hiddenSlides, toggleSlide, isHidden, setHiddenFull } = useHiddenSlides(speciesKeys, !isSharedView);
 
@@ -239,22 +229,10 @@ export default function Home() {
         })),
       }))
     );
-    if (sharedState.spriteSettings) {
-      // Merge shared sprite settings with defaults (animated defaults to true)
-      const merged: Record<string, { shiny: boolean; animated: boolean }> = {};
-      for (const key of speciesKeys) {
-        const shared = sharedState.spriteSettings[key];
-        merged[key] = {
-          shiny: shared?.shiny ?? false,
-          animated: shared?.animated ?? true,
-        };
-      }
-      setSpriteSettingsFull(merged);
-    }
     if (sharedState.hiddenSlides) {
       setHiddenFull(sharedState.hiddenSlides);
     }
-  }, [sharedState, analysis, speciesKeys, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setSpriteSettingsFull, setHiddenFull]);
+  }, [sharedState, analysis, speciesKeys, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
 
 
   const handleAnalyze = (directPaste?: string) => {
@@ -263,16 +241,6 @@ export default function Home() {
 
   const handleShare = useCallback(() => {
     if (!analysis) return;
-    // Only include non-default sprite settings (shiny=true or animated=false)
-    const spriteOverrides: Record<string, { shiny?: boolean; animated?: boolean }> = {};
-    for (const key of speciesKeys) {
-      const cfg = getSpriteConfig(key);
-      const entry: { shiny?: boolean; animated?: boolean } = {};
-      if (cfg.shiny) entry.shiny = true;
-      if (!cfg.animated) entry.animated = false;
-      if (Object.keys(entry).length > 0) spriteOverrides[key] = entry;
-    }
-
     copyShareUrl({
       paste,
       notes,
@@ -295,10 +263,9 @@ export default function Home() {
           result: gp.result ?? undefined,
         })),
       })),
-      spriteSettings: Object.keys(spriteOverrides).length > 0 ? spriteOverrides : undefined,
       hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
     });
-  }, [analysis, paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, plans, speciesKeys, getSpriteConfig, copyShareUrl, hiddenSlides]);
+  }, [analysis, paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, plans, copyShareUrl, hiddenSlides]);
 
   // Share completeness check: require team summary and notes for every Pokemon
   const missingForShare = useMemo(() => {
@@ -403,22 +370,6 @@ export default function Home() {
               </span>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                type="button"
-                onClick={toggleAllAnimated}
-                title={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
-                aria-label={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
-                className={`flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
-                  allAnimated
-                    ? "bg-accent/15 text-accent border-accent/30"
-                    : "bg-surface-alt text-text-secondary border-border hover:text-text-primary"
-                }`}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
-                <span className="hidden sm:inline">GIF</span>
-              </button>
               <Toggle
                 checked={darkMode}
                 onChange={setDarkMode}
@@ -460,22 +411,6 @@ export default function Home() {
               </span>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              <button
-                type="button"
-                onClick={toggleAllAnimated}
-                title={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
-                aria-label={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
-                className={`p-1.5 sm:px-3 sm:py-1.5 rounded-lg border transition-all duration-200 sm:flex sm:items-center sm:gap-1.5 ${
-                  allAnimated
-                    ? "bg-accent/15 text-accent border-accent/30"
-                    : "bg-surface-alt text-text-secondary border-border hover:text-text-primary"
-                }`}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
-                <span className="hidden sm:inline text-xs font-semibold">GIF</span>
-              </button>
               <Toggle
                 checked={darkMode}
                 onChange={setDarkMode}
@@ -554,81 +489,14 @@ export default function Home() {
               >
                 {shareButtonText}
               </Button>
-              {/* Export & help — grouped behind md breakpoint */}
-              <div className="hidden md:flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => exportAsPng(`slide-${currentSlide + 1}.png`)}
-                  title="Export slide as image"
-                  aria-label="Export slide as image"
-                  className="text-text-secondary hover:text-text-primary"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                  </svg>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => exportAllSlides(totalSlides, goToSlide, slideLabels)}
-                  disabled={exportStatus === "exporting-all"}
-                  title="Export all slides as ZIP"
-                  aria-label="Export all slides as ZIP"
-                  className="text-text-secondary hover:text-text-primary"
-                >
-                  {exportStatus === "exporting-all" ? (
-                    <span className="text-xs tabular-nums">{exportProgress.current}/{exportProgress.total}</span>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                  )}
-                </Button>
-                <button
-                  onClick={startWalkthrough}
-                  title="Help & walkthrough"
-                  aria-label="Help and walkthrough"
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors text-sm font-bold border border-border-subtle hover:border-border"
-                >
-                  ?
-                </button>
-              </div>
-
-              {/* Global GIF toggle: icon-only on mobile, icon+text on sm+ */}
+              {/* Help button — visible on md+ */}
               <button
-                type="button"
-                onClick={toggleAllAnimated}
-                title={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
-                aria-label={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
-                className={`sm:hidden p-1.5 rounded-lg border transition-all duration-200 ${
-                  allAnimated
-                    ? "bg-accent/15 text-accent border-accent/30"
-                    : "bg-surface-alt text-text-secondary border-border hover:text-text-primary"
-                }`}
+                onClick={startWalkthrough}
+                title="Help & walkthrough"
+                aria-label="Help and walkthrough"
+                className="hidden md:flex w-7 h-7 items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors text-sm font-bold border border-border-subtle hover:border-border"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={toggleAllAnimated}
-                title={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
-                aria-label={allAnimated ? "Switch all to static sprites" : "Switch all to animated GIFs"}
-                className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
-                  allAnimated
-                    ? "bg-accent/15 text-accent border-accent/30"
-                    : "bg-surface-alt text-text-secondary border-border hover:text-text-primary hover:border-border"
-                }`}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
-                GIF
+                ?
               </button>
 
               {/* Generation theme selector */}
@@ -712,7 +580,7 @@ export default function Home() {
                 aria-label="Start presentation"
               >
                 <span className="hidden sm:inline">Present</span>
-                <span className="sm:hidden">▶</span>
+                <span className="sm:hidden">&#9654;</span>
               </Button>
             </div>
           </div>
@@ -735,7 +603,6 @@ export default function Home() {
 
       {/* Report content */}
       <div
-        ref={slideRef}
         className={`max-w-7xl mx-auto pb-20 slide-content ${
           isPresentationStyle
             ? "px-4 sm:px-8 py-4 sm:py-6"
@@ -806,8 +673,6 @@ export default function Home() {
           onRemovePlan={removePlan}
           onAddPlan={addPlan}
           getSpriteConfig={getSpriteConfig}
-          onToggleShiny={toggleShiny}
-          onToggleAnimated={toggleAnimated}
         />
       </div>
 
@@ -843,11 +708,6 @@ export default function Home() {
         visible={showShortcutHint}
         onDismiss={() => setShowShortcutHint(false)}
       />
-
-      {/* QR code modal (after share) */}
-      {lastShareUrl && (
-        <QrCodeModal url={lastShareUrl} onDismiss={dismissQr} />
-      )}
     </main>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
-import type { SpriteConfig } from "@/hooks/useSpriteSettings";
+import type { SpriteConfig } from "@/lib/types/sprites";
 import { PokemonCard } from "./PokemonCard";
 
 interface TeamOverviewProps {
@@ -25,8 +25,6 @@ interface TeamOverviewProps {
   onMvpIndexChange?: (index: number | null) => void;
   isReadOnly: boolean;
   getSpriteConfig?: (key: string) => SpriteConfig;
-  onToggleShiny?: (key: string) => void;
-  onToggleAnimated?: (key: string) => void;
 }
 
 export function TeamOverview({
@@ -49,8 +47,6 @@ export function TeamOverview({
   onMvpIndexChange,
   isReadOnly,
   getSpriteConfig,
-  onToggleShiny,
-  onToggleAnimated,
 }: TeamOverviewProps) {
   const hasTournamentInfo = !!(tournamentName || placement || record);
   const [rentalCopied, setRentalCopied] = useState(false);
@@ -182,8 +178,6 @@ export function TeamOverview({
               onToggleMvp={() => onMvpIndexChange?.(mvpIndex === i ? null : i)}
               shiny={sc?.shiny}
               animated={sc?.animated}
-              onToggleShiny={onToggleShiny ? () => onToggleShiny(speciesKeys[i]) : undefined}
-              onToggleAnimated={onToggleAnimated ? () => onToggleAnimated(speciesKeys[i]) : undefined}
             />
           );
         })}

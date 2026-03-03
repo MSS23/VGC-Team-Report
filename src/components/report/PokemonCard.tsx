@@ -17,11 +17,9 @@ interface PokemonCardProps {
   onToggleMvp?: () => void;
   shiny?: boolean;
   animated?: boolean;
-  onToggleShiny?: () => void;
-  onToggleAnimated?: () => void;
 }
 
-export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, onToggleShiny, onToggleAnimated }: PokemonCardProps) {
+export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true }: PokemonCardProps) {
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
   const spriteSizeSm = creatorMode ? 88 : 76;
@@ -51,28 +49,20 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
       {/* Header: Sprite + Name + Types */}
       <div className="flex items-start gap-3 creator:gap-4">
         <div className="flex-shrink-0">
-          <button
-            type="button"
-            onClick={onToggleAnimated}
-            title={animated ? "Switch to static sprite" : "Switch to animated GIF"}
-            aria-label={animated ? "Switch to static sprite" : "Switch to animated sprite"}
-            className="block cursor-pointer rounded-xl transition-transform hover:scale-105 active:scale-95"
-          >
-            <PokemonSprite
-              species={parsed.species}
-              size={spriteSizeSm}
-              className="sm:hidden"
-              animated={animated}
-              shiny={shiny}
-            />
-            <PokemonSprite
-              species={parsed.species}
-              size={spriteSizeLg}
-              className="hidden sm:block"
-              animated={animated}
-              shiny={shiny}
-            />
-          </button>
+          <PokemonSprite
+            species={parsed.species}
+            size={spriteSizeSm}
+            className="sm:hidden"
+            animated={animated}
+            shiny={shiny}
+          />
+          <PokemonSprite
+            species={parsed.species}
+            size={spriteSizeLg}
+            className="hidden sm:block"
+            animated={animated}
+            shiny={shiny}
+          />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -84,44 +74,23 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                 {parsed.gender === "M" ? "\u2642" : "\u2640"}
               </span>
             )}
-            {/* Action buttons: MVP star + Shiny sparkle */}
-            {!isReadOnly && (
-              <div className="flex items-center ml-auto">
-                {onToggleMvp && (
-                  <button
-                    type="button"
-                    onClick={onToggleMvp}
-                    className={`p-2 rounded-lg transition-all duration-200 ${
-                      isMvp
-                        ? "text-amber-500 bg-amber-500/10"
-                        : "text-text-tertiary/40 hover:text-amber-400 hover:bg-amber-400/5"
-                    }`}
-                    title={isMvp ? "Remove MVP" : "Set as MVP"}
-                    aria-label={isMvp ? "Remove MVP" : "Set as MVP"}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill={isMvp ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-                    </svg>
-                  </button>
-                )}
-                {onToggleShiny && (
-                  <button
-                    type="button"
-                    onClick={onToggleShiny}
-                    className={`p-2 rounded-lg transition-all duration-200 ${
-                      shiny
-                        ? "text-amber-500 bg-amber-500/10"
-                        : "text-text-tertiary/40 hover:text-amber-400 hover:bg-amber-400/5"
-                    }`}
-                    title={shiny ? "Show normal sprite" : "Show shiny sprite"}
-                    aria-label={shiny ? "Disable shiny sprite" : "Enable shiny sprite"}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill={shiny ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2L14 10L22 12L14 14L12 22L10 14L2 12L10 10Z" />
-                    </svg>
-                  </button>
-                )}
-              </div>
+            {/* MVP star */}
+            {!isReadOnly && onToggleMvp && (
+              <button
+                type="button"
+                onClick={onToggleMvp}
+                className={`ml-auto p-2 rounded-lg transition-all duration-200 ${
+                  isMvp
+                    ? "text-amber-500 bg-amber-500/10"
+                    : "text-text-tertiary/40 hover:text-amber-400 hover:bg-amber-400/5"
+                }`}
+                title={isMvp ? "Remove MVP" : "Set as MVP"}
+                aria-label={isMvp ? "Remove MVP" : "Set as MVP"}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill={isMvp ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                  <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+                </svg>
+              </button>
             )}
           </div>
 

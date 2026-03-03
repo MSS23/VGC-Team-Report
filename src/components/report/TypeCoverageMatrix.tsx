@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { PokemonType } from "@/lib/types/pokemon";
-import { lookupMoveType } from "@/lib/data/move-types";
+import { MOVES } from "@/lib/data/moves";
 import { TYPE_CHART, getEffectiveness } from "@/lib/data/type-chart";
 import { TYPE_COLORS } from "@/lib/utils/type-colors";
 
@@ -17,6 +17,11 @@ type CoverageMode = "offensive" | "defensive";
 
 interface TypeCoverageMatrixProps {
   pokemon: AnalyzedPokemon[];
+}
+
+function lookupMoveType(name: string): PokemonType | null {
+  const key = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return MOVES[key]?.type ?? null;
 }
 
 function hasSuperEffectiveCoverage(mon: AnalyzedPokemon, defenderType: PokemonType): boolean {

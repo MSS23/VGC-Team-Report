@@ -20,8 +20,6 @@ interface PokemonDetailSlideProps {
   isPresentationMode?: boolean;
   shiny?: boolean;
   animated?: boolean;
-  onToggleShiny?: () => void;
-  onToggleAnimated?: () => void;
 }
 
 const CATEGORY_CONFIG = {
@@ -69,8 +67,6 @@ export function PokemonDetailSlide({
   isPresentationMode = false,
   shiny = false,
   animated = true,
-  onToggleShiny,
-  onToggleAnimated,
 }: PokemonDetailSlideProps) {
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
@@ -157,40 +153,6 @@ export function PokemonDetailSlide({
               animated={animated}
               shiny={shiny}
             />
-            {(onToggleShiny || onToggleAnimated) && (
-              <div className="flex items-center gap-1">
-                {onToggleShiny && (
-                  <button
-                    type="button"
-                    onClick={onToggleShiny}
-                    title={shiny ? "Show normal sprite" : "Show shiny sprite"}
-                    aria-label={shiny ? "Disable shiny sprite" : "Enable shiny sprite"}
-                    className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border transition-colors ${
-                      shiny
-                        ? "bg-amber-400/20 text-amber-500 border-amber-400/40"
-                        : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary"
-                    }`}
-                  >
-                    Shiny
-                  </button>
-                )}
-                {onToggleAnimated && (
-                  <button
-                    type="button"
-                    onClick={onToggleAnimated}
-                    title={animated ? "Show static sprite" : "Show animated sprite"}
-                    aria-label={animated ? "Switch to static sprite" : "Switch to animated sprite"}
-                    className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border transition-colors ${
-                      animated
-                        ? "bg-accent/15 text-accent border-accent/30"
-                        : "bg-surface-alt text-text-tertiary border-border-subtle hover:text-text-secondary"
-                    }`}
-                  >
-                    GIF
-                  </button>
-                )}
-              </div>
-            )}
           </div>
           <div className="flex flex-col gap-1.5 sm:gap-2 pt-1 sm:pt-2 min-w-0">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">

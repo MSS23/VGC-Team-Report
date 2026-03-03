@@ -3,7 +3,7 @@
 import type { TeamAnalysis } from "@/lib/types/analysis";
 import type { MatchupPlan, GameResult } from "@/hooks/useMatchupPlans";
 import type { CalcEntry, CalcCategory } from "@/hooks/useDamageCalcs";
-import type { SpriteConfig } from "@/hooks/useSpriteSettings";
+import type { SpriteConfig } from "@/lib/types/sprites";
 import { TeamOverview } from "./TeamOverview";
 import { MatchupSheet } from "./MatchupSheet";
 import { PokemonDetailSlide } from "./PokemonDetailSlide";
@@ -53,8 +53,6 @@ interface TeamReportProps {
   onRemovePlan?: (id: string) => void;
   onAddPlan?: (paste: string, label: string) => void;
   getSpriteConfig?: (key: string) => SpriteConfig;
-  onToggleShiny?: (key: string) => void;
-  onToggleAnimated?: (key: string) => void;
 }
 
 export function TeamReport({
@@ -95,8 +93,6 @@ export function TeamReport({
   onRemovePlan,
   onAddPlan,
   getSpriteConfig,
-  onToggleShiny,
-  onToggleAnimated,
 }: TeamReportProps) {
   const pokemonCount = analysis.pokemon.length;
 
@@ -123,8 +119,6 @@ export function TeamReport({
         onMvpIndexChange={onMvpIndexChange}
         isReadOnly={isReadOnly}
         getSpriteConfig={getSpriteConfig}
-        onToggleShiny={onToggleShiny}
-        onToggleAnimated={onToggleAnimated}
       />
     );
   }
@@ -148,8 +142,6 @@ export function TeamReport({
         isPresentationMode={isPresentationMode}
         shiny={getSpriteConfig?.(key)?.shiny}
         animated={getSpriteConfig?.(key)?.animated}
-        onToggleShiny={onToggleShiny ? () => onToggleShiny(key) : undefined}
-        onToggleAnimated={onToggleAnimated ? () => onToggleAnimated(key) : undefined}
       />
     );
   }
