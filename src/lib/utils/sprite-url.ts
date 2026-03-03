@@ -137,7 +137,12 @@ export function getGenThemedSpriteUrls(
     if (style.animated !== "ani") {
       urls.push(`${BASE_URL}/${shiny ? "ani-shiny" : "ani"}/${slug}.gif`);
     }
-    // 3. Static fallback
+    // 3. Gen-themed static (e.g., home for gen8/9 — covers newer Pokemon)
+    const staticFolder = shiny && style.shinyFolder ? style.shinyFolder : style.folder;
+    if (staticFolder !== "gen5") {
+      urls.push(`${BASE_URL}/${staticFolder}/${slug}.png`);
+    }
+    // 4. Gen5 static fallback (broadest retro coverage)
     urls.push(`${BASE_URL}/${shiny ? "gen5-shiny" : "gen5"}/${slug}.png`);
   } else {
     // 1. Gen-themed static (e.g., gen1rb, gen3, home)

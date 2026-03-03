@@ -53,6 +53,11 @@ export default function Home() {
   const isReadOnly = isSharedView || presentationMode || !creatorMode;
   const isPresentationStyle = presentationMode;
 
+  // Autosave indicator — flashes "Saved" after user edits
+  const [saveFlash, setSaveFlash] = useState(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRender = useRef(true);
+
   // Build species keys with dedup index for duplicate species
   const speciesKeys = useMemo(() => {
     if (!analysis) return [];
@@ -99,6 +104,15 @@ export default function Home() {
 
   const { hiddenSlides, toggleSlide, isHidden, setHiddenFull } = useHiddenSlides(speciesKeys, !isSharedView);
 
+  // Flash "Saved" indicator when user data changes (skip initial load)
+  useEffect(() => {
+    if (!analysis || isSharedView) return;
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    setSaveFlash(true);
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => setSaveFlash(false), 1500);
+  }, [notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, plans, hiddenSlides, analysis, isSharedView]);
+
   // Build ALL slide keys and labels (including all plans, visibility handled at nav level)
   const { allSlideKeys, allSlideLabels } = useMemo(() => {
     if (!analysis) return { allSlideKeys: [] as string[], allSlideLabels: [] as string[] };
@@ -134,9 +148,9 @@ export default function Home() {
   // Creator sees all slides; non-creator only sees visible ones
   const visibleIndices = useMemo(() => {
     const all = allSlideKeys.map((_, i) => i);
-    if (creatorMode) return all;
+    if (creatorMode && !presentationMode) return all;
     return all.filter((i) => !isSlideHiddenAt(i));
-  }, [allSlideKeys, creatorMode, isSlideHiddenAt]);
+  }, [allSlideKeys, creatorMode, presentationMode, isSlideHiddenAt]);
 
   const totalSlides = visibleIndices.length;
 
@@ -454,6 +468,9 @@ export default function Home() {
                   {warnings.length} warning{warnings.length > 1 ? "s" : ""}
                 </span>
               )}
+              <span className={`text-xs text-emerald-500 hidden sm:inline transition-opacity duration-300 ${saveFlash ? "opacity-100" : "opacity-0"}`}>
+                Saved
+              </span>
             </div>
 
             {/* Center: Slide indicator (hidden on small screens, shown in nav bar instead) */}
