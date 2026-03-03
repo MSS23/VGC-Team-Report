@@ -20,7 +20,7 @@ interface Rect {
 }
 
 const SPOTLIGHT_PAD = 8;
-const TOOLTIP_MARGIN = 12;
+const TOOLTIP_MARGIN = 16;
 const TOOLTIP_GAP = 12;
 const NAVBAR_HEIGHT = 52;
 
@@ -33,7 +33,6 @@ export function WalkthroughOverlay({
 }: WalkthroughOverlayProps) {
   const [mounted, setMounted] = useState(false);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
-  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const tooltipRef = useRef<HTMLDivElement>(null);
   const isVirtual = step.target === null;
   const isLastStep = stepIndex === totalSteps - 1;
@@ -57,78 +56,13 @@ export function WalkthroughOverlay({
     setTargetRect({ top: r.top, left: r.left, width: r.width, height: r.height });
   }, [step.target, isVirtual]);
 
-  // Position tooltip relative to target
-  const positionTooltip = useCallback(() => {
-    requestAnimationFrame(() => {
-      const tt = tooltipRef.current;
-      if (!tt) return;
-      const ttW = tt.offsetWidth;
-      const ttH = tt.offsetHeight;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-
-      // Account for the fixed bottom navbar so tooltips don't hide behind it
-      const safeBottom = vh - NAVBAR_HEIGHT;
-
-      if (isVirtual || !targetRect) {
-        // Centered on screen (within the safe area above navbar)
-        setTooltipStyle({
-          position: "fixed",
-          top: `${Math.max(TOOLTIP_MARGIN, (safeBottom - ttH) / 2)}px`,
-          left: `${Math.max(TOOLTIP_MARGIN, (vw - ttW) / 2)}px`,
-        });
-        return;
-      }
-
-      const spotTop = targetRect.top - SPOTLIGHT_PAD;
-      const spotLeft = targetRect.left - SPOTLIGHT_PAD;
-      const spotW = targetRect.width + SPOTLIGHT_PAD * 2;
-      const spotH = targetRect.height + SPOTLIGHT_PAD * 2;
-      const spotBottom = spotTop + spotH;
-      const spotCenterX = spotLeft + spotW / 2;
-
-      let top: number;
-      let left: number;
-
-      if (step.placement === "above") {
-        top = spotTop - TOOLTIP_GAP - ttH;
-        if (top < TOOLTIP_MARGIN) {
-          // Fall back to below
-          top = spotBottom + TOOLTIP_GAP;
-        }
-      } else {
-        top = spotBottom + TOOLTIP_GAP;
-        if (top + ttH > safeBottom - TOOLTIP_MARGIN) {
-          // Fall back to above
-          top = spotTop - TOOLTIP_GAP - ttH;
-        }
-      }
-
-      left = spotCenterX - ttW / 2;
-      // Clamp horizontal
-      left = Math.max(TOOLTIP_MARGIN, Math.min(left, vw - ttW - TOOLTIP_MARGIN));
-      // Clamp vertical — keep above the navbar
-      top = Math.max(TOOLTIP_MARGIN, Math.min(top, safeBottom - ttH - TOOLTIP_MARGIN));
-
-      setTooltipStyle({ position: "fixed", top: `${top}px`, left: `${left}px` });
-    });
-  }, [isVirtual, targetRect, step.placement]);
-
-  // Recalculate on step change
+  // Recalculate on step change, resize, scroll
   useEffect(() => {
     measureTarget();
   }, [measureTarget]);
 
-  // Position tooltip after target measured
   useEffect(() => {
-    positionTooltip();
-  }, [positionTooltip, targetRect]);
-
-  // Resize and scroll listeners
-  useEffect(() => {
-    const update = () => {
-      measureTarget();
-    };
+    const update = () => measureTarget();
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
     return () => {
@@ -152,6 +86,57 @@ export function WalkthroughOverlay({
     return () => window.removeEventListener("keydown", handleKey);
   }, [onNext, onSkip]);
 
+  // Position the tooltip after render using layout effect
+  useEffect(() => {
+    if (!mounted) return;
+    const tt = tooltipRef.current;
+    if (!tt) return;
+
+    const position = () => {
+      // Clear the initial CSS centering transform so calculated values work
+      tt.style.transform = "none";
+
+      const ttW = tt.offsetWidth;
+      const ttH = tt.offsetHeight;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const safeBottom = vh - NAVBAR_HEIGHT;
+
+      if (isVirtual || !targetRect) {
+        // Center on screen above navbar
+        tt.style.top = `${Math.max(TOOLTIP_MARGIN, (safeBottom - ttH) / 2)}px`;
+        tt.style.left = `${Math.max(TOOLTIP_MARGIN, (vw - ttW) / 2)}px`;
+        return;
+      }
+
+      const spotTop = targetRect.top - SPOTLIGHT_PAD;
+      const spotH = targetRect.height + SPOTLIGHT_PAD * 2;
+      const spotBottom = spotTop + spotH;
+      const spotCenterX = targetRect.left + targetRect.width / 2;
+
+      let top: number;
+      let left: number;
+
+      if (step.placement === "above") {
+        top = spotTop - TOOLTIP_GAP - ttH;
+        if (top < TOOLTIP_MARGIN) top = spotBottom + TOOLTIP_GAP;
+      } else {
+        top = spotBottom + TOOLTIP_GAP;
+        if (top + ttH > safeBottom - TOOLTIP_MARGIN) top = spotTop - TOOLTIP_GAP - ttH;
+      }
+
+      left = spotCenterX - ttW / 2;
+      left = Math.max(TOOLTIP_MARGIN, Math.min(left, vw - ttW - TOOLTIP_MARGIN));
+      top = Math.max(TOOLTIP_MARGIN, Math.min(top, safeBottom - ttH - TOOLTIP_MARGIN));
+
+      tt.style.top = `${top}px`;
+      tt.style.left = `${left}px`;
+    };
+
+    // Position on next frame to ensure layout is computed
+    requestAnimationFrame(position);
+  }, [mounted, isVirtual, targetRect, step.placement]);
+
   if (!mounted) return null;
 
   const spotlightStyle: React.CSSProperties | undefined =
@@ -163,7 +148,7 @@ export function WalkthroughOverlay({
           width: targetRect.width + SPOTLIGHT_PAD * 2,
           height: targetRect.height + SPOTLIGHT_PAD * 2,
           borderRadius: 12,
-          boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
+          boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)",
           zIndex: 9999,
           pointerEvents: "none" as const,
           transition: "all 300ms ease",
@@ -172,36 +157,34 @@ export function WalkthroughOverlay({
 
   return createPortal(
     <>
-      {/* Backdrop — for virtual steps or if target not found */}
-      {(isVirtual || !targetRect) && (
-        <div
-          style={{ position: "fixed", inset: 0, zIndex: 9998, backgroundColor: "rgba(0,0,0,0.5)" }}
-          onClick={onSkip}
-        />
-      )}
+      {/* Full-screen backdrop — always visible */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9998,
+          backgroundColor: "rgba(0,0,0,0.5)",
+        }}
+        onClick={onSkip}
+      />
 
-      {/* Spotlight cutout */}
+      {/* Spotlight cutout (brighter hole over targeted element) */}
       {spotlightStyle && (
         <div style={spotlightStyle} />
       )}
 
-      {/* Click catcher behind tooltip for non-virtual steps */}
-      {!isVirtual && targetRect && (
-        <div
-          style={{ position: "fixed", inset: 0, zIndex: 9998 }}
-          onClick={onSkip}
-        />
-      )}
-
-      {/* Tooltip card */}
+      {/* Tooltip card — starts centered via CSS, then repositioned by effect */}
       <div
         ref={tooltipRef}
         role="dialog"
         aria-label="Walkthrough"
         style={{
-          ...tooltipStyle,
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
           zIndex: 10000,
-          width: "min(340px, calc(100vw - 24px))",
+          width: "min(340px, calc(100vw - 32px))",
         }}
         className="bg-surface rounded-2xl border border-border shadow-xl animate-fade-in"
         onClick={(e) => e.stopPropagation()}

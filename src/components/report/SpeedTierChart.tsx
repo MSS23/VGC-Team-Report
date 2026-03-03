@@ -24,16 +24,27 @@ const SPEED_BENCHMARKS = [
 export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode }: SpeedTierChartProps) {
   const entries = pokemon.map((mon, i) => {
     const baseSpe = mon.calculatedStats.spe;
-    const isScarfed = mon.itemBoost?.stat === "spe";
-    const boostedSpe = isScarfed ? mon.itemBoost!.boostedValue : baseSpe;
+    const hasSpeedBoost = mon.itemBoost?.stat === "spe";
+    const boostedSpe = hasSpeedBoost ? mon.itemBoost!.boostedValue : baseSpe;
     const tailwindSpe = baseSpe * 2;
+
+    // Determine the label for the speed boost source
+    let speedBoostLabel = "";
+    if (hasSpeedBoost && mon.parsed.item) {
+      const item = mon.parsed.item.toLowerCase();
+      if (item === "choice scarf") speedBoostLabel = "scarf";
+      else if (item === "booster energy") speedBoostLabel = "booster";
+      else speedBoostLabel = mon.parsed.item;
+    }
+
     return {
       species: mon.parsed.species,
       speciesKey: speciesKeys[i],
       baseSpe,
       boostedSpe,
       tailwindSpe,
-      hasSpeedBoost: isScarfed,
+      hasSpeedBoost,
+      speedBoostLabel,
     };
   }).sort((a, b) => b.boostedSpe - a.boostedSpe);
 
@@ -116,9 +127,9 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                     }`}>
                       {entry.hasSpeedBoost ? entry.boostedSpe : entry.baseSpe}
                     </span>
-                    {entry.hasSpeedBoost && (
+                    {entry.hasSpeedBoost && entry.speedBoostLabel && (
                       <span className="text-xs text-amber-500/60 ml-0.5">
-                        scarf
+                        {entry.speedBoostLabel}
                       </span>
                     )}
                   </div>
@@ -136,7 +147,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           </span>
           <span className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded bg-amber-500/70" />
-            Scarf / Booster
+            Item boosted
           </span>
           <span className="flex items-center gap-1">
             <span className="w-px h-3 bg-text-tertiary/30" />
