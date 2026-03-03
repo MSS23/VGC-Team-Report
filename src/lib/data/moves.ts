@@ -889,6 +889,13 @@ export const MOVES: Record<string, MoveData> = {
     power: 90,
     flags: [],
   },
+  "thunderclap": {
+    name: "Thunderclap",
+    type: "Electric",
+    category: "Special",
+    power: 70,
+    flags: [],
+  },
   "ice-beam": {
     name: "Ice Beam",
     type: "Ice",
