@@ -20,9 +20,9 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
   },
   {
     target: null,
-    title: "How It Works",
+    title: "Your Report is a Slide Deck",
     description:
-      "Your report is a slide deck: Team Overview, one slide per Pok\u00e9mon, a Speed Tier chart, matchup plans for each opponent, and a Matchup Sheet. Navigate slides and fill in your notes, calcs, and game plans.",
+      "It starts with a Team Overview, then one slide per Pok\u00e9mon, a Speed Tier chart, individual matchup plans, and a Matchup Sheet. Everything is editable and saveable.",
     placement: "center",
   },
   {
@@ -33,10 +33,38 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     placement: "above",
   },
   {
+    target: null,
+    title: "Team Overview Slide",
+    description:
+      "The first slide is your team\u2019s home page. Add a tournament name, placement, record, team summary, rental code, and pick your MVP. This is the first thing viewers see.",
+    placement: "center",
+  },
+  {
+    target: null,
+    title: "Pok\u00e9mon Slides",
+    description:
+      "Each Pok\u00e9mon gets its own slide. Write notes explaining its role, add notable damage calcs, and assign a short role label (e.g. \u201cSpread Attacker\u201d). Click any calc to edit it inline.",
+    placement: "center",
+  },
+  {
+    target: null,
+    title: "Matchup Plans",
+    description:
+      "On the Matchup Sheet slide, paste an opponent\u2019s team to add them. Each matchup gets its own slide where you can create game plans, pick your bring-4, write notes, and log replays and results.",
+    placement: "center",
+  },
+  {
+    target: null,
+    title: "Hide Slides",
+    description:
+      "Any slide can be hidden from viewers and presentations. Use the visibility toggle in the bottom nav bar \u2014 hidden slides stay visible to you in editing mode with a banner.",
+    placement: "center",
+  },
+  {
     target: "creator-toggle",
     title: "Lock / Unlock Editing",
     description:
-      "Editing is unlocked by default. Click the lock button to switch to a clean read-only view. Unlock it again anytime to make changes.",
+      "Editing is unlocked by default. Click the lock button to preview the clean read-only view your viewers will see. Unlock it again anytime to keep editing.",
     placement: "below",
     mobileSkip: true,
   },
@@ -44,21 +72,21 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     target: "share-button",
     title: "Share Your Report",
     description:
-      "Once you\u2019ve added a team summary and notes for each Pok\u00e9mon, hit Share to copy a URL. Anyone with the link gets a read-only view with a QR code.",
+      "Hit Share to copy a URL. You can set an optional passcode \u2014 anyone with it can unlock editing and re-share with updates. Without a passcode, the link is read-only.",
     placement: "below",
   },
   {
     target: "present-button",
     title: "Present Your Team",
     description:
-      "Enter fullscreen presentation mode \u2014 perfect for team calls or streams. Use arrow keys to navigate, press D for dark mode, F for fullscreen, or ? for all shortcuts.",
+      "Enter fullscreen presentation mode \u2014 perfect for team calls or streams. Use arrow keys to navigate, D for dark mode, F for fullscreen, or ? for all shortcuts.",
     placement: "below",
   },
   {
     target: null,
     title: "You\u2019re all set!",
     description:
-      "Start by filling in each Pok\u00e9mon\u2019s notes and calcs, then add matchup plans on the Matchup Sheet slide. Click the ? in the header to replay this guide anytime.",
+      "Try the generation theme selector in the header to change the look. Your work saves automatically. Click the ? button anytime to replay this guide.",
     placement: "center",
   },
 ];
