@@ -26,32 +26,38 @@ const CATEGORY_CONFIG = {
   offensive: {
     label: "Offensive",
     icon: "\u2694\uFE0F",
-    borderClass: "border-red-400/30",
-    bgClass: "bg-red-500/10",
-    presentBgClass: "presenting:bg-red-500/15",
-    tagBg: "bg-red-500/20",
-    tagText: "text-red-400",
+    borderClass: "border-red-400/25",
+    leftBorder: "border-l-red-400",
+    bgClass: "bg-red-500/8",
+    presentBgClass: "presenting:bg-red-500/12",
+    tagBg: "bg-red-500/15",
+    tagText: "text-red-500 dark:text-red-400",
     iconColor: "text-red-400",
+    bulletColor: "text-red-400/70",
   },
   defensive: {
     label: "Defensive",
     icon: "\uD83D\uDEE1\uFE0F",
-    borderClass: "border-emerald-400/30",
-    bgClass: "bg-emerald-500/10",
-    presentBgClass: "presenting:bg-emerald-500/15",
-    tagBg: "bg-emerald-500/20",
-    tagText: "text-emerald-400",
+    borderClass: "border-emerald-400/25",
+    leftBorder: "border-l-emerald-400",
+    bgClass: "bg-emerald-500/8",
+    presentBgClass: "presenting:bg-emerald-500/12",
+    tagBg: "bg-emerald-500/15",
+    tagText: "text-emerald-600 dark:text-emerald-400",
     iconColor: "text-emerald-400",
+    bulletColor: "text-emerald-400/70",
   },
   speed: {
     label: "Speed Tier",
     icon: "\u26A1",
-    borderClass: "border-border-subtle",
-    bgClass: "bg-surface-alt/50",
-    presentBgClass: "presenting:bg-surface-alt/70",
-    tagBg: "bg-surface-alt",
-    tagText: "text-text-tertiary",
-    iconColor: "text-text-tertiary",
+    borderClass: "border-amber-400/25",
+    leftBorder: "border-l-amber-400",
+    bgClass: "bg-amber-500/8",
+    presentBgClass: "presenting:bg-amber-500/12",
+    tagBg: "bg-amber-500/15",
+    tagText: "text-amber-600 dark:text-amber-400",
+    iconColor: "text-amber-400",
+    bulletColor: "text-amber-400/70",
   },
 } as const;
 
@@ -98,28 +104,29 @@ export function PokemonDetailSlide({
     const cfg = CATEGORY_CONFIG[category];
 
     return (
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className={`text-xs ${cfg.tagText}`}>{cfg.icon}</span>
-          <span className={`text-xs font-semibold uppercase tracking-wider ${cfg.tagText}`}>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className={`text-sm`}>{cfg.icon}</span>
+          <span className={`text-xs font-bold uppercase tracking-widest ${cfg.tagText}`}>
             {cfg.label}
           </span>
+          <span className={`flex-1 h-px ${cfg.tagBg}`} />
         </div>
         {entries.map((entry) => {
           const globalIndex = globalCalcs.indexOf(entry);
           return (
             <div
               key={globalIndex}
-              className={`group flex items-start gap-2 px-3 py-2 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} rounded-xl transition-colors`}
+              className={`group flex items-start gap-3 px-4 py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-xl transition-colors presenting:px-5 presenting:py-4`}
             >
-              <span className={`${cfg.iconColor} text-xs mt-0.5 flex-shrink-0`}>&#9656;</span>
-              <span className="flex-1 text-sm text-text-primary leading-relaxed presenting:text-base">
+              <span className={`${cfg.bulletColor} text-sm mt-px flex-shrink-0 presenting:text-base`}>&#9656;</span>
+              <span className="flex-1 text-sm sm:text-base text-text-primary leading-relaxed presenting:text-lg presenting:leading-8">
                 {entry.text}
               </span>
               {!isReadOnly && (
                 <button
                   onClick={() => onRemoveCalc(globalIndex)}
-                  className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-red-400 text-sm flex-shrink-0 transition-opacity ml-1"
+                  className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-red-400 text-sm flex-shrink-0 transition-opacity ml-1 mt-0.5"
                   aria-label="Remove calc"
                 >
                   &#10005;
@@ -320,13 +327,13 @@ export function PokemonDetailSlide({
         </div>
 
         {/* Notable Calcs */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm">
             Notable Calcs
           </h3>
 
           {calcs.length > 0 ? (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               {renderCalcGroup(offensiveCalcs, "offensive", calcs)}
               {renderCalcGroup(defensiveCalcs, "defensive", calcs)}
               {renderCalcGroup(speedCalcs, "speed", calcs)}
