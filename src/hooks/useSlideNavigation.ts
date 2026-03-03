@@ -11,9 +11,10 @@ interface UseSlideNavigationOptions {
   onToggleDarkMode?: () => void;
   onToggleFullscreen?: () => void;
   onShowHelp?: () => void;
+  onTogglePresentation?: () => void;
 }
 
-export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocusGuard = false, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp }: UseSlideNavigationOptions) {
+export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocusGuard = false, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation }: UseSlideNavigationOptions) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Reset to slide 0 when team changes (resetKey), or when totalSlides changes if no resetKey
@@ -70,12 +71,15 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
       } else if (e.key === "?" && onShowHelp) {
         e.preventDefault();
         onShowHelp();
+      } else if ((e.key === "p" || e.key === "P") && onTogglePresentation) {
+        e.preventDefault();
+        onTogglePresentation();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, totalSlides, bypassFocusGuard, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp]);
+  }, [enabled, totalSlides, bypassFocusGuard, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation]);
 
   // Touch swipe listener
   useEffect(() => {

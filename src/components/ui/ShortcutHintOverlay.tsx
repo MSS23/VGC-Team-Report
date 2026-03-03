@@ -9,9 +9,10 @@ interface ShortcutHintOverlayProps {
 
 const SHORTCUTS = [
   { key: "\u2190 / \u2192", label: "Navigate slides" },
-  { key: "Esc", label: "Exit presentation" },
+  { key: "P", label: "Toggle presentation" },
   { key: "D", label: "Toggle dark mode" },
   { key: "F", label: "Toggle fullscreen" },
+  { key: "Esc", label: "Exit presentation" },
   { key: "?", label: "Show this help" },
 ];
 

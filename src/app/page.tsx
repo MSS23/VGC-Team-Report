@@ -192,9 +192,10 @@ export default function Home() {
     resetKey: paste,
     bypassFocusGuard: presentationMode,
     onEscape: presentationMode ? () => setPresentationMode(false) : undefined,
-    onToggleDarkMode: presentationMode ? () => setDarkMode(!darkMode) : undefined,
-    onToggleFullscreen: presentationMode ? toggleFullscreen : undefined,
+    onToggleDarkMode: () => setDarkMode(!darkMode),
+    onToggleFullscreen: toggleFullscreen,
     onShowHelp: presentationMode ? () => setShowShortcutHint(true) : undefined,
+    onTogglePresentation: () => setPresentationMode(!presentationMode),
   });
 
   // Map virtual currentSlide → physical slide for TeamReport

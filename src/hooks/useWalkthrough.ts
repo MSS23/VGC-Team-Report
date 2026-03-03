@@ -79,8 +79,15 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     target: "present-button",
     title: "Present Your Team",
     description:
-      "Enter fullscreen presentation mode \u2014 perfect for team calls or streams. Use arrow keys to navigate, D for dark mode, F for fullscreen, or ? for all shortcuts.",
+      "Click here or press P to toggle presentation mode \u2014 perfect for team calls or streams. Use arrow keys to navigate, Esc to exit.",
     placement: "below",
+  },
+  {
+    target: null,
+    title: "Keyboard Shortcuts",
+    description:
+      "These work anytime (not just in presentations): D toggles dark mode, F toggles fullscreen, P toggles presentation, and arrow keys navigate slides. Press ? in presentation mode for the full list.",
+    placement: "center",
   },
   {
     target: null,
