@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useRef, useCallback, useState } from "react";
+import { useMemo, useEffect, useLayoutEffect, useRef, useCallback, useState } from "react";
 import { useTeamReport } from "@/hooks/useTeamReport";
 import { useCreatorMode } from "@/hooks/useCreatorMode";
 import { usePresentationMode } from "@/hooks/usePresentationMode";
@@ -194,6 +194,32 @@ export default function Home() {
 
   // Map virtual currentSlide → physical slide for TeamReport
   const physicalSlide = visibleIndices[currentSlide] ?? 0;
+
+  // Preserve physical slide position when visibleIndices changes (e.g. lock/unlock toggle)
+  const prevVisibleRef = useRef(visibleIndices);
+  useLayoutEffect(() => {
+    const prevVisible = prevVisibleRef.current;
+    prevVisibleRef.current = visibleIndices;
+
+    if (prevVisible === visibleIndices) return;
+
+    // Find the physical slide we were on using the old mapping
+    const oldPhysical = prevVisible[currentSlide] ?? 0;
+    const newVirtual = visibleIndices.indexOf(oldPhysical);
+
+    if (newVirtual >= 0 && newVirtual !== currentSlide) {
+      goToSlide(newVirtual);
+    } else if (newVirtual < 0) {
+      // Old slide is now hidden — go to nearest visible slide
+      let closest = 0;
+      let minDist = Infinity;
+      for (let i = 0; i < visibleIndices.length; i++) {
+        const dist = Math.abs(visibleIndices[i] - oldPhysical);
+        if (dist < minDist) { minDist = dist; closest = i; }
+      }
+      goToSlide(closest);
+    }
+  }, [visibleIndices, currentSlide, goToSlide]);
 
   // Slide labels and hidden states derived from visible indices
   const slideLabels = useMemo(() => {
