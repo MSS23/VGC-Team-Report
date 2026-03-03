@@ -19,6 +19,7 @@ interface TeamReportProps {
   calcs: Record<string, CalcEntry[]>;
   onAddCalc: (species: string, text: string, category: CalcCategory) => void;
   onRemoveCalc: (species: string, index: number) => void;
+  onEditCalc: (species: string, index: number, updates: Partial<import("@/hooks/useDamageCalcs").CalcEntry>) => void;
   speciesKeys: string[];
   roles: Record<string, string>;
   onRoleChange: (speciesKey: string, text: string) => void;
@@ -64,6 +65,7 @@ export function TeamReport({
   calcs,
   onAddCalc,
   onRemoveCalc,
+  onEditCalc,
   speciesKeys,
   roles,
   onRoleChange,
@@ -137,6 +139,7 @@ export function TeamReport({
         calcs={calcs[key] ?? []}
         onAddCalc={(text, category) => onAddCalc(key, text, category)}
         onRemoveCalc={(index) => onRemoveCalc(key, index)}
+        onEditCalc={(index, updates) => onEditCalc(key, index, updates)}
         slideNumber={currentSlide}
         isReadOnly={isReadOnly}
         isPresentationMode={isPresentationMode}

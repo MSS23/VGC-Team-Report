@@ -505,11 +505,11 @@ function GamePlanSection({
             {/* Notes + Replays */}
             <div className="flex flex-col gap-4">
               <div>
-                <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
+                <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3 presenting:text-base presenting:mb-4">
                   Notes
                 </span>
                 {isReadOnly ? (
-                  <div className="w-full min-h-[10rem] p-5 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-base sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed">
+                  <div className="w-full min-h-[10rem] p-5 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-base sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:tracking-wide">
                     {gamePlan.notes || "No notes."}
                   </div>
                 ) : (

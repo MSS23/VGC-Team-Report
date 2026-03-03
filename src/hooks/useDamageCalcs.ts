@@ -77,6 +77,16 @@ export function useDamageCalcs(speciesKeys: string[], persist = true) {
     });
   }, []);
 
+  const editCalc = useCallback((species: string, index: number, updates: Partial<CalcEntry>) => {
+    setCalcs((prev) => {
+      const list = prev[species] ?? [];
+      if (index < 0 || index >= list.length) return prev;
+      const updated = [...list];
+      updated[index] = { ...updated[index], ...updates };
+      return { ...prev, [species]: updated };
+    });
+  }, []);
+
   const setCalcsFull = useCallback((newCalcs: DamageCalcsMap) => {
     setCalcs(newCalcs);
   }, []);
@@ -86,5 +96,5 @@ export function useDamageCalcs(speciesKeys: string[], persist = true) {
     [calcs]
   );
 
-  return { calcs, addCalc, removeCalc, setCalcsFull, getCalcs };
+  return { calcs, addCalc, removeCalc, editCalc, setCalcsFull, getCalcs };
 }

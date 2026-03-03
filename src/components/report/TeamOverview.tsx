@@ -134,16 +134,16 @@ export function TeamOverview({
 
       {/* Team Summary */}
       <div>
-        <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-3">
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-3 presenting:text-base presenting:mb-4">
           Team Summary
         </h3>
         {isReadOnly ? (
           summary ? (
-            <div className="w-full min-h-[8rem] p-5 sm:p-6 bg-surface border border-border rounded-2xl text-base sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed">
+            <div className="w-full min-h-[8rem] p-5 sm:p-6 bg-surface border border-border rounded-2xl text-base sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:bg-surface-alt presenting:border-border-subtle presenting:tracking-wide">
               {summary}
             </div>
           ) : (
-            <div className="w-full p-5 sm:p-6 bg-surface-alt/50 border border-border-subtle rounded-2xl text-base text-text-tertiary italic">
+            <div className="w-full p-5 sm:p-6 bg-surface-alt/50 border border-border-subtle rounded-2xl text-base text-text-tertiary italic presenting:text-lg presenting:p-8">
               No team summary.
             </div>
           )

@@ -82,7 +82,7 @@ export default function Home() {
   }, [analysis]);
 
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, !isSharedView);
-  const { calcs, addCalc, removeCalc, setCalcsFull } = useDamageCalcs(speciesKeys, !isSharedView);
+  const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, !isSharedView);
   const {
     roles, summary, tournamentName, placement, record, mvpIndex, rentalCode,
     setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setMetaFull,
@@ -699,6 +699,7 @@ export default function Home() {
           calcs={calcs}
           onAddCalc={addCalc}
           onRemoveCalc={removeCalc}
+          onEditCalc={editCalc}
           speciesKeys={speciesKeys}
           roles={roles}
           onRoleChange={setRole}

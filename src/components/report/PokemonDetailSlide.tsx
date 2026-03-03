@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { CalcEntry, CalcCategory } from "@/hooks/useDamageCalcs";
 import { PokemonSprite } from "./PokemonSprite";
@@ -15,6 +16,7 @@ interface PokemonDetailSlideProps {
   calcs: CalcEntry[];
   onAddCalc: (text: string, category: CalcCategory) => void;
   onRemoveCalc: (index: number) => void;
+  onEditCalc?: (index: number, updates: Partial<CalcEntry>) => void;
   slideNumber: number;
   isReadOnly?: boolean;
   isPresentationMode?: boolean;
@@ -61,6 +63,139 @@ const CATEGORY_CONFIG = {
   },
 } as const;
 
+type CategoryCfg = typeof CATEGORY_CONFIG[CalcCategory];
+
+function EditableCalcEntry({
+  entry,
+  globalIndex,
+  cfg,
+  isReadOnly,
+  onRemove,
+  onEdit,
+  categories,
+}: {
+  entry: CalcEntry;
+  globalIndex: number;
+  cfg: CategoryCfg;
+  isReadOnly: boolean;
+  onRemove: () => void;
+  onEdit?: (updates: Partial<CalcEntry>) => void;
+  categories: CalcCategory[];
+}) {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(entry.text);
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.selectionStart = inputRef.current.value.length;
+    }
+  }, [editing]);
+
+  useEffect(() => {
+    if (!showCategoryMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowCategoryMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showCategoryMenu]);
+
+  const commitEdit = () => {
+    const trimmed = editText.trim();
+    if (trimmed && trimmed !== entry.text) {
+      onEdit?.({ text: trimmed });
+    }
+    setEditing(false);
+  };
+
+  return (
+    <div
+      className={`group flex items-start gap-3 px-4 py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-xl transition-colors presenting:px-5 presenting:py-4`}
+    >
+      <span className={`${cfg.bulletColor} text-sm mt-px flex-shrink-0 presenting:text-base`}>&#9656;</span>
+      {editing && !isReadOnly ? (
+        <textarea
+          ref={inputRef}
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onBlur={commitEdit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commitEdit(); }
+            if (e.key === "Escape") { setEditText(entry.text); setEditing(false); }
+          }}
+          className="flex-1 text-sm sm:text-base text-text-primary leading-relaxed bg-transparent border-none outline-none resize-none min-h-[1.5em]"
+          rows={1}
+          spellCheck={false}
+        />
+      ) : (
+        <span
+          className={`flex-1 text-sm sm:text-base text-text-primary leading-relaxed presenting:text-lg presenting:leading-8 ${!isReadOnly ? "cursor-text" : ""}`}
+          onClick={() => {
+            if (!isReadOnly && onEdit) {
+              setEditText(entry.text);
+              setEditing(true);
+            }
+          }}
+        >
+          {entry.text}
+        </span>
+      )}
+      {!isReadOnly && (
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1 mt-0.5">
+          {/* Category switcher */}
+          {onEdit && (
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setShowCategoryMenu(!showCategoryMenu)}
+                className="text-text-tertiary hover:text-text-secondary text-xs px-1.5 py-0.5 rounded-md hover:bg-surface-alt transition-colors"
+                aria-label="Change category"
+                title="Change category"
+              >
+                {CATEGORY_CONFIG[entry.category].icon}
+              </button>
+              {showCategoryMenu && (
+                <div className="absolute right-0 top-full mt-1 z-20 bg-surface border border-border rounded-lg shadow-lg py-1 min-w-[140px]">
+                  {categories.map((cat) => {
+                    const catCfg = CATEGORY_CONFIG[cat];
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => {
+                          if (cat !== entry.category) onEdit({ category: cat });
+                          setShowCategoryMenu(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-surface-alt transition-colors ${
+                          cat === entry.category ? "font-semibold" : ""
+                        }`}
+                      >
+                        <span>{catCfg.icon}</span>
+                        <span className={catCfg.tagText}>{catCfg.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+          <button
+            onClick={onRemove}
+            className="text-text-tertiary hover:text-red-400 text-sm transition-colors"
+            aria-label="Remove calc"
+          >
+            &#10005;
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PokemonDetailSlide({
   pokemon,
   note,
@@ -68,6 +203,7 @@ export function PokemonDetailSlide({
   calcs,
   onAddCalc,
   onRemoveCalc,
+  onEditCalc,
   slideNumber,
   isReadOnly = false,
   isPresentationMode = false,
@@ -95,6 +231,8 @@ export function PokemonDetailSlide({
   const defensiveCalcs = calcs.filter((c) => c.category === "defensive");
   const speedCalcs = calcs.filter((c) => c.category === "speed");
 
+  const CATEGORIES: CalcCategory[] = ["offensive", "defensive", "speed"];
+
   const renderCalcGroup = (
     entries: CalcEntry[],
     category: CalcCategory,
@@ -115,24 +253,16 @@ export function PokemonDetailSlide({
         {entries.map((entry) => {
           const globalIndex = globalCalcs.indexOf(entry);
           return (
-            <div
+            <EditableCalcEntry
               key={globalIndex}
-              className={`group flex items-start gap-3 px-4 py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-xl transition-colors presenting:px-5 presenting:py-4`}
-            >
-              <span className={`${cfg.bulletColor} text-sm mt-px flex-shrink-0 presenting:text-base`}>&#9656;</span>
-              <span className="flex-1 text-sm sm:text-base text-text-primary leading-relaxed presenting:text-lg presenting:leading-8">
-                {entry.text}
-              </span>
-              {!isReadOnly && (
-                <button
-                  onClick={() => onRemoveCalc(globalIndex)}
-                  className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-red-400 text-sm flex-shrink-0 transition-opacity ml-1 mt-0.5"
-                  aria-label="Remove calc"
-                >
-                  &#10005;
-                </button>
-              )}
-            </div>
+              entry={entry}
+              globalIndex={globalIndex}
+              cfg={cfg}
+              isReadOnly={isReadOnly}
+              onRemove={() => onRemoveCalc(globalIndex)}
+              onEdit={onEditCalc ? (updates) => onEditCalc(globalIndex, updates) : undefined}
+              categories={CATEGORIES}
+            />
           );
         })}
       </div>
