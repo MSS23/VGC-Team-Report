@@ -30,6 +30,7 @@ export function PokemonDropdown({
   speciesLabels,
 }: PokemonDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Close on outside click
@@ -67,7 +68,14 @@ export function PokemonDropdown({
     <div ref={wrapperRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          if (!open && wrapperRef.current) {
+            const rect = wrapperRef.current.getBoundingClientRect();
+            // Open upward if less than 320px available below (dropdown max-h + navbar ~60px)
+            setOpenUpward(rect.bottom + 320 + 60 > window.innerHeight);
+          }
+          setOpen((prev) => !prev);
+        }}
         draggable={draggable}
         onDragStart={onDragStart}
         aria-label={selected ? `${speciesLabels?.[selectedIndex!] ?? selected.parsed.species} selected — click to change` : "Select a Pokémon to bring"}
@@ -98,7 +106,9 @@ export function PokemonDropdown({
         <div
           role="listbox"
           aria-label="Select a Pokémon"
-          className="absolute z-50 left-0 sm:left-1/2 sm:-translate-x-1/2 top-full mt-1 bg-surface border border-border rounded-xl shadow-xl min-w-[160px] sm:min-w-[180px] py-1 overflow-y-auto max-h-[320px]"
+          className={`absolute z-50 left-0 sm:left-1/2 sm:-translate-x-1/2 bg-surface border border-border rounded-xl shadow-xl min-w-[160px] sm:min-w-[180px] py-1 overflow-y-auto max-h-[320px] ${
+            openUpward ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
         >
           {selected !== null && (
             <button

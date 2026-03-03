@@ -3,14 +3,72 @@ const BASE_URL = "https://play.pokemonshowdown.com/sprites";
 function toSlug(species: string): string {
   return species
     .toLowerCase()
-    .replace(/[''.]/g, "")
+    .replace(/♂/g, "m")
+    .replace(/♀/g, "f")
+    .replace(/[éè]/g, "e")
+    .replace(/[''.:\u2019]/g, "")
     .replace(/[^a-z0-9-]/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 }
 
 const SLUG_OVERRIDES: Record<string, string> = {
+  // Base name corrections (Showdown strips all non-alnum from base names)
+  "ho-oh": "hooh",
+  "type-null": "typenull",
+  "mr-mime": "mrmime",
+  "mr-rime": "mrrime",
+  "mime-jr": "mimejr",
+  "jangmo-o": "jangmoo",
+  "hakamo-o": "hakamoo",
+  "kommo-o": "kommoo",
+  "tapu-koko": "tapukoko",
+  "tapu-lele": "tapulele",
+  "tapu-bulu": "tapubulu",
+  "tapu-fini": "tapufini",
+  // Nidoran gender (♂/♀ handled in toSlug → nidoranm / nidoranf)
+
+  // Form names (multi-word forms merged)
   "urshifu-rapid-strike": "urshifu-rapidstrike",
+  "necrozma-dusk-mane": "necrozma-duskmane",
+  "necrozma-dawn-wings": "necrozma-dawnwings",
+  "oricorio-pom-pom": "oricorio-pompom",
+  "mr-mime-galar": "mrmime-galar",
+  "tauros-paldea-combat": "tauros-paldeacombat",
+  "tauros-paldea-blaze": "tauros-paldeablaze",
+  "tauros-paldea-aqua": "tauros-paldeaaqua",
+
+  // Paradox Pokemon (two-word names, no hyphen on Showdown)
+  "flutter-mane": "fluttermane",
+  "iron-hands": "ironhands",
+  "iron-bundle": "ironbundle",
+  "iron-valiant": "ironvaliant",
+  "iron-moth": "ironmoth",
+  "iron-thorns": "ironthorns",
+  "iron-jugulis": "ironjugulis",
+  "iron-leaves": "ironleaves",
+  "iron-boulder": "ironboulder",
+  "iron-crown": "ironcrown",
+  "great-tusk": "greattusk",
+  "brute-bonnet": "brutebonnet",
+  "scream-tail": "screamtail",
+  "sandy-shocks": "sandyshocks",
+  "slither-wing": "slitherwing",
+  "roaring-moon": "roaringmoon",
+  "walking-wake": "walkingwake",
+  "gouging-fire": "gougingfire",
+  "raging-bolt": "ragingbolt",
+
+  // Treasures of Ruin
+  "chien-pao": "chienpao",
+  "chi-yu": "chiyu",
+  "ting-lu": "tinglu",
+  "wo-chien": "wochien",
+
+  // Bloodmoon Ursaluna (name order differs from Showdown slug)
+  "bloodmoon-ursaluna": "ursaluna-bloodmoon",
+
+  // Forms that match slug as-is (kept for documentation)
   "calyrex-ice": "calyrex-ice",
   "calyrex-shadow": "calyrex-shadow",
   "indeedee-f": "indeedee-f",
@@ -32,36 +90,11 @@ const SLUG_OVERRIDES: Record<string, string> = {
   "goodra-hisui": "goodra-hisui",
   "kyurem-white": "kyurem-white",
   "kyurem-black": "kyurem-black",
-  "bloodmoon-ursaluna": "ursaluna-bloodmoon",
   "rotom-wash": "rotom-wash",
   "rotom-heat": "rotom-heat",
   "rotom-mow": "rotom-mow",
   "rotom-fan": "rotom-fan",
   "rotom-frost": "rotom-frost",
-  "flutter-mane": "fluttermane",
-  "iron-hands": "ironhands",
-  "iron-bundle": "ironbundle",
-  "iron-valiant": "ironvaliant",
-  "iron-moth": "ironmoth",
-  "iron-thorns": "ironthorns",
-  "iron-jugulis": "ironjugulis",
-  "iron-leaves": "ironleaves",
-  "iron-boulder": "ironboulder",
-  "iron-crown": "ironcrown",
-  "great-tusk": "greattusk",
-  "brute-bonnet": "brutebonnet",
-  "scream-tail": "screamtail",
-  "sandy-shocks": "sandyshocks",
-  "slither-wing": "slitherwing",
-  "roaring-moon": "roaringmoon",
-  "walking-wake": "walkingwake",
-  "gouging-fire": "gougingfire",
-  "raging-bolt": "ragingbolt",
-  "chien-pao": "chienpao",
-  "chi-yu": "chiyu",
-  "ting-lu": "tinglu",
-  "wo-chien": "wochien",
-  "kommo-o": "kommoo",
 };
 
 function resolveSlug(species: string): string {

@@ -22,6 +22,7 @@ interface Rect {
 const SPOTLIGHT_PAD = 8;
 const TOOLTIP_MARGIN = 12;
 const TOOLTIP_GAP = 12;
+const NAVBAR_HEIGHT = 52;
 
 export function WalkthroughOverlay({
   step,
@@ -66,11 +67,14 @@ export function WalkthroughOverlay({
       const vw = window.innerWidth;
       const vh = window.innerHeight;
 
+      // Account for the fixed bottom navbar so tooltips don't hide behind it
+      const safeBottom = vh - NAVBAR_HEIGHT;
+
       if (isVirtual || !targetRect) {
-        // Centered on screen
+        // Centered on screen (within the safe area above navbar)
         setTooltipStyle({
           position: "fixed",
-          top: `${Math.max(TOOLTIP_MARGIN, (vh - ttH) / 2)}px`,
+          top: `${Math.max(TOOLTIP_MARGIN, (safeBottom - ttH) / 2)}px`,
           left: `${Math.max(TOOLTIP_MARGIN, (vw - ttW) / 2)}px`,
         });
         return;
@@ -94,7 +98,7 @@ export function WalkthroughOverlay({
         }
       } else {
         top = spotBottom + TOOLTIP_GAP;
-        if (top + ttH > vh - TOOLTIP_MARGIN) {
+        if (top + ttH > safeBottom - TOOLTIP_MARGIN) {
           // Fall back to above
           top = spotTop - TOOLTIP_GAP - ttH;
         }
@@ -103,8 +107,8 @@ export function WalkthroughOverlay({
       left = spotCenterX - ttW / 2;
       // Clamp horizontal
       left = Math.max(TOOLTIP_MARGIN, Math.min(left, vw - ttW - TOOLTIP_MARGIN));
-      // Clamp vertical
-      top = Math.max(TOOLTIP_MARGIN, Math.min(top, vh - ttH - TOOLTIP_MARGIN));
+      // Clamp vertical — keep above the navbar
+      top = Math.max(TOOLTIP_MARGIN, Math.min(top, safeBottom - ttH - TOOLTIP_MARGIN));
 
       setTooltipStyle({ position: "fixed", top: `${top}px`, left: `${left}px` });
     });
