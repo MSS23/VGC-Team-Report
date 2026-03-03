@@ -25,13 +25,9 @@ export function useShareUrl() {
 
   const passcodeHash = sharedState?.passcodeHash ?? null;
 
-  // On mount: check URL hash for shared data
+  // On mount: check URL hash for #id= (short) or #data= (legacy)
   useEffect(() => {
     const hash = window.location.hash;
-    if (!hash.startsWith("#data=")) return;
-
-    const encoded = hash.slice("#data=".length);
-    if (!encoded) return;
 
     let settled = false;
     const timeout = setTimeout(() => {
@@ -41,7 +37,7 @@ export function useShareUrl() {
       }
     }, 5000);
 
-    decodeShareState(encoded).then((state) => {
+    const settle = (state: ShareableState | null) => {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
@@ -51,25 +47,56 @@ export function useShareUrl() {
       } else {
         setDecodeFailed(true);
       }
-    }).catch(() => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeout);
-      setDecodeFailed(true);
-    });
+    };
 
-    return () => clearTimeout(timeout);
+    if (hash.startsWith("#id=")) {
+      const id = hash.slice("#id=".length);
+      if (!id) return;
+      fetch(`/api/share/${id}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((state) => settle(state as ShareableState | null))
+        .catch(() => settle(null));
+      return () => clearTimeout(timeout);
+    }
+
+    if (hash.startsWith("#data=")) {
+      const encoded = hash.slice("#data=".length);
+      if (!encoded) return;
+      decodeShareState(encoded)
+        .then((state) => settle(state))
+        .catch(() => settle(null));
+      return () => clearTimeout(timeout);
+    }
+
+    // No share hash — clear timeout
+    clearTimeout(timeout);
   }, []);
 
   const copyShareUrl = useCallback(async (state: ShareableState) => {
     setShareStatus("copying");
     setUrlWarning(null);
     try {
-      const encoded = await encodeShareState(state);
-      const url = `${window.location.origin}${window.location.pathname}#data=${encoded}`;
+      let url: string;
 
-      if (url.length > 10000) {
-        setUrlWarning(`Share URL is very long (${Math.round(url.length / 1000)}KB). Some browsers may truncate it. Consider reducing notes or calcs.`);
+      // Try short URL via API
+      try {
+        const res = await fetch("/api/share", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(state),
+        });
+        if (!res.ok) throw new Error("API error");
+        const { id } = await res.json();
+        url = `${window.location.origin}${window.location.pathname}#id=${id}`;
+      } catch {
+        // Fallback to inline encoding
+        const encoded = await encodeShareState(state);
+        url = `${window.location.origin}${window.location.pathname}#data=${encoded}`;
+        if (url.length > 10000) {
+          setUrlWarning(
+            `Share URL is very long (${Math.round(url.length / 1000)}KB). Some browsers may truncate it. Consider reducing notes or calcs.`
+          );
+        }
       }
 
       await navigator.clipboard.writeText(url);
@@ -91,7 +118,6 @@ export function useShareUrl() {
   const exitSharedView = useCallback(() => {
     setIsSharedView(false);
     setIsEditingUnlocked(false);
-    // Remove the hash from the URL without reloading
     history.replaceState(null, "", window.location.pathname);
   }, []);
 
