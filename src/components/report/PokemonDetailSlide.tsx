@@ -410,11 +410,7 @@ export function PokemonDetailSlide({
                         {displayValue}
                       </span>
                       <div className="flex items-center gap-1 w-16">
-                        {isBoosted ? (
-                          <span className="text-[10px] sm:text-xs text-amber-500 font-medium whitespace-nowrap" title={`${value} × ${itemBoost.multiplier}`}>
-                            ×{itemBoost.multiplier}
-                          </span>
-                        ) : ev > 0 ? (
+                        {ev > 0 ? (
                           <span className="text-[10px] sm:text-xs text-accent font-semibold">
                             +{ev}
                           </span>
