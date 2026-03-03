@@ -158,8 +158,8 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             return (
               <span
                 key={move}
-                className={`text-sm text-text-primary creator:text-base truncate px-3 py-2 rounded-lg border font-medium text-center transition-colors ${
-                  typeStyle ? "shadow-sm" : "bg-surface-alt/60 border-transparent"
+                className={`text-sm creator:text-base truncate px-3 py-2 rounded-lg border font-medium text-center transition-colors ${
+                  typeStyle ? "shadow-sm" : "text-text-primary bg-surface-alt/60 border-transparent"
                 }`}
                 style={typeStyle ?? undefined}
               >

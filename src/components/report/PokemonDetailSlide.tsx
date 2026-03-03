@@ -221,8 +221,8 @@ export function PokemonDetailSlide({
               return (
                 <div
                   key={move}
-                  className={`px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl text-xs sm:text-sm font-semibold text-text-primary text-center presenting:text-base presenting:py-4 transition-colors ${
-                    typeStyle ? "shadow-sm" : "bg-surface border-border"
+                  className={`px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl text-xs sm:text-sm font-semibold text-center presenting:text-base presenting:py-4 transition-colors ${
+                    typeStyle ? "shadow-sm" : "text-text-primary bg-surface border-border"
                   }`}
                   style={typeStyle ?? undefined}
                 >
@@ -244,10 +244,12 @@ export function PokemonDetailSlide({
                 (stat) => {
                   const value = calculatedStats[stat];
                   const ev = parsed.evs[stat];
+                  const iv = parsed.ivs[stat];
                   const isBoosted = itemBoost?.stat === stat;
                   const displayValue = isBoosted ? itemBoost.boostedValue : value;
                   const maxStat = stat === "hp" ? 300 : 250;
                   const percentage = Math.min((displayValue / maxStat) * 100, 100);
+                  const hasNonDefaultIv = iv !== 31;
 
                   return (
                     <div key={stat} className="flex items-center gap-2">
@@ -270,17 +272,22 @@ export function PokemonDetailSlide({
                       }`}>
                         {displayValue}
                       </span>
-                      {isBoosted ? (
-                        <span className="text-[10px] sm:text-xs text-amber-500 font-medium whitespace-nowrap w-12" title={`${value} × ${itemBoost.multiplier}`}>
-                          ×{itemBoost.multiplier}
-                        </span>
-                      ) : ev > 0 ? (
-                        <span className="text-[10px] sm:text-xs text-accent font-semibold w-12">
-                          +{ev}
-                        </span>
-                      ) : (
-                        <span className="w-12" />
-                      )}
+                      <div className="flex items-center gap-1 w-16">
+                        {isBoosted ? (
+                          <span className="text-[10px] sm:text-xs text-amber-500 font-medium whitespace-nowrap" title={`${value} × ${itemBoost.multiplier}`}>
+                            ×{itemBoost.multiplier}
+                          </span>
+                        ) : ev > 0 ? (
+                          <span className="text-[10px] sm:text-xs text-accent font-semibold">
+                            +{ev}
+                          </span>
+                        ) : null}
+                        {hasNonDefaultIv && (
+                          <span className="text-[10px] sm:text-xs text-text-tertiary font-medium" title={`${iv} IV`}>
+                            {iv}iv
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
                 }
