@@ -87,7 +87,7 @@ export function useShareUrl() {
         });
         if (!res.ok) throw new Error("API error");
         const { id } = await res.json();
-        url = `${window.location.origin}${window.location.pathname}#id=${id}`;
+        url = `${window.location.origin}/s/${id}`;
       } catch {
         // Fallback to inline encoding
         const encoded = await encodeShareState(state);

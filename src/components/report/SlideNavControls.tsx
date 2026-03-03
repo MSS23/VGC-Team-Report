@@ -95,9 +95,11 @@ export function SlideNavControls({
             <span className="mx-1 text-border">&middot;</span>
             <span className="tabular-nums">{currentSlide + 1}/{totalSlides}</span>
           </span>
-          {/* Mobile: just counter */}
-          <span className="text-xs text-text-tertiary tabular-nums sm:hidden">
-            {currentSlide + 1}/{totalSlides}
+          {/* Mobile: label + counter */}
+          <span className="text-xs text-text-tertiary truncate sm:hidden">
+            <span className="font-semibold text-text-primary">{slideLabels[currentSlide]}</span>
+            <span className="mx-1 text-border">&middot;</span>
+            <span className="tabular-nums">{currentSlide + 1}/{totalSlides}</span>
           </span>
         </div>
 
