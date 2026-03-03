@@ -574,18 +574,6 @@ export default function Home() {
                 </Button>
               )}
               <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  exitSharedView();
-                  setCreatorMode(true);
-                }}
-                title="Fork this team into an editable copy"
-              >
-                <span className="sm:hidden">Fork</span>
-                <span className="hidden sm:inline">Fork & Edit</span>
-              </Button>
-              <Button
                 variant="primary"
                 size="sm"
                 onClick={() => {
