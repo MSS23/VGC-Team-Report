@@ -208,11 +208,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                   }`}>
                     {displayValue}
                   </span>
-                  {isBoosted ? (
-                    <span className="text-xs text-amber-500 font-medium w-9" title={`${value} × ${itemBoost.multiplier}`}>
-                      ×{itemBoost.multiplier}
-                    </span>
-                  ) : ev > 0 ? (
+                  {ev > 0 ? (
                     <span className="text-xs text-accent font-semibold w-9">
                       +{ev}
                     </span>
