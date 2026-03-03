@@ -41,6 +41,23 @@ export function WalkthroughOverlay({
     setMounted(true);
   }, []);
 
+  // Lock scrolling while walkthrough is active
+  useEffect(() => {
+    const { style } = document.body;
+    const prevOverflow = style.overflow;
+    style.overflow = "hidden";
+
+    const block = (e: Event) => e.preventDefault();
+    document.addEventListener("wheel", block, { passive: false });
+    document.addEventListener("touchmove", block, { passive: false });
+
+    return () => {
+      style.overflow = prevOverflow;
+      document.removeEventListener("wheel", block);
+      document.removeEventListener("touchmove", block);
+    };
+  }, []);
+
   // Measure target element
   const measureTarget = useCallback(() => {
     if (isVirtual) {
