@@ -135,7 +135,7 @@ function EditableCalcEntry({
         />
       ) : (
         <span
-          className={`flex-1 text-sm sm:text-base text-text-primary leading-relaxed presenting:text-lg presenting:leading-8 ${!isReadOnly ? "cursor-text" : ""}`}
+          className={`flex-1 text-sm sm:text-base text-text-primary leading-relaxed ${!isReadOnly ? "cursor-text" : ""}`}
           onClick={() => {
             if (!isReadOnly && onEdit) {
               setEditText(entry.text);
@@ -242,7 +242,7 @@ export function PokemonDetailSlide({
     const cfg = CATEGORY_CONFIG[category];
 
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 presenting:flex-1 presenting:min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <span className={`text-sm`}>{cfg.icon}</span>
           <span className={`text-xs font-bold uppercase tracking-widest ${cfg.tagText}`}>
@@ -285,7 +285,7 @@ export function PokemonDetailSlide({
             />
             <PokemonSprite
               species={parsed.species}
-              size={isPresentationMode ? 224 : 160}
+              size={isPresentationMode ? 160 : 160}
               className="hidden sm:block"
               animated={animated}
               shiny={shiny}
@@ -358,7 +358,7 @@ export function PokemonDetailSlide({
               return (
                 <div
                   key={move}
-                  className={`px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl text-xs sm:text-sm font-semibold text-center presenting:text-base presenting:py-4 transition-colors ${
+                  className={`px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl text-xs sm:text-sm font-semibold text-center transition-colors ${
                     typeStyle ? "shadow-sm" : "text-text-primary bg-surface border-border"
                   }`}
                   style={typeStyle ?? undefined}
@@ -395,7 +395,7 @@ export function PokemonDetailSlide({
                         {natureData?.minus === stat && <span className="text-[10px]">{"\u25BC"}</span>}
                         {statLabels[stat]}
                       </span>
-                      <div className="flex-1 h-2.5 sm:h-3 bg-surface-alt rounded-full overflow-hidden presenting:h-4">
+                      <div className="flex-1 h-2.5 sm:h-3 bg-surface-alt rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full animate-bar-fill"
                           style={{
@@ -438,7 +438,7 @@ export function PokemonDetailSlide({
             {isPresentationMode ? "Notes" : isReadOnly ? "About This Pokemon" : "Your Explanation"}
           </h3>
           {isReadOnly ? (
-            <div className="w-full min-h-[6rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface border border-border rounded-2xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-lg presenting:leading-8 presenting:bg-surface-alt presenting:border-border-subtle">
+            <div className={`w-full bg-surface border border-border rounded-2xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed presenting:bg-surface-alt presenting:border-border-subtle ${isPresentationMode ? "p-3 sm:p-4" : "min-h-[6rem] sm:min-h-[10rem] p-3 sm:p-6"}`}>
               {note || "No notes yet."}
             </div>
           ) : (
@@ -459,7 +459,7 @@ export function PokemonDetailSlide({
           </h3>
 
           {calcs.length > 0 ? (
-            <div className="flex flex-col gap-5 presenting:gap-3">
+            <div className="flex flex-col gap-5 presenting:flex-row presenting:gap-3 presenting:items-start">
               {renderCalcGroup(offensiveCalcs, "offensive", calcs)}
               {renderCalcGroup(defensiveCalcs, "defensive", calcs)}
               {renderCalcGroup(speedCalcs, "speed", calcs)}
