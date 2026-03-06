@@ -116,7 +116,7 @@ function EditableCalcEntry({
 
   return (
     <div
-      className={`group flex items-start gap-3 px-4 py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-xl transition-colors presenting:px-5 presenting:py-4`}
+      className={`group flex items-start gap-3 px-4 py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-xl transition-colors presenting:px-5`}
     >
       <span className={`${cfg.bulletColor} text-sm mt-px flex-shrink-0 presenting:text-base`}>&#9656;</span>
       {editing && !isReadOnly ? (
@@ -431,7 +431,7 @@ export function PokemonDetailSlide({
       </div>
 
       {/* Right Column: User Notes + Notable Calcs */}
-      <div className="flex flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col gap-4 sm:gap-6 presenting:max-h-[calc(100vh-12rem)] presenting:overflow-y-auto presenting:pr-1">
         {/* Notes */}
         <div className="flex flex-col gap-2">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm">
@@ -459,7 +459,7 @@ export function PokemonDetailSlide({
           </h3>
 
           {calcs.length > 0 ? (
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-5 presenting:gap-3">
               {renderCalcGroup(offensiveCalcs, "offensive", calcs)}
               {renderCalcGroup(defensiveCalcs, "defensive", calcs)}
               {renderCalcGroup(speedCalcs, "speed", calcs)}
