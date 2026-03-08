@@ -147,7 +147,7 @@ function EditableCalcEntry({
         </span>
       )}
       {!isReadOnly && (
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1 mt-0.5">
+        <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1 mt-0.5">
           {/* Category switcher */}
           {onEdit && (
             <div className="relative" ref={menuRef}>
@@ -344,7 +344,7 @@ export function PokemonDetailSlide({
           <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
             <PokemonSprite
               species={parsed.species}
-              size={isPresentationMode ? 224 : 120}
+              size={isPresentationMode ? 140 : 96}
               className="sm:hidden"
               animated={animated}
               shiny={shiny}
@@ -357,7 +357,7 @@ export function PokemonDetailSlide({
               shiny={shiny}
             />
           </div>
-          <div className="flex flex-col gap-1.5 sm:gap-2 pt-1 sm:pt-2 min-w-0">
+          <div className="flex flex-col gap-1.5 sm:gap-2 pt-0.5 sm:pt-2 min-w-0">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <h2 className="text-2xl sm:text-3xl font-bold text-text-primary presenting:text-4xl truncate">
                 {parsed.species}
@@ -504,15 +504,15 @@ export function PokemonDetailSlide({
             {isPresentationMode ? "Notes" : isReadOnly ? "About This Pokemon" : "Your Explanation"}
           </h3>
           {isReadOnly ? (
-            <div className={`w-full bg-surface border border-border rounded-2xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed presenting:bg-surface-alt presenting:border-border-subtle ${isPresentationMode ? "p-3 sm:p-4" : "min-h-[6rem] sm:min-h-[10rem] p-3 sm:p-6"}`}>
+            <div className={`w-full bg-surface border border-border rounded-2xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed presenting:bg-surface-alt presenting:border-border-subtle ${isPresentationMode ? "p-3 sm:p-4" : "min-h-[5rem] sm:min-h-[10rem] p-3 sm:p-6"}`}>
               {note || "No notes yet."}
             </div>
           ) : (
             <textarea
               value={note}
               onChange={(e) => onNoteChange(e.target.value)}
-              placeholder={`Explain ${parsed.species}'s role on the team, why you chose this spread, key matchups, how to use it...\n\nThis will be formatted nicely when shared.`}
-              className="w-full min-h-[6rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface border border-border rounded-2xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+              placeholder={`Explain ${parsed.species}'s role, key matchups, how to use it...`}
+              className="w-full min-h-[5rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface border border-border rounded-2xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
               spellCheck={false}
             />
           )}

@@ -648,12 +648,12 @@ export default function Home() {
                 {currentSlide + 1}/{totalSlides}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <button
                 onClick={startWalkthrough}
                 title="Take a tour"
                 aria-label="Take a tour"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-xs font-medium border border-border-subtle hover:border-border cursor-pointer"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-xs font-medium border border-border-subtle hover:border-border cursor-pointer"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
@@ -757,12 +757,12 @@ export default function Home() {
               >
                 {shareButtonText}
               </Button>
-              {/* Tour button */}
+              {/* Tour button — hidden on small mobile */}
               <button
                 onClick={startWalkthrough}
                 title="Take a tour"
                 aria-label="Take a tour"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-xs font-medium border border-border-subtle hover:border-border cursor-pointer"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-xs font-medium border border-border-subtle hover:border-border cursor-pointer"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
@@ -825,7 +825,7 @@ export default function Home() {
                   onClick={() => setCreatorMode(!creatorMode)}
                   title={creatorMode ? "Lock editing (read-only)" : "Unlock editing"}
                   aria-label={creatorMode ? "Lock editing" : "Unlock editing"}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 ${
+                  className={`flex items-center justify-center gap-1.5 min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 ${
                     creatorMode
                       ? "bg-accent/15 text-accent border-accent/30 hover:bg-accent/25"
                       : "bg-surface-alt text-text-secondary border-border hover:text-text-primary hover:border-border"
@@ -851,6 +851,7 @@ export default function Home() {
                 onClick={() => setPresentationMode(true)}
                 data-walkthrough="present-button"
                 aria-label="Start presentation"
+                className="!min-w-[36px] !min-h-[36px] sm:!min-w-0 sm:!min-h-0"
               >
                 <span className="hidden sm:inline">Present</span>
                 <span className="sm:hidden">&#9654;</span>
@@ -876,10 +877,10 @@ export default function Home() {
 
       {/* Report content */}
       <div
-        className={`max-w-7xl mx-auto pb-20 slide-content ${
+        className={`max-w-7xl mx-auto pb-24 sm:pb-20 slide-content ${
           isPresentationStyle
-            ? "px-4 sm:px-8 py-4 sm:py-6"
-            : "px-3 sm:px-4 py-4 sm:py-6 creator:px-8 creator:py-8"
+            ? "px-3 sm:px-8 py-3 sm:py-6"
+            : "px-3 sm:px-4 py-3 sm:py-6 creator:px-8 creator:py-8"
         }`}
         key={physicalSlide}
       >

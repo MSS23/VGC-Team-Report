@@ -132,16 +132,17 @@ export function MatchupPlanSlide({
           )}
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-4 sm:p-6">
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 sm:gap-5">
+        <div className="bg-surface border border-border rounded-2xl p-3 sm:p-6">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-5">
             {opponentPokemon.map((mon, i) => (
               <div key={i} className="flex flex-col items-center text-center min-h-0">
                 {/* Sprite — fixed height container for alignment */}
-                <div className="h-[72px] flex items-end justify-center mb-1.5">
-                  <PokemonSprite species={mon.parsed.species} size={72} />
+                <div className="h-[56px] sm:h-[72px] flex items-end justify-center mb-1">
+                  <PokemonSprite species={mon.parsed.species} size={56} className="sm:hidden" />
+                  <PokemonSprite species={mon.parsed.species} size={72} className="hidden sm:block" />
                 </div>
                 {/* Name */}
-                <span className="text-sm sm:text-base font-bold text-text-primary truncate w-full leading-tight">
+                <span className="text-xs sm:text-base font-bold text-text-primary truncate w-full leading-tight">
                   {mon.parsed.species}
                 </span>
                 {/* Types */}
@@ -509,7 +510,7 @@ function GamePlanSection({
                   Notes
                 </span>
                 {isReadOnly ? (
-                  <div className="w-full min-h-[10rem] p-5 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-base sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:tracking-wide">
+                  <div className="w-full min-h-[6rem] sm:min-h-[10rem] p-4 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:tracking-wide">
                     {gamePlan.notes || "No notes."}
                   </div>
                 ) : (
@@ -517,7 +518,7 @@ function GamePlanSection({
                     value={gamePlan.notes}
                     onChange={(e) => onNotesChange(e.target.value)}
                     placeholder="Why are you bringing these four? What's the win condition?"
-                    className="w-full min-h-[10rem] p-5 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-base sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+                    className="w-full min-h-[6rem] sm:min-h-[10rem] p-4 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
                     spellCheck={false}
                   />
                 )}

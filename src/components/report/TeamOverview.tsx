@@ -98,36 +98,38 @@ export function TeamOverview({
           <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-3" data-walkthrough="tournament-info">
             Tournament Info
           </h3>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <input
               type="text"
               value={tournamentName ?? ""}
               onChange={(e) => onTournamentNameChange?.(e.target.value)}
               placeholder="Event name (e.g. EUIC 2025)"
-              className="flex-1 min-w-[180px] px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+              className="flex-1 min-w-[150px] sm:min-w-[180px] px-3 sm:px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             />
-            <input
-              type="text"
-              value={placement ?? ""}
-              onChange={(e) => onPlacementChange?.(e.target.value)}
-              placeholder="Placement (e.g. Top 8)"
-              className="w-[140px] px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
-            />
-            <input
-              type="text"
-              value={record ?? ""}
-              onChange={(e) => onRecordChange?.(e.target.value)}
-              placeholder="Record (e.g. 7-2)"
-              className="w-[120px] px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
-            />
-            <input
-              type="text"
-              value={rentalCode ?? ""}
-              onChange={(e) => onRentalCodeChange?.(e.target.value.toUpperCase())}
-              placeholder="Rental Code"
-              maxLength={20}
-              className="w-[160px] px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-mono font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-wider"
-            />
+            <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+              <input
+                type="text"
+                value={placement ?? ""}
+                onChange={(e) => onPlacementChange?.(e.target.value)}
+                placeholder="Placement"
+                className="flex-1 sm:flex-none sm:w-[140px] px-3 sm:px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+              />
+              <input
+                type="text"
+                value={record ?? ""}
+                onChange={(e) => onRecordChange?.(e.target.value)}
+                placeholder="Record"
+                className="flex-1 sm:flex-none sm:w-[120px] px-3 sm:px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+              />
+              <input
+                type="text"
+                value={rentalCode ?? ""}
+                onChange={(e) => onRentalCodeChange?.(e.target.value.toUpperCase())}
+                placeholder="Rental"
+                maxLength={20}
+                className="flex-1 sm:flex-none sm:w-[160px] px-3 sm:px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-mono font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-wider"
+              />
+            </div>
           </div>
         </div>
       )}

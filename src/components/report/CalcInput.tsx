@@ -231,7 +231,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
     <div className="flex flex-col gap-2">
       {/* Category selector + paste mode toggle */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-1.5 flex-wrap">
+        <div className="flex gap-1 sm:gap-1.5 flex-wrap">
           {(["offensive", "defensive", "speed"] as const).map((cat) => {
             const cfg = CATEGORY_CONFIG[cat];
             const isActive = calcCategory === cat;
@@ -240,7 +240,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
                 key={cat}
                 type="button"
                 onClick={() => setCalcCategory(cat)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-[32px] ${
                   isActive
                     ? `${cfg.tagBg} ${cfg.tagText} border ${cfg.borderClass}`
                     : "bg-surface border border-border text-text-tertiary hover:text-text-secondary"
@@ -255,9 +255,9 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
         <button
           type="button"
           onClick={() => setMode("paste")}
-          className="text-xs text-accent hover:text-accent/80 font-medium transition-colors"
+          className="text-xs text-accent hover:text-accent/80 font-medium transition-colors flex-shrink-0"
         >
-          Paste Calcs
+          Paste
         </button>
       </div>
       {/* Input */}
@@ -276,15 +276,15 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
             calcCategory === "offensive"
               ? "e.g. 252+ Atk Flare Blitz vs 252 HP Rillaboom: 81-96%"
               : calcCategory === "defensive"
-                ? "e.g. 252 SpA Flutter Mane Moonblast: 42-50% (lives)"
-                : "e.g. 140 Spe to outspeed max speed Rillaboom"
+                ? "e.g. 252 SpA Moonblast: 42-50% (lives)"
+                : "e.g. 140 Spe outruns max Rillaboom"
           }
           className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
         />
         <button
           type="submit"
           disabled={!calcInput.trim()}
-          className="px-4 py-2.5 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+          className="px-3 sm:px-4 py-2.5 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 min-h-[40px]"
         >
           Add
         </button>

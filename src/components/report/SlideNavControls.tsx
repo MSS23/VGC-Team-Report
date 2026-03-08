@@ -47,32 +47,30 @@ export function SlideNavControls({
       role="navigation"
       aria-label="Slide navigation"
       data-walkthrough="slide-nav"
-      className={`fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl border-t transition-all duration-300 ${
+      className={`fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl border-t transition-all duration-300 safe-bottom ${
         autoHide
           ? "bg-surface/0 border-transparent opacity-0 hover:opacity-100 hover:bg-surface/95 hover:border-border"
           : "bg-surface/95 border-border shadow-[0_-2px_12px_rgba(0,0,0,0.06)]"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-1 sm:py-1.5 flex items-center gap-2 sm:gap-3">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-1.5 sm:py-1.5 flex items-center gap-1.5 sm:gap-3">
         {/* Prev button */}
-        <Button
-          variant="secondary"
-          size="sm"
+        <button
           onClick={onPrev}
           disabled={isFirst}
           aria-label="Previous slide"
-          className="!py-1 !px-2 sm:!px-3 !text-xs"
+          className="flex items-center justify-center min-w-[40px] h-[36px] sm:min-w-0 sm:h-auto px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-xl bg-surface text-text-primary border border-border hover:bg-surface-alt active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="hidden sm:block">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1">
             <polyline points="15,18 9,12 15,6" />
           </svg>
-          Prev
-        </Button>
+          <span className="hidden sm:inline">Prev</span>
+        </button>
 
         {/* Center: Dots + label on one row */}
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 justify-center overflow-hidden">
-          {/* Dots */}
-          <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
+          {/* Dots — larger touch targets on mobile */}
+          <div className="flex items-center gap-1 sm:gap-1 flex-shrink-0">
             {Array.from({ length: totalSlides }, (_, i) => {
               const isHidden = hiddenStates?.[i] ?? false;
               const isCurrent = i === currentSlide;
@@ -85,26 +83,20 @@ export function SlideNavControls({
                   className={`rounded-full transition-all duration-300 flex-shrink-0 ${
                     isCurrent
                       ? isHidden
-                        ? "w-3 sm:w-3.5 h-2 sm:h-2.5 bg-amber-400/70 shadow-sm shadow-amber-400/30 ring-1 ring-amber-400/40"
-                        : "w-3 sm:w-3.5 h-2 sm:h-2.5 bg-accent shadow-sm shadow-accent/40"
+                        ? "w-4 sm:w-3.5 h-2.5 sm:h-2.5 bg-amber-400/70 shadow-sm shadow-amber-400/30 ring-1 ring-amber-400/40"
+                        : "w-4 sm:w-3.5 h-2.5 sm:h-2.5 bg-accent shadow-sm shadow-accent/40"
                       : isHidden
-                        ? "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-amber-400/30 hover:bg-amber-400/50"
-                        : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-border hover:bg-text-tertiary hover:scale-125"
+                        ? "w-2 sm:w-2 h-2 sm:h-2 bg-amber-400/30 hover:bg-amber-400/50"
+                        : "w-2 sm:w-2 h-2 sm:h-2 bg-border hover:bg-text-tertiary hover:scale-125"
                   }`}
                 />
               );
             })}
           </div>
-          {/* Label + counter (desktop) */}
-          <span className="text-xs text-text-tertiary truncate hidden sm:inline">
-            <span className="font-semibold text-text-primary">{slideLabels[currentSlide]}</span>
-            <span className="mx-1 text-border">&middot;</span>
-            <span className="tabular-nums">{currentSlide + 1}/{totalSlides}</span>
-          </span>
-          {/* Mobile: label + counter */}
-          <span className="text-xs text-text-tertiary truncate sm:hidden">
-            <span className="font-semibold text-text-primary">{slideLabels[currentSlide]}</span>
-            <span className="mx-1 text-border">&middot;</span>
+          {/* Label + counter */}
+          <span className="text-xs text-text-tertiary truncate">
+            <span className="font-semibold text-text-primary hidden sm:inline">{slideLabels[currentSlide]}</span>
+            <span className="hidden sm:inline mx-1 text-border">&middot;</span>
             <span className="tabular-nums">{currentSlide + 1}/{totalSlides}</span>
           </span>
         </div>
@@ -114,7 +106,7 @@ export function SlideNavControls({
           <button
             type="button"
             onClick={onToggleHide}
-            className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 ${
+            className={`relative flex items-center justify-center gap-1.5 min-w-[36px] h-[36px] sm:min-w-0 sm:h-auto px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 ${
               isCurrentHidden
                 ? "bg-amber-400/20 text-amber-700 dark:text-amber-300 border-amber-400/40 hover:bg-amber-400/30 font-bold"
                 : "bg-surface-alt text-text-tertiary border-border hover:text-text-secondary hover:bg-surface-alt/80"
@@ -152,7 +144,7 @@ export function SlideNavControls({
           <button
             type="button"
             onClick={onStartTour}
-            className="flex items-center justify-center w-7 h-7 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer flex-shrink-0"
+            className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer flex-shrink-0"
             aria-label="Take a tour"
             title="Take a tour"
           >
@@ -164,12 +156,12 @@ export function SlideNavControls({
           </button>
         )}
 
-        {/* Keyboard shortcuts */}
+        {/* Keyboard shortcuts — hide on mobile (no keyboard) */}
         {onShowShortcuts && (
           <button
             type="button"
             onClick={onShowShortcuts}
-            className="flex items-center justify-center w-7 h-7 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer flex-shrink-0"
+            className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer flex-shrink-0"
             aria-label="Keyboard shortcuts"
             title="Keyboard shortcuts (?)"
           >
@@ -181,19 +173,17 @@ export function SlideNavControls({
         )}
 
         {/* Next button */}
-        <Button
-          variant="secondary"
-          size="sm"
+        <button
           onClick={onNext}
           disabled={isLast}
           aria-label="Next slide"
-          className="!py-1 !px-2 sm:!px-3 !text-xs"
+          className="flex items-center justify-center min-w-[40px] h-[36px] sm:min-w-0 sm:h-auto px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-xl bg-surface text-text-primary border border-border hover:bg-surface-alt active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
-          Next
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="hidden sm:block">
+          <span className="hidden sm:inline">Next</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:ml-1">
             <polyline points="9,18 15,12 9,6" />
           </svg>
-        </Button>
+        </button>
       </div>
     </div>
   );

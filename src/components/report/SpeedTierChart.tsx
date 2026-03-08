@@ -81,23 +81,31 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             const basePercent = Math.min((entry.baseSpe / maxSpeed) * 100, 100);
 
             return (
-              <div key={entry.speciesKey} className="flex items-center gap-2 sm:gap-3">
+              <div key={entry.speciesKey} className="flex items-center gap-1.5 sm:gap-3">
                 {/* Name column — fixed width */}
-                <div className="flex items-center gap-2 w-32 sm:w-40 flex-shrink-0 min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 w-24 sm:w-40 flex-shrink-0 min-w-0">
                   <PokemonSprite
                     species={entry.species}
-                    size={isPresentationMode ? 36 : 28}
+                    size={isPresentationMode ? 36 : 24}
+                    className="sm:hidden flex-shrink-0"
                     animated={sc?.animated}
                     shiny={sc?.shiny}
                   />
-                  <span className="text-sm sm:text-base font-semibold text-text-primary truncate">
+                  <PokemonSprite
+                    species={entry.species}
+                    size={isPresentationMode ? 36 : 28}
+                    className="hidden sm:block flex-shrink-0"
+                    animated={sc?.animated}
+                    shiny={sc?.shiny}
+                  />
+                  <span className="text-xs sm:text-base font-semibold text-text-primary truncate">
                     {entry.species}
                   </span>
                 </div>
 
                 {/* Bar column */}
                 <div className="flex-1 flex items-center gap-2 min-w-0">
-                  <div className="flex-1 h-7 sm:h-8 bg-surface-alt rounded-lg overflow-hidden relative">
+                  <div className="flex-1 h-6 sm:h-8 bg-surface-alt rounded-lg overflow-hidden relative">
                     {/* Base bar */}
                     <div
                       className={`absolute inset-y-0 left-0 rounded-lg transition-all ${
@@ -121,8 +129,8 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                   </div>
 
                   {/* Speed value — fixed width to prevent overlap */}
-                  <div className="w-18 sm:w-24 flex-shrink-0 text-right">
-                    <span className={`text-sm sm:text-base font-mono font-bold tabular-nums ${
+                  <div className="w-14 sm:w-24 flex-shrink-0 text-right">
+                    <span className={`text-xs sm:text-base font-mono font-bold tabular-nums ${
                       entry.hasSpeedBoost ? "text-amber-500" : "text-text-primary"
                     }`}>
                       {entry.hasSpeedBoost ? entry.boostedSpe : entry.baseSpe}

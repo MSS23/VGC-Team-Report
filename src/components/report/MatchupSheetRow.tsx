@@ -46,26 +46,27 @@ export function MatchupSheetRow({
 
   return (
     <div className="bg-surface border border-border rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 sm:py-4">
+      <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4">
         {/* Row number */}
-        <span className="text-sm font-bold text-text-tertiary/60 tabular-nums w-6 flex-shrink-0 text-center">
+        <span className="text-sm font-bold text-text-tertiary/60 tabular-nums w-5 sm:w-6 flex-shrink-0 text-center">
           {rowNumber}
         </span>
 
         {/* Opponent info */}
-        <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+        <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4">
           <span
-            className="text-base sm:text-lg font-semibold text-text-primary truncate sm:max-w-[280px]"
+            className="text-sm sm:text-lg font-semibold text-text-primary truncate sm:max-w-[280px]"
             title={plan.opponentLabel}
           >
             {plan.opponentLabel}
           </span>
 
           {/* Opponent sprites */}
-          <div className="flex items-center gap-1 overflow-x-auto max-w-[220px] sm:max-w-none">
+          <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto max-w-full sm:max-w-none scroll-smooth-touch">
             {opponentPokemon.map((species, i) => (
-              <div key={i} className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                <PokemonSprite species={species} size={30} />
+              <div key={i} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center flex-shrink-0">
+                <PokemonSprite species={species} size={26} className="sm:hidden" />
+                <PokemonSprite species={species} size={30} className="hidden sm:block" />
               </div>
             ))}
           </div>
