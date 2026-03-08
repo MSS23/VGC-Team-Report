@@ -415,7 +415,7 @@ export default function Home() {
             <p className="text-text-primary font-semibold">Failed to load shared team</p>
             <p className="text-text-secondary text-sm max-w-xs">The link may be corrupted or expired. Ask the creator for a new link.</p>
             <button
-              onClick={() => { window.location.href = window.location.origin; }}
+              onClick={() => { reset(); window.location.href = window.location.origin; }}
               className="mt-2 px-5 py-2 bg-accent text-white rounded-xl font-semibold text-sm hover:bg-accent/90 transition-colors"
             >
               Build Your Own
@@ -610,6 +610,8 @@ export default function Home() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
+                  reset();
+                  exitSharedView();
                   window.location.href = window.location.origin;
                 }}
               >
@@ -695,6 +697,8 @@ export default function Home() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
+                  reset();
+                  exitSharedView();
                   window.location.href = window.location.origin;
                 }}
               >
