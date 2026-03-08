@@ -40,16 +40,6 @@ export default function Home() {
   const { darkMode, setDarkMode } = useDarkMode(false);
   const { genTheme, setGenTheme } = useTheme();
   const { isSharedView, isSharePending, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, hasPasscode, passcodeHash, unlockEditing, lastShareResult } = useShareUrl();
-  const {
-    isActive: walkthroughActive,
-    currentStep: walkthroughStep,
-    currentStepIndex: walkthroughStepIndex,
-    totalSteps: walkthroughTotalSteps,
-    next: walkthroughNext,
-    skip: walkthroughSkip,
-    start: startWalkthrough,
-  } = useWalkthrough({ enabled: !!analysis && !isSharedView && !presentationMode });
-
   const [showShortcutHint, setShowShortcutHint] = useState(false);
   const [showPasscodeModal, setShowPasscodeModal] = useState<"set" | "unlock" | null>(null);
   const [passcodeError, setPasscodeError] = useState<string | null>(null);
@@ -196,6 +186,27 @@ export default function Home() {
     onToggleFullscreen: toggleFullscreen,
     onShowHelp: presentationMode ? () => setShowShortcutHint(true) : undefined,
     onTogglePresentation: () => setPresentationMode(!presentationMode),
+  });
+
+  const pokemonNames = useMemo(
+    () => analysis?.pokemon.map((p) => p.parsed.species) ?? [],
+    [analysis]
+  );
+
+  const {
+    isActive: walkthroughActive,
+    currentStep: walkthroughStep,
+    currentStepIndex: walkthroughStepIndex,
+    totalSteps: walkthroughTotalSteps,
+    next: walkthroughNext,
+    skip: walkthroughSkip,
+    start: startWalkthrough,
+  } = useWalkthrough({
+    enabled: !!analysis && !isSharedView && !presentationMode,
+    pokemonNames,
+    goToSlide,
+    pokemonCount: analysis?.pokemon.length ?? 0,
+    totalSlides,
   });
 
   // Map virtual currentSlide → physical slide for TeamReport

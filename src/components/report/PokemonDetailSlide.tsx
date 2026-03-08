@@ -414,7 +414,7 @@ export function PokemonDetailSlide({
 
         {/* Moves - 2x2 grid */}
         <div>
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3" data-walkthrough="pokemon-moves">
             Moves
           </h3>
           <div className="grid grid-cols-2 gap-2 stagger-moves">
@@ -499,7 +499,7 @@ export function PokemonDetailSlide({
       <div className="flex flex-col gap-4 sm:gap-6">
         {/* Notes */}
         <div className="flex flex-col gap-2">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="pokemon-notes">
             {isPresentationMode ? "Notes" : isReadOnly ? "About This Pokemon" : "Your Explanation"}
           </h3>
           {isReadOnly ? (
@@ -519,7 +519,7 @@ export function PokemonDetailSlide({
 
         {/* Notable Calcs */}
         <div className="flex flex-col gap-4">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="notable-calcs">
             Notable Calcs
           </h3>
 

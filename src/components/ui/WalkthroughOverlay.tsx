@@ -214,18 +214,27 @@ export function WalkthroughOverlay({
             {step.description}
           </p>
         </div>
+        {/* Progress bar */}
+        <div className="px-5 pb-3">
+          <div className="h-1 bg-surface-alt rounded-full overflow-hidden">
+            <div
+              className="h-full bg-accent rounded-full transition-all duration-300"
+              style={{ width: `${((stepIndex + 1) / totalSteps) * 100}%` }}
+            />
+          </div>
+        </div>
         <div className="flex items-center justify-between px-5 pb-4">
           <span className="text-xs text-text-tertiary tabular-nums">
-            {stepIndex + 1} / {totalSteps}
+            {stepIndex + 1} of {totalSteps}
           </span>
           <div className="flex items-center gap-2">
             {!isLastStep && (
               <button
                 onClick={onSkip}
-                aria-label="Skip walkthrough"
+                aria-label="Skip all"
                 className="text-xs text-text-tertiary hover:text-text-secondary px-3 py-1.5 rounded-lg transition-colors"
               >
-                Skip
+                Skip all
               </button>
             )}
             <button

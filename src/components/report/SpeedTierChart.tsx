@@ -69,7 +69,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       </div>
 
       {/* Speed Tiers Section */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2" data-walkthrough="speed-tiers">
         <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">
           Speed Tiers
         </h3>

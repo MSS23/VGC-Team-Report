@@ -5,96 +5,137 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 export interface WalkthroughStep {
   target: string | null; // data-walkthrough value, or null for centered (no spotlight)
   title: string;
-  description: string;
+  description: string; // supports {{pokemon}} placeholder
   placement: "above" | "below" | "center";
+  slide?: number | "pokemon" | "speed" | "matchup-sheet"; // which slide to navigate to
   mobileSkip?: boolean;
 }
 
 export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
+  // --- Welcome ---
   {
     target: null,
     title: "Welcome to VGC Team Report!",
     description:
-      "Let\u2019s take a quick tour of the key features so you can build and share your team analysis.",
+      "Let\u2019s take a quick tour of all the pages and features. You can skip anytime.",
     placement: "center",
+    slide: 0,
+  },
+
+  // --- Team Overview page ---
+  {
+    target: "tournament-info",
+    title: "Tournament Info",
+    description:
+      "Add your event name, placement, record, and rental code. This appears at the top of your report when shared.",
+    placement: "below",
+    slide: 0,
   },
   {
-    target: null,
-    title: "Your Report is a Slide Deck",
+    target: "team-summary",
+    title: "Team Summary",
     description:
-      "It starts with a Team Overview, then one slide per Pok\u00e9mon, a Speed Tier chart, individual matchup plans, and a Matchup Sheet. Everything is editable and saveable.",
-    placement: "center",
+      "Write an overview of your team\u2019s strategy, win conditions, and key synergies. This is the first thing viewers read.",
+    placement: "below",
+    slide: 0,
   },
+  {
+    target: "pokemon-grid",
+    title: "Pokemon Cards",
+    description:
+      "Your full team at a glance. Click a role label to describe each mon\u2019s job (e.g. \u201cSpread Attacker\u201d). Star your MVP!",
+    placement: "above",
+    slide: 0,
+  },
+
+  // --- Pokemon detail page (random pokemon) ---
+  {
+    target: null,
+    title: "{{pokemon}}\u2019s Detail Slide",
+    description:
+      "Every Pokemon gets a dedicated slide with its full set, stats, and EV spread shown on the left.",
+    placement: "center",
+    slide: "pokemon",
+  },
+  {
+    target: "pokemon-notes",
+    title: "Your Explanation",
+    description:
+      "Explain why you chose this spread for {{pokemon}}, its role, and key matchups. This text is shown when you share the report.",
+    placement: "below",
+    slide: "pokemon",
+  },
+  {
+    target: "notable-calcs",
+    title: "Notable Calcs",
+    description:
+      "Add damage calcs, speed benchmarks, and survival checks. They\u2019re organized into Offensive, Defensive, and Speed categories \u2014 each collapsible.",
+    placement: "above",
+    slide: "pokemon",
+  },
+
+  // --- Speed Tier Chart ---
+  {
+    target: "speed-tiers",
+    title: "Speed Tier Chart",
+    description:
+      "See how your whole team stacks up in speed. Item boosts (like Choice Scarf) are shown as extended bars.",
+    placement: "below",
+    slide: "speed",
+  },
+
+  // --- Matchup Sheet ---
+  {
+    target: "matchup-sheet",
+    title: "Matchup Sheet",
+    description:
+      "Paste opponent teams to plan your game strategy. Each matchup gets its own slide where you pick your bring-4, write notes, and log replays.",
+    placement: "below",
+    slide: "matchup-sheet",
+  },
+
+  // --- Navigation ---
   {
     target: "slide-nav",
     title: "Slide Navigation",
     description:
-      "Use these controls or the left/right arrow keys to move between slides. Click any dot to jump directly to that slide.",
+      "Use these controls or arrow keys to move between slides. Click any dot to jump directly. You can hide slides from viewers too.",
     placement: "above",
   },
+
+  // --- Header controls ---
   {
-    target: null,
-    title: "Team Overview Slide",
+    target: "share-button",
+    title: "Share Your Report",
     description:
-      "The first slide is your team\u2019s home page. Add a tournament name, placement, record, team summary, rental code, and pick your MVP. This is the first thing viewers see.",
-    placement: "center",
-  },
-  {
-    target: null,
-    title: "Pok\u00e9mon Slides",
-    description:
-      "Each Pok\u00e9mon gets its own slide. Write notes explaining its role, add notable damage calcs, and assign a short role label (e.g. \u201cSpread Attacker\u201d). Click any calc to edit it inline.",
-    placement: "center",
-  },
-  {
-    target: null,
-    title: "Matchup Plans",
-    description:
-      "On the Matchup Sheet slide, paste an opponent\u2019s team to add them. Each matchup gets its own slide where you can create game plans, pick your bring-4, write notes, and log replays and results.",
-    placement: "center",
-  },
-  {
-    target: null,
-    title: "Hide Slides",
-    description:
-      "Any slide can be hidden from viewers and presentations. Use the visibility toggle in the bottom nav bar \u2014 hidden slides stay visible to you in editing mode with a banner.",
-    placement: "center",
+      "Copies a short permanent link. Set a passcode to let trusted people edit and re-share. Without one, the link is read-only.",
+    placement: "below",
+    mobileSkip: true,
   },
   {
     target: "creator-toggle",
     title: "Lock / Unlock Editing",
     description:
-      "Editing is unlocked by default. Click the lock button to preview the clean read-only view your viewers will see. Unlock it again anytime to keep editing.",
+      "Preview the clean read-only view your viewers will see. Unlock anytime to keep editing.",
     placement: "below",
     mobileSkip: true,
   },
   {
-    target: "share-button",
-    title: "Share Your Report",
-    description:
-      "Hit Share to copy a URL. You can set an optional passcode \u2014 anyone with it can unlock editing and re-share with updates. Without a passcode, the link is read-only.",
-    placement: "below",
-  },
-  {
     target: "present-button",
-    title: "Present Your Team",
+    title: "Presentation Mode",
     description:
-      "Click here or press P to toggle presentation mode \u2014 perfect for team calls or streams. Use arrow keys to navigate, Esc to exit.",
+      "Full-screen slide deck \u2014 perfect for team calls or streams. Use arrow keys to navigate, Esc to exit. Press D for dark mode.",
     placement: "below",
   },
-  {
-    target: null,
-    title: "Keyboard Shortcuts",
-    description:
-      "These work anytime (not just in presentations): D toggles dark mode, F toggles fullscreen, P toggles presentation, and arrow keys navigate slides. Press ? in presentation mode for the full list.",
-    placement: "center",
-  },
+
+  // --- Finish ---
   {
     target: null,
     title: "You\u2019re all set!",
     description:
-      "Try the generation theme selector in the header to change the look. Your work saves automatically. Click the ? button anytime to replay this guide.",
+      "Your work saves automatically to your browser. Try the generation theme selector to change the look. Click ? anytime to replay this guide.",
     placement: "center",
+    slide: 0,
   },
 ];
 
@@ -122,12 +163,25 @@ function setSeenFlag(): void {
 
 interface UseWalkthroughOptions {
   enabled: boolean;
+  pokemonNames?: string[];
+  goToSlide?: (index: number) => void;
+  pokemonCount?: number;
+  totalSlides?: number;
 }
 
-export function useWalkthrough({ enabled }: UseWalkthroughOptions) {
+export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount, totalSlides }: UseWalkthroughOptions) {
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
+
+  // Pick a random pokemon index (stable per session)
+  const [randomPokemonIndex] = useState(() =>
+    pokemonNames && pokemonNames.length > 0
+      ? Math.floor(Math.random() * pokemonNames.length)
+      : 0
+  );
+
+  const randomPokemonName = pokemonNames?.[randomPokemonIndex] ?? "your Pokemon";
 
   const filteredSteps = useMemo(() => {
     if (isMobile()) {
@@ -135,6 +189,45 @@ export function useWalkthrough({ enabled }: UseWalkthroughOptions) {
     }
     return WALKTHROUGH_STEPS;
   }, []);
+
+  // Resolve the slide index for the current step
+  const resolveSlide = useCallback(
+    (step: WalkthroughStep): number | null => {
+      if (step.slide === undefined || step.slide === null) return null;
+      if (typeof step.slide === "number") return step.slide;
+      const count = pokemonCount ?? 0;
+      if (step.slide === "pokemon") return 1 + randomPokemonIndex;
+      if (step.slide === "speed") return count + 1;
+      if (step.slide === "matchup-sheet") {
+        // Matchup sheet is always the last slide
+        return (totalSlides ?? count + 3) - 1;
+      }
+      return null;
+    },
+    [pokemonCount, randomPokemonIndex]
+  );
+
+  // Navigate to the correct slide when step changes
+  useEffect(() => {
+    if (!isActive || !goToSlide) return;
+    const step = filteredSteps[currentStepIndex];
+    if (!step) return;
+    const slideIdx = resolveSlide(step);
+    if (slideIdx !== null) {
+      goToSlide(slideIdx);
+    }
+  }, [isActive, currentStepIndex, filteredSteps, goToSlide, resolveSlide]);
+
+  // Interpolate {{pokemon}} in the current step
+  const currentStep = useMemo(() => {
+    const step = filteredSteps[currentStepIndex];
+    if (!step) return null;
+    return {
+      ...step,
+      title: step.title.replace(/\{\{pokemon\}\}/g, randomPokemonName),
+      description: step.description.replace(/\{\{pokemon\}\}/g, randomPokemonName),
+    };
+  }, [filteredSteps, currentStepIndex, randomPokemonName]);
 
   // Auto-trigger on first visit
   useEffect(() => {
@@ -160,13 +253,16 @@ export function useWalkthrough({ enabled }: UseWalkthroughOptions) {
       // Finished
       setIsActive(false);
       setSeenFlag();
+      // Navigate back to overview
+      goToSlide?.(0);
     }
-  }, [currentStepIndex, filteredSteps.length]);
+  }, [currentStepIndex, filteredSteps.length, goToSlide]);
 
   const skip = useCallback(() => {
     setIsActive(false);
     setSeenFlag();
-  }, []);
+    goToSlide?.(0);
+  }, [goToSlide]);
 
   const start = useCallback(() => {
     setCurrentStepIndex(0);
@@ -175,7 +271,7 @@ export function useWalkthrough({ enabled }: UseWalkthroughOptions) {
 
   return {
     isActive: isActive && enabled,
-    currentStep: filteredSteps[currentStepIndex] ?? null,
+    currentStep,
     currentStepIndex,
     totalSteps: filteredSteps.length,
     next,

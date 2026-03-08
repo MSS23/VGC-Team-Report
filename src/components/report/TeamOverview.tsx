@@ -95,7 +95,7 @@ export function TeamOverview({
         )
       ) : (
         <div>
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-3" data-walkthrough="tournament-info">
             Tournament Info
           </h3>
           <div className="flex flex-wrap gap-3">
@@ -134,7 +134,7 @@ export function TeamOverview({
 
       {/* Team Summary */}
       <div>
-        <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-3 presenting:text-base presenting:mb-4">
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-3 presenting:text-base presenting:mb-4" data-walkthrough="team-summary">
           Team Summary
         </h3>
         {isReadOnly ? (
@@ -159,7 +159,7 @@ export function TeamOverview({
       </div>
 
       {/* Pokemon Grid */}
-      <div className={`stagger-children grid gap-3 sm:gap-4 creator:gap-6 ${
+      <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-3 sm:gap-4 creator:gap-6 ${
         creatorMode
           ? "grid-cols-1 md:grid-cols-2"
           : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"

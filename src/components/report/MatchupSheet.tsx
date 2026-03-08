@@ -58,7 +58,7 @@ export function MatchupSheet({
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in" data-walkthrough="matchup-sheet">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">Matchup Sheet</h2>
         {plans.length > 0 && (
