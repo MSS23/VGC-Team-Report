@@ -184,7 +184,7 @@ export default function Home() {
     onEscape: presentationMode ? () => setPresentationMode(false) : undefined,
     onToggleDarkMode: () => setDarkMode(!darkMode),
     onToggleFullscreen: toggleFullscreen,
-    onShowHelp: presentationMode ? () => setShowShortcutHint(true) : undefined,
+    onShowHelp: () => setShowShortcutHint((v) => !v),
     onTogglePresentation: () => setPresentationMode(!presentationMode),
   });
 
@@ -427,7 +427,7 @@ export default function Home() {
 
   // Show report
   return (
-    <main className="min-h-screen bg-background overflow-y-auto">
+    <main className={`bg-background ${isPresentationStyle ? "h-screen overflow-y-auto" : "min-h-screen"}`}>
       {/* Header bar */}
       <header
         className={`sticky top-0 z-10 backdrop-blur-xl border-b transition-all duration-300 ${
@@ -461,7 +461,18 @@ export default function Home() {
                 {currentSlide + 1}/{totalSlides}
               </span>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <button
+                onClick={() => setShowShortcutHint(true)}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer"
+                aria-label="Keyboard shortcuts"
+                title="Keyboard shortcuts (?)"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
+                </svg>
+              </button>
               <Toggle
                 checked={darkMode}
                 onChange={setDarkMode}
@@ -914,6 +925,7 @@ export default function Home() {
         hiddenStates={creatorMode ? slideHiddenStates : undefined}
         onToggleHide={creatorMode ? handleToggleCurrentSlide : undefined}
         isCurrentHidden={creatorMode ? isSlideHiddenAt(physicalSlide) : false}
+        onShowShortcuts={() => setShowShortcutHint(true)}
       />
 
       {/* Walkthrough overlay */}
@@ -931,6 +943,7 @@ export default function Home() {
       <ShortcutHintOverlay
         visible={showShortcutHint}
         onDismiss={() => setShowShortcutHint(false)}
+        isPresentationMode={isPresentationStyle}
       />
 
       {/* Passcode modal */}

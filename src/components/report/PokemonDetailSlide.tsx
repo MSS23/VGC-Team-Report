@@ -218,7 +218,6 @@ function CollapsibleCalcGroup({
   categories: CalcCategory[];
 }) {
   const [isOpen, setIsOpen] = useState(!isPresentationMode);
-  const contentRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="presenting:flex-1 presenting:min-w-0">
@@ -245,13 +244,14 @@ function CollapsibleCalcGroup({
         </svg>
       </button>
       <div
-        ref={contentRef}
-        className="overflow-hidden transition-all duration-200 ease-in-out"
+        className="transition-all duration-200 ease-in-out"
         style={{
-          maxHeight: isOpen ? `${(entries.length + 1) * 80}px` : "0px",
+          display: "grid",
+          gridTemplateRows: isOpen ? "1fr" : "0fr",
           opacity: isOpen ? 1 : 0,
         }}
       >
+        <div className="overflow-hidden">
         <div className="flex flex-col gap-2 pt-1">
           {entries.map((entry) => {
             const globalIndex = globalCalcs.indexOf(entry);
@@ -268,6 +268,7 @@ function CollapsibleCalcGroup({
               />
             );
           })}
+        </div>
         </div>
       </div>
     </div>

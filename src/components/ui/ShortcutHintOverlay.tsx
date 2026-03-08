@@ -1,50 +1,65 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 interface ShortcutHintOverlayProps {
   visible: boolean;
   onDismiss: () => void;
+  isPresentationMode?: boolean;
 }
 
-const SHORTCUTS = [
+const SHORTCUTS_COMMON = [
   { key: "\u2190 / \u2192", label: "Navigate slides" },
-  { key: "P", label: "Toggle presentation" },
+  { key: "\u2191 / \u2193", label: "Navigate slides" },
   { key: "D", label: "Toggle dark mode" },
-  { key: "F", label: "Toggle fullscreen" },
-  { key: "Esc", label: "Exit presentation" },
-  { key: "?", label: "Show this help" },
+  { key: "?", label: "Show / hide shortcuts" },
 ];
 
-export function ShortcutHintOverlay({ visible, onDismiss }: ShortcutHintOverlayProps) {
-  const [show, setShow] = useState(false);
+const SHORTCUTS_PRESENTATION = [
+  { key: "F", label: "Toggle fullscreen" },
+  { key: "Esc", label: "Exit presentation" },
+];
 
+const SHORTCUTS_NORMAL = [
+  { key: "P", label: "Enter presentation" },
+];
+
+export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = false }: ShortcutHintOverlayProps) {
+  // Close on Escape key
   useEffect(() => {
-    if (visible) {
-      setShow(true);
-      const timer = setTimeout(() => {
-        setShow(false);
+    if (!visible) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
         onDismiss();
-      }, 3000);
-      return () => clearTimeout(timer);
-    } else {
-      setShow(false);
-    }
+      }
+    };
+    window.addEventListener("keydown", handler, { capture: true });
+    return () => window.removeEventListener("keydown", handler, { capture: true });
   }, [visible, onDismiss]);
 
-  if (!show) return null;
+  if (!visible) return null;
+
+  const shortcuts = [
+    ...SHORTCUTS_COMMON,
+    ...(isPresentationMode ? SHORTCUTS_PRESENTATION : SHORTCUTS_NORMAL),
+  ];
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in"
-      onClick={() => { setShow(false); onDismiss(); }}
+      onClick={onDismiss}
     >
-      <div className="bg-surface/95 border border-border rounded-2xl p-6 shadow-2xl max-w-xs w-full mx-4">
+      <div
+        className="bg-surface/95 border border-border rounded-2xl p-6 shadow-2xl max-w-xs w-full mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3 className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">
           Keyboard Shortcuts
         </h3>
         <div className="space-y-3">
-          {SHORTCUTS.map(({ key, label }) => (
+          {shortcuts.map(({ key, label }) => (
             <div key={key} className="flex items-center justify-between gap-4">
               <kbd className="px-2.5 py-1 bg-surface-alt border border-border rounded-lg text-xs font-mono font-semibold text-text-primary min-w-[3rem] text-center">
                 {key}
@@ -53,6 +68,17 @@ export function ShortcutHintOverlay({ visible, onDismiss }: ShortcutHintOverlayP
             </div>
           ))}
         </div>
+        <div className="mt-4 pt-3 border-t border-border-subtle">
+          <p className="text-[11px] text-text-tertiary text-center leading-relaxed">
+            Use swipe gestures on mobile to navigate slides
+          </p>
+        </div>
+        <button
+          onClick={onDismiss}
+          className="mt-4 w-full text-center text-xs text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
+        >
+          Click anywhere or press <kbd className="px-1.5 py-0.5 bg-surface-alt border border-border rounded text-[10px] font-mono font-semibold">Esc</kbd> to close
+        </button>
       </div>
     </div>
   );
