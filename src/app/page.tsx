@@ -39,7 +39,7 @@ export default function Home() {
   const { presentationMode, setPresentationMode } = usePresentationMode();
   const { darkMode, setDarkMode } = useDarkMode(false);
   const { genTheme, setGenTheme } = useTheme();
-  const { isSharedView, isSharePending, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, hasPasscode, passcodeHash, unlockEditing } = useShareUrl();
+  const { isSharedView, isSharePending, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, hasPasscode, passcodeHash, unlockEditing, lastShareResult } = useShareUrl();
   const {
     isActive: walkthroughActive,
     currentStep: walkthroughStep,
@@ -362,7 +362,9 @@ export default function Home() {
     shareStatus === "copying"
       ? "Copying..."
       : shareStatus === "copied"
-        ? "Copied!"
+        ? lastShareResult?.updated
+          ? "Updated!"
+          : "Copied!"
         : shareStatus === "error"
           ? "Failed"
           : "Share";
@@ -507,7 +509,7 @@ export default function Home() {
                 onClick={handleReshare}
                 disabled={shareStatus === "copying"}
               >
-                {shareStatus === "copying" ? "Copying..." : shareStatus === "copied" ? "Copied!" : shareStatus === "error" ? "Failed" : "Re-share"}
+                {shareStatus === "copying" ? "Copying..." : shareStatus === "copied" ? (lastShareResult?.updated ? "Updated!" : "Copied!") : shareStatus === "error" ? "Failed" : "Re-share"}
               </Button>
               <Button
                 variant="primary"

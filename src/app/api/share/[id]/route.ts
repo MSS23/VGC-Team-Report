@@ -1,4 +1,4 @@
-import { kv } from "@vercel/kv";
+import { getDb } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -7,12 +7,16 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const data = await kv.get(`share:${id}`);
-    if (!data) {
+    const sql = getDb();
+    const rows = await sql`
+      SELECT data FROM shares WHERE id = ${id}
+    `;
+    if (rows.length === 0) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json(data);
-  } catch {
+    return NextResponse.json(rows[0].data);
+  } catch (e) {
+    console.error("Share fetch error:", e);
     return NextResponse.json(
       { error: "Failed to load share" },
       { status: 500 }

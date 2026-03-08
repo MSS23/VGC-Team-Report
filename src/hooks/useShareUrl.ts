@@ -9,6 +9,28 @@ import {
 
 type ShareStatus = "idle" | "copying" | "copied" | "error";
 
+const SHARE_TOKENS_KEY = "vgc-share-tokens";
+
+interface StoredShareInfo {
+  shareId: string;
+  editToken: string;
+}
+
+function getStoredShareInfo(): StoredShareInfo | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(SHARE_TOKENS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as StoredShareInfo;
+  } catch {
+    return null;
+  }
+}
+
+function storeShareInfo(info: StoredShareInfo) {
+  localStorage.setItem(SHARE_TOKENS_KEY, JSON.stringify(info));
+}
+
 /** Synchronously detect share URL from query params or hash (runs before effects). */
 function detectShareParam(): string | null {
   if (typeof window === "undefined") return null;
@@ -41,6 +63,9 @@ export function useShareUrl() {
   const [urlWarning, setUrlWarning] = useState<string | null>(null);
   const [decodeFailed, setDecodeFailed] = useState(false);
   const [isEditingUnlocked, setIsEditingUnlocked] = useState(false);
+  const [lastShareResult, setLastShareResult] = useState<{
+    updated: boolean;
+  } | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hasPasscode = useMemo(
@@ -103,19 +128,30 @@ export function useShareUrl() {
   const copyShareUrl = useCallback(async (state: ShareableState) => {
     setShareStatus("copying");
     setUrlWarning(null);
+    setLastShareResult(null);
     try {
       let url: string;
 
-      // Try short URL via API
+      // Check for existing share to update
+      const stored = getStoredShareInfo();
+
       try {
         const res = await fetch("/api/share", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(state),
+          body: JSON.stringify({
+            state,
+            existingId: stored?.shareId,
+            editToken: stored?.editToken,
+          }),
         });
         if (!res.ok) throw new Error("API error");
-        const { id } = await res.json();
+        const { id, editToken, updated } = await res.json();
         url = `${window.location.origin}/s/${id}`;
+
+        // Store the edit token for future updates
+        storeShareInfo({ shareId: id, editToken });
+        setLastShareResult({ updated });
       } catch {
         // Fallback to inline encoding
         const encoded = await encodeShareState(state);
@@ -131,7 +167,10 @@ export function useShareUrl() {
       setShareStatus("copied");
 
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setShareStatus("idle"), 2000);
+      timerRef.current = setTimeout(() => {
+        setShareStatus("idle");
+        setLastShareResult(null);
+      }, 3000);
     } catch {
       setShareStatus("error");
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -162,5 +201,6 @@ export function useShareUrl() {
     hasPasscode,
     passcodeHash,
     unlockEditing,
+    lastShareResult,
   };
 }
