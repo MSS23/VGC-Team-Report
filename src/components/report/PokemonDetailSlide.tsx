@@ -196,6 +196,84 @@ function EditableCalcEntry({
   );
 }
 
+function CollapsibleCalcGroup({
+  category,
+  cfg,
+  entries,
+  globalCalcs,
+  isReadOnly,
+  isPresentationMode,
+  onRemoveCalc,
+  onEditCalc,
+  categories,
+}: {
+  category: CalcCategory;
+  cfg: CategoryCfg;
+  entries: CalcEntry[];
+  globalCalcs: CalcEntry[];
+  isReadOnly: boolean;
+  isPresentationMode: boolean;
+  onRemoveCalc: (index: number) => void;
+  onEditCalc?: (index: number, updates: Partial<CalcEntry>) => void;
+  categories: CalcCategory[];
+}) {
+  const [isOpen, setIsOpen] = useState(!isPresentationMode);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <div className="presenting:flex-1 presenting:min-w-0">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 w-full mb-1 group/header cursor-pointer"
+      >
+        <span className="text-sm">{cfg.icon}</span>
+        <span className={`text-xs font-bold uppercase tracking-widest ${cfg.tagText}`}>
+          {cfg.label}
+        </span>
+        <span className={`text-xs font-medium ${cfg.tagText} opacity-60`}>
+          ({entries.length})
+        </span>
+        <span className={`flex-1 h-px ${cfg.tagBg}`} />
+        <svg
+          className={`w-3.5 h-3.5 ${cfg.tagText} opacity-50 group-hover/header:opacity-100 transition-all duration-200 ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div
+        ref={contentRef}
+        className="overflow-hidden transition-all duration-200 ease-in-out"
+        style={{
+          maxHeight: isOpen ? `${(entries.length + 1) * 80}px` : "0px",
+          opacity: isOpen ? 1 : 0,
+        }}
+      >
+        <div className="flex flex-col gap-2 pt-1">
+          {entries.map((entry) => {
+            const globalIndex = globalCalcs.indexOf(entry);
+            return (
+              <EditableCalcEntry
+                key={globalIndex}
+                entry={entry}
+                globalIndex={globalIndex}
+                cfg={cfg}
+                isReadOnly={isReadOnly}
+                onRemove={() => onRemoveCalc(globalIndex)}
+                onEdit={onEditCalc ? (updates) => onEditCalc(globalIndex, updates) : undefined}
+                categories={categories}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PokemonDetailSlide({
   pokemon,
   note,
@@ -242,30 +320,17 @@ export function PokemonDetailSlide({
     const cfg = CATEGORY_CONFIG[category];
 
     return (
-      <div className="flex flex-col gap-2 presenting:flex-1 presenting:min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className={`text-sm`}>{cfg.icon}</span>
-          <span className={`text-xs font-bold uppercase tracking-widest ${cfg.tagText}`}>
-            {cfg.label}
-          </span>
-          <span className={`flex-1 h-px ${cfg.tagBg}`} />
-        </div>
-        {entries.map((entry) => {
-          const globalIndex = globalCalcs.indexOf(entry);
-          return (
-            <EditableCalcEntry
-              key={globalIndex}
-              entry={entry}
-              globalIndex={globalIndex}
-              cfg={cfg}
-              isReadOnly={isReadOnly}
-              onRemove={() => onRemoveCalc(globalIndex)}
-              onEdit={onEditCalc ? (updates) => onEditCalc(globalIndex, updates) : undefined}
-              categories={CATEGORIES}
-            />
-          );
-        })}
-      </div>
+      <CollapsibleCalcGroup
+        category={category}
+        cfg={cfg}
+        entries={entries}
+        globalCalcs={globalCalcs}
+        isReadOnly={isReadOnly}
+        isPresentationMode={isPresentationMode}
+        onRemoveCalc={onRemoveCalc}
+        onEditCalc={onEditCalc}
+        categories={CATEGORIES}
+      />
     );
   };
 
@@ -431,7 +496,7 @@ export function PokemonDetailSlide({
       </div>
 
       {/* Right Column: User Notes + Notable Calcs */}
-      <div className="flex flex-col gap-4 sm:gap-6 presenting:max-h-[calc(100vh-12rem)] presenting:overflow-y-auto presenting:pr-1">
+      <div className="flex flex-col gap-4 sm:gap-6">
         {/* Notes */}
         <div className="flex flex-col gap-2">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm">
