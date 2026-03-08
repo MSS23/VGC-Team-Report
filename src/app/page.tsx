@@ -508,12 +508,57 @@ export default function Home() {
                 Editing Unlocked
               </span>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               <Toggle
                 checked={darkMode}
                 onChange={setDarkMode}
                 label={darkMode ? "Dark" : "Light"}
               />
+              {/* Generation theme selector */}
+              <div className="hidden lg:flex items-center bg-surface-alt/50 rounded-xl p-1 gap-0.5" title="Generation theme">
+                {GEN_THEMES.map((t) => {
+                  const isActive = genTheme === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setGenTheme(t.id)}
+                      className={`group relative flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 cursor-pointer ${
+                        isActive ? "bg-surface scale-105" : "hover:bg-surface-alt"
+                      }`}
+                      style={isActive ? {
+                        boxShadow: `0 0 0 1.5px ${t.badge}50, 0 2px 8px ${t.badge}25`,
+                      } : undefined}
+                      title={`${t.label} (${t.abbr})`}
+                      aria-label={`Set theme to ${t.label}`}
+                    >
+                      <img
+                        src={`https://play.pokemonshowdown.com/sprites/home/${t.legendary}.png`}
+                        alt={t.label}
+                        width={32}
+                        height={32}
+                        loading="lazy"
+                        className={`object-contain transition-all duration-200 ${
+                          isActive
+                            ? "scale-110"
+                            : "brightness-[0.5] grayscale opacity-60 group-hover:brightness-100 group-hover:grayscale-0 group-hover:opacity-90 group-hover:scale-105"
+                        }`}
+                        style={{
+                          maxWidth: 32,
+                          maxHeight: 32,
+                          ...(isActive ? { filter: `drop-shadow(0 0 6px ${t.badge}80)` } : {}),
+                        }}
+                      />
+                      {isActive && (
+                        <span
+                          className="absolute -bottom-px left-1/2 -translate-x-1/2 h-[2px] w-5 rounded-full"
+                          style={{ backgroundColor: t.badge }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
               <Button
                 variant="secondary"
                 size="sm"
@@ -524,6 +569,15 @@ export default function Home() {
               </Button>
               <Button
                 variant="primary"
+                size="sm"
+                onClick={() => setPresentationMode(true)}
+                aria-label="Start presentation"
+              >
+                <span className="hidden sm:inline">Present</span>
+                <span className="sm:hidden">&#9654;</span>
+              </Button>
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => {
                   window.location.href =
@@ -563,12 +617,57 @@ export default function Home() {
                 {currentSlide + 1}/{totalSlides}
               </span>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               <Toggle
                 checked={darkMode}
                 onChange={setDarkMode}
                 label={darkMode ? "Dark" : "Light"}
               />
+              {/* Generation theme selector */}
+              <div className="hidden lg:flex items-center bg-surface-alt/50 rounded-xl p-1 gap-0.5" title="Generation theme">
+                {GEN_THEMES.map((t) => {
+                  const isActive = genTheme === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setGenTheme(t.id)}
+                      className={`group relative flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 cursor-pointer ${
+                        isActive ? "bg-surface scale-105" : "hover:bg-surface-alt"
+                      }`}
+                      style={isActive ? {
+                        boxShadow: `0 0 0 1.5px ${t.badge}50, 0 2px 8px ${t.badge}25`,
+                      } : undefined}
+                      title={`${t.label} (${t.abbr})`}
+                      aria-label={`Set theme to ${t.label}`}
+                    >
+                      <img
+                        src={`https://play.pokemonshowdown.com/sprites/home/${t.legendary}.png`}
+                        alt={t.label}
+                        width={32}
+                        height={32}
+                        loading="lazy"
+                        className={`object-contain transition-all duration-200 ${
+                          isActive
+                            ? "scale-110"
+                            : "brightness-[0.5] grayscale opacity-60 group-hover:brightness-100 group-hover:grayscale-0 group-hover:opacity-90 group-hover:scale-105"
+                        }`}
+                        style={{
+                          maxWidth: 32,
+                          maxHeight: 32,
+                          ...(isActive ? { filter: `drop-shadow(0 0 6px ${t.badge}80)` } : {}),
+                        }}
+                      />
+                      {isActive && (
+                        <span
+                          className="absolute -bottom-px left-1/2 -translate-x-1/2 h-[2px] w-5 rounded-full"
+                          style={{ backgroundColor: t.badge }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
               {hasPasscode && (
                 <Button
                   variant="secondary"
@@ -587,7 +686,16 @@ export default function Home() {
                 </Button>
               )}
               <Button
-                variant="primary"
+                variant="secondary"
+                size="sm"
+                onClick={() => setPresentationMode(true)}
+                aria-label="Start presentation"
+              >
+                <span className="hidden sm:inline">Present</span>
+                <span className="sm:hidden">&#9654;</span>
+              </Button>
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => {
                   window.location.href =
