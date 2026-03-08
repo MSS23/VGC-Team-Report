@@ -133,7 +133,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     target: null,
     title: "You\u2019re all set!",
     description:
-      "Your work saves automatically to your browser. Try the generation theme selector to change the look. Click ? anytime to replay this guide.",
+      "Your work saves automatically to your browser. Try the generation theme selector to change the look. Click the tour button anytime to replay this guide.",
     placement: "center",
     slide: 0,
   },
@@ -167,9 +167,10 @@ interface UseWalkthroughOptions {
   goToSlide?: (index: number) => void;
   pokemonCount?: number;
   totalSlides?: number;
+  isSharedView?: boolean;
 }
 
-export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount, totalSlides }: UseWalkthroughOptions) {
+export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount, totalSlides, isSharedView }: UseWalkthroughOptions) {
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
@@ -183,12 +184,19 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
 
   const randomPokemonName = pokemonNames?.[randomPokemonIndex] ?? "your Pokemon";
 
+  // Targets that only exist in creator/owner mode
+  const CREATOR_ONLY_TARGETS = ["share-button", "creator-toggle"];
+
   const filteredSteps = useMemo(() => {
+    let steps = WALKTHROUGH_STEPS;
     if (isMobile()) {
-      return WALKTHROUGH_STEPS.filter((s) => !s.mobileSkip);
+      steps = steps.filter((s) => !s.mobileSkip);
     }
-    return WALKTHROUGH_STEPS;
-  }, []);
+    if (isSharedView) {
+      steps = steps.filter((s) => !s.target || !CREATOR_ONLY_TARGETS.includes(s.target));
+    }
+    return steps;
+  }, [isSharedView]);
 
   // Resolve the slide index for the current step
   const resolveSlide = useCallback(

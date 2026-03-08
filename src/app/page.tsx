@@ -202,11 +202,12 @@ export default function Home() {
     skip: walkthroughSkip,
     start: startWalkthrough,
   } = useWalkthrough({
-    enabled: !!analysis && !isSharedView && !presentationMode,
+    enabled: !!analysis && !presentationMode,
     pokemonNames,
     goToSlide,
     pokemonCount: analysis?.pokemon.length ?? 0,
     totalSlides,
+    isSharedView,
   });
 
   // Map virtual currentSlide → physical slide for TeamReport
@@ -520,6 +521,19 @@ export default function Home() {
               </span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <button
+                onClick={startWalkthrough}
+                title="Take a tour"
+                aria-label="Take a tour"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-xs font-medium border border-border-subtle hover:border-border cursor-pointer"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <span className="hidden sm:inline">Tour</span>
+              </button>
               <Toggle
                 checked={darkMode}
                 onChange={setDarkMode}
@@ -629,6 +643,19 @@ export default function Home() {
               </span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <button
+                onClick={startWalkthrough}
+                title="Take a tour"
+                aria-label="Take a tour"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-xs font-medium border border-border-subtle hover:border-border cursor-pointer"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <span className="hidden sm:inline">Tour</span>
+              </button>
               <Toggle
                 checked={darkMode}
                 onChange={setDarkMode}
@@ -723,14 +750,19 @@ export default function Home() {
               >
                 {shareButtonText}
               </Button>
-              {/* Help button */}
+              {/* Tour button */}
               <button
                 onClick={startWalkthrough}
-                title="Help & walkthrough"
-                aria-label="Help and walkthrough"
-                className="flex w-7 h-7 items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors text-sm font-bold border border-border-subtle hover:border-border"
+                title="Take a tour"
+                aria-label="Take a tour"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors text-xs font-medium border border-border-subtle hover:border-border cursor-pointer"
               >
-                ?
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <span className="hidden sm:inline">Tour</span>
               </button>
 
               {/* Generation theme selector */}
@@ -926,6 +958,7 @@ export default function Home() {
         onToggleHide={creatorMode ? handleToggleCurrentSlide : undefined}
         isCurrentHidden={creatorMode ? isSlideHiddenAt(physicalSlide) : false}
         onShowShortcuts={() => setShowShortcutHint(true)}
+        onStartTour={!presentationMode ? startWalkthrough : undefined}
       />
 
       {/* Walkthrough overlay */}
