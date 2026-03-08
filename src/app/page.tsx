@@ -201,6 +201,7 @@ export default function Home() {
     next: walkthroughNext,
     skip: walkthroughSkip,
     start: startWalkthrough,
+    guidePokemon: walkthroughGuidePokemon,
   } = useWalkthrough({
     enabled: !!analysis && !presentationMode,
     pokemonNames,
@@ -208,6 +209,10 @@ export default function Home() {
     pokemonCount: analysis?.pokemon.length ?? 0,
     totalSlides,
     isSharedView,
+    physicalToVirtual: useCallback((physical: number) => {
+      const idx = visibleIndices.indexOf(physical);
+      return idx === -1 ? null : idx;
+    }, [visibleIndices]),
   });
 
   // Map virtual currentSlide → physical slide for TeamReport
@@ -410,7 +415,7 @@ export default function Home() {
             <p className="text-text-primary font-semibold">Failed to load shared team</p>
             <p className="text-text-secondary text-sm max-w-xs">The link may be corrupted or expired. Ask the creator for a new link.</p>
             <button
-              onClick={() => { window.location.href = window.location.origin + window.location.pathname; }}
+              onClick={() => { window.location.href = window.location.origin; }}
               className="mt-2 px-5 py-2 bg-accent text-white rounded-xl font-semibold text-sm hover:bg-accent/90 transition-colors"
             >
               Build Your Own
@@ -605,8 +610,7 @@ export default function Home() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  window.location.href =
-                    window.location.origin + window.location.pathname;
+                  window.location.href = window.location.origin;
                 }}
               >
                 <span className="sm:hidden">New</span>
@@ -691,8 +695,7 @@ export default function Home() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  window.location.href =
-                    window.location.origin + window.location.pathname;
+                  window.location.href = window.location.origin;
                 }}
               >
                 <span className="sm:hidden">New</span>
@@ -969,6 +972,7 @@ export default function Home() {
           totalSteps={walkthroughTotalSteps}
           onNext={walkthroughNext}
           onSkip={walkthroughSkip}
+          guidePokemon={walkthroughGuidePokemon}
         />
       )}
 

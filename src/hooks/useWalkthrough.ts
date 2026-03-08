@@ -168,9 +168,11 @@ interface UseWalkthroughOptions {
   pokemonCount?: number;
   totalSlides?: number;
   isSharedView?: boolean;
+  /** Maps physical slide index → virtual index (for hidden slide support). If not provided, assumes 1:1 mapping. */
+  physicalToVirtual?: (physicalIndex: number) => number | null;
 }
 
-export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount, totalSlides, isSharedView }: UseWalkthroughOptions) {
+export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount, totalSlides, isSharedView, physicalToVirtual }: UseWalkthroughOptions) {
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
@@ -220,11 +222,14 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     if (!isActive || !goToSlide) return;
     const step = filteredSteps[currentStepIndex];
     if (!step) return;
-    const slideIdx = resolveSlide(step);
-    if (slideIdx !== null) {
-      goToSlide(slideIdx);
+    const physicalIdx = resolveSlide(step);
+    if (physicalIdx === null) return;
+    // Map physical → virtual index if mapping provided
+    const virtualIdx = physicalToVirtual ? physicalToVirtual(physicalIdx) : physicalIdx;
+    if (virtualIdx !== null) {
+      goToSlide(virtualIdx);
     }
-  }, [isActive, currentStepIndex, filteredSteps, goToSlide, resolveSlide]);
+  }, [isActive, currentStepIndex, filteredSteps, goToSlide, resolveSlide, physicalToVirtual]);
 
   // Interpolate {{pokemon}} in the current step
   const currentStep = useMemo(() => {
@@ -285,5 +290,6 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     next,
     skip,
     start,
+    guidePokemon: randomPokemonName,
   };
 }

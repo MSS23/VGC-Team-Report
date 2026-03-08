@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { WalkthroughStep } from "@/hooks/useWalkthrough";
+import { PokemonSprite } from "@/components/report/PokemonSprite";
 
 interface WalkthroughOverlayProps {
   step: WalkthroughStep;
@@ -10,6 +11,7 @@ interface WalkthroughOverlayProps {
   totalSteps: number;
   onNext: () => void;
   onSkip: () => void;
+  guidePokemon?: string;
 }
 
 interface Rect {
@@ -30,6 +32,7 @@ export function WalkthroughOverlay({
   totalSteps,
   onNext,
   onSkip,
+  guidePokemon,
 }: WalkthroughOverlayProps) {
   const [mounted, setMounted] = useState(false);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
@@ -201,18 +204,39 @@ export function WalkthroughOverlay({
           left: "50%",
           transform: "translate(-50%, -50%)",
           zIndex: 10000,
-          width: "min(340px, calc(100vw - 32px))",
+          width: "min(360px, calc(100vw - 32px))",
         }}
         className="bg-surface rounded-2xl border border-border shadow-xl animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Pokemon guide + content */}
         <div className="p-5">
-          <h3 className="text-base font-bold text-text-primary mb-1.5">
-            {step.title}
-          </h3>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            {step.description}
-          </p>
+          <div className="flex items-start gap-3">
+            {/* Pokemon guide sprite */}
+            {guidePokemon && guidePokemon !== "your Pokemon" && (
+              <div className="flex-shrink-0 -mt-1">
+                <div className="relative">
+                  <PokemonSprite
+                    species={guidePokemon}
+                    size={56}
+                    animated
+                  />
+                  {/* Speech bubble tail */}
+                  <div
+                    className="absolute -right-1 top-3 w-2.5 h-2.5 bg-accent/15 rotate-45 rounded-sm"
+                  />
+                </div>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-bold text-text-primary mb-1.5">
+                {step.title}
+              </h3>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                {step.description}
+              </p>
+            </div>
+          </div>
         </div>
         {/* Progress bar */}
         <div className="px-5 pb-3">
@@ -232,7 +256,7 @@ export function WalkthroughOverlay({
               <button
                 onClick={onSkip}
                 aria-label="Skip all"
-                className="text-xs text-text-tertiary hover:text-text-secondary px-3 py-1.5 rounded-lg transition-colors"
+                className="text-xs text-text-tertiary hover:text-text-secondary px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
               >
                 Skip all
               </button>
@@ -240,7 +264,7 @@ export function WalkthroughOverlay({
             <button
               onClick={onNext}
               aria-label={isLastStep ? "Finish walkthrough" : "Next step"}
-              className="text-xs font-semibold text-white bg-accent hover:bg-accent/90 px-4 py-1.5 rounded-lg transition-colors"
+              className="text-xs font-semibold text-white bg-accent hover:bg-accent/90 px-4 py-1.5 rounded-lg transition-colors cursor-pointer"
             >
               {isLastStep ? "Done" : "Next"}
             </button>
