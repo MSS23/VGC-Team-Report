@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 
 const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
@@ -82,20 +82,26 @@ function looksLikeShowdownPaste(text: string): boolean {
   const hasAbility = /\bAbility:/i.test(trimmed);
   const hasEVs = /\bEVs:/i.test(trimmed);
   const hasMove = /^- .+/m.test(trimmed);
-  // Must match at least 2 of the 3 markers
   return [hasAbility, hasEVs, hasMove].filter(Boolean).length >= 2;
 }
+
+const POKEMON_SPRITES = [
+  "incineroar", "flutter-mane", "rillaboom",
+  "urshifu-rapid-strike", "tornadus", "landorus-therian",
+];
 
 export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps) {
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
 
   const isUrl = isPokePasteUrl(paste);
+  const hasContent = paste.trim().length > 0;
 
   const handleAnalyze = () => {
     if (paste.trim() && !isUrl && !looksLikeShowdownPaste(paste)) {
-      setValidationError("Invalid format. Paste a Pokémon Showdown team export or PokéPaste URL.");
+      setValidationError("Invalid format. Paste a Showdown team export or PokéPaste URL.");
       return;
     }
     setValidationError(null);
@@ -129,97 +135,166 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 sm:px-4">
-      {/* Hero */}
-      <div className="text-center mb-8 sm:mb-10 animate-fade-in-up">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent/10 text-accent text-xs font-bold rounded-full mb-4 sm:mb-6 tracking-widest uppercase border border-accent/20">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-          </svg>
-          VGC Team Report
-        </div>
-        <h1 className="text-3xl sm:text-5xl font-extrabold text-text-primary mb-3 sm:mb-4 tracking-tight leading-[1.1]">
-          Build Your{" "}
-          <span className="bg-gradient-to-r from-accent via-purple-500 to-accent bg-clip-text text-transparent">
-            Team Report
-          </span>
-        </h1>
-        <p className="text-sm sm:text-lg text-text-secondary max-w-lg mx-auto leading-relaxed px-2">
-          Paste your Showdown team or PokéPaste URL to create a professional, shareable VGC team report.
-        </p>
-      </div>
+    <div className="w-full max-w-2xl mx-auto px-4">
 
-      {/* Input Area */}
-      <div className="space-y-4 animate-fade-in" style={{ animationDelay: "150ms" }}>
-        <div className="relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-accent/20 via-purple-500/20 to-accent/20 rounded-[18px] opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur-sm" />
-          <textarea
-            value={paste}
-            onChange={(e) => { onPasteChange(e.target.value); setFetchError(null); setValidationError(null); }}
-            onKeyDown={handleKeyDown}
-            placeholder="Paste your Pokemon Showdown team export or a pokepast.es URL..."
-            className="relative w-full h-56 sm:h-80 p-4 sm:p-6 bg-surface border border-border rounded-2xl text-sm font-mono text-text-primary placeholder:text-text-tertiary resize-none focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/60 transition-all duration-200 shadow-sm"
-            spellCheck={false}
+      {/* Floating sprites */}
+      <div className="flex justify-center gap-1 mb-6 sm:mb-8 overflow-hidden">
+        {POKEMON_SPRITES.map((name, i) => (
+          <motion.img
+            key={name}
+            src={`https://play.pokemonshowdown.com/sprites/home/${name}.png`}
+            alt=""
+            width={48}
+            height={48}
+            className="w-10 h-10 sm:w-12 sm:h-12 object-contain opacity-30 grayscale"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 0.3, y: 0 }}
+            transition={{
+              delay: 0.1 + i * 0.08,
+              duration: 0.5,
+              ease: "easeOut",
+            }}
+            loading="lazy"
           />
-          {isUrl && (
-            <div className="absolute top-3 right-3 px-2.5 py-1 bg-accent text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shadow-sm">
-              PokéPaste URL
-            </div>
-          )}
-        </div>
-
-        {(fetchError || validationError) && (
-          <div className="flex items-center gap-2 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl animate-fade-in">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-400 flex-shrink-0">
-              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            <p className="text-sm text-red-400">{fetchError || validationError}</p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between gap-2 sm:gap-3 pt-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onPasteChange(SAMPLE_PASTE)}
-            className="text-text-tertiary"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1 sm:mr-1.5">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14,2 14,8 20,8" />
-            </svg>
-            <span className="hidden sm:inline">Load Sample</span>
-            <span className="sm:hidden">Sample</span>
-          </Button>
-          {isUrl ? (
-            <Button
-              onClick={handleFetchPaste}
-              disabled={isFetching}
-              size="lg"
-            >
-              {isFetching ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Fetching...
-                </>
-              ) : (
-                <>
-                  Fetch & Analyze
-                  <span className="ml-2 text-xs opacity-50 hidden sm:inline">Ctrl+Enter</span>
-                </>
-              )}
-            </Button>
-          ) : (
-            <Button
-              onClick={handleAnalyze}
-              disabled={!paste.trim()}
-              size="lg"
-            >
-              Analyze Team
-              <span className="ml-2 text-xs opacity-50 hidden sm:inline">Ctrl+Enter</span>
-            </Button>
-          )}
-        </div>
+        ))}
       </div>
+
+      {/* Title — minimal */}
+      <motion.div
+        className="text-center mb-6 sm:mb-8"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <h1 className="text-2xl sm:text-4xl font-bold text-text-primary tracking-tight">
+          VGC Team Report
+        </h1>
+        <p className="text-sm text-text-tertiary mt-2">
+          Paste a Showdown export or PokéPaste URL
+        </p>
+      </motion.div>
+
+      {/* Textarea */}
+      <motion.div
+        className="relative"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.4, ease: "easeOut" }}
+      >
+        <div
+          className={`absolute -inset-px rounded-2xl transition-all duration-300 ${
+            isFocused
+              ? "bg-gradient-to-b from-accent/25 to-accent/5"
+              : "bg-transparent"
+          }`}
+        />
+        <textarea
+          value={paste}
+          onChange={(e) => {
+            onPasteChange(e.target.value);
+            setFetchError(null);
+            setValidationError(null);
+          }}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          placeholder={
+            "Incineroar @ Sitrus Berry\nAbility: Intimidate\nLevel: 50\nEVs: 252 HP / 4 Atk / 252 Spe\nCareful Nature\n- Fake Out\n- Knock Off\n- Flare Blitz\n- Parting Shot"
+          }
+          className="relative w-full h-52 sm:h-72 p-4 sm:p-5 bg-surface border border-border rounded-2xl text-sm font-mono text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none transition-colors duration-200"
+          spellCheck={false}
+        />
+        {isUrl && (
+          <motion.span
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute top-3 right-3 px-2 py-0.5 bg-accent/15 text-accent text-[10px] font-semibold rounded-md uppercase tracking-wider"
+          >
+            PokéPaste
+          </motion.span>
+        )}
+      </motion.div>
+
+      {/* Error */}
+      {(fetchError || validationError) && (
+        <motion.p
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-sm text-red-400 mt-3 px-1"
+        >
+          {fetchError || validationError}
+        </motion.p>
+      )}
+
+      {/* Actions */}
+      <motion.div
+        className="flex items-center justify-between gap-3 mt-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.25, duration: 0.3 }}
+      >
+        <button
+          onClick={() => onPasteChange(SAMPLE_PASTE)}
+          className="text-xs text-text-tertiary hover:text-text-secondary transition-colors py-2 px-1 cursor-pointer"
+        >
+          Load sample team
+        </button>
+
+        {isUrl ? (
+          <motion.button
+            onClick={handleFetchPaste}
+            disabled={isFetching}
+            whileTap={{ scale: 0.97 }}
+            className="px-6 py-2.5 bg-text-primary text-background rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:opacity-90 cursor-pointer"
+          >
+            {isFetching ? (
+              <span className="flex items-center gap-2">
+                <span className="w-3.5 h-3.5 border-2 border-background/30 border-t-background rounded-full animate-spin" />
+                Fetching...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                Fetch & Analyze
+                <kbd className="text-[10px] opacity-40 hidden sm:inline font-mono">Ctrl+Enter</kbd>
+              </span>
+            )}
+          </motion.button>
+        ) : (
+          <motion.button
+            onClick={handleAnalyze}
+            disabled={!hasContent}
+            whileTap={hasContent ? { scale: 0.97 } : undefined}
+            className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+              hasContent
+                ? "bg-text-primary text-background hover:opacity-90"
+                : "bg-border text-text-tertiary cursor-not-allowed"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              Analyze
+              <kbd className="text-[10px] opacity-40 hidden sm:inline font-mono">Ctrl+Enter</kbd>
+            </span>
+          </motion.button>
+        )}
+      </motion.div>
+
+      {/* App credit */}
+      <motion.p
+        className="text-center text-[10px] text-text-tertiary/40 mt-8 sm:mt-12"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+      >
+        Built by Manraj Sidhu{" "}
+        <a
+          href="https://x.com/Manny64Official"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-text-tertiary transition-colors"
+        >
+          @Manny64Official
+        </a>
+      </motion.p>
     </div>
   );
 }
