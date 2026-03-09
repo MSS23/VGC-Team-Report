@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { lookupPokemon } from "@/lib/data/pokemon";
 import { calculateAllStats } from "@/lib/analysis/stat-calculator";
@@ -12,45 +12,15 @@ const STORAGE_KEY = "vgc-team-paste";
 
 export type ViewMode = "simple" | "advanced";
 
-/** Check if the current URL indicates a share link (skip localStorage load). */
-function isShareUrl(): boolean {
-  if (typeof window === "undefined") return false;
-  const url = new URL(window.location.href);
-  if (url.searchParams.has("s")) return true;
-  const hash = window.location.hash;
-  return hash.startsWith("#id=") || hash.startsWith("#data=");
-}
-
-function loadSavedPaste(): string {
-  try {
-    return localStorage.getItem(STORAGE_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
-
 export function useTeamReport() {
   const [paste, setPaste] = useState("");
   const [parsedTeam, setParsedTeam] = useState<ParsedTeam | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("simple");
-  const hasAutoLoaded = useRef(false);
 
-  // Auto-load saved paste on mount (skip if opening a share URL)
-  useEffect(() => {
-    if (hasAutoLoaded.current) return;
-    hasAutoLoaded.current = true;
-
-    if (isShareUrl()) return;
-
-    const saved = loadSavedPaste();
-    if (saved) {
-      setPaste(saved);
-      const result = parseShowdownPaste(saved);
-      if (result.pokemon.length > 0) {
-        setParsedTeam(result);
-      }
-    }
-  }, []);
+  // On fresh visits, always start with a blank slate.
+  // Shared views hydrate via useShareUrl, not localStorage.
+  // The auto-save below still persists the paste while actively working,
+  // so in-session refreshes during a share flow won't lose data.
 
   // Auto-save paste to localStorage whenever it changes (and analysis exists)
   useEffect(() => {
