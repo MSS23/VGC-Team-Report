@@ -21,6 +21,8 @@ interface TeamOverviewProps {
   onRecordChange?: (text: string) => void;
   rentalCode?: string;
   onRentalCodeChange?: (text: string) => void;
+  creatorName?: string;
+  onCreatorNameChange?: (text: string) => void;
   mvpIndex?: number | null;
   onMvpIndexChange?: (index: number | null) => void;
   isReadOnly: boolean;
@@ -43,12 +45,15 @@ export function TeamOverview({
   onRecordChange,
   rentalCode,
   onRentalCodeChange,
+  creatorName,
+  onCreatorNameChange,
   mvpIndex,
   onMvpIndexChange,
   isReadOnly,
   getSpriteConfig,
 }: TeamOverviewProps) {
   const hasTournamentInfo = !!(tournamentName || placement || record);
+  const hasCreatorInfo = !!creatorName;
   const [rentalCopied, setRentalCopied] = useState(false);
 
   const copyRentalCode = () => {
@@ -62,34 +67,41 @@ export function TeamOverview({
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
       {/* Tournament Context */}
       {isReadOnly ? (
-        (hasTournamentInfo || rentalCode) && (
-          <div className="flex items-center gap-3 flex-wrap px-1">
-            {tournamentName && (
-              <h2 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">
-                {tournamentName}
-              </h2>
-            )}
-            {placement && (
-              <span className="text-sm font-bold text-accent bg-accent-surface px-3 py-1 rounded-full border border-accent/20">
-                {placement}
-              </span>
-            )}
-            {record && (
-              <span className="text-sm text-text-secondary font-medium">({record})</span>
-            )}
-            {rentalCode && (
-              <button
-                onClick={copyRentalCode}
-                className="flex items-center gap-2 ml-auto px-3 py-1.5 bg-surface border border-border rounded-xl hover:bg-surface-alt transition-colors"
-                title="Copy rental code"
-              >
-                <span className="text-sm font-mono font-bold text-text-primary tracking-wider">
-                  {rentalCode}
+        (hasTournamentInfo || rentalCode || hasCreatorInfo) && (
+          <div className="flex flex-col gap-2 px-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              {tournamentName && (
+                <h2 className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">
+                  {tournamentName}
+                </h2>
+              )}
+              {placement && (
+                <span className="text-sm font-bold text-accent bg-accent-surface px-3 py-1 rounded-full border border-accent/20">
+                  {placement}
                 </span>
-                <span className="text-xs text-text-tertiary">
-                  {rentalCopied ? "Copied!" : "Copy"}
-                </span>
-              </button>
+              )}
+              {record && (
+                <span className="text-sm text-text-secondary font-medium">({record})</span>
+              )}
+              {rentalCode && (
+                <button
+                  onClick={copyRentalCode}
+                  className="flex items-center gap-2 ml-auto px-3 py-1.5 bg-surface border border-border rounded-xl hover:bg-surface-alt transition-colors"
+                  title="Copy rental code"
+                >
+                  <span className="text-sm font-mono font-bold text-text-primary tracking-wider">
+                    {rentalCode}
+                  </span>
+                  <span className="text-xs text-text-tertiary">
+                    {rentalCopied ? "Copied!" : "Copy"}
+                  </span>
+                </button>
+              )}
+            </div>
+            {creatorName && (
+              <p className="text-sm text-text-secondary font-medium">
+                by <span className="text-text-primary font-semibold">{creatorName}</span>
+              </p>
             )}
           </div>
         )
@@ -130,6 +142,13 @@ export function TeamOverview({
                 className="flex-1 sm:flex-none sm:w-[160px] px-3 sm:px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-mono font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-wider"
               />
             </div>
+            <input
+              type="text"
+              value={creatorName ?? ""}
+              onChange={(e) => onCreatorNameChange?.(e.target.value)}
+              placeholder="Your name / alias (shown on report)"
+              className="flex-1 min-w-[150px] sm:min-w-[200px] px-3 sm:px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+            />
           </div>
         </div>
       )}
@@ -183,6 +202,21 @@ export function TeamOverview({
             />
           );
         })}
+      </div>
+
+      {/* App trademark */}
+      <div className="text-center pt-4 border-t border-border-subtle">
+        <p className="text-[10px] sm:text-xs text-text-tertiary/60">
+          Built with VGC Team Report by Manraj Sidhu{" "}
+          <a
+            href="https://x.com/Manny64Official"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-text-tertiary/80 hover:text-accent transition-colors"
+          >
+            @Manny64Official
+          </a>
+        </p>
       </div>
 
     </div>

@@ -33,6 +33,8 @@ interface TeamReportProps {
   onRecordChange?: (text: string) => void;
   rentalCode?: string;
   onRentalCodeChange?: (text: string) => void;
+  creatorName?: string;
+  onCreatorNameChange?: (text: string) => void;
   mvpIndex?: number | null;
   onMvpIndexChange?: (index: number | null) => void;
   isReadOnly?: boolean;
@@ -79,6 +81,8 @@ export function TeamReport({
   onRecordChange,
   rentalCode,
   onRentalCodeChange,
+  creatorName,
+  onCreatorNameChange,
   mvpIndex,
   onMvpIndexChange,
   isReadOnly = false,
@@ -117,6 +121,8 @@ export function TeamReport({
         onRecordChange={onRecordChange}
         rentalCode={rentalCode}
         onRentalCodeChange={onRentalCodeChange}
+        creatorName={creatorName}
+        onCreatorNameChange={onCreatorNameChange}
         mvpIndex={mvpIndex ?? null}
         onMvpIndexChange={onMvpIndexChange}
         isReadOnly={isReadOnly}

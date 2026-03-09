@@ -30,10 +30,10 @@ export interface ShareableState {
   record?: string;
   mvpIndex?: number | null;
   rentalCode?: string;
+  creatorName?: string;
   matchupPlans: SerializedMatchupPlan[];
   spriteSettings?: Record<string, { shiny?: boolean; animated?: boolean }>;
   hiddenSlides?: string[];
-  passcodeHash?: string;
 }
 
 function toBase64Url(bytes: Uint8Array): string {

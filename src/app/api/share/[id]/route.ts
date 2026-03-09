@@ -2,12 +2,31 @@ import { getDb } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const url = new URL(request.url);
+    const key = url.searchParams.get("key");
+
     const sql = getDb();
+
+    if (key) {
+      // Validate edit key — return data + editable flag
+      const rows = await sql`
+        SELECT data, (edit_token = ${key}) AS editable FROM shares WHERE id = ${id}
+      `;
+      if (rows.length === 0) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      return NextResponse.json({
+        ...rows[0].data,
+        _editable: !!rows[0].editable,
+      });
+    }
+
+    // Public access — read-only, no edit info leaked
     const rows = await sql`
       SELECT data FROM shares WHERE id = ${id}
     `;

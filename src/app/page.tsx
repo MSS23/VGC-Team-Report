@@ -21,8 +21,6 @@ import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
 import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
 import { Button } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
-import { PasscodeModal } from "@/components/ui/PasscodeModal";
-import { hashPasscode, verifyPasscode } from "@/lib/sharing/passcode";
 import type { SpriteConfig } from "@/lib/types/sprites";
 
 export default function Home() {
@@ -39,10 +37,10 @@ export default function Home() {
   const { presentationMode, setPresentationMode } = usePresentationMode();
   const { darkMode, setDarkMode } = useDarkMode(false);
   const { genTheme, setGenTheme } = useTheme();
-  const { isSharedView, isSharePending, sharedState, copyShareUrl, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, hasPasscode, passcodeHash, unlockEditing, lastShareResult } = useShareUrl();
+  const { isSharedView, isSharePending, sharedState, copyShareUrl, freshShare, autoSave, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, lastShareResult, getEditUrl, hasExistingShare } = useShareUrl();
   const [showShortcutHint, setShowShortcutHint] = useState(false);
-  const [showPasscodeModal, setShowPasscodeModal] = useState<"set" | "unlock" | null>(null);
-  const [passcodeError, setPasscodeError] = useState<string | null>(null);
+  const [showEditUrl, setShowEditUrl] = useState(false);
+  const [editLinkCopied, setEditLinkCopied] = useState(false);
   const creatorModeBeforePresent = useRef(creatorMode);
 
   // Auto-lock editing when entering presentation, restore on exit
@@ -79,8 +77,8 @@ export default function Home() {
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, !isSharedView);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, !isSharedView);
   const {
-    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode,
-    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setMetaFull,
+    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName,
+    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setMetaFull,
   } = useTeamMeta(speciesKeys, !isSharedView);
   const {
     plans,
@@ -118,7 +116,7 @@ export default function Home() {
     setSaveFlash(true);
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => setSaveFlash(false), 1500);
-  }, [notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, plans, hiddenSlides, analysis, isSharedView]);
+  }, [notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, analysis, isSharedView]);
 
   // Build ALL slide keys and labels (including all plans, visibility handled at nav level)
   const { allSlideKeys, allSlideLabels } = useMemo(() => {
@@ -292,6 +290,7 @@ export default function Home() {
       record: sharedState.record,
       mvpIndex: sharedState.mvpIndex ?? null,
       rentalCode: sharedState.rentalCode,
+      creatorName: sharedState.creatorName,
     });
     setPlansFull(
       sharedState.matchupPlans.map((p) => ({
@@ -314,7 +313,7 @@ export default function Home() {
     parseTeam(directPaste ?? paste);
   };
 
-  const buildShareState = useCallback((extraPasscodeHash?: string) => ({
+  const buildShareState = useCallback(() => ({
     paste,
     notes,
     calcs,
@@ -325,6 +324,7 @@ export default function Home() {
     record: record || undefined,
     mvpIndex: mvpIndex ?? undefined,
     rentalCode: rentalCode || undefined,
+    creatorName: creatorName || undefined,
     matchupPlans: plans.map((p) => ({
       opponentPaste: p.opponentPaste,
       opponentLabel: p.opponentLabel,
@@ -337,43 +337,48 @@ export default function Home() {
       })),
     })),
     hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
-    passcodeHash: extraPasscodeHash || undefined,
-  }), [paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, plans, hiddenSlides]);
+  }), [paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides]);
 
   const handleShareClick = useCallback(() => {
     if (!analysis) return;
-    setShowPasscodeModal("set");
-    setPasscodeError(null);
-  }, [analysis]);
-
-  const handleShareWithPasscode = useCallback(async (passcode: string) => {
-    const hash = await hashPasscode(passcode);
-    copyShareUrl(buildShareState(hash));
-    setShowPasscodeModal(null);
-  }, [copyShareUrl, buildShareState]);
-
-  const handleShareNoPasscode = useCallback(() => {
     copyShareUrl(buildShareState());
-    setShowPasscodeModal(null);
-  }, [copyShareUrl, buildShareState]);
+    setShowEditUrl(true);
+  }, [analysis, copyShareUrl, buildShareState]);
 
   const handleReshare = useCallback(() => {
     if (!analysis) return;
-    copyShareUrl(buildShareState(passcodeHash ?? undefined));
-  }, [analysis, copyShareUrl, buildShareState, passcodeHash]);
+    copyShareUrl(buildShareState());
+  }, [analysis, copyShareUrl, buildShareState]);
 
-  const handleUnlockAttempt = useCallback(async (attempt: string) => {
-    if (!passcodeHash) return;
-    const valid = await verifyPasscode(attempt, passcodeHash);
-    if (valid) {
-      unlockEditing();
-      setCreatorMode(true);
-      setShowPasscodeModal(null);
-      setPasscodeError(null);
-    } else {
-      setPasscodeError("Incorrect passcode. Try again.");
-    }
-  }, [passcodeHash, unlockEditing, setCreatorMode]);
+  /** Copy the stored edit link to clipboard (same browser recovery). */
+  const handleCopyEditLink = useCallback(() => {
+    const url = getEditUrl();
+    if (!url) return;
+    navigator.clipboard.writeText(url);
+    setEditLinkCopied(true);
+    setTimeout(() => setEditLinkCopied(false), 2000);
+  }, [getEditUrl]);
+
+  /** Force a fresh share — new ID + new edit token (old edit link stops working). */
+  const handleFreshReshare = useCallback(() => {
+    if (!analysis) return;
+    freshShare(buildShareState());
+    setShowEditUrl(true);
+  }, [analysis, freshShare, buildShareState]);
+
+  // Auto-save: debounce pushes to server when editing (shared or local with existing share)
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!analysis) return;
+    // Auto-save when editing an unlocked shared view or when a local share exists
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      autoSave(buildShareState());
+    }, 3000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [analysis, buildShareState, autoSave]);
 
   const shareButtonText =
     shareStatus === "copying"
@@ -667,23 +672,6 @@ export default function Home() {
                 onChange={setDarkMode}
                 label={darkMode ? "Dark" : "Light"}
               />
-              {hasPasscode && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setShowPasscodeModal("unlock");
-                    setPasscodeError(null);
-                  }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0110 0v4" />
-                  </svg>
-                  <span className="hidden sm:inline">Unlock Editing</span>
-                  <span className="sm:hidden">Unlock</span>
-                </Button>
-              )}
               <Button
                 variant="secondary"
                 size="sm"
@@ -757,6 +745,19 @@ export default function Home() {
               >
                 {shareButtonText}
               </Button>
+              {hasExistingShare() && (
+                <button
+                  onClick={handleCopyEditLink}
+                  title="Copy your private edit link"
+                  className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-text-tertiary hover:text-accent hover:bg-accent/10 border border-border-subtle hover:border-accent/30 transition-all cursor-pointer"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                  </svg>
+                  <span className="hidden sm:inline">{editLinkCopied ? "Copied!" : "Edit Link"}</span>
+                </button>
+              )}
               {/* Tour button — hidden on small mobile */}
               <button
                 onClick={startWalkthrough}
@@ -932,6 +933,8 @@ export default function Home() {
           onRecordChange={setRecord}
           rentalCode={rentalCode}
           onRentalCodeChange={setRentalCode}
+          creatorName={creatorName}
+          onCreatorNameChange={setCreatorName}
           mvpIndex={mvpIndex}
           onMvpIndexChange={setMvpIndex}
           isReadOnly={isReadOnly}
@@ -988,19 +991,52 @@ export default function Home() {
         isPresentationMode={isPresentationStyle}
       />
 
-      {/* Passcode modal */}
-      {showPasscodeModal && (
-        <PasscodeModal
-          mode={showPasscodeModal}
-          error={passcodeError}
-          onShareWithPasscode={handleShareWithPasscode}
-          onShareWithout={handleShareNoPasscode}
-          onUnlock={handleUnlockAttempt}
-          onCancel={() => {
-            setShowPasscodeModal(null);
-            setPasscodeError(null);
-          }}
-        />
+      {/* Edit URL toast — shown after sharing */}
+      {showEditUrl && lastShareResult?.editUrl && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in max-w-md w-full px-4">
+          <div className="bg-surface border border-border rounded-2xl p-4 shadow-2xl">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div>
+                <h4 className="text-sm font-bold text-text-primary">Public link copied!</h4>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Save the edit link below to make changes later. Only you have this link.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowEditUrl(false)}
+                className="text-text-tertiary hover:text-text-primary transition-colors flex-shrink-0 cursor-pointer"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 text-xs bg-surface-alt border border-border-subtle rounded-lg px-3 py-2 text-text-secondary truncate font-mono">
+                {lastShareResult.editUrl}
+              </code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(lastShareResult.editUrl!);
+                }}
+                className="flex-shrink-0 px-3 py-2 bg-accent text-white rounded-lg text-xs font-semibold hover:bg-accent/85 transition-colors cursor-pointer"
+              >
+                Copy Edit Link
+              </button>
+            </div>
+            <p className="text-[10px] text-text-tertiary mt-2.5">
+              Lost your edit link on another device?{" "}
+              <button
+                onClick={handleFreshReshare}
+                className="text-accent hover:underline font-medium cursor-pointer"
+              >
+                Generate a new edit link
+              </button>
+              {" "}(old edit link will stop working).
+            </p>
+          </div>
+        </div>
       )}
     </main>
   );
