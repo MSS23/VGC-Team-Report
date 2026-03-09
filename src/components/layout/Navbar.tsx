@@ -74,7 +74,7 @@ export function Navbar(props: NavbarProps) {
 
   return (
     <header
-      className={`sticky top-0 z-10 backdrop-blur-xl border-b transition-all duration-300 ${
+      className={`sm:sticky sm:top-0 z-10 backdrop-blur-xl border-b transition-all duration-300 ${
         isPresentationStyle
           ? "bg-transparent border-transparent"
           : "bg-surface/90 border-border shadow-[0_1px_8px_rgba(0,0,0,0.04)]"
