@@ -30,6 +30,10 @@ export const metadata: Metadata = {
   icons: {
     icon: { url: "/favicon.svg", type: "image/svg+xml" },
   },
+  manifest: "/manifest.json",
+  other: {
+    "theme-color": "#6366f1",
+  },
   robots: {
     index: true,
     follow: true,

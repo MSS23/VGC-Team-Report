@@ -1,0 +1,17 @@
+{
+  "name": "VGC Team Report",
+  "short_name": "VGC Report",
+  "description": "Build, share, and present professional VGC team reports",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0f1a",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
