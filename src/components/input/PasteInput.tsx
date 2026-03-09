@@ -86,8 +86,8 @@ function looksLikeShowdownPaste(text: string): boolean {
 }
 
 const POKEMON_SPRITES = [
-  "incineroar", "flutter-mane", "rillaboom",
-  "urshifu-rapid-strike", "tornadus", "landorus-therian",
+  "incineroar", "fluttermane", "rillaboom",
+  "urshifu", "tornadus", "landorus-therian",
 ];
 
 export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps) {
@@ -137,20 +137,18 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
   return (
     <div className="w-full max-w-2xl mx-auto px-4">
 
-      {/* Floating sprites */}
-      <div className="flex justify-center gap-1 mb-6 sm:mb-8 overflow-hidden">
+      {/* Animated sprites */}
+      <div className="flex justify-center gap-2 sm:gap-3 mb-6 sm:mb-8 overflow-hidden">
         {POKEMON_SPRITES.map((name, i) => (
           <motion.img
             key={name}
-            src={`https://play.pokemonshowdown.com/sprites/home/${name}.png`}
+            src={`https://play.pokemonshowdown.com/sprites/ani/${name}.gif`}
             alt=""
-            width={48}
-            height={48}
-            className="w-10 h-10 sm:w-12 sm:h-12 object-contain opacity-30 grayscale"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 0.3, y: 0 }}
+            className="w-10 h-10 sm:w-14 sm:h-14 object-contain"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{
-              delay: 0.1 + i * 0.08,
+              delay: 0.1 + i * 0.09,
               duration: 0.5,
               ease: "easeOut",
             }}
@@ -235,9 +233,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
       >
         <button
           onClick={() => onPasteChange(SAMPLE_PASTE)}
-          className="text-xs text-text-tertiary hover:text-text-secondary transition-colors py-2 px-1 cursor-pointer"
+          className="text-sm text-text-secondary hover:text-text-primary border border-border hover:border-border-subtle rounded-xl px-4 py-2.5 transition-colors cursor-pointer"
         >
-          Load sample team
+          Load sample
         </button>
 
         {isUrl ? (
@@ -245,17 +243,17 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
             onClick={handleFetchPaste}
             disabled={isFetching}
             whileTap={{ scale: 0.97 }}
-            className="px-6 py-2.5 bg-text-primary text-background rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:opacity-90 cursor-pointer"
+            className="px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-accent/85 shadow-sm shadow-accent/25 cursor-pointer"
           >
             {isFetching ? (
               <span className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 border-2 border-background/30 border-t-background rounded-full animate-spin" />
+                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Fetching...
               </span>
             ) : (
               <span className="flex items-center gap-2">
                 Fetch & Analyze
-                <kbd className="text-[10px] opacity-40 hidden sm:inline font-mono">Ctrl+Enter</kbd>
+                <kbd className="text-[10px] opacity-50 hidden sm:inline font-mono">Ctrl+Enter</kbd>
               </span>
             )}
           </motion.button>
@@ -266,13 +264,13 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
             whileTap={hasContent ? { scale: 0.97 } : undefined}
             className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
               hasContent
-                ? "bg-text-primary text-background hover:opacity-90"
-                : "bg-border text-text-tertiary cursor-not-allowed"
+                ? "bg-accent text-white hover:bg-accent/85 shadow-sm shadow-accent/25"
+                : "bg-surface-alt text-text-tertiary border border-border cursor-not-allowed"
             }`}
           >
             <span className="flex items-center gap-2">
-              Analyze
-              <kbd className="text-[10px] opacity-40 hidden sm:inline font-mono">Ctrl+Enter</kbd>
+              Analyze Team
+              <kbd className="text-[10px] opacity-50 hidden sm:inline font-mono">Ctrl+Enter</kbd>
             </span>
           </motion.button>
         )}
@@ -280,19 +278,19 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
 
       {/* App credit */}
       <motion.p
-        className="text-center text-[10px] text-text-tertiary/40 mt-8 sm:mt-12"
+        className="text-center text-xs text-text-secondary mt-8 sm:mt-12"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
       >
-        Built by Manraj Sidhu{" "}
+        Built by{" "}
         <a
           href="https://x.com/Manny64Official"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-text-tertiary transition-colors"
+          className="font-semibold text-text-primary hover:text-accent transition-colors"
         >
-          @Manny64Official
+          Manraj Sidhu
         </a>
       </motion.p>
     </div>
