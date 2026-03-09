@@ -1,4 +1,4 @@
-import type { PokemonData, PokemonType } from "@/lib/types/pokemon";
+import type { PokemonData } from "@/lib/types/pokemon";
 
 export const POKEMON_DATA: Record<string, PokemonData> = {
   // ── Restricted / Legendary ──────────────────────────────────────────────────

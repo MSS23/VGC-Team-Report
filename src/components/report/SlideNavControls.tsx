@@ -1,7 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-
 interface SlideNavControlsProps {
   currentSlide: number;
   totalSlides: number;

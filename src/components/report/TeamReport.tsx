@@ -146,7 +146,6 @@ export function TeamReport({
         onAddCalc={(text, category) => onAddCalc(key, text, category)}
         onRemoveCalc={(index) => onRemoveCalc(key, index)}
         onEditCalc={(index, updates) => onEditCalc(key, index, updates)}
-        slideNumber={currentSlide}
         isReadOnly={isReadOnly}
         isPresentationMode={isPresentationMode}
         shiny={getSpriteConfig?.(key)?.shiny}

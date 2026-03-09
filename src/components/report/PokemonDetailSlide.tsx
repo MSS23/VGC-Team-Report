@@ -17,7 +17,6 @@ interface PokemonDetailSlideProps {
   onAddCalc: (text: string, category: CalcCategory) => void;
   onRemoveCalc: (index: number) => void;
   onEditCalc?: (index: number, updates: Partial<CalcEntry>) => void;
-  slideNumber: number;
   isReadOnly?: boolean;
   isPresentationMode?: boolean;
   shiny?: boolean;
@@ -67,7 +66,6 @@ type CategoryCfg = typeof CATEGORY_CONFIG[CalcCategory];
 
 function EditableCalcEntry({
   entry,
-  globalIndex,
   cfg,
   isReadOnly,
   onRemove,
@@ -75,7 +73,6 @@ function EditableCalcEntry({
   categories,
 }: {
   entry: CalcEntry;
-  globalIndex: number;
   cfg: CategoryCfg;
   isReadOnly: boolean;
   onRemove: () => void;
@@ -259,7 +256,6 @@ function CollapsibleCalcGroup({
               <EditableCalcEntry
                 key={globalIndex}
                 entry={entry}
-                globalIndex={globalIndex}
                 cfg={cfg}
                 isReadOnly={isReadOnly}
                 onRemove={() => onRemoveCalc(globalIndex)}
@@ -283,7 +279,6 @@ export function PokemonDetailSlide({
   onAddCalc,
   onRemoveCalc,
   onEditCalc,
-  slideNumber,
   isReadOnly = false,
   isPresentationMode = false,
   shiny = false,

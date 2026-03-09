@@ -605,6 +605,7 @@ function GamePlanSection({
                   )}
                 </div>
               )}
+
             </div>
           </div>
         </div>
