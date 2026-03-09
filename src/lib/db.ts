@@ -5,7 +5,7 @@ export function getDb() {
   return sql;
 }
 
-/** Run once to create the shares table. Idempotent. */
+/** Run once to create the shares table and indexes. Idempotent. */
 export async function ensureTable() {
   const sql = getDb();
   await sql`
@@ -17,4 +17,5 @@ export async function ensureTable() {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_shares_updated_at ON shares(updated_at)`;
 }

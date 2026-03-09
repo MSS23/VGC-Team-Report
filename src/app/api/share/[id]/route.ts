@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { isRateLimited } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -6,6 +7,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    if (isRateLimited(`share-get:${ip}`, 60, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const { id } = await params;
     const url = new URL(request.url);
     const key = url.searchParams.get("key");

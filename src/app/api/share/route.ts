@@ -1,5 +1,8 @@
 import { getDb } from "@/lib/db";
+import { isRateLimited } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
+
+const MAX_BODY_SIZE = 512_000; // 500 KB
 
 function generateId(): string {
   const chars =
@@ -17,6 +20,24 @@ function generateEditToken(): string {
 
 export async function POST(request: Request) {
   try {
+    // Rate limit by IP
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    if (isRateLimited(`share:${ip}`, 20, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
+    // Check content length
+    const contentLength = parseInt(request.headers.get("content-length") ?? "0", 10);
+    if (contentLength > MAX_BODY_SIZE) {
+      return NextResponse.json(
+        { error: "Request too large" },
+        { status: 413 }
+      );
+    }
+
     const body = await request.json();
     const { state, existingId, editToken } = body;
 
