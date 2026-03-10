@@ -16,17 +16,6 @@ interface StoredShareInfo {
   editToken: string;
 }
 
-function getStoredShareInfo(): StoredShareInfo | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(SHARE_TOKENS_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as StoredShareInfo;
-  } catch {
-    return null;
-  }
-}
-
 function storeShareInfo(info: StoredShareInfo) {
   localStorage.setItem(SHARE_TOKENS_KEY, JSON.stringify(info));
 }
@@ -73,7 +62,10 @@ export function useShareUrl() {
     editUrl?: string;
   } | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Store the active edit token (from URL key or from creating a share)
+  // Active session refs — only set when we have a verified edit session
+  // (loaded via edit link or just created/updated a share in this session).
+  // These are the ONLY source of truth for whether to update vs create.
+  // localStorage is only used to persist across page refreshes within the same editing session.
   const activeEditTokenRef = useRef<string | null>(null);
   const activeShareIdRef = useRef<string | null>(null);
 
@@ -117,9 +109,9 @@ export function useShareUrl() {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { _editable, ...state } = data;
           if (editable && editKeyFromUrl) {
+            // Only set active refs when we have a verified edit session
             activeEditTokenRef.current = editKeyFromUrl;
             activeShareIdRef.current = shareId;
-            // Also store locally for auto-save
             storeShareInfo({ shareId, editToken: editKeyFromUrl });
           }
           settle(state as ShareableState, editable);
@@ -148,6 +140,17 @@ export function useShareUrl() {
     clearTimeout(timeout);
   }, [shareId, inlineData, editKeyFromUrl]);
 
+  /** Get the active share info for this session (from refs, not localStorage). */
+  const getActiveShare = useCallback((): StoredShareInfo | null => {
+    if (activeShareIdRef.current && activeEditTokenRef.current) {
+      return {
+        shareId: activeShareIdRef.current,
+        editToken: activeEditTokenRef.current,
+      };
+    }
+    return null;
+  }, []);
+
   const copyShareUrl = useCallback(async (state: ShareableState) => {
     setShareStatus("copying");
     setUrlWarning(null);
@@ -156,7 +159,8 @@ export function useShareUrl() {
       let publicUrl: string;
       let editUrl: string | undefined;
 
-      const stored = getStoredShareInfo();
+      // Only reuse an existing share if we have an active session with it
+      const active = getActiveShare();
 
       try {
         const res = await fetch("/api/share", {
@@ -164,8 +168,8 @@ export function useShareUrl() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             state,
-            existingId: stored?.shareId,
-            editToken: stored?.editToken,
+            existingId: active?.shareId,
+            editToken: active?.editToken,
           }),
         });
         if (!res.ok) throw new Error("API error");
@@ -200,38 +204,38 @@ export function useShareUrl() {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setShareStatus("idle"), 2000);
     }
-  }, []);
+  }, [getActiveShare]);
 
-  /** Silent auto-save: push current state to the server without copying URL. */
+  /** Silent auto-save: push current state to the server (only when active session exists). */
   const autoSave = useCallback(async (state: ShareableState) => {
-    const stored = getStoredShareInfo();
-    if (!stored) return;
+    const active = getActiveShare();
+    if (!active) return;
     try {
       await fetch("/api/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           state,
-          existingId: stored.shareId,
-          editToken: stored.editToken,
+          existingId: active.shareId,
+          editToken: active.editToken,
         }),
       });
     } catch {
       // Silent fail — auto-save is best-effort
     }
-  }, []);
+  }, [getActiveShare]);
 
-  /** Get the edit URL from localStorage (if a share exists on this browser). */
+  /** Get the edit URL for the active session. */
   const getEditUrl = useCallback((): string | null => {
-    const stored = getStoredShareInfo();
-    if (!stored) return null;
-    return `${window.location.origin}/s/${stored.shareId}?key=${stored.editToken}`;
-  }, []);
+    const active = getActiveShare();
+    if (!active) return null;
+    return `${window.location.origin}/s/${active.shareId}?key=${active.editToken}`;
+  }, [getActiveShare]);
 
-  /** Whether this browser has a stored share (edit link can be recovered). */
+  /** Whether this session has an active share (edit link can be recovered). */
   const hasExistingShare = useCallback((): boolean => {
-    return !!getStoredShareInfo();
-  }, []);
+    return !!getActiveShare();
+  }, [getActiveShare]);
 
   /** Force a fresh share with a new ID and edit token (invalidates old edit link). */
   const freshShare = useCallback(async (state: ShareableState) => {
@@ -274,6 +278,17 @@ export function useShareUrl() {
     history.replaceState(null, "", window.location.pathname);
   }, []);
 
+  /** Clear active share session so the next Share creates a fresh link. */
+  const clearStoredShare = useCallback(() => {
+    try {
+      localStorage.removeItem(SHARE_TOKENS_KEY);
+    } catch {
+      // ignore
+    }
+    activeEditTokenRef.current = null;
+    activeShareIdRef.current = null;
+  }, []);
+
   return {
     isSharedView,
     isSharePending,
@@ -289,5 +304,6 @@ export function useShareUrl() {
     lastShareResult,
     getEditUrl,
     hasExistingShare,
+    clearStoredShare,
   };
 }

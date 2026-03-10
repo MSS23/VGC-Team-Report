@@ -36,7 +36,7 @@ export default function Home() {
   const { presentationMode, setPresentationMode } = usePresentationMode();
   const { darkMode, setDarkMode } = useDarkMode(false);
   const { genTheme, setGenTheme } = useTheme();
-  const { isSharedView, isSharePending, sharedState, copyShareUrl, freshShare, autoSave, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, lastShareResult, getEditUrl, hasExistingShare } = useShareUrl();
+  const { isSharedView, isSharePending, sharedState, copyShareUrl, freshShare, autoSave, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, lastShareResult, getEditUrl, hasExistingShare, clearStoredShare } = useShareUrl();
   const [showShortcutHint, setShowShortcutHint] = useState(false);
   const [showEditUrl, setShowEditUrl] = useState(false);
   const [editLinkCopied, setEditLinkCopied] = useState(false);
@@ -365,11 +365,10 @@ export default function Home() {
     setShowEditUrl(true);
   }, [analysis, freshShare, buildShareState]);
 
-  // Auto-save: debounce pushes to server when editing (shared or local with existing share)
+  // Auto-save: debounce pushes to server only when editing an unlocked shared view
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!analysis) return;
-    // Auto-save when editing an unlocked shared view or when a local share exists
+    if (!analysis || !isEditingUnlocked) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
       autoSave(buildShareState());
@@ -377,7 +376,7 @@ export default function Home() {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [analysis, buildShareState, autoSave]);
+  }, [analysis, isEditingUnlocked, buildShareState, autoSave]);
 
   const shareButtonText =
     shareStatus === "copying"
@@ -419,7 +418,7 @@ export default function Home() {
             <p className="text-text-primary font-semibold">Failed to load shared team</p>
             <p className="text-text-secondary text-sm max-w-xs">The link may be corrupted or expired. Ask the creator for a new link.</p>
             <button
-              onClick={() => { reset(); window.location.href = window.location.origin; }}
+              onClick={() => { reset(); clearStoredShare(); window.location.href = window.location.origin; }}
               className="mt-2 px-5 py-2 bg-accent text-white rounded-xl font-semibold text-sm hover:bg-accent/90 transition-colors"
             >
               Build Your Own
@@ -467,7 +466,7 @@ export default function Home() {
         onShowShortcuts={setShowShortcutHint}
         onSetCreatorMode={setCreatorMode}
         onSetPresentationMode={setPresentationMode}
-        onReset={reset}
+        onReset={() => { reset(); clearStoredShare(); }}
         onExitSharedView={exitSharedView}
       />
 
