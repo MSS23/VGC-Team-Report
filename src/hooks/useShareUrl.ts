@@ -118,14 +118,8 @@ export function useShareUrl() {
         })
         .catch(() => settle(null));
 
-      // Clean up query params from URL (cosmetic)
-      const url = new URL(window.location.href);
-      if (url.searchParams.has("s") || url.searchParams.has("key")) {
-        url.searchParams.delete("s");
-        url.searchParams.delete("key");
-        const clean = url.pathname + (url.search || "") + url.hash;
-        history.replaceState(null, "", clean);
-      }
+      // Replace URL with clean /s/{id} path (strip query params but keep share context)
+      history.replaceState(null, "", `/s/${shareId}`);
 
       return () => clearTimeout(timeout);
     }
