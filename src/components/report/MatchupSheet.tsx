@@ -5,6 +5,7 @@ import type { MatchupPlan } from "@/hooks/useMatchupPlans";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { MatchupSheetRow } from "./MatchupSheetRow";
 import { AddOpponentInput } from "./AddOpponentInput";
+import { useTranslation } from "@/lib/i18n";
 
 const DRAG_TYPE = "application/x-matchup-plan";
 
@@ -25,6 +26,7 @@ export function MatchupSheet({
   onRemovePlan,
   onAddPlan,
 }: MatchupSheetProps) {
+  const { t } = useTranslation();
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -60,10 +62,10 @@ export function MatchupSheet({
   return (
     <div className="space-y-6 animate-fade-in" data-walkthrough="matchup-sheet">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">Matchup Sheet</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">{t.matchupSheet}</h2>
         {plans.length > 0 && (
           <span className="text-xs font-medium text-text-tertiary px-2.5 py-1 bg-surface-alt rounded-full">
-            {plans.length} matchup{plans.length !== 1 ? "s" : ""}
+            {plans.length} {plans.length !== 1 ? t.matchups : t.matchup}
           </span>
         )}
       </div>
@@ -73,8 +75,8 @@ export function MatchupSheet({
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 text-text-tertiary/50">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14,2 14,8 20,8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
           </svg>
-          <p className="text-base font-medium">No matchup plans yet</p>
-          <p className="text-sm text-text-tertiary mt-1">Add an opponent team below to get started.</p>
+          <p className="text-base font-medium">{t.noMatchupPlans}</p>
+          <p className="text-sm text-text-tertiary mt-1">{t.addOpponentHint}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">

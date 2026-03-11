@@ -20,9 +20,19 @@ import { SlideNavControls } from "@/components/report/SlideNavControls";
 import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
 import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
 import { Navbar } from "@/components/layout/Navbar";
+import { I18nProvider, useTranslation } from "@/lib/i18n";
 import type { SpriteConfig } from "@/lib/types/sprites";
 
 export default function Home() {
+  return (
+    <I18nProvider>
+      <HomeContent />
+    </I18nProvider>
+  );
+}
+
+function HomeContent() {
+  const { t } = useTranslation();
   const {
     paste,
     setPaste,
@@ -128,11 +138,11 @@ export default function Home() {
       "matchup-sheet",
     ];
     const labels: string[] = [
-      "Overview",
+      t.overview,
       ...analysis.pokemon.map((mon) => mon.parsed.species),
-      "Team Analysis",
+      t.teamAnalysisLabel,
       ...plans.map((p) => `vs. ${p.opponentLabel}`),
-      "Matchups",
+      t.matchupsLabel,
     ];
     return { allSlideKeys: keys, allSlideLabels: labels };
   }, [analysis, speciesKeys, plans]);
@@ -380,14 +390,14 @@ export default function Home() {
 
   const shareButtonText =
     shareStatus === "copying"
-      ? "Copying..."
+      ? t.copying
       : shareStatus === "copied"
         ? lastShareResult?.updated
-          ? "Updated!"
-          : "Copied!"
+          ? t.updated
+          : t.copied
         : shareStatus === "error"
-          ? "Failed"
-          : "Share";
+          ? t.failed
+          : t.share;
 
   // Show paste input if no analysis and not loading shared view
   if (!analysis && !sharedState && !isSharePending) {
@@ -415,19 +425,58 @@ export default function Home() {
                 <line x1="9" y1="9" x2="15" y2="15" />
               </svg>
             </div>
-            <p className="text-text-primary font-semibold">Failed to load shared team</p>
-            <p className="text-text-secondary text-sm max-w-xs">The link may be corrupted or expired. Ask the creator for a new link.</p>
+            <p className="text-text-primary font-semibold">{t.failedToLoadShared}</p>
+            <p className="text-text-secondary text-sm max-w-xs">{t.sharedLinkCorrupt}</p>
             <button
               onClick={() => { reset(); clearStoredShare(); window.location.href = window.location.origin; }}
               className="mt-2 px-5 py-2 bg-accent text-white rounded-xl font-semibold text-sm hover:bg-accent/90 transition-colors"
             >
-              Build Your Own
+              {t.buildYourOwn}
             </button>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3 animate-fade-in">
-            <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-            <p className="text-text-secondary text-sm">Loading shared team...</p>
+          <div className="w-full max-w-7xl animate-fade-in px-4">
+            {/* Skeleton: Tournament info */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="skeleton h-7 w-48" />
+              <div className="skeleton h-6 w-20" />
+              <div className="skeleton h-6 w-16" />
+            </div>
+            {/* Skeleton: Team summary */}
+            <div className="skeleton h-32 w-full mb-8 rounded-xl" />
+            {/* Skeleton: Pokemon grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-2xl border border-border p-5 flex flex-col gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="skeleton w-[76px] h-[76px] rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <div className="skeleton h-5 w-28" />
+                      <div className="flex gap-1">
+                        <div className="skeleton h-5 w-14 rounded-full" />
+                        <div className="skeleton h-5 w-14 rounded-full" />
+                      </div>
+                      <div className="skeleton h-4 w-36" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Array.from({ length: 4 }).map((_, j) => (
+                      <div key={j} className="skeleton h-9 rounded-lg" />
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    {Array.from({ length: 6 }).map((_, j) => (
+                      <div key={j} className="flex items-center gap-2">
+                        <div className="skeleton h-3 w-8" />
+                        <div className="skeleton h-2.5 flex-1 rounded-full" />
+                        <div className="skeleton h-3 w-8" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-text-tertiary text-sm mt-6">Loading shared team...</p>
           </div>
         )}
       </main>
@@ -492,6 +541,7 @@ export default function Home() {
             : "px-3 sm:px-4 py-3 sm:py-6 creator:px-8 creator:py-8"
         }`}
         key={physicalSlide}
+        style={{ viewTransitionName: "slide" }}
       >
         {/* Hidden slide banner for creator */}
         {creatorMode && isSlideHiddenAt(physicalSlide) && (
@@ -504,17 +554,15 @@ export default function Home() {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">This slide is hidden</p>
-              <p className="text-xs text-amber-600/80 dark:text-amber-400/70 mt-0.5">
-                Viewers won&apos;t see it when you share or present. Click <strong>Hidden</strong> below to show it again.
-              </p>
+              <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">{t.thisSlideIsHidden}</p>
+              <p className="text-xs text-amber-600/80 dark:text-amber-400/70 mt-0.5" dangerouslySetInnerHTML={{ __html: t.hiddenSlideDescription }} />
             </div>
             <button
               type="button"
               onClick={handleToggleCurrentSlide}
               className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25 transition-colors border border-amber-500/20"
             >
-              Show slide
+              {t.showSlide}
             </button>
           </div>
         )}
@@ -605,9 +653,9 @@ export default function Home() {
           <div className="bg-surface border border-border rounded-2xl p-4 shadow-2xl">
             <div className="flex items-start justify-between gap-3 mb-2">
               <div>
-                <h4 className="text-sm font-bold text-text-primary">Public link copied!</h4>
+                <h4 className="text-sm font-bold text-text-primary">{t.publicLinkCopied}</h4>
                 <p className="text-xs text-text-secondary mt-0.5">
-                  Save the edit link below to make changes later. Only you have this link.
+                  {t.saveEditLink}
                 </p>
               </div>
               <button
@@ -630,18 +678,18 @@ export default function Home() {
                 }}
                 className="flex-shrink-0 px-3 py-2 bg-accent text-white rounded-lg text-xs font-semibold hover:bg-accent/85 transition-colors cursor-pointer"
               >
-                Copy Edit Link
+                {t.copyEditLink}
               </button>
             </div>
             <p className="text-[10px] text-text-tertiary mt-2.5">
-              Lost your edit link on another device?{" "}
+              {t.lostEditLink}{" "}
               <button
                 onClick={handleFreshReshare}
                 className="text-accent hover:underline font-medium cursor-pointer"
               >
-                Generate a new edit link
+                {t.generateNewEditLink}
               </button>
-              {" "}(old edit link will stop working).
+              {" "}{t.oldEditLinkStops}
             </p>
           </div>
         </div>

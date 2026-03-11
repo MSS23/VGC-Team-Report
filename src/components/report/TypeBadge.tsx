@@ -11,10 +11,11 @@ export function TypeBadge({ type, className = "" }: TypeBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider rounded-md leading-none ${className}`}
+      className={`inline-flex items-center px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-widest rounded-md leading-none shadow-sm ${className}`}
       style={{
         backgroundColor: colors.bg,
         color: colors.text,
+        textShadow: colors.text === "#FFFFFF" ? "0 1px 2px rgba(0,0,0,0.2)" : "none",
       }}
     >
       {type}

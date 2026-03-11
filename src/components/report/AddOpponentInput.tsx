@@ -4,12 +4,14 @@ import { useState, useMemo } from "react";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { Button } from "@/components/ui/Button";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
+import { useTranslation } from "@/lib/i18n";
 
 interface AddOpponentInputProps {
   onAdd: (paste: string, label: string) => void;
 }
 
 export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
+  const { t } = useTranslation();
   const [label, setLabel] = useState("");
   const [paste, setPaste] = useState("");
   const [isFetching, setIsFetching] = useState(false);
@@ -60,21 +62,21 @@ export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
   return (
     <div className="mt-6 pt-6 border-t border-border">
       <h3 className="text-sm font-semibold text-text-primary mb-3">
-        Add Matchup Plan
+        {t.addMatchupPlan}
       </h3>
       <div className="space-y-3">
         <input
           type="text"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
-          placeholder={parsedResult?.teamName ? `Auto-detected: ${parsedResult.teamName}` : 'Opponent label (e.g. "Round 1 - Sun Team")'}
+          placeholder={parsedResult?.teamName ? `Auto-detected: ${parsedResult.teamName}` : t.opponentLabelPlaceholder}
           className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
         />
         <div className="relative">
           <textarea
             value={paste}
             onChange={(e) => { setPaste(e.target.value); setFetchError(null); }}
-            placeholder="Paste opponent's Showdown team or a pokepast.es URL..."
+            placeholder={t.pasteOpponentPlaceholder}
             className="w-full h-36 sm:h-40 p-4 bg-surface border border-border rounded-xl text-sm font-mono text-text-primary placeholder:text-text-tertiary resize-none focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             spellCheck={false}
           />
@@ -97,11 +99,11 @@ export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
           </span>
           {isUrl ? (
             <Button onClick={handleFetchPaste} disabled={isFetching} size="md">
-              {isFetching ? "Fetching..." : "Fetch Paste"}
+              {isFetching ? t.fetching : t.fetchAndAnalyze}
             </Button>
           ) : (
             <Button onClick={handleAdd} disabled={!canAdd} size="md">
-              Add Matchup
+              {t.addPlan}
             </Button>
           )}
         </div>

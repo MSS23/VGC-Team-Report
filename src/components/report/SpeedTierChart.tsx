@@ -4,6 +4,7 @@ import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { PokemonSprite } from "./PokemonSprite";
 import { TypeCoverageMatrix } from "./TypeCoverageMatrix";
 import type { SpriteConfig } from "@/lib/types/sprites";
+import { useTranslation } from "@/lib/i18n";
 
 interface SpeedTierChartProps {
   pokemon: AnalyzedPokemon[];
@@ -22,6 +23,7 @@ const SPEED_BENCHMARKS = [
 ];
 
 export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode }: SpeedTierChartProps) {
+  const { t } = useTranslation();
   const entries = pokemon.map((mon, i) => {
     const baseSpe = mon.calculatedStats.spe;
     const hasSpeedBoost = mon.itemBoost?.stat === "spe";
@@ -60,18 +62,18 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   return (
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold text-text-primary presenting:text-3xl">
-          Team Analysis
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text-primary presenting:text-3xl tracking-tight">
+          {t.teamAnalysis}
         </h2>
-        <p className="text-sm sm:text-base text-text-secondary mt-1">
-          Speed tiers & type coverage
+        <p className="text-sm sm:text-base text-text-secondary mt-1 font-medium">
+          {t.speedTiersAndCoverage}
         </p>
       </div>
 
       {/* Speed Tiers Section */}
       <div className="flex flex-col gap-2" data-walkthrough="speed-tiers">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary">
-          Speed Tiers
+        <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary">
+          {t.speedTiers}
         </h3>
 
         <div className="flex flex-col gap-3">
@@ -82,8 +84,8 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
 
             return (
               <div key={entry.speciesKey} className="flex items-center gap-1.5 sm:gap-3">
-                {/* Name column — fixed width */}
-                <div className="flex items-center gap-1.5 sm:gap-2 w-24 sm:w-40 flex-shrink-0 min-w-0">
+                {/* Name column -- fixed width */}
+                <div className="flex items-center gap-1.5 sm:gap-2 w-[5.5rem] sm:w-40 lg:w-48 flex-shrink-0 min-w-0">
                   <PokemonSprite
                     species={entry.species}
                     size={isPresentationMode ? 36 : 24}
@@ -98,20 +100,24 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                     animated={sc?.animated}
                     shiny={sc?.shiny}
                   />
-                  <span className="text-xs sm:text-base font-semibold text-text-primary truncate">
+                  <span className="text-xs sm:text-sm lg:text-base font-bold text-text-primary truncate">
                     {entry.species}
                   </span>
                 </div>
 
                 {/* Bar column */}
                 <div className="flex-1 flex items-center gap-2 min-w-0">
-                  <div className="flex-1 h-6 sm:h-8 bg-surface-alt rounded-lg overflow-hidden relative">
+                  <div className="flex-1 h-7 sm:h-8 lg:h-10 bg-surface-alt rounded-lg overflow-hidden relative">
                     {/* Base bar */}
                     <div
                       className={`absolute inset-y-0 left-0 rounded-lg transition-all ${
-                        entry.hasSpeedBoost ? "bg-amber-500/70" : "bg-accent/60"
+                        entry.hasSpeedBoost ? "bg-amber-500/70" : ""
                       }`}
-                      style={{ width: `${entry.hasSpeedBoost ? percent : basePercent}%` }}
+                      style={{
+                        width: `${entry.hasSpeedBoost ? percent : basePercent}%`,
+                        backgroundColor: entry.hasSpeedBoost ? undefined : "var(--stat-spe)",
+                        opacity: entry.hasSpeedBoost ? undefined : 0.7,
+                      }}
                     />
                     {/* Benchmark lines inside the bar */}
                     {relevantBenchmarks.map((b) => {
@@ -128,15 +134,15 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                     })}
                   </div>
 
-                  {/* Speed value — fixed width to prevent overlap */}
-                  <div className="w-14 sm:w-24 flex-shrink-0 text-right">
-                    <span className={`text-xs sm:text-base font-mono font-bold tabular-nums ${
+                  {/* Speed value -- fixed width to prevent overlap */}
+                  <div className="w-14 sm:w-24 lg:w-28 flex-shrink-0 text-right">
+                    <span className={`text-xs sm:text-sm lg:text-base font-[family-name:var(--font-mono)] font-extrabold tabular-nums ${
                       entry.hasSpeedBoost ? "text-amber-500" : "text-text-primary"
                     }`}>
                       {entry.hasSpeedBoost ? entry.boostedSpe : entry.baseSpe}
                     </span>
                     {entry.hasSpeedBoost && entry.speedBoostLabel && (
-                      <span className="text-xs text-amber-500/60 ml-0.5">
+                      <span className="text-xs text-amber-500/60 font-semibold ml-0.5">
                         {entry.speedBoostLabel}
                       </span>
                     )}
@@ -148,21 +154,21 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         </div>
 
         {/* Tailwind note + Legend */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-text-tertiary">
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded bg-accent/60" />
-            Base
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs font-semibold text-text-tertiary">
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded" style={{ backgroundColor: "var(--stat-spe)", opacity: 0.7 }} />
+            {t.base}
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded bg-amber-500/70" />
-            Item boosted
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded bg-amber-500/70" />
+            {t.itemBoosted}
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-px h-3 bg-text-tertiary/30" />
-            Benchmarks
+          <span className="flex items-center gap-1.5">
+            <span className="w-px h-3.5 bg-text-tertiary/30" />
+            {t.benchmarks}
           </span>
-          <span className="ml-auto text-text-tertiary/60">
-            Tailwind doubles base speed
+          <span className="ml-auto text-text-tertiary/60 font-medium">
+            {t.tailwindDoublesBase}
           </span>
         </div>
       </div>

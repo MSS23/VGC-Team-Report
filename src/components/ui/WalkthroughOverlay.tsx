@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { WalkthroughStep } from "@/hooks/useWalkthrough";
 import { PokemonSprite } from "@/components/report/PokemonSprite";
+import { useTranslation } from "@/lib/i18n";
 
 interface WalkthroughOverlayProps {
   step: WalkthroughStep;
@@ -34,6 +35,7 @@ export function WalkthroughOverlay({
   onSkip,
   guidePokemon,
 }: WalkthroughOverlayProps) {
+  const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -249,7 +251,7 @@ export function WalkthroughOverlay({
         </div>
         <div className="flex items-center justify-between px-5 pb-4">
           <span className="text-xs text-text-tertiary tabular-nums">
-            {stepIndex + 1} of {totalSteps}
+            {stepIndex + 1} {t.of} {totalSteps}
           </span>
           <div className="flex items-center gap-2">
             {!isLastStep && (
@@ -258,7 +260,7 @@ export function WalkthroughOverlay({
                 aria-label="Skip all"
                 className="text-xs text-text-tertiary hover:text-text-secondary px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
               >
-                Skip all
+                {t.skipAll}
               </button>
             )}
             <button
@@ -266,7 +268,7 @@ export function WalkthroughOverlay({
               aria-label={isLastStep ? "Finish walkthrough" : "Next step"}
               className="text-xs font-semibold text-white bg-accent hover:bg-accent/90 px-4 py-1.5 rounded-lg transition-colors cursor-pointer"
             >
-              {isLastStep ? "Done" : "Next"}
+              {isLastStep ? t.done : t.next}
             </button>
           </div>
         </div>

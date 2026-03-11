@@ -27,20 +27,29 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
     setCurrentSlide((prev) => Math.min(prev, Math.max(0, totalSlides - 1)));
   }, [totalSlides]);
 
+  // Wrap state updates in View Transitions API when available
+  const withTransition = useCallback((update: () => void) => {
+    if (typeof document !== "undefined" && "startViewTransition" in document) {
+      (document as unknown as { startViewTransition: (cb: () => void) => void }).startViewTransition(update);
+    } else {
+      update();
+    }
+  }, []);
+
   const goToSlide = useCallback(
     (index: number) => {
-      setCurrentSlide(Math.max(0, Math.min(index, totalSlides - 1)));
+      withTransition(() => setCurrentSlide(Math.max(0, Math.min(index, totalSlides - 1))));
     },
-    [totalSlides]
+    [totalSlides, withTransition]
   );
 
   const nextSlide = useCallback(() => {
-    setCurrentSlide((prev) => Math.min(prev + 1, totalSlides - 1));
-  }, [totalSlides]);
+    withTransition(() => setCurrentSlide((prev) => Math.min(prev + 1, totalSlides - 1)));
+  }, [totalSlides, withTransition]);
 
   const prevSlide = useCallback(() => {
-    setCurrentSlide((prev) => Math.max(prev - 1, 0));
-  }, [totalSlides]);
+    withTransition(() => setCurrentSlide((prev) => Math.max(prev - 1, 0)));
+  }, [totalSlides, withTransition]);
 
   // Keyboard listener
   useEffect(() => {
@@ -55,10 +64,10 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
 
       if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
-        setCurrentSlide((prev) => Math.min(prev + 1, totalSlides - 1));
+        withTransition(() => setCurrentSlide((prev) => Math.min(prev + 1, totalSlides - 1)));
       } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
-        setCurrentSlide((prev) => Math.max(prev - 1, 0));
+        withTransition(() => setCurrentSlide((prev) => Math.max(prev - 1, 0)));
       } else if (e.key === "Escape" && onEscape) {
         e.preventDefault();
         onEscape();
@@ -79,7 +88,7 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, totalSlides, bypassFocusGuard, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation]);
+  }, [enabled, totalSlides, bypassFocusGuard, withTransition, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation]);
 
   // Touch swipe listener
   useEffect(() => {
@@ -109,10 +118,10 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
 
       if (deltaX < 0) {
         // Swipe left → next slide
-        setCurrentSlide((prev) => Math.min(prev + 1, totalSlides - 1));
+        withTransition(() => setCurrentSlide((prev) => Math.min(prev + 1, totalSlides - 1)));
       } else {
         // Swipe right → prev slide
-        setCurrentSlide((prev) => Math.max(prev - 1, 0));
+        withTransition(() => setCurrentSlide((prev) => Math.max(prev - 1, 0)));
       }
     };
 
@@ -122,7 +131,7 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [enabled, totalSlides]);
+  }, [enabled, totalSlides, withTransition]);
 
   return {
     currentSlide,

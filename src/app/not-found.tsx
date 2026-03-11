@@ -1,6 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { I18nProvider, useTranslation } from "@/lib/i18n";
 
 export default function NotFound() {
+  return (
+    <I18nProvider>
+      <NotFoundContent />
+    </I18nProvider>
+  );
+}
+
+function NotFoundContent() {
+  const { t } = useTranslation();
+
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="flex flex-col items-center gap-4 text-center animate-fade-in">
@@ -12,15 +25,15 @@ export default function NotFound() {
             <line x1="15" y1="9" x2="15.01" y2="9" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-text-primary">Page Not Found</h1>
+        <h1 className="text-2xl font-bold text-text-primary">{t.pageNotFound}</h1>
         <p className="text-text-secondary text-sm max-w-xs">
-          This page doesn&apos;t exist. The link may be broken or the report may have been removed.
+          {t.pageNotFoundDesc}
         </p>
         <Link
           href="/"
           className="mt-2 px-5 py-2.5 bg-accent text-white rounded-xl font-semibold text-sm hover:bg-accent/90 transition-colors"
         >
-          Go Home
+          {t.goHome}
         </Link>
       </div>
     </main>

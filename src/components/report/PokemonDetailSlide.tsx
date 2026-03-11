@@ -8,6 +8,8 @@ import { TypeBadge } from "./TypeBadge";
 import { CalcInput } from "./CalcInput";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { NATURES } from "@/lib/data/natures";
+import { useTranslation } from "@/lib/i18n";
+import { translateMove } from "@/lib/utils/translate-move";
 
 interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;
@@ -22,6 +24,15 @@ interface PokemonDetailSlideProps {
   shiny?: boolean;
   animated?: boolean;
 }
+
+const STAT_COLORS: Record<string, string> = {
+  hp: "var(--stat-hp)",
+  atk: "var(--stat-atk)",
+  def: "var(--stat-def)",
+  spa: "var(--stat-spa)",
+  spd: "var(--stat-spd)",
+  spe: "var(--stat-spe)",
+};
 
 const CATEGORY_CONFIG = {
   offensive: {
@@ -79,6 +90,12 @@ function EditableCalcEntry({
   onEdit?: (updates: Partial<CalcEntry>) => void;
   categories: CalcCategory[];
 }) {
+  const { t } = useTranslation();
+  const catLabelMap: Record<string, string> = {
+    "Offensive": t.offensive,
+    "Defensive": t.defensive,
+    "Speed Tier": t.speedTier,
+  };
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(entry.text);
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
@@ -113,7 +130,7 @@ function EditableCalcEntry({
 
   return (
     <div
-      className={`group flex items-start gap-3 px-4 py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-xl transition-colors presenting:px-5`}
+      className={`group flex items-start gap-3 px-4 py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-lg transition-colors presenting:px-5`}
     >
       <span className={`${cfg.bulletColor} text-sm mt-px flex-shrink-0 presenting:text-base`}>&#9656;</span>
       {editing && !isReadOnly ? (
@@ -172,7 +189,7 @@ function EditableCalcEntry({
                         }`}
                       >
                         <span>{catCfg.icon}</span>
-                        <span className={catCfg.tagText}>{catCfg.label}</span>
+                        <span className={catCfg.tagText}>{catLabelMap[catCfg.label] ?? catCfg.label}</span>
                       </button>
                     );
                   })}
@@ -203,6 +220,7 @@ function CollapsibleCalcGroup({
   onRemoveCalc,
   onEditCalc,
   categories,
+  translatedLabel,
 }: {
   category: CalcCategory;
   cfg: CategoryCfg;
@@ -213,6 +231,7 @@ function CollapsibleCalcGroup({
   onRemoveCalc: (index: number) => void;
   onEditCalc?: (index: number, updates: Partial<CalcEntry>) => void;
   categories: CalcCategory[];
+  translatedLabel: string;
 }) {
   const [isOpen, setIsOpen] = useState(!isPresentationMode);
 
@@ -223,10 +242,10 @@ function CollapsibleCalcGroup({
         className="flex items-center gap-2 w-full mb-1 group/header cursor-pointer"
       >
         <span className="text-sm">{cfg.icon}</span>
-        <span className={`text-xs font-bold uppercase tracking-widest ${cfg.tagText}`}>
-          {cfg.label}
+        <span className={`text-xs font-extrabold uppercase tracking-widest ${cfg.tagText}`}>
+          {translatedLabel}
         </span>
-        <span className={`text-xs font-medium ${cfg.tagText} opacity-60`}>
+        <span className={`text-xs font-semibold ${cfg.tagText} opacity-60`}>
           ({entries.length})
         </span>
         <span className={`flex-1 h-px ${cfg.tagBg}`} />
@@ -284,6 +303,7 @@ export function PokemonDetailSlide({
   shiny = false,
   animated = true,
 }: PokemonDetailSlideProps) {
+  const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
   const natureData = NATURES[parsed.nature];
@@ -307,6 +327,12 @@ export function PokemonDetailSlide({
 
   const CATEGORIES: CalcCategory[] = ["offensive", "defensive", "speed"];
 
+  const categoryLabelMap: Record<string, string> = {
+    "Offensive": t.offensive,
+    "Defensive": t.defensive,
+    "Speed Tier": t.speedTier,
+  };
+
   const renderCalcGroup = (
     entries: CalcEntry[],
     category: CalcCategory,
@@ -326,12 +352,13 @@ export function PokemonDetailSlide({
         onRemoveCalc={onRemoveCalc}
         onEditCalc={onEditCalc}
         categories={CATEGORIES}
+        translatedLabel={categoryLabelMap[cfg.label] ?? cfg.label}
       />
     );
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[45%_55%] gap-4 sm:gap-6 lg:gap-8 items-start animate-fade-in">
+    <div className="grid grid-cols-1 md:grid-cols-[45%_55%] gap-4 sm:gap-6 lg:gap-8 items-start animate-fade-in">
       {/* Left Column: Pokemon Info */}
       <div className="flex flex-col gap-4 sm:gap-6">
         {/* Header: Sprite + Name + Types */}
@@ -354,12 +381,12 @@ export function PokemonDetailSlide({
           </div>
           <div className="flex flex-col gap-1.5 sm:gap-2 pt-0.5 sm:pt-2 min-w-0">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              <h2 className="text-2xl sm:text-3xl font-bold text-text-primary presenting:text-4xl truncate">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary presenting:text-4xl truncate tracking-tight">
                 {parsed.species}
               </h2>
               {parsed.gender && (
                 <span
-                  className={`text-lg sm:text-xl font-medium ${
+                  className={`text-lg sm:text-xl font-bold ${
                     parsed.gender === "M" ? "text-blue-500" : "text-pink-500"
                   }`}
                 >
@@ -375,7 +402,7 @@ export function PokemonDetailSlide({
               ))}
               {parsed.teraType && (
                 <span className="flex items-center gap-1 ml-1 sm:ml-2">
-                  <span className="text-xs text-text-tertiary">Tera:</span>
+                  <span className="text-xs text-text-tertiary font-semibold">Tera:</span>
                   <TypeBadge type={parsed.teraType} />
                 </span>
               )}
@@ -383,9 +410,9 @@ export function PokemonDetailSlide({
 
             {/* Ability + Item */}
             <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 text-sm sm:text-base text-text-secondary presenting:text-lg">
-              {parsed.ability && <span>{parsed.ability}</span>}
+              {parsed.ability && <span className="font-medium">{parsed.ability}</span>}
               {parsed.item && (
-                <span className="text-text-primary font-medium">
+                <span className="text-text-primary font-bold">
                   @ {parsed.item}
                 </span>
               )}
@@ -394,11 +421,11 @@ export function PokemonDetailSlide({
             {/* Non-default IVs */}
             {nonDefaultIvs.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary presenting:text-sm">IVs:</span>
+                <span className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm">{t.ivs}:</span>
                 {nonDefaultIvs.map((stat) => (
                   <span
                     key={stat}
-                    className="text-xs font-mono font-medium text-text-tertiary bg-surface-alt px-2 py-0.5 rounded presenting:text-sm presenting:px-2.5 presenting:py-1"
+                    className="text-xs font-[family-name:var(--font-mono)] font-semibold text-text-tertiary bg-surface-alt px-2 py-0.5 rounded presenting:text-sm presenting:px-2.5 presenting:py-1"
                   >
                     {parsed.ivs[stat]} {statLabels[stat]}
                   </span>
@@ -410,8 +437,8 @@ export function PokemonDetailSlide({
 
         {/* Moves - 2x2 grid */}
         <div>
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3" data-walkthrough="pokemon-moves">
-            Moves
+          <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3" data-walkthrough="pokemon-moves">
+            {t.moves}
           </h3>
           <div className="grid grid-cols-2 gap-2 stagger-moves">
             {parsed.moves.map((move) => {
@@ -419,12 +446,12 @@ export function PokemonDetailSlide({
               return (
                 <div
                   key={move}
-                  className={`px-3 sm:px-4 py-2.5 sm:py-3 border rounded-xl text-xs sm:text-sm font-semibold text-center transition-colors ${
+                  className={`px-3 sm:px-4 py-2.5 sm:py-3 border rounded-lg text-xs sm:text-sm font-bold text-center transition-colors ${
                     typeStyle ? "shadow-sm" : "text-text-primary bg-surface border-border"
                   }`}
                   style={typeStyle ?? undefined}
                 >
-                  {move}
+                  {translateMove(move, language)}
                 </div>
               );
             })}
@@ -434,8 +461,8 @@ export function PokemonDetailSlide({
         {/* Stats */}
         {data && (
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-2">
-              Stats <span className="normal-case tracking-normal font-normal text-text-tertiary/70">({parsed.nature}{natureData?.plus ? ` +${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.plus]}` : ""}{natureData?.minus ? ` -${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.minus]}` : ""})</span>
+            <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-2">
+              {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70">({parsed.nature}{natureData?.plus ? ` +${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.plus]}` : ""}{natureData?.minus ? ` -${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.minus]}` : ""})</span>
             </h3>
             <div className="space-y-1 sm:space-y-1.5 stagger-stats">
               {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map(
@@ -451,7 +478,7 @@ export function PokemonDetailSlide({
 
                   return (
                     <div key={stat} className="flex items-center gap-2">
-                      <span className="text-xs font-semibold w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5">
+                      <span className="text-xs font-bold w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5">
                         {natureData?.plus === stat && <span className="text-[10px]">{"\u25B2"}</span>}
                         {natureData?.minus === stat && <span className="text-[10px]">{"\u25BC"}</span>}
                         {statLabels[stat]}
@@ -461,23 +488,23 @@ export function PokemonDetailSlide({
                           className="h-full rounded-full animate-bar-fill"
                           style={{
                             width: `${percentage}%`,
-                            backgroundColor: isBoosted ? "#f59e0b" : ev > 0 ? "var(--accent)" : "#94a3b8",
+                            backgroundColor: isBoosted ? "#f59e0b" : STAT_COLORS[stat],
                           }}
                         />
                       </div>
-                      <span className={`text-xs sm:text-sm font-mono w-8 text-right tabular-nums ${
-                        isBoosted ? "text-amber-500 font-semibold" : "text-text-secondary"
+                      <span className={`text-xs sm:text-sm font-[family-name:var(--font-mono)] font-bold w-8 text-right tabular-nums ${
+                        isBoosted ? "text-amber-500" : "text-text-secondary"
                       }`}>
                         {displayValue}
                       </span>
                       <div className="flex items-center gap-1 w-16">
                         {ev > 0 ? (
-                          <span className="text-[10px] sm:text-xs text-accent font-semibold">
+                          <span className="text-[10px] sm:text-xs text-accent font-bold">
                             +{ev}
                           </span>
                         ) : null}
                         {hasNonDefaultIv && (
-                          <span className="text-[10px] sm:text-xs text-text-tertiary font-medium" title={`${iv} IV`}>
+                          <span className="text-[10px] sm:text-xs text-text-tertiary font-semibold" title={`${iv} IV`}>
                             {iv}iv
                           </span>
                         )}
@@ -495,19 +522,19 @@ export function PokemonDetailSlide({
       <div className="flex flex-col gap-4 sm:gap-6">
         {/* Notes */}
         <div className="flex flex-col gap-2">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="pokemon-notes">
-            {isPresentationMode ? "Notes" : isReadOnly ? "About This Pokemon" : "Your Explanation"}
+          <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="pokemon-notes">
+            {isPresentationMode ? t.notes : isReadOnly ? t.aboutThisPokemon : t.yourExplanation}
           </h3>
           {isReadOnly ? (
-            <div className={`w-full bg-surface border border-border rounded-2xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed presenting:bg-surface-alt presenting:border-border-subtle ${isPresentationMode ? "p-3 sm:p-4" : "min-h-[5rem] sm:min-h-[10rem] p-3 sm:p-6"}`}>
-              {note || "No notes yet."}
+            <div className={`w-full bg-surface border border-border rounded-xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed presenting:bg-surface-alt presenting:border-border-subtle ${isPresentationMode ? "p-3 sm:p-4" : "min-h-[5rem] sm:min-h-[10rem] p-3 sm:p-6"}`}>
+              {note || t.noNotesYet}
             </div>
           ) : (
             <textarea
               value={note}
               onChange={(e) => onNoteChange(e.target.value)}
-              placeholder={`Explain ${parsed.species}'s role, key matchups, how to use it...`}
-              className="w-full min-h-[5rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface border border-border rounded-2xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+              placeholder={t.notesPlaceholder.replace("{species}", parsed.species)}
+              className="w-full min-h-[5rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface border-2 border-border rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
               spellCheck={false}
             />
           )}
@@ -515,8 +542,8 @@ export function PokemonDetailSlide({
 
         {/* Notable Calcs */}
         <div className="flex flex-col gap-4">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="notable-calcs">
-            Notable Calcs
+          <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="notable-calcs">
+            {t.notableCalcs}
           </h3>
 
           {calcs.length > 0 ? (
@@ -526,12 +553,12 @@ export function PokemonDetailSlide({
               {renderCalcGroup(speedCalcs, "speed", calcs)}
             </div>
           ) : isReadOnly ? (
-            <div className="flex items-center justify-center py-8 sm:py-12 text-text-tertiary presenting:py-16 bg-surface-alt/50 rounded-2xl border border-border-subtle">
-              <p className="text-sm presenting:text-base">No notable calcs added.</p>
+            <div className="flex items-center justify-center py-8 sm:py-12 text-text-tertiary presenting:py-16 bg-surface-alt/50 rounded-xl border border-border-subtle">
+              <p className="text-sm presenting:text-base font-medium">{t.noNotableCalcs}</p>
             </div>
           ) : (
-            <p className="text-sm text-text-tertiary italic">
-              Add damage calcs, speed benchmarks, and other key numbers.
+            <p className="text-sm text-text-tertiary italic font-medium">
+              {t.addDamageCalcsHint}
             </p>
           )}
 

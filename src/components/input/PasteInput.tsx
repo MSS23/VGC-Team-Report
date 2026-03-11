@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
+import { useTranslation } from "@/lib/i18n";
 
 const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
 Ability: Intimidate
@@ -91,6 +92,7 @@ const POKEMON_SPRITES = [
 ];
 
 export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps) {
+  const { t } = useTranslation();
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -101,7 +103,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
 
   const handleAnalyze = () => {
     if (paste.trim() && !isUrl && !looksLikeShowdownPaste(paste)) {
-      setValidationError("Invalid format. Paste a Showdown team export or PokéPaste URL.");
+      setValidationError(t.invalidFormat);
       return;
     }
     setValidationError(null);
@@ -128,7 +130,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
       onPasteChange(result.paste);
       onAnalyze(result.paste);
     } catch (err) {
-      setFetchError(err instanceof Error ? err.message : "Failed to fetch PokéPaste");
+      setFetchError(err instanceof Error ? err.message : "Failed to fetch PokePaste");
     } finally {
       setIsFetching(false);
     }
@@ -137,42 +139,52 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
   return (
     <div className="w-full max-w-2xl mx-auto px-4">
 
-      {/* Animated sprites */}
-      <div className="flex justify-center gap-2 sm:gap-3 mb-6 sm:mb-8 overflow-hidden">
+      {/* Animated sprites with floating effect */}
+      <div className="flex justify-center gap-3 sm:gap-5 mb-8 sm:mb-10 overflow-hidden">
         {POKEMON_SPRITES.map((name, i) => (
           <motion.img
             key={name}
             src={`https://play.pokemonshowdown.com/sprites/ani/${name}.gif`}
             alt=""
-            className="w-10 h-10 sm:w-14 sm:h-14 object-contain"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
+            className="w-11 h-11 sm:w-16 sm:h-16 object-contain drop-shadow-lg"
+            initial={{ opacity: 0, y: 30, scale: 0.8 }}
+            animate={{
+              opacity: 1,
+              y: [0, -6, 0],
+              scale: 1,
+            }}
             transition={{
-              delay: 0.1 + i * 0.09,
-              duration: 0.5,
-              ease: "easeOut",
+              opacity: { delay: 0.1 + i * 0.09, duration: 0.5 },
+              scale: { delay: 0.1 + i * 0.09, duration: 0.5 },
+              y: {
+                delay: 0.6 + i * 0.09,
+                duration: 2.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              },
             }}
             loading="lazy"
           />
         ))}
       </div>
 
-      {/* Title — minimal */}
+      {/* Title — bold, distinctive */}
       <motion.div
-        className="text-center mb-6 sm:mb-8"
+        className="text-center mb-8 sm:mb-10"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <h1 className="text-2xl sm:text-4xl font-bold text-text-primary tracking-tight">
-          VGC Team Report
+        <h1 className="text-3xl sm:text-5xl font-extrabold text-text-primary tracking-tight leading-none">
+          {t.appTitle}
+          <span className="text-accent"> {t.appTitleAccent}</span>
         </h1>
-        <p className="text-sm text-text-tertiary mt-2">
-          Paste a Showdown export or PokéPaste URL
+        <p className="text-sm sm:text-base text-text-tertiary mt-3 font-medium tracking-wide">
+          {t.appSubtitle}
         </p>
       </motion.div>
 
-      {/* Textarea */}
+      {/* Textarea with accent glow */}
       <motion.div
         className="relative"
         initial={{ opacity: 0, y: 12 }}
@@ -180,9 +192,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
         transition={{ delay: 0.15, duration: 0.4, ease: "easeOut" }}
       >
         <div
-          className={`absolute -inset-px rounded-2xl transition-all duration-300 ${
+          className={`absolute -inset-px rounded-xl transition-all duration-500 ${
             isFocused
-              ? "bg-gradient-to-b from-accent/25 to-accent/5"
+              ? "bg-gradient-to-b from-accent/30 via-accent/10 to-transparent shadow-lg shadow-accent/10"
               : "bg-transparent"
           }`}
         />
@@ -199,16 +211,16 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
           placeholder={
             "Incineroar @ Sitrus Berry\nAbility: Intimidate\nLevel: 50\nEVs: 252 HP / 4 Atk / 252 Spe\nCareful Nature\n- Fake Out\n- Knock Off\n- Flare Blitz\n- Parting Shot"
           }
-          className="relative w-full h-52 sm:h-72 p-4 sm:p-5 bg-surface border border-border rounded-2xl text-sm font-mono text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none transition-colors duration-200"
+          className="relative w-full h-52 sm:h-72 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none focus:border-accent/50 transition-all duration-300"
           spellCheck={false}
         />
         {isUrl && (
           <motion.span
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute top-3 right-3 px-2 py-0.5 bg-accent/15 text-accent text-[10px] font-semibold rounded-md uppercase tracking-wider"
+            className="absolute top-3 right-3 px-2.5 py-1 bg-accent text-white text-[10px] font-extrabold rounded-md uppercase tracking-widest shadow-sm"
           >
-            PokéPaste
+            {t.pokePaste}
           </motion.span>
         )}
       </motion.div>
@@ -218,7 +230,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
         <motion.p
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-sm text-red-400 mt-3 px-1"
+          className="text-sm text-danger font-semibold mt-3 px-1"
         >
           {fetchError || validationError}
         </motion.p>
@@ -226,16 +238,16 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
 
       {/* Actions */}
       <motion.div
-        className="flex items-center justify-between gap-3 mt-4"
+        className="flex items-center justify-between gap-3 mt-5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.25, duration: 0.3 }}
       >
         <button
           onClick={() => onPasteChange(SAMPLE_PASTE)}
-          className="text-sm text-text-secondary hover:text-text-primary border border-border hover:border-border-subtle rounded-xl px-4 py-2.5 transition-colors cursor-pointer"
+          className="text-sm font-semibold text-text-secondary hover:text-accent border-2 border-border hover:border-accent/30 rounded-lg px-4 py-2.5 transition-all duration-200 cursor-pointer hover:bg-accent-surface/50"
         >
-          Load sample
+          {t.loadSample}
         </button>
 
         {isUrl ? (
@@ -243,17 +255,17 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
             onClick={handleFetchPaste}
             disabled={isFetching}
             whileTap={{ scale: 0.97 }}
-            className="px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-accent/85 shadow-sm shadow-accent/25 cursor-pointer"
+            className="px-6 py-2.5 bg-accent text-white rounded-lg text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 shadow-md shadow-accent/30 cursor-pointer tracking-wide"
           >
             {isFetching ? (
               <span className="flex items-center gap-2">
                 <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Fetching...
+                {t.fetching}
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                Fetch & Analyze
-                <kbd className="text-[10px] opacity-50 hidden sm:inline font-mono">Ctrl+Enter</kbd>
+                {t.fetchAndAnalyze}
+                <kbd className="text-[10px] opacity-60 hidden sm:inline font-[family-name:var(--font-mono)]">Ctrl+Enter</kbd>
               </span>
             )}
           </motion.button>
@@ -262,15 +274,15 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
             onClick={handleAnalyze}
             disabled={!hasContent}
             whileTap={hasContent ? { scale: 0.97 } : undefined}
-            className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+            className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer tracking-wide ${
               hasContent
-                ? "bg-accent text-white hover:bg-accent/85 shadow-sm shadow-accent/25"
-                : "bg-surface-alt text-text-tertiary border border-border cursor-not-allowed"
+                ? "bg-accent text-white hover:brightness-110 shadow-md shadow-accent/30"
+                : "bg-surface-alt text-text-tertiary border-2 border-border cursor-not-allowed"
             }`}
           >
             <span className="flex items-center gap-2">
-              Analyze Team
-              <kbd className="text-[10px] opacity-50 hidden sm:inline font-mono">Ctrl+Enter</kbd>
+              {t.analyzeTeam}
+              <kbd className="text-[10px] opacity-60 hidden sm:inline font-[family-name:var(--font-mono)]">Ctrl+Enter</kbd>
             </span>
           </motion.button>
         )}
@@ -278,26 +290,26 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
 
       {/* App credit */}
       <motion.p
-        className="text-center text-xs text-text-secondary mt-8 sm:mt-12"
+        className="text-center text-xs text-text-tertiary mt-10 sm:mt-14 font-medium"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
       >
-        Built by{" "}
+        {t.builtBy}{" "}
         <a
           href="https://x.com/Manny64Official"
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold text-text-primary hover:text-accent transition-colors"
+          className="font-bold text-text-primary hover:text-accent transition-colors"
         >
           Manraj Sidhu
         </a>
-        <span className="mx-1.5 text-text-tertiary">&middot;</span>
+        <span className="mx-1.5 text-border">&middot;</span>
         <a
           href="/privacy"
           className="text-text-tertiary hover:text-text-primary transition-colors"
         >
-          Privacy
+          {t.privacy}
         </a>
       </motion.p>
     </div>

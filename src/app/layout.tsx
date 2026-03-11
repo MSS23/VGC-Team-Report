@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Sora, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const sora = Sora({
+  variable: "--font-sora",
+  subsets: ["latin"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
@@ -23,7 +29,7 @@ export const metadata: Metadata = {
     url: "https://vgc-team-report.vercel.app",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "VGC Team Report",
     description: "Build, share, and present professional VGC team reports",
   },
@@ -32,7 +38,7 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   other: {
-    "theme-color": "#6366f1",
+    "theme-color": "#E11D48",
   },
   robots: {
     index: true,
@@ -46,10 +52,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${sora.variable} ${jetbrainsMono.variable} antialiased`}>
         {children}
         <Analytics />
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

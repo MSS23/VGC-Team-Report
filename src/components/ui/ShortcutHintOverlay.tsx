@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 interface ShortcutHintOverlayProps {
   visible: boolean;
@@ -8,23 +9,24 @@ interface ShortcutHintOverlayProps {
   isPresentationMode?: boolean;
 }
 
-const SHORTCUTS_COMMON = [
-  { key: "\u2190 / \u2192", label: "Navigate slides" },
-  { key: "\u2191 / \u2193", label: "Navigate slides" },
-  { key: "D", label: "Toggle dark mode" },
-  { key: "?", label: "Show / hide shortcuts" },
-];
-
-const SHORTCUTS_PRESENTATION = [
-  { key: "F", label: "Toggle fullscreen" },
-  { key: "Esc", label: "Exit presentation" },
-];
-
-const SHORTCUTS_NORMAL = [
-  { key: "P", label: "Enter presentation" },
-];
-
 export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = false }: ShortcutHintOverlayProps) {
+  const { t } = useTranslation();
+
+  const SHORTCUTS_COMMON = [
+    { key: "\u2190 / \u2192", label: t.navigateSlides },
+    { key: "\u2191 / \u2193", label: t.navigateSlides },
+    { key: "D", label: t.toggleDarkMode },
+    { key: "?", label: t.showHideShortcuts },
+  ];
+
+  const SHORTCUTS_PRESENTATION = [
+    { key: "F", label: t.toggleFullscreen },
+    { key: "Esc", label: t.exitPresentation },
+  ];
+
+  const SHORTCUTS_NORMAL = [
+    { key: "P", label: t.enterPresentation },
+  ];
   // Close on Escape key
   useEffect(() => {
     if (!visible) return;
@@ -56,7 +58,7 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">
-          Keyboard Shortcuts
+          {t.keyboardShortcuts}
         </h3>
         <div className="space-y-3">
           {shortcuts.map(({ key, label }) => (
@@ -70,14 +72,14 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
         </div>
         <div className="mt-4 pt-3 border-t border-border-subtle">
           <p className="text-[11px] text-text-tertiary text-center leading-relaxed">
-            Use swipe gestures on mobile to navigate slides
+            {t.swipeHint}
           </p>
         </div>
         <button
           onClick={onDismiss}
           className="mt-4 w-full text-center text-xs text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
         >
-          Click anywhere or press <kbd className="px-1.5 py-0.5 bg-surface-alt border border-border rounded text-[10px] font-mono font-semibold">Esc</kbd> to close
+          {t.clickOrEsc} <kbd className="px-1.5 py-0.5 bg-surface-alt border border-border rounded text-[10px] font-mono font-semibold">Esc</kbd> {t.toClose}
         </button>
       </div>
     </div>

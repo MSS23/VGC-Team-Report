@@ -156,16 +156,20 @@ function setTheme(theme: GenTheme) {
 }
 
 // Apply theme on first load & watch dark mode changes
+// Use requestAnimationFrame to defer until after React hydration
 if (typeof window !== "undefined") {
-  // Initial apply after DOM ready
+  const initTheme = () => {
+    requestAnimationFrame(() => applyTheme(currentTheme));
+    // Re-apply when dark mode toggles
+    const observer = new MutationObserver(() => applyTheme(currentTheme));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-dark-mode"] });
+  };
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => applyTheme(currentTheme), { once: true });
+    document.addEventListener("DOMContentLoaded", initTheme, { once: true });
   } else {
-    applyTheme(currentTheme);
+    initTheme();
   }
-  // Re-apply when dark mode toggles
-  const observer = new MutationObserver(() => applyTheme(currentTheme));
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-dark-mode"] });
 }
 
 export function useTheme() {
