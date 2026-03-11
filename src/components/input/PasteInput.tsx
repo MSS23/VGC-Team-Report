@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { useTranslation } from "@/lib/i18n";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
 
 const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
 Ability: Intimidate
@@ -138,6 +139,11 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4">
+
+      {/* Language selector — top right */}
+      <div className="fixed top-3 right-3 z-20">
+        <LanguageSelector />
+      </div>
 
       {/* Animated sprites with floating effect */}
       <div className="flex justify-center gap-3 sm:gap-5 mb-8 sm:mb-10 overflow-hidden">
