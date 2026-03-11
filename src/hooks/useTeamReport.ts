@@ -12,18 +12,15 @@ const STORAGE_KEY = "vgc-team-paste";
 
 export type ViewMode = "simple" | "advanced";
 
-export function useTeamReport() {
+export function useTeamReport(persist = true) {
   const [paste, setPaste] = useState("");
   const [parsedTeam, setParsedTeam] = useState<ParsedTeam | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("simple");
 
-  // On fresh visits, always start with a blank slate.
-  // Shared views hydrate via useShareUrl, not localStorage.
-  // The auto-save below still persists the paste while actively working,
-  // so in-session refreshes during a share flow won't lose data.
-
   // Auto-save paste to localStorage whenever it changes (and analysis exists)
+  // Skipped when persist=false (e.g. sample/demo teams)
   useEffect(() => {
+    if (!persist) return;
     try {
       if (parsedTeam && parsedTeam.pokemon.length > 0) {
         localStorage.setItem(STORAGE_KEY, paste);
@@ -31,7 +28,7 @@ export function useTeamReport() {
     } catch {
       // localStorage quota exceeded — paste works in-memory only
     }
-  }, [paste, parsedTeam]);
+  }, [paste, parsedTeam, persist]);
 
   const parseTeam = useCallback((input: string) => {
     const result = parseShowdownPaste(input);

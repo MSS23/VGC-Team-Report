@@ -14,7 +14,7 @@ import { useTeamMeta } from "@/hooks/useTeamMeta";
 import { useShareUrl } from "@/hooks/useShareUrl";
 import { useWalkthrough } from "@/hooks/useWalkthrough";
 import { useTheme } from "@/hooks/useTheme";
-import { PasteInput } from "@/components/input/PasteInput";
+import { PasteInput, SAMPLE_PASTE } from "@/components/input/PasteInput";
 import { TeamReport } from "@/components/report/TeamReport";
 import { SlideNavControls } from "@/components/report/SlideNavControls";
 import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
@@ -33,6 +33,8 @@ export default function Home() {
 
 function HomeContent() {
   const { t } = useTranslation();
+  const [isSampleTeam, setIsSampleTeam] = useState(false);
+
   const {
     paste,
     setPaste,
@@ -40,7 +42,7 @@ function HomeContent() {
     parseTeam,
     reset,
     warnings,
-  } = useTeamReport();
+  } = useTeamReport(!isSampleTeam);
 
   const { creatorMode, setCreatorMode } = useCreatorMode();
   const { presentationMode, setPresentationMode } = usePresentationMode();
@@ -83,12 +85,13 @@ function HomeContent() {
     });
   }, [analysis]);
 
-  const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, !isSharedView);
-  const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, !isSharedView);
+  const shouldPersist = !isSharedView && !isSampleTeam;
+  const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
+  const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
     roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName,
     setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setMetaFull,
-  } = useTeamMeta(speciesKeys, !isSharedView);
+  } = useTeamMeta(speciesKeys, shouldPersist);
   const {
     plans,
     addPlan,
@@ -103,7 +106,7 @@ function HomeContent() {
     togglePlanSlide,
     reorderPlans,
     setPlansFull,
-  } = useMatchupPlans(speciesKeys, !isSharedView);
+  } = useMatchupPlans(speciesKeys, shouldPersist);
 
   // Sprite config from parsed data — shiny from paste, always animated
   const getSpriteConfig = useCallback(
@@ -116,7 +119,7 @@ function HomeContent() {
     [analysis, speciesKeys]
   );
 
-  const { hiddenSlides, toggleSlide, isHidden, setHiddenFull } = useHiddenSlides(speciesKeys, !isSharedView);
+  const { hiddenSlides, toggleSlide, isHidden, setHiddenFull } = useHiddenSlides(speciesKeys, shouldPersist);
 
   // Flash "Saved" indicator when user data changes (skip initial load)
   useEffect(() => {
@@ -319,7 +322,9 @@ function HomeContent() {
 
 
   const handleAnalyze = (directPaste?: string) => {
-    parseTeam(directPaste ?? paste);
+    const teamPaste = directPaste ?? paste;
+    setIsSampleTeam(teamPaste.trim() === SAMPLE_PASTE.trim());
+    parseTeam(teamPaste);
   };
 
   const buildShareState = useCallback(() => ({
@@ -515,7 +520,7 @@ function HomeContent() {
         onShowShortcuts={setShowShortcutHint}
         onSetCreatorMode={setCreatorMode}
         onSetPresentationMode={setPresentationMode}
-        onReset={() => { reset(); clearStoredShare(); }}
+        onReset={() => { reset(); clearStoredShare(); setIsSampleTeam(false); }}
         onExitSharedView={exitSharedView}
       />
 

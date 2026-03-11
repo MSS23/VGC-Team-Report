@@ -6,7 +6,7 @@ import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { useTranslation } from "@/lib/i18n";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 
-const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
+export const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
 Ability: Intimidate
 Level: 50
 Tera Type: Ghost
