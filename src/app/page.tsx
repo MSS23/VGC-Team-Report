@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useLayoutEffect, useRef, useCallback, useState } from "react";
+import { Suspense, useMemo, useEffect, useLayoutEffect, useRef, useCallback, useState } from "react";
 import { useTeamReport } from "@/hooks/useTeamReport";
 import { useCreatorMode } from "@/hooks/useCreatorMode";
 import { usePresentationMode } from "@/hooks/usePresentationMode";
@@ -26,7 +26,9 @@ import type { SpriteConfig } from "@/lib/types/sprites";
 export default function Home() {
   return (
     <I18nProvider>
-      <HomeContent />
+      <Suspense>
+        <HomeContent />
+      </Suspense>
     </I18nProvider>
   );
 }

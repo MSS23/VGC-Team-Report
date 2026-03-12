@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   encodeShareState,
   decodeShareState,
@@ -20,22 +21,12 @@ function storeShareInfo(info: StoredShareInfo) {
   localStorage.setItem(SHARE_TOKENS_KEY, JSON.stringify(info));
 }
 
-/** Synchronously detect share URL from query params or hash (runs before effects). */
-function detectShareParam(): string | null {
+/** Detect share ID from hash (fallback for #id= links). */
+function detectHashId(): string | null {
   if (typeof window === "undefined") return null;
-  const url = new URL(window.location.href);
-  const s = url.searchParams.get("s");
-  if (s) return s;
   const hash = window.location.hash;
   if (hash.startsWith("#id=")) return hash.slice("#id=".length) || null;
   return null;
-}
-
-/** Detect edit key from ?key= query param. */
-function detectEditKey(): string | null {
-  if (typeof window === "undefined") return null;
-  const url = new URL(window.location.href);
-  return url.searchParams.get("key");
 }
 
 function detectInlineData(): string | null {
@@ -46,8 +37,10 @@ function detectInlineData(): string | null {
 }
 
 export function useShareUrl() {
-  const [shareId] = useState(detectShareParam);
-  const [editKeyFromUrl] = useState(detectEditKey);
+  // Use Next.js searchParams (works correctly across SSR and hydration)
+  const searchParams = useSearchParams();
+  const shareId = searchParams.get("s") || detectHashId();
+  const editKeyFromUrl = searchParams.get("key") || null;
   const [inlineData] = useState(detectInlineData);
   const isSharePending = !!(shareId || inlineData);
 
