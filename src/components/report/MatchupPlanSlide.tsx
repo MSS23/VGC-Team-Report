@@ -427,7 +427,7 @@ function GamePlanSection({
         <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-1">
           <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4 sm:gap-6">
             {/* Bring Four — Lead / Back split */}
-            <div className="flex flex-row lg:flex-col gap-4">
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-4">
               {/* Lead */}
               <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 border border-border-subtle">
                 <div className="flex items-center gap-2 mb-2.5">
@@ -510,7 +510,7 @@ function GamePlanSection({
                   Notes
                 </span>
                 {isReadOnly ? (
-                  <div className="w-full min-h-[6rem] sm:min-h-[10rem] p-4 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:tracking-wide">
+                  <div className="w-full min-h-[4rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:tracking-wide">
                     {gamePlan.notes || "No notes."}
                   </div>
                 ) : (
@@ -518,7 +518,7 @@ function GamePlanSection({
                     value={gamePlan.notes}
                     onChange={(e) => onNotesChange(e.target.value)}
                     placeholder="Why are you bringing these four? What's the win condition?"
-                    className="w-full min-h-[6rem] sm:min-h-[10rem] p-4 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+                    className="w-full min-h-[4rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
                     spellCheck={false}
                   />
                 )}

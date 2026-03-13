@@ -78,7 +78,7 @@ export function Navbar(props: NavbarProps) {
 
   return (
     <header
-      className={`sm:sticky sm:top-0 z-10 backdrop-blur-xl border-b transition-all duration-300 ${
+      className={`sticky top-0 z-10 backdrop-blur-xl border-b transition-all duration-300 ${
         isPresentationStyle
           ? "bg-transparent border-transparent"
           : "bg-surface/90 border-border shadow-[0_1px_8px_rgba(0,0,0,0.06)]"
@@ -149,11 +149,16 @@ export function Navbar(props: NavbarProps) {
           </div>
         )}
 
-        {/* Mobile slide counter (non-presentation, non-draft) */}
-        {!isPresentationStyle && isSharedView && (
-          <span className="md:hidden text-xs text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">
-            {currentSlide + 1}/{totalSlides}
-          </span>
+        {/* Mobile slide counter (non-presentation) */}
+        {!isPresentationStyle && (
+          <div className="md:hidden flex items-center gap-1.5 min-w-0 overflow-hidden flex-shrink">
+            <span className="text-xs text-text-primary font-semibold truncate max-w-[100px]">
+              {slideLabels[currentSlide]}
+            </span>
+            <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">
+              {currentSlide + 1}/{totalSlides}
+            </span>
+          </div>
         )}
 
         {/* -- Right: actions -- */}

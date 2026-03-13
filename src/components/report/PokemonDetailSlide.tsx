@@ -526,7 +526,7 @@ export function PokemonDetailSlide({
             {isPresentationMode ? t.notes : isReadOnly ? t.aboutThisPokemon : t.yourExplanation}
           </h3>
           {isReadOnly ? (
-            <div className={`w-full bg-surface border border-border rounded-xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed presenting:bg-surface-alt presenting:border-border-subtle ${isPresentationMode ? "p-3 sm:p-4" : "min-h-[5rem] sm:min-h-[10rem] p-3 sm:p-6"}`}>
+            <div className={`w-full bg-surface border border-border rounded-xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed presenting:bg-surface-alt presenting:border-border-subtle ${isPresentationMode ? "p-3 sm:p-4" : "min-h-[3rem] sm:min-h-[10rem] p-3 sm:p-6"}`}>
               {note || t.noNotesYet}
             </div>
           ) : (
@@ -534,7 +534,7 @@ export function PokemonDetailSlide({
               value={note}
               onChange={(e) => onNoteChange(e.target.value)}
               placeholder={t.notesPlaceholder.replace("{species}", parsed.species)}
-              className="w-full min-h-[5rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface border-2 border-border rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+              className="w-full min-h-[3rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface border-2 border-border rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
               spellCheck={false}
             />
           )}

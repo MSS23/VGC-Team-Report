@@ -70,8 +70,8 @@ export function SlideNavControls({
 
         {/* Center: Dots + label on one row */}
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 justify-center overflow-hidden">
-          {/* Dots -- larger touch targets on mobile */}
-          <div className="flex items-center gap-1 sm:gap-1 flex-shrink-0">
+          {/* Dots -- scrollable on mobile when many slides */}
+          <div className="flex items-center gap-1 sm:gap-1 overflow-x-auto max-w-[50vw] sm:max-w-none flex-shrink scrollbar-none">
             {Array.from({ length: totalSlides }, (_, i) => {
               const isHidden = hiddenStates?.[i] ?? false;
               const isCurrent = i === currentSlide;

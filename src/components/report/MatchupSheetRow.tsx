@@ -55,7 +55,7 @@ export function MatchupSheetRow({
         {/* Opponent info */}
         <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4">
           <span
-            className="text-sm sm:text-lg font-semibold text-text-primary truncate max-w-[140px] sm:max-w-[280px]"
+            className="text-sm sm:text-lg font-semibold text-text-primary truncate max-w-[120px] sm:max-w-[280px]"
             title={plan.opponentLabel}
           >
             {plan.opponentLabel}
@@ -75,22 +75,28 @@ export function MatchupSheetRow({
         {/* Right side: lead/back preview + plan count + actions */}
         <div className="flex items-center gap-3 flex-shrink-0">
           {hasBringPreview && (
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Lead preview */}
               {leadPreview.length > 0 && (
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-blue-400/70 mr-0.5">L</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-blue-400/70 mr-0.5 hidden sm:inline">L</span>
                   {leadPreview.map((species, i) => (
-                    <PokemonSprite key={i} species={species} size={20} />
+                    <PokemonSprite key={i} species={species} size={18} className="sm:hidden" />
+                  ))}
+                  {leadPreview.map((species, i) => (
+                    <PokemonSprite key={`lg-${i}`} species={species} size={20} className="hidden sm:block" />
                   ))}
                 </div>
               )}
               {/* Back preview */}
               {backPreview.length > 0 && (
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400/70 mr-0.5">B</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400/70 mr-0.5 hidden sm:inline">B</span>
                   {backPreview.map((species, i) => (
-                    <PokemonSprite key={i} species={species} size={20} />
+                    <PokemonSprite key={i} species={species} size={18} className="sm:hidden" />
+                  ))}
+                  {backPreview.map((species, i) => (
+                    <PokemonSprite key={`lg-${i}`} species={species} size={20} className="hidden sm:block" />
                   ))}
                 </div>
               )}

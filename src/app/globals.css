@@ -88,6 +88,15 @@ body::before {
   scroll-behavior: smooth;
 }
 
+/* Hide scrollbar but allow scrolling */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* Better text input sizing on iOS (prevents zoom on focus) */
 @media (max-width: 639px) {
   input, textarea, select {

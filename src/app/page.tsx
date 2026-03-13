@@ -656,7 +656,7 @@ function HomeContent() {
 
       {/* Edit URL toast — shown after sharing */}
       {showEditUrl && lastShareResult?.editUrl && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in max-w-md w-full px-4">
+        <div className="fixed bottom-20 sm:bottom-16 left-1/2 -translate-x-1/2 z-50 animate-fade-in max-w-md w-full px-4">
           <div className="bg-surface border border-border rounded-2xl p-4 shadow-2xl">
             <div className="flex items-start justify-between gap-3 mb-2">
               <div>

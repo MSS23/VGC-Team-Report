@@ -129,7 +129,7 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
     if (items.length === 0) return null;
     return (
       <div className="flex flex-col gap-2">
-        <span className={`text-sm font-bold uppercase tracking-wider ${color}`}>{label}</span>
+        <span className={`text-xs sm:text-sm font-bold uppercase tracking-wider ${color}`}>{label}</span>
         <div className="flex flex-wrap gap-2.5">
           {items.map(({ type, count, indices }) => {
             const tc = TYPE_COLORS[type];
@@ -158,12 +158,12 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-0.5">
             {mode === "offensive" ? "Offensive Type Coverage" : "Defensive Type Coverage"}
           </h3>
-          <p className="text-sm sm:text-base text-text-tertiary">
+          <p className="text-xs sm:text-base text-text-tertiary">
             {mode === "offensive"
               ? "Number of team members that hit each type super-effectively"
               : "Number of team members weak to each attacking type"}
@@ -171,7 +171,7 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
         </div>
 
         {/* Toggle */}
-        <div className="flex items-center bg-surface-alt rounded-lg p-0.5 flex-shrink-0">
+        <div className="flex items-center bg-surface-alt rounded-lg p-0.5 flex-shrink-0 self-start">
           <button
             type="button"
             onClick={() => setMode("offensive")}
