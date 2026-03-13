@@ -242,9 +242,9 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     };
   }, [filteredSteps, currentStepIndex, randomPokemonName]);
 
-  // Auto-trigger on first visit
+  // Auto-trigger on first visit (never on shared views)
   useEffect(() => {
-    if (!enabled || hasAutoTriggered) return;
+    if (!enabled || hasAutoTriggered || isSharedView) return;
     if (getSeenFlag()) {
       setHasAutoTriggered(true);
       return;
@@ -257,7 +257,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     }, 600);
 
     return () => clearTimeout(timer);
-  }, [enabled, hasAutoTriggered]);
+  }, [enabled, hasAutoTriggered, isSharedView]);
 
   const next = useCallback(() => {
     if (currentStepIndex < filteredSteps.length - 1) {

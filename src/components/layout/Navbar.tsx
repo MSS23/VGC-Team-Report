@@ -78,7 +78,7 @@ export function Navbar(props: NavbarProps) {
 
   return (
     <header
-      className={`sticky top-0 z-10 backdrop-blur-xl border-b transition-all duration-300 ${
+      className={`sticky top-0 z-40 backdrop-blur-xl border-b transition-all duration-300 ${
         isPresentationStyle
           ? "bg-transparent border-transparent"
           : "bg-surface/90 border-border shadow-[0_1px_8px_rgba(0,0,0,0.06)]"
@@ -177,18 +177,19 @@ export function Navbar(props: NavbarProps) {
                 {shareButtonText}
               </Button>
               {hasExistingShare && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={onCopyEditLink}
                   title="Copy your private edit link"
                   aria-label="Copy edit link"
-                  className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-text-tertiary hover:text-accent hover:bg-accent-surface/60 border border-border-subtle hover:border-accent/30 transition-all cursor-pointer"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3" />
                     <line x1="8" y1="12" x2="16" y2="12" />
                   </svg>
                   <span className="hidden sm:inline">{editLinkCopied ? t.copied : t.editLink}</span>
-                </button>
+                </Button>
               )}
             </>
           )}
@@ -260,16 +261,16 @@ export function Navbar(props: NavbarProps) {
           {/* Creator mode lock/unlock (local draft only) */}
           {isLocalDraft && (
             <div data-walkthrough="creator-toggle">
-              <button
-                type="button"
+              <Button
+                variant={creatorMode ? "secondary" : "ghost"}
+                size="sm"
                 onClick={() => onSetCreatorMode(!creatorMode)}
                 title={creatorMode ? "Lock editing (read-only)" : "Unlock editing"}
                 aria-label={creatorMode ? "Lock editing" : "Unlock editing"}
-                className={`flex items-center justify-center gap-1.5 min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 px-2 sm:px-2.5 py-1.5 rounded-lg border-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
-                  creatorMode
-                    ? "bg-accent/15 text-accent border-accent/40 hover:bg-accent/25"
-                    : "bg-surface-alt text-text-secondary border-border hover:text-text-primary hover:border-border"
-                }`}
+                className={creatorMode
+                  ? "!bg-accent/15 !text-accent !border-accent/40 hover:!bg-accent/25"
+                  : ""
+                }
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -279,7 +280,7 @@ export function Navbar(props: NavbarProps) {
                   }
                 </svg>
                 <span className="hidden sm:inline tracking-wide">{creatorMode ? t.editing : t.locked}</span>
-              </button>
+              </Button>
             </div>
           )}
 
@@ -291,10 +292,11 @@ export function Navbar(props: NavbarProps) {
               onClick={() => onSetPresentationMode(true)}
               data-walkthrough="present-button"
               aria-label="Start presentation"
-              className="!min-w-[36px] !min-h-[36px] sm:!min-w-0 sm:!min-h-0"
             >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:hidden">
+                <polygon points="5,3 19,12 5,21" fill="currentColor" stroke="none" />
+              </svg>
               <span className="hidden sm:inline">{t.present}</span>
-              <span className="sm:hidden">&#9654;</span>
             </Button>
           )}
 
