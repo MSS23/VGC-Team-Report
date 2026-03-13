@@ -150,7 +150,7 @@ function HomeContent() {
       t.matchupsLabel,
     ];
     return { allSlideKeys: keys, allSlideLabels: labels };
-  }, [analysis, speciesKeys, plans]);
+  }, [analysis, speciesKeys, plans, t]);
 
   // Check if a physical slide index is hidden
   const isSlideHiddenAt = useCallback((physicalIndex: number) => {
