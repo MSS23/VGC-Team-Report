@@ -186,47 +186,61 @@ export function WalkthroughOverlay({
 
   if (!mounted) return null;
 
-  const hasSpotlight = !isVirtual && targetRect;
   const OVERLAY_OPACITY = 0.55;
 
-  const spotlightStyle: React.CSSProperties | undefined =
-    hasSpotlight
+  // Always render a single spotlight div. For virtual steps (no target) it
+  // collapses to a zero-size point at the center of the viewport — the huge
+  // box-shadow still covers the entire screen as a solid overlay. For targeted
+  // steps it expands around the element. Because the div is always mounted,
+  // CSS transitions animate smoothly between states with no flicker.
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const spotlightRect =
+    !isVirtual && targetRect
       ? {
-          position: "fixed",
           top: targetRect.top - SPOTLIGHT_PAD,
           left: targetRect.left - SPOTLIGHT_PAD,
           width: targetRect.width + SPOTLIGHT_PAD * 2,
           height: targetRect.height + SPOTLIGHT_PAD * 2,
           borderRadius: 12,
-          boxShadow: `0 0 0 9999px rgba(0,0,0,${OVERLAY_OPACITY})`,
-          zIndex: 9999,
-          pointerEvents: "none" as const,
-          transition: "all 300ms ease",
         }
-      : undefined;
+      : {
+          // Zero-size point in center — box-shadow covers everything
+          top: vh / 2,
+          left: vw / 2,
+          width: 0,
+          height: 0,
+          borderRadius: 0,
+        };
 
   return createPortal(
     <>
-      {/* Full-screen backdrop — only provides overlay when no spotlight is active.
-          When spotlight is active, its box-shadow covers everything outside the cutout,
-          so we make the backdrop transparent to avoid double-darkening & flicker. */}
+      {/* Invisible click-catcher for backdrop clicks (skip on tap outside) */}
       <div
         style={{
           position: "fixed",
           inset: 0,
           zIndex: 9998,
-          backgroundColor: hasSpotlight
-            ? "transparent"
-            : `rgba(0,0,0,${OVERLAY_OPACITY})`,
-          transition: "background-color 300ms ease",
         }}
         onClick={onSkip}
       />
 
-      {/* Spotlight cutout (brighter hole over targeted element) */}
-      {spotlightStyle && (
-        <div style={spotlightStyle} />
-      )}
+      {/* Single spotlight — always mounted so CSS transitions work.
+          Its box-shadow provides the dark overlay for the entire screen. */}
+      <div
+        style={{
+          position: "fixed",
+          top: spotlightRect.top,
+          left: spotlightRect.left,
+          width: spotlightRect.width,
+          height: spotlightRect.height,
+          borderRadius: spotlightRect.borderRadius,
+          boxShadow: `0 0 0 9999px rgba(0,0,0,${OVERLAY_OPACITY})`,
+          zIndex: 9999,
+          pointerEvents: "none",
+          transition: "top 300ms ease, left 300ms ease, width 300ms ease, height 300ms ease, border-radius 300ms ease",
+        }}
+      />
 
       {/* Tooltip card — hidden until positioned to prevent flash */}
       <div
