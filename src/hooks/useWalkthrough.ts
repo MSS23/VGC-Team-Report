@@ -242,45 +242,62 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
   }, [isActive, currentStepIndex, filteredSteps, goToSlide, resolveSlide, physicalToVirtual]);
 
   // Auto-skip steps whose target element doesn't exist in the DOM.
-  // Runs after a short delay to give goToSlide time to update the DOM.
+  // Uses retries because slide navigation + React render can take a few frames.
   useEffect(() => {
     if (!isActive) return;
     const step = filteredSteps[currentStepIndex];
     if (!step || step.target === null) return; // virtual steps always valid
 
-    const timer = setTimeout(() => {
-      if (!isStepAvailable(step)) {
-        // Find the next available step
-        let nextIdx = currentStepIndex + 1;
-        while (nextIdx < filteredSteps.length) {
-          const candidate = filteredSteps[nextIdx];
-          // Virtual steps are always OK; for targeted steps we need to navigate
-          // to their slide first, but we can't check yet — accept them optimistically
-          // and let this same effect re-check after navigation.
-          if (candidate.target === null) break;
+    let attempt = 0;
+    const MAX_ATTEMPTS = 6; // check at 100, 200, 400, 600, 800, 1000ms
+    let timer: ReturnType<typeof setTimeout>;
+    let cancelled = false;
 
-          // For steps on the same slide (no slide change), check DOM directly
-          if (candidate.slide === step.slide || candidate.slide === undefined) {
-            if (isStepAvailable(candidate)) break;
-            nextIdx++;
-            continue;
-          }
-          // For steps on different slides, accept optimistically
-          break;
-        }
+    const check = () => {
+      if (cancelled) return;
+      attempt++;
 
-        if (nextIdx >= filteredSteps.length) {
-          // No more valid steps — finish the walkthrough
-          setIsActive(false);
-          setSeenFlag();
-          goToSlide?.(0);
-        } else {
-          setCurrentStepIndex(nextIdx);
-        }
+      if (isStepAvailable(step)) {
+        // Target found — nothing to skip
+        return;
       }
-    }, 150); // short delay for DOM to settle after slide navigation
 
-    return () => clearTimeout(timer);
+      if (attempt < MAX_ATTEMPTS) {
+        // Retry with increasing delay
+        timer = setTimeout(check, attempt < 2 ? 100 : 200);
+        return;
+      }
+
+      // Target not found after all retries — skip forward
+      let nextIdx = currentStepIndex + 1;
+      while (nextIdx < filteredSteps.length) {
+        const candidate = filteredSteps[nextIdx];
+        // Virtual steps are always OK
+        if (candidate.target === null) break;
+        // For steps on different slides, accept optimistically
+        // (this effect will re-check after navigation)
+        if (candidate.slide !== step.slide && candidate.slide !== undefined) break;
+        // Same slide — check DOM directly
+        if (isStepAvailable(candidate)) break;
+        nextIdx++;
+      }
+
+      if (nextIdx >= filteredSteps.length) {
+        setIsActive(false);
+        setSeenFlag();
+        goToSlide?.(0);
+      } else {
+        setCurrentStepIndex(nextIdx);
+      }
+    };
+
+    // Start first check after a short delay for the slide to render
+    timer = setTimeout(check, 100);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [isActive, currentStepIndex, filteredSteps, isStepAvailable, goToSlide]);
 
   // Interpolate {{pokemon}} in the current step
