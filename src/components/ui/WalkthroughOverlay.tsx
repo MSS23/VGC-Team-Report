@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import type { WalkthroughStep } from "@/hooks/useWalkthrough";
 import { PokemonSprite } from "@/components/report/PokemonSprite";
 import { useTranslation } from "@/lib/i18n";
+
+// useLayoutEffect on client, useEffect on server (avoids SSR warnings)
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 interface WalkthroughOverlayProps {
   step: WalkthroughStep;
@@ -26,6 +30,7 @@ const SPOTLIGHT_PAD = 8;
 const TOOLTIP_MARGIN = 16;
 const TOOLTIP_GAP = 12;
 const NAVBAR_HEIGHT = 52;
+const MOBILE_BROWSER_CHROME_PAD = 60; // Extra padding for mobile browser bottom nav bar
 
 export function WalkthroughOverlay({
   step,
@@ -38,9 +43,15 @@ export function WalkthroughOverlay({
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
+  const [positioned, setPositioned] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const isVirtual = step.target === null;
   const isLastStep = stepIndex === totalSteps - 1;
+
+  // Reset positioned flag when step changes so tooltip hides until repositioned
+  useEffect(() => {
+    setPositioned(false);
+  }, [stepIndex]);
 
   useEffect(() => {
     setMounted(true);
@@ -87,9 +98,12 @@ export function WalkthroughOverlay({
     const update = () => measureTarget();
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
+    // Re-measure when mobile browser chrome shows/hides (e.g. address bar)
+    window.visualViewport?.addEventListener("resize", update);
     return () => {
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
+      window.visualViewport?.removeEventListener("resize", update);
     };
   }, [measureTarget]);
 
@@ -108,61 +122,75 @@ export function WalkthroughOverlay({
     return () => window.removeEventListener("keydown", handleKey);
   }, [onNext, onSkip]);
 
-  // Position the tooltip after render using layout effect
-  useEffect(() => {
+  // Position the tooltip synchronously before paint to prevent flicker
+  useIsomorphicLayoutEffect(() => {
     if (!mounted) return;
     const tt = tooltipRef.current;
     if (!tt) return;
 
     const position = () => {
-      // Clear the initial CSS centering transform so calculated values work
       tt.style.transform = "none";
 
       const ttW = tt.offsetWidth;
       const ttH = tt.offsetHeight;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const safeBottom = vh - NAVBAR_HEIGHT;
+      const vv = window.visualViewport;
+      const vw = vv?.width ?? window.innerWidth;
+      const vh = vv?.height ?? window.innerHeight;
+      const vvOffsetTop = vv?.offsetTop ?? 0;
+      const isMobile = window.innerWidth < 640;
+      const bottomPad = NAVBAR_HEIGHT + (isMobile ? MOBILE_BROWSER_CHROME_PAD : 0);
+      const safeBottom = vvOffsetTop + vh - bottomPad;
 
       if (isVirtual || !targetRect) {
-        // Center on screen above navbar
-        tt.style.top = `${Math.max(TOOLTIP_MARGIN, (safeBottom - ttH) / 2)}px`;
+        const visibleCenter = vvOffsetTop + (vh - bottomPad - ttH) / 2;
+        tt.style.top = `${Math.max(TOOLTIP_MARGIN, visibleCenter)}px`;
         tt.style.left = `${Math.max(TOOLTIP_MARGIN, (vw - ttW) / 2)}px`;
-        return;
-      }
-
-      const spotTop = targetRect.top - SPOTLIGHT_PAD;
-      const spotH = targetRect.height + SPOTLIGHT_PAD * 2;
-      const spotBottom = spotTop + spotH;
-      const spotCenterX = targetRect.left + targetRect.width / 2;
-
-      let top: number;
-      let left: number;
-
-      if (step.placement === "above") {
-        top = spotTop - TOOLTIP_GAP - ttH;
-        if (top < TOOLTIP_MARGIN) top = spotBottom + TOOLTIP_GAP;
       } else {
-        top = spotBottom + TOOLTIP_GAP;
-        if (top + ttH > safeBottom - TOOLTIP_MARGIN) top = spotTop - TOOLTIP_GAP - ttH;
+        const spotTop = targetRect.top - SPOTLIGHT_PAD;
+        const spotH = targetRect.height + SPOTLIGHT_PAD * 2;
+        const spotBottom = spotTop + spotH;
+        const spotCenterX = targetRect.left + targetRect.width / 2;
+
+        let top: number;
+        let left: number;
+
+        if (step.placement === "above") {
+          top = spotTop - TOOLTIP_GAP - ttH;
+          if (top < TOOLTIP_MARGIN) top = spotBottom + TOOLTIP_GAP;
+        } else {
+          top = spotBottom + TOOLTIP_GAP;
+          if (top + ttH > safeBottom - TOOLTIP_MARGIN) top = spotTop - TOOLTIP_GAP - ttH;
+        }
+
+        left = spotCenterX - ttW / 2;
+        left = Math.max(TOOLTIP_MARGIN, Math.min(left, vw - ttW - TOOLTIP_MARGIN));
+        top = Math.max(TOOLTIP_MARGIN, Math.min(top, safeBottom - ttH - TOOLTIP_MARGIN));
+
+        tt.style.top = `${top}px`;
+        tt.style.left = `${left}px`;
       }
 
-      left = spotCenterX - ttW / 2;
-      left = Math.max(TOOLTIP_MARGIN, Math.min(left, vw - ttW - TOOLTIP_MARGIN));
-      top = Math.max(TOOLTIP_MARGIN, Math.min(top, safeBottom - ttH - TOOLTIP_MARGIN));
-
-      tt.style.top = `${top}px`;
-      tt.style.left = `${left}px`;
+      setPositioned(true);
     };
 
-    // Position on next frame to ensure layout is computed
-    requestAnimationFrame(position);
-  }, [mounted, isVirtual, targetRect, step.placement]);
+    // Position synchronously on layout to avoid flash
+    position();
+
+    // Reposition when mobile browser chrome shows/hides
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener("resize", position);
+      return () => vv.removeEventListener("resize", position);
+    }
+  }, [mounted, isVirtual, targetRect, step.placement, stepIndex]);
 
   if (!mounted) return null;
 
+  const hasSpotlight = !isVirtual && targetRect;
+  const OVERLAY_OPACITY = 0.55;
+
   const spotlightStyle: React.CSSProperties | undefined =
-    !isVirtual && targetRect
+    hasSpotlight
       ? {
           position: "fixed",
           top: targetRect.top - SPOTLIGHT_PAD,
@@ -170,7 +198,7 @@ export function WalkthroughOverlay({
           width: targetRect.width + SPOTLIGHT_PAD * 2,
           height: targetRect.height + SPOTLIGHT_PAD * 2,
           borderRadius: 12,
-          boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)",
+          boxShadow: `0 0 0 9999px rgba(0,0,0,${OVERLAY_OPACITY})`,
           zIndex: 9999,
           pointerEvents: "none" as const,
           transition: "all 300ms ease",
@@ -179,13 +207,18 @@ export function WalkthroughOverlay({
 
   return createPortal(
     <>
-      {/* Full-screen backdrop — always visible */}
+      {/* Full-screen backdrop — only provides overlay when no spotlight is active.
+          When spotlight is active, its box-shadow covers everything outside the cutout,
+          so we make the backdrop transparent to avoid double-darkening & flicker. */}
       <div
         style={{
           position: "fixed",
           inset: 0,
           zIndex: 9998,
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: hasSpotlight
+            ? "transparent"
+            : `rgba(0,0,0,${OVERLAY_OPACITY})`,
+          transition: "background-color 300ms ease",
         }}
         onClick={onSkip}
       />
@@ -195,20 +228,21 @@ export function WalkthroughOverlay({
         <div style={spotlightStyle} />
       )}
 
-      {/* Tooltip card — starts centered via CSS, then repositioned by effect */}
+      {/* Tooltip card — hidden until positioned to prevent flash */}
       <div
         ref={tooltipRef}
         role="dialog"
         aria-label="Walkthrough"
         style={{
           position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
+          top: 0,
+          left: 0,
           zIndex: 10000,
           width: "min(360px, calc(100vw - 32px))",
+          opacity: positioned ? 1 : 0,
+          transition: "opacity 150ms ease",
         }}
-        className="bg-surface rounded-2xl border border-border shadow-xl animate-fade-in"
+        className="bg-surface rounded-2xl border border-border shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Pokemon guide + content */}
