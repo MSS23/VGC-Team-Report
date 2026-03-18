@@ -71,9 +71,9 @@ export function TeamOverview({
       {isReadOnly ? (
         (hasTournamentInfo || rentalCode || hasCreatorInfo) && (
           <div className="flex flex-col gap-2 px-1">
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               {tournamentName && (
-                <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
+                <h2 className="text-lg sm:text-2xl font-extrabold text-text-primary tracking-tight">
                   {tournamentName}
                 </h2>
               )}
@@ -85,21 +85,21 @@ export function TeamOverview({
               {record && (
                 <span className="text-sm text-text-secondary font-semibold">({record})</span>
               )}
-              {rentalCode && (
-                <button
-                  onClick={copyRentalCode}
-                  className="flex items-center gap-2 ml-auto px-3 py-1.5 bg-surface border-2 border-border rounded-lg hover:bg-surface-alt hover:border-accent/30 transition-all"
-                  title="Copy rental code"
-                >
-                  <span className="text-sm font-[family-name:var(--font-mono)] font-extrabold text-text-primary tracking-widest">
-                    {rentalCode}
-                  </span>
-                  <span className="text-xs font-semibold text-text-tertiary">
-                    {rentalCopied ? t.copied : t.copy}
-                  </span>
-                </button>
-              )}
             </div>
+            {rentalCode && (
+              <button
+                onClick={copyRentalCode}
+                className="flex items-center gap-2 self-start px-3 py-1.5 bg-surface border-2 border-border rounded-lg hover:bg-surface-alt hover:border-accent/30 transition-all"
+                title="Copy rental code"
+              >
+                <span className="text-sm font-[family-name:var(--font-mono)] font-extrabold text-text-primary tracking-widest">
+                  {rentalCode}
+                </span>
+                <span className="text-xs font-semibold text-text-tertiary">
+                  {rentalCopied ? t.copied : t.copy}
+                </span>
+              </button>
+            )}
             {creatorName && (
               <p className="text-sm text-text-secondary font-medium">
                 {t.by} <span className="text-text-primary font-bold">{creatorName}</span>
@@ -112,44 +112,44 @@ export function TeamOverview({
           <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-3" data-walkthrough="tournament-info">
             {t.tournamentInfo}
           </h3>
-          <div className="flex flex-wrap gap-2 sm:gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
             <input
               type="text"
               value={tournamentName ?? ""}
               onChange={(e) => onTournamentNameChange?.(e.target.value)}
               placeholder={t.eventNamePlaceholder}
-              className="flex-1 min-w-[150px] sm:min-w-[180px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+              className="w-full sm:flex-1 sm:min-w-[180px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             />
-            <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3 sm:w-auto">
               <input
                 type="text"
                 value={placement ?? ""}
                 onChange={(e) => onPlacementChange?.(e.target.value)}
                 placeholder={t.placementPlaceholder}
-                className="flex-1 sm:flex-none sm:w-[140px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+                className="w-full sm:w-[140px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
               />
               <input
                 type="text"
                 value={record ?? ""}
                 onChange={(e) => onRecordChange?.(e.target.value)}
                 placeholder={t.recordPlaceholder}
-                className="flex-1 sm:flex-none sm:w-[120px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
-              />
-              <input
-                type="text"
-                value={rentalCode ?? ""}
-                onChange={(e) => onRentalCodeChange?.(e.target.value.toUpperCase())}
-                placeholder={t.rentalPlaceholder}
-                maxLength={20}
-                className="flex-1 sm:flex-none sm:w-[160px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm font-[family-name:var(--font-mono)] font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-widest"
+                className="w-full sm:w-[120px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
               />
             </div>
+            <input
+              type="text"
+              value={rentalCode ?? ""}
+              onChange={(e) => onRentalCodeChange?.(e.target.value.toUpperCase())}
+              placeholder={t.rentalPlaceholder}
+              maxLength={20}
+              className="w-full sm:flex-none sm:w-[160px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm font-[family-name:var(--font-mono)] font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-widest"
+            />
             <input
               type="text"
               value={creatorName ?? ""}
               onChange={(e) => onCreatorNameChange?.(e.target.value)}
               placeholder={t.creatorNamePlaceholder}
-              className="flex-1 min-w-[150px] sm:min-w-[200px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+              className="w-full sm:flex-1 sm:min-w-[200px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             />
           </div>
         </div>
