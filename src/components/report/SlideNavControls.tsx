@@ -71,7 +71,7 @@ export function SlideNavControls({
         {/* Center: Dots + label on one row */}
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 justify-center overflow-hidden">
           {/* Dots -- scrollable on mobile when many slides */}
-          <div className="flex items-center gap-1.5 sm:gap-1 overflow-x-auto max-w-[55vw] sm:max-w-none flex-shrink scrollbar-none">
+          <div className="flex items-center gap-1.5 sm:gap-1 overflow-x-auto max-w-[45vw] sm:max-w-none flex-shrink scrollbar-none">
             {Array.from({ length: totalSlides }, (_, i) => {
               const isHidden = hiddenStates?.[i] ?? false;
               const isCurrent = i === currentSlide;
@@ -145,7 +145,7 @@ export function SlideNavControls({
           <button
             type="button"
             onClick={onStartTour}
-            className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
+            className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
             aria-label={t.takeATour}
             title={t.takeATour}
           >
