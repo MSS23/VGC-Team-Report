@@ -202,8 +202,8 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               return (
                 <div key={stat} className="flex items-center gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${ev > 0 ? `, ${ev} EVs` : ""}${isBoosted ? `, boosted by item` : ""}`}>
                   <span className="text-xs font-bold w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-px">
-                    {natureData?.plus === stat && <span className="text-[9px]" aria-label="boosted by nature">{"\u25B2"}</span>}
-                    {natureData?.minus === stat && <span className="text-[9px]" aria-label="reduced by nature">{"\u25BC"}</span>}
+                    {natureData?.plus === stat && <span className="text-[11px]" aria-label="boosted by nature">{"\u25B2"}</span>}
+                    {natureData?.minus === stat && <span className="text-[11px]" aria-label="reduced by nature">{"\u25BC"}</span>}
                     {labels[stat]}
                   </span>
                   <div className="flex-1 h-2.5 bg-surface-alt rounded-full overflow-hidden creator:h-3" role="progressbar" aria-valuenow={displayValue} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${labels[stat]} stat bar`}>

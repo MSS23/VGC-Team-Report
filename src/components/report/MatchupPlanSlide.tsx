@@ -142,7 +142,7 @@ export function MatchupPlanSlide({
                   <PokemonSprite species={mon.parsed.species} size={72} className="hidden sm:block" />
                 </div>
                 {/* Name */}
-                <span className="text-xs sm:text-base font-bold text-text-primary truncate w-full leading-tight">
+                <span className="text-sm sm:text-base font-bold text-text-primary truncate w-full leading-tight">
                   {mon.parsed.species}
                 </span>
                 {/* Types */}
@@ -388,7 +388,7 @@ function GamePlanSection({
               {/* Lead indicators */}
               {gamePlan.bring.slice(0, 2).some((idx) => idx !== null) && (
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-blue-400/70">L</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400/70">L</span>
                   {([0, 1] as const).map((i) => {
                     const idx = gamePlan.bring[i];
                     return idx !== null && yourPokemon[idx] ? (
@@ -400,7 +400,7 @@ function GamePlanSection({
               {/* Back indicators */}
               {gamePlan.bring.slice(2, 4).some((idx) => idx !== null) && (
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400/70">B</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/70">B</span>
                   {([2, 3] as const).map((i) => {
                     const idx = gamePlan.bring[i];
                     return idx !== null && yourPokemon[idx] ? (
@@ -510,7 +510,7 @@ function GamePlanSection({
                   Notes
                 </span>
                 {isReadOnly ? (
-                  <div className="w-full min-h-[4rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:tracking-wide">
+                  <div className="w-full min-h-[7rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:tracking-wide">
                     {gamePlan.notes || "No notes."}
                   </div>
                 ) : (
@@ -518,7 +518,7 @@ function GamePlanSection({
                     value={gamePlan.notes}
                     onChange={(e) => onNotesChange(e.target.value)}
                     placeholder="Why are you bringing these four? What's the win condition?"
-                    className="w-full min-h-[4rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+                    className="w-full min-h-[7rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
                     spellCheck={false}
                   />
                 )}
@@ -587,7 +587,7 @@ function GamePlanSection({
                           }
                         }}
                         placeholder="Paste replay URL..."
-                        className="flex-1 min-w-0 px-3 py-1.5 bg-surface-alt border border-border-subtle rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+                        className="flex-1 min-w-0 px-3 py-2.5 bg-surface-alt border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
                       />
                       <button
                         type="button"
@@ -597,7 +597,7 @@ function GamePlanSection({
                             setReplayInput("");
                           }
                         }}
-                        className="px-3 py-1.5 bg-accent/10 text-accent text-xs font-medium rounded-lg hover:bg-accent/20 transition-colors flex-shrink-0"
+                        className="px-4 py-2.5 bg-accent/10 text-accent text-sm font-semibold rounded-lg hover:bg-accent/20 transition-colors flex-shrink-0 min-h-[44px]"
                       >
                         Add
                       </button>

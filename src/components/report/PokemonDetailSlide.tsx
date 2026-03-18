@@ -362,11 +362,11 @@ export function PokemonDetailSlide({
       {/* Left Column: Pokemon Info */}
       <div className="flex flex-col gap-4 sm:gap-6">
         {/* Header: Sprite + Name + Types */}
-        <div className="flex items-start gap-3 sm:gap-6">
+        <div className="flex items-start gap-4 sm:gap-6">
           <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
             <PokemonSprite
               species={parsed.species}
-              size={isPresentationMode ? 140 : 96}
+              size={isPresentationMode ? 140 : 104}
               className="sm:hidden"
               animated={animated}
               shiny={shiny}
@@ -479,8 +479,8 @@ export function PokemonDetailSlide({
                   return (
                     <div key={stat} className="flex items-center gap-2">
                       <span className="text-xs font-bold w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5">
-                        {natureData?.plus === stat && <span className="text-[10px]">{"\u25B2"}</span>}
-                        {natureData?.minus === stat && <span className="text-[10px]">{"\u25BC"}</span>}
+                        {natureData?.plus === stat && <span className="text-[11px]">{"\u25B2"}</span>}
+                        {natureData?.minus === stat && <span className="text-[11px]">{"\u25BC"}</span>}
                         {statLabels[stat]}
                       </span>
                       <div className="flex-1 h-2.5 sm:h-3 bg-surface-alt rounded-full overflow-hidden">
@@ -499,12 +499,12 @@ export function PokemonDetailSlide({
                       </span>
                       <div className="flex items-center gap-1 w-16">
                         {ev > 0 ? (
-                          <span className="text-[10px] sm:text-xs text-accent font-bold">
+                          <span className="text-xs text-accent font-bold">
                             +{ev}
                           </span>
                         ) : null}
                         {hasNonDefaultIv && (
-                          <span className="text-[10px] sm:text-xs text-text-tertiary font-semibold" title={`${iv} IV`}>
+                          <span className="text-xs text-text-tertiary font-semibold" title={`${iv} IV`}>
                             {iv}iv
                           </span>
                         )}
@@ -526,7 +526,7 @@ export function PokemonDetailSlide({
             {isPresentationMode ? t.notes : isReadOnly ? t.aboutThisPokemon : t.yourExplanation}
           </h3>
           {isReadOnly ? (
-            <div className={`w-full bg-surface border border-border rounded-xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed presenting:bg-surface-alt presenting:border-border-subtle ${isPresentationMode ? "p-3 sm:p-4" : "min-h-[3rem] sm:min-h-[10rem] p-3 sm:p-6"}`}>
+            <div className={`w-full bg-surface border border-border rounded-xl text-sm sm:text-base text-text-primary whitespace-pre-wrap leading-relaxed presenting:bg-surface-alt presenting:border-border-subtle ${isPresentationMode ? "p-3 sm:p-4" : "min-h-[6rem] sm:min-h-[10rem] p-3 sm:p-6"}`}>
               {note || t.noNotesYet}
             </div>
           ) : (
@@ -534,7 +534,7 @@ export function PokemonDetailSlide({
               value={note}
               onChange={(e) => onNoteChange(e.target.value)}
               placeholder={t.notesPlaceholder.replace("{species}", parsed.species)}
-              className="w-full min-h-[3rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface border-2 border-border rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+              className="w-full min-h-[6rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface border-2 border-border rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
               spellCheck={false}
             />
           )}

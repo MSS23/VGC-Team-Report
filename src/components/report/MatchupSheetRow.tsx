@@ -55,14 +55,14 @@ export function MatchupSheetRow({
         {/* Opponent info */}
         <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4">
           <span
-            className="text-sm sm:text-lg font-semibold text-text-primary truncate max-w-[120px] sm:max-w-[280px]"
+            className="text-sm sm:text-lg font-semibold text-text-primary truncate max-w-[160px] sm:max-w-[280px]"
             title={plan.opponentLabel}
           >
             {plan.opponentLabel}
           </span>
 
           {/* Opponent sprites */}
-          <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto max-w-full sm:max-w-none scroll-smooth-touch">
+          <div className="flex items-center gap-1 sm:gap-1 overflow-x-auto max-w-full sm:max-w-none scroll-smooth-touch scrollbar-none">
             {opponentPokemon.map((species, i) => (
               <div key={i} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center flex-shrink-0">
                 <PokemonSprite species={species} size={26} className="sm:hidden" />
@@ -79,7 +79,7 @@ export function MatchupSheetRow({
               {/* Lead preview */}
               {leadPreview.length > 0 && (
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-blue-400/70 mr-0.5 hidden sm:inline">L</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400/70 mr-0.5 hidden sm:inline">L</span>
                   {leadPreview.map((species, i) => (
                     <PokemonSprite key={i} species={species} size={18} className="sm:hidden" />
                   ))}
@@ -91,7 +91,7 @@ export function MatchupSheetRow({
               {/* Back preview */}
               {backPreview.length > 0 && (
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400/70 mr-0.5 hidden sm:inline">B</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/70 mr-0.5 hidden sm:inline">B</span>
                   {backPreview.map((species, i) => (
                     <PokemonSprite key={i} species={species} size={18} className="sm:hidden" />
                   ))}
@@ -112,7 +112,7 @@ export function MatchupSheetRow({
             <button
               type="button"
               onClick={onRemove}
-              className="text-text-tertiary hover:text-red-400 p-1.5 rounded-lg hover:bg-red-400/10 transition-colors flex-shrink-0"
+              className="text-text-tertiary hover:text-red-400 p-2.5 rounded-lg hover:bg-red-400/10 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
               title="Remove matchup"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

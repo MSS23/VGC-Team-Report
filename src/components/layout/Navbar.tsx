@@ -152,7 +152,7 @@ export function Navbar(props: NavbarProps) {
         {/* Mobile slide counter (non-presentation) */}
         {!isPresentationStyle && (
           <div className="md:hidden flex items-center gap-1.5 min-w-0 overflow-hidden flex-shrink">
-            <span className="text-xs text-text-primary font-semibold truncate max-w-[100px]">
+            <span className="text-xs text-text-primary font-semibold truncate max-w-[130px]">
               {slideLabels[currentSlide]}
             </span>
             <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">

@@ -85,7 +85,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             return (
               <div key={entry.speciesKey} className="flex items-center gap-1.5 sm:gap-3">
                 {/* Name column -- fixed width */}
-                <div className="flex items-center gap-1.5 sm:gap-2 w-[5.5rem] sm:w-40 lg:w-48 flex-shrink-0 min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 w-[6.5rem] sm:w-40 lg:w-48 flex-shrink-0 min-w-0">
                   <PokemonSprite
                     species={entry.species}
                     size={isPresentationMode ? 36 : 24}
@@ -135,7 +135,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                   </div>
 
                   {/* Speed value -- fixed width to prevent overlap */}
-                  <div className="w-14 sm:w-24 lg:w-28 flex-shrink-0 text-right">
+                  <div className="w-16 sm:w-24 lg:w-28 flex-shrink-0 text-right">
                     <span className={`text-xs sm:text-sm lg:text-base font-[family-name:var(--font-mono)] font-extrabold tabular-nums ${
                       entry.hasSpeedBoost ? "text-amber-500" : "text-text-primary"
                     }`}>

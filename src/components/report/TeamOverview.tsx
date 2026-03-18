@@ -208,7 +208,7 @@ export function TeamOverview({
 
       {/* App trademark */}
       <div className="text-center pt-4 border-t border-border-subtle">
-        <p className="text-[10px] sm:text-xs text-text-tertiary/60 font-medium">
+        <p className="text-xs text-text-tertiary/60 font-medium">
           {t.builtWith}{" "}
           <a
             href="https://x.com/Manny64Official"

@@ -71,7 +71,7 @@ export function SlideNavControls({
         {/* Center: Dots + label on one row */}
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 justify-center overflow-hidden">
           {/* Dots -- scrollable on mobile when many slides */}
-          <div className="flex items-center gap-1 sm:gap-1 overflow-x-auto max-w-[50vw] sm:max-w-none flex-shrink scrollbar-none">
+          <div className="flex items-center gap-1.5 sm:gap-1 overflow-x-auto max-w-[55vw] sm:max-w-none flex-shrink scrollbar-none">
             {Array.from({ length: totalSlides }, (_, i) => {
               const isHidden = hiddenStates?.[i] ?? false;
               const isCurrent = i === currentSlide;
@@ -84,11 +84,11 @@ export function SlideNavControls({
                   className={`rounded-full transition-all duration-300 flex-shrink-0 ${
                     isCurrent
                       ? isHidden
-                        ? "w-4 sm:w-3.5 h-2.5 sm:h-2.5 bg-amber-400/70 shadow-sm shadow-amber-400/30 ring-1 ring-amber-400/40"
-                        : "w-4 sm:w-3.5 h-2.5 sm:h-2.5 bg-accent shadow-sm shadow-accent/40"
+                        ? "w-5 sm:w-3.5 h-3 sm:h-2.5 bg-amber-400/70 shadow-sm shadow-amber-400/30 ring-1 ring-amber-400/40"
+                        : "w-5 sm:w-3.5 h-3 sm:h-2.5 bg-accent shadow-sm shadow-accent/40"
                       : isHidden
-                        ? "w-2 sm:w-2 h-2 sm:h-2 bg-amber-400/30 hover:bg-amber-400/50"
-                        : "w-2 sm:w-2 h-2 sm:h-2 bg-border hover:bg-text-tertiary hover:scale-125"
+                        ? "w-2.5 sm:w-2 h-2.5 sm:h-2 bg-amber-400/30 hover:bg-amber-400/50"
+                        : "w-2.5 sm:w-2 h-2.5 sm:h-2 bg-border hover:bg-text-tertiary hover:scale-125"
                   }`}
                 />
               );
@@ -145,7 +145,7 @@ export function SlideNavControls({
           <button
             type="button"
             onClick={onStartTour}
-            className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
+            className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
             aria-label={t.takeATour}
             title={t.takeATour}
           >
