@@ -28,7 +28,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     const baseSpe = mon.calculatedStats.spe;
     const hasSpeedBoost = mon.itemBoost?.stat === "spe";
     const boostedSpe = hasSpeedBoost ? mon.itemBoost!.boostedValue : baseSpe;
-    const tailwindSpe = baseSpe * 2;
+    const tailwindSpe = boostedSpe * 2;
 
     // Determine the label for the speed boost source
     let speedBoostLabel = "";

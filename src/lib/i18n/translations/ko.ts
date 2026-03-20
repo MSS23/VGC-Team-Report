@@ -75,7 +75,7 @@ const ko: TranslationKeys = {
   base: "기본",
   itemBoosted: "아이템 보정",
   benchmarks: "기준값",
-  tailwindDoublesBase: "순풍으로 기본 스피드 2배",
+  tailwindDoublesBase: "순풍으로 스피드 2배",
 
   matchupSheet: "매치업 시트",
   matchup: "매치업",

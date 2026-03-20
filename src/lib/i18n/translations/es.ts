@@ -75,7 +75,7 @@ const es: TranslationKeys = {
   base: "Base",
   itemBoosted: "Potenciado por objeto",
   benchmarks: "Referencias",
-  tailwindDoublesBase: "Tailwind duplica la velocidad base",
+  tailwindDoublesBase: "Tailwind duplica la velocidad",
 
   matchupSheet: "Hoja de enfrentamientos",
   matchup: "enfrentamiento",

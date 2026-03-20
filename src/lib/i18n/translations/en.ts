@@ -80,7 +80,7 @@ const en = {
   base: "Base",
   itemBoosted: "Item boosted",
   benchmarks: "Benchmarks",
-  tailwindDoublesBase: "Tailwind doubles base speed",
+  tailwindDoublesBase: "Tailwind doubles speed",
 
   // Matchup Sheet
   matchupSheet: "Matchup Sheet",

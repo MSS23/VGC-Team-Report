@@ -75,7 +75,7 @@ const fr: TranslationKeys = {
   base: "Base",
   itemBoosted: "Booste par objet",
   benchmarks: "Reperes",
-  tailwindDoublesBase: "Vent Arriere double la vitesse de base",
+  tailwindDoublesBase: "Vent Arriere double la vitesse",
 
   matchupSheet: "Feuille de matchups",
   matchup: "matchup",

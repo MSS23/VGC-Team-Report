@@ -75,7 +75,7 @@ const zh: TranslationKeys = {
   base: "基础",
   itemBoosted: "道具加成",
   benchmarks: "基准值",
-  tailwindDoublesBase: "顺风使基础速度翻倍",
+  tailwindDoublesBase: "顺风使速度翻倍",
 
   matchupSheet: "对战表",
   matchup: "对战",

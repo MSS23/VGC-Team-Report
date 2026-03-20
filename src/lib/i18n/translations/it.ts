@@ -75,7 +75,7 @@ const it: TranslationKeys = {
   base: "Base",
   itemBoosted: "Potenziato da strumento",
   benchmarks: "Riferimenti",
-  tailwindDoublesBase: "Tailwind raddoppia la velocita base",
+  tailwindDoublesBase: "Tailwind raddoppia la velocita",
 
   matchupSheet: "Foglio matchup",
   matchup: "matchup",
