@@ -66,7 +66,7 @@ export function TeamOverview({
   };
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
+    <div className="flex flex-col gap-4 sm:gap-8 animate-fade-in">
       {/* Tournament Context */}
       {isReadOnly ? (
         (hasTournamentInfo || rentalCode || hasCreatorInfo) && (
@@ -112,44 +112,44 @@ export function TeamOverview({
           <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-3" data-walkthrough="tournament-info">
             {t.tournamentInfo}
           </h3>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-3">
             <input
               type="text"
               value={tournamentName ?? ""}
               onChange={(e) => onTournamentNameChange?.(e.target.value)}
               placeholder={t.eventNamePlaceholder}
-              className="w-full sm:flex-1 sm:min-w-[180px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+              className="w-full sm:flex-1 sm:min-w-[180px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             />
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3 sm:w-auto">
+            <div className="grid grid-cols-3 gap-1.5 sm:flex sm:gap-3 sm:w-auto">
               <input
                 type="text"
                 value={placement ?? ""}
                 onChange={(e) => onPlacementChange?.(e.target.value)}
                 placeholder={t.placementPlaceholder}
-                className="w-full sm:w-[140px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+                className="w-full sm:w-[140px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
               />
               <input
                 type="text"
                 value={record ?? ""}
                 onChange={(e) => onRecordChange?.(e.target.value)}
                 placeholder={t.recordPlaceholder}
-                className="w-full sm:w-[120px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+                className="w-full sm:w-[120px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+              />
+              <input
+                type="text"
+                value={rentalCode ?? ""}
+                onChange={(e) => onRentalCodeChange?.(e.target.value.toUpperCase())}
+                placeholder={t.rentalPlaceholder}
+                maxLength={20}
+                className="w-full sm:flex-none sm:w-[160px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm font-[family-name:var(--font-mono)] font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-widest"
               />
             </div>
-            <input
-              type="text"
-              value={rentalCode ?? ""}
-              onChange={(e) => onRentalCodeChange?.(e.target.value.toUpperCase())}
-              placeholder={t.rentalPlaceholder}
-              maxLength={20}
-              className="w-full sm:flex-none sm:w-[160px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm font-[family-name:var(--font-mono)] font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-widest"
-            />
             <input
               type="text"
               value={creatorName ?? ""}
               onChange={(e) => onCreatorNameChange?.(e.target.value)}
               placeholder={t.creatorNamePlaceholder}
-              className="w-full sm:flex-1 sm:min-w-[200px] px-3 sm:px-4 py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+              className="w-full sm:flex-1 sm:min-w-[200px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             />
           </div>
         </div>
@@ -157,7 +157,7 @@ export function TeamOverview({
 
       {/* Team Summary */}
       <div>
-        <h3 className="text-sm font-extrabold uppercase tracking-widest text-text-tertiary mb-3 presenting:text-base presenting:mb-4" data-walkthrough="team-summary">
+        <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3 presenting:text-base presenting:mb-4" data-walkthrough="team-summary">
           {t.teamSummary}
         </h3>
         {isReadOnly ? (
@@ -175,17 +175,17 @@ export function TeamOverview({
             value={summary}
             onChange={(e) => onSummaryChange(e.target.value)}
             placeholder={t.teamSummaryPlaceholder}
-            className="w-full min-h-[8rem] p-5 sm:p-6 bg-surface border-2 border-border rounded-xl text-base sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+            className="w-full min-h-[4rem] sm:min-h-[8rem] p-3 sm:p-6 bg-surface border-2 border-border rounded-xl text-sm sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
             spellCheck={false}
           />
         )}
       </div>
 
       {/* Pokemon Grid */}
-      <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-3 sm:gap-4 creator:gap-6 ${
+      <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-2 sm:gap-4 creator:gap-6 ${
         creatorMode
-          ? "grid-cols-1 md:grid-cols-2"
-          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          ? "grid-cols-2 md:grid-cols-2"
+          : "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3"
       }`}>
         {pokemon.map((mon, i) => {
           const sc = getSpriteConfig?.(speciesKeys[i]);

@@ -542,10 +542,10 @@ function HomeContent() {
 
       {/* Report content */}
       <div
-        className={`max-w-7xl mx-auto pb-24 sm:pb-20 slide-content ${
+        className={`max-w-7xl mx-auto pb-20 sm:pb-20 slide-content ${
           isPresentationStyle
-            ? "px-3 sm:px-8 py-3 sm:py-6"
-            : "px-3 sm:px-4 py-3 sm:py-6 creator:px-8 creator:py-8"
+            ? "px-3 sm:px-8 py-2 sm:py-6"
+            : "px-2 sm:px-4 py-2 sm:py-6 creator:px-8 creator:py-8"
         }`}
         key={physicalSlide}
         style={{ viewTransitionName: "slide" }}
