@@ -29,6 +29,8 @@ const en = {
   saving: "Saving...",
   savedBang: "Saved!",
   reshare: "Re-share",
+  exportTeam: "Export",
+  exportCopied: "Copied!",
   editLink: "Edit Link",
   present: "Present",
   exit: "Exit",

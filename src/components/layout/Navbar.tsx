@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
@@ -48,8 +49,10 @@ interface NavbarProps {
   editLinkCopied: boolean;
   onCopyEditLink: () => void;
 
+  // Export
+  onExportTeam?: () => void;
+
   // Actions
-  onStartTour: () => void;
   onShowShortcuts: (v: boolean) => void;
   onSetCreatorMode: (v: boolean) => void;
   onSetPresentationMode: (v: boolean) => void;
@@ -68,11 +71,13 @@ export function Navbar(props: NavbarProps) {
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare,
     hasExistingShare, editLinkCopied, onCopyEditLink,
+    onExportTeam,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
     onReset, onExitSharedView,
   } = props;
 
   const { t } = useTranslation();
+  const [exportCopied, setExportCopied] = useState(false);
 
   const isLocalDraft = !isSharedView && !isPresentationStyle;
 
@@ -163,6 +168,28 @@ export function Navbar(props: NavbarProps) {
 
         {/* -- Right: actions -- */}
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+
+          {/* Export */}
+          {onExportTeam && !isPresentationStyle && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                onExportTeam();
+                setExportCopied(true);
+                setTimeout(() => setExportCopied(false), 2000);
+              }}
+              title={t.exportTeam}
+              aria-label={t.exportTeam}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span className="hidden sm:inline">{exportCopied ? t.exportCopied : t.exportTeam}</span>
+            </Button>
+          )}
 
           {/* Share / Re-share */}
           {isLocalDraft && (

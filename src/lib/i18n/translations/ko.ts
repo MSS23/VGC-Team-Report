@@ -28,6 +28,8 @@ const ko: TranslationKeys = {
   saving: "저장 중...",
   savedBang: "저장됨!",
   reshare: "다시 공유",
+  exportTeam: "내보내기",
+  exportCopied: "복사됨!",
   editLink: "편집 링크",
   present: "발표",
   exit: "종료",

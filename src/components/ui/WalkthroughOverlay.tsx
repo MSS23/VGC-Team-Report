@@ -45,13 +45,9 @@ export function WalkthroughOverlay({
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
   const [positioned, setPositioned] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const prevStepRef = useRef(stepIndex);
   const isVirtual = step.target === null;
   const isLastStep = stepIndex === totalSteps - 1;
-
-  // Reset positioned flag when step changes so tooltip hides until repositioned
-  useEffect(() => {
-    setPositioned(false);
-  }, [stepIndex]);
 
   useEffect(() => {
     setMounted(true);
@@ -68,9 +64,17 @@ export function WalkthroughOverlay({
     document.addEventListener("touchmove", block, { passive: false });
 
     return () => {
+      // Restore scrolling — always clean up even if component errors
       style.overflow = prevOverflow;
       document.removeEventListener("wheel", block);
       document.removeEventListener("touchmove", block);
+    };
+  }, []);
+
+  // Safety: if the component unmounts for any reason, ensure body scroll is restored
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = "";
     };
   }, []);
 
@@ -122,11 +126,21 @@ export function WalkthroughOverlay({
     return () => window.removeEventListener("keydown", handleKey);
   }, [onNext, onSkip]);
 
-  // Position the tooltip synchronously before paint to prevent flicker
+  // Position the tooltip synchronously before paint to prevent flicker.
+  // Also handles step-change resets — if stepIndex changed, we hide the tooltip
+  // first (opacity 0), then reposition and reveal, all before the browser paints.
   useIsomorphicLayoutEffect(() => {
     if (!mounted) return;
     const tt = tooltipRef.current;
     if (!tt) return;
+
+    // If step changed, immediately hide tooltip before repositioning
+    const stepChanged = prevStepRef.current !== stepIndex;
+    if (stepChanged) {
+      prevStepRef.current = stepIndex;
+      setPositioned(false);
+      tt.style.opacity = "0";
+    }
 
     const position = () => {
       tt.style.transform = "none";
@@ -173,7 +187,13 @@ export function WalkthroughOverlay({
       setPositioned(true);
     };
 
-    // Position synchronously on layout to avoid flash
+    // If step changed, wait a frame for the new slide to render before positioning
+    if (stepChanged) {
+      const raf = requestAnimationFrame(() => position());
+      return () => cancelAnimationFrame(raf);
+    }
+
+    // Otherwise position synchronously on layout
     position();
 
     // Reposition when mobile browser chrome shows/hides
@@ -256,11 +276,23 @@ export function WalkthroughOverlay({
           opacity: positioned ? 1 : 0,
           transition: "opacity 150ms ease",
         }}
-        className="bg-surface rounded-2xl border border-border shadow-xl"
+        className="relative bg-surface rounded-2xl border border-border shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close button */}
+        <button
+          onClick={onSkip}
+          aria-label="Close walkthrough"
+          className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer z-10"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
         {/* Pokemon guide + content */}
-        <div className="p-5">
+        <div className="p-5 pr-10">
           <div className="flex items-start gap-3">
             {/* Pokemon guide sprite */}
             {guidePokemon && guidePokemon !== "your Pokemon" && (

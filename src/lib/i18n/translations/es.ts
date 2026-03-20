@@ -28,6 +28,8 @@ const es: TranslationKeys = {
   saving: "Guardando...",
   savedBang: "Guardado!",
   reshare: "Compartir de nuevo",
+  exportTeam: "Exportar",
+  exportCopied: "¡Copiado!",
   editLink: "Enlace de edicion",
   present: "Presentar",
   exit: "Salir",

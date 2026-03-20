@@ -10,6 +10,7 @@ import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { NATURES } from "@/lib/data/natures";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
+import { getRelevantStats } from "@/lib/utils/stat-relevance";
 
 interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;
@@ -307,6 +308,7 @@ export function PokemonDetailSlide({
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
   const natureData = NATURES[parsed.nature];
+  const relevantStats = getRelevantStats(parsed);
   const statLabels = {
     hp: "HP",
     atk: "Atk",
@@ -462,10 +464,10 @@ export function PokemonDetailSlide({
         {data && (
           <div>
             <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-2">
-              {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70">({parsed.nature}{natureData?.plus ? ` +${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.plus]}` : ""}{natureData?.minus ? ` -${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.minus]}` : ""})</span>
+              {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70">({parsed.nature})</span>
             </h3>
             <div className="space-y-1 sm:space-y-1.5 stagger-stats">
-              {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map(
+              {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map(
                 (stat) => {
                   const value = calculatedStats[stat];
                   const ev = parsed.evs[stat];

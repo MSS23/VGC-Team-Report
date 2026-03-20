@@ -22,6 +22,7 @@ import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
 import { Navbar } from "@/components/layout/Navbar";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 import type { SpriteConfig } from "@/lib/types/sprites";
+import { teamToShowdown } from "@/lib/utils/export-paste";
 
 export default function Home() {
   return (
@@ -219,7 +220,7 @@ function HomeContent() {
     pokemonNames,
     goToSlide,
     pokemonCount: analysis?.pokemon.length ?? 0,
-    totalSlides,
+    totalPhysicalSlides: allSlideKeys.length,
     isSharedView,
     physicalToVirtual: useCallback((physical: number) => {
       const idx = visibleIndices.indexOf(physical);
@@ -395,6 +396,13 @@ function HomeContent() {
     };
   }, [analysis, isEditingUnlocked, buildShareState, autoSave]);
 
+  // Export team as Showdown paste to clipboard
+  const handleExportTeam = useCallback(() => {
+    if (!analysis) return;
+    const pasteText = teamToShowdown(analysis.pokemon.map((p) => p.parsed));
+    navigator.clipboard.writeText(pasteText);
+  }, [analysis]);
+
   const shareButtonText =
     shareStatus === "copying"
       ? t.copying
@@ -518,7 +526,7 @@ function HomeContent() {
         hasExistingShare={hasExistingShare()}
         editLinkCopied={editLinkCopied}
         onCopyEditLink={handleCopyEditLink}
-        onStartTour={startWalkthrough}
+        onExportTeam={analysis ? handleExportTeam : undefined}
         onShowShortcuts={setShowShortcutHint}
         onSetCreatorMode={setCreatorMode}
         onSetPresentationMode={setPresentationMode}

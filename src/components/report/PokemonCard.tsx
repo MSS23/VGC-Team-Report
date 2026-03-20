@@ -8,6 +8,7 @@ import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { NATURES } from "@/lib/data/natures";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
+import { getRelevantStats } from "@/lib/utils/stat-relevance";
 
 interface PokemonCardProps {
   pokemon: AnalyzedPokemon;
@@ -37,6 +38,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const spriteSizeSm = creatorMode ? 56 : 48;
   const spriteSizeLg = creatorMode ? 120 : 104;
   const natureData = NATURES[parsed.nature];
+  const relevantStats = getRelevantStats(parsed);
 
   // Non-default IVs (not 31)
   const nonDefaultIvs = (["hp", "atk", "def", "spa", "spd", "spe"] as const).filter(
@@ -187,10 +189,10 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
       {data && (
         <div>
           <h4 className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-1 sm:mb-1.5 creator:mb-2">
-            {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70 hidden sm:inline">({parsed.nature}{natureData?.plus ? ` +${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.plus]}` : ""}{natureData?.minus ? ` -${({ atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as Record<string, string>)[natureData.minus]}` : ""})</span>
+            {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70 hidden sm:inline">({parsed.nature})</span>
           </h4>
           <div className="space-y-1 sm:space-y-1.5 stagger-stats" role="list" aria-label={`${parsed.species} stats`}>
-            {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map((stat) => {
+            {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map((stat) => {
               const value = calculatedStats[stat];
               const ev = parsed.evs[stat];
               const isBoosted = itemBoost?.stat === stat;

@@ -166,13 +166,14 @@ interface UseWalkthroughOptions {
   pokemonNames?: string[];
   goToSlide?: (index: number) => void;
   pokemonCount?: number;
-  totalSlides?: number;
+  /** Total number of physical slides (including hidden ones). Used to resolve matchup-sheet index. */
+  totalPhysicalSlides?: number;
   isSharedView?: boolean;
   /** Maps physical slide index → virtual index (for hidden slide support). If not provided, assumes 1:1 mapping. */
   physicalToVirtual?: (physicalIndex: number) => number | null;
 }
 
-export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount, totalSlides, isSharedView, physicalToVirtual }: UseWalkthroughOptions) {
+export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount, totalPhysicalSlides, isSharedView, physicalToVirtual }: UseWalkthroughOptions) {
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
@@ -186,8 +187,8 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
 
   const randomPokemonName = pokemonNames?.[randomPokemonIndex] ?? "your Pokemon";
 
-  // Targets that only exist in creator/owner mode
-  const CREATOR_ONLY_TARGETS = ["share-button", "creator-toggle"];
+  // Targets that only exist in creator/owner mode (input fields, not read-only views)
+  const CREATOR_ONLY_TARGETS = ["share-button", "creator-toggle", "tournament-info"];
 
   const filteredSteps = useMemo(() => {
     let steps = WALKTHROUGH_STEPS;
@@ -200,7 +201,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     return steps;
   }, [isSharedView]);
 
-  // Resolve the slide index for the current step
+  // Resolve the physical slide index for the current step
   const resolveSlide = useCallback(
     (step: WalkthroughStep): number | null => {
       if (step.slide === undefined || step.slide === null) return null;
@@ -209,12 +210,12 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
       if (step.slide === "pokemon") return 1 + randomPokemonIndex;
       if (step.slide === "speed") return count + 1;
       if (step.slide === "matchup-sheet") {
-        // Matchup sheet is always the last slide
-        return (totalSlides ?? count + 3) - 1;
+        // Matchup sheet is always the last physical slide
+        return (totalPhysicalSlides ?? count + 3) - 1;
       }
       return null;
     },
-    [pokemonCount, randomPokemonIndex]
+    [pokemonCount, randomPokemonIndex, totalPhysicalSlides]
   );
 
   // Check whether a step's target element exists in the DOM.
@@ -249,9 +250,9 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     if (!step || step.target === null) return; // virtual steps always valid
 
     let attempt = 0;
-    const MAX_ATTEMPTS = 6; // check at 100, 200, 400, 600, 800, 1000ms
-    let timer: ReturnType<typeof setTimeout>;
+    const MAX_ATTEMPTS = 4;
     let cancelled = false;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
 
     const check = () => {
       if (cancelled) return;
@@ -263,8 +264,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
       }
 
       if (attempt < MAX_ATTEMPTS) {
-        // Retry with increasing delay
-        timer = setTimeout(check, attempt < 2 ? 100 : 200);
+        timerId = setTimeout(check, 150);
         return;
       }
 
@@ -292,11 +292,11 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     };
 
     // Start first check after a short delay for the slide to render
-    timer = setTimeout(check, 100);
+    timerId = setTimeout(check, 100);
 
     return () => {
       cancelled = true;
-      clearTimeout(timer);
+      if (timerId !== null) clearTimeout(timerId);
     };
   }, [isActive, currentStepIndex, filteredSteps, isStepAvailable, goToSlide]);
 
