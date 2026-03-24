@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
+import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import "./globals.css";
 
 const sora = Sora({
@@ -34,11 +35,21 @@ export const metadata: Metadata = {
     description: "Build, share, and present professional VGC team reports",
   },
   icons: {
-    icon: { url: "/favicon.svg", type: "image/svg+xml" },
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
   },
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "VGC Report",
+  },
   other: {
     "theme-color": "#E11D48",
+    "mobile-web-app-capable": "yes",
   },
   robots: {
     index: true,
@@ -55,6 +66,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${sora.variable} ${jetbrainsMono.variable} antialiased`}>
         {children}
+        <InstallPrompt />
         <Analytics />
         <ServiceWorkerRegistration />
       </body>

@@ -1,6 +1,8 @@
-const CACHE_NAME = "vgc-team-report-v2";
+const CACHE_NAME = "vgc-team-report-v3";
+const SPRITE_CACHE = "vgc-sprites-v1";
+const SHARE_CACHE = "vgc-shares-v1";
 
-const PRECACHE_URLS = ["/", "/favicon.svg"];
+const PRECACHE_URLS = ["/", "/favicon.svg", "/icon-192.png"];
 
 const OFFLINE_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -63,7 +65,7 @@ const OFFLINE_HTML = `<!DOCTYPE html>
       </svg>
     </div>
     <h1>You're offline</h1>
-    <p>VGC Team Report needs an internet connection to load teams and shared reports. Please check your connection and try again.</p>
+    <p>VGC Team Report needs an internet connection to load teams and shared reports. Previously viewed teams may still be available.</p>
     <button onclick="window.location.reload()">Retry</button>
   </div>
 </body>
@@ -74,7 +76,6 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
       await cache.addAll(PRECACHE_URLS);
-      // Store offline fallback page
       await cache.put(
         new Request("/_offline"),
         new Response(OFFLINE_HTML, {
@@ -86,13 +87,14 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean up old caches
+// Activate: clean up old caches (keep sprite + share caches)
 self.addEventListener("activate", (event) => {
+  const keepCaches = [CACHE_NAME, SPRITE_CACHE, SHARE_CACHE];
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key !== CACHE_NAME)
+          .filter((key) => !keepCaches.includes(key))
           .map((key) => caches.delete(key))
       )
     )
@@ -104,13 +106,55 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET and cross-origin requests
-  if (request.method !== "GET" || url.origin !== self.location.origin) return;
+  // Skip non-GET requests
+  if (request.method !== "GET") return;
 
-  // API routes — network only (no caching)
+  // ── Pokemon sprites (cross-origin) ──
+  // Cache sprites from Showdown CDN so teams render offline
+  if (url.hostname === "play.pokemonshowdown.com" && url.pathname.includes("/sprites/")) {
+    event.respondWith(
+      caches.open(SPRITE_CACHE).then((cache) =>
+        cache.match(request).then((cached) => {
+          if (cached) return cached;
+          return fetch(request).then((response) => {
+            if (response.ok) {
+              cache.put(request, response.clone());
+            }
+            return response;
+          }).catch(() => new Response("", { status: 404 }));
+        })
+      )
+    );
+    return;
+  }
+
+  // Skip other cross-origin requests
+  if (url.origin !== self.location.origin) return;
+
+  // ── Share API data ──
+  // Cache share responses so previously viewed teams load offline
+  if (url.pathname.match(/^\/api\/share\/[A-Za-z0-9]{8}$/) && !url.searchParams.has("key")) {
+    event.respondWith(
+      caches.open(SHARE_CACHE).then((cache) =>
+        fetch(request)
+          .then((response) => {
+            if (response.ok) {
+              cache.put(request, response.clone());
+            }
+            return response;
+          })
+          .catch(() =>
+            cache.match(request).then((cached) => cached || Response.error())
+          )
+      )
+    );
+    return;
+  }
+
+  // ── Other API routes — network only ──
   if (url.pathname.startsWith("/api/")) return;
 
-  // Static assets (JS, CSS, fonts, images) — cache-first
+  // ── Static assets (JS, CSS, fonts, images) — cache-first ──
   if (
     url.pathname.match(
       /\.(js|css|woff2?|ttf|otf|svg|png|jpg|jpeg|gif|webp|ico)$/
@@ -133,7 +177,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Shared team pages (/s/*) — network-first with cache fallback, then offline page
+  // ── Shared team pages (/s/*) — network-first, cache fallback ──
   if (url.pathname.startsWith("/s/")) {
     event.respondWith(
       fetch(request)
@@ -153,7 +197,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // All other pages — network-first with cache fallback, then offline page
+  // ── All other pages — network-first, cache fallback ──
   event.respondWith(
     fetch(request)
       .then((response) => {
