@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { PokemonSprite } from "./PokemonSprite";
+import { useTranslation } from "@/lib/i18n";
 
 interface PokemonDropdownProps {
   yourPokemon: AnalyzedPokemon[];
@@ -29,6 +30,7 @@ export function PokemonDropdown({
   onDragStart,
   speciesLabels,
 }: PokemonDropdownProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -97,7 +99,7 @@ export function PokemonDropdown({
             <div className="w-11 h-11 rounded-lg bg-surface-alt border border-dashed border-border flex items-center justify-center">
               <span className="text-text-tertiary text-xl leading-none">+</span>
             </div>
-            <span className="text-xs text-text-tertiary">Select</span>
+            <span className="text-xs text-text-tertiary">{t.select}</span>
           </>
         )}
       </button>
@@ -119,7 +121,7 @@ export function PokemonDropdown({
               }}
               className="w-full px-3 py-2 text-left text-xs text-red-400 hover:bg-surface-alt transition-colors border-b border-border"
             >
-              Clear selection
+              {t.clearSelection}
             </button>
           )}
           {yourPokemon.map((mon, index) => {

@@ -72,13 +72,15 @@ export function SlideNavControls({
         {/* === CENTER: Dots + slide counter === */}
         <div className="flex-1 min-w-0 flex items-center justify-center gap-1.5 sm:gap-2 overflow-hidden">
           {/* Dots */}
-          <div className="flex items-center gap-1 sm:gap-1 overflow-x-auto flex-shrink scrollbar-none">
+          <div role="tablist" aria-label="Slides" className="flex items-center gap-1 sm:gap-1 overflow-x-auto flex-shrink scrollbar-none">
             {Array.from({ length: totalSlides }, (_, i) => {
               const isHidden = hiddenStates?.[i] ?? false;
               const isCurrent = i === currentSlide;
               return (
                 <button
                   key={i}
+                  role="tab"
+                  aria-selected={isCurrent}
                   onClick={() => onGoTo(i)}
                   title={`${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}`}
                   aria-label={`Go to ${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}`}
@@ -100,6 +102,10 @@ export function SlideNavControls({
             <span className="font-bold text-text-primary hidden sm:inline">{slideLabels[currentSlide]}</span>
             <span className="hidden sm:inline mx-1 text-border">&middot;</span>
             <span className="font-[family-name:var(--font-mono)] tabular-nums">{currentSlide + 1}/{totalSlides}</span>
+          </span>
+          {/* Screen reader live region for slide changes */}
+          <span className="sr-only" aria-live="polite" aria-atomic="true">
+            Slide {currentSlide + 1} of {totalSlides}: {slideLabels[currentSlide]}
           </span>
         </div>
 

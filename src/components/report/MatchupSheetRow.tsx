@@ -5,6 +5,7 @@ import type { MatchupPlan } from "@/hooks/useMatchupPlans";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { PokemonSprite } from "./PokemonSprite";
+import { useTranslation } from "@/lib/i18n";
 
 interface MatchupSheetRowProps {
   plan: MatchupPlan;
@@ -21,6 +22,7 @@ export function MatchupSheetRow({
   isReadOnly,
   onRemove,
 }: MatchupSheetRowProps) {
+  const { t } = useTranslation();
   const opponentPokemon = useMemo(() => {
     const parsed = parseShowdownPaste(plan.opponentPaste);
     return parsed.pokemon.map((p) => p.species);
@@ -104,7 +106,7 @@ export function MatchupSheetRow({
           )}
 
           <span className="text-xs font-medium text-text-tertiary whitespace-nowrap px-2 py-1 bg-surface-alt rounded-md">
-            {plan.gamePlans.length} plan{plan.gamePlans.length !== 1 ? "s" : ""}
+            {plan.gamePlans.length} {plan.gamePlans.length !== 1 ? t.plans : t.plan}
           </span>
 
           {/* Remove */}
@@ -113,7 +115,7 @@ export function MatchupSheetRow({
               type="button"
               onClick={onRemove}
               className="text-text-tertiary hover:text-red-400 p-2.5 rounded-lg hover:bg-red-400/10 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
-              title="Remove matchup"
+              title={t.removeMatchup}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import type { CalcCategory } from "@/hooks/useDamageCalcs";
+import { useTranslation } from "@/lib/i18n";
 
 const CATEGORY_CONFIG = {
   offensive: {
@@ -89,6 +90,12 @@ interface CalcInputProps {
 }
 
 export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
+  const { t } = useTranslation();
+  const catLabelMap: Record<string, string> = {
+    "Offensive": t.offensive,
+    "Defensive": t.defensive,
+    "Speed Tier": t.speedTier,
+  };
   const [mode, setMode] = useState<"single" | "paste">("single");
   const [calcInput, setCalcInput] = useState("");
   const [calcCategory, setCalcCategory] = useState<CalcCategory>("offensive");
@@ -151,14 +158,14 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-            Paste Calcs
+            {t.pasteCalcs}
           </span>
           <button
             type="button"
             onClick={() => { setMode("single"); setPasteInput(""); setParsedLines([]); }}
             className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
           >
-            Cancel
+            {t.cancel}
           </button>
         </div>
 
@@ -166,7 +173,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
           ref={textareaRef}
           value={pasteInput}
           onChange={(e) => handlePasteChange(e.target.value)}
-          placeholder={"Paste damage calc results here — one per line.\n\ne.g. 252+ Atk Incineroar Flare Blitz vs. 252 HP / 0 Def Rillaboom: 210-248 (103.4 - 122.1%) -- guaranteed OHKO"}
+          placeholder={`${t.pasteCalcsPlaceholder}\n\ne.g. 252+ Atk Incineroar Flare Blitz vs. 252 HP / 0 Def Rillaboom: 210-248 (103.4 - 122.1%) -- guaranteed OHKO`}
           className="w-full min-h-[6rem] p-3 bg-surface border border-border rounded-xl text-sm font-mono text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
           spellCheck={false}
           autoFocus
@@ -176,7 +183,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
         {parsedLines.length > 0 && (
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] text-text-tertiary">
-              {parsedLines.length} calc{parsedLines.length !== 1 ? "s" : ""} detected — click category to change
+              {parsedLines.length} {t.calcsDetected}
             </span>
             {parsedLines.map((line, i) => {
               const cfg = CATEGORY_CONFIG[line.category];
@@ -189,9 +196,9 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
                     type="button"
                     onClick={() => toggleCategory(i)}
                     className={`flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${cfg.tagBg} ${cfg.tagText} hover:opacity-80 transition-opacity`}
-                    title="Click to change category"
+                    title={t.changeCategory}
                   >
-                    {cfg.icon} {cfg.label}
+                    {cfg.icon} {catLabelMap[cfg.label] ?? cfg.label}
                   </button>
                   <span className="flex-1 text-xs text-text-primary truncate">
                     {line.text}
@@ -201,7 +208,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
                     onClick={() => handleAddSingle(i)}
                     className="text-accent text-xs font-medium hover:text-accent/80 flex-shrink-0"
                   >
-                    Add
+                    {t.add}
                   </button>
                   <button
                     type="button"
@@ -218,7 +225,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
               onClick={handleAddAll}
               className="self-end px-4 py-2 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90 transition-colors"
             >
-              Add All ({parsedLines.length})
+              {t.addAll} ({parsedLines.length})
             </button>
           </div>
         )}
@@ -247,7 +254,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
                 }`}
               >
                 <span>{cfg.icon}</span>
-                <span className="hidden sm:inline">{cfg.label}</span>
+                <span className="hidden sm:inline">{catLabelMap[cfg.label] ?? cfg.label}</span>
               </button>
             );
           })}
@@ -257,7 +264,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
           onClick={() => setMode("paste")}
           className="text-xs text-accent hover:text-accent/80 font-medium transition-colors flex-shrink-0"
         >
-          Paste
+          {t.paste}
         </button>
       </div>
       {/* Input */}
@@ -286,7 +293,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
           disabled={!calcInput.trim()}
           className="px-3 sm:px-4 py-2.5 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 min-h-[40px]"
         >
-          Add
+          {t.add}
         </button>
       </form>
     </div>

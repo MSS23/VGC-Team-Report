@@ -52,6 +52,17 @@ export function useTeamReport(persist = true) {
     return { pokemon: analyzedPokemon };
   }, [parsedTeam]);
 
+  /** Reorder Pokemon by swapping positions. Preserves all parsed data. */
+  const reorderPokemon = useCallback((fromIndex: number, toIndex: number) => {
+    setParsedTeam((prev) => {
+      if (!prev) return prev;
+      const pokemon = [...prev.pokemon];
+      const [moved] = pokemon.splice(fromIndex, 1);
+      pokemon.splice(toIndex, 0, moved);
+      return { ...prev, pokemon };
+    });
+  }, []);
+
   const reset = useCallback(() => {
     setParsedTeam(null);
     setPaste("");
@@ -70,6 +81,7 @@ export function useTeamReport(persist = true) {
     viewMode,
     setViewMode,
     parseTeam,
+    reorderPokemon,
     reset,
     warnings: parsedTeam?.warnings ?? [],
   };

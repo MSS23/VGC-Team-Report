@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { PokemonCard } from "./PokemonCard";
@@ -28,6 +28,7 @@ interface TeamOverviewProps {
   onMvpIndexChange?: (index: number | null) => void;
   isReadOnly: boolean;
   getSpriteConfig?: (key: string) => SpriteConfig;
+  onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
 }
 
 export function TeamOverview({
@@ -52,11 +53,16 @@ export function TeamOverview({
   onMvpIndexChange,
   isReadOnly,
   getSpriteConfig,
+  onReorderPokemon,
 }: TeamOverviewProps) {
   const { t } = useTranslation();
   const hasTournamentInfo = !!(tournamentName || placement || record);
   const hasCreatorInfo = !!creatorName;
   const [rentalCopied, setRentalCopied] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const dragCounter = useRef(0);
+  const canDrag = !isReadOnly && !!onReorderPokemon;
 
   const copyRentalCode = () => {
     if (!rentalCode) return;
@@ -90,7 +96,7 @@ export function TeamOverview({
               <button
                 onClick={copyRentalCode}
                 className="flex items-center gap-2 self-start px-3 py-1.5 bg-surface border-2 border-border rounded-lg hover:bg-surface-alt hover:border-accent/30 transition-all"
-                title="Copy rental code"
+                title={t.copyRentalCode}
               >
                 <span className="text-sm font-[family-name:var(--font-mono)] font-extrabold text-text-primary tracking-widest">
                   {rentalCode}
@@ -189,19 +195,66 @@ export function TeamOverview({
       }`}>
         {pokemon.map((mon, i) => {
           const sc = getSpriteConfig?.(speciesKeys[i]);
+          const isDragging = dragIndex === i;
+          const isDragOver = dragOverIndex === i && dragIndex !== i;
           return (
-            <PokemonCard
+            <div
               key={`${mon.parsed.species}-${i}`}
-              pokemon={mon}
-              creatorMode={creatorMode}
-              role={roles[speciesKeys[i]] ?? ""}
-              onRoleChange={(text) => onRoleChange(speciesKeys[i], text)}
-              isReadOnly={isReadOnly}
-              isMvp={mvpIndex === i}
-              onToggleMvp={() => onMvpIndexChange?.(mvpIndex === i ? null : i)}
-              shiny={sc?.shiny}
-              animated={sc?.animated}
-            />
+              draggable={canDrag}
+              onDragStart={(e) => {
+                setDragIndex(i);
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", String(i));
+              }}
+              onDragEnd={() => {
+                setDragIndex(null);
+                setDragOverIndex(null);
+                dragCounter.current = 0;
+              }}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                dragCounter.current++;
+                setDragOverIndex(i);
+              }}
+              onDragLeave={() => {
+                dragCounter.current--;
+                if (dragCounter.current <= 0) {
+                  setDragOverIndex(null);
+                  dragCounter.current = 0;
+                }
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const from = dragIndex ?? parseInt(e.dataTransfer.getData("text/plain"), 10);
+                if (!isNaN(from) && from !== i) {
+                  onReorderPokemon?.(from, i);
+                }
+                setDragIndex(null);
+                setDragOverIndex(null);
+                dragCounter.current = 0;
+              }}
+              className={`transition-all duration-200 rounded-2xl ${
+                canDrag ? "cursor-grab active:cursor-grabbing" : ""
+              } ${isDragging ? "opacity-40 scale-95" : ""} ${
+                isDragOver ? "ring-2 ring-accent ring-offset-2 ring-offset-background scale-[1.02]" : ""
+              }`}
+            >
+              <PokemonCard
+                pokemon={mon}
+                creatorMode={creatorMode}
+                role={roles[speciesKeys[i]] ?? ""}
+                onRoleChange={(text) => onRoleChange(speciesKeys[i], text)}
+                isReadOnly={isReadOnly}
+                isMvp={mvpIndex === i}
+                onToggleMvp={() => onMvpIndexChange?.(mvpIndex === i ? null : i)}
+                shiny={sc?.shiny}
+                animated={sc?.animated}
+              />
+            </div>
           );
         })}
       </div>

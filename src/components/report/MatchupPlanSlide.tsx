@@ -13,6 +13,7 @@ import { ItemIcon } from "./ItemIcon";
 import { PokemonDropdown } from "./PokemonDropdown";
 import { Button } from "@/components/ui/Button";
 import { GAME_COLORS, getReplayInfo, ReplayIcon } from "@/lib/utils/game-plan-helpers";
+import { useTranslation } from "@/lib/i18n";
 
 interface OpponentPokemonInfo {
   parsed: ReturnType<typeof parseShowdownPaste>["pokemon"][number];
@@ -49,8 +50,6 @@ function totalEvs(evs: StatSpread): number {
   return evs.hp + evs.atk + evs.def + evs.spa + evs.spd + evs.spe;
 }
 
-const STAT_LABELS = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as const;
-
 export function MatchupPlanSlide({
   plan,
   yourPokemon,
@@ -64,6 +63,8 @@ export function MatchupPlanSlide({
   onRemoveGamePlan,
   onRemove,
 }: MatchupPlanSlideProps) {
+  const { t } = useTranslation();
+  const STAT_LABELS = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe } as const;
   const [collapsedPlans, setCollapsedPlans] = useState<Set<string>>(new Set());
   const gamePlansRef = useRef<HTMLDivElement>(null);
   const prevPlanCount = useRef(plan.gamePlans.length);
@@ -114,7 +115,7 @@ export function MatchupPlanSlide({
             onClick={() => onRemove(plan.id)}
             className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
           >
-            Remove
+            {t.remove}
           </Button>
         )}
       </div>
@@ -123,11 +124,11 @@ export function MatchupPlanSlide({
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary">
-            Opponent Team
+            {t.opponentTeam}
           </h3>
           {anyHasEvs && (
             <span className="text-xs text-accent font-medium px-2.5 py-0.5 bg-accent-surface rounded-full">
-              Full Spreads
+              {t.fullSpreads}
             </span>
           )}
         </div>
@@ -220,7 +221,7 @@ export function MatchupPlanSlide({
                       <div className="flex items-center gap-2 text-text-tertiary">
                         <PokemonSprite species={mon.parsed.species} size={28} />
                         <span className="text-sm">{mon.parsed.species}</span>
-                        <span className="text-xs">— No spread data</span>
+                        <span className="text-xs">— {t.noSpreadData}</span>
                       </div>
                     )}
                   </div>
@@ -235,7 +236,7 @@ export function MatchupPlanSlide({
       <div ref={gamePlansRef} className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary">
-            Game Plans ({plan.gamePlans.length}/3)
+            {t.gamePlans} ({plan.gamePlans.length}/3)
           </h3>
           {!isReadOnly && plan.gamePlans.length < 3 && (
             <Button
@@ -244,7 +245,7 @@ export function MatchupPlanSlide({
               onClick={() => onAddGamePlan(plan.id)}
               className="text-accent"
             >
-              + Add Game Plan
+              + {t.addGamePlan}
             </Button>
           )}
         </div>
@@ -313,6 +314,7 @@ function GamePlanSection({
   onResultChange,
   onDelete,
 }: GamePlanSectionProps) {
+  const { t } = useTranslation();
   const color = GAME_COLORS[index] ?? GAME_COLORS[0];
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [replayInput, setReplayInput] = useState("");
@@ -380,7 +382,7 @@ function GamePlanSection({
             {index + 1}
           </span>
           <span className="text-sm font-semibold text-text-primary">
-            Game {index + 1}
+            {t.gameN} {index + 1}
           </span>
           {/* Show lead/back sprites inline when collapsed */}
           {isCollapsed && (
@@ -417,7 +419,7 @@ function GamePlanSection({
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className="text-text-tertiary hover:text-red-400 text-xs px-2 py-1 rounded-md hover:bg-red-400/10 transition-colors"
           >
-            Delete
+            {t.delete}
           </span>
         )}
       </button>
@@ -434,7 +436,7 @@ function GamePlanSection({
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-500/20 text-blue-400">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /></svg>
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-widest text-blue-400">Lead</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-blue-400">{t.lead}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {([0, 1] as const).map((bringIdx) => {
@@ -471,7 +473,7 @@ function GamePlanSection({
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-500/20 text-amber-400">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-widest text-amber-400">Back</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-amber-400">{t.back}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {([2, 3] as const).map((bringIdx) => {
@@ -507,17 +509,17 @@ function GamePlanSection({
             <div className="flex flex-col gap-4">
               <div>
                 <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3 presenting:text-base presenting:mb-4">
-                  Notes
+                  {t.notesLabel}
                 </span>
                 {isReadOnly ? (
                   <div className="w-full min-h-[7rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:tracking-wide">
-                    {gamePlan.notes || "No notes."}
+                    {gamePlan.notes || t.noNotes}
                   </div>
                 ) : (
                   <textarea
                     value={gamePlan.notes}
                     onChange={(e) => onNotesChange(e.target.value)}
-                    placeholder="Why are you bringing these four? What's the win condition?"
+                    placeholder={t.gamePlanNotesPlaceholder}
                     className="w-full min-h-[7rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
                     spellCheck={false}
                   />
@@ -528,7 +530,7 @@ function GamePlanSection({
               {(gamePlan.replays.length > 0 || !isReadOnly) && (
                 <div>
                   <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
-                    Replays <span className="normal-case tracking-normal font-normal text-text-tertiary/60">(optional)</span>
+                    {t.replays} <span className="normal-case tracking-normal font-normal text-text-tertiary/60">({t.optional})</span>
                   </span>
                   {gamePlan.replays.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-2">
@@ -586,7 +588,7 @@ function GamePlanSection({
                             setReplayInput("");
                           }
                         }}
-                        placeholder="Paste replay URL..."
+                        placeholder={t.pasteReplayPlaceholder}
                         className="flex-1 min-w-0 px-3 py-2.5 bg-surface-alt border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
                       />
                       <button
@@ -599,7 +601,7 @@ function GamePlanSection({
                         }}
                         className="px-4 py-2.5 bg-accent/10 text-accent text-sm font-semibold rounded-lg hover:bg-accent/20 transition-colors flex-shrink-0 min-h-[44px]"
                       >
-                        Add
+                        {t.add}
                       </button>
                     </div>
                   )}

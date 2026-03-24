@@ -18,4 +18,6 @@ export async function ensureTable() {
     )
   `;
   await sql`CREATE INDEX IF NOT EXISTS idx_shares_updated_at ON shares(updated_at)`;
+  // Add version column for collaborative editing (safe to run multiple times)
+  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1`;
 }

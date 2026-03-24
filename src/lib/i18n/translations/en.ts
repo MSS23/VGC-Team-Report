@@ -156,6 +156,104 @@ const en = {
   overview: "Overview",
   teamAnalysisLabel: "Team Analysis",
   matchupsLabel: "Matchups",
+
+  // Stat labels (Pokemon abbreviations — keep as-is in most languages)
+  statHp: "HP",
+  statAtk: "Atk",
+  statDef: "Def",
+  statSpa: "SpA",
+  statSpd: "SpD",
+  statSpe: "Spe",
+
+  // BringSelector
+  yourBring4: "Your Bring-4",
+  selectedCount: "selected",
+
+  // TeamOverview
+  copyRentalCode: "Copy rental code",
+
+  // MatchupPlanSlide
+  remove: "Remove",
+  opponentTeam: "Opponent Team",
+  fullSpreads: "Full Spreads",
+  noSpreadData: "No spread data",
+  gamePlans: "Game Plans",
+  addGamePlan: "Add Game Plan",
+  gameN: "Game",
+  lead: "Lead",
+  back: "Back",
+  notesLabel: "Notes",
+  noNotes: "No notes.",
+  gamePlanNotesPlaceholder: "Why are you bringing these four? What's the win condition?",
+  replays: "Replays",
+  optional: "optional",
+  pasteReplayPlaceholder: "Paste replay URL...",
+  add: "Add",
+  delete: "Delete",
+
+  // MatchupSheetRow
+  plan: "plan",
+  plans: "plans",
+  removeMatchup: "Remove matchup",
+
+  // TypeCoverageMatrix
+  offensiveTypeCoverage: "Offensive Type Coverage",
+  defensiveTypeCoverage: "Defensive Type Coverage",
+  offensiveCoverageDesc: "Number of team members that hit each type super-effectively",
+  defensiveCoverageDesc: "Number of team members weak to each attacking type",
+  gaps: "Gaps",
+  noSeCoverage: "no SE coverage",
+  thin: "Thin",
+  onlyOneAnswer: "only 1 answer",
+  covered: "Covered",
+  twoPlusAnswers: "2+ answers",
+  vulnerable: "Vulnerable",
+  threePlusWeak: "3+ weak",
+  exposed: "Exposed",
+  twoWeak: "2 weak",
+  manageable: "Manageable",
+  oneWeak: "1 weak",
+  resistant: "Resistant",
+  noWeakness: "no weakness",
+
+  // CalcInput
+  pasteCalcs: "Paste Calcs",
+  cancel: "Cancel",
+  paste: "Paste",
+  addAll: "Add All",
+  calcsDetected: "detected — click category to change",
+  pasteCalcsPlaceholder: "Paste damage calc results here — one per line.",
+  changeCategory: "Change category",
+  removeCalc: "Remove calc",
+
+  // PokemonDetailSlide / PokemonCard
+  tera: "Tera",
+
+  // PokemonDropdown
+  select: "Select",
+  clearSelection: "Clear selection",
+
+  // PasscodeModal
+  setPasscode: "Set a Passcode",
+  unlockEditing: "Unlock Editing",
+  passcodeEditDesc: "Anyone with the passcode can edit and re-share this team.",
+  passcodeUnlockDesc: "Enter the passcode to unlock editing.",
+  enterPasscode: "Enter a passcode",
+  passcode: "Passcode",
+  shareWithPasscode: "Share with Passcode",
+  shareWithoutPasscode: "Share without Passcode",
+  unlock: "Unlock",
+
+  // AddOpponentInput
+  fetchPokePasteToContinue: "Fetch the PokéPaste to continue",
+  pokemonDetected: "Pokemon detected",
+  pasteTeamToContinue: "Paste a team to continue",
+  autoDetected: "Auto-detected",
+
+  // Export report
+  exportAsImage: "Export as Image (PNG)",
+  exportAsPdf: "Export as PDF",
+  exporting: "Exporting...",
 } as const;
 
 export type TranslationKeys = { [K in keyof typeof en]: string };

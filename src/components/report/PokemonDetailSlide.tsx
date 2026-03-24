@@ -169,8 +169,8 @@ function EditableCalcEntry({
               <button
                 onClick={() => setShowCategoryMenu(!showCategoryMenu)}
                 className="text-text-tertiary hover:text-text-secondary text-xs px-1.5 py-0.5 rounded-md hover:bg-surface-alt transition-colors"
-                aria-label="Change category"
-                title="Change category"
+                aria-label={t.changeCategory}
+                title={t.changeCategory}
               >
                 {CATEGORY_CONFIG[entry.category].icon}
               </button>
@@ -201,7 +201,7 @@ function EditableCalcEntry({
           <button
             onClick={onRemove}
             className="text-text-tertiary hover:text-red-400 text-sm transition-colors"
-            aria-label="Remove calc"
+            aria-label={t.removeCalc}
           >
             &#10005;
           </button>
@@ -310,12 +310,12 @@ export function PokemonDetailSlide({
   const natureData = NATURES[parsed.nature];
   const relevantStats = getRelevantStats(parsed);
   const statLabels = {
-    hp: "HP",
-    atk: "Atk",
-    def: "Def",
-    spa: "SpA",
-    spd: "SpD",
-    spe: "Spe",
+    hp: t.statHp,
+    atk: t.statAtk,
+    def: t.statDef,
+    spa: t.statSpa,
+    spd: t.statSpd,
+    spe: t.statSpe,
   } as const;
 
   // Non-default IVs (not 31)
@@ -404,7 +404,7 @@ export function PokemonDetailSlide({
               ))}
               {parsed.teraType && (
                 <span className="flex items-center gap-1 ml-1 sm:ml-2">
-                  <span className="text-xs text-text-tertiary font-semibold">Tera:</span>
+                  <span className="text-xs text-text-tertiary font-semibold">{t.tera}:</span>
                   <TypeBadge type={parsed.teraType} />
                 </span>
               )}

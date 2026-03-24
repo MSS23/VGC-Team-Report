@@ -2,6 +2,7 @@
 
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { PokemonSprite } from "./PokemonSprite";
+import { useTranslation } from "@/lib/i18n";
 
 interface BringSelectorProps {
   yourPokemon: AnalyzedPokemon[];
@@ -16,6 +17,7 @@ export function BringSelector({
   onChange,
   isReadOnly,
 }: BringSelectorProps) {
+  const { t } = useTranslation();
   const toggleIndex = (index: number) => {
     if (isReadOnly) return;
     if (selectedIndices.includes(index)) {
@@ -26,13 +28,13 @@ export function BringSelector({
   };
 
   return (
-    <div>
+    <div role="group" aria-label={t.yourBring4}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-          Your Bring-4
+          {t.yourBring4}
         </h3>
-        <span className="text-xs text-text-secondary">
-          {selectedIndices.length}/4 selected
+        <span className="text-xs text-text-secondary" aria-live="polite">
+          {selectedIndices.length}/4 {t.selectedCount}
         </span>
       </div>
       <div className="grid grid-cols-3 gap-2">
@@ -44,6 +46,8 @@ export function BringSelector({
               type="button"
               onClick={() => toggleIndex(index)}
               disabled={isReadOnly}
+              aria-pressed={isSelected}
+              aria-label={`${isSelected ? t.clearSelection : t.select} ${mon.parsed.species}`}
               className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
                 isSelected
                   ? "ring-2 ring-accent bg-accent/10 border-accent"

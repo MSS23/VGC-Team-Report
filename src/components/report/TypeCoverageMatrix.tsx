@@ -6,6 +6,7 @@ import type { PokemonType } from "@/lib/types/pokemon";
 import { MOVES } from "@/lib/data/moves";
 import { TYPE_CHART, getEffectiveness } from "@/lib/data/type-chart";
 import { TYPE_COLORS } from "@/lib/utils/type-colors";
+import { useTranslation } from "@/lib/i18n";
 
 const ALL_TYPES: PokemonType[] = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -40,6 +41,7 @@ function isWeakTo(mon: AnalyzedPokemon, attackType: PokemonType): boolean {
 }
 
 export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<CoverageMode>("offensive");
 
   // Offensive: how many team members hit each type SE
@@ -82,16 +84,16 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
     : [];
 
   const offensiveGroups = {
-    g1: { label: `Gaps — no SE coverage (${group1.length})`, color: "text-red-400" },
-    g2: { label: `Thin — only 1 answer (${group2.length})`, color: "text-amber-400" },
-    g3: { label: `Covered — 2+ answers (${group3.length})`, color: "text-emerald-400" },
+    g1: { label: `${t.gaps} — ${t.noSeCoverage} (${group1.length})`, color: "text-red-400" },
+    g2: { label: `${t.thin} — ${t.onlyOneAnswer} (${group2.length})`, color: "text-amber-400" },
+    g3: { label: `${t.covered} — ${t.twoPlusAnswers} (${group3.length})`, color: "text-emerald-400" },
   };
 
   const defensiveGroups = {
-    g1: { label: `Vulnerable — 3+ weak (${group1.length})`, color: "text-red-400" },
-    g2: { label: `Exposed — 2 weak (${group2.length})`, color: "text-amber-400" },
-    g3: { label: `Manageable — 1 weak (${group3.length})`, color: "text-emerald-400" },
-    g4: { label: `Resistant — no weakness (${group4.length})`, color: "text-cyan-400" },
+    g1: { label: `${t.vulnerable} — ${t.threePlusWeak} (${group1.length})`, color: "text-red-400" },
+    g2: { label: `${t.exposed} — ${t.twoWeak} (${group2.length})`, color: "text-amber-400" },
+    g3: { label: `${t.manageable} — ${t.oneWeak} (${group3.length})`, color: "text-emerald-400" },
+    g4: { label: `${t.resistant} — ${t.noWeakness} (${group4.length})`, color: "text-cyan-400" },
   };
 
   const groups = mode === "offensive" ? offensiveGroups : defensiveGroups;
@@ -161,12 +163,12 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-0.5">
-            {mode === "offensive" ? "Offensive Type Coverage" : "Defensive Type Coverage"}
+            {mode === "offensive" ? t.offensiveTypeCoverage : t.defensiveTypeCoverage}
           </h3>
           <p className="text-xs sm:text-base text-text-tertiary">
             {mode === "offensive"
-              ? "Number of team members that hit each type super-effectively"
-              : "Number of team members weak to each attacking type"}
+              ? t.offensiveCoverageDesc
+              : t.defensiveCoverageDesc}
           </p>
         </div>
 
@@ -181,7 +183,7 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
                 : "text-text-tertiary hover:text-text-secondary"
             }`}
           >
-            Offensive
+            {t.offensive}
           </button>
           <button
             type="button"
@@ -192,7 +194,7 @@ export function TypeCoverageMatrix({ pokemon }: TypeCoverageMatrixProps) {
                 : "text-text-tertiary hover:text-text-secondary"
             }`}
           >
-            Defensive
+            {t.defensive}
           </button>
         </div>
       </div>

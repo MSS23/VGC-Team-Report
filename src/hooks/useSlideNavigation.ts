@@ -12,9 +12,11 @@ interface UseSlideNavigationOptions {
   onToggleFullscreen?: () => void;
   onShowHelp?: () => void;
   onTogglePresentation?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
-export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocusGuard = false, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation }: UseSlideNavigationOptions) {
+export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocusGuard = false, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation, onUndo, onRedo }: UseSlideNavigationOptions) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Reset to slide 0 when team changes (resetKey), or when totalSlides changes if no resetKey
@@ -62,6 +64,16 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
         if (tag === "TEXTAREA" || tag === "INPUT") return;
       }
 
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey && onUndo) {
+        e.preventDefault();
+        onUndo();
+        return;
+      } else if ((e.ctrlKey || e.metaKey) && ((e.key === "z" && e.shiftKey) || e.key === "y") && onRedo) {
+        e.preventDefault();
+        onRedo();
+        return;
+      }
+
       if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
         withTransition(() => setCurrentSlide((prev) => Math.min(prev + 1, totalSlides - 1)));
@@ -88,7 +100,7 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, totalSlides, bypassFocusGuard, withTransition, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation]);
+  }, [enabled, totalSlides, bypassFocusGuard, withTransition, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation, onUndo, onRedo]);
 
   // Touch swipe listener with velocity-based detection
   useEffect(() => {

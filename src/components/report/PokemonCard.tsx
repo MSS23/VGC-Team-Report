@@ -44,7 +44,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const nonDefaultIvs = (["hp", "atk", "def", "spa", "spd", "spe"] as const).filter(
     (stat) => parsed.ivs[stat] !== 31
   );
-  const ivLabels = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" } as const;
+  const ivLabels = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe } as const;
 
   return (
     <Card className={`p-3 sm:p-6 creator:p-7 flex flex-col gap-2.5 sm:gap-4 creator:gap-5 transition-all duration-200 ${
@@ -115,7 +115,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             ))}
             {parsed.teraType && (
               <span className="flex items-center gap-0.5 ml-1">
-                <span className="text-xs text-text-tertiary font-semibold">Tera:</span>
+                <span className="text-xs text-text-tertiary font-semibold">{t.tera}:</span>
                 <TypeBadge type={parsed.teraType} />
               </span>
             )}
@@ -199,7 +199,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               const displayValue = isBoosted ? itemBoost.boostedValue : value;
               const maxStat = stat === "hp" ? 300 : 250;
               const percentage = Math.min((displayValue / maxStat) * 100, 100);
-              const labels = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" };
+              const labels = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe };
 
               return (
                 <div key={stat} className="flex items-center gap-1 sm:gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${ev > 0 ? `, ${ev} EVs` : ""}${isBoosted ? `, boosted by item` : ""}`}>

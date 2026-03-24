@@ -69,7 +69,7 @@ export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
           type="text"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
-          placeholder={parsedResult?.teamName ? `Auto-detected: ${parsedResult.teamName}` : t.opponentLabelPlaceholder}
+          placeholder={parsedResult?.teamName ? `${t.autoDetected}: ${parsedResult.teamName}` : t.opponentLabelPlaceholder}
           className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
         />
         <div className="relative">
@@ -92,10 +92,10 @@ export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-text-tertiary">
             {isUrl
-              ? "Fetch the PokéPaste to continue"
+              ? t.fetchPokePasteToContinue
               : parsedCount > 0
-                ? `${parsedCount} Pokemon detected${parsedResult?.teamName ? ` — "${parsedResult.teamName}"` : ""}`
-                : "Paste a team to continue"}
+                ? `${parsedCount} ${t.pokemonDetected}${parsedResult?.teamName ? ` — "${parsedResult.teamName}"` : ""}`
+                : t.pasteTeamToContinue}
           </span>
           {isUrl ? (
             <Button onClick={handleFetchPaste} disabled={isFetching} size="md">

@@ -1,4 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const PokePasteUrlSchema = z.string().url().refine(
+  (val) => {
+    try {
+      return new URL(val).hostname === "pokepast.es";
+    } catch {
+      return false;
+    }
+  },
+  { message: "Only pokepast.es URLs are supported" }
+);
 
 /**
  * Proxy endpoint for fetching PokéPaste content.
@@ -13,17 +25,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
   }
 
-  // Validate it's a pokepast.es URL
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
+  const urlResult = PokePasteUrlSchema.safeParse(url);
+  if (!urlResult.success) {
+    const msg = urlResult.error.issues[0]?.message;
+    if (msg === "Only pokepast.es URLs are supported") {
+      return NextResponse.json({ error: "Only pokepast.es URLs are supported" }, { status: 400 });
+    }
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
   }
 
-  if (parsed.hostname !== "pokepast.es") {
-    return NextResponse.json({ error: "Only pokepast.es URLs are supported" }, { status: 400 });
-  }
+  const parsed = new URL(urlResult.data);
 
   // Build the /raw URL and the HTML page URL
   const basePath = parsed.pathname.replace(/\/raw\/?$/, "").replace(/\/$/, "");

@@ -1,8 +1,18 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 const MAX_BODY_SIZE = 512_000; // 500 KB
+
+const ShareBodySchema = z.object({
+  state: z.object({
+    paste: z.string(),
+    matchupPlans: z.array(z.unknown()),
+  }).passthrough(),
+  existingId: z.string().optional(),
+  editToken: z.string().optional(),
+});
 
 function generateId(): string {
   const chars =
@@ -38,21 +48,28 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
-    const { state, existingId, editToken } = body;
+    const raw = await request.json();
+    const parsed = ShareBodySchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const { state, existingId, editToken } = parsed.data;
 
     const sql = getDb();
 
-    // Update existing share
+    // Update existing share (increment version for collaborative sync)
     if (existingId && editToken) {
       const rows = await sql`
         UPDATE shares
-        SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW()
+        SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(), version = COALESCE(version, 1) + 1
         WHERE id = ${existingId} AND edit_token = ${editToken}
-        RETURNING id
+        RETURNING id, COALESCE(version, 1) AS version
       `;
       if (rows.length > 0) {
-        return NextResponse.json({ id: existingId, editToken, updated: true });
+        return NextResponse.json({ id: existingId, editToken, updated: true, version: rows[0].version });
       }
       // Token mismatch or not found — fall through to create new
     }
@@ -61,10 +78,10 @@ export async function POST(request: Request) {
     const id = generateId();
     const newEditToken = generateEditToken();
     await sql`
-      INSERT INTO shares (id, edit_token, data)
-      VALUES (${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb)
+      INSERT INTO shares (id, edit_token, data, version)
+      VALUES (${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1)
     `;
-    return NextResponse.json({ id, editToken: newEditToken, updated: false });
+    return NextResponse.json({ id, editToken: newEditToken, updated: false, version: 1 });
   } catch (e) {
     console.error("Share create/update error:", e);
     return NextResponse.json(
