@@ -291,7 +291,9 @@ function HomeContent() {
       {/* Report content */}
       <div
         ref={slideContentRef}
-        className={`max-w-7xl mx-auto pb-20 sm:pb-20 slide-content ${
+        className={`max-w-7xl mx-auto slide-content ${
+          isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-36 sm:pb-32" : "pb-20 sm:pb-20"
+        } ${
           isPresentationStyle
             ? "px-3 sm:px-8 py-2 sm:py-6"
             : "px-2 sm:px-4 py-2 sm:py-6 creator:px-8 creator:py-8"
