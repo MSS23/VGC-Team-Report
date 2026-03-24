@@ -53,6 +53,7 @@ export function useShareUrl() {
   const [lastShareResult, setLastShareResult] = useState<{
     updated: boolean;
     editUrl?: string;
+    publicUrl?: string;
   } | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Active session refs — only set when we have a verified edit session
@@ -167,7 +168,7 @@ export function useShareUrl() {
         storeShareInfo({ shareId: id, editToken });
         activeEditTokenRef.current = editToken;
         activeShareIdRef.current = id;
-        setLastShareResult({ updated, editUrl });
+        setLastShareResult({ updated, editUrl, publicUrl });
       } catch {
         const encoded = await encodeShareState(state);
         publicUrl = `${window.location.origin}${window.location.pathname}#data=${encoded}`;
@@ -176,7 +177,7 @@ export function useShareUrl() {
             `Share URL is very long (${Math.round(publicUrl.length / 1000)}KB). Some browsers may truncate it.`
           );
         }
-        setLastShareResult({ updated: false });
+        setLastShareResult({ updated: false, publicUrl });
       }
 
       await navigator.clipboard.writeText(publicUrl);
@@ -243,7 +244,7 @@ export function useShareUrl() {
       storeShareInfo({ shareId: id, editToken });
       activeEditTokenRef.current = editToken;
       activeShareIdRef.current = id;
-      setLastShareResult({ updated: false, editUrl });
+      setLastShareResult({ updated: false, editUrl, publicUrl });
 
       await navigator.clipboard.writeText(publicUrl);
       setShareStatus("copied");

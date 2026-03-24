@@ -1,12 +1,14 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useCallback, useEffect, useRef } from "react";
 import { useHomePage } from "@/hooks/useHomePage";
 import { PasteInput } from "@/components/input/PasteInput";
 import { TeamReport } from "@/components/report/TeamReport";
 import { SlideNavControls } from "@/components/report/SlideNavControls";
 import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
 import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
+import { ShareModal } from "@/components/ui/ShareModal";
+import { ShareViewCTA } from "@/components/ui/ShareViewCTA";
 import { Navbar } from "@/components/layout/Navbar";
 import { I18nProvider } from "@/lib/i18n";
 
@@ -126,6 +128,25 @@ function HomeContent() {
     handleExportImage,
     handleExportPdf,
   } = useHomePage();
+
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  // Open share modal when a share completes with a public URL
+  const prevShareStatus = useRef(shareStatus);
+  useEffect(() => {
+    if (prevShareStatus.current === "copying" && shareStatus === "copied" && lastShareResult?.publicUrl) {
+      setShowShareModal(true);
+    }
+    prevShareStatus.current = shareStatus;
+  }, [shareStatus, lastShareResult]);
+
+  const teamSpecies = analysis?.pokemon.map((p) => p.parsed.species) ?? [];
+
+  const handleCreateOwn = useCallback(() => {
+    handleReset();
+    exitSharedView();
+    window.location.href = window.location.origin;
+  }, [handleReset, exitSharedView]);
 
   // Show paste input if no analysis and not loading shared view
   if (!analysis && !sharedState && !isSharePending) {
@@ -382,6 +403,23 @@ function HomeContent() {
         onDismiss={() => setShowShortcutHint(false)}
         isPresentationMode={isPresentationStyle}
       />
+
+      {/* Share modal — social share options */}
+      {showShareModal && lastShareResult?.publicUrl && (
+        <ShareModal
+          publicUrl={lastShareResult.publicUrl}
+          teamSpecies={teamSpecies}
+          tournamentName={tournamentName}
+          creatorName={creatorName}
+          placement={placement}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
+
+      {/* CTA banner for shared views (read-only viewers) */}
+      {isSharedView && !isEditingUnlocked && !isPresentationStyle && (
+        <ShareViewCTA onCreateOwn={handleCreateOwn} />
+      )}
 
       {/* Edit URL toast — shown after sharing */}
       {showEditUrl && lastShareResult?.editUrl && (

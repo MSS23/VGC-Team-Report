@@ -20,13 +20,13 @@ export const metadata: Metadata = {
     template: "%s | VGC Team Report",
   },
   description: "Transform your Pokemon Showdown VGC paste into a clean, professional team report. Build, share, and present with one click.",
-  metadataBase: new URL("https://vgc-team-report.vercel.app"),
+  metadataBase: new URL("https://pokemonvgcteamreport.com"),
   openGraph: {
     title: "VGC Team Report",
     description: "Build, share, and present professional VGC team reports",
     type: "website",
     siteName: "VGC Team Report",
-    url: "https://vgc-team-report.vercel.app",
+    url: "https://pokemonvgcteamreport.com",
   },
   twitter: {
     card: "summary_large_image",

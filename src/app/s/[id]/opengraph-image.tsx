@@ -380,7 +380,7 @@ export default async function Image({
             }}
           />
           <div style={{ fontSize: 14, color: "#4A4A68" }}>
-            vgc-team-report.vercel.app
+            pokemonvgcteamreport.com
           </div>
         </div>
       </div>

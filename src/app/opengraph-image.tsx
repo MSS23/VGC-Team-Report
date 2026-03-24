@@ -130,7 +130,7 @@ export default function Image() {
             letterSpacing: "0.05em",
           }}
         >
-          vgc-team-report.vercel.app
+          pokemonvgcteamreport.com
         </div>
       </div>
     ),
