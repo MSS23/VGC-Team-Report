@@ -6,8 +6,8 @@ interface ShareViewCTAProps {
 
 export function ShareViewCTA({ onCreateOwn }: ShareViewCTAProps) {
   return (
-    <div className="fixed bottom-0 inset-x-0 z-30 pointer-events-none">
-      <div className="max-w-7xl mx-auto px-4 pb-4">
+    <div className="fixed bottom-14 sm:bottom-12 inset-x-0 z-30 pointer-events-none">
+      <div className="max-w-7xl mx-auto px-4 pb-2">
         <div className="pointer-events-auto bg-surface/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl px-5 py-4 flex items-center justify-between gap-4 animate-fade-in">
           <div className="min-w-0">
             <p className="text-sm font-bold text-text-primary tracking-tight">
