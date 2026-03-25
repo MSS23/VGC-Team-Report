@@ -4,71 +4,26 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
+import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 import type { ExploreReport } from "./ReportCard";
-
-const BASE = "https://play.pokemonshowdown.com/sprites";
-
-// Resolve species to Showdown slug (matches sprite-url.ts logic)
-function toSlug(species: string): string {
-  return species
-    .toLowerCase()
-    .replace(/♂/g, "m")
-    .replace(/♀/g, "f")
-    .replace(/[éè]/g, "e")
-    .replace(/[''.:\u2019]/g, "")
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-const SLUG_MAP: Record<string, string> = {
-  "ho-oh": "hooh", "type-null": "typenull", "mr-mime": "mrmime", "mr-rime": "mrrime",
-  "mime-jr": "mimejr", "tapu-koko": "tapukoko", "tapu-lele": "tapulele",
-  "tapu-bulu": "tapubulu", "tapu-fini": "tapufini",
-  "flutter-mane": "fluttermane", "iron-hands": "ironhands", "iron-bundle": "ironbundle",
-  "iron-valiant": "ironvaliant", "iron-moth": "ironmoth", "iron-thorns": "ironthorns",
-  "iron-jugulis": "ironjugulis", "iron-leaves": "ironleaves", "iron-boulder": "ironboulder",
-  "iron-crown": "ironcrown", "great-tusk": "greattusk", "brute-bonnet": "brutebonnet",
-  "scream-tail": "screamtail", "sandy-shocks": "sandyshocks", "slither-wing": "slitherwing",
-  "roaring-moon": "roaringmoon", "walking-wake": "walkingwake", "gouging-fire": "gougingfire",
-  "raging-bolt": "ragingbolt", "chien-pao": "chienpao", "chi-yu": "chiyu",
-  "ting-lu": "tinglu", "wo-chien": "wochien",
-  "urshifu-rapid-strike": "urshifu-rapidstrike",
-  "landorus-therian": "landorus-therian", "tornadus-therian": "tornadus-therian",
-  "thundurus-therian": "thundurus-therian", "calyrex-ice": "calyrex-ice",
-  "calyrex-shadow": "calyrex-shadow", "ogerpon-hearthflame": "ogerpon-hearthflame",
-  "bloodmoon-ursaluna": "ursaluna-bloodmoon",
-};
-
-function resolveSlug(species: string): string {
-  const slug = toSlug(species);
-  return SLUG_MAP[slug] ?? slug;
-}
 
 const REACTION_EMOJIS: Record<string, string> = {
   fire: "\uD83D\uDD25", heart: "\u2764\uFE0F", brain: "\uD83E\uDDE0",
   battle: "\u2694\uFE0F", clap: "\uD83D\uDC4F",
 };
 
-/** Animated sprite with fallback chain: ani gif → gen5ani gif → home png */
 function AnimatedSprite({ species, size = 56 }: { species: string; size?: number }) {
-  const slug = resolveSlug(species);
+  const urls = getSpriteUrls(species);
   const [srcIdx, setSrcIdx] = useState(0);
-  const srcs = [
-    `${BASE}/ani/${slug}.gif`,
-    `${BASE}/gen5ani/${slug}.gif`,
-    `${BASE}/home/${slug}.png`,
-    `${BASE}/gen5/${slug}.png`,
-  ];
   return (
     <img
-      src={srcs[Math.min(srcIdx, srcs.length - 1)]}
+      src={urls[Math.min(srcIdx, urls.length - 1)]}
       alt={species}
       width={size}
       height={size}
       className="object-contain"
       loading="lazy"
-      onError={() => setSrcIdx((i) => Math.min(i + 1, srcs.length - 1))}
+      onError={() => setSrcIdx((i) => Math.min(i + 1, urls.length - 1))}
     />
   );
 }

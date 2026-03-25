@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "motion/react";
 import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
+import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 
 export interface ExploreReport {
   id: string;
@@ -19,8 +21,6 @@ export interface ExploreReport {
   isVerified?: boolean;
 }
 
-const BASE_URL = "https://play.pokemonshowdown.com/sprites";
-
 const REACTION_EMOJIS: Record<string, string> = {
   fire: "\uD83D\uDD25",
   heart: "\u2764\uFE0F",
@@ -29,14 +29,20 @@ const REACTION_EMOJIS: Record<string, string> = {
   clap: "\uD83D\uDC4F",
 };
 
-function spriteSlug(species: string): string {
-  return species
-    .toLowerCase()
-    .replace(/♂/g, "m")
-    .replace(/♀/g, "f")
-    .replace(/[éè]/g, "e")
-    .replace(/[''.:\u2019]/g, "")
-    .replace(/[^a-z0-9]/g, "")
+function CardSprite({ species }: { species: string }) {
+  const urls = getSpriteUrls(species);
+  const [idx, setIdx] = useState(0);
+  return (
+    <img
+      src={urls[Math.min(idx, urls.length - 1)]}
+      alt={species}
+      width={40}
+      height={40}
+      className="object-contain"
+      loading="lazy"
+      onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
+    />
+  );
 }
 
 export function ReportCard({ report }: { report: ExploreReport }) {
@@ -66,22 +72,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
       <div className="px-4 pt-4 pb-2">
         <div className="flex items-center justify-center gap-1">
           {report.species.map((species, i) => (
-            <img
-              key={i}
-              src={`${BASE_URL}/home/${spriteSlug(species)}.png`}
-              alt={species}
-              width={40}
-              height={40}
-              className="object-contain"
-              loading="lazy"
-              onError={(e) => {
-                const img = e.currentTarget;
-                if (!img.dataset.fallback) {
-                  img.dataset.fallback = "1";
-                  img.src = `${BASE_URL}/gen5/${spriteSlug(species)}.png`;
-                }
-              }}
-            />
+            <CardSprite key={i} species={species} />
           ))}
           {Array.from({ length: Math.max(0, 6 - report.species.length) }).map(
             (_, i) => (
