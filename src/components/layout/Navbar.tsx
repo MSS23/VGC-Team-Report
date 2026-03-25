@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
+import { SignInButton, UserButton, Show } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
 import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
@@ -50,11 +51,6 @@ interface NavbarProps {
   editLinkCopied: boolean;
   onCopyEditLink: () => void;
 
-  // Export
-  onExportTeam?: () => void;
-  onExportImage?: () => void;
-  onExportPdf?: () => void;
-
   // Undo / redo
   onUndo?: () => void;
   onRedo?: () => void;
@@ -81,32 +77,14 @@ export function Navbar(props: NavbarProps) {
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare,
     hasExistingShare, editLinkCopied, onCopyEditLink,
-    onExportTeam,
-    onExportImage, onExportPdf,
     onUndo, onRedo, canUndo, canRedo,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
     onReset, onExitSharedView,
   } = props;
 
   const { t } = useTranslation();
-  const [exportCopied, setExportCopied] = useState(false);
-  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
-  const [isExporting, setIsExporting] = useState(false);
-  const exportDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close export dropdown on outside click
-  useEffect(() => {
-    if (!exportDropdownOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target as Node)) {
-        setExportDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [exportDropdownOpen]);
 
   // Close mobile menu on outside click
   useEffect(() => {
@@ -249,94 +227,6 @@ export function Navbar(props: NavbarProps) {
         {/* -- Right: actions -- */}
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
 
-          {/* Export */}
-          {onExportTeam && !isPresentationStyle && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                onExportTeam();
-                setExportCopied(true);
-                setTimeout(() => setExportCopied(false), 2000);
-              }}
-              title={t.exportTeam}
-              aria-label={t.exportTeam}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              <span className="hidden sm:inline">{exportCopied ? t.exportCopied : t.exportTeam}</span>
-            </Button>
-          )}
-
-          {/* Export as Image / PDF dropdown */}
-          {onExportImage && !isPresentationStyle && (
-            <div className="relative" ref={exportDropdownRef}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setExportDropdownOpen((v) => !v)}
-                title="Export slide"
-                aria-label="Export slide"
-                aria-expanded={exportDropdownOpen}
-                disabled={isExporting}
-              >
-                {isExporting ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" className="animate-spin" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                )}
-                <span className="hidden sm:inline">{isExporting ? t.exporting : "Save"}</span>
-                <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="hidden sm:inline">
-                  <polyline points="3 5 6 8 9 5" />
-                </svg>
-              </Button>
-              {exportDropdownOpen && (
-                <div className="absolute right-0 top-full mt-1 bg-surface border border-border rounded-xl shadow-lg py-1 min-w-[200px] z-50 animate-fade-in">
-                  <button
-                    type="button"
-                    className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-surface-alt transition-colors cursor-pointer flex items-center gap-2"
-                    onClick={async () => {
-                      setExportDropdownOpen(false);
-                      setIsExporting(true);
-                      try { await onExportImage(); } finally { setIsExporting(false); }
-                    }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                      <circle cx="8.5" cy="8.5" r="1.5" />
-                      <polyline points="21 15 16 10 5 21" />
-                    </svg>
-                    {t.exportAsImage}
-                  </button>
-                  <button
-                    type="button"
-                    className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-surface-alt transition-colors cursor-pointer flex items-center gap-2"
-                    onClick={async () => {
-                      setExportDropdownOpen(false);
-                      setIsExporting(true);
-                      try { await onExportPdf?.(); } finally { setIsExporting(false); }
-                    }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                    {t.exportAsPdf}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Share / Re-share */}
           {isLocalDraft && (
             <>
@@ -421,6 +311,18 @@ export function Navbar(props: NavbarProps) {
               })}
             </div>
           )}
+
+          {/* Auth */}
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all cursor-pointer">
+                Sign In
+              </button>
+            </SignInButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
+          </Show>
 
           {/* Secondary controls — hidden on mobile behind overflow menu */}
           <div className="hidden sm:flex items-center gap-2">

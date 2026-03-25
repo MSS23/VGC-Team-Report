@@ -133,13 +133,9 @@ function HomeContent() {
     handleUndo,
     handleRedo,
     handleAnalyze,
-    handleExportTeam,
     isSampleTeam,
     handleReset,
     handleDecodeFailed,
-    slideContentRef,
-    handleExportImage,
-    handleExportPdf,
   } = useHomePage();
 
   const [showShareModal, setShowShareModal] = useState(false);
@@ -297,9 +293,6 @@ function HomeContent() {
         hasExistingShare={hasExistingShare()}
         editLinkCopied={editLinkCopied}
         onCopyEditLink={handleCopyEditLink}
-        onExportTeam={analysis ? handleExportTeam : undefined}
-        onExportImage={analysis ? handleExportImage : undefined}
-        onExportPdf={analysis ? handleExportPdf : undefined}
         onUndo={handleUndo}
         onRedo={handleRedo}
         canUndo={canUndo}
@@ -327,7 +320,6 @@ function HomeContent() {
 
       {/* Report content */}
       <div
-        ref={slideContentRef}
         className={`max-w-7xl mx-auto slide-content ${
           isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-36 sm:pb-32" : "pb-20 sm:pb-20"
         } ${

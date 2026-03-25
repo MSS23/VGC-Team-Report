@@ -9,6 +9,7 @@ import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { WhatsNewModal } from "@/components/ui/WhatsNewModal";
+import { SignInButton, UserButton, Show } from "@clerk/nextjs";
 
 export const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
 Ability: Intimidate
@@ -171,8 +172,22 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
   return (
     <div className="w-full max-w-2xl mx-auto px-4">
 
-      {/* Language selector — top right */}
-      <div className="fixed top-3 right-3 z-20">
+      {/* Top right: auth + language */}
+      <div className="fixed top-3 right-3 z-20 flex items-center gap-2">
+        <Show when="signed-out">
+          <SignInButton mode="modal">
+            <button className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all cursor-pointer">
+              Sign In
+            </button>
+          </SignInButton>
+        </Show>
+        <Show when="signed-in">
+          <UserButton
+            appearance={{
+              elements: { avatarBox: "w-8 h-8" },
+            }}
+          />
+        </Show>
         <LanguageSelector />
       </div>
 

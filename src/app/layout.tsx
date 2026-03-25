@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
@@ -69,6 +70,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${sora.variable} ${jetbrainsMono.variable} antialiased`}>
+        <ClerkProvider>
         <JsonLd
           data={{
             "@context": "https://schema.org",
@@ -91,6 +93,7 @@ export default function RootLayout({
         <InstallPrompt />
         <Analytics />
         <ServiceWorkerRegistration />
+        </ClerkProvider>
       </body>
     </html>
   );

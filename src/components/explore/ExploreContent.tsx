@@ -11,6 +11,7 @@ import { SpotlightSection } from "./SpotlightCard";
 import { ReportCard, type ExploreReport } from "./ReportCard";
 import { ExploreEmpty } from "./ExploreEmpty";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { SignInButton, UserButton, Show } from "@clerk/nextjs";
 
 export function ExploreContent() {
   return (
@@ -118,6 +119,16 @@ function ExploreInner() {
             <span className="text-accent">Report</span>
           </a>
           <div className="flex items-center gap-3">
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <button className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all cursor-pointer">
+                  Sign In
+                </button>
+              </SignInButton>
+            </Show>
+            <Show when="signed-in">
+              <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
+            </Show>
             <LanguageSelector />
             <button
               onClick={() => setDarkMode(!darkMode)}

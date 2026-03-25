@@ -15,7 +15,6 @@ import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useTheme } from "@/hooks/useTheme";
 import { useShareFlow } from "@/hooks/useShareFlow";
 import { useSlideSystem } from "@/hooks/useSlideSystem";
-import { useExportActions } from "@/hooks/useExportActions";
 import { SAMPLE_PASTE } from "@/components/input/PasteInput";
 import { useTranslation } from "@/lib/i18n";
 import type { SpriteConfig } from "@/lib/types/sprites";
@@ -165,13 +164,6 @@ export function useHomePage() {
     setShowShortcutHint: setShowShortcutHint as (fn: (v: boolean) => boolean) => void,
     handleUndo, handleRedo,
     t: t as unknown as Record<string, string>,
-  });
-
-  // ── Export actions (extracted) ───────────────────────────────────
-  const exports = useExportActions({
-    analysis,
-    tournamentName,
-    physicalSlide: slides.physicalSlide,
   });
 
   const isReadOnly = (share.isSharedView && !share.isEditingUnlocked) || presentationMode || !creatorMode;
@@ -352,13 +344,7 @@ export function useHomePage() {
 
     // Actions
     handleAnalyze,
-    handleExportTeam: exports.handleExportTeam,
     handleReset,
     handleDecodeFailed,
-
-    // Export
-    slideContentRef: exports.slideContentRef,
-    handleExportImage: exports.handleExportImage,
-    handleExportPdf: exports.handleExportPdf,
   };
 }
