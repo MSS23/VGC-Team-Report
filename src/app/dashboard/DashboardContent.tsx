@@ -10,6 +10,7 @@ import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard"
 
 interface DashboardReport extends ExploreReport {
   isPublic?: boolean;
+  editToken?: string;
 }
 
 export function DashboardContent() {
@@ -280,15 +281,161 @@ function DashboardInner() {
                   </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {(tab === "my" ? myReports : savedReports).map((report) => (
-                    <ReportCard key={report.id} report={report} />
-                  ))}
+                  {tab === "my"
+                    ? myReports.map((report) => (
+                        <ManagedReportCard
+                          key={report.id}
+                          report={report}
+                          onUpdate={(id, updates) => {
+                            setMyReports((prev) => prev.map((r) => r.id === id ? { ...r, ...updates } : r));
+                          }}
+                          onDelete={(id) => {
+                            setMyReports((prev) => prev.filter((r) => r.id !== id));
+                          }}
+                        />
+                      ))
+                    : savedReports.map((report) => (
+                        <ReportCard key={report.id} report={report} />
+                      ))
+                  }
                 </div>
               </>
             )}
           </motion.div>
         </Show>
       </main>
+    </div>
+  );
+}
+
+/** Report card with edit/visibility/delete controls for owned reports */
+function ManagedReportCard({
+  report,
+  onUpdate,
+  onDelete,
+}: {
+  report: DashboardReport;
+  onUpdate: (id: string, updates: Partial<DashboardReport>) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [toggling, setToggling] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const toggleVisibility = async () => {
+    if (toggling) return;
+    setToggling(true);
+    try {
+      const res = await fetch(`/api/user/reports/${report.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublic: !report.isPublic }),
+      });
+      if (res.ok) {
+        onUpdate(report.id, { isPublic: !report.isPublic });
+      }
+    } catch { /* silent */ }
+    finally { setToggling(false); }
+  };
+
+  const handleDelete = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/user/reports/${report.id}`, { method: "DELETE" });
+      if (res.ok) onDelete(report.id);
+    } catch { /* silent */ }
+    finally { setDeleting(false); setConfirmDelete(false); }
+  };
+
+  const editUrl = report.editToken
+    ? `/s/${report.id}?key=${report.editToken}`
+    : `/s/${report.id}`;
+
+  return (
+    <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
+      <a href={`/s/${report.id}`} className="block hover:bg-surface-alt/30 transition-colors">
+        <div className="px-4 pt-4 pb-2">
+          <div className="flex items-center justify-center gap-1">
+            {report.species.map((species, i) => (
+              <img
+                key={i}
+                src={`https://play.pokemonshowdown.com/sprites/ani/${species.toLowerCase().replace(/[^a-z0-9]/g, "")}.gif`}
+                alt={species}
+                width={36}
+                height={36}
+                className="object-contain"
+                loading="lazy"
+              />
+            ))}
+          </div>
+        </div>
+        <div className="px-4 pb-2">
+          <h3 className="text-sm font-bold text-text-primary leading-tight line-clamp-1">
+            {report.tournamentName || report.species.join(" / ")}
+          </h3>
+          {report.placement && (
+            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-extrabold rounded-md tracking-wide bg-accent-surface text-accent mt-1">
+              {report.placement}
+            </span>
+          )}
+        </div>
+      </a>
+
+      {/* Management controls */}
+      <div className="px-4 py-3 border-t border-border bg-surface-alt/30 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleVisibility}
+            disabled={toggling}
+            className={`inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md border transition-all cursor-pointer ${
+              report.isPublic
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                : "bg-surface-alt text-text-tertiary border-border"
+            }`}
+          >
+            {report.isPublic ? "Public" : "Private"}
+          </button>
+          <a
+            href={editUrl}
+            className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition-all"
+          >
+            Edit
+          </a>
+        </div>
+        {confirmDelete ? (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-2 py-1 text-[10px] font-bold rounded-md bg-red-500/10 text-red-500 border border-red-500/20 cursor-pointer"
+            >
+              {deleting ? "..." : "Confirm"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(false)}
+              className="px-2 py-1 text-[10px] font-bold rounded-md text-text-tertiary cursor-pointer"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="p-1 text-text-tertiary hover:text-red-500 transition-colors cursor-pointer"
+            title="Delete report"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+            </svg>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

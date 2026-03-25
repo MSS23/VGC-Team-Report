@@ -12,7 +12,7 @@ export async function GET() {
 
     const sql = getDb();
     const rows = await sql`
-      SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count, is_public
+      SELECT id, edit_token, data, created_at, updated_at, COALESCE(view_count, 0) as view_count, is_public
       FROM shares
       WHERE owner_id = ${userId}
       ORDER BY updated_at DESC
@@ -32,6 +32,7 @@ export async function GET() {
         updatedAt: (row.updated_at as Date).toISOString(),
         viewCount: row.view_count as number,
         isPublic: row.is_public as boolean,
+        editToken: row.edit_token as string,
       };
     });
 

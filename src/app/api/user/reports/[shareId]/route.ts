@@ -1,0 +1,81 @@
+import { getDb } from "@/lib/db";
+import { auth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+const UpdateBody = z.object({
+  isPublic: z.boolean().optional(),
+});
+
+// PATCH: update report settings (visibility, etc.)
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ shareId: string }> },
+) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { shareId } = await params;
+    const raw = await request.json();
+    const parsed = UpdateBody.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    }
+
+    const sql = getDb();
+
+    if (parsed.data.isPublic !== undefined) {
+      const rows = await sql`
+        UPDATE shares SET is_public = ${parsed.data.isPublic}, updated_at = NOW()
+        WHERE id = ${shareId} AND owner_id = ${userId}
+        RETURNING id, is_public
+      `;
+      if (rows.length === 0) {
+        return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
+      }
+      return NextResponse.json({ id: shareId, isPublic: rows[0].is_public });
+    }
+
+    return NextResponse.json({ id: shareId });
+  } catch (e) {
+    console.error("Report update error:", e);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  }
+}
+
+// DELETE: delete a report you own
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ shareId: string }> },
+) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { shareId } = await params;
+    const sql = getDb();
+
+    const rows = await sql`
+      DELETE FROM shares WHERE id = ${shareId} AND owner_id = ${userId}
+      RETURNING id
+    `;
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
+    }
+
+    // Clean up related data
+    await sql`DELETE FROM reactions WHERE share_id = ${shareId}`;
+    await sql`DELETE FROM comments WHERE share_id = ${shareId}`;
+    await sql`DELETE FROM saved_reports WHERE share_id = ${shareId}`;
+
+    return NextResponse.json({ deleted: true });
+  } catch (e) {
+    console.error("Report delete error:", e);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  }
+}
