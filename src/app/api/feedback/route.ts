@@ -22,7 +22,7 @@ const TYPE_COLOR: Record<string, number> = {
 const FeedbackBody = z.object({
   type: z.enum(["feature", "bug", "improvement", "other"]),
   title: z.string().min(3).max(200),
-  description: z.string().min(10).max(2000),
+  description: z.string().min(3).max(2000),
   device: z.string().max(100).optional(),
   browser: z.string().max(100).optional(),
   screenSize: z.string().max(50).optional(),

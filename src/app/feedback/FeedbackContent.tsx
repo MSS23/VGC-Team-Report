@@ -60,6 +60,16 @@ function FeedbackInner() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deviceInfo, setDeviceInfo] = useState({ device: "...", browser: "...", screen: "..." });
+
+  // Detect device info on mount (avoids hydration mismatch)
+  useEffect(() => {
+    setDeviceInfo({
+      device: detectDevice(),
+      browser: detectBrowser(),
+      screen: detectScreenSize(),
+    });
+  }, []);
 
   const handleSubmit = async () => {
     if (!title.trim() || !description.trim() || submitting) return;
@@ -230,15 +240,15 @@ function FeedbackInner() {
                 <div className="flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-md bg-surface border border-border text-text-secondary">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>
-                    {typeof navigator !== "undefined" ? detectDevice() : "..."}
+                    {deviceInfo.device}
                   </span>
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-md bg-surface border border-border text-text-secondary">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></svg>
-                    {typeof navigator !== "undefined" ? detectBrowser() : "..."}
+                    {deviceInfo.browser}
                   </span>
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-md bg-surface border border-border text-text-secondary">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
-                    {typeof window !== "undefined" ? detectScreenSize() : "..."}
+                    {deviceInfo.screen}
                   </span>
                 </div>
               </div>
