@@ -228,6 +228,23 @@ const ja: TranslationKeys = {
   exportAsImage: "画像としてエクスポート (PNG)",
   exportAsPdf: "PDFとしてエクスポート",
   exporting: "エクスポート中...",
+
+  // Explore page
+  explore: "探索",
+  exploreTitle: "VGCチームを探索",
+  exploreSubtitle: "コミュニティが共有したチームレポートを発見しよう",
+  searchPlaceholder: "ポケモンや大会名で検索...",
+  sortNewest: "新着順",
+  sortUpdated: "最近更新",
+  noPublicReports: "公開レポートはまだありません",
+  noSearchResults: "一致するチームが見つかりません",
+  tryDifferentSearch: "別のキーワードで検索するか、後でもう一度お試しください。",
+  beTheFirst: "チームを共有して最初の投稿者になろう！",
+  loadMore: "もっと見る",
+  loading: "読み込み中...",
+  listPublicly: "公開",
+  listPubliclyTooltip: "このチームを探索ギャラリーに公開する",
+  byCreator: "作成者:",
 };
 
 export default ja;

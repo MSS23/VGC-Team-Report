@@ -41,6 +41,7 @@ export function useHomePage() {
   const { genTheme, setGenTheme } = useTheme();
   const { isSharedView, isSharePending, sharedState, copyShareUrl, freshShare, autoSave, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, lastShareResult, getEditUrl, hasExistingShare, clearStoredShare } = useShareUrl();
   const [showShortcutHint, setShowShortcutHint] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
   const [showEditUrl, setShowEditUrl] = useState(false);
   const [editLinkCopied, setEditLinkCopied] = useState(false);
   const creatorModeBeforePresent = useRef(creatorMode);
@@ -393,14 +394,14 @@ export function useHomePage() {
 
   const handleShareClick = useCallback(() => {
     if (!analysis) return;
-    copyShareUrl(buildShareState());
+    copyShareUrl(buildShareState(), isPublic);
     setShowEditUrl(true);
-  }, [analysis, copyShareUrl, buildShareState]);
+  }, [analysis, copyShareUrl, buildShareState, isPublic]);
 
   const handleReshare = useCallback(() => {
     if (!analysis) return;
-    copyShareUrl(buildShareState());
-  }, [analysis, copyShareUrl, buildShareState]);
+    copyShareUrl(buildShareState(), isPublic);
+  }, [analysis, copyShareUrl, buildShareState, isPublic]);
 
   /** Copy the stored edit link to clipboard (same browser recovery). */
   const handleCopyEditLink = useCallback(() => {
@@ -414,9 +415,9 @@ export function useHomePage() {
   /** Force a fresh share — new ID + new edit token (old edit link stops working). */
   const handleFreshReshare = useCallback(() => {
     if (!analysis) return;
-    freshShare(buildShareState());
+    freshShare(buildShareState(), isPublic);
     setShowEditUrl(true);
-  }, [analysis, freshShare, buildShareState]);
+  }, [analysis, freshShare, buildShareState, isPublic]);
 
   // Auto-save: debounce pushes to server only when editing an unlocked shared view
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -424,12 +425,12 @@ export function useHomePage() {
     if (!analysis || !isEditingUnlocked) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
-      autoSave(buildShareState());
+      autoSave(buildShareState(), isPublic);
     }, 3000);
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [analysis, isEditingUnlocked, buildShareState, autoSave]);
+  }, [analysis, isEditingUnlocked, buildShareState, autoSave, isPublic]);
 
   // Export team as Showdown paste to clipboard
   const handleExportTeam = useCallback(() => {
@@ -522,6 +523,8 @@ export function useHomePage() {
     handleReshare,
     handleCopyEditLink,
     handleFreshReshare,
+    isPublic,
+    setIsPublic,
 
     // Save flash
     saveFlash,

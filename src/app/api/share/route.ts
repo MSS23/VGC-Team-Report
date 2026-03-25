@@ -12,6 +12,7 @@ const ShareBodySchema = z.object({
   }).passthrough(),
   existingId: z.string().optional(),
   editToken: z.string().optional(),
+  isPublic: z.boolean().optional(),
 });
 
 function generateId(): string {
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const { state, existingId, editToken } = parsed.data;
+    const { state, existingId, editToken, isPublic } = parsed.data;
 
     const sql = getDb();
 
@@ -64,12 +65,13 @@ export async function POST(request: Request) {
     if (existingId && editToken) {
       const rows = await sql`
         UPDATE shares
-        SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(), version = COALESCE(version, 1) + 1
+        SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(), version = COALESCE(version, 1) + 1,
+            is_public = ${isPublic ?? false}
         WHERE id = ${existingId} AND edit_token = ${editToken}
-        RETURNING id, COALESCE(version, 1) AS version
+        RETURNING id, COALESCE(version, 1) AS version, is_public
       `;
       if (rows.length > 0) {
-        return NextResponse.json({ id: existingId, editToken, updated: true, version: rows[0].version });
+        return NextResponse.json({ id: existingId, editToken, updated: true, version: rows[0].version, isPublic: rows[0].is_public });
       }
       // Token mismatch or not found — fall through to create new
     }
@@ -78,10 +80,10 @@ export async function POST(request: Request) {
     const id = generateId();
     const newEditToken = generateEditToken();
     await sql`
-      INSERT INTO shares (id, edit_token, data, version)
-      VALUES (${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1)
+      INSERT INTO shares (id, edit_token, data, version, is_public)
+      VALUES (${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false})
     `;
-    return NextResponse.json({ id, editToken: newEditToken, updated: false, version: 1 });
+    return NextResponse.json({ id, editToken: newEditToken, updated: false, version: 1, isPublic: isPublic ?? false });
   } catch (e) {
     console.error("Share create/update error:", e);
     return NextResponse.json(

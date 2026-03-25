@@ -139,7 +139,7 @@ export function useShareUrl() {
     return null;
   }, []);
 
-  const copyShareUrl = useCallback(async (state: ShareableState) => {
+  const copyShareUrl = useCallback(async (state: ShareableState, isPublic?: boolean) => {
     setShareStatus("copying");
     setUrlWarning(null);
     setLastShareResult(null);
@@ -158,6 +158,7 @@ export function useShareUrl() {
             state,
             existingId: active?.shareId,
             editToken: active?.editToken,
+            isPublic,
           }),
         });
         if (!res.ok) throw new Error("API error");
@@ -195,7 +196,7 @@ export function useShareUrl() {
   }, [getActiveShare]);
 
   /** Silent auto-save: push current state to the server (only when active session exists). */
-  const autoSave = useCallback(async (state: ShareableState) => {
+  const autoSave = useCallback(async (state: ShareableState, isPublic?: boolean) => {
     const active = getActiveShare();
     if (!active) return;
     try {
@@ -206,6 +207,7 @@ export function useShareUrl() {
           state,
           existingId: active.shareId,
           editToken: active.editToken,
+          isPublic,
         }),
       });
     } catch {
@@ -226,7 +228,7 @@ export function useShareUrl() {
   }, [getActiveShare]);
 
   /** Force a fresh share with a new ID and edit token (invalidates old edit link). */
-  const freshShare = useCallback(async (state: ShareableState) => {
+  const freshShare = useCallback(async (state: ShareableState, isPublic?: boolean) => {
     setShareStatus("copying");
     setUrlWarning(null);
     setLastShareResult(null);
@@ -234,7 +236,7 @@ export function useShareUrl() {
       const res = await fetch("/api/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state }),
+        body: JSON.stringify({ state, isPublic }),
       });
       if (!res.ok) throw new Error("API error");
       const { id, editToken } = await res.json();

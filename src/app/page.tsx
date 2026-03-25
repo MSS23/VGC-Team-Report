@@ -58,6 +58,8 @@ function HomeContent() {
     handleReshare,
     handleCopyEditLink,
     handleFreshReshare,
+    isPublic,
+    setIsPublic,
     saveFlash,
     showShortcutHint,
     setShowShortcutHint,
@@ -260,6 +262,8 @@ function HomeContent() {
         hasExistingShare={hasExistingShare()}
         editLinkCopied={editLinkCopied}
         onCopyEditLink={handleCopyEditLink}
+        isPublic={isPublic}
+        onIsPublicChange={setIsPublic}
         onExportTeam={analysis ? handleExportTeam : undefined}
         onExportImage={analysis ? handleExportImage : undefined}
         onExportPdf={analysis ? handleExportPdf : undefined}

@@ -228,6 +228,23 @@ const zh: TranslationKeys = {
   exportAsImage: "导出为图片 (PNG)",
   exportAsPdf: "导出为 PDF",
   exporting: "导出中...",
+
+  // Explore page
+  explore: "探索",
+  exploreTitle: "探索 VGC 队伍",
+  exploreSubtitle: "发现社区分享的队伍报告",
+  searchPlaceholder: "按宝可梦或赛事搜索...",
+  sortNewest: "最新",
+  sortUpdated: "最近更新",
+  noPublicReports: "暂无公开报告",
+  noSearchResults: "没有匹配的队伍",
+  tryDifferentSearch: "试试其他搜索词，或稍后再来查看。",
+  beTheFirst: "分享你的队伍，成为第一个！",
+  loadMore: "加载更多",
+  loading: "加载中...",
+  listPublicly: "公开",
+  listPubliclyTooltip: "将此队伍展示在探索画廊中",
+  byCreator: "作者:",
 };
 
 export default zh;

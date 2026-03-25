@@ -228,6 +228,23 @@ const ko: TranslationKeys = {
   exportAsImage: "이미지로 내보내기 (PNG)",
   exportAsPdf: "PDF로 내보내기",
   exporting: "내보내는 중...",
+
+  // Explore page
+  explore: "탐색",
+  exploreTitle: "VGC 팀 탐색",
+  exploreSubtitle: "커뮤니티가 공유한 팀 리포트를 발견하세요",
+  searchPlaceholder: "포켓몬 또는 대회로 검색...",
+  sortNewest: "최신순",
+  sortUpdated: "최근 업데이트",
+  noPublicReports: "아직 공개 리포트가 없습니다",
+  noSearchResults: "검색과 일치하는 팀이 없습니다",
+  tryDifferentSearch: "다른 검색어로 시도하거나 나중에 다시 확인하세요.",
+  beTheFirst: "팀을 공유하고 첫 번째가 되세요!",
+  loadMore: "더 보기",
+  loading: "로딩 중...",
+  listPublicly: "공개",
+  listPubliclyTooltip: "이 팀을 탐색 갤러리에 공개",
+  byCreator: "제작자:",
 };
 
 export default ko;

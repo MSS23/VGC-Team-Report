@@ -254,6 +254,23 @@ const en = {
   exportAsImage: "Export as Image (PNG)",
   exportAsPdf: "Export as PDF",
   exporting: "Exporting...",
+
+  // Explore page
+  explore: "Explore",
+  exploreTitle: "Explore VGC Teams",
+  exploreSubtitle: "Discover team reports shared by the community",
+  searchPlaceholder: "Search by Pokemon or tournament...",
+  sortNewest: "Newest",
+  sortUpdated: "Recently Updated",
+  noPublicReports: "No public team reports yet",
+  noSearchResults: "No teams match your search",
+  tryDifferentSearch: "Try a different search term or check back later.",
+  beTheFirst: "Share your team and be the first on the board!",
+  loadMore: "Load More",
+  loading: "Loading...",
+  listPublicly: "Public",
+  listPubliclyTooltip: "List this team on the Explore gallery for others to discover",
+  byCreator: "by",
 } as const;
 
 export type TranslationKeys = { [K in keyof typeof en]: string };

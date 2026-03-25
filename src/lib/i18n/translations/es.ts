@@ -228,6 +228,23 @@ const es: TranslationKeys = {
   exportAsImage: "Exportar como imagen (PNG)",
   exportAsPdf: "Exportar como PDF",
   exporting: "Exportando...",
+
+  // Explore page
+  explore: "Explorar",
+  exploreTitle: "Explorar equipos VGC",
+  exploreSubtitle: "Descubre reportes de equipo compartidos por la comunidad",
+  searchPlaceholder: "Buscar por Pokémon o torneo...",
+  sortNewest: "Más recientes",
+  sortUpdated: "Actualizados recientemente",
+  noPublicReports: "Aún no hay reportes públicos",
+  noSearchResults: "Ningún equipo coincide con tu búsqueda",
+  tryDifferentSearch: "Prueba con otro término de búsqueda o vuelve más tarde.",
+  beTheFirst: "¡Comparte tu equipo y sé el primero!",
+  loadMore: "Cargar más",
+  loading: "Cargando...",
+  listPublicly: "Público",
+  listPubliclyTooltip: "Listar este equipo en la galería Explorar",
+  byCreator: "por",
 };
 
 export default es;
