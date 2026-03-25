@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { PokemonCard } from "./PokemonCard";
+import { TeamStats } from "./TeamStats";
 import { useTranslation } from "@/lib/i18n";
 
 interface TeamOverviewProps {
@@ -101,8 +102,8 @@ export function TeamOverview({
                 <span className="text-sm font-[family-name:var(--font-mono)] font-extrabold text-text-primary tracking-widest">
                   {rentalCode}
                 </span>
-                <span className="text-xs font-semibold text-text-tertiary">
-                  {rentalCopied ? t.copied : t.copy}
+                <span className={`text-xs font-semibold transition-colors duration-200 ${rentalCopied ? "text-emerald-500" : "text-text-tertiary"}`}>
+                  {rentalCopied ? "\u2713 " + t.copied : t.copy}
                 </span>
               </button>
             )}
@@ -185,6 +186,11 @@ export function TeamOverview({
             spellCheck={false}
           />
         )}
+      </div>
+
+      {/* Team Stats Summary */}
+      <div className="mb-3 sm:mb-4">
+        <TeamStats pokemon={pokemon} />
       </div>
 
       {/* Pokemon Grid */}

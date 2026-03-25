@@ -176,14 +176,21 @@ function ExploreInner() {
 
         {/* Results */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="flex items-center gap-3 text-text-secondary">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              <span className="text-sm font-medium">{t.loading}</span>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-surface rounded-xl border border-border overflow-hidden animate-pulse">
+                <div className="px-4 pt-4 pb-2 flex justify-center gap-1">
+                  {Array.from({ length: 6 }).map((_, j) => (
+                    <div key={j} className="w-10 h-10 rounded-full bg-surface-alt" />
+                  ))}
+                </div>
+                <div className="px-4 pb-4 space-y-2">
+                  <div className="h-4 bg-surface-alt rounded w-3/4" />
+                  <div className="h-3 bg-surface-alt rounded w-1/2" />
+                  <div className="h-3 bg-surface-alt rounded w-1/3" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : reports.length === 0 ? (
           <ExploreEmpty hasSearch={!!query} />

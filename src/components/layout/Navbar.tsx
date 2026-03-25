@@ -99,13 +99,22 @@ export function Navbar(props: NavbarProps) {
   }, [mobileMenuOpen]);
 
   const isLocalDraft = !isSharedView && !isPresentationStyle;
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <header
       className={`sticky top-0 z-40 backdrop-blur-xl border-b transition-all duration-300 ${
         isPresentationStyle
           ? "bg-transparent border-transparent"
-          : "bg-surface/90 border-border shadow-[0_1px_8px_rgba(0,0,0,0.06)]"
+          : scrolled
+            ? "bg-surface/95 border-border shadow-lg shadow-black/5"
+            : "bg-surface/90 border-border shadow-[0_1px_8px_rgba(0,0,0,0.06)]"
       }`}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2">

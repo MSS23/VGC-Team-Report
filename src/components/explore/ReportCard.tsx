@@ -49,7 +49,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
   return (
     <motion.a
       href={`/s/${report.id}`}
-      className="block bg-surface rounded-xl border border-border shadow-sm hover:shadow-md hover:border-accent/30 transition-all duration-300 overflow-hidden group"
+      className="block bg-surface rounded-xl border border-border shadow-sm hover:shadow-md hover:border-accent/30 overflow-hidden group card-hover"
       variants={{
         hidden: { opacity: 0, y: 12 },
         visible: { opacity: 1, y: 0 },

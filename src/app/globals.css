@@ -389,3 +389,14 @@ body {
 :focus:not(:focus-visible) {
   outline: none;
 }
+
+/* Smooth hover for interactive cards */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+}
+.card-hover:active {
+  transform: translateY(0);
+}
