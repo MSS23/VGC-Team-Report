@@ -283,7 +283,7 @@ function DashboardInner() {
                     type="text"
                     value={claimUrl}
                     onChange={(e) => setClaimUrl(e.target.value)}
-                    placeholder="Paste your edit link (e.g., https://pokemonvgcteamreport.com/s/ABC123?key=...)"
+                    placeholder="Paste edit link (/s/ID?key=...)"
                     className="flex-1 px-3 py-2 bg-surface-alt border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
                   />
                   <button

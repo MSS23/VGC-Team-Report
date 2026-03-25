@@ -4,28 +4,28 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 
-const STORAGE_KEY = "vgc-whats-new-v2";
+const STORAGE_KEY = "vgc-whats-new-v3";
 
 const FEATURES = [
   {
-    icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
-    title: "Explore Community Teams",
-    desc: "Browse public team reports from VGC players around the world. Search by Pokemon, tournament, or creator.",
-  },
-  {
-    icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
-    title: "React & Comment",
-    desc: "Show love with emoji reactions and leave comments on public reports. Creators control whether comments are enabled.",
-  },
-  {
     icon: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z",
-    title: "Creator Profiles",
-    desc: "Every creator gets an auto-generated profile page showing all their public reports and community stats.",
+    title: "Sign In & Dashboard",
+    desc: "Sign in with Discord, Google, or X. Manage all your reports, save favorites, and edit your creator profile from your dashboard.",
   },
   {
-    icon: "M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z",
-    title: "Share Your Way",
-    desc: "Reports are unlisted by default. Choose to list publicly on the Explore gallery, or keep the link private.",
+    icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
+    title: "Explore & Discover",
+    desc: "Browse public team reports from VGC players worldwide. React, comment, save, and fork teams you like.",
+  },
+  {
+    icon: "M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2",
+    title: "Fork Any Team",
+    desc: "See a team you like? Fork it to copy the paste and build your own version with your notes and matchup plans.",
+  },
+  {
+    icon: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z",
+    title: "Full Report Control",
+    desc: "Claim your reports, toggle public/private, edit anytime, and manage everything from your dashboard.",
   },
 ];
 
@@ -81,10 +81,10 @@ export function WhatsNewModal() {
               <span className="text-xs font-extrabold text-accent uppercase tracking-widest">What&apos;s New</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
-              VGC Team Report is now a <span className="text-accent">community</span>
+              Your teams, your <span className="text-accent">dashboard</span>
             </h2>
             <p className="text-sm text-text-secondary mt-2 max-w-sm mx-auto">
-              Build your team report, share it with the world, and discover what other players are running.
+              Sign in to manage your reports, save favorites, fork teams, and join the VGC community.
             </p>
           </div>
 
@@ -118,13 +118,13 @@ export function WhatsNewModal() {
               </svg>
               Explore Teams
             </a>
-            <button
-              type="button"
-              onClick={dismiss}
-              className="w-full sm:w-auto px-5 py-2.5 text-sm font-bold text-text-secondary hover:text-text-primary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all cursor-pointer tracking-wide"
+            <a
+              href="/dashboard"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-text-secondary hover:text-text-primary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all tracking-wide"
+              onClick={() => localStorage.setItem(STORAGE_KEY, "1")}
             >
-              Start Building
-            </button>
+              My Dashboard
+            </a>
           </div>
         </motion.div>
       </motion.div>

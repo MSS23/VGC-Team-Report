@@ -87,7 +87,7 @@ Cypress.Commands.add("loadSampleTeam", () => {
   // Set localStorage to skip WhatsNew modal
   cy.visit("/", {
     onBeforeLoad(win) {
-      win.localStorage.setItem("vgc-whats-new-v2", "1");
+      win.localStorage.setItem("vgc-whats-new-v3", "1");
     },
   });
   cy.contains("button", "Load sample").click();

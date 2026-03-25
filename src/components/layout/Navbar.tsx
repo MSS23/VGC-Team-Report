@@ -225,7 +225,7 @@ export function Navbar(props: NavbarProps) {
         )}
 
         {/* -- Right: actions -- */}
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
 
           {/* Share / Re-share */}
           {isLocalDraft && (
@@ -264,13 +264,14 @@ export function Navbar(props: NavbarProps) {
                 size="sm"
                 onClick={onReshare}
                 disabled={shareStatus === "copying"}
+                className="text-xs"
               >
                 {shareStatus === "copying" ? t.saving : shareStatus === "copied" ? (lastShareResult?.updated ? t.savedBang : t.copied) : shareStatus === "error" ? t.failed : t.reshare}
               </Button>
               {/* Sign-in nudge / claim for editors */}
               <Show when="signed-out">
                 <SignInButton mode="modal">
-                  <button className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold text-accent bg-accent-surface/60 border border-accent/20 rounded-lg hover:bg-accent-surface transition-all cursor-pointer">
+                  <button className="hidden md:inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold text-accent bg-accent-surface/60 border border-accent/20 rounded-lg hover:bg-accent-surface transition-all cursor-pointer">
                     Sign in to save
                   </button>
                 </SignInButton>
@@ -280,7 +281,7 @@ export function Navbar(props: NavbarProps) {
 
           {/* Gen theme selector (local draft & shared edit, large screens only) */}
           {!isPresentationStyle && (isLocalDraft || (isSharedView && isEditingUnlocked)) && (
-            <div className="hidden lg:flex items-center bg-surface-alt/50 rounded-lg p-1 gap-0.5" title="Generation theme">
+            <div className={`hidden ${isSharedView && isEditingUnlocked ? "xl:flex" : "lg:flex"} items-center bg-surface-alt/50 rounded-lg p-1 gap-0.5`} title="Generation theme">
               {GEN_THEMES.map((theme) => {
                 const isActive = genTheme === theme.id;
                 return (
@@ -439,8 +440,8 @@ export function Navbar(props: NavbarProps) {
             </>
           )}
 
-          {/* Build Your Own CTA (shared views only, not presentation) */}
-          {isSharedView && !isPresentationStyle && (
+          {/* Build Your Own CTA (shared views only, not presentation, hide when editing to reduce clutter) */}
+          {isSharedView && !isPresentationStyle && !isEditingUnlocked && (
             <a
               href="/"
               className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"

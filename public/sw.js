@@ -1,9 +1,9 @@
-const CACHE_NAME = "vgc-team-report-v4";
+const CACHE_NAME = "vgc-team-report-v5";
 const SPRITE_CACHE = "vgc-sprites-v1";
 const SHARE_CACHE = "vgc-shares-v1";
-const API_CACHE = "vgc-api-v1";
+const API_CACHE = "vgc-api-v2";
 
-const PRECACHE_URLS = ["/", "/explore", "/changelog", "/favicon.svg", "/icon-192.png"];
+const PRECACHE_URLS = ["/", "/explore", "/changelog", "/feedback", "/dashboard", "/favicon.svg", "/icon-192.png"];
 
 const OFFLINE_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -153,7 +153,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // ── Cacheable API routes (explore, spotlight, creator) — stale-while-revalidate ──
-  if (url.pathname.match(/^\/api\/(explore|spotlight|creator\/)/)) {
+  if (url.pathname.match(/^\/api\/(explore|spotlight|creator\/|user\/reports|user\/saved)/)) {
     event.respondWith(
       caches.open(API_CACHE).then((cache) =>
         cache.match(request).then((cached) => {

@@ -1,13 +1,30 @@
 {
   "name": "VGC Team Report",
   "short_name": "VGC Report",
-  "description": "Build, share, and present professional VGC team reports",
+  "description": "Build, share, and discover competitive Pokemon VGC team reports. Join the community.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0f1a",
   "theme_color": "#E11D48",
   "orientation": "any",
-  "categories": ["games", "utilities"],
+  "categories": ["games", "utilities", "social"],
+  "shortcuts": [
+    {
+      "name": "Explore Teams",
+      "url": "/explore",
+      "description": "Browse community team reports"
+    },
+    {
+      "name": "My Dashboard",
+      "url": "/dashboard",
+      "description": "Manage your team reports"
+    },
+    {
+      "name": "Give Feedback",
+      "url": "/feedback",
+      "description": "Request features or report bugs"
+    }
+  ],
   "icons": [
     {
       "src": "/favicon.svg",

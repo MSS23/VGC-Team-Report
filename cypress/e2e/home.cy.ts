@@ -2,7 +2,7 @@ describe("Home / Paste Input", () => {
   beforeEach(() => {
     cy.visit("/", {
       onBeforeLoad(win) {
-        win.localStorage.setItem("vgc-whats-new-v2", "1");
+        win.localStorage.setItem("vgc-whats-new-v3", "1");
       },
     });
   });
