@@ -45,28 +45,54 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="relative">
-        {/* Spotlight badge */}
-        <div className="absolute top-3 left-3 z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-extrabold rounded-full bg-accent text-white shadow-md shadow-accent/30 uppercase tracking-widest">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+      {/* Top bar: badge + author + placement */}
+      <div className="px-5 sm:px-6 pt-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-accent text-white shadow-sm shadow-accent/30 uppercase tracking-widest">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
             Spotlight
           </span>
+          {report.creatorName && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 rounded-full bg-accent-surface flex items-center justify-center flex-shrink-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <span className="text-sm font-bold text-text-primary">{report.creatorName}</span>
+              {report.isVerified && (
+                <span title="Verified creator" className="flex-shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" className="text-blue-500">
+                    <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15" />
+                    <path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                </span>
+              )}
+            </div>
+          )}
         </div>
+        {report.placement && (
+          <span className="inline-flex items-center px-2.5 py-1 text-xs font-extrabold rounded-lg tracking-wide bg-accent-surface text-accent">
+            {report.placement}
+          </span>
+        )}
+      </div>
 
-        {/* Sprites — larger, centered */}
-        <div className="px-6 pt-12 pb-4">
-          <div className="flex items-center justify-center gap-2 sm:gap-3">
-            {report.species.map((species, i) => (
+      {/* Team sprites with species names */}
+      <div className="px-5 sm:px-6 pt-4 pb-3">
+        <div className="flex items-end justify-center gap-3 sm:gap-4">
+          {report.species.map((species, i) => (
+            <div key={i} className="flex flex-col items-center gap-1">
               <img
-                key={i}
                 src={`${BASE_URL}/home/${spriteSlug(species)}.png`}
                 alt={species}
-                width={56}
-                height={56}
-                className="object-contain sm:w-16 sm:h-16"
+                width={48}
+                height={48}
+                className="object-contain sm:w-14 sm:h-14"
                 loading="lazy"
                 onError={(e) => {
                   const img = e.currentTarget;
@@ -76,53 +102,36 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
                   }
                 }}
               />
-            ))}
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="px-6 pb-6 space-y-3">
-          {/* Title + Placement */}
-          <div className="flex items-start justify-between gap-3">
-            <h3 className="text-lg sm:text-xl font-extrabold text-text-primary leading-tight group-hover:text-accent transition-colors">
-              {report.tournamentName || report.species.join(" / ")}
-            </h3>
-            {report.placement && (
-              <span className="flex-shrink-0 inline-flex items-center px-2.5 py-1 text-xs font-extrabold rounded-lg tracking-wide bg-accent-surface text-accent">
-                {report.placement}
+              <span className="text-[9px] sm:text-[10px] font-semibold text-text-tertiary text-center leading-tight max-w-[60px] truncate">
+                {species}
               </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Title + Summary */}
+      <div className="px-5 sm:px-6 pb-5 space-y-2">
+        {(report.tournamentName || report.teamSummary) && (
+          <div className="border-t border-border/50 pt-3 space-y-1.5">
+            {report.tournamentName && (
+              <h3 className="text-base sm:text-lg font-extrabold text-text-primary leading-tight group-hover:text-accent transition-colors">
+                {report.tournamentName}
+              </h3>
+            )}
+            {report.teamSummary && (
+              <p className="text-xs sm:text-sm text-text-secondary leading-relaxed line-clamp-2">
+                {report.teamSummary}
+              </p>
             )}
           </div>
+        )}
 
-          {/* Creator */}
-          {report.creatorName && (
-            <p className="text-sm text-text-secondary flex items-center gap-1.5">
-              <span>{t.byCreator}</span>
-              <span className="font-bold inline-flex items-center gap-1">
-                {report.creatorName}
-                {report.isVerified && (
-                  <span title="Verified creator">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-blue-500">
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                      <circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" strokeWidth="2" />
-                    </svg>
-                  </span>
-                )}
-              </span>
-            </p>
-          )}
-
-          {/* Summary */}
-          {report.teamSummary && (
-            <p className="text-sm text-text-tertiary leading-relaxed line-clamp-3">
-              {report.teamSummary}
-            </p>
-          )}
-
-          {/* Social stats */}
-          <div className="flex items-center gap-4 pt-1">
+        {/* Footer: social stats + CTA */}
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <div className="flex items-center gap-3">
             {topReactions.length > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs">
+              <span className="inline-flex items-center gap-0.5 text-xs">
                 {topReactions.map(([type]) => (
                   <span key={type}>{REACTION_EMOJIS[type]}</span>
                 ))}
@@ -146,10 +155,17 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
                 <span className="font-bold">{report.viewCount}</span>
               </span>
             )}
-            <span className="text-[10px] text-text-tertiary font-medium uppercase tracking-wider ml-auto">
+            <span className="text-[10px] text-text-tertiary font-medium">
               {relativeTime(report.createdAt)}
             </span>
           </div>
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-accent group-hover:underline">
+            View Report
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </span>
         </div>
       </div>
     </motion.a>
@@ -173,6 +189,12 @@ export function SpotlightSection() {
 
   return (
     <div className="mb-8">
+      <div className="flex items-center gap-2 mb-3">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+        <h2 className="text-xs font-extrabold text-text-secondary uppercase tracking-widest">Featured Team Report</h2>
+      </div>
       <SpotlightCard report={report} />
     </div>
   );
