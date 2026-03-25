@@ -182,6 +182,12 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
           </SignInButton>
         </Show>
         <Show when="signed-in">
+          <a
+            href="/dashboard"
+            className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all"
+          >
+            Dashboard
+          </a>
           <UserButton
             appearance={{
               elements: { avatarBox: "w-8 h-8" },

@@ -321,6 +321,7 @@ export function Navbar(props: NavbarProps) {
             </SignInButton>
           </Show>
           <Show when="signed-in">
+            <a href="/dashboard" className="hidden sm:inline text-xs font-bold text-text-secondary hover:text-accent transition-colors">Dashboard</a>
             <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
           </Show>
 
