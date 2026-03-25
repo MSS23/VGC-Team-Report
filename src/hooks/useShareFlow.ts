@@ -18,9 +18,17 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     editKeyFromUrl, copyShareUrl, freshShare, autoSave, shareStatus,
     urlWarning, decodeFailed, exitSharedView, isEditingUnlocked,
     lastShareResult, getEditUrl, hasExistingShare, clearStoredShare,
+    fetchedIsPublic,
   } = useShareUrl();
 
   const [isPublic, setIsPublic] = useState(false);
+
+  // Sync isPublic from server when share data is fetched (e.g. opening a shared view or dashboard toggle)
+  useEffect(() => {
+    if (fetchedIsPublic !== null) {
+      setIsPublic(fetchedIsPublic);
+    }
+  }, [fetchedIsPublic]);
   const [allowComments, setAllowComments] = useState(false);
   const [showEditUrl, setShowEditUrl] = useState(false);
   const [editLinkCopied, setEditLinkCopied] = useState(false);

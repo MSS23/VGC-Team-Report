@@ -42,9 +42,9 @@ export async function GET(
     const sinceVersion = url.searchParams.get("since");
 
     if (key) {
-      // Validate edit key — return data + editable flag + version
+      // Validate edit key — return data + editable flag + version + visibility
       const rows = await sql`
-        SELECT data, (edit_token = ${key}) AS editable, COALESCE(version, 1) AS version FROM shares WHERE id = ${id}
+        SELECT data, (edit_token = ${key}) AS editable, COALESCE(version, 1) AS version, is_public FROM shares WHERE id = ${id} AND deleted_at IS NULL
       `;
       if (rows.length === 0) {
         return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -59,12 +59,13 @@ export async function GET(
         ...rows[0].data,
         _editable: !!rows[0].editable,
         _version: Number(rows[0].version),
+        _isPublic: !!rows[0].is_public,
       });
     }
 
     // Public access — read-only, no edit info leaked
     const rows = await sql`
-      SELECT data, COALESCE(version, 1) AS version FROM shares WHERE id = ${id}
+      SELECT data, COALESCE(version, 1) AS version, is_public FROM shares WHERE id = ${id} AND deleted_at IS NULL
     `;
     if (rows.length === 0) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -78,6 +79,7 @@ export async function GET(
     return NextResponse.json({
       ...rows[0].data,
       _version: Number(rows[0].version),
+      _isPublic: !!rows[0].is_public,
     });
   } catch (e) {
     console.error("Share fetch error:", e);

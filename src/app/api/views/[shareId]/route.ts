@@ -30,7 +30,7 @@ export async function POST(
     if (recentViews.has(key)) {
       // Already counted this session recently — return current count
       const sql = getDb();
-      const rows = await sql`SELECT COALESCE(view_count, 0) as vc FROM shares WHERE id = ${shareId} AND is_public = TRUE`;
+      const rows = await sql`SELECT COALESCE(view_count, 0) as vc FROM shares WHERE id = ${shareId} AND is_public = TRUE AND deleted_at IS NULL`;
       return NextResponse.json({ viewCount: rows[0]?.vc ?? 0 });
     }
 
@@ -38,7 +38,7 @@ export async function POST(
     const sql = getDb();
     const rows = await sql`
       UPDATE shares SET view_count = COALESCE(view_count, 0) + 1
-      WHERE id = ${shareId} AND is_public = TRUE
+      WHERE id = ${shareId} AND is_public = TRUE AND deleted_at IS NULL
       RETURNING view_count
     `;
     if (rows.length === 0) {

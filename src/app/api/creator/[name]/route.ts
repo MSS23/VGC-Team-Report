@@ -21,7 +21,7 @@ export async function GET(
     const rows = await sql`
       SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count
       FROM shares
-      WHERE is_public = TRUE AND data->>'creatorName' ILIKE ${creatorName}
+      WHERE is_public = TRUE AND deleted_at IS NULL AND data->>'creatorName' ILIKE ${creatorName}
       ORDER BY created_at DESC
     `;
 

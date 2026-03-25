@@ -7,6 +7,7 @@ import { useDarkMode } from "@/hooks/useDarkMode";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { FollowButton } from "@/components/social/FollowButton";
 
 interface CreatorProfile {
   bio?: string;
@@ -117,7 +118,10 @@ function CreatorProfileInner({ name }: { name: string }) {
                       </span>
                     )}
                   </h1>
-                  <p className="text-sm text-text-secondary mt-0.5">{t.creatorProfile}</p>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <p className="text-sm text-text-secondary">{t.creatorProfile}</p>
+                    <FollowButton creatorName={data.creator} />
+                  </div>
                 </div>
               </div>
 

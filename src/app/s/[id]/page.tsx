@@ -13,7 +13,7 @@ export async function generateMetadata({
 
   try {
     const sql = getDb();
-    const rows = await sql`SELECT data FROM shares WHERE id = ${id}`;
+    const rows = await sql`SELECT data FROM shares WHERE id = ${id} AND deleted_at IS NULL`;
     if (rows.length === 0) return { title: "VGC Team Report" };
 
     const data = rows[0].data as Record<string, unknown>;
@@ -74,7 +74,7 @@ export default async function SharePage({
   let jsonLd: Record<string, unknown> | null = null;
   try {
     const sql = getDb();
-    const rows = await sql`SELECT data, created_at FROM shares WHERE id = ${id}`;
+    const rows = await sql`SELECT data, created_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`;
     if (rows.length > 0) {
       const data = rows[0].data as Record<string, unknown>;
       const species = extractSpecies((data.paste as string) ?? "");

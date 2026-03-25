@@ -6,7 +6,7 @@ import { I18nProvider, useTranslation } from "@/lib/i18n";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { ExploreHero } from "./ExploreHero";
-import { ExploreFilters } from "./ExploreFilters";
+import { ExploreFilters, type SearchCategory } from "./ExploreFilters";
 import { SpotlightSection } from "./SpotlightCard";
 import { ReportCard, type ExploreReport } from "./ReportCard";
 import { ExploreEmpty } from "./ExploreEmpty";
@@ -34,6 +34,7 @@ function ExploreInner() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"newest" | "updated" | "popular">("newest");
+  const [searchCategory, setSearchCategory] = useState<SearchCategory>("all");
   const initialLoad = useRef(true);
 
   const fetchReports = useCallback(
@@ -42,6 +43,7 @@ function ExploreInner() {
       if (cursor) params.set("cursor", cursor);
       if (query) params.set("q", query);
       if (sort !== "newest") params.set("sort", sort);
+      if (searchCategory !== "all") params.set("searchType", searchCategory);
 
       const res = await fetch(`/api/explore?${params}`);
       if (!res.ok) throw new Error("Failed to fetch");
@@ -50,7 +52,7 @@ function ExploreInner() {
         nextCursor: string | null;
       }>;
     },
-    [query, sort],
+    [query, sort, searchCategory],
   );
 
   // Initial + filter/sort change fetch
@@ -168,6 +170,8 @@ function ExploreInner() {
           onQueryChange={setQuery}
           sort={sort}
           onSortChange={setSort}
+          searchCategory={searchCategory}
+          onSearchCategoryChange={setSearchCategory}
         />
 
         {/* Results */}

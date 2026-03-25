@@ -5,9 +5,10 @@ import { z } from "zod";
 
 const UpdateBody = z.object({
   isPublic: z.boolean().optional(),
+  restore: z.boolean().optional(),
 });
 
-// PATCH: update report settings (visibility, etc.)
+// PATCH: update report settings (visibility, restore from trash, etc.)
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ shareId: string }> },
@@ -27,10 +28,23 @@ export async function PATCH(
 
     const sql = getDb();
 
+    // Restore from trash
+    if (parsed.data.restore) {
+      const rows = await sql`
+        UPDATE shares SET deleted_at = NULL
+        WHERE id = ${shareId} AND owner_id = ${userId} AND deleted_at IS NOT NULL
+        RETURNING id
+      `;
+      if (rows.length === 0) {
+        return NextResponse.json({ error: "Not found or not in trash" }, { status: 404 });
+      }
+      return NextResponse.json({ id: shareId, restored: true });
+    }
+
     if (parsed.data.isPublic !== undefined) {
       const rows = await sql`
         UPDATE shares SET is_public = ${parsed.data.isPublic}, updated_at = NOW()
-        WHERE id = ${shareId} AND owner_id = ${userId}
+        WHERE id = ${shareId} AND owner_id = ${userId} AND deleted_at IS NULL
         RETURNING id, is_public
       `;
       if (rows.length === 0) {
@@ -46,7 +60,7 @@ export async function PATCH(
   }
 }
 
-// DELETE: delete a report you own
+// DELETE: soft-delete a report you own (moves to trash, auto-purged after 30 days)
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ shareId: string }> },
@@ -61,17 +75,13 @@ export async function DELETE(
     const sql = getDb();
 
     const rows = await sql`
-      DELETE FROM shares WHERE id = ${shareId} AND owner_id = ${userId}
+      UPDATE shares SET deleted_at = NOW(), is_public = FALSE
+      WHERE id = ${shareId} AND owner_id = ${userId} AND deleted_at IS NULL
       RETURNING id
     `;
     if (rows.length === 0) {
       return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
     }
-
-    // Clean up related data
-    await sql`DELETE FROM reactions WHERE share_id = ${shareId}`;
-    await sql`DELETE FROM comments WHERE share_id = ${shareId}`;
-    await sql`DELETE FROM saved_reports WHERE share_id = ${shareId}`;
 
     return NextResponse.json({ deleted: true });
   } catch (e) {

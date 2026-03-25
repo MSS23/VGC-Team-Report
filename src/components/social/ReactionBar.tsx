@@ -3,14 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSessionId } from "@/hooks/useSessionId";
 
-const REACTIONS = [
-  { type: "fire", emoji: "\uD83D\uDD25", label: "Fire" },
-  { type: "heart", emoji: "\u2764\uFE0F", label: "Love" },
-  { type: "brain", emoji: "\uD83E\uDDE0", label: "Clever" },
-  { type: "battle", emoji: "\u2694\uFE0F", label: "Battle-Ready" },
-  { type: "clap", emoji: "\uD83D\uDC4F", label: "Great" },
-] as const;
-
 interface ReactionBarProps {
   shareId: string;
   compact?: boolean;
@@ -18,8 +10,8 @@ interface ReactionBarProps {
 
 export function ReactionBar({ shareId, compact = false }: ReactionBarProps) {
   const sessionId = useSessionId();
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [userReactions, setUserReactions] = useState<Set<string>>(new Set());
+  const [likeCount, setLikeCount] = useState(0);
+  const [liked, setLiked] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -29,93 +21,86 @@ export function ReactionBar({ shareId, compact = false }: ReactionBarProps) {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data) {
-          setCounts(data.counts ?? {});
-          setUserReactions(new Set(data.userReactions ?? []));
+          // Sum all existing reactions as "likes" for backward compat
+          const total = Object.values(data.counts ?? {}).reduce(
+            (sum: number, c) => sum + (c as number),
+            0,
+          );
+          setLikeCount(total);
+          setLiked((data.userReactions ?? []).length > 0);
         }
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
   }, [shareId, sessionId]);
 
-  const toggle = useCallback(
-    async (type: string) => {
-      if (!sessionId || compact) return;
+  const toggleLike = useCallback(async () => {
+    if (!sessionId || compact) return;
 
-      // Optimistic update
-      const wasActive = userReactions.has(type);
-      setUserReactions((prev) => {
-        const next = new Set(prev);
-        if (wasActive) next.delete(type);
-        else next.add(type);
-        return next;
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikeCount((c) => Math.max(0, c + (wasLiked ? -1 : 1)));
+
+    try {
+      await fetch(`/api/reactions/${shareId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reactionType: "heart", sessionId }),
       });
-      setCounts((prev) => ({
-        ...prev,
-        [type]: Math.max(0, (prev[type] ?? 0) + (wasActive ? -1 : 1)),
-      }));
-
-      try {
-        await fetch(`/api/reactions/${shareId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reactionType: type, sessionId }),
-        });
-      } catch {
-        // Revert on failure
-        setUserReactions((prev) => {
-          const next = new Set(prev);
-          if (wasActive) next.add(type);
-          else next.delete(type);
-          return next;
-        });
-        setCounts((prev) => ({
-          ...prev,
-          [type]: Math.max(0, (prev[type] ?? 0) + (wasActive ? 1 : -1)),
-        }));
-      }
-    },
-    [shareId, sessionId, userReactions, compact],
-  );
+    } catch {
+      setLiked(wasLiked);
+      setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));
+    }
+  }, [shareId, sessionId, liked, compact]);
 
   if (!loaded) return null;
 
-  const visibleReactions = compact
-    ? REACTIONS.filter((r) => (counts[r.type] ?? 0) > 0)
-    : REACTIONS;
-
-  if (compact && visibleReactions.length === 0) return null;
+  if (compact) {
+    if (likeCount === 0) return null;
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px]">
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill={liked ? "currentColor" : "none"}
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-red-500"
+        >
+          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+        </svg>
+        <span className="font-bold text-text-secondary">{likeCount}</span>
+      </span>
+    );
+  }
 
   return (
-    <div className={`flex items-center ${compact ? "gap-1.5" : "gap-2"} flex-wrap`}>
-      {visibleReactions.map((r) => {
-        const count = counts[r.type] ?? 0;
-        const active = userReactions.has(r.type);
-        return (
-          <button
-            key={r.type}
-            type="button"
-            onClick={() => toggle(r.type)}
-            disabled={compact}
-            title={r.label}
-            className={`inline-flex items-center gap-1 rounded-full transition-all duration-200 ${
-              compact
-                ? "px-1.5 py-0.5 text-[10px] cursor-default"
-                : `px-3 py-1.5 text-xs cursor-pointer active:scale-95 ${
-                    active
-                      ? "bg-accent-surface border-2 border-accent/40 shadow-sm shadow-accent/10"
-                      : "bg-surface border-2 border-border hover:border-accent/30 hover:bg-accent-surface/50"
-                  }`
-            }`}
-          >
-            <span className={compact ? "text-xs" : "text-sm"}>{r.emoji}</span>
-            {count > 0 && (
-              <span className={`font-bold ${active ? "text-accent" : "text-text-secondary"}`}>
-                {count}
-              </span>
-            )}
-          </button>
-        );
-      })}
-    </div>
+    <button
+      type="button"
+      onClick={toggleLike}
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 cursor-pointer active:scale-95 ${
+        liked
+          ? "bg-red-500/10 border-2 border-red-500/30 text-red-500 shadow-sm shadow-red-500/10"
+          : "bg-surface border-2 border-border text-text-secondary hover:border-red-500/30 hover:bg-red-500/5 hover:text-red-500"
+      }`}
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill={liked ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+      </svg>
+      <span>{liked ? "Liked" : "Like"}</span>
+      {likeCount > 0 && <span className="opacity-70">{likeCount}</span>}
+    </button>
   );
 }

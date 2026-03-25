@@ -5,13 +5,6 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function orderSql(sql: any, sort: string) {
-  if (sort === "updated") return sql`updated_at`;
-  if (sort === "popular") return sql`COALESCE(view_count, 0)`;
-  return sql`created_at`;
-}
-
 export async function GET(request: Request) {
   try {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
@@ -28,47 +21,49 @@ export async function GET(request: Request) {
     const q = url.searchParams.get("q")?.trim() ?? "";
     const sortParam = url.searchParams.get("sort") ?? "newest";
     const sort = ["updated", "popular"].includes(sortParam) ? sortParam : "newest";
+    const searchType = url.searchParams.get("searchType") ?? "all";
 
     const sql = getDb();
-    const col = orderSql(sql, sort);
 
-    // For popular sort, cursor is a number (view_count); for others, ISO timestamp
+    // Build search condition based on searchType
+    const searchPattern = q ? `%${q}%` : null;
+
+    // For popular sort, we need a subquery to count likes
+    // For other sorts, use the column directly
     let rows;
-    if (q && cursor) {
-      const searchPattern = `%${q}%`;
+
+    if (sort === "popular") {
+      // Sort by total reaction (like) count
       rows = await sql`
-        SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count
-        FROM shares
-        WHERE is_public = TRUE
-          AND ${col} < ${sort === "popular" ? parseInt(cursor, 10) : cursor}
-          AND (data->>'paste' ILIKE ${searchPattern} OR data->>'tournamentName' ILIKE ${searchPattern} OR data->>'creatorName' ILIKE ${searchPattern})
-        ORDER BY ${col} DESC
-        LIMIT ${limit + 1}
-      `;
-    } else if (q) {
-      const searchPattern = `%${q}%`;
-      rows = await sql`
-        SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count
-        FROM shares
-        WHERE is_public = TRUE
-          AND (data->>'paste' ILIKE ${searchPattern} OR data->>'tournamentName' ILIKE ${searchPattern} OR data->>'creatorName' ILIKE ${searchPattern})
-        ORDER BY ${col} DESC
-        LIMIT ${limit + 1}
-      `;
-    } else if (cursor) {
-      rows = await sql`
-        SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count
-        FROM shares
-        WHERE is_public = TRUE
-          AND ${col} < ${sort === "popular" ? parseInt(cursor, 10) : cursor}
-        ORDER BY ${col} DESC
+        SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count,
+               COALESCE(rc.like_count, 0) as like_count
+        FROM shares s
+        LEFT JOIN (
+          SELECT share_id, COUNT(*)::int as like_count
+          FROM reactions
+          GROUP BY share_id
+        ) rc ON rc.share_id = s.id
+        WHERE s.is_public = TRUE AND s.deleted_at IS NULL
+          ${searchPattern && searchType === "pokemon" ? sql`AND s.data->>'paste' ILIKE ${searchPattern}` : sql``}
+          ${searchPattern && searchType === "tournament" ? sql`AND s.data->>'tournamentName' ILIKE ${searchPattern}` : sql``}
+          ${searchPattern && searchType === "creator" ? sql`AND s.data->>'creatorName' ILIKE ${searchPattern}` : sql``}
+          ${searchPattern && searchType === "all" ? sql`AND (s.data->>'paste' ILIKE ${searchPattern} OR s.data->>'tournamentName' ILIKE ${searchPattern} OR s.data->>'creatorName' ILIKE ${searchPattern})` : sql``}
+          ${cursor ? sql`AND COALESCE(rc.like_count, 0) < ${parseInt(cursor, 10)}` : sql``}
+        ORDER BY COALESCE(rc.like_count, 0) DESC, s.created_at DESC
         LIMIT ${limit + 1}
       `;
     } else {
+      const col = sort === "updated" ? sql`s.updated_at` : sql`s.created_at`;
+
       rows = await sql`
-        SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count
-        FROM shares
-        WHERE is_public = TRUE
+        SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
+        FROM shares s
+        WHERE s.is_public = TRUE AND s.deleted_at IS NULL
+          ${searchPattern && searchType === "pokemon" ? sql`AND s.data->>'paste' ILIKE ${searchPattern}` : sql``}
+          ${searchPattern && searchType === "tournament" ? sql`AND s.data->>'tournamentName' ILIKE ${searchPattern}` : sql``}
+          ${searchPattern && searchType === "creator" ? sql`AND s.data->>'creatorName' ILIKE ${searchPattern}` : sql``}
+          ${searchPattern && searchType === "all" ? sql`AND (s.data->>'paste' ILIKE ${searchPattern} OR s.data->>'tournamentName' ILIKE ${searchPattern} OR s.data->>'creatorName' ILIKE ${searchPattern})` : sql``}
+          ${cursor ? sql`AND ${col} < ${cursor}` : sql``}
         ORDER BY ${col} DESC
         LIMIT ${limit + 1}
       `;
@@ -79,7 +74,7 @@ export async function GET(request: Request) {
 
     // Batch-fetch social counts
     const shareIds = items.map((r) => r.id as string);
-    let reactionMap: Record<string, Record<string, number>> = {};
+    let likeMap: Record<string, number> = {};
     let commentMap: Record<string, number> = {};
 
     // Collect unique creator names for verification check
@@ -88,23 +83,22 @@ export async function GET(request: Request) {
 
     if (shareIds.length > 0) {
       const queries: Promise<unknown>[] = [
-        sql`SELECT share_id, reaction_type, COUNT(*)::int as count FROM reactions WHERE share_id = ANY(${shareIds}) GROUP BY share_id, reaction_type`,
+        sql`SELECT share_id, COUNT(*)::int as count FROM reactions WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
         sql`SELECT share_id, COUNT(*)::int as count FROM comments WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
       ];
       if (creatorNames.length > 0) {
         queries.push(sql`SELECT name FROM verified_creators WHERE LOWER(name) = ANY(${creatorNames.map((n) => n.toLowerCase())})`);
       }
 
-      const [reactionRows, commentRows, verifiedRows] = await Promise.all(queries) as [
+      const [likeRows, commentRows, verifiedRows] = await Promise.all(queries) as [
         Array<Record<string, unknown>>,
         Array<Record<string, unknown>>,
         Array<Record<string, unknown>>?,
       ];
 
-      for (const r of reactionRows) {
+      for (const r of likeRows) {
         const sid = r.share_id as string;
-        if (!reactionMap[sid]) reactionMap[sid] = {};
-        reactionMap[sid][r.reaction_type as string] = r.count as number;
+        likeMap[sid] = (likeMap[sid] ?? 0) + (r.count as number);
       }
       for (const r of commentRows) {
         commentMap[r.share_id as string] = r.count as number;
@@ -129,7 +123,7 @@ export async function GET(request: Request) {
         createdAt: (row.created_at as Date).toISOString(),
         updatedAt: (row.updated_at as Date).toISOString(),
         viewCount: row.view_count as number,
-        reactionCounts: reactionMap[sid] || undefined,
+        likeCount: likeMap[sid] ?? 0,
         commentCount: commentMap[sid] || undefined,
         isVerified: creatorNameStr ? verifiedSet.has(creatorNameStr.toLowerCase()) : false,
       };
@@ -138,7 +132,7 @@ export async function GET(request: Request) {
     let nextCursor: string | null = null;
     if (hasMore) {
       const last = items[items.length - 1];
-      if (sort === "popular") nextCursor = String(last.view_count);
+      if (sort === "popular") nextCursor = String(last.like_count ?? 0);
       else if (sort === "updated") nextCursor = (last.updated_at as Date).toISOString();
       else nextCursor = (last.created_at as Date).toISOString();
     }

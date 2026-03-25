@@ -7,10 +7,12 @@ import { useDarkMode } from "@/hooks/useDarkMode";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { UserButton, Show, SignInButton, useUser } from "@clerk/nextjs";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
+import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 
 interface DashboardReport extends ExploreReport {
   isPublic?: boolean;
   editToken?: string;
+  deletedAt?: string;
 }
 
 export function DashboardContent() {
@@ -26,9 +28,11 @@ function DashboardInner() {
   const { user, isLoaded } = useUser();
   useEffect(() => { applyRandomAccent(); }, []);
 
-  const [tab, setTab] = useState<"my" | "saved">("my");
+  const [tab, setTab] = useState<"my" | "saved" | "feed" | "trash">("my");
   const [myReports, setMyReports] = useState<DashboardReport[]>([]);
   const [savedReports, setSavedReports] = useState<ExploreReport[]>([]);
+  const [feedReports, setFeedReports] = useState<ExploreReport[]>([]);
+  const [trashReports, setTrashReports] = useState<DashboardReport[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Claim input
@@ -40,12 +44,14 @@ function DashboardInner() {
   useEffect(() => {
     if (!user) return;
     setLoading(true);
-    const endpoint = tab === "my" ? "/api/user/reports" : "/api/user/saved";
+    const endpoint = tab === "my" ? "/api/user/reports" : tab === "trash" ? "/api/user/reports?trash=1" : tab === "feed" ? "/api/user/feed" : "/api/user/saved";
     fetch(endpoint)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.reports) {
           if (tab === "my") setMyReports(data.reports);
+          else if (tab === "trash") setTrashReports(data.reports);
+          else if (tab === "feed") setFeedReports(data.reports);
           else setSavedReports(data.reports);
         }
         setLoading(false);
@@ -54,42 +60,88 @@ function DashboardInner() {
   }, [user, tab]);
 
   // Auto-detect unclaimed reports from localStorage
-  const [localToken, setLocalToken] = useState<{ shareId: string; editToken: string } | null>(null);
+  const [localTokens, setLocalTokens] = useState<{ shareId: string; editToken: string }[]>([]);
   useEffect(() => {
     if (!user) return;
     try {
       const stored = localStorage.getItem("vgc-share-tokens");
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed.shareId && parsed.editToken) {
-          // Check if already claimed
-          const alreadyOwned = myReports.some((r) => r.id === parsed.shareId);
-          if (!alreadyOwned) {
-            setLocalToken(parsed);
-          }
-        }
+        // Handle both legacy single-object and new array format
+        const tokens: { shareId: string; editToken: string }[] = Array.isArray(parsed)
+          ? parsed.filter((t: { shareId?: string; editToken?: string }) => t.shareId && t.editToken)
+          : parsed.shareId && parsed.editToken ? [parsed] : [];
+        // Filter out already-owned reports
+        const unclaimed = tokens.filter((t) => !myReports.some((r) => r.id === t.shareId));
+        setLocalTokens(unclaimed);
+      } else {
+        setLocalTokens([]);
       }
     } catch { /* ignore */ }
   }, [user, myReports]);
 
-  const handleAutoClaimLocal = async () => {
-    if (!localToken) return;
+  /** Remove a token from localStorage after claiming */
+  const removeLocalToken = (shareId: string) => {
+    try {
+      const stored = localStorage.getItem("vgc-share-tokens");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const tokens: { shareId: string; editToken: string }[] = Array.isArray(parsed) ? parsed : [parsed];
+        const remaining = tokens.filter((t) => t.shareId !== shareId);
+        if (remaining.length > 0) {
+          localStorage.setItem("vgc-share-tokens", JSON.stringify(remaining));
+        } else {
+          localStorage.removeItem("vgc-share-tokens");
+        }
+      }
+    } catch { /* ignore */ }
+  };
+
+  const handleAutoClaimLocal = async (token: { shareId: string; editToken: string }) => {
     setClaiming(true);
     try {
       const res = await fetch("/api/user/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(localToken),
+        body: JSON.stringify(token),
       });
       if (res.ok) {
+        removeLocalToken(token.shareId);
+        setLocalTokens((prev) => prev.filter((t) => t.shareId !== token.shareId));
         setClaimResult("Report claimed from this browser!");
-        setLocalToken(null);
         fetch("/api/user/reports")
           .then((r) => (r.ok ? r.json() : null))
           .then((data) => { if (data?.reports) setMyReports(data.reports); });
       }
     } catch { /* silent */ }
     finally { setClaiming(false); }
+  };
+
+  const handleClaimAll = async () => {
+    if (localTokens.length === 0 || claiming) return;
+    setClaiming(true);
+    let claimedCount = 0;
+    for (const token of localTokens) {
+      try {
+        const res = await fetch("/api/user/claim", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(token),
+        });
+        if (res.ok) {
+          removeLocalToken(token.shareId);
+          claimedCount++;
+        }
+      } catch { /* continue to next */ }
+    }
+    setLocalTokens([]);
+    if (claimedCount > 0) {
+      setClaimResult(`${claimedCount} report${claimedCount > 1 ? "s" : ""} claimed!`);
+      fetch("/api/user/reports")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => { if (data?.reports) setMyReports(data.reports); });
+    }
+    setClaiming(false);
   };
 
   const handleClaim = async () => {
@@ -118,6 +170,9 @@ function DashboardInner() {
       if (res.ok) {
         setClaimResult("Report claimed! It now appears in My Reports.");
         setClaimUrl("");
+        // Remove from localStorage if it was there
+        removeLocalToken(match[1]);
+        setLocalTokens((prev) => prev.filter((t) => t.shareId !== match[1]));
         // Refresh my reports
         fetch("/api/user/reports")
           .then((r) => (r.ok ? r.json() : null))
@@ -191,18 +246,18 @@ function DashboardInner() {
             {/* Tabs + Sort */}
             <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
             <div className="flex items-center gap-1 p-1 bg-surface-alt/50 rounded-xl w-fit">
-              {(["my", "saved"] as const).map((t) => (
+              {(["my", "saved", "feed", "trash"] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setTab(t)}
                   className={`px-4 py-2 text-sm font-bold rounded-lg transition-all cursor-pointer ${
                     tab === t
-                      ? "bg-surface text-text-primary shadow-sm"
+                      ? t === "trash" ? "bg-red-500/10 text-red-500 shadow-sm" : "bg-surface text-text-primary shadow-sm"
                       : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  {t === "my" ? "My Reports" : "Saved"}
+                  {t === "my" ? "My Reports" : t === "feed" ? "Feed" : t === "trash" ? "Trash" : "Saved"}
                 </button>
               ))}
             </div>
@@ -254,23 +309,44 @@ function DashboardInner() {
             {/* Claim report section */}
             {tab === "my" && (
               <>
-              {/* Auto-detected report from this browser */}
-              {localToken && (
-                <div className="bg-accent-surface/50 border-2 border-accent/20 rounded-xl px-4 py-3 mb-4 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-bold text-text-primary">Report found in this browser</p>
-                    <p className="text-xs text-text-secondary mt-0.5">
-                      We detected report <span className="font-mono font-bold">{localToken.shareId}</span> from your localStorage. Claim it to link it to your account.
-                    </p>
+              {/* Auto-detected reports from this browser */}
+              {localTokens.length > 0 && (
+                <div className="bg-accent-surface/50 border-2 border-accent/20 rounded-xl px-4 py-3 mb-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-text-primary">
+                        {localTokens.length === 1 ? "Report found in this browser" : `${localTokens.length} reports found in this browser`}
+                      </p>
+                      <p className="text-xs text-text-secondary mt-0.5">
+                        Claim {localTokens.length === 1 ? "it" : "them"} to link to your account.
+                      </p>
+                    </div>
+                    {localTokens.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={handleClaimAll}
+                        disabled={claiming}
+                        className="px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
+                      >
+                        {claiming ? "Claiming..." : "Claim All"}
+                      </button>
+                    )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAutoClaimLocal}
-                    disabled={claiming}
-                    className="px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
-                  >
-                    {claiming ? "Claiming..." : "Claim"}
-                  </button>
+                  {localTokens.map((token) => (
+                    <div key={token.shareId} className="flex items-center justify-between gap-3 bg-surface/50 rounded-lg px-3 py-2">
+                      <span className="text-xs text-text-secondary">
+                        Report <span className="font-mono font-bold text-text-primary">{token.shareId}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleAutoClaimLocal(token)}
+                        disabled={claiming}
+                        className="px-3 py-1.5 bg-accent text-white text-[11px] font-bold rounded-md hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
+                      >
+                        {claiming ? "..." : "Claim"}
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -330,6 +406,18 @@ function DashboardInner() {
                     </a>
                   </div>
                 )}
+                {tab === "trash" && trashReports.length === 0 && (
+                  <div className="text-center py-16">
+                    <p className="text-sm text-text-secondary mb-4">Trash is empty.</p>
+                  </div>
+                )}
+                {tab === "trash" && trashReports.length > 0 && (
+                  <div className="bg-red-500/5 border border-red-500/20 rounded-xl px-4 py-3 mb-4">
+                    <p className="text-xs text-red-500 dark:text-red-400 font-semibold">
+                      Deleted reports are automatically permanently removed after 30 days.
+                    </p>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {tab === "my"
                     ? [...myReports].sort((a, b) => {
@@ -349,9 +437,25 @@ function DashboardInner() {
                           }}
                         />
                       ))
-                    : savedReports.map((report) => (
+                    : tab === "trash"
+                    ? trashReports.map((report) => (
+                        <TrashReportCard
+                          key={report.id}
+                          report={report}
+                          onRestore={(id) => {
+                            setTrashReports((prev) => prev.filter((r) => r.id !== id));
+                          }}
+                        />
+                      ))
+                    : tab === "saved"
+                    ? savedReports.map((report) => (
                         <ReportCard key={report.id} report={report} />
                       ))
+                    : tab === "feed"
+                    ? feedReports.map((report) => (
+                        <ReportCard key={report.id} report={report} />
+                      ))
+                    : null
                   }
                 </div>
               </>
@@ -360,6 +464,22 @@ function DashboardInner() {
         </Show>
       </main>
     </div>
+  );
+}
+
+function DashboardSprite({ species }: { species: string }) {
+  const urls = getSpriteUrls(species);
+  const [idx, setIdx] = useState(0);
+  return (
+    <img
+      src={urls[Math.min(idx, urls.length - 1)]}
+      alt={species}
+      width={36}
+      height={36}
+      className="object-contain"
+      loading="lazy"
+      onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
+    />
   );
 }
 
@@ -375,7 +495,8 @@ function ManagedReportCard({
 }) {
   const [toggling, setToggling] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  // 0 = idle, 1 = first confirm (Confirm/Cancel), 2 = second confirm (Are you sure?)
+  const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
 
   const toggleVisibility = async () => {
     if (toggling) return;
@@ -400,7 +521,7 @@ function ManagedReportCard({
       const res = await fetch(`/api/user/reports/${report.id}`, { method: "DELETE" });
       if (res.ok) onDelete(report.id);
     } catch { /* silent */ }
-    finally { setDeleting(false); setConfirmDelete(false); }
+    finally { setDeleting(false); setDeleteStep(0); }
   };
 
   const editUrl = report.editToken
@@ -413,15 +534,7 @@ function ManagedReportCard({
         <div className="px-4 pt-4 pb-2">
           <div className="flex items-center justify-center gap-1">
             {report.species.map((species, i) => (
-              <img
-                key={i}
-                src={`https://play.pokemonshowdown.com/sprites/ani/${species.toLowerCase().replace(/[^a-z0-9]/g, "")}.gif`}
-                alt={species}
-                width={36}
-                height={36}
-                className="object-contain"
-                loading="lazy"
-              />
+              <DashboardSprite key={i} species={species} />
             ))}
           </div>
         </div>
@@ -459,19 +572,37 @@ function ManagedReportCard({
             Edit
           </a>
         </div>
-        {confirmDelete ? (
+        {deleteStep === 2 ? (
           <div className="flex items-center gap-1">
+            <span className="text-[10px] font-bold text-red-500 mr-1">Are you sure?</span>
             <button
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="px-2 py-1 text-[10px] font-bold rounded-md bg-red-500/10 text-red-500 border border-red-500/20 cursor-pointer"
+              className="px-2 py-1 text-[10px] font-bold rounded-md bg-red-500 text-white cursor-pointer"
             >
-              {deleting ? "..." : "Confirm"}
+              {deleting ? "..." : "Delete"}
             </button>
             <button
               type="button"
-              onClick={() => setConfirmDelete(false)}
+              onClick={() => setDeleteStep(0)}
+              className="px-2 py-1 text-[10px] font-bold rounded-md text-text-tertiary cursor-pointer"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : deleteStep === 1 ? (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setDeleteStep(2)}
+              className="px-2 py-1 text-[10px] font-bold rounded-md bg-red-500/10 text-red-500 border border-red-500/20 cursor-pointer"
+            >
+              Confirm
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteStep(0)}
               className="px-2 py-1 text-[10px] font-bold rounded-md text-text-tertiary cursor-pointer"
             >
               Cancel
@@ -480,7 +611,7 @@ function ManagedReportCard({
         ) : (
           <button
             type="button"
-            onClick={() => setConfirmDelete(true)}
+            onClick={() => setDeleteStep(1)}
             className="p-1 text-text-tertiary hover:text-red-500 transition-colors cursor-pointer"
             title="Delete report"
           >
@@ -490,6 +621,65 @@ function ManagedReportCard({
             </svg>
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** Card for deleted reports in the Trash tab with restore and days-remaining info */
+function TrashReportCard({
+  report,
+  onRestore,
+}: {
+  report: DashboardReport;
+  onRestore: (id: string) => void;
+}) {
+  const [restoring, setRestoring] = useState(false);
+
+  const daysRemaining = report.deletedAt
+    ? Math.max(0, 30 - Math.floor((Date.now() - new Date(report.deletedAt).getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
+  const handleRestore = async () => {
+    if (restoring) return;
+    setRestoring(true);
+    try {
+      const res = await fetch(`/api/user/reports/${report.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restore: true }),
+      });
+      if (res.ok) onRestore(report.id);
+    } catch { /* silent */ }
+    finally { setRestoring(false); }
+  };
+
+  return (
+    <div className="bg-surface rounded-xl border border-red-500/20 shadow-sm overflow-hidden opacity-75 hover:opacity-100 transition-opacity">
+      <div className="px-4 pt-4 pb-2">
+        <div className="flex items-center justify-center gap-1">
+          {report.species.map((species, i) => (
+            <DashboardSprite key={i} species={species} />
+          ))}
+        </div>
+      </div>
+      <div className="px-4 pb-2">
+        <h3 className="text-sm font-bold text-text-primary leading-tight line-clamp-1">
+          {report.tournamentName || report.species.join(" / ")}
+        </h3>
+        <p className="text-[10px] text-red-500 dark:text-red-400 font-semibold mt-1">
+          {daysRemaining > 0 ? `Permanently deleted in ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""}` : "Will be permanently deleted soon"}
+        </p>
+      </div>
+      <div className="px-4 py-3 border-t border-red-500/10 bg-surface-alt/30 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={handleRestore}
+          disabled={restoring}
+          className="px-3 py-1 text-[10px] font-bold rounded-md bg-accent/10 text-accent border border-accent/20 cursor-pointer hover:bg-accent/20 transition-all"
+        >
+          {restoring ? "Restoring..." : "Restore"}
+        </button>
       </div>
     </div>
   );

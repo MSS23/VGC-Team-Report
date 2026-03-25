@@ -89,7 +89,7 @@ export async function POST(
     const sql = getDb();
 
     // Verify share exists, is public, and has comments enabled
-    const shareCheck = await sql`SELECT id, data FROM shares WHERE id = ${shareId} AND is_public = TRUE`;
+    const shareCheck = await sql`SELECT id, data FROM shares WHERE id = ${shareId} AND is_public = TRUE AND deleted_at IS NULL`;
     if (shareCheck.length === 0) {
       return NextResponse.json({ error: "Report not found or not public" }, { status: 404 });
     }

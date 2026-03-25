@@ -7,10 +7,7 @@ import { relativeTime } from "@/lib/utils/relative-time";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 import type { ExploreReport } from "./ReportCard";
 
-const REACTION_EMOJIS: Record<string, string> = {
-  fire: "\uD83D\uDD25", heart: "\u2764\uFE0F", brain: "\uD83E\uDDE0",
-  battle: "\u2694\uFE0F", clap: "\uD83D\uDC4F",
-};
+// (reaction emojis removed — using unified like system)
 
 function AnimatedSprite({ species, size = 56 }: { species: string; size?: number }) {
   const urls = getSpriteUrls(species);
@@ -31,13 +28,9 @@ function AnimatedSprite({ species, size = 56 }: { species: string; size?: number
 export function SpotlightCard({ report }: { report: ExploreReport }) {
   const { t } = useTranslation();
 
-  const topReactions = report.reactionCounts
-    ? Object.entries(report.reactionCounts)
-        .filter(([, count]) => count > 0)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-    : [];
-  const totalReactions = topReactions.reduce((sum, [, c]) => sum + c, 0);
+  const likeCount = report.likeCount ?? (report.reactionCounts
+    ? Object.values(report.reactionCounts).reduce((sum, c) => sum + c, 0)
+    : 0);
 
   return (
     <motion.a
@@ -117,12 +110,12 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
         {/* Footer: social stats + CTA */}
         <div className="flex items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-3 flex-wrap">
-            {topReactions.length > 0 && (
-              <span className="inline-flex items-center gap-0.5 text-xs">
-                {topReactions.map(([type]) => (
-                  <span key={type}>{REACTION_EMOJIS[type]}</span>
-                ))}
-                <span className="font-bold text-text-secondary ml-0.5">{totalReactions}</span>
+            {likeCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="text-red-500">
+                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                </svg>
+                <span className="font-bold text-text-secondary">{likeCount}</span>
               </span>
             )}
             {(report.commentCount ?? 0) > 0 && (

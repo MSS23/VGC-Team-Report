@@ -18,7 +18,22 @@ interface StoredShareInfo {
 }
 
 function storeShareInfo(info: StoredShareInfo) {
-  localStorage.setItem(SHARE_TOKENS_KEY, JSON.stringify(info));
+  try {
+    const existing = localStorage.getItem(SHARE_TOKENS_KEY);
+    let tokens: StoredShareInfo[] = [];
+    if (existing) {
+      const parsed = JSON.parse(existing);
+      // Handle legacy single-object format
+      tokens = Array.isArray(parsed) ? parsed : [parsed];
+    }
+    // Replace if same shareId exists, otherwise append
+    const idx = tokens.findIndex((t) => t.shareId === info.shareId);
+    if (idx >= 0) tokens[idx] = info;
+    else tokens.push(info);
+    localStorage.setItem(SHARE_TOKENS_KEY, JSON.stringify(tokens));
+  } catch {
+    localStorage.setItem(SHARE_TOKENS_KEY, JSON.stringify([info]));
+  }
 }
 
 /** Detect share ID from hash (fallback for #id= links). */
@@ -50,6 +65,7 @@ export function useShareUrl() {
   const [urlWarning, setUrlWarning] = useState<string | null>(null);
   const [decodeFailed, setDecodeFailed] = useState(false);
   const [isEditingUnlocked, setIsEditingUnlocked] = useState(false);
+  const [fetchedIsPublic, setFetchedIsPublic] = useState<boolean | null>(null);
   const [lastShareResult, setLastShareResult] = useState<{
     updated: boolean;
     editUrl?: string;
@@ -99,9 +115,10 @@ export function useShareUrl() {
         .then((data) => {
           if (!data) return settle(null);
           const editable = data._editable === true;
-          // Strip internal flag before treating as ShareableState
+          if (data._isPublic !== undefined) setFetchedIsPublic(!!data._isPublic);
+          // Strip internal flags before treating as ShareableState
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { _editable, ...state } = data;
+          const { _editable, _isPublic: _ip, ...state } = data;
           if (editable && editKeyFromUrl) {
             // Only set active refs when we have a verified edit session
             activeEditTokenRef.current = editKeyFromUrl;
@@ -297,5 +314,6 @@ export function useShareUrl() {
     getEditUrl,
     hasExistingShare,
     clearStoredShare,
+    fetchedIsPublic,
   };
 }

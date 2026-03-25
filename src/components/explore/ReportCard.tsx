@@ -16,18 +16,11 @@ export interface ExploreReport {
   createdAt: string;
   updatedAt: string;
   viewCount?: number;
+  likeCount?: number;
   reactionCounts?: Record<string, number>;
   commentCount?: number;
   isVerified?: boolean;
 }
-
-const REACTION_EMOJIS: Record<string, string> = {
-  fire: "\uD83D\uDD25",
-  heart: "\u2764\uFE0F",
-  brain: "\uD83E\uDDE0",
-  battle: "\u2694\uFE0F",
-  clap: "\uD83D\uDC4F",
-};
 
 function CardSprite({ species }: { species: string }) {
   const urls = getSpriteUrls(species);
@@ -48,16 +41,10 @@ function CardSprite({ species }: { species: string }) {
 export function ReportCard({ report }: { report: ExploreReport }) {
   const { t } = useTranslation();
 
-  // Top reactions (up to 3)
-  const topReactions = report.reactionCounts
-    ? Object.entries(report.reactionCounts)
-        .filter(([, count]) => count > 0)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-    : [];
-
-  const totalReactions = topReactions.reduce((sum, [, count]) => sum + count, 0);
-  const hasSocial = totalReactions > 0 || (report.commentCount ?? 0) > 0 || (report.viewCount ?? 0) > 0;
+  // Like count: use dedicated likeCount field, or fall back to summing all reactions
+  const likeCount = report.likeCount ?? (report.reactionCounts
+    ? Object.values(report.reactionCounts).reduce((sum, c) => sum + c, 0)
+    : 0);
 
   return (
     <motion.a
@@ -129,13 +116,13 @@ export function ReportCard({ report }: { report: ExploreReport }) {
         {/* Social indicators + timestamp */}
         <div className="flex items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-2.5">
-            {/* Reactions */}
-            {topReactions.length > 0 && (
-              <span className="inline-flex items-center gap-0.5 text-[10px]">
-                {topReactions.map(([type]) => (
-                  <span key={type}>{REACTION_EMOJIS[type]}</span>
-                ))}
-                <span className="font-bold text-text-secondary ml-0.5">{totalReactions}</span>
+            {/* Likes */}
+            {likeCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[10px]">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="text-red-500">
+                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                </svg>
+                <span className="font-bold text-text-secondary">{likeCount}</span>
               </span>
             )}
             {/* Comments */}

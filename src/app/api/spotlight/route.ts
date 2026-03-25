@@ -11,7 +11,7 @@ export async function GET() {
     const rows = await sql`
       SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count
       FROM shares
-      WHERE id = ${SPOTLIGHT_ID}
+      WHERE id = ${SPOTLIGHT_ID} AND deleted_at IS NULL
     `;
 
     if (rows.length === 0) {
@@ -30,16 +30,12 @@ export async function GET() {
       isVerified = verified.length > 0;
     }
 
-    // Reaction counts
-    const reactionRows = await sql`
-      SELECT reaction_type, COUNT(*)::int as count
+    // Like count (total reactions)
+    const likeRows = await sql`
+      SELECT COUNT(*)::int as count
       FROM reactions WHERE share_id = ${SPOTLIGHT_ID}
-      GROUP BY reaction_type
     `;
-    const reactionCounts: Record<string, number> = {};
-    for (const r of reactionRows) {
-      reactionCounts[r.reaction_type as string] = r.count as number;
-    }
+    const likeCount = (likeRows[0]?.count as number) || 0;
 
     // Comment count
     const commentRows = await sql`SELECT COUNT(*)::int as count FROM comments WHERE share_id = ${SPOTLIGHT_ID}`;
@@ -55,7 +51,7 @@ export async function GET() {
         createdAt: (row.created_at as Date).toISOString(),
         updatedAt: (row.updated_at as Date).toISOString(),
         viewCount: row.view_count as number,
-        reactionCounts: Object.keys(reactionCounts).length > 0 ? reactionCounts : undefined,
+        likeCount,
         commentCount: (commentRows[0]?.count as number) || undefined,
         isVerified,
       },

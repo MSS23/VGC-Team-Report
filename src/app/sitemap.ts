@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Fetch all public shares (id + updated_at)
     const shares = await sql`
       SELECT id, updated_at FROM shares
-      WHERE is_public = TRUE
+      WHERE is_public = TRUE AND deleted_at IS NULL
       ORDER BY updated_at DESC
       LIMIT 5000
     `;
@@ -33,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const creators = await sql`
       SELECT DISTINCT data->>'creatorName' as name
       FROM shares
-      WHERE is_public = TRUE AND data->>'creatorName' IS NOT NULL AND data->>'creatorName' != ''
+      WHERE is_public = TRUE AND deleted_at IS NULL AND data->>'creatorName' IS NOT NULL AND data->>'creatorName' != ''
     `;
 
     const creatorPages: MetadataRoute.Sitemap = creators.map((row) => ({

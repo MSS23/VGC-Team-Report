@@ -111,4 +111,20 @@ export async function ensureTable() {
     )
   `);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_saved_user ON saved_reports(user_id)`);
+
+  // Creator follows
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS follows (
+      user_id TEXT NOT NULL,
+      creator_name TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (user_id, creator_name)
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_follows_user ON follows(user_id)`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_follows_creator ON follows(creator_name)`);
+
+  // Soft-delete support
+  await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_deleted ON shares(deleted_at) WHERE deleted_at IS NOT NULL`);
 }
