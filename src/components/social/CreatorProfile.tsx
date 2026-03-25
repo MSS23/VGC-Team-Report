@@ -9,6 +9,7 @@ import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard"
 
 interface CreatorData {
   creator: string;
+  isVerified: boolean;
   totalReports: number;
   totalReactions: number;
   reports: ExploreReport[];
@@ -95,7 +96,15 @@ function CreatorProfileInner({ name }: { name: string }) {
                   </svg>
                 </div>
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">{data.creator}</h1>
+                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight flex items-center gap-2">
+                    {data.creator}
+                    {data.isVerified && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20" title="Verified creator">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" /></svg>
+                        Verified
+                      </span>
+                    )}
+                  </h1>
                   <p className="text-sm text-text-secondary mt-0.5">{t.creatorProfile}</p>
                 </div>
               </div>

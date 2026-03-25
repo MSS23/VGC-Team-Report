@@ -11,6 +11,8 @@ interface ShareModalProps {
   placement?: string;
   isPublic: boolean;
   onTogglePublic: (v: boolean) => void;
+  allowComments: boolean;
+  onToggleComments: (v: boolean) => void;
   onClose: () => void;
 }
 
@@ -22,6 +24,8 @@ export function ShareModal({
   placement,
   isPublic,
   onTogglePublic,
+  allowComments,
+  onToggleComments,
   onClose,
 }: ShareModalProps) {
   const [linkCopied, setLinkCopied] = useState(false);
@@ -241,6 +245,33 @@ export function ShareModal({
                 UNLISTED
               </span>
             )}
+          </button>
+        </div>
+
+        {/* Comments toggle */}
+        <div className="px-6 py-3 border-t border-border">
+          <button
+            type="button"
+            onClick={() => onToggleComments(!allowComments)}
+            className="flex items-center gap-3 w-full text-left group cursor-pointer"
+          >
+            <div className={`relative inline-flex h-[24px] w-[42px] items-center rounded-full transition-all duration-300 flex-shrink-0 ${
+              allowComments ? "bg-accent shadow-md shadow-accent/30" : "bg-border"
+            }`}>
+              <span className={`inline-block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-all duration-300 ${
+                allowComments ? "translate-x-[20px] scale-110" : "translate-x-[3px]"
+              }`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
+                {allowComments ? "Comments enabled" : "Enable comments"}
+              </div>
+              <div className="text-xs text-text-tertiary">
+                {allowComments
+                  ? "Viewers can leave comments on your report."
+                  : "Comments are off. Turn on to let others share feedback."}
+              </div>
+            </div>
           </button>
         </div>
 

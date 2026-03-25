@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
+import { containsBlockedWords } from "@/lib/utils/word-filter";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -78,12 +79,21 @@ export async function POST(
     const { displayName, body, sessionId } = parsed.data;
     const name = displayName?.trim() || "Anonymous";
 
+    // Word filter
+    if (containsBlockedWords(body) || (displayName && containsBlockedWords(displayName))) {
+      return NextResponse.json({ error: "Comment contains inappropriate language." }, { status: 400 });
+    }
+
     const sql = getDb();
 
-    // Verify share exists and is public
-    const shareCheck = await sql`SELECT id FROM shares WHERE id = ${shareId} AND is_public = TRUE`;
+    // Verify share exists, is public, and has comments enabled
+    const shareCheck = await sql`SELECT id, data FROM shares WHERE id = ${shareId} AND is_public = TRUE`;
     if (shareCheck.length === 0) {
       return NextResponse.json({ error: "Report not found or not public" }, { status: 404 });
+    }
+    const shareData = shareCheck[0].data as Record<string, unknown>;
+    if (!shareData.allowComments) {
+      return NextResponse.json({ error: "Comments are disabled on this report" }, { status: 403 });
     }
 
     const rows = await sql`

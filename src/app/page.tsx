@@ -65,6 +65,8 @@ function HomeContent() {
     handleFreshReshare,
     isPublic,
     handleSetPublic,
+    allowComments,
+    setAllowComments,
     activeShareId,
     editKeyFromUrl,
     saveFlash,
@@ -420,7 +422,9 @@ function HomeContent() {
             <ViewCount count={viewCount} />
           </div>
           <ReactionBar shareId={activeShareId} />
-          <CommentSection shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
+          {allowComments && (
+            <CommentSection shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
+          )}
         </div>
       )}
 
@@ -453,6 +457,11 @@ function HomeContent() {
           placement={placement}
           isPublic={isPublic}
           onTogglePublic={handleSetPublic}
+          allowComments={allowComments}
+          onToggleComments={(v) => {
+            setAllowComments(v);
+            handleSetPublic(isPublic); // trigger save to persist allowComments
+          }}
           onClose={() => setShowShareModal(false)}
         />
       )}

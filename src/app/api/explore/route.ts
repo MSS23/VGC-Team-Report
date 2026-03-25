@@ -82,11 +82,24 @@ export async function GET(request: Request) {
     let reactionMap: Record<string, Record<string, number>> = {};
     let commentMap: Record<string, number> = {};
 
+    // Collect unique creator names for verification check
+    const creatorNames = [...new Set(items.map((r) => ((r.data as Record<string, unknown>).creatorName as string)).filter(Boolean))];
+    let verifiedSet = new Set<string>();
+
     if (shareIds.length > 0) {
-      const [reactionRows, commentRows] = await Promise.all([
+      const queries: Promise<unknown>[] = [
         sql`SELECT share_id, reaction_type, COUNT(*)::int as count FROM reactions WHERE share_id = ANY(${shareIds}) GROUP BY share_id, reaction_type`,
         sql`SELECT share_id, COUNT(*)::int as count FROM comments WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
-      ]);
+      ];
+      if (creatorNames.length > 0) {
+        queries.push(sql`SELECT name FROM verified_creators WHERE LOWER(name) = ANY(${creatorNames.map((n) => n.toLowerCase())})`);
+      }
+
+      const [reactionRows, commentRows, verifiedRows] = await Promise.all(queries) as [
+        Array<Record<string, unknown>>,
+        Array<Record<string, unknown>>,
+        Array<Record<string, unknown>>?,
+      ];
 
       for (const r of reactionRows) {
         const sid = r.share_id as string;
@@ -96,17 +109,21 @@ export async function GET(request: Request) {
       for (const r of commentRows) {
         commentMap[r.share_id as string] = r.count as number;
       }
+      if (verifiedRows) {
+        verifiedSet = new Set(verifiedRows.map((r) => (r.name as string).toLowerCase()));
+      }
     }
 
     const reports = items.map((row) => {
       const data = row.data as Record<string, unknown>;
       const paste = (data.paste as string) ?? "";
       const sid = row.id as string;
+      const creatorNameStr = (data.creatorName as string) || undefined;
       return {
         id: sid,
         species: extractSpecies(paste),
         tournamentName: (data.tournamentName as string) || undefined,
-        creatorName: (data.creatorName as string) || undefined,
+        creatorName: creatorNameStr,
         placement: (data.placement as string) || undefined,
         teamSummary: (data.teamSummary as string) || undefined,
         createdAt: (row.created_at as Date).toISOString(),
@@ -114,6 +131,7 @@ export async function GET(request: Request) {
         viewCount: row.view_count as number,
         reactionCounts: reactionMap[sid] || undefined,
         commentCount: commentMap[sid] || undefined,
+        isVerified: creatorNameStr ? verifiedSet.has(creatorNameStr.toLowerCase()) : false,
       };
     });
 

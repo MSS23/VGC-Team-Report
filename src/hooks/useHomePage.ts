@@ -42,6 +42,7 @@ export function useHomePage() {
   const { isSharedView, isSharePending, sharedState, shareId: activeShareId, editKeyFromUrl, copyShareUrl, freshShare, autoSave, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, lastShareResult, getEditUrl, hasExistingShare, clearStoredShare } = useShareUrl();
   const [showShortcutHint, setShowShortcutHint] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
+  const [allowComments, setAllowComments] = useState(false);
   const [showEditUrl, setShowEditUrl] = useState(false);
   const [editLinkCopied, setEditLinkCopied] = useState(false);
   const creatorModeBeforePresent = useRef(creatorMode);
@@ -357,6 +358,9 @@ export function useHomePage() {
     if (sharedState.hiddenSlides) {
       setHiddenFull(sharedState.hiddenSlides);
     }
+    if (sharedState.allowComments) {
+      setAllowComments(true);
+    }
   }, [sharedState, analysis, speciesKeys, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
 
 
@@ -390,6 +394,7 @@ export function useHomePage() {
       })),
     })),
     hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
+    allowComments: allowComments || undefined,
   }), [paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides]);
 
   const handleShareClick = useCallback(() => {
@@ -535,6 +540,8 @@ export function useHomePage() {
     isPublic,
     setIsPublic,
     handleSetPublic,
+    allowComments,
+    setAllowComments,
 
     // Save flash
     saveFlash,

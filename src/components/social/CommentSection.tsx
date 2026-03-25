@@ -127,6 +127,27 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
   const canDelete = (comment: Comment) =>
     comment.sessionId === sessionId || !!editToken;
 
+  const handleFlag = async (commentId: number) => {
+    if (!sessionId) return;
+    try {
+      const res = await fetch("/api/comments/flag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commentId, sessionId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.autoRemoved) {
+          // Comment was auto-removed due to flags
+          setComments((prev) => prev.filter((c) => c.id !== commentId));
+          setTotal((prev) => Math.max(0, prev - 1));
+        }
+      }
+    } catch {
+      // silent
+    }
+  };
+
   return (
     <div className="bg-surface border border-border rounded-2xl overflow-hidden">
       {/* Header */}
@@ -214,15 +235,27 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
                       <span className="text-xs font-bold text-text-primary">{comment.displayName}</span>
                       <span className="text-[10px] text-text-tertiary">{relativeTime(comment.createdAt)}</span>
                     </div>
-                    {canDelete(comment) && (
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(comment.id)}
-                        className="opacity-0 group-hover:opacity-100 text-[10px] text-text-tertiary hover:text-danger transition-all cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                      {canDelete(comment) && (
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(comment.id)}
+                          className="text-[10px] text-text-tertiary hover:text-danger cursor-pointer"
+                        >
+                          Delete
+                        </button>
+                      )}
+                      {comment.sessionId !== sessionId && (
+                        <button
+                          type="button"
+                          onClick={() => handleFlag(comment.id)}
+                          className="text-[10px] text-text-tertiary hover:text-warning cursor-pointer"
+                          title="Report this comment"
+                        >
+                          Flag
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm text-text-secondary leading-relaxed">{comment.body}</p>
                 </div>

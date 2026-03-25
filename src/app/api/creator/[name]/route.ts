@@ -25,8 +25,12 @@ export async function GET(
       ORDER BY created_at DESC
     `;
 
+    // Check if creator is verified
+    const verifiedCheck = await sql`SELECT name FROM verified_creators WHERE LOWER(name) = ${creatorName.toLowerCase()}`;
+    const isVerified = verifiedCheck.length > 0;
+
     if (rows.length === 0) {
-      return NextResponse.json({ creator: creatorName, totalReports: 0, totalReactions: 0, reports: [] });
+      return NextResponse.json({ creator: creatorName, isVerified, totalReports: 0, totalReactions: 0, reports: [] });
     }
 
     const shareIds = rows.map((r) => r.id as string);
@@ -64,6 +68,7 @@ export async function GET(
 
     return NextResponse.json({
       creator: creatorName,
+      isVerified,
       totalReports: reports.length,
       totalReactions,
       reports,

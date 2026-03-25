@@ -34,6 +34,7 @@ export interface ShareableState {
   matchupPlans: SerializedMatchupPlan[];
   spriteSettings?: Record<string, { shiny?: boolean; animated?: boolean }>;
   hiddenSlides?: string[];
+  allowComments?: boolean;
 }
 
 function toBase64Url(bytes: Uint8Array): string {

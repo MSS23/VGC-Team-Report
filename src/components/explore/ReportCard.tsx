@@ -16,6 +16,7 @@ export interface ExploreReport {
   viewCount?: number;
   reactionCounts?: Record<string, number>;
   commentCount?: number;
+  isVerified?: boolean;
 }
 
 const BASE_URL = "https://play.pokemonshowdown.com/sprites";
@@ -109,17 +110,28 @@ export function ReportCard({ report }: { report: ExploreReport }) {
 
         {/* Creator */}
         {report.creatorName && (
-          <p className="text-xs text-text-secondary">
-            {t.byCreator}{" "}
+          <p className="text-xs text-text-secondary flex items-center gap-1">
+            <span>{t.byCreator}</span>
             <span
-              className="font-semibold hover:text-accent transition-colors"
+              className="font-semibold hover:text-accent transition-colors inline-flex items-center gap-1"
               onClick={(e) => {
                 e.preventDefault();
                 window.location.href = `/creator/${encodeURIComponent(report.creatorName!)}`;
               }}
             >
               {report.creatorName}
+              {report.isVerified && (
+                <span title="Verified creator">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-blue-500 flex-shrink-0">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                    <circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                </span>
+              )}
             </span>
+            {report.placement && !report.isVerified && (
+              <span className="text-[9px] text-text-tertiary italic ml-1">(self-reported)</span>
+            )}
           </p>
         )}
 

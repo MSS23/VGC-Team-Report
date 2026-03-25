@@ -49,4 +49,22 @@ export async function ensureTable() {
     )
   `;
   await sql`CREATE INDEX IF NOT EXISTS idx_comments_share ON comments(share_id, created_at)`;
+  // Verified creators table (admin-managed)
+  await sql`
+    CREATE TABLE IF NOT EXISTS verified_creators (
+      name TEXT PRIMARY KEY,
+      verified_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+  // Comment flags table
+  await sql`
+    CREATE TABLE IF NOT EXISTS comment_flags (
+      id SERIAL PRIMARY KEY,
+      comment_id INTEGER NOT NULL,
+      session_id TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(comment_id, session_id)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_comment_flags_comment ON comment_flags(comment_id)`;
 }
