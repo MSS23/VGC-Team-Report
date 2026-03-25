@@ -271,6 +271,22 @@ const en = {
   listPublicly: "Public",
   listPubliclyTooltip: "List this team on the Explore gallery for others to discover",
   byCreator: "by",
+
+  // Social / Community
+  sortPopular: "Most Popular",
+  reactions: "Reactions",
+  comments: "Comments",
+  addComment: "Add a comment",
+  commentPlaceholder: "Share your thoughts on this team...",
+  displayNameLabel: "Display name",
+  anonymous: "Anonymous",
+  deleteComment: "Delete",
+  noComments: "No comments yet. Be the first!",
+  loadMoreComments: "Load more comments",
+  creatorProfile: "Creator Profile",
+  publicReports: "Public Reports",
+  totalReactions: "Total Reactions",
+  noCreatorReports: "This creator has no public reports yet.",
 } as const;
 
 export type TranslationKeys = { [K in keyof typeof en]: string };

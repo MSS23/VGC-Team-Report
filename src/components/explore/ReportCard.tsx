@@ -13,9 +13,20 @@ export interface ExploreReport {
   teamSummary?: string;
   createdAt: string;
   updatedAt: string;
+  viewCount?: number;
+  reactionCounts?: Record<string, number>;
+  commentCount?: number;
 }
 
 const BASE_URL = "https://play.pokemonshowdown.com/sprites";
+
+const REACTION_EMOJIS: Record<string, string> = {
+  fire: "\uD83D\uDD25",
+  heart: "\u2764\uFE0F",
+  brain: "\uD83E\uDDE0",
+  battle: "\u2694\uFE0F",
+  clap: "\uD83D\uDC4F",
+};
 
 function spriteSlug(species: string): string {
   return species
@@ -29,7 +40,17 @@ function spriteSlug(species: string): string {
 
 export function ReportCard({ report }: { report: ExploreReport }) {
   const { t } = useTranslation();
-  const hasMetadata = report.tournamentName || report.creatorName;
+
+  // Top reactions (up to 3)
+  const topReactions = report.reactionCounts
+    ? Object.entries(report.reactionCounts)
+        .filter(([, count]) => count > 0)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+    : [];
+
+  const totalReactions = topReactions.reduce((sum, [, count]) => sum + count, 0);
+  const hasSocial = totalReactions > 0 || (report.commentCount ?? 0) > 0 || (report.viewCount ?? 0) > 0;
 
   return (
     <motion.a
@@ -54,7 +75,6 @@ export function ReportCard({ report }: { report: ExploreReport }) {
               loading="lazy"
               onError={(e) => {
                 const img = e.currentTarget;
-                // Try gen5 fallback
                 if (!img.dataset.fallback) {
                   img.dataset.fallback = "1";
                   img.src = `${BASE_URL}/gen5/${spriteSlug(species)}.png`;
@@ -62,7 +82,6 @@ export function ReportCard({ report }: { report: ExploreReport }) {
               }}
             />
           ))}
-          {/* Fill empty slots with muted placeholders */}
           {Array.from({ length: Math.max(0, 6 - report.species.length) }).map(
             (_, i) => (
               <div
@@ -91,7 +110,16 @@ export function ReportCard({ report }: { report: ExploreReport }) {
         {/* Creator */}
         {report.creatorName && (
           <p className="text-xs text-text-secondary">
-            {t.byCreator} <span className="font-semibold">{report.creatorName}</span>
+            {t.byCreator}{" "}
+            <span
+              className="font-semibold hover:text-accent transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.href = `/creator/${encodeURIComponent(report.creatorName!)}`;
+              }}
+            >
+              {report.creatorName}
+            </span>
           </p>
         )}
 
@@ -102,10 +130,44 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           </p>
         )}
 
-        {/* Timestamp */}
-        <p className="text-[10px] text-text-tertiary font-medium uppercase tracking-wider pt-1">
-          {relativeTime(report.createdAt)}
-        </p>
+        {/* Social indicators + timestamp */}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <div className="flex items-center gap-2.5">
+            {/* Reactions */}
+            {topReactions.length > 0 && (
+              <span className="inline-flex items-center gap-0.5 text-[10px]">
+                {topReactions.map(([type]) => (
+                  <span key={type}>{REACTION_EMOJIS[type]}</span>
+                ))}
+                <span className="font-bold text-text-secondary ml-0.5">{totalReactions}</span>
+              </span>
+            )}
+            {/* Comments */}
+            {(report.commentCount ?? 0) > 0 && (
+              <span className="inline-flex items-center gap-0.5 text-text-tertiary">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                </svg>
+                <span className="text-[10px] font-bold">{report.commentCount}</span>
+              </span>
+            )}
+            {/* Views */}
+            {(report.viewCount ?? 0) > 0 && (
+              <span className="inline-flex items-center gap-0.5 text-text-tertiary">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span className="text-[10px] font-bold">
+                  {(report.viewCount ?? 0) >= 1000 ? `${((report.viewCount ?? 0) / 1000).toFixed(1)}k` : report.viewCount}
+                </span>
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-text-tertiary font-medium uppercase tracking-wider">
+            {relativeTime(report.createdAt)}
+          </span>
+        </div>
       </div>
     </motion.a>
   );

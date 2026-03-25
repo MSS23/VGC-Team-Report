@@ -10,6 +10,11 @@ import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
 import { ShareModal } from "@/components/ui/ShareModal";
 import { ShareViewCTA } from "@/components/ui/ShareViewCTA";
 import { Navbar } from "@/components/layout/Navbar";
+import { ReactionBar } from "@/components/social/ReactionBar";
+import { CommentSection } from "@/components/social/CommentSection";
+import { CreatorLink } from "@/components/social/CreatorLink";
+import { ViewCount } from "@/components/social/ViewCount";
+import { getSessionId } from "@/lib/utils/session-id";
 import { I18nProvider } from "@/lib/i18n";
 
 export default function Home() {
@@ -60,6 +65,8 @@ function HomeContent() {
     handleFreshReshare,
     isPublic,
     handleSetPublic,
+    activeShareId,
+    editKeyFromUrl,
     saveFlash,
     showShortcutHint,
     setShowShortcutHint,
@@ -132,6 +139,22 @@ function HomeContent() {
   } = useHomePage();
 
   const [showShareModal, setShowShareModal] = useState(false);
+  const [viewCount, setViewCount] = useState(0);
+
+  // Track view count for shared public reports
+  useEffect(() => {
+    if (!isSharedView || !activeShareId) return;
+    const sessionId = getSessionId();
+    if (!sessionId) return;
+    fetch(`/api/views/${activeShareId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.viewCount) setViewCount(data.viewCount); })
+      .catch(() => {});
+  }, [isSharedView, activeShareId]);
 
   // Open share modal when a share completes with a public URL
   const prevShareStatus = useRef(shareStatus);
@@ -388,6 +411,18 @@ function HomeContent() {
         onShowShortcuts={() => setShowShortcutHint(true)}
         onStartTour={!presentationMode ? startWalkthrough : undefined}
       />
+
+      {/* Social engagement section for public shared reports */}
+      {isSharedView && !isEditingUnlocked && !isPresentationStyle && activeShareId && (
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-6 space-y-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            {creatorName && <CreatorLink name={creatorName} />}
+            <ViewCount count={viewCount} />
+          </div>
+          <ReactionBar shareId={activeShareId} />
+          <CommentSection shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
+        </div>
+      )}
 
       {/* Walkthrough overlay */}
       {walkthroughActive && walkthroughStep && (

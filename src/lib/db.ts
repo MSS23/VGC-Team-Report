@@ -23,4 +23,30 @@ export async function ensureTable() {
   // Add public listing flag for explore gallery
   await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE`;
   await sql`CREATE INDEX IF NOT EXISTS idx_shares_public_updated ON shares(updated_at DESC) WHERE is_public = TRUE`;
+  // View count for public reports
+  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0`;
+  // Reactions table
+  await sql`
+    CREATE TABLE IF NOT EXISTS reactions (
+      id SERIAL PRIMARY KEY,
+      share_id TEXT NOT NULL,
+      reaction_type TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(share_id, reaction_type, session_id)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_reactions_share ON reactions(share_id)`;
+  // Comments table
+  await sql`
+    CREATE TABLE IF NOT EXISTS comments (
+      id SERIAL PRIMARY KEY,
+      share_id TEXT NOT NULL,
+      display_name TEXT NOT NULL DEFAULT 'Anonymous',
+      body TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_comments_share ON comments(share_id, created_at)`;
 }

@@ -283,6 +283,8 @@ export function useShareUrl() {
     isSharedView,
     isSharePending,
     sharedState,
+    shareId,
+    editKeyFromUrl,
     copyShareUrl,
     freshShare,
     autoSave,

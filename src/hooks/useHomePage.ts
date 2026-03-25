@@ -39,7 +39,7 @@ export function useHomePage() {
   const { presentationMode, setPresentationMode } = usePresentationMode();
   const { darkMode, setDarkMode } = useDarkMode(false);
   const { genTheme, setGenTheme } = useTheme();
-  const { isSharedView, isSharePending, sharedState, copyShareUrl, freshShare, autoSave, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, lastShareResult, getEditUrl, hasExistingShare, clearStoredShare } = useShareUrl();
+  const { isSharedView, isSharePending, sharedState, shareId: activeShareId, editKeyFromUrl, copyShareUrl, freshShare, autoSave, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, lastShareResult, getEditUrl, hasExistingShare, clearStoredShare } = useShareUrl();
   const [showShortcutHint, setShowShortcutHint] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [showEditUrl, setShowEditUrl] = useState(false);
@@ -515,6 +515,8 @@ export function useHomePage() {
     isSharedView,
     isSharePending,
     sharedState,
+    activeShareId,
+    editKeyFromUrl,
     shareStatus,
     urlWarning,
     decodeFailed,

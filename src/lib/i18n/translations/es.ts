@@ -245,6 +245,22 @@ const es: TranslationKeys = {
   listPublicly: "Público",
   listPubliclyTooltip: "Listar este equipo en la galería Explorar",
   byCreator: "por",
+
+  // Social / Community
+  sortPopular: "Más populares",
+  reactions: "Reacciones",
+  comments: "Comentarios",
+  addComment: "Agregar un comentario",
+  commentPlaceholder: "Comparte tus opiniones sobre este equipo...",
+  displayNameLabel: "Nombre visible",
+  anonymous: "Anónimo",
+  deleteComment: "Eliminar",
+  noComments: "Sin comentarios aún. ¡Sé el primero!",
+  loadMoreComments: "Cargar más comentarios",
+  creatorProfile: "Perfil del creador",
+  publicReports: "Reportes públicos",
+  totalReactions: "Reacciones totales",
+  noCreatorReports: "Este creador aún no tiene reportes públicos.",
 };
 
 export default es;

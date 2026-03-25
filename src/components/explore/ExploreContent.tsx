@@ -27,7 +27,7 @@ function ExploreInner() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<"newest" | "updated">("newest");
+  const [sort, setSort] = useState<"newest" | "updated" | "popular">("newest");
   const initialLoad = useRef(true);
 
   const fetchReports = useCallback(

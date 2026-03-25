@@ -245,6 +245,22 @@ const ja: TranslationKeys = {
   listPublicly: "公開",
   listPubliclyTooltip: "このチームを探索ギャラリーに公開する",
   byCreator: "作成者:",
+
+  // Social / Community
+  sortPopular: "人気順",
+  reactions: "リアクション",
+  comments: "コメント",
+  addComment: "コメントを追加",
+  commentPlaceholder: "このチームについて感想を共有...",
+  displayNameLabel: "表示名",
+  anonymous: "匿名",
+  deleteComment: "削除",
+  noComments: "まだコメントはありません。最初のコメントを！",
+  loadMoreComments: "もっと読み込む",
+  creatorProfile: "クリエイタープロフィール",
+  publicReports: "公開レポート",
+  totalReactions: "総リアクション",
+  noCreatorReports: "このクリエイターにはまだ公開レポートがありません。",
 };
 
 export default ja;

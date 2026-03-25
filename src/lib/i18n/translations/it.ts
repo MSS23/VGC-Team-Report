@@ -245,6 +245,22 @@ const it: TranslationKeys = {
   listPublicly: "Pubblico",
   listPubliclyTooltip: "Mostra questo team nella galleria Esplora",
   byCreator: "di",
+
+  // Social / Community
+  sortPopular: "Più popolari",
+  reactions: "Reazioni",
+  comments: "Commenti",
+  addComment: "Aggiungi un commento",
+  commentPlaceholder: "Condividi le tue opinioni su questo team...",
+  displayNameLabel: "Nome visualizzato",
+  anonymous: "Anonimo",
+  deleteComment: "Elimina",
+  noComments: "Nessun commento ancora. Sii il primo!",
+  loadMoreComments: "Carica altri commenti",
+  creatorProfile: "Profilo del creatore",
+  publicReports: "Report pubblici",
+  totalReactions: "Reazioni totali",
+  noCreatorReports: "Questo creatore non ha ancora report pubblici.",
 };
 
 export default it;

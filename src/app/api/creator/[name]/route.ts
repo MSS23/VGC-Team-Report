@@ -1,0 +1,75 @@
+import { getDb } from "@/lib/db";
+import { isRateLimited } from "@/lib/rate-limit";
+import { extractSpecies } from "@/lib/utils/extract-species";
+import { NextResponse } from "next/server";
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ name: string }> },
+) {
+  try {
+    const { name } = await params;
+    const creatorName = decodeURIComponent(name);
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    if (isRateLimited(`creator:${ip}`, 30, 60_000)) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
+    const sql = getDb();
+
+    // Fetch public reports by this creator
+    const rows = await sql`
+      SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count
+      FROM shares
+      WHERE is_public = TRUE AND data->>'creatorName' ILIKE ${creatorName}
+      ORDER BY created_at DESC
+    `;
+
+    if (rows.length === 0) {
+      return NextResponse.json({ creator: creatorName, totalReports: 0, totalReactions: 0, reports: [] });
+    }
+
+    const shareIds = rows.map((r) => r.id as string);
+
+    // Batch reaction counts
+    const reactionRows = await sql`
+      SELECT share_id, COUNT(*)::int as count
+      FROM reactions
+      WHERE share_id = ANY(${shareIds})
+      GROUP BY share_id
+    `;
+    const reactionMap: Record<string, number> = {};
+    for (const r of reactionRows) {
+      reactionMap[r.share_id as string] = r.count as number;
+    }
+
+    const totalReactions = Object.values(reactionMap).reduce((a, b) => a + b, 0);
+
+    const reports = rows.map((row) => {
+      const data = row.data as Record<string, unknown>;
+      const paste = (data.paste as string) ?? "";
+      return {
+        id: row.id as string,
+        species: extractSpecies(paste),
+        tournamentName: (data.tournamentName as string) || undefined,
+        creatorName: (data.creatorName as string) || undefined,
+        placement: (data.placement as string) || undefined,
+        teamSummary: (data.teamSummary as string) || undefined,
+        createdAt: (row.created_at as Date).toISOString(),
+        updatedAt: (row.updated_at as Date).toISOString(),
+        viewCount: row.view_count as number,
+        reactionCount: reactionMap[row.id as string] ?? 0,
+      };
+    });
+
+    return NextResponse.json({
+      creator: creatorName,
+      totalReports: reports.length,
+      totalReactions,
+      reports,
+    });
+  } catch (e) {
+    console.error("Creator API error:", e);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  }
+}

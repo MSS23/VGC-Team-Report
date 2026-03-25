@@ -245,6 +245,22 @@ const zh: TranslationKeys = {
   listPublicly: "公开",
   listPubliclyTooltip: "将此队伍展示在探索画廊中",
   byCreator: "作者:",
+
+  // Social / Community
+  sortPopular: "最受欢迎",
+  reactions: "反应",
+  comments: "评论",
+  addComment: "添加评论",
+  commentPlaceholder: "分享你对这个队伍的看法...",
+  displayNameLabel: "显示名称",
+  anonymous: "匿名",
+  deleteComment: "删除",
+  noComments: "还没有评论。来第一个评论吧！",
+  loadMoreComments: "加载更多评论",
+  creatorProfile: "创作者资料",
+  publicReports: "公开报告",
+  totalReactions: "总反应数",
+  noCreatorReports: "该创作者还没有公开报告。",
 };
 
 export default zh;

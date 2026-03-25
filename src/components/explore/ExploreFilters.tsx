@@ -6,8 +6,8 @@ import { useTranslation } from "@/lib/i18n";
 interface ExploreFiltersProps {
   query: string;
   onQueryChange: (q: string) => void;
-  sort: "newest" | "updated";
-  onSortChange: (s: "newest" | "updated") => void;
+  sort: "newest" | "updated" | "popular";
+  onSortChange: (s: "newest" | "updated" | "popular") => void;
 }
 
 export function ExploreFilters({
@@ -75,10 +75,11 @@ export function ExploreFilters({
         {/* Sort */}
         <select
           value={sort}
-          onChange={(e) => onSortChange(e.target.value as "newest" | "updated")}
+          onChange={(e) => onSortChange(e.target.value as "newest" | "updated" | "popular")}
           className="px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all appearance-none cursor-pointer sm:w-48"
         >
           <option value="newest">{t.sortNewest}</option>
+          <option value="popular">{t.sortPopular}</option>
           <option value="updated">{t.sortUpdated}</option>
         </select>
       </div>

@@ -245,6 +245,22 @@ const ko: TranslationKeys = {
   listPublicly: "공개",
   listPubliclyTooltip: "이 팀을 탐색 갤러리에 공개",
   byCreator: "제작자:",
+
+  // Social / Community
+  sortPopular: "인기순",
+  reactions: "반응",
+  comments: "댓글",
+  addComment: "댓글 추가",
+  commentPlaceholder: "이 팀에 대한 의견을 공유하세요...",
+  displayNameLabel: "표시 이름",
+  anonymous: "익명",
+  deleteComment: "삭제",
+  noComments: "아직 댓글이 없습니다. 첫 번째가 되세요!",
+  loadMoreComments: "더 많은 댓글 로드",
+  creatorProfile: "크리에이터 프로필",
+  publicReports: "공개 리포트",
+  totalReactions: "총 반응",
+  noCreatorReports: "이 크리에이터에게는 아직 공개 리포트가 없습니다.",
 };
 
 export default ko;
