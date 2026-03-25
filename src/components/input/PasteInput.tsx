@@ -8,6 +8,7 @@ import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { WhatsNewModal } from "@/components/ui/WhatsNewModal";
 
 export const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
 Ability: Intimidate
@@ -416,6 +417,8 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
           {t.privacy}
         </a>
       </motion.p>
+
+      <WhatsNewModal />
     </div>
   );
 }
