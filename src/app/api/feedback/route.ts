@@ -3,8 +3,6 @@ import { isRateLimited } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-const DISCORD_WEBHOOK = process.env.DISCORD_FEEDBACK_WEBHOOK || "";
-
 const TYPE_EMOJI: Record<string, string> = {
   feature: "\uD83D\uDCA1",
   bug: "\uD83D\uDC1B",
@@ -13,10 +11,10 @@ const TYPE_EMOJI: Record<string, string> = {
 };
 
 const TYPE_COLOR: Record<string, number> = {
-  feature: 0x10b981,  // emerald
-  bug: 0xef4444,      // red
-  improvement: 0xf59e0b, // amber
-  other: 0x3b82f6,    // blue
+  feature: 0x10b981,
+  bug: 0xef4444,
+  improvement: 0xf59e0b,
+  other: 0x3b82f6,
 };
 
 const FeedbackBody = z.object({
@@ -31,41 +29,47 @@ const FeedbackBody = z.object({
 });
 
 async function sendDiscordNotification(data: z.infer<typeof FeedbackBody>) {
-  if (!DISCORD_WEBHOOK) return;
-  try {
-    const fields = [
-      { name: "Description", value: data.description.slice(0, 1024), inline: false },
-    ];
-    if (data.device || data.browser || data.screenSize) {
-      fields.push({
-        name: "Device Info",
-        value: [
-          data.device && `Device: ${data.device}`,
-          data.browser && `Browser: ${data.browser}`,
-          data.screenSize && `Screen: ${data.screenSize}`,
-        ].filter(Boolean).join("\n"),
-        inline: false,
-      });
-    }
-    if (data.contact) {
-      fields.push({ name: "Contact", value: data.contact, inline: false });
-    }
+  // Read env var at call time, not module init time (serverless compatibility)
+  const webhookUrl = process.env.DISCORD_FEEDBACK_WEBHOOK;
+  if (!webhookUrl) {
+    console.warn("DISCORD_FEEDBACK_WEBHOOK not set, skipping notification");
+    return;
+  }
 
-    await fetch(DISCORD_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        embeds: [{
-          title: `${TYPE_EMOJI[data.type] ?? ""} ${data.type.charAt(0).toUpperCase() + data.type.slice(1)}: ${data.title}`,
-          color: TYPE_COLOR[data.type] ?? 0x6366f1,
-          fields,
-          footer: { text: "VGC Team Report Feedback" },
-          timestamp: new Date().toISOString(),
-        }],
-      }),
+  const fields = [
+    { name: "Description", value: data.description.slice(0, 1024), inline: false },
+  ];
+  if (data.device || data.browser || data.screenSize) {
+    fields.push({
+      name: "Device Info",
+      value: [
+        data.device && `Device: ${data.device}`,
+        data.browser && `Browser: ${data.browser}`,
+        data.screenSize && `Screen: ${data.screenSize}`,
+      ].filter(Boolean).join("\n"),
+      inline: false,
     });
-  } catch (e) {
-    console.warn("Discord webhook failed:", e);
+  }
+  if (data.contact) {
+    fields.push({ name: "Contact", value: data.contact, inline: false });
+  }
+
+  const res = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      embeds: [{
+        title: `${TYPE_EMOJI[data.type] ?? ""} ${data.type.charAt(0).toUpperCase() + data.type.slice(1)}: ${data.title}`,
+        color: TYPE_COLOR[data.type] ?? 0x6366f1,
+        fields,
+        footer: { text: "VGC Team Report Feedback" },
+        timestamp: new Date().toISOString(),
+      }],
+    }),
+  });
+
+  if (!res.ok) {
+    console.error("Discord webhook error:", res.status, await res.text().catch(() => ""));
   }
 }
 
@@ -91,8 +95,12 @@ export async function POST(request: Request) {
       VALUES (${type}, ${title}, ${description}, ${device ?? null}, ${browser ?? null}, ${screenSize ?? null}, ${contact ?? null}, ${sessionId ?? null})
     `;
 
-    // Send Discord notification (fire-and-forget)
-    sendDiscordNotification(parsed.data);
+    // Send Discord notification (awaited so errors are logged)
+    try {
+      await sendDiscordNotification(parsed.data);
+    } catch (e) {
+      console.error("Discord notification failed:", e);
+    }
 
     return NextResponse.json({ success: true });
   } catch (e) {
