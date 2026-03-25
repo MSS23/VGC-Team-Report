@@ -51,15 +51,58 @@ function DashboardInner() {
       .catch(() => setLoading(false));
   }, [user, tab]);
 
+  // Auto-detect unclaimed reports from localStorage
+  const [localToken, setLocalToken] = useState<{ shareId: string; editToken: string } | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const stored = localStorage.getItem("vgc-share-tokens");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.shareId && parsed.editToken) {
+          // Check if already claimed
+          const alreadyOwned = myReports.some((r) => r.id === parsed.shareId);
+          if (!alreadyOwned) {
+            setLocalToken(parsed);
+          }
+        }
+      }
+    } catch { /* ignore */ }
+  }, [user, myReports]);
+
+  const handleAutoClaimLocal = async () => {
+    if (!localToken) return;
+    setClaiming(true);
+    try {
+      const res = await fetch("/api/user/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(localToken),
+      });
+      if (res.ok) {
+        setClaimResult("Report claimed from this browser!");
+        setLocalToken(null);
+        fetch("/api/user/reports")
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => { if (data?.reports) setMyReports(data.reports); });
+      }
+    } catch { /* silent */ }
+    finally { setClaiming(false); }
+  };
+
   const handleClaim = async () => {
     if (!claimUrl.trim() || claiming) return;
     setClaiming(true);
     setClaimResult(null);
 
-    // Extract shareId and key from URL like /s/ABC123?key=xxx
-    const match = claimUrl.match(/\/s\/([A-Za-z0-9]+)\?key=([A-Fa-f0-9]+)/);
+    // Extract shareId and key from various URL formats
+    // Full URL: https://pokemonvgcteamreport.com/s/ABC123?key=xxx
+    // Path: /s/ABC123?key=xxx
+    // Just params: ABC123?key=xxx
+    const input = claimUrl.trim();
+    const match = input.match(/(?:\/s\/)?([A-Za-z0-9]{6,12})\?key=([A-Fa-f0-9]+)/);
     if (!match) {
-      setClaimResult("Invalid edit link. Paste the full edit link (e.g., /s/ABC123?key=...)");
+      setClaimResult("Invalid edit link. Paste your edit link — it looks like: .../s/ABC123?key=...");
       setClaiming(false);
       return;
     }
@@ -159,6 +202,27 @@ function DashboardInner() {
 
             {/* Claim report section */}
             {tab === "my" && (
+              <>
+              {/* Auto-detected report from this browser */}
+              {localToken && (
+                <div className="bg-accent-surface/50 border-2 border-accent/20 rounded-xl px-4 py-3 mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-text-primary">Report found in this browser</p>
+                    <p className="text-xs text-text-secondary mt-0.5">
+                      We detected report <span className="font-mono font-bold">{localToken.shareId}</span> from your localStorage. Claim it to link it to your account.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAutoClaimLocal}
+                    disabled={claiming}
+                    className="px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
+                  >
+                    {claiming ? "Claiming..." : "Claim"}
+                  </button>
+                </div>
+              )}
+
               <div className="bg-surface border border-border rounded-xl px-4 py-3 mb-6">
                 <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">
                   Claim an existing report
@@ -186,6 +250,7 @@ function DashboardInner() {
                   </p>
                 )}
               </div>
+              </>
             )}
 
             {/* Content */}

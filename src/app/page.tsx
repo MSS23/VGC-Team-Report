@@ -15,6 +15,7 @@ import { CommentSection } from "@/components/social/CommentSection";
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
 import { SaveButton } from "@/components/social/SaveButton";
+import { ClaimButton } from "@/components/social/ClaimButton";
 import { getSessionId } from "@/lib/utils/session-id";
 import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { I18nProvider } from "@/lib/i18n";
@@ -416,6 +417,13 @@ function HomeContent() {
         onShowShortcuts={() => setShowShortcutHint(true)}
         onStartTour={!presentationMode ? startWalkthrough : undefined}
       />
+
+      {/* Claim button for editors who are signed in */}
+      {isSharedView && isEditingUnlocked && activeShareId && editKeyFromUrl && (
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
+          <ClaimButton shareId={activeShareId} editToken={editKeyFromUrl} />
+        </div>
+      )}
 
       {/* Social engagement section for public shared reports */}
       {isSharedView && !isEditingUnlocked && !isPresentationStyle && activeShareId && (
