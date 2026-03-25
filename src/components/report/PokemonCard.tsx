@@ -131,7 +131,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
 
           {/* Non-default IVs */}
           {nonDefaultIvs.length > 0 && (
-            <div className="hidden sm:flex flex-wrap items-center gap-1.5 mt-1.5">
+            <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mt-1 sm:mt-1.5">
               {nonDefaultIvs.map((stat) => (
                 <span
                   key={stat}
@@ -173,7 +173,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             return (
               <span
                 key={move}
-                className={`text-[10px] sm:text-sm creator:text-base leading-tight px-1 sm:px-3 py-1 sm:py-2 rounded-md sm:rounded-lg border font-semibold text-center transition-colors break-words hyphens-auto ${
+                className={`text-[11px] sm:text-sm creator:text-base leading-tight px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg border font-semibold text-center transition-colors break-words hyphens-auto ${
                   typeStyle ? "shadow-sm" : "text-text-primary bg-surface-alt/60 border-transparent"
                 }`}
                 style={typeStyle ?? undefined}
@@ -214,7 +214,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                     {natureData?.minus === stat && <span className="text-[9px] sm:text-[11px]" aria-label="reduced by nature">{"\u25BC"}</span>}
                     {labels[stat]}
                   </span>
-                  <div className="flex-1 h-2 sm:h-2.5 bg-surface-alt rounded-full overflow-hidden creator:h-3" role="progressbar" aria-valuenow={displayValue} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${labels[stat]} stat bar`}>
+                  <div className="flex-1 h-2.5 sm:h-2.5 bg-surface-alt rounded-full overflow-hidden creator:h-3" role="progressbar" aria-valuenow={displayValue} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${labels[stat]} stat bar`}>
                     <div
                       className="h-full rounded-full animate-bar-fill"
                       style={{

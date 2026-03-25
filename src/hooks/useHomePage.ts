@@ -5,50 +5,39 @@ import { useTeamReport } from "@/hooks/useTeamReport";
 import { useCreatorMode } from "@/hooks/useCreatorMode";
 import { usePresentationMode } from "@/hooks/usePresentationMode";
 import { useDarkMode } from "@/hooks/useDarkMode";
-import { useSlideNavigation } from "@/hooks/useSlideNavigation";
 import { usePokemonNotes } from "@/hooks/usePokemonNotes";
 import { useDamageCalcs } from "@/hooks/useDamageCalcs";
 import { useMatchupPlans } from "@/hooks/useMatchupPlans";
 import { useHiddenSlides } from "@/hooks/useHiddenSlides";
 import { useTeamMeta } from "@/hooks/useTeamMeta";
-import { useShareUrl } from "@/hooks/useShareUrl";
 import { useWalkthrough } from "@/hooks/useWalkthrough";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useTheme } from "@/hooks/useTheme";
+import { useShareFlow } from "@/hooks/useShareFlow";
+import { useSlideSystem } from "@/hooks/useSlideSystem";
+import { useExportActions } from "@/hooks/useExportActions";
 import { SAMPLE_PASTE } from "@/components/input/PasteInput";
 import { useTranslation } from "@/lib/i18n";
 import type { SpriteConfig } from "@/lib/types/sprites";
-import { teamToShowdown } from "@/lib/utils/export-paste";
-import { exportAsImage, exportAsPdf } from "@/lib/utils/export-report";
 
 export function useHomePage() {
   const { t } = useTranslation();
   const [isSampleTeam, setIsSampleTeam] = useState(false);
 
+  // ── Core team data ───────────────────────────────────────────────
   const {
-    paste,
-    setPaste,
-    analysis,
-    parseTeam,
-    reorderPokemon,
-    reset,
-    warnings,
+    paste, setPaste, analysis, parseTeam, reorderPokemon, reset, warnings,
   } = useTeamReport(!isSampleTeam);
 
+  // ── Mode toggles ─────────────────────────────────────────────────
   const { creatorMode, setCreatorMode } = useCreatorMode();
   const { presentationMode, setPresentationMode } = usePresentationMode();
   const { darkMode, setDarkMode } = useDarkMode(false);
   const { genTheme, setGenTheme } = useTheme();
-  const { isSharedView, isSharePending, sharedState, shareId: activeShareId, editKeyFromUrl, copyShareUrl, freshShare, autoSave, shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, lastShareResult, getEditUrl, hasExistingShare, clearStoredShare } = useShareUrl();
   const [showShortcutHint, setShowShortcutHint] = useState(false);
-  const [isPublic, setIsPublic] = useState(false);
-  const [allowComments, setAllowComments] = useState(false);
-  const [showEditUrl, setShowEditUrl] = useState(false);
-  const [editLinkCopied, setEditLinkCopied] = useState(false);
   const creatorModeBeforePresent = useRef(creatorMode);
 
-  // Auto-lock editing when entering presentation, restore on exit
-  // useLayoutEffect prevents a brief flash of non-creator layout on exit
+  // Auto-lock editing in presentation mode
   useLayoutEffect(() => {
     if (presentationMode) {
       creatorModeBeforePresent.current = creatorMode;
@@ -59,15 +48,7 @@ export function useHomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presentationMode]);
 
-  const isReadOnly = (isSharedView && !isEditingUnlocked) || presentationMode || !creatorMode;
-  const isPresentationStyle = presentationMode;
-
-  // Autosave indicator — flashes "Saved" after user edits
-  const [saveFlash, setSaveFlash] = useState(false);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isFirstRender = useRef(true);
-
-  // Build species keys with dedup index for duplicate species
+  // ── Species keys ─────────────────────────────────────────────────
   const speciesKeys = useMemo(() => {
     if (!analysis) return [];
     const counts: Record<string, number> = {};
@@ -78,7 +59,8 @@ export function useHomePage() {
     });
   }, [analysis]);
 
-  const shouldPersist = !isSharedView && !isSampleTeam;
+  // ── Team content hooks ───────────────────────────────────────────
+  const shouldPersist = !false && !isSampleTeam; // updated after share flow
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
@@ -86,22 +68,13 @@ export function useHomePage() {
     setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setMetaFull,
   } = useTeamMeta(speciesKeys, shouldPersist);
   const {
-    plans,
-    addPlan,
-    removePlan,
-    addGamePlan,
-    removeGamePlan,
-    updateGamePlanNotes,
-    updateGamePlanReplays,
-    updateGamePlanBring,
-    reorderGamePlanBring,
-    updateGamePlanResult,
-    togglePlanSlide,
-    reorderPlans,
-    setPlansFull,
+    plans, addPlan, removePlan, addGamePlan, removeGamePlan,
+    updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,
+    reorderGamePlanBring, updateGamePlanResult, togglePlanSlide, reorderPlans, setPlansFull,
   } = useMatchupPlans(speciesKeys, shouldPersist);
+  const { hiddenSlides, toggleSlide, isHidden, setHiddenFull } = useHiddenSlides(speciesKeys, shouldPersist);
 
-  // Sprite config from parsed data — shiny from paste, always animated
+  // ── Sprite config ────────────────────────────────────────────────
   const getSpriteConfig = useCallback(
     (key: string): SpriteConfig => {
       if (!analysis) return { shiny: false, animated: true };
@@ -109,33 +82,23 @@ export function useHomePage() {
       const shiny = idx >= 0 ? analysis.pokemon[idx]?.parsed.shiny ?? false : false;
       return { shiny, animated: true };
     },
-    [analysis, speciesKeys]
+    [analysis, speciesKeys],
   );
 
-  const { hiddenSlides, toggleSlide, isHidden, setHiddenFull } = useHiddenSlides(speciesKeys, shouldPersist);
-
-  // Undo / redo system
+  // ── Undo / redo ──────────────────────────────────────────────────
   const undoRedo = useUndoRedo();
   const snapshotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const undoRedoInitialized = useRef(false);
 
-  // Push debounced snapshots when tracked state changes
   useEffect(() => {
     if (!analysis || undoRedo.isRestoring()) return;
     if (snapshotTimerRef.current) clearTimeout(snapshotTimerRef.current);
     snapshotTimerRef.current = setTimeout(() => {
       undoRedo.pushSnapshot({
-        notes,
-        calcs,
-        roles,
-        summary,
+        notes, calcs, roles, summary,
         plans: plans.map((p) => ({ ...p, gamePlans: p.gamePlans.map((gp) => ({ ...gp })) })),
       });
-      undoRedoInitialized.current = true;
     }, 500);
-    return () => {
-      if (snapshotTimerRef.current) clearTimeout(snapshotTimerRef.current);
-    };
+    return () => { if (snapshotTimerRef.current) clearTimeout(snapshotTimerRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notes, calcs, roles, summary, plans, analysis]);
 
@@ -159,217 +122,12 @@ export function useHomePage() {
     undoRedo.doneRestoring();
   }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull]);
 
-  // Flash "Saved" indicator when user data changes (skip initial load)
-  useEffect(() => {
-    if (!analysis || isSharedView) return;
-    if (isFirstRender.current) { isFirstRender.current = false; return; }
-    setSaveFlash(true);
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => setSaveFlash(false), 1500);
-  }, [notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, analysis, isSharedView]);
+  // ── Save flash indicator ─────────────────────────────────────────
+  const [saveFlash, setSaveFlash] = useState(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRender = useRef(true);
 
-  // Build ALL slide keys and labels (including all plans, visibility handled at nav level)
-  const { allSlideKeys, allSlideLabels } = useMemo(() => {
-    if (!analysis) return { allSlideKeys: [] as string[], allSlideLabels: [] as string[] };
-    const keys: string[] = [
-      "overview",
-      ...speciesKeys,
-      "speed-tiers",
-      ...plans.map((p) => `matchup-${p.id}`),
-      "matchup-sheet",
-    ];
-    const labels: string[] = [
-      t.overview,
-      ...analysis.pokemon.map((mon) => mon.parsed.species),
-      t.teamAnalysisLabel,
-      ...plans.map((p) => `vs. ${p.opponentLabel}`),
-      t.matchupsLabel,
-    ];
-    return { allSlideKeys: keys, allSlideLabels: labels };
-  }, [analysis, speciesKeys, plans, t]);
-
-  // Check if a physical slide index is hidden
-  const isSlideHiddenAt = useCallback((physicalIndex: number) => {
-    const key = allSlideKeys[physicalIndex];
-    if (!key) return false;
-    if (key.startsWith("matchup-") && key !== "matchup-sheet") {
-      const planId = key.slice("matchup-".length);
-      const plan = plans.find((p) => p.id === planId);
-      return plan?.showSlide === false;
-    }
-    return isHidden(key);
-  }, [allSlideKeys, plans, isHidden]);
-
-  // Creator sees all slides; non-creator only sees visible ones
-  const visibleIndices = useMemo(() => {
-    const all = allSlideKeys.map((_, i) => i);
-    if (creatorMode && !presentationMode) return all;
-    return all.filter((i) => !isSlideHiddenAt(i));
-  }, [allSlideKeys, creatorMode, presentationMode, isSlideHiddenAt]);
-
-  const totalSlides = visibleIndices.length;
-
-  const toggleFullscreen = useCallback(() => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      document.documentElement.requestFullscreen();
-    }
-  }, []);
-
-  const {
-    currentSlide,
-    goToSlide,
-    nextSlide,
-    prevSlide,
-    isFirst,
-    isLast,
-  } = useSlideNavigation({
-    totalSlides,
-    enabled: !!analysis,
-    resetKey: paste,
-    bypassFocusGuard: presentationMode,
-    onEscape: presentationMode ? () => setPresentationMode(false) : undefined,
-    onToggleDarkMode: () => setDarkMode(!darkMode),
-    onToggleFullscreen: toggleFullscreen,
-    onShowHelp: () => setShowShortcutHint((v) => !v),
-    onTogglePresentation: () => setPresentationMode(!presentationMode),
-    onUndo: handleUndo,
-    onRedo: handleRedo,
-  });
-
-  const pokemonNames = useMemo(
-    () => analysis?.pokemon.map((p) => p.parsed.species) ?? [],
-    [analysis]
-  );
-
-  const {
-    isActive: walkthroughActive,
-    currentStep: walkthroughStep,
-    currentStepIndex: walkthroughStepIndex,
-    totalSteps: walkthroughTotalSteps,
-    next: walkthroughNext,
-    skip: walkthroughSkip,
-    start: startWalkthrough,
-    guidePokemon: walkthroughGuidePokemon,
-  } = useWalkthrough({
-    enabled: !!analysis && !presentationMode,
-    pokemonNames,
-    goToSlide,
-    pokemonCount: analysis?.pokemon.length ?? 0,
-    totalPhysicalSlides: allSlideKeys.length,
-    isSharedView,
-    physicalToVirtual: useCallback((physical: number) => {
-      const idx = visibleIndices.indexOf(physical);
-      return idx === -1 ? null : idx;
-    }, [visibleIndices]),
-  });
-
-  // Map virtual currentSlide → physical slide for TeamReport
-  const physicalSlide = visibleIndices[currentSlide] ?? 0;
-
-  // Preserve physical slide position when visibleIndices changes (e.g. lock/unlock toggle)
-  const prevVisibleRef = useRef(visibleIndices);
-  useLayoutEffect(() => {
-    const prevVisible = prevVisibleRef.current;
-    prevVisibleRef.current = visibleIndices;
-
-    if (prevVisible === visibleIndices) return;
-
-    // Find the physical slide we were on using the old mapping
-    const oldPhysical = prevVisible[currentSlide] ?? 0;
-    const newVirtual = visibleIndices.indexOf(oldPhysical);
-
-    if (newVirtual >= 0 && newVirtual !== currentSlide) {
-      goToSlide(newVirtual);
-    } else if (newVirtual < 0) {
-      // Old slide is now hidden — go to nearest visible slide
-      let closest = 0;
-      let minDist = Infinity;
-      for (let i = 0; i < visibleIndices.length; i++) {
-        const dist = Math.abs(visibleIndices[i] - oldPhysical);
-        if (dist < minDist) { minDist = dist; closest = i; }
-      }
-      goToSlide(closest);
-    }
-  }, [visibleIndices, currentSlide, goToSlide]);
-
-  // Slide labels and hidden states derived from visible indices
-  const slideLabels = useMemo(() => {
-    return visibleIndices.map((i) => allSlideLabels[i]);
-  }, [visibleIndices, allSlideLabels]);
-
-  const slideHiddenStates = useMemo(() => {
-    return visibleIndices.map((i) => isSlideHiddenAt(i));
-  }, [visibleIndices, isSlideHiddenAt]);
-
-  // Handle hide toggle for current slide
-  const handleToggleCurrentSlide = useCallback(() => {
-    const physIdx = visibleIndices[currentSlide];
-    if (physIdx === undefined) return;
-    const key = allSlideKeys[physIdx];
-    if (!key) return;
-    if (key.startsWith("matchup-") && key !== "matchup-sheet") {
-      const planId = key.slice("matchup-".length);
-      togglePlanSlide(planId);
-    } else {
-      toggleSlide(key);
-    }
-  }, [currentSlide, visibleIndices, allSlideKeys, togglePlanSlide, toggleSlide]);
-
-  // Hydration for shared view
-  const hasHydrated = useRef(false);
-
-  // Effect 1: Load paste from shared state and disable creator mode
-  useEffect(() => {
-    if (!sharedState) return;
-    setCreatorMode(false);
-    setPaste(sharedState.paste);
-    parseTeam(sharedState.paste);
-  }, [sharedState, setPaste, parseTeam, setCreatorMode]);
-
-  // Effect 2: Hydrate notes, calcs, roles, summary, and plans once analysis is ready
-  useEffect(() => {
-    if (!sharedState || !analysis || hasHydrated.current) return;
-    hasHydrated.current = true;
-    setNotesFull(sharedState.notes);
-    if (sharedState.calcs) setCalcsFull(sharedState.calcs);
-    setMetaFull({
-      roles: sharedState.roles ?? {},
-      summary: sharedState.teamSummary ?? "",
-      tournamentName: sharedState.tournamentName,
-      placement: sharedState.placement,
-      record: sharedState.record,
-      mvpIndex: sharedState.mvpIndex ?? null,
-      rentalCode: sharedState.rentalCode,
-      creatorName: sharedState.creatorName,
-    });
-    setPlansFull(
-      sharedState.matchupPlans.map((p) => ({
-        id: crypto.randomUUID(),
-        ...p,
-        gamePlans: p.gamePlans?.map((gp) => ({
-          ...gp,
-          id: crypto.randomUUID(),
-          replays: gp.replays ?? [],
-        })),
-      }))
-    );
-    if (sharedState.hiddenSlides) {
-      setHiddenFull(sharedState.hiddenSlides);
-    }
-    if (sharedState.allowComments) {
-      setAllowComments(true);
-    }
-  }, [sharedState, analysis, speciesKeys, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
-
-
-  const handleAnalyze = (directPaste?: string) => {
-    const teamPaste = directPaste ?? paste;
-    setIsSampleTeam(teamPaste.trim() === SAMPLE_PASTE.trim());
-    parseTeam(teamPaste);
-  };
-
+  // ── Build share state ────────────────────────────────────────────
   const buildShareState = useCallback(() => ({
     paste,
     notes,
@@ -394,247 +152,213 @@ export function useHomePage() {
       })),
     })),
     hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
-    allowComments: allowComments || undefined,
   }), [paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides]);
 
-  const handleShareClick = useCallback(() => {
-    if (!analysis || isSampleTeam) return;
-    copyShareUrl(buildShareState(), isPublic);
-    setShowEditUrl(true);
-  }, [analysis, isSampleTeam, copyShareUrl, buildShareState, isPublic]);
+  // ── Share flow (extracted) ───────────────────────────────────────
+  const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t: t as unknown as Record<string, string> });
 
-  const handleReshare = useCallback(() => {
-    if (!analysis) return;
-    copyShareUrl(buildShareState(), isPublic);
-  }, [analysis, copyShareUrl, buildShareState, isPublic]);
+  // ── Slide system (extracted) ─────────────────────────────────────
+  const slides = useSlideSystem({
+    analysis, speciesKeys, plans, hiddenSlides, isHidden,
+    toggleSlide, togglePlanSlide, creatorMode, presentationMode, paste,
+    darkMode, setDarkMode, setPresentationMode,
+    setShowShortcutHint: setShowShortcutHint as (fn: (v: boolean) => boolean) => void,
+    handleUndo, handleRedo,
+    t: t as unknown as Record<string, string>,
+  });
 
-  /** Copy the stored edit link to clipboard (same browser recovery). */
-  const handleCopyEditLink = useCallback(() => {
-    const url = getEditUrl();
-    if (!url) return;
-    navigator.clipboard.writeText(url);
-    setEditLinkCopied(true);
-    setTimeout(() => setEditLinkCopied(false), 2000);
-  }, [getEditUrl]);
+  // ── Export actions (extracted) ───────────────────────────────────
+  const exports = useExportActions({
+    analysis,
+    tournamentName,
+    physicalSlide: slides.physicalSlide,
+  });
 
-  /** Force a fresh share — new ID + new edit token (old edit link stops working). */
-  const handleFreshReshare = useCallback(() => {
-    if (!analysis) return;
-    freshShare(buildShareState(), isPublic);
-    setShowEditUrl(true);
-  }, [analysis, freshShare, buildShareState, isPublic]);
+  const isReadOnly = (share.isSharedView && !share.isEditingUnlocked) || presentationMode || !creatorMode;
+  const isPresentationStyle = presentationMode;
 
-  // Auto-save: debounce pushes to server only when editing an unlocked shared view
-  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Flash "Saved" when user data changes
   useEffect(() => {
-    if (!analysis || !isEditingUnlocked) return;
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(() => {
-      autoSave(buildShareState(), isPublic);
-    }, 3000);
-    return () => {
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    };
-  }, [analysis, isEditingUnlocked, buildShareState, autoSave, isPublic]);
+    if (!analysis || share.isSharedView) return;
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    setSaveFlash(true);
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => setSaveFlash(false), 1500);
+  }, [notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, analysis, share.isSharedView]);
 
-  /** Update public visibility and immediately sync to server. */
-  const handleSetPublic = useCallback((v: boolean) => {
-    setIsPublic(v);
-    // Immediate save with new visibility (autoSave checks for active session)
-    autoSave(buildShareState(), v);
-  }, [autoSave, buildShareState]);
+  // ── Walkthrough ──────────────────────────────────────────────────
+  const pokemonNames = useMemo(
+    () => analysis?.pokemon.map((p) => p.parsed.species) ?? [],
+    [analysis],
+  );
 
-  // Export team as Showdown paste to clipboard
-  const handleExportTeam = useCallback(() => {
-    if (!analysis) return;
-    const pasteText = teamToShowdown(analysis.pokemon.map((p) => p.parsed));
-    navigator.clipboard.writeText(pasteText);
-  }, [analysis]);
+  const {
+    isActive: walkthroughActive,
+    currentStep: walkthroughStep,
+    currentStepIndex: walkthroughStepIndex,
+    totalSteps: walkthroughTotalSteps,
+    next: walkthroughNext,
+    skip: walkthroughSkip,
+    start: startWalkthrough,
+    guidePokemon: walkthroughGuidePokemon,
+  } = useWalkthrough({
+    enabled: !!analysis && !presentationMode,
+    pokemonNames,
+    goToSlide: slides.goToSlide,
+    pokemonCount: analysis?.pokemon.length ?? 0,
+    totalPhysicalSlides: slides.allSlideKeys.length,
+    isSharedView: share.isSharedView,
+    physicalToVirtual: useCallback((physical: number) => {
+      const idx = slides.visibleIndices.indexOf(physical);
+      return idx === -1 ? null : idx;
+    }, [slides.visibleIndices]),
+  });
 
-  // Ref for the slide content element (used for image/PDF export)
-  const slideContentRef = useRef<HTMLDivElement>(null);
+  // ── Shared view hydration ────────────────────────────────────────
+  const hasHydrated = useRef(false);
 
-  const handleExportImage = useCallback(async () => {
-    if (!slideContentRef.current || !analysis) return;
-    const name = tournamentName
-      ? `${tournamentName}-slide-${physicalSlide + 1}`
-      : `vgc-report-slide-${physicalSlide + 1}`;
-    await exportAsImage(slideContentRef.current, name);
-  }, [analysis, tournamentName, physicalSlide]);
+  useEffect(() => {
+    if (!share.sharedState) return;
+    setCreatorMode(false);
+    setPaste(share.sharedState.paste);
+    parseTeam(share.sharedState.paste);
+  }, [share.sharedState, setPaste, parseTeam, setCreatorMode]);
 
-  const handleExportPdf = useCallback(async () => {
-    if (!slideContentRef.current || !analysis) return;
-    const name = tournamentName
-      ? `${tournamentName}-slide-${physicalSlide + 1}`
-      : `vgc-report-slide-${physicalSlide + 1}`;
-    await exportAsPdf(slideContentRef.current, name);
-  }, [analysis, tournamentName, physicalSlide]);
+  useEffect(() => {
+    if (!share.sharedState || !analysis || hasHydrated.current) return;
+    hasHydrated.current = true;
+    setNotesFull(share.sharedState.notes);
+    if (share.sharedState.calcs) setCalcsFull(share.sharedState.calcs);
+    setMetaFull({
+      roles: share.sharedState.roles ?? {},
+      summary: share.sharedState.teamSummary ?? "",
+      tournamentName: share.sharedState.tournamentName,
+      placement: share.sharedState.placement,
+      record: share.sharedState.record,
+      mvpIndex: share.sharedState.mvpIndex ?? null,
+      rentalCode: share.sharedState.rentalCode,
+      creatorName: share.sharedState.creatorName,
+    });
+    setPlansFull(
+      share.sharedState.matchupPlans.map((p) => ({
+        id: crypto.randomUUID(),
+        ...p,
+        gamePlans: p.gamePlans?.map((gp) => ({
+          ...gp,
+          id: crypto.randomUUID(),
+          replays: gp.replays ?? [],
+        })),
+      })),
+    );
+    if (share.sharedState.hiddenSlides) setHiddenFull(share.sharedState.hiddenSlides);
+    if (share.sharedState.allowComments) share.setAllowComments(true);
+  }, [share.sharedState, analysis, speciesKeys, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
 
-  const shareButtonText =
-    shareStatus === "copying"
-      ? t.copying
-      : shareStatus === "copied"
-        ? lastShareResult?.updated
-          ? t.updated
-          : t.copied
-        : shareStatus === "error"
-          ? t.failed
-          : t.share;
+  // ── Actions ──────────────────────────────────────────────────────
+  const handleAnalyze = (directPaste?: string) => {
+    const teamPaste = directPaste ?? paste;
+    setIsSampleTeam(teamPaste.trim() === SAMPLE_PASTE.trim());
+    parseTeam(teamPaste);
+  };
 
   const handleReset = useCallback(() => {
     reset();
-    clearStoredShare();
+    share.clearStoredShare();
     setIsSampleTeam(false);
-  }, [reset, clearStoredShare]);
+  }, [reset, share.clearStoredShare]);
 
   const handleDecodeFailed = useCallback(() => {
     reset();
-    clearStoredShare();
+    share.clearStoredShare();
     window.location.href = window.location.origin;
-  }, [reset, clearStoredShare]);
+  }, [reset, share.clearStoredShare]);
 
+  // ── Return (same API as before) ──────────────────────────────────
   return {
-    // Translation
     t,
+    paste, setPaste, analysis, warnings, reorderPokemon,
+    creatorMode, setCreatorMode, presentationMode, setPresentationMode,
+    darkMode, setDarkMode, genTheme, setGenTheme,
+    isReadOnly, isPresentationStyle,
 
-    // Team report
-    paste,
-    setPaste,
-    analysis,
-    warnings,
-    reorderPokemon,
+    // Share flow
+    isSharedView: share.isSharedView,
+    isSharePending: share.isSharePending,
+    sharedState: share.sharedState,
+    activeShareId: share.activeShareId,
+    editKeyFromUrl: share.editKeyFromUrl,
+    shareStatus: share.shareStatus,
+    urlWarning: share.urlWarning,
+    decodeFailed: share.decodeFailed,
+    exitSharedView: share.exitSharedView,
+    isEditingUnlocked: share.isEditingUnlocked,
+    lastShareResult: share.lastShareResult,
+    hasExistingShare: share.hasExistingShare,
+    showEditUrl: share.showEditUrl,
+    setShowEditUrl: share.setShowEditUrl,
+    editLinkCopied: share.editLinkCopied,
+    shareButtonText: share.shareButtonText,
+    handleShareClick: share.handleShareClick,
+    handleReshare: share.handleReshare,
+    handleCopyEditLink: share.handleCopyEditLink,
+    handleFreshReshare: share.handleFreshReshare,
+    isPublic: share.isPublic,
+    setIsPublic: share.setIsPublic,
+    handleSetPublic: share.handleSetPublic,
+    allowComments: share.allowComments,
+    setAllowComments: share.setAllowComments,
 
-    // Modes
-    creatorMode,
-    setCreatorMode,
-    presentationMode,
-    setPresentationMode,
-    darkMode,
-    setDarkMode,
-    genTheme,
-    setGenTheme,
-    isReadOnly,
-    isPresentationStyle,
-
-    // Share
-    isSharedView,
-    isSharePending,
-    sharedState,
-    activeShareId,
-    editKeyFromUrl,
-    shareStatus,
-    urlWarning,
-    decodeFailed,
-    exitSharedView,
-    isEditingUnlocked,
-    lastShareResult,
-    hasExistingShare,
-    showEditUrl,
-    setShowEditUrl,
-    editLinkCopied,
-    shareButtonText,
-    handleShareClick,
-    handleReshare,
-    handleCopyEditLink,
-    handleFreshReshare,
-    isPublic,
-    setIsPublic,
-    handleSetPublic,
-    allowComments,
-    setAllowComments,
-
-    // Save flash
     saveFlash,
-
-    // Shortcuts
-    showShortcutHint,
-    setShowShortcutHint,
-
-    // Sample team
+    showShortcutHint, setShowShortcutHint,
     isSampleTeam,
-
-    // Species keys
     speciesKeys,
 
-    // Notes, calcs, meta
-    notes,
-    setNote,
-    calcs,
-    addCalc,
-    removeCalc,
-    editCalc,
-    roles,
-    setRole,
-    summary,
-    setSummary,
-    tournamentName,
-    setTournamentName,
-    placement,
-    setPlacement,
-    record,
-    setRecord,
-    mvpIndex,
-    setMvpIndex,
-    rentalCode,
-    setRentalCode,
-    creatorName,
-    setCreatorName,
+    // Team content
+    notes, setNote, calcs, addCalc, removeCalc, editCalc,
+    roles, setRole, summary, setSummary,
+    tournamentName, setTournamentName, placement, setPlacement,
+    record, setRecord, mvpIndex, setMvpIndex,
+    rentalCode, setRentalCode, creatorName, setCreatorName,
 
-    // Plans
-    plans,
-    addPlan,
-    removePlan,
-    addGamePlan,
-    removeGamePlan,
-    updateGamePlanNotes,
-    updateGamePlanReplays,
-    updateGamePlanBring,
-    reorderGamePlanBring,
-    updateGamePlanResult,
-    reorderPlans,
+    plans, addPlan, removePlan, addGamePlan, removeGamePlan,
+    updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,
+    reorderGamePlanBring, updateGamePlanResult, reorderPlans,
 
-    // Sprite config
     getSpriteConfig,
 
     // Slides
-    currentSlide,
-    goToSlide,
-    nextSlide,
-    prevSlide,
-    isFirst,
-    isLast,
-    totalSlides,
-    physicalSlide,
-    slideLabels,
-    slideHiddenStates,
-    isSlideHiddenAt,
-    handleToggleCurrentSlide,
+    currentSlide: slides.currentSlide,
+    goToSlide: slides.goToSlide,
+    nextSlide: slides.nextSlide,
+    prevSlide: slides.prevSlide,
+    isFirst: slides.isFirst,
+    isLast: slides.isLast,
+    totalSlides: slides.totalSlides,
+    physicalSlide: slides.physicalSlide,
+    slideLabels: slides.slideLabels,
+    slideHiddenStates: slides.slideHiddenStates,
+    isSlideHiddenAt: slides.isSlideHiddenAt,
+    handleToggleCurrentSlide: slides.handleToggleCurrentSlide,
 
     // Walkthrough
-    walkthroughActive,
-    walkthroughStep,
-    walkthroughStepIndex,
-    walkthroughTotalSteps,
-    walkthroughNext,
-    walkthroughSkip,
-    startWalkthrough,
-    walkthroughGuidePokemon,
+    walkthroughActive, walkthroughStep, walkthroughStepIndex,
+    walkthroughTotalSteps, walkthroughNext, walkthroughSkip,
+    startWalkthrough, walkthroughGuidePokemon,
 
     // Undo / redo
     canUndo: undoRedo.canUndo,
     canRedo: undoRedo.canRedo,
-    handleUndo,
-    handleRedo,
+    handleUndo, handleRedo,
 
     // Actions
     handleAnalyze,
-    handleExportTeam,
+    handleExportTeam: exports.handleExportTeam,
     handleReset,
     handleDecodeFailed,
 
-    // Export as image/PDF
-    slideContentRef,
-    handleExportImage,
-    handleExportPdf,
+    // Export
+    slideContentRef: exports.slideContentRef,
+    handleExportImage: exports.handleExportImage,
+    handleExportPdf: exports.handleExportPdf,
   };
 }

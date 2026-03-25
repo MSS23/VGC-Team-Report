@@ -360,7 +360,7 @@ export function PokemonDetailSlide({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[45%_55%] gap-4 sm:gap-6 lg:gap-8 items-start animate-fade-in">
+    <div className="grid grid-cols-1 sm:grid-cols-[45%_55%] gap-4 sm:gap-6 lg:gap-8 items-start animate-fade-in">
       {/* Left Column: Pokemon Info */}
       <div className="flex flex-col gap-4 sm:gap-6">
         {/* Header: Sprite + Name + Types */}

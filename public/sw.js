@@ -1,8 +1,9 @@
-const CACHE_NAME = "vgc-team-report-v3";
+const CACHE_NAME = "vgc-team-report-v4";
 const SPRITE_CACHE = "vgc-sprites-v1";
 const SHARE_CACHE = "vgc-shares-v1";
+const API_CACHE = "vgc-api-v1";
 
-const PRECACHE_URLS = ["/", "/favicon.svg", "/icon-192.png"];
+const PRECACHE_URLS = ["/", "/explore", "/changelog", "/favicon.svg", "/icon-192.png"];
 
 const OFFLINE_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -89,7 +90,7 @@ self.addEventListener("install", (event) => {
 
 // Activate: clean up old caches (keep sprite + share caches)
 self.addEventListener("activate", (event) => {
-  const keepCaches = [CACHE_NAME, SPRITE_CACHE, SHARE_CACHE];
+  const keepCaches = [CACHE_NAME, SPRITE_CACHE, SHARE_CACHE, API_CACHE];
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
@@ -146,6 +147,22 @@ self.addEventListener("fetch", (event) => {
           .catch(() =>
             cache.match(request).then((cached) => cached || Response.error())
           )
+      )
+    );
+    return;
+  }
+
+  // ── Cacheable API routes (explore, spotlight, creator) — stale-while-revalidate ──
+  if (url.pathname.match(/^\/api\/(explore|spotlight|creator\/)/)) {
+    event.respondWith(
+      caches.open(API_CACHE).then((cache) =>
+        cache.match(request).then((cached) => {
+          const fetchPromise = fetch(request).then((response) => {
+            if (response.ok) cache.put(request, response.clone());
+            return response;
+          }).catch(() => cached || Response.error());
+          return cached || fetchPromise;
+        })
       )
     );
     return;

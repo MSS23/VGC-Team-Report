@@ -18,8 +18,8 @@ describe("Navbar", () => {
     cy.contains("New Team").should("be.visible");
   });
 
-  it("shows Share button", () => {
-    cy.get("[data-walkthrough='share-button']").should("be.visible");
+  it("shows Share button (disabled for sample team)", () => {
+    cy.get("[data-walkthrough='share-button']").should("be.visible").and("be.disabled");
   });
 
   it("shows dark mode toggle", () => {

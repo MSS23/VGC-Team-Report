@@ -84,7 +84,12 @@ declare global {
 }
 
 Cypress.Commands.add("loadSampleTeam", () => {
-  cy.visit("/");
+  // Set localStorage to skip WhatsNew modal
+  cy.visit("/", {
+    onBeforeLoad(win) {
+      win.localStorage.setItem("vgc-whats-new-v2", "1");
+    },
+  });
   cy.contains("button", "Load sample").click();
   cy.contains("button", "Analyze Team").click();
   // Wait for report to render

@@ -5,7 +5,11 @@ describe("Privacy Page", () => {
   });
 
   it("navigates to privacy from home page", () => {
-    cy.visit("/");
+    cy.visit("/", {
+      onBeforeLoad(win) {
+        win.localStorage.setItem("vgc-whats-new-v2", "1");
+      },
+    });
     cy.contains("a", "Privacy").click();
     cy.url().should("include", "/privacy");
   });

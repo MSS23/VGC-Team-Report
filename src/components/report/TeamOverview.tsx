@@ -126,7 +126,7 @@ export function TeamOverview({
               placeholder={t.eventNamePlaceholder}
               className="w-full sm:flex-1 sm:min-w-[180px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             />
-            <div className="grid grid-cols-3 gap-1.5 sm:flex sm:gap-3 sm:w-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:flex sm:gap-3 sm:w-auto">
               <input
                 type="text"
                 value={placement ?? ""}
@@ -188,7 +188,7 @@ export function TeamOverview({
       </div>
 
       {/* Pokemon Grid */}
-      <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-2 sm:gap-4 creator:gap-6 ${
+      <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-3 sm:gap-4 creator:gap-6 ${
         creatorMode
           ? "grid-cols-2 md:grid-cols-2"
           : "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3"

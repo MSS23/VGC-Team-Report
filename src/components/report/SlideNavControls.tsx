@@ -154,7 +154,7 @@ export function SlideNavControls({
             <button
               type="button"
               onClick={onStartTour}
-              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
               aria-label={t.takeATour}
               title={t.takeATour}
             >
@@ -171,7 +171,7 @@ export function SlideNavControls({
             <button
               type="button"
               onClick={onShowShortcuts}
-              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
               aria-label="Keyboard shortcuts"
               title="Keyboard shortcuts (?)"
             >

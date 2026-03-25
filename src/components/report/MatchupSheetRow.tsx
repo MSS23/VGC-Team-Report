@@ -57,7 +57,7 @@ export function MatchupSheetRow({
         {/* Opponent info */}
         <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4">
           <span
-            className="text-sm sm:text-lg font-semibold text-text-primary truncate max-w-[160px] sm:max-w-[280px]"
+            className="text-sm sm:text-lg font-semibold text-text-primary truncate max-w-[200px] sm:max-w-[280px]"
             title={plan.opponentLabel}
           >
             {plan.opponentLabel}

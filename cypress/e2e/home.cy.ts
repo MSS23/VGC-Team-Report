@@ -1,6 +1,10 @@
 describe("Home / Paste Input", () => {
   beforeEach(() => {
-    cy.visit("/");
+    cy.visit("/", {
+      onBeforeLoad(win) {
+        win.localStorage.setItem("vgc-whats-new-v2", "1");
+      },
+    });
   });
 
   it("renders the paste input screen with title", () => {
@@ -13,13 +17,11 @@ describe("Home / Paste Input", () => {
   });
 
   it("shows disabled analyze button when textarea is empty", () => {
-    // The analyze/submit button should exist with disabled styling
-    cy.get("textarea").siblings().find("button").last()
+    cy.get("button").contains(/analyze|submit/i)
       .should("have.class", "cursor-not-allowed");
   });
 
   it("loads sample paste on button click", () => {
-    // Click the first action button (Load sample)
     cy.get("button").contains(/sample|load/i).click();
     cy.get("textarea").should("contain.value", "Incineroar @ Sitrus Berry");
     cy.get("textarea").should("contain.value", "Landorus-Therian @ Life Orb");
@@ -46,5 +48,16 @@ describe("Home / Paste Input", () => {
   it("shows footer credits", () => {
     cy.contains("Manraj Sidhu").should("be.visible");
     cy.get("a[href='/privacy']").should("exist");
+  });
+
+  it("shows community section with Explore link", () => {
+    cy.contains("Community").should("be.visible");
+    cy.get("a[href='/explore']").should("exist");
+  });
+
+  it("shows feature pills", () => {
+    cy.contains("Team Analysis").should("be.visible");
+    cy.contains("Share & Explore").should("be.visible");
+    cy.contains("Matchup Plans").should("be.visible");
   });
 });
