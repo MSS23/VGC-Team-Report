@@ -165,6 +165,15 @@ export function Navbar(props: NavbarProps) {
                 </span>
               )}
             </>
+          ) : isSharedView && !isPresentationStyle ? (
+            /* Shared view: show home logo link */
+            <a
+              href="/"
+              className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity"
+            >
+              <span className="text-text-primary">VGC Team</span>
+              <span className="text-accent">Report</span>
+            </a>
           ) : isPresentationStyle ? (
             /* Presentation: show tournament + slide info on left */
             <div className="flex items-center gap-2 text-sm text-text-secondary">
@@ -476,20 +485,18 @@ export function Navbar(props: NavbarProps) {
             </>
           )}
 
-          {/* Build Your Own (shared views only, not presentation) */}
+          {/* Build Your Own CTA (shared views only, not presentation) */}
           {isSharedView && !isPresentationStyle && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                onReset();
-                onExitSharedView();
-                window.location.href = window.location.origin;
-              }}
+            <a
+              href="/"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"
             >
-              <span className="sm:hidden">{t.newShort}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
               <span className="hidden sm:inline">{t.buildYourOwn}</span>
-            </Button>
+              <span className="sm:hidden">Create</span>
+            </a>
           )}
         </div>
       </div>
