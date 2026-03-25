@@ -38,6 +38,7 @@ interface NavbarProps {
   saveFlash: boolean;
 
   // Share
+  isSampleTeam?: boolean;
   shareStatus: string;
   shareButtonText: string;
   lastShareResult?: { updated?: boolean; editUrl?: string } | null;
@@ -76,6 +77,7 @@ export function Navbar(props: NavbarProps) {
     darkMode, onDarkModeChange,
     genTheme, onGenThemeChange,
     warnings, saveFlash,
+    isSampleTeam,
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare,
     hasExistingShare, editLinkCopied, onCopyEditLink,
@@ -319,7 +321,8 @@ export function Navbar(props: NavbarProps) {
                 variant="secondary"
                 size="sm"
                 onClick={onShareClick}
-                disabled={shareStatus === "copying"}
+                disabled={shareStatus === "copying" || isSampleTeam}
+                title={isSampleTeam ? "Load your own team to share — the sample is just a tutorial" : undefined}
                 data-walkthrough="share-button"
               >
                 {shareButtonText}

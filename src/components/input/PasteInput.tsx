@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { useTranslation } from "@/lib/i18n";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
+import { SpotlightCard } from "@/components/explore/SpotlightCard";
+import type { ExploreReport } from "@/components/explore/ReportCard";
 
 export const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
 Ability: Intimidate
@@ -98,6 +100,15 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [spotlight, setSpotlight] = useState<ExploreReport | null>(null);
+
+  // Fetch spotlight report for the landing page
+  useEffect(() => {
+    fetch("/api/spotlight")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.spotlight) setSpotlight(data.spotlight); })
+      .catch(() => {});
+  }, []);
 
   const isUrl = isPokePasteUrl(paste);
   const hasContent = paste.trim().length > 0;
@@ -293,6 +304,21 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
           </motion.button>
         )}
       </motion.div>
+
+      {/* Spotlight report */}
+      {spotlight && (
+        <motion.div
+          className="mt-10 sm:mt-14"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <p className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-3 text-center">
+            Featured Team Report
+          </p>
+          <SpotlightCard report={spotlight} />
+        </motion.div>
+      )}
 
       {/* App credit */}
       <motion.p

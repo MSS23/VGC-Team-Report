@@ -133,6 +133,7 @@ function HomeContent() {
     handleRedo,
     handleAnalyze,
     handleExportTeam,
+    isSampleTeam,
     handleReset,
     handleDecodeFailed,
     slideContentRef,
@@ -279,6 +280,7 @@ function HomeContent() {
         onGenThemeChange={setGenTheme}
         warnings={warnings}
         saveFlash={saveFlash}
+        isSampleTeam={isSampleTeam}
         shareStatus={shareStatus}
         shareButtonText={shareButtonText}
         lastShareResult={lastShareResult}

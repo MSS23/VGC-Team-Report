@@ -7,6 +7,7 @@ import { useDarkMode } from "@/hooks/useDarkMode";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { ExploreHero } from "./ExploreHero";
 import { ExploreFilters } from "./ExploreFilters";
+import { SpotlightSection } from "./SpotlightCard";
 import { ReportCard, type ExploreReport } from "./ReportCard";
 import { ExploreEmpty } from "./ExploreEmpty";
 
@@ -143,6 +144,8 @@ function ExploreInner() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
         <ExploreHero />
+
+        <SpotlightSection />
 
         <ExploreFilters
           query={query}
