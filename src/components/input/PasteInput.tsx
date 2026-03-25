@@ -337,20 +337,56 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
         )}
       </motion.div>
 
-      {/* Spotlight report */}
-      {spotlight && (
-        <motion.div
-          className="mt-10 sm:mt-14"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
+      {/* Community section: spotlight + explore CTA */}
+      <motion.div
+        className="mt-12 sm:mt-16 space-y-6"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
+      >
+        {/* Section divider */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Community</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
+        {/* Explore CTA */}
+        <a
+          href="/explore"
+          className="block bg-surface border-2 border-border rounded-2xl px-5 py-4 hover:border-accent/30 hover:shadow-md transition-all group"
         >
-          <p className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-3 text-center">
-            Featured Team Report
-          </p>
-          <SpotlightCard report={spotlight} />
-        </motion.div>
-      )}
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-extrabold text-text-primary group-hover:text-accent transition-colors tracking-tight">
+                {t.explore} Community Teams
+              </h2>
+              <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
+                See what other players are building and sharing from tournaments around the world.
+              </p>
+            </div>
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent-surface flex items-center justify-center group-hover:bg-accent/10 transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </div>
+          </div>
+        </a>
+
+        {/* Spotlight report */}
+        {spotlight && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Featured Team Report</span>
+            </div>
+            <SpotlightCard report={spotlight} />
+          </div>
+        )}
+      </motion.div>
 
       {/* App credit */}
       <motion.p
@@ -367,13 +403,6 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
           className="font-bold text-text-primary hover:text-accent transition-colors"
         >
           Manraj Sidhu
-        </a>
-        <span className="mx-1.5 text-border">&middot;</span>
-        <a
-          href="/explore"
-          className="text-text-tertiary hover:text-text-primary transition-colors"
-        >
-          {t.explore}
         </a>
         <span className="mx-1.5 text-border">&middot;</span>
         <a
