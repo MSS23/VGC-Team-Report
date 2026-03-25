@@ -5,10 +5,14 @@ export function getDb() {
   return sql;
 }
 
-/** Run once to create the shares table and indexes. Idempotent. */
+/** Run once to create tables and indexes. Each statement is independent so one failure doesn't block others. */
 export async function ensureTable() {
   const sql = getDb();
-  await sql`
+  const run = async (query: ReturnType<typeof sql>) => {
+    try { await query; } catch (e) { console.warn("Migration statement skipped:", e); }
+  };
+
+  await run(sql`
     CREATE TABLE IF NOT EXISTS shares (
       id TEXT PRIMARY KEY,
       edit_token TEXT NOT NULL,
@@ -16,17 +20,14 @@ export async function ensureTable() {
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
-  `;
-  await sql`CREATE INDEX IF NOT EXISTS idx_shares_updated_at ON shares(updated_at)`;
-  // Add version column for collaborative editing (safe to run multiple times)
-  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1`;
-  // Add public listing flag for explore gallery
-  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_shares_public_updated ON shares(updated_at DESC) WHERE is_public = TRUE`;
-  // View count for public reports
-  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0`;
-  // Reactions table
-  await sql`
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_updated_at ON shares(updated_at)`);
+  await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1`);
+  await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_public_updated ON shares(updated_at DESC) WHERE is_public = TRUE`);
+  await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0`);
+
+  await run(sql`
     CREATE TABLE IF NOT EXISTS reactions (
       id SERIAL PRIMARY KEY,
       share_id TEXT NOT NULL,
@@ -35,10 +36,10 @@ export async function ensureTable() {
       created_at TIMESTAMPTZ DEFAULT NOW(),
       UNIQUE(share_id, reaction_type, session_id)
     )
-  `;
-  await sql`CREATE INDEX IF NOT EXISTS idx_reactions_share ON reactions(share_id)`;
-  // Comments table
-  await sql`
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_reactions_share ON reactions(share_id)`);
+
+  await run(sql`
     CREATE TABLE IF NOT EXISTS comments (
       id SERIAL PRIMARY KEY,
       share_id TEXT NOT NULL,
@@ -47,17 +48,17 @@ export async function ensureTable() {
       session_id TEXT NOT NULL,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
-  `;
-  await sql`CREATE INDEX IF NOT EXISTS idx_comments_share ON comments(share_id, created_at)`;
-  // Verified creators table (admin-managed)
-  await sql`
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_comments_share ON comments(share_id, created_at)`);
+
+  await run(sql`
     CREATE TABLE IF NOT EXISTS verified_creators (
       name TEXT PRIMARY KEY,
       verified_at TIMESTAMPTZ DEFAULT NOW()
     )
-  `;
-  // Comment flags table
-  await sql`
+  `);
+
+  await run(sql`
     CREATE TABLE IF NOT EXISTS comment_flags (
       id SERIAL PRIMARY KEY,
       comment_id INTEGER NOT NULL,
@@ -65,10 +66,10 @@ export async function ensureTable() {
       created_at TIMESTAMPTZ DEFAULT NOW(),
       UNIQUE(comment_id, session_id)
     )
-  `;
-  await sql`CREATE INDEX IF NOT EXISTS idx_comment_flags_comment ON comment_flags(comment_id)`;
-  // Creator profiles table (optional bio + social links)
-  await sql`
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_comment_flags_comment ON comment_flags(comment_id)`);
+
+  await run(sql`
     CREATE TABLE IF NOT EXISTS creator_profiles (
       name TEXT PRIMARY KEY,
       bio TEXT,
@@ -77,5 +78,5 @@ export async function ensureTable() {
       youtube TEXT,
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
-  `;
+  `);
 }
