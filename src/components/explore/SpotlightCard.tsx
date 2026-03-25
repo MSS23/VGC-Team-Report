@@ -6,25 +6,72 @@ import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
 import type { ExploreReport } from "./ReportCard";
 
-const BASE_URL = "https://play.pokemonshowdown.com/sprites";
+const BASE = "https://play.pokemonshowdown.com/sprites";
 
-function spriteSlug(species: string): string {
+// Resolve species to Showdown slug (matches sprite-url.ts logic)
+function toSlug(species: string): string {
   return species
     .toLowerCase()
     .replace(/♂/g, "m")
     .replace(/♀/g, "f")
     .replace(/[éè]/g, "e")
     .replace(/[''.:\u2019]/g, "")
-    .replace(/[^a-z0-9]/g, "");
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+const SLUG_MAP: Record<string, string> = {
+  "ho-oh": "hooh", "type-null": "typenull", "mr-mime": "mrmime", "mr-rime": "mrrime",
+  "mime-jr": "mimejr", "tapu-koko": "tapukoko", "tapu-lele": "tapulele",
+  "tapu-bulu": "tapubulu", "tapu-fini": "tapufini",
+  "flutter-mane": "fluttermane", "iron-hands": "ironhands", "iron-bundle": "ironbundle",
+  "iron-valiant": "ironvaliant", "iron-moth": "ironmoth", "iron-thorns": "ironthorns",
+  "iron-jugulis": "ironjugulis", "iron-leaves": "ironleaves", "iron-boulder": "ironboulder",
+  "iron-crown": "ironcrown", "great-tusk": "greattusk", "brute-bonnet": "brutebonnet",
+  "scream-tail": "screamtail", "sandy-shocks": "sandyshocks", "slither-wing": "slitherwing",
+  "roaring-moon": "roaringmoon", "walking-wake": "walkingwake", "gouging-fire": "gougingfire",
+  "raging-bolt": "ragingbolt", "chien-pao": "chienpao", "chi-yu": "chiyu",
+  "ting-lu": "tinglu", "wo-chien": "wochien",
+  "urshifu-rapid-strike": "urshifu-rapidstrike",
+  "landorus-therian": "landorus-therian", "tornadus-therian": "tornadus-therian",
+  "thundurus-therian": "thundurus-therian", "calyrex-ice": "calyrex-ice",
+  "calyrex-shadow": "calyrex-shadow", "ogerpon-hearthflame": "ogerpon-hearthflame",
+  "bloodmoon-ursaluna": "ursaluna-bloodmoon",
+};
+
+function resolveSlug(species: string): string {
+  const slug = toSlug(species);
+  return SLUG_MAP[slug] ?? slug;
 }
 
 const REACTION_EMOJIS: Record<string, string> = {
-  fire: "\uD83D\uDD25",
-  heart: "\u2764\uFE0F",
-  brain: "\uD83E\uDDE0",
-  battle: "\u2694\uFE0F",
-  clap: "\uD83D\uDC4F",
+  fire: "\uD83D\uDD25", heart: "\u2764\uFE0F", brain: "\uD83E\uDDE0",
+  battle: "\u2694\uFE0F", clap: "\uD83D\uDC4F",
 };
+
+/** Animated sprite with fallback chain: ani gif → gen5ani gif → home png */
+function AnimatedSprite({ species, size = 56 }: { species: string; size?: number }) {
+  const slug = resolveSlug(species);
+  const [srcIdx, setSrcIdx] = useState(0);
+  const srcs = [
+    `${BASE}/ani/${slug}.gif`,
+    `${BASE}/gen5ani/${slug}.gif`,
+    `${BASE}/home/${slug}.png`,
+    `${BASE}/gen5/${slug}.png`,
+  ];
+  return (
+    <img
+      src={srcs[Math.min(srcIdx, srcs.length - 1)]}
+      alt={species}
+      width={size}
+      height={size}
+      className="object-contain"
+      loading="lazy"
+      onError={() => setSrcIdx((i) => Math.min(i + 1, srcs.length - 1))}
+    />
+  );
+}
 
 export function SpotlightCard({ report }: { report: ExploreReport }) {
   const { t } = useTranslation();
@@ -46,7 +93,7 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
       transition={{ duration: 0.5 }}
     >
       {/* Top bar: badge + author + placement */}
-      <div className="px-5 sm:px-6 pt-5 flex items-center justify-between gap-3">
+      <div className="px-5 sm:px-6 pt-5 flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2.5">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-accent text-white shadow-sm shadow-accent/30 uppercase tracking-widest">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
@@ -82,30 +129,22 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
         )}
       </div>
 
-      {/* Team sprites with species names */}
-      <div className="px-5 sm:px-6 pt-4 pb-3">
-        <div className="flex items-end justify-center gap-3 sm:gap-4">
+      {/* Animated team sprites with species names */}
+      <div className="px-4 sm:px-6 pt-5 pb-3">
+        <div className="flex items-end justify-center gap-2 sm:gap-5">
           {report.species.map((species, i) => (
-            <div key={i} className="flex flex-col items-center gap-1">
-              <img
-                src={`${BASE_URL}/home/${spriteSlug(species)}.png`}
-                alt={species}
-                width={48}
-                height={48}
-                className="object-contain sm:w-14 sm:h-14"
-                loading="lazy"
-                onError={(e) => {
-                  const img = e.currentTarget;
-                  if (!img.dataset.fallback) {
-                    img.dataset.fallback = "1";
-                    img.src = `${BASE_URL}/gen5/${spriteSlug(species)}.png`;
-                  }
-                }}
-              />
-              <span className="text-[9px] sm:text-[10px] font-semibold text-text-tertiary text-center leading-tight max-w-[60px] truncate">
+            <motion.div
+              key={i}
+              className="flex flex-col items-center gap-1"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + i * 0.07, duration: 0.4 }}
+            >
+              <AnimatedSprite species={species} size={52} />
+              <span className="text-[9px] sm:text-[10px] font-semibold text-text-tertiary text-center leading-tight max-w-[56px] sm:max-w-[72px] truncate">
                 {species}
               </span>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -129,7 +168,7 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
 
         {/* Footer: social stats + CTA */}
         <div className="flex items-center justify-between gap-3 pt-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {topReactions.length > 0 && (
               <span className="inline-flex items-center gap-0.5 text-xs">
                 {topReactions.map(([type]) => (
@@ -159,7 +198,7 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
               {relativeTime(report.createdAt)}
             </span>
           </div>
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-accent group-hover:underline">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-accent group-hover:underline flex-shrink-0">
             View Report
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="5" y1="12" x2="19" y2="12" />
