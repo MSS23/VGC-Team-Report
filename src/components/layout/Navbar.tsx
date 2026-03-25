@@ -258,14 +258,24 @@ export function Navbar(props: NavbarProps) {
             </>
           )}
           {isSharedView && isEditingUnlocked && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onReshare}
-              disabled={shareStatus === "copying"}
-            >
-              {shareStatus === "copying" ? t.saving : shareStatus === "copied" ? (lastShareResult?.updated ? t.savedBang : t.copied) : shareStatus === "error" ? t.failed : t.reshare}
-            </Button>
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onReshare}
+                disabled={shareStatus === "copying"}
+              >
+                {shareStatus === "copying" ? t.saving : shareStatus === "copied" ? (lastShareResult?.updated ? t.savedBang : t.copied) : shareStatus === "error" ? t.failed : t.reshare}
+              </Button>
+              {/* Sign-in nudge / claim for editors */}
+              <Show when="signed-out">
+                <SignInButton mode="modal">
+                  <button className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold text-accent bg-accent-surface/60 border border-accent/20 rounded-lg hover:bg-accent-surface transition-all cursor-pointer">
+                    Sign in to save
+                  </button>
+                </SignInButton>
+              </Show>
+            </>
           )}
 
           {/* Gen theme selector (local draft & shared edit, large screens only) */}
