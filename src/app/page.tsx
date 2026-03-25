@@ -15,6 +15,7 @@ import { CommentSection } from "@/components/social/CommentSection";
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
 import { getSessionId } from "@/lib/utils/session-id";
+import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { I18nProvider } from "@/lib/i18n";
 
 export default function Home() {
@@ -142,6 +143,11 @@ function HomeContent() {
   } = useHomePage();
 
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Clear random accent when viewing a report (use author's default theme)
+  useEffect(() => {
+    if (analysis) clearRandomAccent();
+  }, [analysis]);
   const [viewCount, setViewCount] = useState(0);
 
   // Track view count for shared public reports

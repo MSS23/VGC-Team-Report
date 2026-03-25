@@ -6,6 +6,7 @@ import { I18nProvider, useTranslation } from "@/lib/i18n";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
+import { applyRandomAccent } from "@/lib/utils/random-accent";
 
 interface CreatorData {
   creator: string;
@@ -26,6 +27,9 @@ export function CreatorProfileWrapper({ name }: { name: string }) {
 function CreatorProfileInner({ name }: { name: string }) {
   const { t } = useTranslation();
   const { darkMode, setDarkMode } = useDarkMode();
+
+  // Random accent color on creator profile page
+  useEffect(() => { applyRandomAccent(); }, []);
   const [data, setData] = useState<CreatorData | null>(null);
   const [loading, setLoading] = useState(true);
 

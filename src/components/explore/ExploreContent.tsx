@@ -10,6 +10,7 @@ import { ExploreFilters } from "./ExploreFilters";
 import { SpotlightSection } from "./SpotlightCard";
 import { ReportCard, type ExploreReport } from "./ReportCard";
 import { ExploreEmpty } from "./ExploreEmpty";
+import { applyRandomAccent } from "@/lib/utils/random-accent";
 
 export function ExploreContent() {
   return (
@@ -22,6 +23,9 @@ export function ExploreContent() {
 function ExploreInner() {
   const { t } = useTranslation();
   const { darkMode, setDarkMode } = useDarkMode();
+
+  // Random accent color on explore page
+  useEffect(() => { applyRandomAccent(); }, []);
 
   const [reports, setReports] = useState<ExploreReport[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);

@@ -7,6 +7,7 @@ import { useTranslation } from "@/lib/i18n";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
+import { applyRandomAccent } from "@/lib/utils/random-accent";
 
 export const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
 Ability: Intimidate
@@ -100,6 +101,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+
+  // Random accent color on landing page
+  useEffect(() => { applyRandomAccent(); }, []);
   const [spotlight, setSpotlight] = useState<ExploreReport | null>(null);
 
   // Fetch spotlight report for the landing page

@@ -143,9 +143,9 @@ body::before {
   --text-primary: #F0EDE6;
   --text-secondary: #C0C0D8;
   --text-tertiary: #7A7AA0;
-  --accent: #FB7185;
+  --accent: var(--accent-dark, #FB7185);
   --accent-light: #FDA4AF;
-  --accent-surface: #3B1525;
+  --accent-surface: var(--accent-surface-dark, #3B1525);
 }
 
 [data-dark-mode] body::before {
