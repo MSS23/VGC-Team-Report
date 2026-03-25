@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { ShareRedirectClient } from "./redirect";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 export async function generateMetadata({
   params,
@@ -42,6 +43,9 @@ export async function generateMetadata({
         type: "website",
         siteName: "VGC Team Report",
       },
+      alternates: {
+        canonical: `https://pokemonvgcteamreport.com/s/${id}`,
+      },
       twitter: {
         card: "summary_large_image",
         title,
@@ -66,5 +70,50 @@ export default async function SharePage({
     ? `?s=${encodeURIComponent(id)}&key=${encodeURIComponent(key)}`
     : `?s=${encodeURIComponent(id)}`;
 
-  return <ShareRedirectClient to={`/${qs}`} />;
+  // Build JSON-LD from DB (best-effort)
+  let jsonLd: Record<string, unknown> | null = null;
+  try {
+    const sql = getDb();
+    const rows = await sql`SELECT data, created_at FROM shares WHERE id = ${id}`;
+    if (rows.length > 0) {
+      const data = rows[0].data as Record<string, unknown>;
+      const species = extractSpecies((data.paste as string) ?? "");
+      const creatorName = (data.creatorName as string) || undefined;
+      const tournamentName = (data.tournamentName as string) || undefined;
+
+      jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "CreativeWork",
+        name: tournamentName
+          ? `${tournamentName} - VGC Team Report`
+          : species.length > 0
+            ? `${species.join(" / ")} - VGC Team Report`
+            : "VGC Team Report",
+        url: `https://pokemonvgcteamreport.com/s/${id}`,
+        description:
+          (data.teamSummary as string) ||
+          `VGC team: ${species.join(", ")}`,
+        datePublished: (rows[0].created_at as Date).toISOString(),
+        ...(creatorName && {
+          author: { "@type": "Person", name: creatorName },
+        }),
+        isPartOf: {
+          "@type": "WebApplication",
+          name: "VGC Team Report",
+          url: "https://pokemonvgcteamreport.com",
+        },
+      };
+    }
+  } catch {
+    // Non-critical — skip JSON-LD
+  }
+
+  return (
+    <>
+      {jsonLd && (
+        <JsonLd data={jsonLd} />
+      )}
+      <ShareRedirectClient to={`/${qs}`} />
+    </>
+  );
 }

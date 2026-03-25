@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { ExploreContent } from "@/components/explore/ExploreContent";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Explore VGC Teams",
+  alternates: { canonical: "https://pokemonvgcteamreport.com/explore" },
   description:
     "Browse Pokemon VGC team reports shared by competitive players from tournaments around the world. Search by Pokemon, tournament, or creator.",
   openGraph: {
@@ -20,5 +22,24 @@ export const metadata: Metadata = {
 };
 
 export default function ExplorePage() {
-  return <ExploreContent />;
+  return (
+    <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Explore VGC Teams",
+          url: "https://pokemonvgcteamreport.com/explore",
+          description:
+            "Browse Pokemon VGC team reports shared by competitive players from tournaments around the world.",
+          isPartOf: {
+            "@type": "WebApplication",
+            name: "VGC Team Report",
+            url: "https://pokemonvgcteamreport.com",
+          },
+        }}
+      />
+      <ExploreContent />
+    </>
+  );
 }

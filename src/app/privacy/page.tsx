@@ -3,6 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
+  alternates: { canonical: "https://pokemonvgcteamreport.com/privacy" },
 };
 
 export default function PrivacyPage() {

@@ -3,6 +3,7 @@ import { Sora, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
+import { JsonLd } from "@/components/seo/JsonLd";
 import "./globals.css";
 
 const sora = Sora({
@@ -51,6 +52,9 @@ export const metadata: Metadata = {
     "theme-color": "#E11D48",
     "mobile-web-app-capable": "yes",
   },
+  alternates: {
+    canonical: "https://pokemonvgcteamreport.com",
+  },
   robots: {
     index: true,
     follow: true,
@@ -65,6 +69,24 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${sora.variable} ${jetbrainsMono.variable} antialiased`}>
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "VGC Team Report",
+            url: "https://pokemonvgcteamreport.com",
+            description:
+              "Build detailed competitive Pokemon VGC team breakdowns with notes, matchup plans, and damage calcs — then share them with the community or present at tournaments.",
+            applicationCategory: "GameApplication",
+            operatingSystem: "Any",
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "USD",
+            },
+            browserRequirements: "Requires a modern web browser",
+          }}
+        />
         {children}
         <InstallPrompt />
         <Analytics />

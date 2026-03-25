@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CreatorProfileWrapper } from "@/components/social/CreatorProfile";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 export async function generateMetadata({
   params,
@@ -11,6 +12,9 @@ export async function generateMetadata({
   return {
     title: `${creator}'s Teams`,
     description: `View all public VGC team reports by ${creator}.`,
+    alternates: {
+      canonical: `https://pokemonvgcteamreport.com/creator/${encodeURIComponent(creator)}`,
+    },
     openGraph: {
       title: `${creator}'s Teams - VGC Team Report`,
       description: `View all public VGC team reports by ${creator}.`,
@@ -26,5 +30,23 @@ export default async function CreatorPage({
   params: Promise<{ name: string }>;
 }) {
   const { name } = await params;
-  return <CreatorProfileWrapper name={decodeURIComponent(name)} />;
+  const creator = decodeURIComponent(name);
+  return (
+    <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "ProfilePage",
+          name: `${creator}'s VGC Teams`,
+          url: `https://pokemonvgcteamreport.com/creator/${encodeURIComponent(creator)}`,
+          description: `View all public VGC team reports by ${creator}.`,
+          mainEntity: {
+            "@type": "Person",
+            name: creator,
+          },
+        }}
+      />
+      <CreatorProfileWrapper name={creator} />
+    </>
+  );
 }
