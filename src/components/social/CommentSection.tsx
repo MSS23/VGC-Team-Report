@@ -31,6 +31,8 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
   const [displayName, setDisplayName] = useState("");
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [postSuccess, setPostSuccess] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
   const nameRef = useRef(false);
 
   // Load saved display name
@@ -100,9 +102,17 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
         setTotal((prev) => prev + 1);
         setBody("");
         setExpanded(true);
+        setPostSuccess(true);
+        setPostError(null);
+        setTimeout(() => setPostSuccess(false), 3000);
+      } else {
+        const data = await res.json().catch(() => null);
+        setPostError(data?.error ?? "Failed to post comment");
+        setTimeout(() => setPostError(null), 4000);
       }
     } catch {
-      // silent
+      setPostError("Failed to post comment");
+      setTimeout(() => setPostError(null), 4000);
     } finally {
       setSubmitting(false);
     }
@@ -217,6 +227,12 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
             >
               {submitting ? "Posting..." : "Post Comment"}
             </button>
+            {postSuccess && (
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-fade-in">Comment posted!</span>
+            )}
+            {postError && (
+              <span className="text-xs font-bold text-danger animate-fade-in">{postError}</span>
+            )}
           </div>
 
           {/* Comment list */}

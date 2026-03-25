@@ -467,6 +467,27 @@ function GamePlanSection({
                 </div>
               </div>
 
+              {/* Swap lead/back button (touch-friendly alternative to drag) */}
+              {!isReadOnly && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Swap lead[0]↔back[0] and lead[1]↔back[1]
+                    onReorderBring(0 as 0 | 1 | 2 | 3, 2 as 0 | 1 | 2 | 3);
+                    onReorderBring(1 as 0 | 1 | 2 | 3, 3 as 0 | 1 | 2 | 3);
+                  }}
+                  className="self-center p-1.5 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/50 transition-all cursor-pointer lg:hidden"
+                  title="Swap lead and back"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="17 1 21 5 17 9" />
+                    <path d="M3 11V9a4 4 0 014-4h14" />
+                    <polyline points="7 23 3 19 7 15" />
+                    <path d="M21 13v2a4 4 0 01-4 4H3" />
+                  </svg>
+                </button>
+              )}
+
               {/* Back */}
               <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 border border-border-subtle">
                 <div className="flex items-center gap-2 mb-2.5">

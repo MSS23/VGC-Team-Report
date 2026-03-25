@@ -149,10 +149,12 @@ function HomeContent() {
     if (analysis) clearRandomAccent();
   }, [analysis]);
   const [viewCount, setViewCount] = useState(0);
+  const viewTracked = useRef(false);
 
-  // Track view count for shared public reports
+  // Track view count for shared public reports (once only)
   useEffect(() => {
-    if (!isSharedView || !activeShareId) return;
+    if (!isSharedView || !activeShareId || viewTracked.current) return;
+    viewTracked.current = true;
     const sessionId = getSessionId();
     if (!sessionId) return;
     fetch(`/api/views/${activeShareId}`, {

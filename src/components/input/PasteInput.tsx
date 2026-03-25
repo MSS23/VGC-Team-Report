@@ -107,12 +107,27 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
   useEffect(() => { applyRandomAccent(); }, []);
   const [spotlight, setSpotlight] = useState<ExploreReport | null>(null);
 
-  // Fetch spotlight report for the landing page
+  // Fetch spotlight report once per session (delayed to avoid blocking render)
   useEffect(() => {
-    fetch("/api/spotlight")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data?.spotlight) setSpotlight(data.spotlight); })
-      .catch(() => {});
+    // Check session cache first
+    const cached = sessionStorage.getItem("vgc-spotlight");
+    if (cached) {
+      try { setSpotlight(JSON.parse(cached)); } catch { /* ignore */ }
+      return;
+    }
+    // Delay fetch to avoid blocking initial paint
+    const timer = setTimeout(() => {
+      fetch("/api/spotlight")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data?.spotlight) {
+            setSpotlight(data.spotlight);
+            sessionStorage.setItem("vgc-spotlight", JSON.stringify(data.spotlight));
+          }
+        })
+        .catch(() => {});
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   const isUrl = isPokePasteUrl(paste);
@@ -408,6 +423,13 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
           className="font-bold text-text-primary hover:text-accent transition-colors"
         >
           Manraj Sidhu
+        </a>
+        <span className="mx-1.5 text-border">&middot;</span>
+        <a
+          href="/changelog"
+          className="text-text-tertiary hover:text-text-primary transition-colors"
+        >
+          Changelog
         </a>
         <span className="mx-1.5 text-border">&middot;</span>
         <a

@@ -188,8 +188,14 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
       {/* Stats */}
       {data && (
         <div>
-          <h4 className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-1 sm:mb-1.5 creator:mb-2">
-            {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70 hidden sm:inline">({parsed.nature})</span>
+          <h4 className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-1 sm:mb-1.5 creator:mb-2 flex items-center gap-2">
+            <span>{t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70 hidden sm:inline">({parsed.nature})</span></span>
+            {(() => {
+              const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
+              if (totalEvs > 510) return <span className="text-[9px] font-bold text-danger normal-case tracking-normal">{totalEvs}/510 EVs</span>;
+              if (totalEvs > 0) return <span className="text-[9px] font-bold text-text-tertiary/50 normal-case tracking-normal hidden sm:inline">{totalEvs}/510</span>;
+              return null;
+            })()}
           </h4>
           <div className="space-y-1 sm:space-y-1.5 stagger-stats" role="list" aria-label={`${parsed.species} stats`}>
             {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map((stat) => {

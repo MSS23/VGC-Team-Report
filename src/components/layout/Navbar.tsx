@@ -91,6 +91,8 @@ export function Navbar(props: NavbarProps) {
   const { t } = useTranslation();
   const [exportCopied, setExportCopied] = useState(false);
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -105,6 +107,18 @@ export function Navbar(props: NavbarProps) {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [exportDropdownOpen]);
+
+  // Close mobile menu on outside click
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [mobileMenuOpen]);
 
   const isLocalDraft = !isSharedView && !isPresentationStyle;
 
@@ -408,15 +422,15 @@ export function Navbar(props: NavbarProps) {
             </div>
           )}
 
-          {/* Language selector */}
-          <LanguageSelector />
-
-          {/* Dark mode toggle */}
-          <Toggle
-            checked={darkMode}
-            onChange={onDarkModeChange}
-            label={darkMode ? t.dark : t.light}
-          />
+          {/* Secondary controls — hidden on mobile behind overflow menu */}
+          <div className="hidden sm:flex items-center gap-2">
+            <LanguageSelector />
+            <Toggle
+              checked={darkMode}
+              onChange={onDarkModeChange}
+              label={darkMode ? t.dark : t.light}
+            />
+          </div>
 
           {/* Creator mode lock/unlock (local draft only) */}
           {isLocalDraft && (
@@ -443,6 +457,33 @@ export function Navbar(props: NavbarProps) {
               </Button>
             </div>
           )}
+
+          {/* Mobile overflow menu for secondary controls */}
+          <div className="sm:hidden relative" ref={mobileMenuRef}>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+              aria-label="More options"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="12" cy="5" r="1" />
+                <circle cx="12" cy="19" r="1" />
+              </svg>
+            </button>
+            {mobileMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 bg-surface border border-border rounded-xl shadow-lg py-2 min-w-[180px] z-50 animate-fade-in">
+                <div className="px-3 py-2 flex items-center justify-between">
+                  <span className="text-xs font-bold text-text-secondary">{darkMode ? t.dark : t.light}</span>
+                  <Toggle checked={darkMode} onChange={(v) => { onDarkModeChange(v); setMobileMenuOpen(false); }} label="" />
+                </div>
+                <div className="px-3 py-2">
+                  <LanguageSelector />
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Present button (not in presentation mode) */}
           {!isPresentationStyle && (

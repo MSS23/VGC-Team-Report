@@ -67,4 +67,15 @@ export async function ensureTable() {
     )
   `;
   await sql`CREATE INDEX IF NOT EXISTS idx_comment_flags_comment ON comment_flags(comment_id)`;
+  // Creator profiles table (optional bio + social links)
+  await sql`
+    CREATE TABLE IF NOT EXISTS creator_profiles (
+      name TEXT PRIMARY KEY,
+      bio TEXT,
+      twitter TEXT,
+      discord TEXT,
+      youtube TEXT,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
 }
