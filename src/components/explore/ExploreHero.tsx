@@ -10,10 +10,19 @@ const SHOWCASE_SPRITES = [
 
 const BASE_URL = "https://play.pokemonshowdown.com/sprites";
 
+// Showdown slug overrides for showcase Pokemon with hyphens
+const SLUG_OVERRIDES: Record<string, string> = {
+  "flutter-mane": "fluttermane",
+  "urshifu-rapid-strike": "urshifu-rapidstrike",
+  "iron-hands": "ironhands",
+  "ogerpon-hearthflame": "ogerpon-hearthflame",
+  "calyrex-ice": "calyrex-ice",
+  "tornadus-therian": "tornadus-therian",
+};
+
 function spriteUrl(slug: string) {
-  // Use simpler slug resolution for showcase (these are known-good slugs)
-  const resolved = slug.replace(/-/g, "");
-  return `${BASE_URL}/gen5ani/${resolved}.gif`;
+  const resolved = SLUG_OVERRIDES[slug] ?? slug;
+  return `${BASE_URL}/ani/${resolved}.gif`;
 }
 
 export function ExploreHero() {
