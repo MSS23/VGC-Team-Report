@@ -99,7 +99,7 @@ function DashboardInner() {
     // Full URL: https://pokemonvgcteamreport.com/s/ABC123?key=xxx
     // Path: /s/ABC123?key=xxx
     // Just params: ABC123?key=xxx
-    const input = claimUrl.trim();
+    const input = claimUrl.replace(/\s+/g, "").trim();
     const match = input.match(/(?:\/s\/)?([A-Za-z0-9]{6,12})\?key=([A-Fa-f0-9]+)/);
     if (!match) {
       setClaimResult("Invalid edit link. Paste your edit link — it looks like: .../s/ABC123?key=...");
