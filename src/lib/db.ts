@@ -79,4 +79,21 @@ export async function ensureTable() {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+
+  // Feedback / feature requests table
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS feedback (
+      id SERIAL PRIMARY KEY,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      device TEXT,
+      browser TEXT,
+      screen_size TEXT,
+      contact TEXT,
+      session_id TEXT,
+      status TEXT DEFAULT 'new',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
 }

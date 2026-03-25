@@ -221,6 +221,13 @@ function ExploreInner() {
           >
             {t.buildYourOwn}
           </a>
+          <span className="mx-1.5 text-border">&middot;</span>
+          <a
+            href="/feedback"
+            className="text-text-tertiary hover:text-text-primary transition-colors"
+          >
+            Feedback
+          </a>
         </p>
       </footer>
     </div>

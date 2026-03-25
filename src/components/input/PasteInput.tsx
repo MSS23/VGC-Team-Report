@@ -433,6 +433,13 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
         </a>
         <span className="mx-1.5 text-border">&middot;</span>
         <a
+          href="/feedback"
+          className="text-text-tertiary hover:text-text-primary transition-colors"
+        >
+          Feedback
+        </a>
+        <span className="mx-1.5 text-border">&middot;</span>
+        <a
           href="/privacy"
           className="text-text-tertiary hover:text-text-primary transition-colors"
         >
