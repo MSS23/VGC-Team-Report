@@ -3,8 +3,7 @@ import { isRateLimited } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-const DISCORD_WEBHOOK = process.env.DISCORD_FEEDBACK_WEBHOOK
-  || "https://discord.com/api/webhooks/1486366505959428187/c33x8bgV5FvKGVGBejaoz0FQu2iUZ8mcrRsWPRgYrQYWwC6NEj7PfanA5KY6kaKzlD_P";
+const DISCORD_WEBHOOK = process.env.DISCORD_FEEDBACK_WEBHOOK || "";
 
 const TYPE_EMOJI: Record<string, string> = {
   feature: "\uD83D\uDCA1",
