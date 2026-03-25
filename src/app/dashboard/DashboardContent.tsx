@@ -33,6 +33,7 @@ function DashboardInner() {
 
   // Claim input
   const [claimUrl, setClaimUrl] = useState("");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "views" | "name">("newest");
   const [claiming, setClaiming] = useState(false);
   const [claimResult, setClaimResult] = useState<string | null>(null);
 
@@ -181,10 +182,15 @@ function DashboardInner() {
               <p className="text-sm text-text-secondary mt-1">
                 Manage your team reports and saved favorites.
               </p>
+              <a href="/dashboard/profile" className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold text-accent hover:underline">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                Edit Creator Profile
+              </a>
             </div>
 
-            {/* Tabs */}
-            <div className="flex items-center gap-1 p-1 bg-surface-alt/50 rounded-xl mb-6 w-fit">
+            {/* Tabs + Sort */}
+            <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+            <div className="flex items-center gap-1 p-1 bg-surface-alt/50 rounded-xl w-fit">
               {(["my", "saved"] as const).map((t) => (
                 <button
                   key={t}
@@ -200,6 +206,50 @@ function DashboardInner() {
                 </button>
               ))}
             </div>
+            {tab === "my" && myReports.length > 1 && (
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "views" | "name")}
+                className="px-3 py-2 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer"
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="views">Most views</option>
+                <option value="name">By name</option>
+              </select>
+            )}
+            </div>
+
+            {/* Bulk actions */}
+            {tab === "my" && myReports.length > 1 && (
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Bulk:</span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    for (const r of myReports.filter((r) => !r.isPublic)) {
+                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: true }) });
+                    }
+                    setMyReports((prev) => prev.map((r) => ({ ...r, isPublic: true })));
+                  }}
+                  className="px-2 py-1 text-[10px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition-all"
+                >
+                  All Public
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    for (const r of myReports.filter((r) => r.isPublic)) {
+                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: false }) });
+                    }
+                    setMyReports((prev) => prev.map((r) => ({ ...r, isPublic: false })));
+                  }}
+                  className="px-2 py-1 text-[10px] font-bold rounded-md bg-surface-alt text-text-tertiary border border-border cursor-pointer hover:bg-surface transition-all"
+                >
+                  All Private
+                </button>
+              </div>
+            )}
 
             {/* Claim report section */}
             {tab === "my" && (
@@ -282,7 +332,12 @@ function DashboardInner() {
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {tab === "my"
-                    ? myReports.map((report) => (
+                    ? [...myReports].sort((a, b) => {
+                        if (sortBy === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                        if (sortBy === "views") return (b.viewCount ?? 0) - (a.viewCount ?? 0);
+                        if (sortBy === "name") return (a.tournamentName ?? "").localeCompare(b.tournamentName ?? "");
+                        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                      }).map((report) => (
                         <ManagedReportCard
                           key={report.id}
                           report={report}

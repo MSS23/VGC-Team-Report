@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 import { containsBlockedWords } from "@/lib/utils/word-filter";
+import { escapeHtml } from "@/lib/utils/sanitize";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -77,10 +78,11 @@ export async function POST(
       return NextResponse.json({ error: "Invalid comment", details: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
     const { displayName, body, sessionId } = parsed.data;
-    const name = displayName?.trim() || "Anonymous";
+    const name = escapeHtml(displayName?.trim() || "Anonymous");
+    const sanitizedBody = escapeHtml(body.trim());
 
     // Word filter
-    if (containsBlockedWords(body) || (displayName && containsBlockedWords(displayName))) {
+    if (containsBlockedWords(sanitizedBody) || (displayName && containsBlockedWords(displayName))) {
       return NextResponse.json({ error: "Comment contains inappropriate language." }, { status: 400 });
     }
 
@@ -98,7 +100,7 @@ export async function POST(
 
     const rows = await sql`
       INSERT INTO comments (share_id, display_name, body, session_id)
-      VALUES (${shareId}, ${name}, ${body}, ${sessionId})
+      VALUES (${shareId}, ${name}, ${sanitizedBody}, ${sessionId})
       RETURNING id, display_name, body, session_id, created_at
     `;
 

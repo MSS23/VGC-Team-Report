@@ -432,10 +432,34 @@ function HomeContent() {
             {creatorName && <CreatorLink name={creatorName} />}
             <ViewCount count={viewCount} />
             <SaveButton shareId={activeShareId} />
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(paste);
+                window.location.href = "/";
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent transition-all cursor-pointer"
+              title="Copy this team and create your own version"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+              </svg>
+              Fork Team
+            </button>
           </div>
           <ReactionBar shareId={activeShareId} />
-          {allowComments && (
+          {allowComments ? (
             <CommentSection shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
+          ) : (
+            <div className="flex items-center gap-2 px-4 py-3 bg-surface-alt/50 border border-border rounded-xl text-xs text-text-tertiary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+              </svg>
+              <span>Comments are turned off by the creator.</span>
+            </div>
           )}
         </div>
       )}
