@@ -104,20 +104,13 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
         </div>
       </div>
 
-      {/* Title + Summary */}
+      {/* Title + View Report */}
       <div className="px-5 sm:px-6 pb-5 space-y-2">
-        {(report.tournamentName || report.teamSummary) && (
-          <div className="border-t border-border/50 pt-3 space-y-1.5">
-            {report.tournamentName && (
-              <h3 className="text-base sm:text-lg font-extrabold text-text-primary leading-tight group-hover:text-accent transition-colors">
-                {report.tournamentName}
-              </h3>
-            )}
-            {report.teamSummary && (
-              <p className="text-xs sm:text-sm text-text-secondary leading-relaxed line-clamp-2">
-                {report.teamSummary}
-              </p>
-            )}
+        {report.tournamentName && (
+          <div className="border-t border-border/50 pt-3">
+            <h3 className="text-base sm:text-lg font-extrabold text-text-primary leading-tight group-hover:text-accent transition-colors">
+              {report.tournamentName}
+            </h3>
           </div>
         )}
 

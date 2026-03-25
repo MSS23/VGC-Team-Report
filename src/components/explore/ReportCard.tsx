@@ -126,13 +126,6 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           </p>
         )}
 
-        {/* Summary */}
-        {report.teamSummary && (
-          <p className="text-xs text-text-tertiary leading-relaxed line-clamp-2">
-            {report.teamSummary}
-          </p>
-        )}
-
         {/* Social indicators + timestamp */}
         <div className="flex items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-2.5">
