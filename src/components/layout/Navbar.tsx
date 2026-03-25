@@ -49,10 +49,6 @@ interface NavbarProps {
   editLinkCopied: boolean;
   onCopyEditLink: () => void;
 
-  // Public toggle
-  isPublic?: boolean;
-  onIsPublicChange?: (v: boolean) => void;
-
   // Export
   onExportTeam?: () => void;
   onExportImage?: () => void;
@@ -83,7 +79,6 @@ export function Navbar(props: NavbarProps) {
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare,
     hasExistingShare, editLinkCopied, onCopyEditLink,
-    isPublic, onIsPublicChange,
     onExportTeam,
     onExportImage, onExportPdf,
     onUndo, onRedo, canUndo, canRedo,
@@ -320,30 +315,6 @@ export function Navbar(props: NavbarProps) {
           {/* Share / Re-share */}
           {isLocalDraft && (
             <>
-              {onIsPublicChange && (
-                <label
-                  className="inline-flex items-center gap-1.5 cursor-pointer select-none group min-h-[36px]"
-                  title={t.listPubliclyTooltip}
-                >
-                  <button
-                    role="switch"
-                    aria-checked={isPublic}
-                    onClick={() => onIsPublicChange(!isPublic)}
-                    className={`relative inline-flex h-[20px] w-[34px] items-center rounded-full transition-all duration-300 flex-shrink-0 ${
-                      isPublic ? "bg-accent shadow-sm shadow-accent/30" : "bg-border"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-[14px] w-[14px] rounded-full bg-white shadow-sm transition-all duration-300 ${
-                        isPublic ? "translate-x-[16px]" : "translate-x-[3px]"
-                      }`}
-                    />
-                  </button>
-                  <span className="text-[10px] font-bold text-text-secondary group-hover:text-text-primary transition-colors hidden sm:inline uppercase tracking-wider">
-                    {t.listPublicly}
-                  </span>
-                </label>
-              )}
               <Button
                 variant="secondary"
                 size="sm"

@@ -59,7 +59,7 @@ function HomeContent() {
     handleCopyEditLink,
     handleFreshReshare,
     isPublic,
-    setIsPublic,
+    handleSetPublic,
     saveFlash,
     showShortcutHint,
     setShowShortcutHint,
@@ -262,8 +262,6 @@ function HomeContent() {
         hasExistingShare={hasExistingShare()}
         editLinkCopied={editLinkCopied}
         onCopyEditLink={handleCopyEditLink}
-        isPublic={isPublic}
-        onIsPublicChange={setIsPublic}
         onExportTeam={analysis ? handleExportTeam : undefined}
         onExportImage={analysis ? handleExportImage : undefined}
         onExportPdf={analysis ? handleExportPdf : undefined}
@@ -418,6 +416,8 @@ function HomeContent() {
           tournamentName={tournamentName}
           creatorName={creatorName}
           placement={placement}
+          isPublic={isPublic}
+          onTogglePublic={handleSetPublic}
           onClose={() => setShowShareModal(false)}
         />
       )}

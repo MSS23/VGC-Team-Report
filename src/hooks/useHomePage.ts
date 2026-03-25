@@ -432,6 +432,13 @@ export function useHomePage() {
     };
   }, [analysis, isEditingUnlocked, buildShareState, autoSave, isPublic]);
 
+  /** Update public visibility and immediately sync to server. */
+  const handleSetPublic = useCallback((v: boolean) => {
+    setIsPublic(v);
+    // Immediate save with new visibility (autoSave checks for active session)
+    autoSave(buildShareState(), v);
+  }, [autoSave, buildShareState]);
+
   // Export team as Showdown paste to clipboard
   const handleExportTeam = useCallback(() => {
     if (!analysis) return;
@@ -525,6 +532,7 @@ export function useHomePage() {
     handleFreshReshare,
     isPublic,
     setIsPublic,
+    handleSetPublic,
 
     // Save flash
     saveFlash,

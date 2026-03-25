@@ -9,6 +9,8 @@ interface ShareModalProps {
   tournamentName?: string;
   creatorName?: string;
   placement?: string;
+  isPublic: boolean;
+  onTogglePublic: (v: boolean) => void;
   onClose: () => void;
 }
 
@@ -18,6 +20,8 @@ export function ShareModal({
   tournamentName,
   creatorName,
   placement,
+  isPublic,
+  onTogglePublic,
   onClose,
 }: ShareModalProps) {
   const [linkCopied, setLinkCopied] = useState(false);
@@ -200,6 +204,43 @@ export function ShareModal({
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
             </svg>
+          </button>
+        </div>
+
+        {/* Visibility toggle */}
+        <div className="px-6 py-4 border-t border-border">
+          <button
+            type="button"
+            onClick={() => onTogglePublic(!isPublic)}
+            className="flex items-center gap-3 w-full text-left group cursor-pointer"
+          >
+            <div className={`relative inline-flex h-[24px] w-[42px] items-center rounded-full transition-all duration-300 flex-shrink-0 ${
+              isPublic ? "bg-accent shadow-md shadow-accent/30" : "bg-border"
+            }`}>
+              <span className={`inline-block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-all duration-300 ${
+                isPublic ? "translate-x-[20px] scale-110" : "translate-x-[3px]"
+              }`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
+                {isPublic ? "Listed on Explore" : "List on Explore"}
+              </div>
+              <div className="text-xs text-text-tertiary">
+                {isPublic
+                  ? "Your team is visible in the public gallery. Toggle off to unlist."
+                  : "Currently unlisted. Toggle on to feature in the public gallery."}
+              </div>
+            </div>
+            {isPublic && (
+              <span className="flex-shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-extrabold rounded-md tracking-wide bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
+                PUBLIC
+              </span>
+            )}
+            {!isPublic && (
+              <span className="flex-shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-extrabold rounded-md tracking-wide bg-surface-alt text-text-tertiary border border-border">
+                UNLISTED
+              </span>
+            )}
           </button>
         </div>
 
