@@ -398,10 +398,10 @@ export function useHomePage() {
   }), [paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides]);
 
   const handleShareClick = useCallback(() => {
-    if (!analysis) return;
+    if (!analysis || isSampleTeam) return;
     copyShareUrl(buildShareState(), isPublic);
     setShowEditUrl(true);
-  }, [analysis, copyShareUrl, buildShareState, isPublic]);
+  }, [analysis, isSampleTeam, copyShareUrl, buildShareState, isPublic]);
 
   const handleReshare = useCallback(() => {
     if (!analysis) return;
