@@ -187,7 +187,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
 
       {/* Title — bold, distinctive */}
       <motion.div
-        className="text-center mb-8 sm:mb-10"
+        className="text-center mb-6 sm:mb-8"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
@@ -196,12 +196,44 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
           {t.appTitle}
           <span className="text-accent"> {t.appTitleAccent}</span>
         </h1>
-        <p className="text-sm sm:text-base text-text-tertiary mt-3 font-medium tracking-wide">
+        <p className="text-sm sm:text-base text-text-secondary mt-3 font-medium max-w-md mx-auto">
           {t.appSubtitle}
         </p>
       </motion.div>
 
+      {/* Feature pills */}
+      <motion.div
+        className="flex flex-wrap items-center justify-center gap-2 mb-8 sm:mb-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.4 }}
+      >
+        {[
+          { icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", label: "Team Analysis" },
+          { icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", label: "Share & Explore" },
+          { icon: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z", label: "Matchup Plans" },
+        ].map((pill) => (
+          <span
+            key={pill.label}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-full bg-surface border border-border text-text-secondary"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+              <path d={pill.icon} />
+            </svg>
+            {pill.label}
+          </span>
+        ))}
+      </motion.div>
+
       {/* Textarea with accent glow */}
+      <motion.p
+        className="text-xs text-text-tertiary font-medium mb-2 px-1"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.3 }}
+      >
+        {t.appInputHint}
+      </motion.p>
       <motion.div
         className="relative"
         initial={{ opacity: 0, y: 12 }}

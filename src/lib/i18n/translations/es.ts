@@ -3,7 +3,8 @@ import type { TranslationKeys } from "./en";
 const es: TranslationKeys = {
   appTitle: "VGC Team",
   appTitleAccent: "Report",
-  appSubtitle: "Pega una exportacion de Showdown o una URL de PokePaste",
+  appSubtitle: "Crea, comparte y descubre reportes de equipo Pokemon competitivo",
+  appInputHint: "Pega una exportacion de Showdown o una URL de PokePaste para comenzar",
 
   loadSample: "Cargar ejemplo",
   fetchAndAnalyze: "Obtener y analizar",
@@ -232,7 +233,7 @@ const es: TranslationKeys = {
   // Explore page
   explore: "Explorar",
   exploreTitle: "Explorar equipos VGC",
-  exploreSubtitle: "Descubre reportes de equipo compartidos por la comunidad",
+  exploreSubtitle: "Explora reportes de equipo compartidos por jugadores de torneos de todo el mundo",
   searchPlaceholder: "Buscar por Pokémon o torneo...",
   sortNewest: "Más recientes",
   sortUpdated: "Actualizados recientemente",

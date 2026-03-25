@@ -3,7 +3,8 @@ import type { TranslationKeys } from "./en";
 const ko: TranslationKeys = {
   appTitle: "VGC Team",
   appTitleAccent: "Report",
-  appSubtitle: "Showdown 내보내기 또는 PokePaste URL을 붙여넣기",
+  appSubtitle: "경쟁 포켓몬 팀 리포트를 제작, 공유, 탐색하세요",
+  appInputHint: "Showdown 내보내기 또는 PokePaste URL을 붙여넣어 시작하세요",
 
   loadSample: "샘플 불러오기",
   fetchAndAnalyze: "가져오기 및 분석",
@@ -232,7 +233,7 @@ const ko: TranslationKeys = {
   // Explore page
   explore: "탐색",
   exploreTitle: "VGC 팀 탐색",
-  exploreSubtitle: "커뮤니티가 공유한 팀 리포트를 발견하세요",
+  exploreSubtitle: "전 세계 대회 플레이어들이 공유한 팀 리포트를 탐색하세요",
   searchPlaceholder: "포켓몬 또는 대회로 검색...",
   sortNewest: "최신순",
   sortUpdated: "최근 업데이트",

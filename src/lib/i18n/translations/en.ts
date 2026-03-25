@@ -2,7 +2,8 @@ const en = {
   // App title & meta
   appTitle: "VGC Team",
   appTitleAccent: "Report",
-  appSubtitle: "Paste a Showdown export or PokePaste URL",
+  appSubtitle: "Build, share, and discover competitive Pokemon team reports",
+  appInputHint: "Paste a Showdown export or PokePaste URL to get started",
 
   // Input screen
   loadSample: "Load sample",
@@ -258,7 +259,7 @@ const en = {
   // Explore page
   explore: "Explore",
   exploreTitle: "Explore VGC Teams",
-  exploreSubtitle: "Discover team reports shared by the community",
+  exploreSubtitle: "Browse team reports shared by players from tournaments around the world",
   searchPlaceholder: "Search by Pokemon or tournament...",
   sortNewest: "Newest",
   sortUpdated: "Recently Updated",

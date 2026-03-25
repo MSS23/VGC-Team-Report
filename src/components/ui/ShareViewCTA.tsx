@@ -17,10 +17,10 @@ export function ShareViewCTA({ onCreateOwn }: ShareViewCTAProps) {
         <div className="pointer-events-auto bg-surface/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl px-5 py-3.5 flex items-center justify-between gap-3 animate-fade-in">
           <div className="min-w-0">
             <p className="text-sm font-bold text-text-primary tracking-tight">
-              Want to build your own team report?
+              Build your own VGC team report
             </p>
             <p className="text-xs text-text-tertiary mt-0.5 hidden sm:block">
-              Paste a Showdown team, add notes and matchup plans, then share it with one click.
+              Add notes, matchup plans, damage calcs — then share it with the community or present it at your next tournament.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">

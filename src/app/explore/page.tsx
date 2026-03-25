@@ -4,11 +4,11 @@ import { ExploreContent } from "@/components/explore/ExploreContent";
 export const metadata: Metadata = {
   title: "Explore VGC Teams",
   description:
-    "Discover team reports shared by the VGC community. Browse teams by Pokemon, tournament, or creator.",
+    "Browse Pokemon VGC team reports shared by competitive players from tournaments around the world. Search by Pokemon, tournament, or creator.",
   openGraph: {
-    title: "Explore VGC Teams",
+    title: "Explore VGC Teams — VGC Team Report",
     description:
-      "Discover team reports shared by the VGC community. Browse teams by Pokemon, tournament, or creator.",
+      "Browse Pokemon VGC team reports shared by competitive players from tournaments around the world.",
     type: "website",
     siteName: "VGC Team Report",
   },

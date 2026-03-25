@@ -3,7 +3,8 @@ import type { TranslationKeys } from "./en";
 const ja: TranslationKeys = {
   appTitle: "VGC Team",
   appTitleAccent: "Report",
-  appSubtitle: "Showdownのエクスポートまたは PokePaste URLを貼り付け",
+  appSubtitle: "競技ポケモンのチームレポートを作成・共有・発見",
+  appInputHint: "Showdownのエクスポートまたは PokePaste URLを貼り付けて開始",
 
   loadSample: "サンプルを読み込む",
   fetchAndAnalyze: "取得して分析",
@@ -232,7 +233,7 @@ const ja: TranslationKeys = {
   // Explore page
   explore: "探索",
   exploreTitle: "VGCチームを探索",
-  exploreSubtitle: "コミュニティが共有したチームレポートを発見しよう",
+  exploreSubtitle: "世界中の大会プレイヤーが共有したチームレポートを閲覧",
   searchPlaceholder: "ポケモンや大会名で検索...",
   sortNewest: "新着順",
   sortUpdated: "最近更新",

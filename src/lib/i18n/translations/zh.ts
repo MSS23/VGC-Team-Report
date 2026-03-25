@@ -3,7 +3,8 @@ import type { TranslationKeys } from "./en";
 const zh: TranslationKeys = {
   appTitle: "VGC Team",
   appTitleAccent: "Report",
-  appSubtitle: "粘贴 Showdown 导出或 PokePaste 链接",
+  appSubtitle: "创建、分享和发现竞技宝可梦队伍报告",
+  appInputHint: "粘贴 Showdown 导出或 PokePaste 链接以开始",
 
   loadSample: "加载示例",
   fetchAndAnalyze: "获取并分析",
@@ -232,7 +233,7 @@ const zh: TranslationKeys = {
   // Explore page
   explore: "探索",
   exploreTitle: "探索 VGC 队伍",
-  exploreSubtitle: "发现社区分享的队伍报告",
+  exploreSubtitle: "浏览来自世界各地赛事选手分享的队伍报告",
   searchPlaceholder: "按宝可梦或赛事搜索...",
   sortNewest: "最新",
   sortUpdated: "最近更新",

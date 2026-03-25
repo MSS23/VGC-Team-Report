@@ -20,19 +20,19 @@ export const metadata: Metadata = {
     default: "VGC Team Report",
     template: "%s | VGC Team Report",
   },
-  description: "Transform your Pokemon Showdown VGC paste into a clean, professional team report. Build, share, and present with one click.",
+  description: "The home for competitive Pokemon VGC team reports. Build detailed team breakdowns with notes, matchup plans, and damage calcs — then share them with the community or present at tournaments.",
   metadataBase: new URL("https://pokemonvgcteamreport.com"),
   openGraph: {
-    title: "VGC Team Report",
-    description: "Build, share, and present professional VGC team reports",
+    title: "VGC Team Report — Build, Share & Discover Pokemon Teams",
+    description: "The home for competitive Pokemon VGC team reports. Build, share, and explore team breakdowns from players around the world.",
     type: "website",
     siteName: "VGC Team Report",
     url: "https://pokemonvgcteamreport.com",
   },
   twitter: {
     card: "summary_large_image",
-    title: "VGC Team Report",
-    description: "Build, share, and present professional VGC team reports",
+    title: "VGC Team Report — Build, Share & Discover Pokemon Teams",
+    description: "The home for competitive Pokemon VGC team reports. Build, share, and explore team breakdowns from players around the world.",
   },
   icons: {
     icon: [
