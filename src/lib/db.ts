@@ -96,4 +96,19 @@ export async function ensureTable() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+
+  // User-owned reports: links Clerk user ID to share edit tokens
+  await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS owner_id TEXT`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_owner ON shares(owner_id) WHERE owner_id IS NOT NULL`);
+
+  // Saved/bookmarked reports
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS saved_reports (
+      user_id TEXT NOT NULL,
+      share_id TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (user_id, share_id)
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_saved_user ON saved_reports(user_id)`);
 }

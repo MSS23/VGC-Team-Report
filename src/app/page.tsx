@@ -14,6 +14,7 @@ import { ReactionBar } from "@/components/social/ReactionBar";
 import { CommentSection } from "@/components/social/CommentSection";
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
+import { SaveButton } from "@/components/social/SaveButton";
 import { getSessionId } from "@/lib/utils/session-id";
 import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { I18nProvider } from "@/lib/i18n";
@@ -422,6 +423,7 @@ function HomeContent() {
           <div className="flex items-center gap-4 flex-wrap">
             {creatorName && <CreatorLink name={creatorName} />}
             <ViewCount count={viewCount} />
+            <SaveButton shareId={activeShareId} />
           </div>
           <ReactionBar shareId={activeShareId} />
           {allowComments && (

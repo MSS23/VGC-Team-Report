@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -76,12 +77,18 @@ export async function POST(request: Request) {
       // Token mismatch or not found — fall through to create new
     }
 
-    // Create new share
+    // Create new share — auto-link to authenticated user if signed in
     const id = generateId();
     const newEditToken = generateEditToken();
+    let ownerId: string | null = null;
+    try {
+      const { userId } = await auth();
+      ownerId = userId;
+    } catch { /* not authenticated — that's fine */ }
+
     await sql`
-      INSERT INTO shares (id, edit_token, data, version, is_public)
-      VALUES (${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false})
+      INSERT INTO shares (id, edit_token, data, version, is_public, owner_id)
+      VALUES (${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${ownerId})
     `;
     return NextResponse.json({ id, editToken: newEditToken, updated: false, version: 1, isPublic: isPublic ?? false });
   } catch (e) {
