@@ -35,6 +35,8 @@ export interface ShareableState {
   spriteSettings?: Record<string, { shiny?: boolean; animated?: boolean }>;
   hiddenSlides?: string[];
   allowComments?: boolean;
+  tags?: { archetype?: string[]; regulation?: string; eventType?: string };
+  templateId?: string;
 }
 
 function toBase64Url(bytes: Uint8Array): string {

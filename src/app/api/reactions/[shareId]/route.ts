@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
+import { createNotification } from "@/lib/notifications";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -79,6 +80,13 @@ export async function POST(
         VALUES (${shareId}, ${reactionType}, ${sessionId})
       `;
       action = "added";
+
+      // Notify report owner (fire-and-forget)
+      const ownerRows = await sql`SELECT owner_id FROM shares WHERE id = ${shareId}`;
+      const ownerId = ownerRows[0]?.owner_id as string | undefined;
+      if (ownerId) {
+        createNotification(ownerId, "reaction", shareId, null, `Someone liked your report`);
+      }
     }
 
     return NextResponse.json({ action });

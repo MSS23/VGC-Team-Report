@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useCallback, useEffect, useRef } from "react";
 import { useHomePage } from "@/hooks/useHomePage";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { PasteInput } from "@/components/input/PasteInput";
 import { TeamReport } from "@/components/report/TeamReport";
 import { SlideNavControls } from "@/components/report/SlideNavControls";
@@ -9,6 +10,7 @@ import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
 import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
 import { ShareModal } from "@/components/ui/ShareModal";
 import { ShareViewCTA } from "@/components/ui/ShareViewCTA";
+import { SwipeHint } from "@/components/ui/SwipeHint";
 import { Navbar } from "@/components/layout/Navbar";
 import { ReactionBar } from "@/components/social/ReactionBar";
 import { CommentSection } from "@/components/social/CommentSection";
@@ -98,6 +100,8 @@ function HomeContent() {
     setRentalCode,
     creatorName,
     setCreatorName,
+    tags,
+    setTags,
     plans,
     addPlan,
     removePlan,
@@ -134,6 +138,8 @@ function HomeContent() {
     canRedo,
     handleUndo,
     handleRedo,
+    pendingTemplateId,
+    setPendingTemplateId,
     handleAnalyze,
     isSampleTeam,
     handleReset,
@@ -141,6 +147,13 @@ function HomeContent() {
   } = useHomePage();
 
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Swipe navigation for mobile
+  const swipeRef = useSwipeNavigation({
+    onSwipeLeft: nextSlide,
+    onSwipeRight: prevSlide,
+    enabled: !!analysis,
+  });
 
   // Clear random accent when viewing a report (use author's default theme)
   useEffect(() => {
@@ -190,6 +203,8 @@ function HomeContent() {
           paste={paste}
           onPasteChange={setPaste}
           onAnalyze={handleAnalyze}
+          selectedTemplate={pendingTemplateId}
+          onTemplateSelect={setPendingTemplateId}
         />
       </main>
     );
@@ -322,6 +337,7 @@ function HomeContent() {
 
       {/* Report content */}
       <div
+        ref={swipeRef}
         className={`max-w-7xl mx-auto slide-content ${
           isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-36 sm:pb-32" : "pb-20 sm:pb-20"
         } ${
@@ -382,6 +398,8 @@ function HomeContent() {
           onCreatorNameChange={setCreatorName}
           mvpIndex={mvpIndex}
           onMvpIndexChange={setMvpIndex}
+          tags={tags}
+          onTagsChange={setTags}
           isReadOnly={isReadOnly}
           isPresentationMode={isPresentationStyle}
           plans={plans}
@@ -417,6 +435,9 @@ function HomeContent() {
         onShowShortcuts={() => setShowShortcutHint(true)}
         onStartTour={!presentationMode ? startWalkthrough : undefined}
       />
+
+      {/* Swipe hint for mobile (one-time) */}
+      <SwipeHint />
 
       {/* Claim button for editors who are signed in */}
       {isSharedView && isEditingUnlocked && activeShareId && editKeyFromUrl && (

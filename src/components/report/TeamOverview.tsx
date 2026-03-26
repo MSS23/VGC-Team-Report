@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import QRCode from "qrcode";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { PokemonCard } from "./PokemonCard";
 import { TeamStats } from "./TeamStats";
 import { useTranslation } from "@/lib/i18n";
+import { ARCHETYPES, REGULATIONS, EVENT_TYPES } from "@/lib/data/tags";
+import type { ReportTags } from "@/lib/data/tags";
 
 interface TeamOverviewProps {
   pokemon: AnalyzedPokemon[];
@@ -27,6 +30,8 @@ interface TeamOverviewProps {
   onCreatorNameChange?: (text: string) => void;
   mvpIndex?: number | null;
   onMvpIndexChange?: (index: number | null) => void;
+  tags?: ReportTags;
+  onTagsChange?: (tags: ReportTags) => void;
   isReadOnly: boolean;
   getSpriteConfig?: (key: string) => SpriteConfig;
   onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
@@ -52,6 +57,8 @@ export function TeamOverview({
   onCreatorNameChange,
   mvpIndex,
   onMvpIndexChange,
+  tags,
+  onTagsChange,
   isReadOnly,
   getSpriteConfig,
   onReorderPokemon,
@@ -60,10 +67,19 @@ export function TeamOverview({
   const hasTournamentInfo = !!(tournamentName || placement || record);
   const hasCreatorInfo = !!creatorName;
   const [rentalCopied, setRentalCopied] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const dragCounter = useRef(0);
   const canDrag = !isReadOnly && !!onReorderPokemon;
+
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!rentalCode) { setQrDataUrl(null); return; }
+    QRCode.toDataURL(rentalCode, { width: 80, margin: 1, color: { dark: "#000000", light: "#ffffff" } })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null));
+  }, [rentalCode]);
 
   const copyRentalCode = () => {
     if (!rentalCode) return;
@@ -94,23 +110,53 @@ export function TeamOverview({
               )}
             </div>
             {rentalCode && (
-              <button
-                onClick={copyRentalCode}
-                className="flex items-center gap-2 self-start px-3 py-1.5 bg-surface border-2 border-border rounded-lg hover:bg-surface-alt hover:border-accent/30 transition-all"
-                title={t.copyRentalCode}
-              >
-                <span className="text-sm font-[family-name:var(--font-mono)] font-extrabold text-text-primary tracking-widest">
-                  {rentalCode}
-                </span>
-                <span className={`text-xs font-semibold transition-colors duration-200 ${rentalCopied ? "text-emerald-500" : "text-text-tertiary"}`}>
-                  {rentalCopied ? "\u2713 " + t.copied : t.copy}
-                </span>
-              </button>
+              <div className="flex items-center gap-3 self-start">
+                <button
+                  onClick={copyRentalCode}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-surface border-2 border-border rounded-lg hover:bg-surface-alt hover:border-accent/30 transition-all"
+                  title={t.copyRentalCode}
+                >
+                  <span className="text-sm font-[family-name:var(--font-mono)] font-extrabold text-text-primary tracking-widest">
+                    {rentalCode}
+                  </span>
+                  <span className={`text-xs font-semibold transition-colors duration-200 ${rentalCopied ? "text-emerald-500" : "text-text-tertiary"}`}>
+                    {rentalCopied ? "\u2713 " + t.copied : t.copy}
+                  </span>
+                </button>
+                {qrDataUrl && (
+                  <img
+                    src={qrDataUrl}
+                    alt={`QR code for rental code ${rentalCode}`}
+                    width={64}
+                    height={64}
+                    className="rounded-lg border border-border shadow-sm"
+                  />
+                )}
+              </div>
             )}
             {creatorName && (
               <p className="text-sm text-text-secondary font-medium">
                 {t.by} <span className="text-text-primary font-bold">{creatorName}</span>
               </p>
+            )}
+            {tags && (tags.archetype?.length || tags.regulation || tags.eventType) && (
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {tags.regulation && (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                    {tags.regulation}
+                  </span>
+                )}
+                {tags.eventType && (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                    {tags.eventType}
+                  </span>
+                )}
+                {tags.archetype?.map((a) => (
+                  <span key={a} className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20">
+                    {a}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
         )
@@ -159,6 +205,60 @@ export function TeamOverview({
               className="w-full sm:flex-1 sm:min-w-[200px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             />
           </div>
+          <p className="text-[10px] text-text-tertiary mt-1.5 flex items-center gap-1">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            Optional — but filling these in helps your report appear in search results on the Explore page.
+          </p>
+
+          {/* Tags */}
+          <div className="mt-3 flex flex-col gap-2">
+            <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">Tags</h4>
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+              <select
+                value={tags?.regulation ?? ""}
+                onChange={(e) => onTagsChange?.({ ...tags, regulation: e.target.value || undefined })}
+                className="w-full sm:w-[140px] px-3 py-2 bg-surface border-2 border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+              >
+                <option value="">Regulation</option>
+                {REGULATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+              <select
+                value={tags?.eventType ?? ""}
+                onChange={(e) => onTagsChange?.({ ...tags, eventType: e.target.value || undefined })}
+                className="w-full sm:w-[160px] px-3 py-2 bg-surface border-2 border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+              >
+                <option value="">Event Type</option>
+                {EVENT_TYPES.map((e) => <option key={e} value={e}>{e}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {ARCHETYPES.map((a) => {
+                const active = tags?.archetype?.includes(a);
+                return (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => {
+                      const current = tags?.archetype ?? [];
+                      const next = active ? current.filter((x) => x !== a) : [...current, a];
+                      onTagsChange?.({ ...tags, archetype: next.length > 0 ? next : undefined });
+                    }}
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-md border transition-all ${
+                      active
+                        ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
+                        : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
+                    }`}
+                  >
+                    {a}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
@@ -169,8 +269,26 @@ export function TeamOverview({
         </h3>
         {isReadOnly ? (
           summary ? (
-            <div className="w-full min-h-[8rem] p-5 sm:p-6 bg-surface border border-border rounded-xl text-base sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:bg-surface-alt presenting:border-border-subtle presenting:tracking-wide">
-              {summary}
+            <div className="relative">
+              <div
+                className={`w-full p-5 sm:p-6 bg-surface border border-border rounded-xl text-base sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:bg-surface-alt presenting:border-border-subtle presenting:tracking-wide ${
+                  !summaryExpanded && summary.length > 200 ? "sm:min-h-[8rem] max-h-28 sm:max-h-none overflow-hidden" : "min-h-[8rem]"
+                }`}
+              >
+                {summary}
+              </div>
+              {/* Show more/less toggle — mobile only, for long summaries */}
+              {summary.length > 200 && (
+                <button
+                  type="button"
+                  onClick={() => setSummaryExpanded(!summaryExpanded)}
+                  className={`sm:hidden w-full text-center py-2 text-xs font-bold text-accent active:scale-[0.97] transition-all ${
+                    !summaryExpanded ? "-mt-8 relative z-10 bg-gradient-to-t from-surface via-surface/95 to-transparent pt-6 rounded-b-xl border-x border-b border-border" : "mt-1"
+                  }`}
+                >
+                  {summaryExpanded ? "Show less" : "Show more"}
+                </button>
+              )}
             </div>
           ) : (
             <div className="w-full p-5 sm:p-6 bg-surface-alt/50 border border-border-subtle rounded-xl text-base text-text-tertiary italic font-medium presenting:text-lg presenting:p-8">
@@ -196,8 +314,8 @@ export function TeamOverview({
       {/* Pokemon Grid */}
       <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-3 sm:gap-4 creator:gap-6 ${
         creatorMode
-          ? "grid-cols-2 md:grid-cols-2"
-          : "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3"
+          ? "grid-cols-1 sm:grid-cols-2"
+          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
       }`}>
         {pokemon.map((mon, i) => {
           const sc = getSpriteConfig?.(speciesKeys[i]);

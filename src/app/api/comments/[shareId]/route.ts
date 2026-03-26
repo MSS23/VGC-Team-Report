@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 import { containsBlockedWords } from "@/lib/utils/word-filter";
 import { escapeHtml } from "@/lib/utils/sanitize";
+import { createNotification } from "@/lib/notifications";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -103,6 +104,13 @@ export async function POST(
       VALUES (${shareId}, ${name}, ${sanitizedBody}, ${sessionId})
       RETURNING id, display_name, body, session_id, created_at
     `;
+
+    // Notify report owner about the new comment (fire-and-forget)
+    const ownerRows = await sql`SELECT owner_id FROM shares WHERE id = ${shareId}`;
+    const ownerId = ownerRows[0]?.owner_id as string | undefined;
+    if (ownerId) {
+      createNotification(ownerId, "comment", shareId, name, `${name} commented on your report`);
+    }
 
     const row = rows[0];
     return NextResponse.json({

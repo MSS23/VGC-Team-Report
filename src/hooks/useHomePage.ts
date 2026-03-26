@@ -17,11 +17,13 @@ import { useShareFlow } from "@/hooks/useShareFlow";
 import { useSlideSystem } from "@/hooks/useSlideSystem";
 import { SAMPLE_PASTE } from "@/components/input/PasteInput";
 import { useTranslation } from "@/lib/i18n";
+import { getTemplate } from "@/lib/templates";
 import type { SpriteConfig } from "@/lib/types/sprites";
 
 export function useHomePage() {
   const { t } = useTranslation();
   const [isSampleTeam, setIsSampleTeam] = useState(false);
+  const [pendingTemplateId, setPendingTemplateId] = useState<string>("blank");
 
   // ── Core team data ───────────────────────────────────────────────
   const {
@@ -31,7 +33,7 @@ export function useHomePage() {
   // ── Mode toggles ─────────────────────────────────────────────────
   const { creatorMode, setCreatorMode } = useCreatorMode();
   const { presentationMode, setPresentationMode } = usePresentationMode();
-  const { darkMode, setDarkMode } = useDarkMode(false);
+  const { darkMode, setDarkMode } = useDarkMode();
   const { genTheme, setGenTheme } = useTheme();
   const [showShortcutHint, setShowShortcutHint] = useState(false);
   const creatorModeBeforePresent = useRef(creatorMode);
@@ -63,8 +65,8 @@ export function useHomePage() {
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
-    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName,
-    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setMetaFull,
+    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId,
+    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull,
   } = useTeamMeta(speciesKeys, shouldPersist);
   const {
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
@@ -151,7 +153,9 @@ export function useHomePage() {
       })),
     })),
     hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
-  }), [paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides]);
+    tags: tags && (tags.archetype?.length || tags.regulation || tags.eventType) ? tags : undefined,
+    templateId: templateId || undefined,
+  }), [paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId]);
 
   // ── Share flow (extracted) ───────────────────────────────────────
   const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t: t as unknown as Record<string, string> });
@@ -176,7 +180,7 @@ export function useHomePage() {
     setSaveFlash(true);
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => setSaveFlash(false), 1500);
-  }, [notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, analysis, share.isSharedView]);
+  }, [notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, analysis, share.isSharedView]);
 
   // ── Walkthrough ──────────────────────────────────────────────────
   const pokemonNames = useMemo(
@@ -219,37 +223,53 @@ export function useHomePage() {
   useEffect(() => {
     if (!share.sharedState || !analysis || hasHydrated.current) return;
     hasHydrated.current = true;
-    setNotesFull(share.sharedState.notes);
-    if (share.sharedState.calcs) setCalcsFull(share.sharedState.calcs);
+    setNotesFull(share.sharedState.notes ?? {});
+    setCalcsFull(share.sharedState.calcs ?? {});
     setMetaFull({
       roles: share.sharedState.roles ?? {},
       summary: share.sharedState.teamSummary ?? "",
-      tournamentName: share.sharedState.tournamentName,
-      placement: share.sharedState.placement,
-      record: share.sharedState.record,
+      tournamentName: share.sharedState.tournamentName ?? undefined,
+      placement: share.sharedState.placement ?? undefined,
+      record: share.sharedState.record ?? undefined,
       mvpIndex: share.sharedState.mvpIndex ?? null,
-      rentalCode: share.sharedState.rentalCode,
-      creatorName: share.sharedState.creatorName,
+      rentalCode: share.sharedState.rentalCode ?? undefined,
+      creatorName: share.sharedState.creatorName ?? undefined,
+      tags: share.sharedState.tags ?? undefined,
+      templateId: share.sharedState.templateId ?? undefined,
     });
+    const rawPlans = Array.isArray(share.sharedState.matchupPlans) ? share.sharedState.matchupPlans : [];
     setPlansFull(
-      share.sharedState.matchupPlans.map((p) => ({
+      rawPlans.map((p) => ({
         id: crypto.randomUUID(),
         ...p,
-        gamePlans: p.gamePlans?.map((gp) => ({
+        gamePlans: (p.gamePlans ?? []).map((gp) => ({
           ...gp,
           id: crypto.randomUUID(),
+          bring: gp.bring ?? [null, null, null, null],
+          notes: gp.notes ?? "",
           replays: gp.replays ?? [],
         })),
       })),
     );
-    if (share.sharedState.hiddenSlides) setHiddenFull(share.sharedState.hiddenSlides);
+    if (Array.isArray(share.sharedState.hiddenSlides)) setHiddenFull(share.sharedState.hiddenSlides);
     if (share.sharedState.allowComments) share.setAllowComments(true);
   }, [share.sharedState, analysis, speciesKeys, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
+
+  // ── Apply template defaults when analysis first appears (non-shared) ──
+  const templateApplied = useRef(false);
+  useEffect(() => {
+    if (!analysis || share.isSharedView || templateApplied.current) return;
+    templateApplied.current = true;
+    const tmpl = getTemplate(pendingTemplateId);
+    if (!tmpl || tmpl.id === "blank") return;
+    setTemplateId(tmpl.id);
+  }, [analysis, share.isSharedView, pendingTemplateId, setTemplateId]);
 
   // ── Actions ──────────────────────────────────────────────────────
   const handleAnalyze = (directPaste?: string) => {
     const teamPaste = directPaste ?? paste;
     setIsSampleTeam(teamPaste.trim() === SAMPLE_PASTE.trim());
+    templateApplied.current = false; // reset so template applies on next parse
     parseTeam(teamPaste);
   };
 
@@ -310,7 +330,7 @@ export function useHomePage() {
     roles, setRole, summary, setSummary,
     tournamentName, setTournamentName, placement, setPlacement,
     record, setRecord, mvpIndex, setMvpIndex,
-    rentalCode, setRentalCode, creatorName, setCreatorName,
+    rentalCode, setRentalCode, creatorName, setCreatorName, tags, setTags, templateId, setTemplateId,
 
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
     updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,
@@ -341,6 +361,9 @@ export function useHomePage() {
     canUndo: undoRedo.canUndo,
     canRedo: undoRedo.canRedo,
     handleUndo, handleRedo,
+
+    // Templates
+    pendingTemplateId, setPendingTemplateId,
 
     // Actions
     handleAnalyze,

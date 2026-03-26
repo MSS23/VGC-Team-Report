@@ -22,6 +22,9 @@ export async function GET(request: Request) {
     const sortParam = url.searchParams.get("sort") ?? "newest";
     const sort = ["updated", "popular"].includes(sortParam) ? sortParam : "newest";
     const searchType = url.searchParams.get("searchType") ?? "all";
+    const filterRegulation = url.searchParams.get("regulation") ?? "";
+    const filterEventType = url.searchParams.get("eventType") ?? "";
+    const filterArchetype = url.searchParams.get("archetype") ?? ""; // comma-separated
 
     const sql = getDb();
 
@@ -48,6 +51,9 @@ export async function GET(request: Request) {
           ${searchPattern && searchType === "tournament" ? sql`AND s.data->>'tournamentName' ILIKE ${searchPattern}` : sql``}
           ${searchPattern && searchType === "creator" ? sql`AND s.data->>'creatorName' ILIKE ${searchPattern}` : sql``}
           ${searchPattern && searchType === "all" ? sql`AND (s.data->>'paste' ILIKE ${searchPattern} OR s.data->>'tournamentName' ILIKE ${searchPattern} OR s.data->>'creatorName' ILIKE ${searchPattern})` : sql``}
+          ${filterRegulation ? sql`AND s.data->'tags'->>'regulation' = ${filterRegulation}` : sql``}
+          ${filterEventType ? sql`AND s.data->'tags'->>'eventType' = ${filterEventType}` : sql``}
+          ${filterArchetype ? sql`AND s.data->'tags'->'archetype' ?| ${filterArchetype.split(",").filter(Boolean)}` : sql``}
           ${cursor ? sql`AND COALESCE(rc.like_count, 0) < ${parseInt(cursor, 10)}` : sql``}
         ORDER BY COALESCE(rc.like_count, 0) DESC, s.created_at DESC
         LIMIT ${limit + 1}
@@ -63,6 +69,9 @@ export async function GET(request: Request) {
           ${searchPattern && searchType === "tournament" ? sql`AND s.data->>'tournamentName' ILIKE ${searchPattern}` : sql``}
           ${searchPattern && searchType === "creator" ? sql`AND s.data->>'creatorName' ILIKE ${searchPattern}` : sql``}
           ${searchPattern && searchType === "all" ? sql`AND (s.data->>'paste' ILIKE ${searchPattern} OR s.data->>'tournamentName' ILIKE ${searchPattern} OR s.data->>'creatorName' ILIKE ${searchPattern})` : sql``}
+          ${filterRegulation ? sql`AND s.data->'tags'->>'regulation' = ${filterRegulation}` : sql``}
+          ${filterEventType ? sql`AND s.data->'tags'->>'eventType' = ${filterEventType}` : sql``}
+          ${filterArchetype ? sql`AND s.data->'tags'->'archetype' ?| ${filterArchetype.split(",").filter(Boolean)}` : sql``}
           ${cursor ? sql`AND ${col} < ${cursor}` : sql``}
         ORDER BY ${col} DESC
         LIMIT ${limit + 1}
@@ -126,6 +135,7 @@ export async function GET(request: Request) {
         likeCount: likeMap[sid] ?? 0,
         commentCount: commentMap[sid] || undefined,
         isVerified: creatorNameStr ? verifiedSet.has(creatorNameStr.toLowerCase()) : false,
+        tags: (data.tags as Record<string, unknown>) || undefined,
       };
     });
 

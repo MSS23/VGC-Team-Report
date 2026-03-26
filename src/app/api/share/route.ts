@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
+import { notifyFollowers } from "@/lib/notifications";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -9,7 +10,7 @@ const MAX_BODY_SIZE = 512_000; // 500 KB
 const ShareBodySchema = z.object({
   state: z.object({
     paste: z.string(),
-    matchupPlans: z.array(z.unknown()),
+    matchupPlans: z.array(z.unknown()).optional().default([]),
   }).passthrough(),
   existingId: z.string().optional(),
   editToken: z.string().optional(),
@@ -90,6 +91,12 @@ export async function POST(request: Request) {
       INSERT INTO shares (id, edit_token, data, version, is_public, owner_id)
       VALUES (${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${ownerId})
     `;
+
+    // Notify followers when a new public report is created (fire-and-forget)
+    if (isPublic && state.creatorName) {
+      notifyFollowers(state.creatorName as string, id, ownerId ?? undefined);
+    }
+
     return NextResponse.json({ id, editToken: newEditToken, updated: false, version: 1, isPublic: isPublic ?? false });
   } catch (e) {
     console.error("Share create/update error:", e);

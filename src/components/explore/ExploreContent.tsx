@@ -35,6 +35,9 @@ function ExploreInner() {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"newest" | "updated" | "popular">("newest");
   const [searchCategory, setSearchCategory] = useState<SearchCategory>("all");
+  const [regulation, setRegulation] = useState("");
+  const [eventType, setEventType] = useState("");
+  const [archetype, setArchetype] = useState("");
   const initialLoad = useRef(true);
 
   const fetchReports = useCallback(
@@ -44,6 +47,9 @@ function ExploreInner() {
       if (query) params.set("q", query);
       if (sort !== "newest") params.set("sort", sort);
       if (searchCategory !== "all") params.set("searchType", searchCategory);
+      if (regulation) params.set("regulation", regulation);
+      if (eventType) params.set("eventType", eventType);
+      if (archetype) params.set("archetype", archetype);
 
       const res = await fetch(`/api/explore?${params}`);
       if (!res.ok) throw new Error("Failed to fetch");
@@ -52,7 +58,7 @@ function ExploreInner() {
         nextCursor: string | null;
       }>;
     },
-    [query, sort, searchCategory],
+    [query, sort, searchCategory, regulation, eventType, archetype],
   );
 
   // Initial + filter/sort change fetch
@@ -160,7 +166,7 @@ function ExploreInner() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pb-24 sm:pb-20">
         <ExploreHero />
 
         <SpotlightSection />
@@ -172,6 +178,12 @@ function ExploreInner() {
           onSortChange={setSort}
           searchCategory={searchCategory}
           onSearchCategoryChange={setSearchCategory}
+          regulation={regulation}
+          onRegulationChange={setRegulation}
+          eventType={eventType}
+          onEventTypeChange={setEventType}
+          archetype={archetype}
+          onArchetypeChange={setArchetype}
         />
 
         {/* Results */}

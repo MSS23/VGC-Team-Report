@@ -10,6 +10,7 @@ import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { WhatsNewModal } from "@/components/ui/WhatsNewModal";
 import { SignInButton, UserButton, Show } from "@clerk/nextjs";
+import { REPORT_TEMPLATES } from "@/lib/templates";
 
 export const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
 Ability: Intimidate
@@ -81,6 +82,8 @@ interface PasteInputProps {
   paste: string;
   onPasteChange: (value: string) => void;
   onAnalyze: (directPaste?: string) => void;
+  selectedTemplate?: string;
+  onTemplateSelect?: (id: string) => void;
 }
 
 function looksLikeShowdownPaste(text: string): boolean {
@@ -97,7 +100,7 @@ const POKEMON_SPRITES = [
   "urshifu", "tornadus", "landorus-therian",
 ];
 
-export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps) {
+export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect }: PasteInputProps) {
   const { t } = useTranslation();
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -378,6 +381,34 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
         )}
       </motion.div>
 
+      {/* Template selector */}
+      <motion.div
+        className="mt-8"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
+      >
+        <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary mb-3">Report Template</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {REPORT_TEMPLATES.map((tmpl) => (
+            <button
+              key={tmpl.id}
+              type="button"
+              onClick={() => onTemplateSelect?.(tmpl.id)}
+              className={`flex flex-col items-start gap-1 p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                selectedTemplate === tmpl.id
+                  ? "border-accent bg-accent-surface shadow-sm shadow-accent/10"
+                  : "border-border bg-surface hover:border-accent/30 hover:bg-surface-alt/50"
+              }`}
+            >
+              <span className="text-base">{tmpl.icon}</span>
+              <span className={`text-xs font-bold ${selectedTemplate === tmpl.id ? "text-accent" : "text-text-primary"}`}>{tmpl.name}</span>
+              <span className="text-[10px] text-text-tertiary leading-tight">{tmpl.description}</span>
+            </button>
+          ))}
+        </div>
+      </motion.div>
+
       {/* Community section: spotlight + explore CTA */}
       <motion.div
         className="mt-12 sm:mt-16 space-y-6"
@@ -410,6 +441,28 @@ export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps)
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </div>
+          </div>
+        </a>
+
+        {/* Compare CTA */}
+        <a
+          href="/compare"
+          className="block bg-surface border-2 border-border rounded-2xl px-5 py-4 hover:border-accent/30 hover:shadow-md transition-all group"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-extrabold text-text-primary group-hover:text-accent transition-colors tracking-tight">
+                Compare Teams
+              </h2>
+              <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
+                Side-by-side type coverage, speed tiers, and shared Pokemon analysis.
+              </p>
+            </div>
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent-surface flex items-center justify-center group-hover:bg-accent/10 transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
               </svg>
             </div>
           </div>

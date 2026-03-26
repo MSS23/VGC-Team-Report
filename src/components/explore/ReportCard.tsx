@@ -20,6 +20,7 @@ export interface ExploreReport {
   reactionCounts?: Record<string, number>;
   commentCount?: number;
   isVerified?: boolean;
+  tags?: { archetype?: string[]; regulation?: string; eventType?: string };
 }
 
 function CardSprite({ species }: { species: string }) {
@@ -111,6 +112,24 @@ export function ReportCard({ report }: { report: ExploreReport }) {
               <span className="text-[9px] text-text-tertiary italic ml-1">(self-reported)</span>
             )}
           </p>
+        )}
+
+        {/* Tags */}
+        {report.tags && (report.tags.regulation || report.tags.eventType || report.tags.archetype?.length) && (
+          <div className="flex flex-wrap gap-1">
+            {report.tags.regulation && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">{report.tags.regulation}</span>
+            )}
+            {report.tags.eventType && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">{report.tags.eventType}</span>
+            )}
+            {report.tags.archetype?.slice(0, 2).map((a) => (
+              <span key={a} className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-accent/10 text-accent">{a}</span>
+            ))}
+            {(report.tags.archetype?.length ?? 0) > 2 && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-surface-alt text-text-tertiary">+{(report.tags.archetype?.length ?? 0) - 2}</span>
+            )}
+          </div>
         )}
 
         {/* Social indicators + timestamp */}

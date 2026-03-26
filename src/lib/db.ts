@@ -124,6 +124,21 @@ export async function ensureTable() {
   await run(sql`CREATE INDEX IF NOT EXISTS idx_follows_user ON follows(user_id)`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_follows_creator ON follows(creator_name)`);
 
+  // Notifications
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      source_share_id TEXT,
+      source_user_name TEXT,
+      message TEXT NOT NULL,
+      read BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read, created_at DESC)`);
+
   // Soft-delete support
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_deleted ON shares(deleted_at) WHERE deleted_at IS NOT NULL`);

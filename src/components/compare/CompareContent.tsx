@@ -1,0 +1,318 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
+import { lookupPokemon } from "@/lib/data/pokemon";
+import { calculateAllStats } from "@/lib/analysis/stat-calculator";
+import { getItemStatBoost } from "@/lib/analysis/item-boosts";
+import { getDefensiveProfile } from "@/lib/data/type-chart";
+import { PokemonSprite } from "@/components/report/PokemonSprite";
+import { TypeBadge } from "@/components/report/TypeBadge";
+import { useDarkMode } from "@/hooks/useDarkMode";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
+import type { AnalyzedPokemon } from "@/lib/types/analysis";
+import type { PokemonType } from "@/lib/types/pokemon";
+
+const ALL_TYPES: PokemonType[] = [
+  "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
+  "Fighting", "Poison", "Ground", "Flying", "Psychic", "Bug",
+  "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
+];
+
+function analyzePaste(paste: string): AnalyzedPokemon[] | null {
+  if (!paste.trim()) return null;
+  const parsed = parseShowdownPaste(paste);
+  if (parsed.pokemon.length === 0) return null;
+  return parsed.pokemon.map((p) => {
+    const data = lookupPokemon(p.species);
+    const calculatedStats = data
+      ? calculateAllStats(data.baseStats, p.ivs, p.evs, p.level, p.nature)
+      : { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+    const itemBoost = getItemStatBoost(p.item, p.ability, calculatedStats);
+    return { parsed: p, data, calculatedStats, itemBoost };
+  });
+}
+
+function getTeamWeaknesses(pokemon: AnalyzedPokemon[]) {
+  const weakMap: Record<string, number> = {};
+  const resistMap: Record<string, number> = {};
+  for (const mon of pokemon) {
+    const types = mon.data?.types ?? [];
+    if (types.length === 0) continue;
+    const profile = getDefensiveProfile(types as PokemonType[]);
+    for (const [t, mult] of Object.entries(profile)) {
+      if (mult >= 2) weakMap[t] = (weakMap[t] ?? 0) + 1;
+      if (mult <= 0.5) resistMap[t] = (resistMap[t] ?? 0) + 1;
+    }
+  }
+  return { weakMap, resistMap };
+}
+
+function PokemonRow({ pokemon, shared }: { pokemon: AnalyzedPokemon[]; shared: Set<string> }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {pokemon.map((mon, i) => {
+        const isShared = shared.has(mon.parsed.species.toLowerCase());
+        return (
+          <div key={i} className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 ${isShared ? "border-accent bg-accent/5" : "border-border bg-surface"}`}>
+            <PokemonSprite species={mon.parsed.species} size={48} shiny={mon.parsed.shiny} />
+            <span className="text-[10px] font-bold text-text-primary text-center leading-tight max-w-[60px] truncate">{mon.parsed.species}</span>
+            <div className="flex gap-0.5">
+              {(mon.data?.types ?? []).map((t) => (
+                <TypeBadge key={t} type={t} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TypeWeaknessGrid({ label, weakMap, resistMap, color }: { label: string; weakMap: Record<string, number>; resistMap: Record<string, number>; color: string }) {
+  return (
+    <div className="flex-1 min-w-0">
+      <h4 className={`text-xs font-bold ${color} mb-2`}>{label}</h4>
+      <div className="grid grid-cols-6 gap-1">
+        {ALL_TYPES.map((t) => {
+          const weak = weakMap[t] ?? 0;
+          const resist = resistMap[t] ?? 0;
+          return (
+            <div key={t} className="flex flex-col items-center gap-0.5">
+              <TypeBadge type={t} />
+              <div className="flex gap-1 text-[9px] font-bold">
+                {weak > 0 && <span className="text-red-500">-{weak}</span>}
+                {resist > 0 && <span className="text-emerald-500">+{resist}</span>}
+                {weak === 0 && resist === 0 && <span className="text-text-tertiary">0</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SpeedComparison({ teamA, teamB }: { teamA: AnalyzedPokemon[]; teamB: AnalyzedPokemon[] }) {
+  const allSpeeds = [
+    ...teamA.map((m) => ({
+      species: m.parsed.species,
+      speed: m.itemBoost?.stat === "spe" ? m.itemBoost.boostedValue : m.calculatedStats.spe,
+      team: "A" as const,
+    })),
+    ...teamB.map((m) => ({
+      species: m.parsed.species,
+      speed: m.itemBoost?.stat === "spe" ? m.itemBoost.boostedValue : m.calculatedStats.spe,
+      team: "B" as const,
+    })),
+  ].sort((a, b) => b.speed - a.speed);
+
+  const maxSpeed = allSpeeds[0]?.speed ?? 1;
+
+  return (
+    <div className="space-y-1.5">
+      {allSpeeds.map((entry, i) => (
+        <div key={`${entry.species}-${entry.team}-${i}`} className="flex items-center gap-2">
+          <span className={`text-[10px] font-bold w-24 text-right truncate ${entry.team === "A" ? "text-blue-500" : "text-orange-500"}`}>
+            {entry.species}
+          </span>
+          <div className="flex-1 h-4 bg-surface-alt rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${entry.team === "A" ? "bg-blue-500/70" : "bg-orange-500/70"}`}
+              style={{ width: `${(entry.speed / maxSpeed) * 100}%` }}
+            />
+          </div>
+          <span className="text-[10px] font-bold text-text-secondary w-8">{entry.speed}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function CompareContent() {
+  const { darkMode, setDarkMode } = useDarkMode();
+  const [pasteA, setPasteA] = useState("");
+  const [pasteB, setPasteB] = useState("");
+  const [compared, setCompared] = useState(false);
+
+  const teamA = useMemo(() => compared ? analyzePaste(pasteA) : null, [pasteA, compared]);
+  const teamB = useMemo(() => compared ? analyzePaste(pasteB) : null, [pasteB, compared]);
+
+  const sharedSpecies = useMemo(() => {
+    if (!teamA || !teamB) return new Set<string>();
+    const speciesA = new Set(teamA.map((m) => m.parsed.species.toLowerCase()));
+    return new Set([...speciesA].filter((s) => teamB.some((m) => m.parsed.species.toLowerCase() === s)));
+  }, [teamA, teamB]);
+
+  const weakA = useMemo(() => teamA ? getTeamWeaknesses(teamA) : null, [teamA]);
+  const weakB = useMemo(() => teamB ? getTeamWeaknesses(teamB) : null, [teamB]);
+
+  const handleCompare = () => {
+    if (pasteA.trim() && pasteB.trim()) setCompared(true);
+  };
+
+  const handleReset = () => {
+    setCompared(false);
+    setPasteA("");
+    setPasteB("");
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-text-primary">
+      {/* Header */}
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-surface/90 border-b border-border shadow-[0_1px_8px_rgba(0,0,0,0.06)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <a href="/" className="flex items-center gap-2 font-bold text-sm hover:opacity-80 transition-opacity">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            <span className="text-text-primary">VGC Team</span>
+            <span className="text-accent">Report</span>
+          </a>
+          <div className="flex items-center gap-3">
+            <a href="/explore" className="text-xs font-bold text-text-secondary hover:text-accent transition-colors">Explore</a>
+            <LanguageSelector />
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all"
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* Hero */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            Compare <span className="text-accent">Teams</span>
+          </h1>
+          <p className="text-sm text-text-secondary mt-2">Paste two teams side-by-side to compare type coverage, speed tiers, and shared Pokemon.</p>
+        </div>
+
+        {!compared || !teamA || !teamB ? (
+          /* Input mode */
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2 block">Team A</label>
+                <textarea
+                  value={pasteA}
+                  onChange={(e) => { setPasteA(e.target.value); setCompared(false); }}
+                  placeholder="Paste Showdown team A here..."
+                  className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 resize-y font-[family-name:var(--font-mono)]"
+                  spellCheck={false}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">Team B</label>
+                <textarea
+                  value={pasteB}
+                  onChange={(e) => { setPasteB(e.target.value); setCompared(false); }}
+                  placeholder="Paste Showdown team B here..."
+                  className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500 resize-y font-[family-name:var(--font-mono)]"
+                  spellCheck={false}
+                />
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <button
+                onClick={handleCompare}
+                disabled={!pasteA.trim() || !pasteB.trim()}
+                className="px-8 py-3 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide"
+              >
+                Compare Teams
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Results */
+          <div className="space-y-8 animate-fade-in">
+            <div className="flex justify-end">
+              <button
+                onClick={handleReset}
+                className="text-xs font-bold text-text-secondary hover:text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent/30 transition-all cursor-pointer"
+              >
+                New Comparison
+              </button>
+            </div>
+
+            {/* Pokemon grids */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-3">Team A</h3>
+                <PokemonRow pokemon={teamA} shared={sharedSpecies} />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-3">Team B</h3>
+                <PokemonRow pokemon={teamB} shared={sharedSpecies} />
+              </div>
+            </div>
+
+            {/* Shared Pokemon */}
+            {sharedSpecies.size > 0 && (
+              <div className="bg-accent/5 border border-accent/20 rounded-xl p-4">
+                <h3 className="text-xs font-bold text-accent uppercase tracking-widest mb-2">
+                  Shared Pokemon ({sharedSpecies.size})
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {[...sharedSpecies].map((s) => (
+                    <span key={s} className="text-xs font-semibold text-accent bg-accent/10 px-2.5 py-1 rounded-lg capitalize">
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Type coverage comparison */}
+            <div>
+              <h3 className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-4">Defensive Type Coverage</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {weakA && <TypeWeaknessGrid label="Team A" weakMap={weakA.weakMap} resistMap={weakA.resistMap} color="text-blue-500" />}
+                {weakB && <TypeWeaknessGrid label="Team B" weakMap={weakB.weakMap} resistMap={weakB.resistMap} color="text-orange-500" />}
+              </div>
+            </div>
+
+            {/* Speed tiers */}
+            <div>
+              <h3 className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-4">Speed Tiers</h3>
+              <div className="bg-surface border border-border rounded-xl p-4 sm:p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold">
+                    <span className="w-3 h-3 rounded-sm bg-blue-500/70" /> Team A
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold">
+                    <span className="w-3 h-3 rounded-sm bg-orange-500/70" /> Team B
+                  </span>
+                </div>
+                <SpeedComparison teamA={teamA} teamB={teamB} />
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <footer className="border-t border-border py-8">
+        <p className="text-center text-xs text-text-tertiary font-medium">
+          <a href="/" className="text-text-tertiary hover:text-text-primary transition-colors">Build Your Own Report</a>
+          <span className="mx-1.5 text-border">&middot;</span>
+          <a href="/explore" className="text-text-tertiary hover:text-text-primary transition-colors">Explore</a>
+        </p>
+      </footer>
+    </div>
+  );
+}

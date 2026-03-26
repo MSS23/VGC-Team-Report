@@ -6,6 +6,81 @@ import { z } from "zod";
 const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
 const KeySchema = z.string().regex(/^[0-9a-f]{64}$/, "Invalid edit key");
 
+/**
+ * Normalize old report data to the current template format.
+ * Ensures all fields expected by the client exist with sensible defaults,
+ * and migrates legacy matchup plan structures to the current gamePlans[] format.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeReportData(data: Record<string, any>): Record<string, any> {
+  // Ensure matchupPlans is always an array
+  const rawPlans = Array.isArray(data.matchupPlans) ? data.matchupPlans : [];
+
+  // Migrate each matchup plan to the current format
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const matchupPlans = rawPlans.map((plan: any) => {
+    // Already has gamePlans array — just ensure each game plan has all fields
+    if (Array.isArray(plan.gamePlans) && plan.gamePlans.length > 0) {
+      return {
+        opponentPaste: plan.opponentPaste ?? "",
+        opponentLabel: plan.opponentLabel ?? "",
+        showSlide: plan.showSlide,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        gamePlans: plan.gamePlans.map((gp: any) => ({
+          bring: Array.isArray(gp.bring) ? gp.bring : [null, null, null, null],
+          notes: gp.notes ?? "",
+          replays: Array.isArray(gp.replays) ? gp.replays : [],
+          result: gp.result ?? undefined,
+        })),
+      };
+    }
+
+    // Legacy: migrate planA/planB or selectedIndices → gamePlans[0]
+    let bring: [number | null, number | null, number | null, number | null] = [null, null, null, null];
+    if (plan.planA) {
+      bring = [plan.planA.lead?.[0] ?? null, plan.planA.lead?.[1] ?? null, plan.planA.back?.[0] ?? null, plan.planA.back?.[1] ?? null];
+    } else if (Array.isArray(plan.selectedIndices)) {
+      bring = [
+        plan.selectedIndices[0] ?? null,
+        plan.selectedIndices[1] ?? null,
+        plan.selectedIndices[2] ?? null,
+        plan.selectedIndices[3] ?? null,
+      ];
+    }
+
+    return {
+      opponentPaste: plan.opponentPaste ?? "",
+      opponentLabel: plan.opponentLabel ?? "",
+      showSlide: plan.showSlide,
+      gamePlans: [{
+        bring,
+        notes: plan.notes ?? "",
+        replays: [],
+      }],
+    };
+  });
+
+  return {
+    ...data,
+    paste: data.paste ?? "",
+    notes: data.notes ?? {},
+    calcs: data.calcs ?? {},
+    roles: data.roles ?? {},
+    teamSummary: data.teamSummary ?? "",
+    tournamentName: data.tournamentName ?? undefined,
+    placement: data.placement ?? undefined,
+    record: data.record ?? undefined,
+    mvpIndex: data.mvpIndex ?? null,
+    rentalCode: data.rentalCode ?? undefined,
+    creatorName: data.creatorName ?? undefined,
+    matchupPlans,
+    hiddenSlides: Array.isArray(data.hiddenSlides) ? data.hiddenSlides : [],
+    allowComments: data.allowComments ?? false,
+    tags: data.tags ?? undefined,
+    templateId: data.templateId ?? undefined,
+  };
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -56,7 +131,7 @@ export async function GET(
       }
 
       return NextResponse.json({
-        ...rows[0].data,
+        ...normalizeReportData(rows[0].data as Record<string, unknown>),
         _editable: !!rows[0].editable,
         _version: Number(rows[0].version),
         _isPublic: !!rows[0].is_public,
@@ -77,7 +152,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      ...rows[0].data,
+      ...normalizeReportData(rows[0].data as Record<string, unknown>),
       _version: Number(rows[0].version),
       _isPublic: !!rows[0].is_public,
     });

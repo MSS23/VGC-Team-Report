@@ -2,6 +2,12 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 
+export interface ReportTags {
+  archetype?: string[];
+  regulation?: string;
+  eventType?: string;
+}
+
 interface TeamMeta {
   roles: Record<string, string>;
   summary: string;
@@ -11,6 +17,8 @@ interface TeamMeta {
   mvpIndex?: number | null;
   rentalCode?: string;
   creatorName?: string;
+  tags?: ReportTags;
+  templateId?: string;
 }
 
 function buildTeamKey(speciesKeys: string[]): string {
@@ -72,6 +80,8 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
   const mvpIndex = meta.mvpIndex ?? null;
   const rentalCode = meta.rentalCode;
   const creatorName = meta.creatorName;
+  const tags = meta.tags;
+  const templateId = meta.templateId;
 
   const setRole = useCallback((species: string, text: string) => {
     setMeta((prev) => ({ ...prev, roles: { ...prev.roles, [species]: text } }));
@@ -105,12 +115,20 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
     setMeta((prev) => ({ ...prev, creatorName: text }));
   }, []);
 
+  const setTags = useCallback((newTags: ReportTags) => {
+    setMeta((prev) => ({ ...prev, tags: newTags }));
+  }, []);
+
+  const setTemplateId = useCallback((id: string | undefined) => {
+    setMeta((prev) => ({ ...prev, templateId: id }));
+  }, []);
+
   const setMetaFull = useCallback((newMeta: TeamMeta) => {
     setMeta(newMeta);
   }, []);
 
   return {
-    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName,
-    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setMetaFull,
+    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId,
+    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull,
   };
 }

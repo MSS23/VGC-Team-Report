@@ -4,6 +4,7 @@ import type { TeamAnalysis } from "@/lib/types/analysis";
 import type { MatchupPlan, GameResult } from "@/hooks/useMatchupPlans";
 import type { CalcEntry, CalcCategory } from "@/hooks/useDamageCalcs";
 import type { SpriteConfig } from "@/lib/types/sprites";
+import type { ReportTags } from "@/lib/data/tags";
 import { TeamOverview } from "./TeamOverview";
 import { MatchupSheet } from "./MatchupSheet";
 import { PokemonDetailSlide } from "./PokemonDetailSlide";
@@ -37,6 +38,8 @@ interface TeamReportProps {
   onCreatorNameChange?: (text: string) => void;
   mvpIndex?: number | null;
   onMvpIndexChange?: (index: number | null) => void;
+  tags?: ReportTags;
+  onTagsChange?: (tags: ReportTags) => void;
   isReadOnly?: boolean;
   isPresentationMode?: boolean;
   plans?: MatchupPlan[];
@@ -86,6 +89,8 @@ export function TeamReport({
   onCreatorNameChange,
   mvpIndex,
   onMvpIndexChange,
+  tags,
+  onTagsChange,
   isReadOnly = false,
   isPresentationMode = false,
   plans = [],
@@ -127,6 +132,8 @@ export function TeamReport({
         onCreatorNameChange={onCreatorNameChange}
         mvpIndex={mvpIndex ?? null}
         onMvpIndexChange={onMvpIndexChange}
+        tags={tags}
+        onTagsChange={onTagsChange}
         isReadOnly={isReadOnly}
         getSpriteConfig={getSpriteConfig}
         onReorderPokemon={onReorderPokemon}

@@ -1,18 +1,41 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { I18nProvider } from "@/lib/i18n";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { PageNavbar } from "@/components/layout/PageNavbar";
+import { PageFooter } from "@/components/layout/PageFooter";
 
 const ENTRIES = [
   {
     date: "March 2026",
+    version: "3.5",
+    title: "Compare, Tags & Notifications",
+    emoji: "🔍",
+    highlight: true,
+    items: [
+      { type: "new" as const, text: "Team Comparison page — paste two teams side-by-side to compare type coverage, speed tiers, and shared Pokemon" },
+      { type: "new" as const, text: "Tags & Categories — tag reports with archetype (Rain, Trick Room, etc.), regulation, and event type" },
+      { type: "new" as const, text: "Explore filters — filter community reports by regulation, event type, and archetype tags" },
+      { type: "new" as const, text: "Notifications — get notified when someone comments, reacts, or a creator you follow posts a new report" },
+      { type: "new" as const, text: "Notification bell in navbar with unread count badge and dropdown panel" },
+      { type: "new" as const, text: "Report Templates — choose Quick Share, Tournament Report, Team Guide, or Blank when creating a report" },
+      { type: "new" as const, text: "Rental Code QR — scan QR codes for rental team codes directly from reports" },
+      { type: "improved" as const, text: "Tag pills shown on Explore report cards for quick identification" },
+      { type: "improved" as const, text: "Tag selector with pill-style archetype multi-select and regulation/event dropdowns in creator mode" },
+      { type: "improved" as const, text: "Dark/light mode now persists across sessions via localStorage" },
+      { type: "improved" as const, text: "System dark mode preference respected on first visit" },
+    ],
+  },
+  {
+    date: "March 2026",
     version: "3.0",
     title: "Authentication & Dashboard",
+    emoji: "🔐",
     items: [
-      { type: "new" as const, text: "Sign in with Discord, Google, or X/Twitter via Clerk" },
+      { type: "new" as const, text: "Sign in with Discord, Google, or Twitch via Clerk" },
       { type: "new" as const, text: "Dashboard — manage all your team reports in one place" },
       { type: "new" as const, text: "Claim reports — link existing reports to your account via edit token" },
       { type: "new" as const, text: "Auto-detect unclaimed reports from your browser localStorage" },
@@ -36,6 +59,7 @@ const ENTRIES = [
     date: "March 2026",
     version: "2.5",
     title: "Technical Upgrade",
+    emoji: "⚡",
     items: [
       { type: "improved" as const, text: "Refactored useHomePage into 3 focused hooks (useShareFlow, useSlideSystem, useExportActions)" },
       { type: "improved" as const, text: "Mobile: IV badges visible, larger move text, wider stat bars, better grids" },
@@ -54,6 +78,7 @@ const ENTRIES = [
     date: "March 2026",
     version: "2.0",
     title: "Community Update",
+    emoji: "🌍",
     items: [
       { type: "new" as const, text: "Explore gallery — browse public team reports from the community" },
       { type: "new" as const, text: "Reactions — react to reports with emoji (fire, heart, brain, battle, clap)" },
@@ -64,7 +89,7 @@ const ENTRIES = [
       { type: "new" as const, text: "YouTube-style visibility — private, unlisted, or public" },
       { type: "new" as const, text: "Spotlight featured team report on landing and explore pages" },
       { type: "new" as const, text: "What's New modal for first-time visitors" },
-      { type: "new" as const, text: "Random accent colors on landing page (8 palettes)" },
+      { type: "new" as const, text: "Random accent colours on landing page (8 palettes)" },
       { type: "improved" as const, text: "Landing page redesigned to show community features" },
       { type: "improved" as const, text: "Animated GIF sprites across all cards and spotlight" },
       { type: "improved" as const, text: "SEO metadata updated across all pages" },
@@ -78,6 +103,7 @@ const ENTRIES = [
     date: "March 2026",
     version: "1.9",
     title: "Safety & Moderation",
+    emoji: "🛡️",
     items: [
       { type: "new" as const, text: "Word filter blocks inappropriate language in comments" },
       { type: "new" as const, text: "Flag/report button on comments with auto-remove at 3 flags" },
@@ -94,9 +120,9 @@ const ENTRIES = [
 ];
 
 const TYPE_STYLES = {
-  new: { label: "New", bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" },
-  improved: { label: "Improved", bg: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" },
-  fixed: { label: "Fixed", bg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" },
+  new: { label: "New", bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20", dot: "bg-emerald-500" },
+  improved: { label: "Improved", bg: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20", dot: "bg-blue-500" },
+  fixed: { label: "Fixed", bg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20", dot: "bg-amber-500" },
 };
 
 export function ChangelogContent() {
@@ -111,76 +137,197 @@ function ChangelogInner() {
   const { darkMode, setDarkMode } = useDarkMode();
   useEffect(() => { applyRandomAccent(); }, []);
 
+  // Count totals
+  const totalNew = ENTRIES.reduce((sum, e) => sum + e.items.filter((i) => i.type === "new").length, 0);
+  const totalImproved = ENTRIES.reduce((sum, e) => sum + e.items.filter((i) => i.type === "improved").length, 0);
+  const totalFixed = ENTRIES.reduce((sum, e) => sum + e.items.filter((i) => i.type === "fixed").length, 0);
+
+  const [expandedVersions, setExpandedVersions] = useState<Set<string>>(() => new Set([ENTRIES[0].version]));
+
+  const toggleVersion = (version: string) => {
+    setExpandedVersions((prev) => {
+      const next = new Set(prev);
+      if (next.has(version)) next.delete(version);
+      else next.add(version);
+      return next;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      {/* Navbar */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-surface/90 border-b border-border shadow-[0_1px_8px_rgba(0,0,0,0.06)]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 font-bold text-sm hover:opacity-80 transition-opacity">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent"><polyline points="15 18 9 12 15 6" /></svg>
-            <span className="text-text-primary">VGC Team</span>
-            <span className="text-accent">Report</span>
-          </a>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all"
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
-            )}
-          </button>
-        </div>
-      </header>
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="changelog" />
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
-            Changelog
-          </h1>
-          <p className="text-sm text-text-secondary mb-10">
-            Latest features, improvements, and fixes.
-          </p>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14 pb-24 sm:pb-14">
+        {/* Hero */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-10"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-accent-surface flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Changelog
+              </h1>
+              <p className="text-sm text-text-secondary">
+                What&apos;s new in VGC Team Report
+              </p>
+            </div>
+          </div>
+
+          {/* Stats bar */}
+          <div className="flex flex-wrap items-center gap-2 mt-5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              {totalNew} new features
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              {totalImproved} improvements
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              {totalFixed} fixes
+            </span>
+            <span className="text-xs text-text-tertiary font-medium ml-1">
+              across {ENTRIES.length} releases
+            </span>
+          </div>
         </motion.div>
 
-        <div className="space-y-10">
-          {ENTRIES.map((entry, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.05, duration: 0.4 }}
-              className="relative"
-            >
-              {/* Version header */}
-              <div className="flex items-center gap-3 mb-4">
-                <span className="inline-flex items-center px-2.5 py-1 text-xs font-extrabold rounded-lg bg-accent-surface text-accent tracking-wide">
-                  v{entry.version}
-                </span>
-                <h2 className="text-lg font-bold text-text-primary">{entry.title}</h2>
-                <span className="text-xs text-text-tertiary font-medium">{entry.date}</span>
-              </div>
+        {/* Timeline */}
+        <div className="relative">
+          {/* Vertical line */}
+          <div className="absolute left-[17px] top-0 bottom-0 w-px bg-border hidden sm:block" />
 
-              {/* Items */}
-              <div className="space-y-2 pl-1">
-                {entry.items.map((item, j) => {
-                  const style = TYPE_STYLES[item.type];
-                  return (
-                    <div key={j} className="flex items-start gap-2.5">
-                      <span className={`flex-shrink-0 inline-flex items-center px-1.5 py-0.5 text-[9px] font-extrabold rounded border tracking-wider uppercase mt-0.5 ${style.bg}`}>
-                        {style.label}
+          <div className="space-y-6">
+            {ENTRIES.map((entry, i) => {
+              const isExpanded = expandedVersions.has(entry.version);
+              const newCount = entry.items.filter((it) => it.type === "new").length;
+              const improvedCount = entry.items.filter((it) => it.type === "improved").length;
+              const fixedCount = entry.items.filter((it) => it.type === "fixed").length;
+
+              return (
+                <motion.div
+                  key={entry.version}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.06, duration: 0.45 }}
+                  className="relative sm:pl-12"
+                >
+                  {/* Timeline dot */}
+                  <div className={`hidden sm:flex absolute left-0 top-4 w-[35px] h-[35px] rounded-full items-center justify-center z-10 ${
+                    entry.highlight
+                      ? "bg-accent text-white shadow-lg shadow-accent/30"
+                      : "bg-surface border-2 border-border text-text-tertiary"
+                  }`}>
+                    <span className="text-sm">{entry.emoji}</span>
+                  </div>
+
+                  {/* Card */}
+                  <div className={`rounded-2xl border-2 overflow-hidden transition-all duration-300 ${
+                    entry.highlight
+                      ? "border-accent/30 bg-accent-surface/20 shadow-sm shadow-accent/10"
+                      : "border-border bg-surface hover:border-accent/20"
+                  }`}>
+                    {/* Header — always visible, clickable */}
+                    <button
+                      type="button"
+                      onClick={() => toggleVersion(entry.version)}
+                      className="w-full px-5 py-4 flex items-center gap-3 text-left cursor-pointer group"
+                    >
+                      <span className="sm:hidden text-lg">{entry.emoji}</span>
+                      <span className={`inline-flex items-center px-2.5 py-1 text-xs font-extrabold rounded-lg tracking-wide flex-shrink-0 ${
+                        entry.highlight
+                          ? "bg-accent text-white"
+                          : "bg-accent-surface text-accent"
+                      }`}>
+                        v{entry.version}
                       </span>
-                      <span className="text-sm text-text-secondary">{item.text}</span>
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-sm sm:text-base font-bold text-text-primary group-hover:text-accent transition-colors truncate">
+                          {entry.title}
+                        </h2>
+                        <span className="text-[11px] text-text-tertiary font-medium">{entry.date}</span>
+                      </div>
+                      {/* Mini counts */}
+                      <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
+                        {newCount > 0 && <span className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold flex items-center justify-center">{newCount}</span>}
+                        {improvedCount > 0 && <span className="w-5 h-5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold flex items-center justify-center">{improvedCount}</span>}
+                        {fixedCount > 0 && <span className="w-5 h-5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold flex items-center justify-center">{fixedCount}</span>}
+                      </div>
+                      <svg
+                        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                        className={`text-text-tertiary flex-shrink-0 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+
+                    {/* Items — collapsible */}
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        isExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+                      }`}
+                    >
+                      <div className="px-5 pb-5 space-y-2 border-t border-border/50 pt-3">
+                        {entry.items.map((item, j) => {
+                          const style = TYPE_STYLES[item.type];
+                          return (
+                            <motion.div
+                              key={j}
+                              initial={isExpanded ? { opacity: 0, x: -8 } : false}
+                              animate={isExpanded ? { opacity: 1, x: 0 } : false}
+                              transition={{ delay: j * 0.02, duration: 0.25 }}
+                              className="flex items-start gap-2.5"
+                            >
+                              <span className={`flex-shrink-0 inline-flex items-center px-1.5 py-0.5 text-[9px] font-extrabold rounded border tracking-wider uppercase mt-0.5 ${style.bg}`}>
+                                {style.label}
+                              </span>
+                              <span className="text-sm text-text-secondary leading-relaxed">{item.text}</span>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          ))}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+          className="text-center mt-14"
+        >
+          <p className="text-sm text-text-tertiary mb-4">Have an idea for the next update?</p>
+          <a
+            href="/feedback"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+            </svg>
+            Send Feedback
+          </a>
+        </motion.div>
       </main>
+
+      <PageFooter />
     </div>
   );
 }

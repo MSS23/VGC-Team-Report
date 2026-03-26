@@ -8,6 +8,7 @@ import { SignInButton, UserButton, Show } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
 import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
+import { NotificationBell } from "@/components/ui/NotificationBell";
 
 interface NavbarProps {
   // Mode flags
@@ -221,15 +222,25 @@ export function Navbar(props: NavbarProps) {
           </div>
         )}
 
-        {/* Mobile slide counter (non-presentation) */}
+        {/* Mobile slide counter + tournament context (non-presentation) */}
         {!isPresentationStyle && (
-          <div className="md:hidden flex items-center gap-1.5 min-w-0 overflow-hidden flex-shrink">
-            <span className="text-xs text-text-primary font-semibold truncate max-w-[130px]">
-              {slideLabels[currentSlide]}
-            </span>
-            <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">
-              {currentSlide + 1}/{totalSlides}
-            </span>
+          <div className="md:hidden flex flex-col items-center min-w-0 overflow-hidden flex-1 justify-center">
+            {tournamentName && scrolled && (
+              <div className="flex items-center gap-1.5 max-w-full">
+                <span className="text-[10px] font-extrabold text-text-primary truncate leading-none">{tournamentName}</span>
+                {placement && (
+                  <span className="text-[9px] font-extrabold text-accent bg-accent-surface px-1.5 py-0.5 rounded flex-shrink-0 leading-none">{placement}</span>
+                )}
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-text-primary font-semibold truncate">
+                {slideLabels[currentSlide]}
+              </span>
+              <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">
+                {currentSlide + 1}/{totalSlides}
+              </span>
+            </div>
           </div>
         )}
 
@@ -341,6 +352,7 @@ export function Navbar(props: NavbarProps) {
             </SignInButton>
           </Show>
           <Show when="signed-in">
+            <NotificationBell enabled={true} />
             <a href="/dashboard" className="hidden sm:inline text-xs font-bold text-text-secondary hover:text-accent transition-colors">Dashboard</a>
             <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
           </Show>
@@ -386,22 +398,23 @@ export function Navbar(props: NavbarProps) {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="More options"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="1" />
                 <circle cx="12" cy="5" r="1" />
                 <circle cx="12" cy="19" r="1" />
               </svg>
             </button>
             {mobileMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-surface border border-border rounded-xl shadow-lg py-2 min-w-[180px] z-50 animate-fade-in">
-                <div className="px-3 py-2 flex items-center justify-between">
-                  <span className="text-xs font-bold text-text-secondary">{darkMode ? t.dark : t.light}</span>
+              <div className="absolute right-0 top-full mt-1 bg-surface border border-border rounded-xl shadow-lg py-2 min-w-[200px] z-50 animate-fade-in">
+                <div className="px-4 py-3 flex items-center justify-between">
+                  <span className="text-sm font-bold text-text-secondary">{darkMode ? t.dark : t.light}</span>
                   <Toggle checked={darkMode} onChange={(v) => { onDarkModeChange(v); setMobileMenuOpen(false); }} label="" />
                 </div>
-                <div className="px-3 py-2">
+                <div className="border-t border-border mx-2" />
+                <div className="px-4 py-3">
                   <LanguageSelector />
                 </div>
               </div>
