@@ -173,32 +173,86 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4">
+    <div className="w-full max-w-2xl mx-auto px-4 pt-14 sm:pt-14 pb-20 sm:pb-0">
 
-      {/* Top right: auth + language */}
-      <div className="fixed top-3 right-3 z-20 flex items-center gap-2">
-        <Show when="signed-out">
-          <SignInButton mode="modal">
-            <button className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all cursor-pointer">
-              Sign In
-            </button>
-          </SignInButton>
-        </Show>
-        <Show when="signed-in">
-          <a
-            href="/dashboard"
-            className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all"
-          >
-            Dashboard
+      {/* Top nav bar */}
+      <div className="fixed top-0 left-0 right-0 z-20 backdrop-blur-xl bg-background/80 border-b border-border/30">
+        <div className="max-w-2xl mx-auto px-4 h-12 flex items-center justify-between">
+          {/* Page links (desktop only — mobile uses bottom tabs) */}
+          <nav className="hidden sm:flex items-center gap-1">
+            {[
+              { href: "/explore", label: "Explore" },
+              { href: "/compare", label: "Compare" },
+              { href: "/changelog", label: "Updates" },
+              { href: "/feedback", label: "Feedback" },
+            ].map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="px-2.5 py-1.5 text-xs font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 rounded-lg transition-all"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* Logo on mobile (since nav links are hidden) */}
+          <a href="/" className="sm:hidden flex items-center gap-1.5 font-bold text-sm">
+            <span className="text-text-primary">VGC Team</span>
+            <span className="text-accent">Report</span>
           </a>
-          <UserButton
-            appearance={{
-              elements: { avatarBox: "w-8 h-8" },
-            }}
-          />
-        </Show>
-        <LanguageSelector />
+
+          {/* Auth + language */}
+          <div className="flex items-center gap-2">
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <button className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all cursor-pointer">
+                  Sign In
+                </button>
+              </SignInButton>
+            </Show>
+            <Show when="signed-in">
+              <a
+                href="/dashboard"
+                className="px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent transition-colors hidden sm:inline"
+              >
+                Dashboard
+              </a>
+              <UserButton
+                appearance={{
+                  elements: { avatarBox: "w-7 h-7" },
+                }}
+              />
+            </Show>
+            <LanguageSelector />
+          </div>
+        </div>
       </div>
+
+      {/* Mobile bottom tab bar (same as PageNavbar) */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-border safe-bottom" aria-label="Mobile navigation">
+        <div className="flex items-center justify-around px-2 py-1.5">
+          {[
+            { href: "/", label: "Home", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1", active: true },
+            { href: "/explore", label: "Explore", icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z", active: false },
+            { href: "/compare", label: "Compare", icon: "M18 20V10M12 20V4M6 20v-6", active: false },
+            { href: "/dashboard", label: "Dashboard", icon: "M4 6h16M4 12h16m-7 6h7", active: false },
+          ].map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-all min-w-[56px] active:scale-[0.93] ${
+                link.active ? "text-accent" : "text-text-tertiary active:text-text-primary"
+              }`}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={link.active ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round">
+                <path d={link.icon} />
+              </svg>
+              <span className={`text-[10px] font-bold ${link.active ? "text-accent" : ""}`}>{link.label}</span>
+            </a>
+          ))}
+        </div>
+      </nav>
 
       {/* Animated sprites with floating effect */}
       <div className="flex justify-center gap-3 sm:gap-5 mb-8 sm:mb-10 overflow-hidden">
@@ -245,27 +299,32 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         </p>
       </motion.div>
 
-      {/* Feature pills */}
+      {/* How it works — quick explainer for new users */}
       <motion.div
-        className="flex flex-wrap items-center justify-center gap-2 mb-8 sm:mb-10"
+        className="flex flex-col sm:flex-row items-stretch gap-3 mb-8 sm:mb-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.4 }}
       >
         {[
-          { icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", label: "Team Analysis" },
-          { icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", label: "Share & Explore" },
-          { icon: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z", label: "Matchup Plans" },
-        ].map((pill) => (
-          <span
-            key={pill.label}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-full bg-surface border border-border text-text-secondary"
+          { step: "1", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", title: "Paste your team", desc: "From Showdown, PokePaste, or any team builder" },
+          { step: "2", icon: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z", title: "Add your notes", desc: "Damage calcs, matchup plans, and strategy" },
+          { step: "3", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", title: "Share with anyone", desc: "Public link, presentation mode, or PDF export" },
+        ].map((item) => (
+          <div
+            key={item.step}
+            className="flex-1 flex items-start gap-3 p-3 rounded-xl bg-surface border border-border"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-              <path d={pill.icon} />
-            </svg>
-            {pill.label}
-          </span>
+            <div className="w-7 h-7 rounded-lg bg-accent-surface flex items-center justify-center flex-shrink-0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                <path d={item.icon} />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-text-primary">{item.title}</p>
+              <p className="text-[10px] text-text-tertiary leading-snug mt-0.5">{item.desc}</p>
+            </div>
+          </div>
         ))}
       </motion.div>
 
@@ -331,18 +390,11 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
       {/* Actions */}
       <motion.div
-        className="flex items-center justify-between gap-3 mt-5"
+        className="flex flex-col gap-3 mt-5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.25, duration: 0.3 }}
       >
-        <button
-          onClick={() => onPasteChange(SAMPLE_PASTE)}
-          className="text-sm font-semibold text-text-secondary hover:text-accent border-2 border-border hover:border-accent/30 rounded-lg px-4 py-2.5 transition-all duration-200 cursor-pointer hover:bg-accent-surface/50"
-        >
-          {t.loadSample}
-        </button>
-
         {isUrl ? (
           <motion.button
             onClick={handleFetchPaste}
@@ -379,64 +431,26 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             </span>
           </motion.button>
         )}
-      </motion.div>
 
-      {/* Template selector */}
-      <motion.div
-        className="mt-8"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">What kind of report?</h3>
-          <span className="text-[9px] text-text-tertiary/60 font-medium">(pre-fills structure after analyzing)</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {REPORT_TEMPLATES.map((tmpl) => {
-            const isSelected = selectedTemplate === tmpl.id;
-            return (
-              <button
-                key={tmpl.id}
-                type="button"
-                onClick={() => onTemplateSelect?.(tmpl.id)}
-                className={`relative flex flex-col items-start gap-1.5 p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                  isSelected
-                    ? "border-accent bg-accent-surface shadow-sm shadow-accent/10"
-                    : "border-border bg-surface hover:border-accent/30 hover:bg-surface-alt/50"
-                }`}
-              >
-                {isSelected && (
-                  <span className="absolute top-2 right-2">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </span>
-                )}
-                <span className="text-base">{tmpl.icon}</span>
-                <span className={`text-xs font-bold ${isSelected ? "text-accent" : "text-text-primary"}`}>{tmpl.name}</span>
-                <span className="text-[10px] text-text-tertiary leading-tight">{tmpl.description}</span>
-              </button>
-            );
-          })}
-        </div>
-        {selectedTemplate && selectedTemplate !== "blank" && (
-          <motion.p
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-[11px] text-accent font-semibold mt-2.5 flex items-center gap-1.5"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        {/* New to this? Try a sample */}
+        {!hasContent && (
+          <div className="flex items-center gap-2 p-3 bg-surface-alt/50 rounded-xl border border-border/50">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent flex-shrink-0">
               <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="16" x2="12" y2="12" />
-              <line x1="12" y1="8" x2="12.01" y2="8" />
+              <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            {selectedTemplate === "quick" && "Quick Share \u2014 starts with a summary prompt. Matchup plans hidden by default."}
-            {selectedTemplate === "tournament" && "Tournament Report \u2014 all sections enabled. Add matchups, calcs, and game plans."}
-            {selectedTemplate === "guide" && "Team Guide \u2014 starts with a detailed summary prompt. Focused on notes and calcs."}
-          </motion.p>
+            <p className="text-[11px] text-text-secondary flex-1">
+              <span className="font-semibold text-text-primary">New here?</span>{" "}
+              Paste a team from{" "}
+              <a href="https://pokepast.es" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-semibold">PokePaste</a>,{" "}
+              <a href="https://play.pokemonshowdown.com" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-semibold">Showdown</a>, or{" "}
+              <button type="button" onClick={() => onPasteChange(SAMPLE_PASTE)} className="text-accent hover:underline font-semibold cursor-pointer">try a sample team</button> to see how it works.
+            </p>
+          </div>
         )}
       </motion.div>
+
 
       {/* Community section: spotlight + explore CTA */}
       <motion.div
@@ -497,6 +511,28 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           </div>
         </a>
 
+        {/* Feedback CTA */}
+        <a
+          href="/feedback"
+          className="block bg-surface border-2 border-border rounded-2xl px-5 py-4 hover:border-accent/30 hover:shadow-md transition-all group"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-extrabold text-text-primary group-hover:text-accent transition-colors tracking-tight">
+                Send Feedback
+              </h2>
+              <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
+                Found a bug? Have an idea? Help shape the future of VGC Team Report.
+              </p>
+            </div>
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent-surface flex items-center justify-center group-hover:bg-accent/10 transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+              </svg>
+            </div>
+          </div>
+        </a>
+
         {/* Spotlight report */}
         {spotlight && (
           <div>
@@ -511,44 +547,40 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         )}
       </motion.div>
 
-      {/* App credit */}
-      <motion.p
-        className="text-center text-xs text-text-tertiary mt-10 sm:mt-14 font-medium"
+      {/* App credit + links */}
+      <motion.div
+        className="mt-10 sm:mt-14 space-y-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
       >
-        {t.builtBy}{" "}
-        <a
-          href="https://x.com/Manny64Official"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-bold text-text-primary hover:text-accent transition-colors"
-        >
-          Manraj Sidhu
-        </a>
-        <span className="mx-1.5 text-border">&middot;</span>
-        <a
-          href="/changelog"
-          className="text-text-tertiary hover:text-text-primary transition-colors"
-        >
-          Changelog
-        </a>
-        <span className="mx-1.5 text-border">&middot;</span>
-        <a
-          href="/feedback"
-          className="text-text-tertiary hover:text-text-primary transition-colors"
-        >
-          Feedback
-        </a>
-        <span className="mx-1.5 text-border">&middot;</span>
-        <a
-          href="/privacy"
-          className="text-text-tertiary hover:text-text-primary transition-colors"
-        >
-          {t.privacy}
-        </a>
-      </motion.p>
+        <div className="flex items-center justify-center gap-2">
+          {[
+            { href: "/changelog", label: "Changelog" },
+            { href: "/feedback", label: "Feedback" },
+            { href: "/privacy", label: t.privacy },
+          ].map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="px-3 py-1.5 text-xs font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+        <p className="text-center text-xs text-text-tertiary font-medium">
+          {t.builtBy}{" "}
+          <a
+            href="https://x.com/Manny64Official"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-text-primary hover:text-accent transition-colors"
+          >
+            Manraj Sidhu
+          </a>
+        </p>
+      </motion.div>
 
       <WhatsNewModal />
     </div>
