@@ -22,6 +22,14 @@ interface SlideNavControlsProps {
   onShowShortcuts?: () => void;
   /** Callback to start the walkthrough tour. */
   onStartTour?: () => void;
+  /** Whether current slide can be moved up (earlier). */
+  canMoveUp?: boolean;
+  /** Whether current slide can be moved down (later). */
+  canMoveDown?: boolean;
+  /** Move current slide up (swap with previous). */
+  onMoveUp?: () => void;
+  /** Move current slide down (swap with next). */
+  onMoveDown?: () => void;
 }
 
 export function SlideNavControls({
@@ -39,6 +47,10 @@ export function SlideNavControls({
   isCurrentHidden = false,
   onShowShortcuts,
   onStartTour,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
 }: SlideNavControlsProps) {
   const { t } = useTranslation();
   const hiddenCount = hiddenStates?.filter(Boolean).length ?? 0;
@@ -61,9 +73,9 @@ export function SlideNavControls({
           onClick={onPrev}
           disabled={isFirst}
           aria-label="Previous slide"
-          className="flex-shrink-0 flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-lg bg-surface text-text-primary border-2 border-border hover:bg-surface-alt hover:border-accent/30 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className="flex-shrink-0 flex items-center justify-center w-11 h-11 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-xl sm:rounded-lg bg-surface text-text-primary border-2 border-border hover:bg-surface-alt hover:border-accent/30 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1 sm:w-3 sm:h-3">
             <polyline points="15,18 9,12 15,6" />
           </svg>
           <span className="hidden sm:inline">{t.prev}</span>
@@ -84,7 +96,9 @@ export function SlideNavControls({
                   onClick={() => onGoTo(i)}
                   title={`${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}`}
                   aria-label={`Go to ${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}`}
-                  className={`rounded-full transition-all duration-300 flex-shrink-0 ${
+                  className="relative flex items-center justify-center w-6 h-6 sm:w-auto sm:h-auto flex-shrink-0"
+                >
+                  <span className={`block rounded-full transition-all duration-300 ${
                     isCurrent
                       ? isHidden
                         ? "w-4 h-2.5 bg-amber-400/70 shadow-sm shadow-amber-400/30 ring-1 ring-amber-400/40"
@@ -92,8 +106,8 @@ export function SlideNavControls({
                       : isHidden
                         ? "w-2 h-2 bg-amber-400/30 hover:bg-amber-400/50"
                         : "w-2 h-2 bg-border hover:bg-text-tertiary hover:scale-125"
-                  }`}
-                />
+                  }`} />
+                </button>
               );
             })}
           </div>
@@ -111,6 +125,36 @@ export function SlideNavControls({
 
         {/* === RIGHT: Actions + Next button === */}
         <div className="flex-shrink-0 flex items-center gap-1.5 sm:gap-2">
+          {/* Reorder slide (creator only, Pokemon & matchup plan slides) */}
+          {(canMoveUp || canMoveDown) && (
+            <span className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={onMoveUp}
+                disabled={!canMoveUp}
+                className="flex items-center justify-center w-8 h-8 sm:w-7 sm:h-7 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
+                title="Move slide earlier"
+                aria-label="Move slide earlier"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15,18 9,12 15,6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={onMoveDown}
+                disabled={!canMoveDown}
+                className="flex items-center justify-center w-8 h-8 sm:w-7 sm:h-7 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
+                title="Move slide later"
+                aria-label="Move slide later"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9,18 15,12 9,6" />
+                </svg>
+              </button>
+            </span>
+          )}
+
           {/* Hide/Show slide toggle (creator only) */}
           {onToggleHide && (
             <button
@@ -154,7 +198,7 @@ export function SlideNavControls({
             <button
               type="button"
               onClick={onStartTour}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
+              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
               aria-label={t.takeATour}
               title={t.takeATour}
             >
@@ -171,7 +215,7 @@ export function SlideNavControls({
             <button
               type="button"
               onClick={onShowShortcuts}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
+              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
               aria-label="Keyboard shortcuts"
               title="Keyboard shortcuts (?)"
             >
@@ -187,10 +231,10 @@ export function SlideNavControls({
             onClick={onNext}
             disabled={isLast}
             aria-label="Next slide"
-            className="flex-shrink-0 flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-lg bg-surface text-text-primary border-2 border-border hover:bg-surface-alt hover:border-accent/30 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="flex-shrink-0 flex items-center justify-center w-11 h-11 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-xl sm:rounded-lg bg-surface text-text-primary border-2 border-border hover:bg-surface-alt hover:border-accent/30 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <span className="hidden sm:inline">{t.next}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:ml-1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:ml-1 sm:w-3 sm:h-3">
               <polyline points="9,18 15,12 9,6" />
             </svg>
           </button>

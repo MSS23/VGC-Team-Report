@@ -4,14 +4,13 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "motion/react";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 import { useDarkMode } from "@/hooks/useDarkMode";
-import { LanguageSelector } from "@/components/ui/LanguageSelector";
+import { PageNavbar } from "@/components/layout/PageNavbar";
 import { ExploreHero } from "./ExploreHero";
 import { ExploreFilters, type SearchCategory } from "./ExploreFilters";
 import { SpotlightSection } from "./SpotlightCard";
 import { ReportCard, type ExploreReport } from "./ReportCard";
 import { ExploreEmpty } from "./ExploreEmpty";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
-import { SignInButton, UserButton, Show } from "@clerk/nextjs";
 
 export function ExploreContent() {
   return (
@@ -103,68 +102,7 @@ function ExploreInner() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      {/* Navbar */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-surface/90 border-b border-border shadow-[0_1px_8px_rgba(0,0,0,0.06)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <a
-            href="/"
-            className="flex items-center gap-2 font-bold text-sm hover:opacity-80 transition-opacity"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-accent"
-            >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-            <span className="text-text-primary">VGC Team</span>
-            <span className="text-accent">Report</span>
-          </a>
-          <div className="flex items-center gap-3">
-            <Show when="signed-out">
-              <SignInButton mode="modal">
-                <button className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all cursor-pointer">
-                  Sign In
-                </button>
-              </SignInButton>
-            </Show>
-            <Show when="signed-in">
-              <a href="/dashboard" className="text-xs font-bold text-text-secondary hover:text-accent transition-colors">Dashboard</a>
-              <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
-            </Show>
-            <LanguageSelector />
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all"
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="5" />
-                  <line x1="12" y1="1" x2="12" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" />
-                  <line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} maxWidth="max-w-7xl" activePage="explore" />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pb-24 sm:pb-20">
         <ExploreHero />

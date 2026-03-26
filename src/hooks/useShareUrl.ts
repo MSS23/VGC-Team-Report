@@ -212,12 +212,17 @@ export function useShareUrl() {
     }
   }, [getActiveShare]);
 
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const autoSaveResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   /** Silent auto-save: push current state to the server (only when active session exists). */
   const autoSave = useCallback(async (state: ShareableState, isPublic?: boolean) => {
     const active = getActiveShare();
     if (!active) return;
+    setAutoSaveStatus("saving");
+    if (autoSaveResetRef.current) clearTimeout(autoSaveResetRef.current);
     try {
-      await fetch("/api/share", {
+      const res = await fetch("/api/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -227,9 +232,11 @@ export function useShareUrl() {
           isPublic,
         }),
       });
+      setAutoSaveStatus(res.ok ? "saved" : "error");
     } catch {
-      // Silent fail — auto-save is best-effort
+      setAutoSaveStatus("error");
     }
+    autoSaveResetRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
   }, [getActiveShare]);
 
   /** Get the edit URL for the active session. */
@@ -315,5 +322,6 @@ export function useShareUrl() {
     hasExistingShare,
     clearStoredShare,
     fetchedIsPublic,
+    autoSaveStatus,
   };
 }

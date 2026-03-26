@@ -10,7 +10,7 @@ import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { WhatsNewModal } from "@/components/ui/WhatsNewModal";
 import { SignInButton, UserButton, Show } from "@clerk/nextjs";
-import { REPORT_TEMPLATES } from "@/lib/templates";
+
 
 export const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
 Ability: Intimidate
@@ -109,6 +109,19 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
   // Random accent color on landing page
   useEffect(() => { applyRandomAccent(); }, []);
+
+  // Collapse "How it works" for returning users
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
+  const [isReturningUser, setIsReturningUser] = useState(false);
+  useEffect(() => {
+    const visited = localStorage.getItem("vgc-visited");
+    if (visited) {
+      setIsReturningUser(true);
+    } else {
+      setHowItWorksOpen(true);
+      localStorage.setItem("vgc-visited", "1");
+    }
+  }, []);
   const [spotlight, setSpotlight] = useState<ExploreReport | null>(null);
 
   // Fetch spotlight report once per session (delayed to avoid blocking render)
@@ -178,32 +191,36 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {/* Top nav bar */}
       <div className="fixed top-0 left-0 right-0 z-20 backdrop-blur-xl bg-background/80 border-b border-border/30">
         <div className="max-w-2xl mx-auto px-4 h-12 flex items-center justify-between">
+          {/* Logo */}
+          <a href="/" className="flex items-center gap-1.5 font-bold text-sm flex-shrink-0">
+            <span className="text-text-primary">VGC Team</span>
+            <span className="text-accent">Report</span>
+          </a>
+
           {/* Page links (desktop only — mobile uses bottom tabs) */}
-          <nav className="hidden sm:flex items-center gap-1">
+          <nav className="hidden sm:flex items-center gap-0.5">
             {[
-              { href: "/explore", label: "Explore" },
-              { href: "/compare", label: "Compare" },
-              { href: "/changelog", label: "Updates" },
-              { href: "/feedback", label: "Feedback" },
+              { href: "/explore", label: "Explore", icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" },
+              { href: "/compare", label: "Compare", icon: "M18 20V10M12 20V4M6 20v-6" },
+              { href: "/dashboard", label: "Dashboard", icon: "M4 6h16M4 12h16m-7 6h7" },
+              { href: "/changelog", label: "Updates", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
+              { href: "/feedback", label: "Feedback", icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" },
             ].map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="px-2.5 py-1.5 text-xs font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 rounded-lg transition-all"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 rounded-lg transition-all"
               >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 opacity-70">
+                  <path d={link.icon} />
+                </svg>
                 {link.label}
               </a>
             ))}
           </nav>
 
-          {/* Logo on mobile (since nav links are hidden) */}
-          <a href="/" className="sm:hidden flex items-center gap-1.5 font-bold text-sm">
-            <span className="text-text-primary">VGC Team</span>
-            <span className="text-accent">Report</span>
-          </a>
-
           {/* Auth + language */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Show when="signed-out">
               <SignInButton mode="modal">
                 <button className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all cursor-pointer">
@@ -212,12 +229,6 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
               </SignInButton>
             </Show>
             <Show when="signed-in">
-              <a
-                href="/dashboard"
-                className="px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent transition-colors hidden sm:inline"
-              >
-                Dashboard
-              </a>
               <UserButton
                 appearance={{
                   elements: { avatarBox: "w-7 h-7" },
@@ -255,7 +266,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       </nav>
 
       {/* Animated sprites with floating effect */}
-      <div className="flex justify-center gap-3 sm:gap-5 mb-8 sm:mb-10 overflow-hidden">
+      <div className="flex justify-center gap-3 sm:gap-5 mb-5 sm:mb-10 overflow-hidden">
         {POKEMON_SPRITES.map((name, i) => (
           <motion.img
             key={name}
@@ -285,7 +296,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
       {/* Title — bold, distinctive */}
       <motion.div
-        className="text-center mb-6 sm:mb-8"
+        className="text-center mb-4 sm:mb-8"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
@@ -299,33 +310,47 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         </p>
       </motion.div>
 
-      {/* How it works — quick explainer for new users */}
+      {/* How it works — collapsible for returning mobile users */}
       <motion.div
-        className="flex flex-col sm:flex-row items-stretch gap-3 mb-8 sm:mb-10"
+        className="mb-6 sm:mb-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.4 }}
       >
-        {[
-          { step: "1", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", title: "Paste your team", desc: "From Showdown, PokePaste, or any team builder" },
-          { step: "2", icon: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z", title: "Add your notes", desc: "Damage calcs, matchup plans, and strategy" },
-          { step: "3", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", title: "Share with anyone", desc: "Public link, presentation mode, or PDF export" },
-        ].map((item) => (
-          <div
-            key={item.step}
-            className="flex-1 flex items-start gap-3 p-3 rounded-xl bg-surface border border-border"
+        {isReturningUser && !howItWorksOpen ? (
+          <button
+            type="button"
+            onClick={() => setHowItWorksOpen(true)}
+            className="sm:hidden w-full flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
           >
-            <div className="w-7 h-7 rounded-lg bg-accent-surface flex items-center justify-center flex-shrink-0">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                <path d={item.icon} />
-              </svg>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6,9 12,15 18,9" />
+            </svg>
+            How it works
+          </button>
+        ) : null}
+        <div className={`flex flex-col sm:flex-row items-stretch gap-3 ${isReturningUser && !howItWorksOpen ? "hidden sm:flex" : "flex"}`}>
+          {[
+            { step: "1", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", title: "Paste your team", desc: "From Showdown, PokePaste, or any team builder" },
+            { step: "2", icon: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z", title: "Add your notes", desc: "Damage calcs, matchup plans, and strategy" },
+            { step: "3", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", title: "Share with anyone", desc: "Public link, presentation mode, or PDF export" },
+          ].map((item) => (
+            <div
+              key={item.step}
+              className="flex-1 flex items-start gap-3 p-3 rounded-xl bg-surface border border-border"
+            >
+              <div className="w-7 h-7 rounded-lg bg-accent-surface flex items-center justify-center flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                  <path d={item.icon} />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-text-primary">{item.title}</p>
+                <p className="text-[10px] text-text-tertiary leading-snug mt-0.5">{item.desc}</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-text-primary">{item.title}</p>
-              <p className="text-[10px] text-text-tertiary leading-snug mt-0.5">{item.desc}</p>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </motion.div>
 
       {/* Textarea with accent glow */}
@@ -363,7 +388,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           placeholder={
             "Incineroar @ Sitrus Berry\nAbility: Intimidate\nLevel: 50\nEVs: 252 HP / 4 Atk / 252 Spe\nCareful Nature\n- Fake Out\n- Knock Off\n- Flare Blitz\n- Parting Shot"
           }
-          className="relative w-full h-52 sm:h-72 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none focus:border-accent/50 transition-all duration-300"
+          className="relative w-full h-44 sm:h-72 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none focus:border-accent/50 transition-all duration-300"
           spellCheck={false}
         />
         {isUrl && (
@@ -452,102 +477,63 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       </motion.div>
 
 
-      {/* Community section: spotlight + explore CTA */}
+      {/* Quick links — visible near the action area so users know the site has more pages */}
       <motion.div
-        className="mt-12 sm:mt-16 space-y-6"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
+        className="mt-8 sm:mt-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.35, duration: 0.4 }}
       >
-        {/* Section divider */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-border" />
-          <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Community</span>
+          <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">More</span>
           <div className="flex-1 h-px bg-border" />
         </div>
-
-        {/* Explore CTA */}
-        <a
-          href="/explore"
-          className="block bg-surface border-2 border-border rounded-2xl px-5 py-4 hover:border-accent/30 hover:shadow-md transition-all group"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-extrabold text-text-primary group-hover:text-accent transition-colors tracking-tight">
-                {t.explore} Community Teams
-              </h2>
-              <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
-                See what other players are building and sharing from tournaments around the world.
-              </p>
-            </div>
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent-surface flex items-center justify-center group-hover:bg-accent/10 transition-colors">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </div>
-          </div>
-        </a>
-
-        {/* Compare CTA */}
-        <a
-          href="/compare"
-          className="block bg-surface border-2 border-border rounded-2xl px-5 py-4 hover:border-accent/30 hover:shadow-md transition-all group"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-extrabold text-text-primary group-hover:text-accent transition-colors tracking-tight">
-                Compare Teams
-              </h2>
-              <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
-                Side-by-side type coverage, speed tiers, and shared Pokemon analysis.
-              </p>
-            </div>
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent-surface flex items-center justify-center group-hover:bg-accent/10 transition-colors">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-              </svg>
-            </div>
-          </div>
-        </a>
-
-        {/* Feedback CTA */}
-        <a
-          href="/feedback"
-          className="block bg-surface border-2 border-border rounded-2xl px-5 py-4 hover:border-accent/30 hover:shadow-md transition-all group"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-extrabold text-text-primary group-hover:text-accent transition-colors tracking-tight">
-                Send Feedback
-              </h2>
-              <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
-                Found a bug? Have an idea? Help shape the future of VGC Team Report.
-              </p>
-            </div>
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent-surface flex items-center justify-center group-hover:bg-accent/10 transition-colors">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-              </svg>
-            </div>
-          </div>
-        </a>
-
-        {/* Spotlight report */}
-        {spotlight && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Featured Team Report</span>
-            </div>
-            <SpotlightCard report={spotlight} />
-          </div>
-        )}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { href: "/explore", label: "Explore Teams", icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z", desc: "Community reports" },
+            { href: "/compare", label: "Compare", icon: "M18 20V10M12 20V4M6 20v-6", desc: "Side-by-side analysis" },
+            { href: "/changelog", label: "Updates", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", desc: "What's new" },
+            { href: "/feedback", label: "Feedback", icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", desc: "Bugs & ideas" },
+          ].map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="flex items-center gap-2.5 px-3 py-2.5 bg-surface border border-border rounded-xl hover:border-accent/30 hover:bg-surface-alt/50 transition-all group"
+            >
+              <div className="w-7 h-7 rounded-lg bg-accent-surface/60 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/10 transition-colors">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                  <path d={link.icon} />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-text-primary group-hover:text-accent transition-colors leading-tight">{link.label}</p>
+                <p className="text-[10px] text-text-tertiary leading-tight hidden sm:block">{link.desc}</p>
+              </div>
+            </a>
+          ))}
+        </div>
       </motion.div>
 
-      {/* App credit + links */}
+      {/* Spotlight report */}
+      {spotlight && (
+        <motion.div
+          className="mt-8 sm:mt-10"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Featured Team Report</span>
+          </div>
+          <SpotlightCard report={spotlight} />
+        </motion.div>
+      )}
+
+      {/* Footer */}
       <motion.div
         className="mt-10 sm:mt-14 space-y-3"
         initial={{ opacity: 0 }}
@@ -555,19 +541,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         transition={{ delay: 0.5, duration: 0.5 }}
       >
         <div className="flex items-center justify-center gap-2">
-          {[
-            { href: "/changelog", label: "Changelog" },
-            { href: "/feedback", label: "Feedback" },
-            { href: "/privacy", label: t.privacy },
-          ].map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="px-3 py-1.5 text-xs font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all"
-            >
-              {link.label}
-            </a>
-          ))}
+          <a href="/privacy" className="px-3 py-1.5 text-xs font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all">
+            {t.privacy}
+          </a>
         </div>
         <p className="text-center text-xs text-text-tertiary font-medium">
           {t.builtBy}{" "}

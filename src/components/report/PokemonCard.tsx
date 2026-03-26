@@ -35,7 +35,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
-  const spriteSizeSm = creatorMode ? 56 : 48;
+  const spriteSizeSm = creatorMode ? 64 : 56;
   const spriteSizeLg = creatorMode ? 120 : 104;
   const natureData = NATURES[parsed.nature];
   const relevantStats = getRelevantStats(parsed);
@@ -80,7 +80,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <h3 className="text-sm sm:text-lg font-extrabold text-text-primary creator:text-xl truncate leading-tight tracking-tight">
+            <h3 className="text-base sm:text-lg font-extrabold text-text-primary creator:text-xl truncate leading-tight tracking-tight">
               {parsed.species}
             </h3>
             {parsed.gender && (
@@ -173,7 +173,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             return (
               <span
                 key={move}
-                className={`text-[11px] sm:text-sm creator:text-base leading-tight px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg border font-semibold text-center transition-colors break-words hyphens-auto ${
+                className={`text-xs sm:text-sm creator:text-base leading-tight px-2 sm:px-3 py-2 sm:py-2 rounded-lg border font-semibold text-center transition-colors break-words hyphens-auto ${
                   typeStyle ? "shadow-sm" : "text-text-primary bg-surface-alt/60 border-transparent"
                 }`}
                 style={typeStyle ?? undefined}
@@ -197,7 +197,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               return null;
             })()}
           </h4>
-          <div className="space-y-1 sm:space-y-1.5 stagger-stats" role="list" aria-label={`${parsed.species} stats`}>
+          <div className="space-y-1.5 sm:space-y-1.5 stagger-stats" role="list" aria-label={`${parsed.species} stats`}>
             {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map((stat) => {
               const value = calculatedStats[stat];
               const ev = parsed.evs[stat];
@@ -208,13 +208,13 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               const labels = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe };
 
               return (
-                <div key={stat} className="flex items-center gap-1 sm:gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${ev > 0 ? `, ${ev} EVs` : ""}${isBoosted ? `, boosted by item` : ""}`}>
-                  <span className="text-[10px] sm:text-xs font-bold w-6 sm:w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-px">
-                    {natureData?.plus === stat && <span className="text-[9px] sm:text-[11px]" aria-label="boosted by nature">{"\u25B2"}</span>}
-                    {natureData?.minus === stat && <span className="text-[9px] sm:text-[11px]" aria-label="reduced by nature">{"\u25BC"}</span>}
+                <div key={stat} className="flex items-center gap-1.5 sm:gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${ev > 0 ? `, ${ev} EVs` : ""}${isBoosted ? `, boosted by item` : ""}`}>
+                  <span className="text-[11px] sm:text-xs font-bold w-7 sm:w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-px">
+                    {natureData?.plus === stat && <span className="text-[10px] sm:text-[11px]" aria-label="boosted by nature">{"\u25B2"}</span>}
+                    {natureData?.minus === stat && <span className="text-[10px] sm:text-[11px]" aria-label="reduced by nature">{"\u25BC"}</span>}
                     {labels[stat]}
                   </span>
-                  <div className="flex-1 h-2.5 sm:h-2.5 bg-surface-alt rounded-full overflow-hidden creator:h-3" role="progressbar" aria-valuenow={displayValue} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${labels[stat]} stat bar`}>
+                  <div className="flex-1 h-3 sm:h-2.5 bg-surface-alt rounded-full overflow-hidden creator:h-3" role="progressbar" aria-valuenow={displayValue} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${labels[stat]} stat bar`}>
                     <div
                       className="h-full rounded-full animate-bar-fill"
                       style={{
@@ -223,17 +223,17 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                       }}
                     />
                   </div>
-                  <span className={`text-xs sm:text-sm font-[family-name:var(--font-mono)] font-bold w-7 sm:w-8 text-right tabular-nums ${
+                  <span className={`text-sm sm:text-sm font-[family-name:var(--font-mono)] font-bold w-8 sm:w-8 text-right tabular-nums ${
                     isBoosted ? "text-amber-500" : "text-text-secondary"
                   }`}>
                     {displayValue}
                   </span>
                   {ev > 0 ? (
-                    <span className="text-[10px] sm:text-xs text-accent font-bold w-7 sm:w-9">
+                    <span className="text-[11px] sm:text-xs text-accent font-bold w-8 sm:w-9">
                       +{ev}
                     </span>
                   ) : (
-                    <span className="w-7 sm:w-9" />
+                    <span className="w-8 sm:w-9" />
                   )}
                 </div>
               );

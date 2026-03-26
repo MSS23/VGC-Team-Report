@@ -38,6 +38,7 @@ interface NavbarProps {
   // Warnings / save indicator
   warnings: string[];
   saveFlash: boolean;
+  autoSaveStatus?: "idle" | "saving" | "saved" | "error";
 
   // Share
   isSampleTeam?: boolean;
@@ -73,7 +74,7 @@ export function Navbar(props: NavbarProps) {
     tournamentName, placement, record,
     darkMode, onDarkModeChange,
     genTheme, onGenThemeChange,
-    warnings, saveFlash,
+    warnings, saveFlash, autoSaveStatus,
     isSampleTeam,
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare,
@@ -219,6 +220,20 @@ export function Navbar(props: NavbarProps) {
                 {t.editing}
               </span>
             )}
+            {isSharedView && isEditingUnlocked && autoSaveStatus && autoSaveStatus !== "idle" && (
+              <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 transition-opacity duration-300 ${
+                autoSaveStatus === "saving"
+                  ? "text-text-tertiary bg-surface-alt/60"
+                  : autoSaveStatus === "saved"
+                    ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                    : "text-red-500 bg-red-500/10"
+              }`}>
+                {autoSaveStatus === "saving" && (
+                  <span className="w-2.5 h-2.5 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin" />
+                )}
+                {autoSaveStatus === "saving" ? "Saving..." : autoSaveStatus === "saved" ? "Saved" : "Save failed"}
+              </span>
+            )}
           </div>
         )}
 
@@ -240,6 +255,14 @@ export function Navbar(props: NavbarProps) {
               <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">
                 {currentSlide + 1}/{totalSlides}
               </span>
+              {isSharedView && isEditingUnlocked && autoSaveStatus === "saving" && (
+                <span className="w-2.5 h-2.5 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
+              )}
+              {isSharedView && isEditingUnlocked && autoSaveStatus === "saved" && (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 flex-shrink-0">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
             </div>
           </div>
         )}
@@ -359,6 +382,16 @@ export function Navbar(props: NavbarProps) {
 
           {/* Secondary controls — hidden on mobile behind overflow menu */}
           <div className="hidden sm:flex items-center gap-2">
+            <a
+              href="/feedback"
+              className="p-2 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-all"
+              title="Send Feedback"
+              aria-label="Send Feedback"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+              </svg>
+            </a>
             <LanguageSelector />
             <Toggle
               checked={darkMode}
@@ -417,6 +450,17 @@ export function Navbar(props: NavbarProps) {
                 <div className="px-4 py-3">
                   <LanguageSelector />
                 </div>
+                <div className="border-t border-border mx-2" />
+                <a
+                  href="/feedback"
+                  className="flex items-center gap-2.5 px-4 py-3 text-sm font-bold text-accent hover:bg-accent-surface/50 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                  </svg>
+                  Send Feedback
+                </a>
               </div>
             )}
           </div>

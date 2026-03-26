@@ -77,14 +77,19 @@ export function ShareModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-surface border border-border rounded-2xl shadow-2xl max-w-md w-full mx-4 animate-fade-in overflow-hidden">
+      <div className="bg-surface border border-border rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full sm:mx-4 animate-[sheet-up_0.3s_ease-out] sm:animate-fade-in overflow-hidden max-h-[90vh] overflow-y-auto">
+        {/* Drag handle (mobile only) */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-border" />
+        </div>
+
         {/* Header */}
-        <div className="px-6 pt-6 pb-4">
+        <div className="px-6 pt-3 sm:pt-6 pb-4">
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-lg font-extrabold text-text-primary tracking-tight">
               Team shared!

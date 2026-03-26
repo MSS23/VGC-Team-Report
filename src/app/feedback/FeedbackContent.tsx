@@ -6,12 +6,14 @@ import { I18nProvider } from "@/lib/i18n";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { getSessionId } from "@/lib/utils/session-id";
+import { PageNavbar } from "@/components/layout/PageNavbar";
+import { PageFooter } from "@/components/layout/PageFooter";
 
 const TYPES = [
-  { value: "feature", label: "Feature Request", icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5", color: "text-emerald-500 bg-emerald-500/10" },
-  { value: "bug", label: "Bug Report", icon: "M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01", color: "text-red-500 bg-red-500/10" },
-  { value: "improvement", label: "Improvement", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8", color: "text-amber-500 bg-amber-500/10" },
-  { value: "other", label: "Other", icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", color: "text-blue-500 bg-blue-500/10" },
+  { value: "feature", label: "Feature Request", icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5", color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20", activeColor: "border-emerald-500/50 bg-emerald-500/15 shadow-emerald-500/10" },
+  { value: "bug", label: "Bug Report", icon: "M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01", color: "text-red-500 bg-red-500/10 border-red-500/20", activeColor: "border-red-500/50 bg-red-500/15 shadow-red-500/10" },
+  { value: "improvement", label: "Improvement", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8", color: "text-amber-500 bg-amber-500/10 border-amber-500/20", activeColor: "border-amber-500/50 bg-amber-500/15 shadow-amber-500/10" },
+  { value: "other", label: "Other", icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", color: "text-blue-500 bg-blue-500/10 border-blue-500/20", activeColor: "border-blue-500/50 bg-blue-500/15 shadow-blue-500/10" },
 ] as const;
 
 function detectDevice(): string {
@@ -62,7 +64,6 @@ function FeedbackInner() {
   const [error, setError] = useState<string | null>(null);
   const [deviceInfo, setDeviceInfo] = useState({ device: "...", browser: "...", screen: "..." });
 
-  // Detect device info on mount (avoids hydration mismatch)
   useEffect(() => {
     setDeviceInfo({
       device: detectDevice(),
@@ -105,31 +106,13 @@ function FeedbackInner() {
     }
   };
 
+  const selectedType = TYPES.find((t) => t.value === type)!;
+
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      {/* Navbar */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-surface/90 border-b border-border shadow-[0_1px_8px_rgba(0,0,0,0.06)]">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 font-bold text-sm hover:opacity-80 transition-opacity">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent"><polyline points="15 18 9 12 15 6" /></svg>
-            <span className="text-text-primary">VGC Team</span>
-            <span className="text-accent">Report</span>
-          </a>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all"
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
-            )}
-          </button>
-        </div>
-      </header>
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} maxWidth="max-w-2xl" activePage="feedback" />
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14 pb-24 sm:pb-14">
         {submitted ? (
           <motion.div
             className="text-center py-16"
@@ -137,63 +120,89 @@ function FeedbackInner() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4 }}
           >
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-6">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500">
+            <motion.div
+              className="w-20 h-20 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-6 border-2 border-emerald-500/20"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-            </div>
+            </motion.div>
             <h1 className="text-2xl font-extrabold tracking-tight mb-2">Thank you!</h1>
-            <p className="text-sm text-text-secondary mb-6 max-w-sm mx-auto">
+            <p className="text-sm text-text-secondary mb-8 max-w-sm mx-auto leading-relaxed">
               Your feedback has been submitted. We review every submission and use it to improve VGC Team Report.
             </p>
             <div className="flex items-center justify-center gap-3">
-              <a href="/" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+              <a href="/" className="px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                 Back to Home
               </a>
               <button
                 onClick={() => { setSubmitted(false); setTitle(""); setDescription(""); setContact(""); }}
-                className="px-5 py-2.5 text-sm font-bold text-text-secondary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all cursor-pointer"
+                className="px-6 py-2.5 text-sm font-bold text-text-secondary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all cursor-pointer"
               >
                 Submit Another
               </button>
             </div>
           </motion.div>
         ) : (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
-              Help Us Improve
-            </h1>
-            <p className="text-sm text-text-secondary mb-8">
-              Request a feature, report a bug, or suggest an improvement. Your device and browser info is auto-detected to help us reproduce issues.
-            </p>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            {/* Hero */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-accent-surface flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                  Send Feedback
+                </h1>
+                <p className="text-sm text-text-secondary">
+                  Help us make VGC Team Report better
+                </p>
+              </div>
+            </div>
 
             {/* Type selector */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
-              {TYPES.map((t) => (
-                <button
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-8 mb-8">
+              {TYPES.map((t, i) => (
+                <motion.button
                   key={t.value}
                   type="button"
                   onClick={() => setType(t.value)}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 + i * 0.05, duration: 0.35 }}
                   className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer ${
                     type === t.value
-                      ? "border-accent bg-accent-surface/50 shadow-sm"
-                      : "border-border hover:border-accent/30 bg-surface"
+                      ? `${t.activeColor} shadow-sm`
+                      : "border-border hover:border-accent/20 bg-surface"
                   }`}
                 >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${t.color}`}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                    type === t.value ? t.color : "text-text-tertiary bg-surface-alt/50"
+                  }`}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d={t.icon} />
                     </svg>
                   </div>
-                  <span className={`text-xs font-bold ${type === t.value ? "text-accent" : "text-text-secondary"}`}>
+                  <span className={`text-xs font-bold transition-colors ${type === t.value ? "text-text-primary" : "text-text-secondary"}`}>
                     {t.label}
                   </span>
-                </button>
+                </motion.button>
               ))}
             </div>
 
-            {/* Title */}
-            <div className="space-y-4">
+            {/* Form */}
+            <motion.div
+              className="space-y-5"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+            >
+              {/* Title */}
               <div>
                 <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
                   Title <span className="text-accent">*</span>
@@ -219,7 +228,7 @@ function FeedbackInner() {
                     onChange={(e) => setDescription(e.target.value.slice(0, 2000))}
                     placeholder={
                       type === "bug"
-                        ? "Steps to reproduce:\n1. Go to...\n2. Click on...\n3. See error...\n\nExpected behavior:\nWhat should have happened\n\nActual behavior:\nWhat actually happened"
+                        ? "Steps to reproduce:\n1. Go to...\n2. Click on...\n3. See error...\n\nExpected behaviour:\nWhat should have happened\n\nActual behaviour:\nWhat actually happened"
                         : type === "feature"
                           ? "Describe the feature in detail. What problem does it solve? How should it work?"
                           : "Provide as much detail as possible..."
@@ -228,7 +237,9 @@ function FeedbackInner() {
                     maxLength={2000}
                     className="w-full px-4 py-3 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all resize-none"
                   />
-                  <span className="absolute bottom-3 right-4 text-[10px] text-text-tertiary">
+                  <span className={`absolute bottom-3 right-4 text-[10px] font-bold transition-colors ${
+                    description.length > 1800 ? "text-amber-500" : "text-text-tertiary"
+                  }`}>
                     {2000 - description.length}
                   </span>
                 </div>
@@ -236,20 +247,20 @@ function FeedbackInner() {
 
               {/* Auto-detected info */}
               <div className="bg-surface-alt/50 border border-border rounded-xl px-4 py-3">
-                <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">Auto-detected (sent with your submission)</p>
+                <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">
+                  Auto-detected (sent with your submission)
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-md bg-surface border border-border text-text-secondary">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>
-                    {deviceInfo.device}
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-md bg-surface border border-border text-text-secondary">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></svg>
-                    {deviceInfo.browser}
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-md bg-surface border border-border text-text-secondary">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
-                    {deviceInfo.screen}
-                  </span>
+                  {[
+                    { icon: "M5 2h14a2 2 0 012 2v16a2 2 0 01-2 2H5a2 2 0 01-2-2V4a2 2 0 012-2zM12 18h.01", label: deviceInfo.device },
+                    { icon: "M12 2a10 10 0 100 20 10 10 0 000-20zM2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z", label: deviceInfo.browser },
+                    { icon: "M2 3h20a2 2 0 012 2v14a2 2 0 01-2 2H2a2 2 0 01-2-2V5a2 2 0 012-2zM8 21h8M12 17v4", label: deviceInfo.screen },
+                  ].map((info, idx) => (
+                    <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-surface border border-border text-text-secondary">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={info.icon} /></svg>
+                      {info.label}
+                    </span>
+                  ))}
                 </div>
               </div>
 
@@ -270,7 +281,13 @@ function FeedbackInner() {
 
               {/* Error */}
               {error && (
-                <p className="text-sm text-danger font-bold animate-fade-in">{error}</p>
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-sm text-danger font-bold px-3 py-2 bg-danger/10 border border-danger/20 rounded-lg"
+                >
+                  {error}
+                </motion.p>
               )}
 
               {/* Submit */}
@@ -278,14 +295,45 @@ function FeedbackInner() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={!title.trim() || !description.trim() || submitting}
-                className="w-full px-5 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed tracking-wide"
+                className={`w-full px-5 py-3.5 text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.98] shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed tracking-wide flex items-center justify-center gap-2 ${
+                  selectedType.value === "bug"
+                    ? "bg-red-500 shadow-red-500/30"
+                    : selectedType.value === "improvement"
+                      ? "bg-amber-500 shadow-amber-500/30"
+                      : selectedType.value === "other"
+                        ? "bg-blue-500 shadow-blue-500/30"
+                        : "bg-accent shadow-accent/30"
+                }`}
               >
-                {submitting ? "Submitting..." : "Submit Feedback"}
+                {submitting ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" /><path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13" />
+                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                    Submit {selectedType.label}
+                  </>
+                )}
               </button>
-            </div>
+
+              {/* Links to changelog */}
+              <p className="text-center text-xs text-text-tertiary pt-2">
+                Want to see what we&apos;ve already shipped?{" "}
+                <a href="/changelog" className="font-bold text-accent hover:underline">
+                  View the changelog
+                </a>
+              </p>
+            </motion.div>
           </motion.div>
         )}
       </main>
+
+      <PageFooter maxWidth="max-w-2xl" hideFeedback />
     </div>
   );
 }

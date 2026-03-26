@@ -324,6 +324,7 @@ export function useHomePage() {
     handleSetPublic: share.handleSetPublic,
     allowComments: share.allowComments,
     setAllowComments: share.setAllowComments,
+    autoSaveStatus: share.autoSaveStatus,
 
     saveFlash,
     showShortcutHint, setShowShortcutHint,

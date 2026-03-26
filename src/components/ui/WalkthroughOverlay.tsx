@@ -30,7 +30,12 @@ const SPOTLIGHT_PAD = 8;
 const TOOLTIP_MARGIN = 16;
 const TOOLTIP_GAP = 12;
 const NAVBAR_HEIGHT = 52;
-const MOBILE_BROWSER_CHROME_PAD = 60; // Extra padding for mobile browser bottom nav bar
+const MOBILE_BROWSER_CHROME_PAD = 60;
+
+// Smooth, snappy easing — fast start, gentle deceleration
+const EASE_OUT = "cubic-bezier(0.16, 1, 0.3, 1)";
+const SPOTLIGHT_DURATION = 350;
+const TOOLTIP_DURATION = 280;
 
 export function WalkthroughOverlay({
   step,
@@ -43,9 +48,10 @@ export function WalkthroughOverlay({
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
-  const [positioned, setPositioned] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const prevStepRef = useRef(stepIndex);
+  const positionedRef = useRef(false);
+  const [renderKey, setRenderKey] = useState(0); // forces re-render after positioning
   const isVirtual = step.target === null;
   const isLastStep = stepIndex === totalSteps - 1;
 
@@ -64,14 +70,13 @@ export function WalkthroughOverlay({
     document.addEventListener("touchmove", block, { passive: false });
 
     return () => {
-      // Restore scrolling — always clean up even if component errors
       style.overflow = prevOverflow;
       document.removeEventListener("wheel", block);
       document.removeEventListener("touchmove", block);
     };
   }, []);
 
-  // Safety: if the component unmounts for any reason, ensure body scroll is restored
+  // Safety: restore scroll on unmount
   useEffect(() => {
     return () => {
       document.body.style.overflow = "";
@@ -93,7 +98,6 @@ export function WalkthroughOverlay({
     setTargetRect({ top: r.top, left: r.left, width: r.width, height: r.height });
   }, [step.target, isVirtual]);
 
-  // Recalculate on step change, resize, scroll
   useEffect(() => {
     measureTarget();
   }, [measureTarget]);
@@ -102,7 +106,6 @@ export function WalkthroughOverlay({
     const update = () => measureTarget();
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
-    // Re-measure when mobile browser chrome shows/hides (e.g. address bar)
     window.visualViewport?.addEventListener("resize", update);
     return () => {
       window.removeEventListener("resize", update);
@@ -126,25 +129,20 @@ export function WalkthroughOverlay({
     return () => window.removeEventListener("keydown", handleKey);
   }, [onNext, onSkip]);
 
-  // Position the tooltip synchronously before paint to prevent flicker.
-  // Also handles step-change resets — if stepIndex changed, we hide the tooltip
-  // first (opacity 0), then reposition and reveal, all before the browser paints.
+  // Position the tooltip. Instead of blinking opacity 0→1 between steps,
+  // we keep the tooltip visible and smoothly transition its top/left.
+  // On the very first render we hide it until we know where to put it.
   useIsomorphicLayoutEffect(() => {
     if (!mounted) return;
     const tt = tooltipRef.current;
     if (!tt) return;
 
-    // If step changed, immediately hide tooltip before repositioning
     const stepChanged = prevStepRef.current !== stepIndex;
     if (stepChanged) {
       prevStepRef.current = stepIndex;
-      setPositioned(false);
-      tt.style.opacity = "0";
     }
 
     const position = () => {
-      tt.style.transform = "none";
-
       const ttW = tt.offsetWidth;
       const ttH = tt.offsetHeight;
       const vv = window.visualViewport;
@@ -155,18 +153,18 @@ export function WalkthroughOverlay({
       const bottomPad = NAVBAR_HEIGHT + (isMobile ? MOBILE_BROWSER_CHROME_PAD : 0);
       const safeBottom = vvOffsetTop + vh - bottomPad;
 
+      let top: number;
+      let left: number;
+
       if (isVirtual || !targetRect) {
         const visibleCenter = vvOffsetTop + (vh - bottomPad - ttH) / 2;
-        tt.style.top = `${Math.max(TOOLTIP_MARGIN, visibleCenter)}px`;
-        tt.style.left = `${Math.max(TOOLTIP_MARGIN, (vw - ttW) / 2)}px`;
+        top = Math.max(TOOLTIP_MARGIN, visibleCenter);
+        left = Math.max(TOOLTIP_MARGIN, (vw - ttW) / 2);
       } else {
         const spotTop = targetRect.top - SPOTLIGHT_PAD;
         const spotH = targetRect.height + SPOTLIGHT_PAD * 2;
         const spotBottom = spotTop + spotH;
         const spotCenterX = targetRect.left + targetRect.width / 2;
-
-        let top: number;
-        let left: number;
 
         if (step.placement === "above") {
           top = spotTop - TOOLTIP_GAP - ttH;
@@ -179,24 +177,25 @@ export function WalkthroughOverlay({
         left = spotCenterX - ttW / 2;
         left = Math.max(TOOLTIP_MARGIN, Math.min(left, vw - ttW - TOOLTIP_MARGIN));
         top = Math.max(TOOLTIP_MARGIN, Math.min(top, safeBottom - ttH - TOOLTIP_MARGIN));
-
-        tt.style.top = `${top}px`;
-        tt.style.left = `${left}px`;
       }
 
-      setPositioned(true);
+      tt.style.top = `${top}px`;
+      tt.style.left = `${left}px`;
+
+      if (!positionedRef.current) {
+        positionedRef.current = true;
+        setRenderKey((k) => k + 1);
+      }
     };
 
-    // If step changed, wait a frame for the new slide to render before positioning
+    // On step change, wait one frame for the new slide to render
     if (stepChanged) {
       const raf = requestAnimationFrame(() => position());
       return () => cancelAnimationFrame(raf);
     }
 
-    // Otherwise position synchronously on layout
     position();
 
-    // Reposition when mobile browser chrome shows/hides
     const vv = window.visualViewport;
     if (vv) {
       vv.addEventListener("resize", position);
@@ -208,11 +207,6 @@ export function WalkthroughOverlay({
 
   const OVERLAY_OPACITY = 0.55;
 
-  // Always render a single spotlight div. For virtual steps (no target) it
-  // collapses to a zero-size point at the center of the viewport — the huge
-  // box-shadow still covers the entire screen as a solid overlay. For targeted
-  // steps it expands around the element. Because the div is always mounted,
-  // CSS transitions animate smoothly between states with no flicker.
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const spotlightRect =
@@ -225,7 +219,6 @@ export function WalkthroughOverlay({
           borderRadius: 12,
         }
       : {
-          // Zero-size point in center — box-shadow covers everything
           top: vh / 2,
           left: vw / 2,
           width: 0,
@@ -233,9 +226,13 @@ export function WalkthroughOverlay({
           borderRadius: 0,
         };
 
+  // After first position, tooltip transitions smoothly between positions.
+  // Before first position, it's invisible (no flash of wrong position).
+  const isPositioned = positionedRef.current;
+
   return createPortal(
     <>
-      {/* Invisible click-catcher for backdrop clicks (skip on tap outside) */}
+      {/* Backdrop click-catcher */}
       <div
         style={{
           position: "fixed",
@@ -245,8 +242,7 @@ export function WalkthroughOverlay({
         onClick={onSkip}
       />
 
-      {/* Single spotlight — always mounted so CSS transitions work.
-          Its box-shadow provides the dark overlay for the entire screen. */}
+      {/* Spotlight overlay — smoothly moves between targets */}
       <div
         style={{
           position: "fixed",
@@ -258,23 +254,27 @@ export function WalkthroughOverlay({
           boxShadow: `0 0 0 9999px rgba(0,0,0,${OVERLAY_OPACITY})`,
           zIndex: 9999,
           pointerEvents: "none",
-          transition: "top 300ms ease, left 300ms ease, width 300ms ease, height 300ms ease, border-radius 300ms ease",
+          transition: `top ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, left ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, width ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, height ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, border-radius ${SPOTLIGHT_DURATION}ms ${EASE_OUT}`,
         }}
       />
 
-      {/* Tooltip card — hidden until positioned to prevent flash */}
+      {/* Tooltip — slides smoothly between positions instead of blinking */}
       <div
         ref={tooltipRef}
         role="dialog"
         aria-label="Walkthrough"
+        data-render-key={renderKey}
         style={{
           position: "fixed",
           top: 0,
           left: 0,
           zIndex: 10000,
           width: "min(360px, calc(100vw - 32px))",
-          opacity: positioned ? 1 : 0,
-          transition: "opacity 150ms ease",
+          opacity: isPositioned ? 1 : 0,
+          transform: isPositioned ? "scale(1)" : "scale(0.95)",
+          transition: isPositioned
+            ? `top ${TOOLTIP_DURATION}ms ${EASE_OUT}, left ${TOOLTIP_DURATION}ms ${EASE_OUT}, opacity 200ms ease, transform 200ms ${EASE_OUT}`
+            : "none",
         }}
         className="relative bg-surface rounded-2xl border border-border shadow-xl"
         onClick={(e) => e.stopPropagation()}
@@ -283,7 +283,7 @@ export function WalkthroughOverlay({
         <button
           onClick={onSkip}
           aria-label="Close walkthrough"
-          className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer z-10"
+          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-[0.92] transition-all cursor-pointer z-10"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -294,24 +294,17 @@ export function WalkthroughOverlay({
         {/* Pokemon guide + content */}
         <div className="p-5 pr-10">
           <div className="flex items-start gap-3">
-            {/* Pokemon guide sprite */}
             {guidePokemon && guidePokemon !== "your Pokemon" && (
               <div className="flex-shrink-0 -mt-1">
-                <div className="relative">
-                  <PokemonSprite
-                    species={guidePokemon}
-                    size={56}
-                    animated
-                  />
-                  {/* Speech bubble tail */}
-                  <div
-                    className="absolute -right-1 top-3 w-2.5 h-2.5 bg-accent/15 rotate-45 rounded-sm"
-                  />
-                </div>
+                <PokemonSprite
+                  species={guidePokemon}
+                  size={52}
+                  animated
+                />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-bold text-text-primary mb-1.5">
+              <h3 className="text-base font-bold text-text-primary mb-1.5 leading-snug">
                 {step.title}
               </h3>
               <p className="text-sm text-text-secondary leading-relaxed">
@@ -320,17 +313,20 @@ export function WalkthroughOverlay({
             </div>
           </div>
         </div>
-        {/* Progress bar */}
-        <div className="px-5 pb-3">
-          <div className="h-1 bg-surface-alt rounded-full overflow-hidden">
+        {/* Step dots + progress */}
+        <div className="px-5 pb-3 flex items-center gap-1.5">
+          {Array.from({ length: totalSteps }, (_, i) => (
             <div
-              className="h-full bg-accent rounded-full transition-all duration-300"
-              style={{ width: `${((stepIndex + 1) / totalSteps) * 100}%` }}
+              key={i}
+              className={`h-1 rounded-full flex-1 transition-all duration-500 ${
+                i <= stepIndex ? "bg-accent" : "bg-surface-alt"
+              }`}
+              style={{ transitionTimingFunction: EASE_OUT }}
             />
-          </div>
+          ))}
         </div>
         <div className="flex items-center justify-between px-5 pb-4">
-          <span className="text-xs text-text-tertiary tabular-nums">
+          <span className="text-xs text-text-tertiary tabular-nums font-medium">
             {stepIndex + 1} {t.of} {totalSteps}
           </span>
           <div className="flex items-center gap-2">
@@ -338,7 +334,7 @@ export function WalkthroughOverlay({
               <button
                 onClick={onSkip}
                 aria-label="Skip all"
-                className="text-xs text-text-tertiary hover:text-text-secondary px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                className="text-xs font-medium text-text-tertiary hover:text-text-secondary px-3 py-2 rounded-lg active:scale-[0.95] transition-all cursor-pointer"
               >
                 {t.skipAll}
               </button>
@@ -346,7 +342,7 @@ export function WalkthroughOverlay({
             <button
               onClick={onNext}
               aria-label={isLastStep ? "Finish walkthrough" : "Next step"}
-              className="text-xs font-semibold text-white bg-accent hover:bg-accent/90 px-4 py-1.5 rounded-lg transition-colors cursor-pointer"
+              className="text-xs font-bold text-white bg-accent hover:brightness-110 px-5 py-2 rounded-lg active:scale-[0.95] transition-all cursor-pointer shadow-sm shadow-accent/25"
             >
               {isLastStep ? t.done : t.next}
             </button>

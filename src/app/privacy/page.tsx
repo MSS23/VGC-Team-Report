@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { PrivacyNavbar } from "./PrivacyNavbar";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -8,15 +8,9 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 py-12 sm:py-16">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-sm text-text-tertiary hover:text-text-primary transition-colors mb-8"
-        >
-          &larr; Back to app
-        </Link>
-
+    <div className="min-h-screen bg-background">
+      <PrivacyNavbar />
+      <main className="max-w-2xl mx-auto px-4 py-10 sm:py-14 pb-24 sm:pb-14">
         <h1 className="text-3xl font-bold text-text-primary mb-2">Privacy Policy</h1>
         <p className="text-sm text-text-tertiary mb-10">Last updated: March 2026</p>
 
@@ -102,7 +96,7 @@ export default function PrivacyPage() {
             </p>
           </section>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

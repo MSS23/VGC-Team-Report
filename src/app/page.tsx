@@ -72,6 +72,7 @@ function HomeContent() {
     handleSetPublic,
     allowComments,
     setAllowComments,
+    autoSaveStatus,
     activeShareId,
     editKeyFromUrl,
     saveFlash,
@@ -189,6 +190,41 @@ function HomeContent() {
 
   const teamSpecies = analysis?.pokemon.map((p) => p.parsed.species) ?? [];
 
+  // Slide reorder logic — determine if current slide is a reorderable Pokemon or matchup plan
+  const pokemonCount = analysis?.pokemon.length ?? 0;
+  const plansCount = plans.length;
+  const isPokemonSlide = physicalSlide >= 1 && physicalSlide <= pokemonCount;
+  const isMatchupPlanSlide = physicalSlide >= pokemonCount + 2 && physicalSlide < pokemonCount + 2 + plansCount;
+
+  const canMoveSlideUp = creatorMode && (
+    (isPokemonSlide && physicalSlide > 1) ||
+    (isMatchupPlanSlide && physicalSlide > pokemonCount + 2)
+  );
+  const canMoveSlideDown = creatorMode && (
+    (isPokemonSlide && physicalSlide < pokemonCount) ||
+    (isMatchupPlanSlide && physicalSlide < pokemonCount + 1 + plansCount)
+  );
+
+  const handleMoveSlideUp = useCallback(() => {
+    if (isPokemonSlide) {
+      const pokemonIdx = physicalSlide - 1;
+      reorderPokemon(pokemonIdx, pokemonIdx - 1);
+    } else if (isMatchupPlanSlide) {
+      const planIdx = physicalSlide - (pokemonCount + 2);
+      reorderPlans(planIdx, planIdx - 1);
+    }
+  }, [isPokemonSlide, isMatchupPlanSlide, physicalSlide, pokemonCount, reorderPokemon, reorderPlans]);
+
+  const handleMoveSlideDown = useCallback(() => {
+    if (isPokemonSlide) {
+      const pokemonIdx = physicalSlide - 1;
+      reorderPokemon(pokemonIdx, pokemonIdx + 1);
+    } else if (isMatchupPlanSlide) {
+      const planIdx = physicalSlide - (pokemonCount + 2);
+      reorderPlans(planIdx, planIdx + 1);
+    }
+  }, [isPokemonSlide, isMatchupPlanSlide, physicalSlide, pokemonCount, reorderPokemon, reorderPlans]);
+
   const handleCreateOwn = useCallback(() => {
     handleReset();
     exitSharedView();
@@ -301,6 +337,7 @@ function HomeContent() {
         onGenThemeChange={setGenTheme}
         warnings={warnings}
         saveFlash={saveFlash}
+        autoSaveStatus={autoSaveStatus}
         isSampleTeam={isSampleTeam}
         shareStatus={shareStatus}
         shareButtonText={shareButtonText}
@@ -434,6 +471,10 @@ function HomeContent() {
         isCurrentHidden={creatorMode ? isSlideHiddenAt(physicalSlide) : false}
         onShowShortcuts={() => setShowShortcutHint(true)}
         onStartTour={!presentationMode ? startWalkthrough : undefined}
+        canMoveUp={canMoveSlideUp}
+        canMoveDown={canMoveSlideDown}
+        onMoveUp={handleMoveSlideUp}
+        onMoveDown={handleMoveSlideDown}
       />
 
       {/* Swipe hint for mobile (one-time) */}
