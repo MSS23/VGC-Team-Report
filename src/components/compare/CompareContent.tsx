@@ -10,6 +10,7 @@ import { PokemonSprite } from "@/components/report/PokemonSprite";
 import { TypeBadge } from "@/components/report/TypeBadge";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
+import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { PokemonType } from "@/lib/types/pokemon";
 
@@ -129,11 +130,24 @@ function SpeedComparison({ teamA, teamB }: { teamA: AnalyzedPokemon[]; teamB: An
   );
 }
 
+/** Extract share ID from a VGC Team Report URL like /s/AbCdEfGh or full URL */
+function extractShareId(input: string): string | null {
+  const trimmed = input.trim();
+  const match = trimmed.match(/\/s\/([a-zA-Z0-9]{6,12})/);
+  return match?.[1] ?? null;
+}
+
+function isUrl(input: string): boolean {
+  return isPokePasteUrl(input) || !!extractShareId(input);
+}
+
 export function CompareContent() {
   const { darkMode, setDarkMode } = useDarkMode();
   const [pasteA, setPasteA] = useState("");
   const [pasteB, setPasteB] = useState("");
   const [compared, setCompared] = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const teamA = useMemo(() => compared ? analyzePaste(pasteA) : null, [pasteA, compared]);
   const teamB = useMemo(() => compared ? analyzePaste(pasteB) : null, [pasteB, compared]);
@@ -147,12 +161,59 @@ export function CompareContent() {
   const weakA = useMemo(() => teamA ? getTeamWeaknesses(teamA) : null, [teamA]);
   const weakB = useMemo(() => teamB ? getTeamWeaknesses(teamB) : null, [teamB]);
 
-  const handleCompare = () => {
-    if (pasteA.trim() && pasteB.trim()) setCompared(true);
+  /** Resolve a paste input — if it's a PokePaste or share URL, fetch it; otherwise return as-is */
+  async function resolvePaste(input: string): Promise<string> {
+    const trimmed = input.trim();
+
+    // PokePaste URL
+    if (isPokePasteUrl(trimmed)) {
+      const result = await fetchPokePaste(trimmed);
+      return result.paste;
+    }
+
+    // Share URL (/s/ID)
+    const shareId = extractShareId(trimmed);
+    if (shareId) {
+      const res = await fetch(`/api/share/${shareId}`);
+      if (!res.ok) throw new Error("Failed to load shared report");
+      const data = await res.json();
+      if (!data.paste) throw new Error("Shared report has no team data");
+      return data.paste;
+    }
+
+    return trimmed;
+  }
+
+  const handleCompare = async () => {
+    setFetchError(null);
+    const needsFetchA = isUrl(pasteA);
+    const needsFetchB = isUrl(pasteB);
+
+    if (!needsFetchA && !needsFetchB) {
+      if (pasteA.trim() && pasteB.trim()) setCompared(true);
+      return;
+    }
+
+    setFetching(true);
+    try {
+      const [resolvedA, resolvedB] = await Promise.all([
+        resolvePaste(pasteA),
+        resolvePaste(pasteB),
+      ]);
+      setPasteA(resolvedA);
+      setPasteB(resolvedB);
+      // Set compared in next tick so useMemo picks up the new paste values
+      setTimeout(() => setCompared(true), 0);
+    } catch (e) {
+      setFetchError(e instanceof Error ? e.message : "Failed to fetch team data");
+    } finally {
+      setFetching(false);
+    }
   };
 
   const handleReset = () => {
     setCompared(false);
+    setFetchError(null);
     setPasteA("");
     setPasteB("");
   };
@@ -200,7 +261,7 @@ export function CompareContent() {
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Compare <span className="text-accent">Teams</span>
           </h1>
-          <p className="text-sm text-text-secondary mt-2">Paste two teams side-by-side to compare type coverage, speed tiers, and shared Pokemon.</p>
+          <p className="text-sm text-text-secondary mt-2">Paste two teams, PokePaste URLs, or share links to compare type coverage, speed tiers, and shared Pokemon.</p>
         </div>
 
         {!compared || !teamA || !teamB ? (
@@ -212,7 +273,7 @@ export function CompareContent() {
                 <textarea
                   value={pasteA}
                   onChange={(e) => { setPasteA(e.target.value); setCompared(false); }}
-                  placeholder="Paste Showdown team A here..."
+                  placeholder="Paste team, PokePaste URL, or share link..."
                   className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 resize-y font-[family-name:var(--font-mono)]"
                   spellCheck={false}
                 />
@@ -222,21 +283,34 @@ export function CompareContent() {
                 <textarea
                   value={pasteB}
                   onChange={(e) => { setPasteB(e.target.value); setCompared(false); }}
-                  placeholder="Paste Showdown team B here..."
+                  placeholder="Paste team, PokePaste URL, or share link..."
                   className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500 resize-y font-[family-name:var(--font-mono)]"
                   spellCheck={false}
                 />
               </div>
             </div>
+            {fetchError && (
+              <p className="text-sm text-red-500 font-semibold text-center">{fetchError}</p>
+            )}
             <div className="flex justify-center">
               <button
                 onClick={handleCompare}
-                disabled={!pasteA.trim() || !pasteB.trim()}
+                disabled={!pasteA.trim() || !pasteB.trim() || fetching}
                 className="px-8 py-3 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide"
               >
-                Compare Teams
+                {fetching ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Fetching...
+                  </span>
+                ) : (
+                  "Compare Teams"
+                )}
               </button>
             </div>
+            <p className="text-[10px] text-text-tertiary text-center">
+              Supports Showdown pastes, pokepast.es URLs, and VGC Team Report share links (/s/...)
+            </p>
           </div>
         ) : (
           /* Results */
