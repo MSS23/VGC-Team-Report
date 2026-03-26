@@ -263,7 +263,12 @@ export function useHomePage() {
     const tmpl = getTemplate(pendingTemplateId);
     if (!tmpl || tmpl.id === "blank") return;
     setTemplateId(tmpl.id);
-  }, [analysis, share.isSharedView, pendingTemplateId, setTemplateId]);
+
+    // Apply template-specific placeholder summary if summary is empty
+    if (!summary && tmpl.defaults.summaryPlaceholder) {
+      setSummary(tmpl.defaults.summaryPlaceholder);
+    }
+  }, [analysis, share.isSharedView, pendingTemplateId, setTemplateId, summary, setSummary]);
 
   // ── Actions ──────────────────────────────────────────────────────
   const handleAnalyze = (directPaste?: string) => {

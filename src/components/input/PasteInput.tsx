@@ -388,25 +388,54 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.4 }}
       >
-        <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary mb-3">Report Template</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {REPORT_TEMPLATES.map((tmpl) => (
-            <button
-              key={tmpl.id}
-              type="button"
-              onClick={() => onTemplateSelect?.(tmpl.id)}
-              className={`flex flex-col items-start gap-1 p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                selectedTemplate === tmpl.id
-                  ? "border-accent bg-accent-surface shadow-sm shadow-accent/10"
-                  : "border-border bg-surface hover:border-accent/30 hover:bg-surface-alt/50"
-              }`}
-            >
-              <span className="text-base">{tmpl.icon}</span>
-              <span className={`text-xs font-bold ${selectedTemplate === tmpl.id ? "text-accent" : "text-text-primary"}`}>{tmpl.name}</span>
-              <span className="text-[10px] text-text-tertiary leading-tight">{tmpl.description}</span>
-            </button>
-          ))}
+        <div className="flex items-center gap-2 mb-3">
+          <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">What kind of report?</h3>
+          <span className="text-[9px] text-text-tertiary/60 font-medium">(pre-fills structure after analyzing)</span>
         </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {REPORT_TEMPLATES.map((tmpl) => {
+            const isSelected = selectedTemplate === tmpl.id;
+            return (
+              <button
+                key={tmpl.id}
+                type="button"
+                onClick={() => onTemplateSelect?.(tmpl.id)}
+                className={`relative flex flex-col items-start gap-1.5 p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? "border-accent bg-accent-surface shadow-sm shadow-accent/10"
+                    : "border-border bg-surface hover:border-accent/30 hover:bg-surface-alt/50"
+                }`}
+              >
+                {isSelected && (
+                  <span className="absolute top-2 right-2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                )}
+                <span className="text-base">{tmpl.icon}</span>
+                <span className={`text-xs font-bold ${isSelected ? "text-accent" : "text-text-primary"}`}>{tmpl.name}</span>
+                <span className="text-[10px] text-text-tertiary leading-tight">{tmpl.description}</span>
+              </button>
+            );
+          })}
+        </div>
+        {selectedTemplate && selectedTemplate !== "blank" && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-[11px] text-accent font-semibold mt-2.5 flex items-center gap-1.5"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            {selectedTemplate === "quick" && "Quick Share \u2014 starts with a summary prompt. Matchup plans hidden by default."}
+            {selectedTemplate === "tournament" && "Tournament Report \u2014 all sections enabled. Add matchups, calcs, and game plans."}
+            {selectedTemplate === "guide" && "Team Guide \u2014 starts with a detailed summary prompt. Focused on notes and calcs."}
+          </motion.p>
+        )}
       </motion.div>
 
       {/* Community section: spotlight + explore CTA */}
