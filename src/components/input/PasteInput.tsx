@@ -10,6 +10,7 @@ import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { WhatsNewModal } from "@/components/ui/WhatsNewModal";
+import { resolveSlug } from "@/lib/utils/sprite-slug";
 
 
 export const SAMPLE_PASTE = `Kangaskhan-Mega @ Kangaskhanite
@@ -204,7 +205,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         {POKEMON_SPRITES.map((name, i) => (
           <motion.img
             key={name}
-            src={`https://play.pokemonshowdown.com/sprites/ani/${name}.gif`}
+            src={`https://play.pokemonshowdown.com/sprites/ani/${resolveSlug(name)}.gif`}
             alt=""
             className="w-11 h-11 sm:w-16 sm:h-16 object-contain drop-shadow-lg"
             initial={{ opacity: 0, y: 30, scale: 0.8 }}

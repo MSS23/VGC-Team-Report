@@ -4,22 +4,8 @@ import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-function toSpriteSlug(species: string): string {
-  const slug = species.toLowerCase()
-    .replace(/♂/g, "m").replace(/♀/g, "f").replace(/[éè]/g, "e")
-    .replace(/[''.:\u2019]/g, "").replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-").replace(/^-|-$/g, "");
-  const overrides: Record<string, string> = {
-    "flutter-mane": "fluttermane", "iron-hands": "ironhands",
-    "iron-bundle": "ironbundle", "iron-valiant": "ironvaliant",
-    "great-tusk": "greattusk", "roaring-moon": "roaringmoon",
-    "chien-pao": "chienpao", "chi-yu": "chiyu", "ting-lu": "tinglu",
-    "urshifu-rapid-strike": "urshifu-rapidstrike",
-    "walking-wake": "walkingwake", "gouging-fire": "gougingfire",
-    "raging-bolt": "ragingbolt",
-  };
-  return overrides[slug] ?? slug;
-}
+// Use canonical slug resolver — single source of truth for all sprite slugs
+import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
 
 export default async function EmbedPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

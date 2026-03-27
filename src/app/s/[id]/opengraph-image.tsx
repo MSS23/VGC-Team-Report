@@ -41,43 +41,8 @@ function extractTeamFromPaste(paste: string): { species: string; item: string | 
   return team.slice(0, 6);
 }
 
-function toSpriteSlug(species: string): string {
-  const slug = species
-    .toLowerCase()
-    .replace(/♂/g, "m")
-    .replace(/♀/g, "f")
-    .replace(/[éè]/g, "e")
-    .replace(/[''.:\u2019]/g, "")
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  const overrides: Record<string, string> = {
-    "ho-oh": "hooh", "type-null": "typenull", "mr-mime": "mrmime",
-    "mr-rime": "mrrime", "mime-jr": "mimejr", "tapu-koko": "tapukoko",
-    "tapu-lele": "tapulele", "tapu-bulu": "tapubulu", "tapu-fini": "tapufini",
-    "jangmo-o": "jangmoo", "hakamo-o": "hakamoo", "kommo-o": "kommoo",
-    "urshifu-rapid-strike": "urshifu-rapidstrike",
-    "necrozma-dusk-mane": "necrozma-duskmane",
-    "necrozma-dawn-wings": "necrozma-dawnwings",
-    "flutter-mane": "fluttermane", "iron-hands": "ironhands",
-    "iron-bundle": "ironbundle", "iron-valiant": "ironvaliant",
-    "iron-moth": "ironmoth", "iron-thorns": "ironthorns",
-    "iron-jugulis": "ironjugulis", "iron-leaves": "ironleaves",
-    "iron-boulder": "ironboulder", "iron-crown": "ironcrown",
-    "great-tusk": "greattusk", "brute-bonnet": "brutebonnet",
-    "scream-tail": "screamtail", "sandy-shocks": "sandyshocks",
-    "slither-wing": "slitherwing", "roaring-moon": "roaringmoon",
-    "walking-wake": "walkingwake", "gouging-fire": "gougingfire",
-    "raging-bolt": "ragingbolt", "chien-pao": "chienpao",
-    "chi-yu": "chiyu", "ting-lu": "tinglu", "wo-chien": "wochien",
-    "bloodmoon-ursaluna": "ursaluna-bloodmoon",
-    "oricorio-pom-pom": "oricorio-pompom",
-    "mr-mime-galar": "mrmime-galar",
-  };
-
-  return overrides[slug] ?? slug;
-}
+// Use canonical slug resolver — single source of truth for all sprite slugs
+import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
 
 function toItemSlug(item: string): string {
   return item
