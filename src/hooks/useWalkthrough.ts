@@ -272,6 +272,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     const onFound = () => {
       // Target found — nothing to skip, clean up
       if (observer) { observer.disconnect(); observer = null; }
+      if (timerId !== null) { clearTimeout(timerId); timerId = null; }
     };
 
     const onGiveUp = () => {

@@ -10,6 +10,7 @@ import { PokemonSprite } from "@/components/report/PokemonSprite";
 import { TypeBadge } from "@/components/report/TypeBadge";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { PageNavbar } from "@/components/layout/PageNavbar";
+import { PageFooter } from "@/components/layout/PageFooter";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { PokemonType } from "@/lib/types/pokemon";
@@ -347,13 +348,7 @@ export function CompareContent() {
         )}
       </main>
 
-      <footer className="border-t border-border py-8">
-        <p className="text-center text-xs text-text-tertiary font-medium">
-          <a href="/" className="text-text-tertiary hover:text-text-primary transition-colors">Build Your Own Report</a>
-          <span className="mx-1.5 text-border">&middot;</span>
-          <a href="/explore" className="text-text-tertiary hover:text-text-primary transition-colors">Explore</a>
-        </p>
-      </footer>
+      <PageFooter maxWidth="max-w-7xl" />
     </div>
   );
 }

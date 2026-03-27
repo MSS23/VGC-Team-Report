@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { PageNavbar } from "@/components/layout/PageNavbar";
+import { PageFooter } from "@/components/layout/PageFooter";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { FollowButton } from "@/components/social/FollowButton";
@@ -165,6 +166,7 @@ function CreatorProfileInner({ name }: { name: string }) {
           </motion.div>
         )}
       </main>
+      <PageFooter maxWidth="max-w-7xl" />
     </div>
   );
 }

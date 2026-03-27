@@ -47,18 +47,18 @@ const nextConfig: NextConfig = {
             value: [
               // Default: block everything not explicitly allowed
               "default-src 'self'",
-              // Scripts: self, Clerk, Vercel Analytics/Speed Insights, Sentry
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://va.vercel-scripts.com https://*.sentry.io https://challenges.cloudflare.com",
-              // Styles: self + inline (Tailwind, motion)
-              "style-src 'self' 'unsafe-inline'",
+              // Scripts: self, Clerk (proxy domain + hosted), Vercel Analytics/Speed Insights, Sentry
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://va.vercel-scripts.com https://*.sentry.io https://challenges.cloudflare.com",
+              // Styles: self + inline (Tailwind, motion) + Google Fonts (Clerk modal)
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // Images: self, Pokemon Showdown sprites, Clerk avatars, data URIs
               "img-src 'self' data: blob: https://play.pokemonshowdown.com https://*.pokemonshowdown.com https://img.clerk.com https://*.clerk.com https://raw.githubusercontent.com",
-              // Fonts: self + Google Fonts
-              "font-src 'self' https://fonts.gstatic.com",
-              // Connect: self, API calls, Clerk, Sentry, Vercel Analytics
-              "connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com https://pokepast.es",
-              // Frames: Clerk (OAuth popups), Cloudflare challenges
-              "frame-src https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com",
+              // Fonts: self + Google Fonts (app + Clerk modal)
+              "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
+              // Connect: self, API calls, Clerk (proxy + hosted), Sentry, Vercel Analytics
+              "connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com https://pokepast.es",
+              // Frames: Clerk (OAuth popups + proxy), Cloudflare challenges
+              "frame-src https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://challenges.cloudflare.com",
               // Workers: self (service worker)
               "worker-src 'self' blob:",
               // Media: self

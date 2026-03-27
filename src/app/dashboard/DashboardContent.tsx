@@ -7,6 +7,7 @@ import { useDarkMode } from "@/hooks/useDarkMode";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { UserButton, Show, SignInButton, useUser } from "@clerk/nextjs";
 import { PageNavbar } from "@/components/layout/PageNavbar";
+import { PageFooter } from "@/components/layout/PageFooter";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 
@@ -452,6 +453,7 @@ function DashboardInner() {
           </motion.div>
         </Show>
       </main>
+      <PageFooter maxWidth="max-w-5xl" />
     </div>
   );
 }

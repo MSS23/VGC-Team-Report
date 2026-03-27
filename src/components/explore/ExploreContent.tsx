@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { PageNavbar } from "@/components/layout/PageNavbar";
+import { PageFooter } from "@/components/layout/PageFooter";
 import { ExploreHero } from "./ExploreHero";
 import { ExploreFilters, type SearchCategory } from "./ExploreFilters";
 import { SpotlightSection } from "./SpotlightCard";
@@ -175,34 +176,7 @@ function ExploreInner() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-8">
-        <p className="text-center text-xs text-text-tertiary font-medium">
-          {t.builtBy}{" "}
-          <a
-            href="https://x.com/Manny64Official"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-bold text-text-primary hover:text-accent transition-colors"
-          >
-            Manraj Sidhu
-          </a>
-          <span className="mx-1.5 text-border">&middot;</span>
-          <a
-            href="/"
-            className="text-text-tertiary hover:text-text-primary transition-colors"
-          >
-            {t.buildYourOwn}
-          </a>
-          <span className="mx-1.5 text-border">&middot;</span>
-          <a
-            href="/feedback"
-            className="text-text-tertiary hover:text-text-primary transition-colors"
-          >
-            Feedback
-          </a>
-        </p>
-      </footer>
+      <PageFooter maxWidth="max-w-7xl" />
     </div>
   );
 }

@@ -105,18 +105,19 @@ export function WalkthroughOverlay({
 
   // Keyboard handling — capture phase to block slide navigation during tour
   useEffect(() => {
+    const NAV_KEYS = new Set(["Escape", "Enter", " ", "ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"]);
     const handleKey = (e: KeyboardEvent) => {
-      // Block all navigation keys from reaching slide nav handlers
+      // Only intercept navigation keys — let typing through
+      if (!NAV_KEYS.has(e.key)) return;
+
+      e.preventDefault();
       e.stopImmediatePropagation();
 
       if (e.key === "Escape") {
-        e.preventDefault();
         onSkip();
       } else if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight" || e.key === "ArrowDown") {
-        e.preventDefault();
         onNext();
       } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-        e.preventDefault();
         onPrev?.();
       }
     };

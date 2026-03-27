@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PrivacyNavbar } from "./PrivacyNavbar";
+import { PageFooter } from "@/components/layout/PageFooter";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -97,6 +98,7 @@ export default function PrivacyPage() {
           </section>
         </div>
       </main>
+      <PageFooter maxWidth="max-w-2xl" hideFeedback />
     </div>
   );
 }

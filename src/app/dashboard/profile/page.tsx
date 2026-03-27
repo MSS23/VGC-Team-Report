@@ -7,6 +7,7 @@ import { useDarkMode } from "@/hooks/useDarkMode";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { UserButton, Show, SignInButton } from "@clerk/nextjs";
 import { PageNavbar } from "@/components/layout/PageNavbar";
+import { PageFooter } from "@/components/layout/PageFooter";
 
 interface Profile {
   bio: string;
@@ -168,6 +169,7 @@ function ProfileInner() {
           )}
         </Show>
       </main>
+      <PageFooter maxWidth="max-w-2xl" />
     </div>
   );
 }

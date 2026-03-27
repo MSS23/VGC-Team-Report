@@ -193,20 +193,21 @@ export function SlideNavControls({
             </button>
           )}
 
-          {/* Take a Tour — desktop only */}
+          {/* Take a Tour */}
           {onStartTour && (
             <button
               type="button"
               onClick={onStartTour}
-              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer flex-shrink-0"
+              className="flex items-center justify-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold text-text-tertiary hover:text-accent hover:bg-accent-surface/60 border border-transparent hover:border-accent/20 transition-all cursor-pointer flex-shrink-0"
               aria-label={t.takeATour}
               title={t.takeATour}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
+              <span className="hidden sm:inline">{t.takeATour}</span>
             </button>
           )}
 
