@@ -231,6 +231,15 @@ function HomeContent() {
     window.location.href = window.location.origin;
   }, [handleReset, exitSharedView]);
 
+  // Fork: keep all report data but start a new local draft
+  const handleForkReport = useCallback(() => {
+    setCreatorName("");
+    exitSharedView();
+    setCreatorMode(true);
+    // Replace URL to remove share context
+    window.history.replaceState(null, "", "/");
+  }, [setCreatorName, exitSharedView, setCreatorMode]);
+
   // Show paste input if no analysis and not loading shared view
   if (!analysis && !sharedState && !isSharePending) {
     return (
@@ -498,18 +507,18 @@ function HomeContent() {
             <SaveButton shareId={activeShareId} />
             <button
               type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(paste);
-                window.location.href = "/";
-              }}
+              onClick={handleForkReport}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent transition-all cursor-pointer"
-              title="Copies this team to your clipboard and opens the builder so you can create your own version"
+              title="Fork this report — copy the full team, notes, calcs, and matchup plans into your own editable draft"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                <circle cx="12" cy="18" r="3" />
+                <circle cx="6" cy="6" r="3" />
+                <circle cx="18" cy="6" r="3" />
+                <path d="M18 9v1a2 2 0 01-2 2H8a2 2 0 01-2-2V9" />
+                <line x1="12" y1="12" x2="12" y2="15" />
               </svg>
-              Copy &amp; Build Your Own
+              Fork Report
             </button>
           </div>
           <ReactionBar shareId={activeShareId} />

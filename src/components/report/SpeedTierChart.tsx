@@ -3,6 +3,7 @@
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { PokemonSprite } from "./PokemonSprite";
 import { TypeCoverageMatrix } from "./TypeCoverageMatrix";
+import { DefensiveCoverageChart } from "./DefensiveCoverageChart";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
 
@@ -177,6 +178,11 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
 
       {/* Type Coverage */}
       <TypeCoverageMatrix pokemon={pokemon} />
+
+      <hr className="border-border" />
+
+      {/* Defensive Coverage Heatmap */}
+      <DefensiveCoverageChart pokemon={pokemon} />
     </div>
   );
 }

@@ -142,4 +142,18 @@ export async function ensureTable() {
   // Soft-delete support
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_deleted ON shares(deleted_at) WHERE deleted_at IS NOT NULL`);
+
+  // Full-text search vector
+  await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS search_vector tsvector`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_search ON shares USING GIN(search_vector) WHERE is_public = TRUE AND deleted_at IS NULL`);
+
+  // Backfill search_vector for existing rows that don't have one
+  await run(sql`
+    UPDATE shares SET search_vector =
+      setweight(to_tsvector('english', COALESCE(data->>'creatorName', '')), 'A') ||
+      setweight(to_tsvector('english', COALESCE(data->>'tournamentName', '')), 'A') ||
+      setweight(to_tsvector('english', COALESCE(data->>'paste', '')), 'B') ||
+      setweight(to_tsvector('english', COALESCE(data->>'teamSummary', '')), 'C')
+    WHERE search_vector IS NULL AND is_public = TRUE AND deleted_at IS NULL
+  `);
 }

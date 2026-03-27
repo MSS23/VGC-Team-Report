@@ -29,11 +29,27 @@ export async function GET(request: Request) {
     const sql = getDb();
 
     // Build search condition based on searchType
+    // Use full-text search for queries 3+ chars, fall back to ILIKE for short queries
     const searchPattern = q ? `%${q}%` : null;
+    const useFts = q.length >= 3;
+    // Convert query to tsquery: split words, add :* prefix matching to each
+    const tsQuery = q ? q.trim().split(/\s+/).map(w => w.replace(/[^\w]/g, "")).filter(Boolean).map(w => `${w}:*`).join(" & ") : null;
 
     // For popular sort, we need a subquery to count likes
     // For other sorts, use the column directly
     let rows;
+
+    // Search condition builder — uses FTS when possible, ILIKE fallback for short queries
+    const ftsCondition = (useFts && tsQuery)
+      ? sql`AND s.search_vector @@ to_tsquery('english', ${tsQuery})`
+      : sql``;
+    const ilikeFallback = (!useFts && searchPattern)
+      ? (searchType === "pokemon" ? sql`AND s.data->>'paste' ILIKE ${searchPattern}`
+        : searchType === "tournament" ? sql`AND s.data->>'tournamentName' ILIKE ${searchPattern}`
+        : searchType === "creator" ? sql`AND s.data->>'creatorName' ILIKE ${searchPattern}`
+        : sql`AND (s.data->>'paste' ILIKE ${searchPattern} OR s.data->>'tournamentName' ILIKE ${searchPattern} OR s.data->>'creatorName' ILIKE ${searchPattern})`)
+      : sql``;
+    const searchCondition = (useFts && tsQuery) ? ftsCondition : ilikeFallback;
 
     if (sort === "popular") {
       // Sort by total reaction (like) count
@@ -47,10 +63,7 @@ export async function GET(request: Request) {
           GROUP BY share_id
         ) rc ON rc.share_id = s.id
         WHERE s.is_public = TRUE AND s.deleted_at IS NULL
-          ${searchPattern && searchType === "pokemon" ? sql`AND s.data->>'paste' ILIKE ${searchPattern}` : sql``}
-          ${searchPattern && searchType === "tournament" ? sql`AND s.data->>'tournamentName' ILIKE ${searchPattern}` : sql``}
-          ${searchPattern && searchType === "creator" ? sql`AND s.data->>'creatorName' ILIKE ${searchPattern}` : sql``}
-          ${searchPattern && searchType === "all" ? sql`AND (s.data->>'paste' ILIKE ${searchPattern} OR s.data->>'tournamentName' ILIKE ${searchPattern} OR s.data->>'creatorName' ILIKE ${searchPattern})` : sql``}
+          ${searchCondition}
           ${filterRegulation ? sql`AND s.data->'tags'->>'regulation' = ${filterRegulation}` : sql``}
           ${filterEventType ? sql`AND s.data->'tags'->>'eventType' = ${filterEventType}` : sql``}
           ${filterArchetype ? sql`AND s.data->'tags'->'archetype' ?| ${filterArchetype.split(",").filter(Boolean)}` : sql``}
@@ -65,10 +78,7 @@ export async function GET(request: Request) {
         SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
         FROM shares s
         WHERE s.is_public = TRUE AND s.deleted_at IS NULL
-          ${searchPattern && searchType === "pokemon" ? sql`AND s.data->>'paste' ILIKE ${searchPattern}` : sql``}
-          ${searchPattern && searchType === "tournament" ? sql`AND s.data->>'tournamentName' ILIKE ${searchPattern}` : sql``}
-          ${searchPattern && searchType === "creator" ? sql`AND s.data->>'creatorName' ILIKE ${searchPattern}` : sql``}
-          ${searchPattern && searchType === "all" ? sql`AND (s.data->>'paste' ILIKE ${searchPattern} OR s.data->>'tournamentName' ILIKE ${searchPattern} OR s.data->>'creatorName' ILIKE ${searchPattern})` : sql``}
+          ${searchCondition}
           ${filterRegulation ? sql`AND s.data->'tags'->>'regulation' = ${filterRegulation}` : sql``}
           ${filterEventType ? sql`AND s.data->'tags'->>'eventType' = ${filterEventType}` : sql``}
           ${filterArchetype ? sql`AND s.data->'tags'->'archetype' ?| ${filterArchetype.split(",").filter(Boolean)}` : sql``}

@@ -63,12 +63,23 @@ export async function POST(request: Request) {
 
     const sql = getDb();
 
+    // Build search vector text from state fields
+    const searchCreator = (state.creatorName as string) ?? "";
+    const searchTournament = (state.tournamentName as string) ?? "";
+    const searchPaste = (state.paste as string) ?? "";
+    const searchSummary = (state.teamSummary as string) ?? "";
+
     // Update existing share (increment version for collaborative sync)
     if (existingId && editToken) {
       const rows = await sql`
         UPDATE shares
         SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(), version = COALESCE(version, 1) + 1,
-            is_public = ${isPublic ?? false}
+            is_public = ${isPublic ?? false},
+            search_vector =
+              setweight(to_tsvector('english', ${searchCreator}), 'A') ||
+              setweight(to_tsvector('english', ${searchTournament}), 'A') ||
+              setweight(to_tsvector('english', ${searchPaste}), 'B') ||
+              setweight(to_tsvector('english', ${searchSummary}), 'C')
         WHERE id = ${existingId} AND edit_token = ${editToken}
         RETURNING id, COALESCE(version, 1) AS version, is_public
       `;
@@ -88,8 +99,14 @@ export async function POST(request: Request) {
     } catch { /* not authenticated — that's fine */ }
 
     await sql`
-      INSERT INTO shares (id, edit_token, data, version, is_public, owner_id)
-      VALUES (${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${ownerId})
+      INSERT INTO shares (id, edit_token, data, version, is_public, owner_id, search_vector)
+      VALUES (
+        ${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${ownerId},
+        setweight(to_tsvector('english', ${searchCreator}), 'A') ||
+        setweight(to_tsvector('english', ${searchTournament}), 'A') ||
+        setweight(to_tsvector('english', ${searchPaste}), 'B') ||
+        setweight(to_tsvector('english', ${searchSummary}), 'C')
+      )
     `;
 
     // Notify followers when a new public report is created (fire-and-forget)
