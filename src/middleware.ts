@@ -4,9 +4,27 @@ import type { NextRequest } from 'next/server'
 import { getCorsHeaders, isAllowedOrigin } from '@/lib/security/cors'
 import { setCsrfCookie, validateCsrf } from '@/lib/security/csrf'
 
+const CANONICAL_HOST = 'pokemonvgcteamreport.com';
+
 export default clerkMiddleware(async (_auth, request: NextRequest) => {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
+  const host = request.headers.get('host') ?? '';
   const isApiRoute = pathname.startsWith('/api');
+
+  // ── Canonical redirect: vercel.app → custom domain ─────────────
+  // Redirects all non-custom-domain traffic to the canonical URL.
+  // Preserves path and query string. Skips in development.
+  if (
+    process.env.NODE_ENV === 'production' &&
+    host !== CANONICAL_HOST &&
+    host !== `www.${CANONICAL_HOST}` &&
+    !host.includes('localhost')
+  ) {
+    return NextResponse.redirect(
+      `https://${CANONICAL_HOST}${pathname}${search}`,
+      301,
+    );
+  }
 
   // ── CORS: Handle preflight OPTIONS requests ────────────────────
   if (isApiRoute && request.method === 'OPTIONS') {
