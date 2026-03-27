@@ -439,6 +439,29 @@ body {
   outline: none;
 }
 
+/* Colorblind-friendly: striped pattern for item-boosted stat bars */
+.bar-boosted {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    rgba(255, 255, 255, 0.15) 3px,
+    rgba(255, 255, 255, 0.15) 5px
+  );
+  background-size: auto;
+}
+
+/* Colorblind-friendly: striped pattern for speed-boosted bars */
+.bar-speed-boosted {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(255, 255, 255, 0.12) 4px,
+    rgba(255, 255, 255, 0.12) 6px
+  );
+}
+
 /* Smooth hover for interactive cards */
 .card-hover {
   transition: transform 0.2s ease, box-shadow 0.2s ease;

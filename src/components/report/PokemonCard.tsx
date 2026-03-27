@@ -214,9 +214,9 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                     {natureData?.minus === stat && <span className="text-[10px] sm:text-[11px]" aria-label="reduced by nature">{"\u25BC"}</span>}
                     {labels[stat]}
                   </span>
-                  <div className="flex-1 h-3 sm:h-2.5 bg-surface-alt rounded-full overflow-hidden creator:h-3" role="progressbar" aria-valuenow={displayValue} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${labels[stat]} stat bar`}>
+                  <div className="flex-1 h-3 sm:h-2.5 bg-surface-alt rounded-full overflow-hidden creator:h-3" role="progressbar" aria-valuenow={displayValue} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${labels[stat]} stat bar${isBoosted ? " (item boosted)" : ""}`}>
                     <div
-                      className="h-full rounded-full animate-bar-fill"
+                      className={`h-full rounded-full animate-bar-fill ${isBoosted ? "bar-boosted" : ""}`}
                       style={{
                         width: `${percentage}%`,
                         backgroundColor: isBoosted ? "#f59e0b" : STAT_COLORS[stat],
@@ -226,7 +226,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                   <span className={`text-sm sm:text-sm font-[family-name:var(--font-mono)] font-bold w-8 sm:w-8 text-right tabular-nums ${
                     isBoosted ? "text-amber-500" : "text-text-secondary"
                   }`}>
-                    {displayValue}
+                    {displayValue}{isBoosted && <span className="text-[8px] align-super" aria-label="boosted by item">*</span>}
                   </span>
                   {ev > 0 ? (
                     <span className="text-[11px] sm:text-xs text-accent font-bold w-8 sm:w-9">

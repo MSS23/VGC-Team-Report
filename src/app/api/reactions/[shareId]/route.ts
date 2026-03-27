@@ -17,6 +17,10 @@ export async function GET(
 ) {
   try {
     const { shareId } = await params;
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    if (isRateLimited(`reactions-read:${ip}`, 60, 60_000)) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
     const sessionId = new URL(request.url).searchParams.get("sessionId") ?? "";
     const sql = getDb();
 

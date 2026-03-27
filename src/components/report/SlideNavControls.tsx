@@ -98,14 +98,14 @@ export function SlideNavControls({
                   aria-label={`Go to ${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}`}
                   className="relative flex items-center justify-center w-6 h-6 sm:w-auto sm:h-auto flex-shrink-0"
                 >
-                  <span className={`block rounded-full transition-all duration-300 ${
+                  <span className={`block transition-all duration-300 ${
                     isCurrent
                       ? isHidden
-                        ? "w-4 h-2.5 bg-amber-400/70 shadow-sm shadow-amber-400/30 ring-1 ring-amber-400/40"
-                        : "w-4 h-2.5 bg-accent shadow-sm shadow-accent/40"
+                        ? "w-4 h-2.5 rounded bg-amber-400/70 shadow-sm shadow-amber-400/30 ring-1 ring-amber-400/40 border border-dashed border-amber-400/60"
+                        : "w-4 h-2.5 rounded-full bg-accent shadow-sm shadow-accent/40"
                       : isHidden
-                        ? "w-2 h-2 bg-amber-400/30 hover:bg-amber-400/50"
-                        : "w-2 h-2 bg-border hover:bg-text-tertiary hover:scale-125"
+                        ? "w-2 h-2 rounded bg-amber-400/30 hover:bg-amber-400/50 border border-dashed border-amber-400/40"
+                        : "w-2 h-2 rounded-full bg-border hover:bg-text-tertiary hover:scale-125"
                   }`} />
                 </button>
               );

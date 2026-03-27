@@ -18,6 +18,10 @@ export async function GET(
 ) {
   try {
     const { shareId } = await params;
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    if (isRateLimited(`comments-read:${ip}`, 60, 60_000)) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
     const url = new URL(request.url);
     const cursor = url.searchParams.get("cursor");
     const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "20", 10) || 20, 50);

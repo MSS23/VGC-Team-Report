@@ -83,7 +83,10 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
                 key={`blind-${type}`}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-xs font-bold text-red-400"
               >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tc.bg }} />
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tc.bg }} />
                 {type}
                 <span className="text-red-400/60">{weakCount} weak</span>
               </span>
@@ -96,7 +99,10 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
                 key={`strong-${type}`}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold text-emerald-400"
               >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tc.bg }} />
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tc.bg }} />
                 {type}
                 <span className="text-emerald-400/60">{resistCount + immuneCount} resist</span>
               </span>
