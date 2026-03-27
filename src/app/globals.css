@@ -20,6 +20,18 @@
   --warning: #D97706;
   --danger: #DC2626;
 
+  /* Type coverage heatmap cells — high contrast in both modes */
+  --cell-immune: #E4E4E7;
+  --cell-immune-text: #71717A;
+  --cell-nve: #FEE2E2;
+  --cell-nve-text: #B91C1C;
+  --cell-se: #D1FAE5;
+  --cell-se-text: #065F46;
+  --cell-dse: #A5F3FC;
+  --cell-dse-text: #164E63;
+  --def-4x: #FECACA;
+  --def-4x-text: #991B1B;
+
   /* Pokémon stat colors */
   --stat-hp: #FF5959;
   --stat-atk: #F5AC78;
@@ -165,6 +177,16 @@ body {
 }
 
 [data-dark-mode] {
+  --cell-immune: #27272A;
+  --cell-immune-text: #A1A1AA;
+  --cell-nve: rgba(239, 68, 68, 0.2);
+  --cell-nve-text: #FCA5A5;
+  --cell-se: rgba(16, 185, 129, 0.25);
+  --cell-se-text: #6EE7B7;
+  --cell-dse: rgba(6, 182, 212, 0.4);
+  --cell-dse-text: #FFFFFF;
+  --def-4x: rgba(220, 38, 38, 0.5);
+  --def-4x-text: #FFFFFF;
   --background: #0B0B1A;
   --foreground: #F0EDE6;
   --surface: #141428;

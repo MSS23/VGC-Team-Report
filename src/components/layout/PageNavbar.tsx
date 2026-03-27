@@ -51,7 +51,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl",
               + Create
             </a>
             <span className="w-px h-4 bg-border mx-0.5" />
-            {NAV_LINKS.filter((l) => l.key !== "home" && l.key !== "feedback").map((link) => (
+            {NAV_LINKS.filter((l) => l.key !== "home").map((link) => (
               <a
                 key={link.key}
                 href={link.href}

@@ -25,13 +25,13 @@ function effectivenessLabel(mult: number): string {
   return `${mult}x`;
 }
 
-function effectivenessCell(mult: number): { bg: string; text: string; ring?: string } {
-  if (mult === 0) return { bg: "bg-zinc-800", text: "text-zinc-400" };
-  if (mult <= 0.25) return { bg: "bg-cyan-500/30", text: "text-cyan-300" };
-  if (mult <= 0.5) return { bg: "bg-emerald-500/25", text: "text-emerald-300" };
-  if (mult === 1) return { bg: "", text: "text-text-tertiary/40" };
-  if (mult === 2) return { bg: "bg-red-500/20", text: "text-red-400" };
-  if (mult >= 4) return { bg: "bg-red-600/50", text: "text-white", ring: "ring-1 ring-red-500/60" };
+function effectivenessCell(mult: number): { bg: string; text: string; ring?: string; style?: React.CSSProperties } {
+  if (mult === 0) return { bg: "", text: "", style: { backgroundColor: "var(--cell-immune)", color: "var(--cell-immune-text)" } };
+  if (mult <= 0.25) return { bg: "", text: "", style: { backgroundColor: "var(--cell-dse)", color: "var(--cell-dse-text)" } };
+  if (mult <= 0.5) return { bg: "", text: "", style: { backgroundColor: "var(--cell-se)", color: "var(--cell-se-text)" } };
+  if (mult === 1) return { bg: "", text: "text-text-tertiary", style: { opacity: 0.45 } };
+  if (mult === 2) return { bg: "", text: "", style: { backgroundColor: "var(--cell-nve)", color: "var(--cell-nve-text)" } };
+  if (mult >= 4) return { bg: "", text: "", ring: "ring-2 ring-red-500/80", style: { backgroundColor: "var(--def-4x)", color: "var(--def-4x-text)" } };
   return { bg: "", text: "" };
 }
 
@@ -69,9 +69,9 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
         <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-1">
           Defensive Profile
         </h3>
-        <p className="text-xs sm:text-sm text-text-tertiary leading-relaxed">
+        <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
           How each Pok&eacute;mon handles incoming attacks. Watch for
-          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded bg-red-600/50 text-white text-[10px] font-extrabold ring-1 ring-red-500/60">4&times;</span>
+          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded-md text-[10px] font-black ring-2 ring-red-500/80" style={{ backgroundColor: "var(--def-4x)", color: "var(--def-4x-text)" }}>4&times;</span>
           double weaknesses.
         </p>
       </div>
@@ -151,9 +151,10 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
                   return (
                     <td key={attackType} className="px-0.5 py-1">
                       <span
-                        className={`inline-flex items-center justify-center w-full h-7 sm:h-8 rounded-md text-[11px] sm:text-xs tabular-nums ${cell.bg} ${cell.text} ${cell.ring ?? ""} ${
-                          mult >= 4 ? "font-extrabold text-[12px] sm:text-sm" : "font-bold"
+                        className={`inline-flex items-center justify-center w-full h-7 sm:h-8 rounded-lg text-[11px] sm:text-xs tabular-nums ${cell.bg} ${cell.text} ${cell.ring ?? ""} ${
+                          mult >= 4 ? "font-black text-[13px] sm:text-sm" : mult >= 2 ? "font-extrabold" : "font-bold"
                         }`}
+                        style={cell.style}
                         title={`${attackType} → ${p.species}: ${mult}x`}
                       >
                         {label}
@@ -189,25 +190,25 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[10px] sm:text-xs font-semibold text-text-tertiary">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-text-secondary">
         <span className="flex items-center gap-1.5">
-          <span className="w-6 h-5 rounded-md bg-red-600/50 ring-1 ring-red-500/60 inline-flex items-center justify-center text-white text-[10px] sm:text-[11px] font-extrabold">4&times;</span>
+          <span className="w-7 h-6 rounded-lg ring-2 ring-red-500/80 inline-flex items-center justify-center text-[11px] font-black" style={{ backgroundColor: "var(--def-4x)", color: "var(--def-4x-text)" }}>4&times;</span>
           Double weak
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-6 h-5 rounded-md bg-red-500/20 inline-flex items-center justify-center text-red-400 text-[10px] sm:text-[11px] font-bold">2&times;</span>
+          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-extrabold" style={{ backgroundColor: "var(--cell-nve)", color: "var(--cell-nve-text)" }}>2&times;</span>
           Weak
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-6 h-5 rounded-md bg-emerald-500/25 inline-flex items-center justify-center text-emerald-300 text-[10px] sm:text-[11px] font-bold">&frac12;</span>
+          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-bold" style={{ backgroundColor: "var(--cell-se)", color: "var(--cell-se-text)" }}>&frac12;</span>
           Resist
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-6 h-5 rounded-md bg-cyan-500/30 inline-flex items-center justify-center text-cyan-300 text-[10px] sm:text-[11px] font-bold">&frac14;</span>
+          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-bold" style={{ backgroundColor: "var(--cell-dse)", color: "var(--cell-dse-text)" }}>&frac14;</span>
           Double resist
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-6 h-5 rounded-md bg-zinc-800 inline-flex items-center justify-center text-zinc-400 text-[10px] sm:text-[11px] font-bold">0</span>
+          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-bold" style={{ backgroundColor: "var(--cell-immune)", color: "var(--cell-immune-text)" }}>0</span>
           Immune
         </span>
       </div>

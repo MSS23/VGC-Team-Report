@@ -62,12 +62,13 @@ function getOffensiveProfile(mon: AnalyzedPokemon): Record<PokemonType, { mult: 
   return profile;
 }
 
-function offensiveCell(mult: number): { bg: string; text: string; ring?: string } {
-  if (mult === 0) return { bg: "bg-zinc-800", text: "text-zinc-400" };
-  if (mult < 1) return { bg: "bg-red-500/20", text: "text-red-400" };
-  if (mult === 1) return { bg: "", text: "text-text-tertiary/40" };
-  if (mult === 2) return { bg: "bg-emerald-500/25", text: "text-emerald-300" };
-  if (mult >= 4) return { bg: "bg-cyan-500/40", text: "text-white", ring: "ring-1 ring-cyan-400/60" };
+function offensiveCell(mult: number): { bg: string; text: string; ring?: string; style?: React.CSSProperties } {
+  // Use inline styles for dual-mode readability since dark mode uses [data-dark-mode] not Tailwind dark:
+  if (mult === 0) return { bg: "", text: "", style: { backgroundColor: "var(--cell-immune)", color: "var(--cell-immune-text)" } };
+  if (mult < 1) return { bg: "", text: "", style: { backgroundColor: "var(--cell-nve)", color: "var(--cell-nve-text)" } };
+  if (mult === 1) return { bg: "", text: "text-text-tertiary", style: { opacity: 0.45 } };
+  if (mult === 2) return { bg: "", text: "", style: { backgroundColor: "var(--cell-se)", color: "var(--cell-se-text)" } };
+  if (mult >= 4) return { bg: "", text: "", ring: "ring-2 ring-cyan-400/80", style: { backgroundColor: "var(--cell-dse)", color: "var(--cell-dse-text)" } };
   return { bg: "", text: "" };
 }
 
@@ -104,11 +105,11 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
         <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-1">
           Offensive Profile
         </h3>
-        <p className="text-xs sm:text-sm text-text-tertiary leading-relaxed">
+        <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
           Best coverage each Pok&eacute;mon has against every type based on their moves.
-          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded bg-emerald-500/25 text-emerald-300 text-[10px] font-extrabold">2&times;</span>
+          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded-md text-[10px] font-extrabold" style={{ backgroundColor: "var(--cell-se)", color: "var(--cell-se-text)" }}>2&times;</span>
           = super effective,
-          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded bg-cyan-500/40 text-white text-[10px] font-extrabold ring-1 ring-cyan-400/60">4&times;</span>
+          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded-md text-[10px] font-black ring-2 ring-cyan-400/80" style={{ backgroundColor: "var(--cell-dse)", color: "var(--cell-dse-text)" }}>4&times;</span>
           = double SE.
         </p>
       </div>
@@ -188,9 +189,10 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
                   return (
                     <td key={defType} className="px-0.5 py-1">
                       <span
-                        className={`inline-flex items-center justify-center w-full h-7 sm:h-8 rounded-md text-[11px] sm:text-xs tabular-nums ${cell.bg} ${cell.text} ${cell.ring ?? ""} ${
-                          mult >= 4 ? "font-extrabold text-[12px] sm:text-sm" : "font-bold"
+                        className={`inline-flex items-center justify-center w-full h-7 sm:h-8 rounded-lg text-[11px] sm:text-xs tabular-nums ${cell.bg} ${cell.text} ${cell.ring ?? ""} ${
+                          mult >= 4 ? "font-black text-[13px] sm:text-sm" : mult >= 2 ? "font-extrabold" : "font-bold"
                         }`}
+                        style={cell.style}
                         title={move ? `${move} → ${defType}: ${mult}x` : `vs ${defType}: ${mult}x`}
                       >
                         {label}
@@ -226,25 +228,25 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[10px] sm:text-xs font-semibold text-text-tertiary">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-text-secondary">
         <span className="flex items-center gap-1.5">
-          <span className="w-6 h-5 rounded-md bg-cyan-500/40 ring-1 ring-cyan-400/60 inline-flex items-center justify-center text-white text-[10px] sm:text-[11px] font-extrabold">4&times;</span>
+          <span className="w-7 h-6 rounded-lg ring-2 ring-cyan-400/80 inline-flex items-center justify-center text-[11px] font-black" style={{ backgroundColor: "var(--cell-dse)", color: "var(--cell-dse-text)" }}>4&times;</span>
           Double SE
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-6 h-5 rounded-md bg-emerald-500/25 inline-flex items-center justify-center text-emerald-300 text-[10px] sm:text-[11px] font-bold">2&times;</span>
+          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-extrabold" style={{ backgroundColor: "var(--cell-se)", color: "var(--cell-se-text)" }}>2&times;</span>
           Super effective
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-6 h-5 rounded-md inline-flex items-center justify-center text-text-tertiary/40 text-[10px] sm:text-[11px] font-bold">&bull;</span>
+          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-text-tertiary text-[11px] font-bold" style={{ opacity: 0.45 }}>&bull;</span>
           Neutral
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-6 h-5 rounded-md bg-red-500/20 inline-flex items-center justify-center text-red-400 text-[10px] sm:text-[11px] font-bold">&frac12;</span>
+          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-bold" style={{ backgroundColor: "var(--cell-nve)", color: "var(--cell-nve-text)" }}>&frac12;</span>
           Not very effective
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-6 h-5 rounded-md bg-zinc-800 inline-flex items-center justify-center text-zinc-400 text-[10px] sm:text-[11px] font-bold">0</span>
+          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-bold" style={{ backgroundColor: "var(--cell-immune)", color: "var(--cell-immune-text)" }}>0</span>
           No effect
         </span>
       </div>
