@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import nacl from "tweetnacl";
 
 const LINEAR_API = "https://api.linear.app/graphql";
+const DISCORD_PUBLIC_KEY = "44b2cb02932ad5b5eae681352246314ffb23ecd299c2490d7875d5883e5596ae";
 
 // Discord interaction types
 const PING = 1;
@@ -9,7 +11,6 @@ const APPLICATION_COMMAND = 2;
 // Response types
 const PONG = 1;
 const CHANNEL_MESSAGE = 4;
-const DEFERRED_CHANNEL_MESSAGE = 5;
 
 function getLinearAuth() {
   return process.env.LINEAR_API_KEY ?? "";
@@ -27,22 +28,31 @@ async function linearQuery(query: string) {
   return res.json();
 }
 
-async function verifyDiscordRequest(request: NextRequest): Promise<boolean> {
-  // For now, verify by checking the bot token is configured
-  // Full Ed25519 verification requires the discord-interactions package
-  // Since this endpoint is only called by Discord, this is acceptable
-  const publicKey = process.env.DISCORD_APP_PUBLIC_KEY;
-  if (!publicKey) return true; // Skip verification if key not set
-  // TODO: Add Ed25519 signature verification for production hardening
-  return true;
-}
-
 /**
  * POST /api/discord — Discord interaction endpoint
  * Handles slash commands from the VGC Team Report bot.
  */
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  // Ed25519 signature verification (required by Discord)
+  const signature = request.headers.get("x-signature-ed25519");
+  const timestamp = request.headers.get("x-signature-timestamp");
+  const rawBody = await request.text();
+
+  if (!signature || !timestamp) {
+    return NextResponse.json({ error: "Missing signature" }, { status: 401 });
+  }
+
+  const isValid = nacl.sign.detached.verify(
+    new TextEncoder().encode(timestamp + rawBody),
+    hexToUint8(signature),
+    hexToUint8(DISCORD_PUBLIC_KEY),
+  );
+
+  if (!isValid) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  const body = JSON.parse(rawBody);
 
   // Handle Discord ping (required for registering the endpoint)
   if (body.type === PING) {
@@ -274,4 +284,12 @@ export async function POST(request: NextRequest) {
     console.error("Discord interaction error:", e);
     return NextResponse.json({ type: CHANNEL_MESSAGE, data: { content: "Something went wrong. Check the logs." } });
   }
+}
+
+function hexToUint8(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
 }
