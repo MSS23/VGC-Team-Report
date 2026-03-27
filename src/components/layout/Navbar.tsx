@@ -114,7 +114,8 @@ export function Navbar(props: NavbarProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const showSignIn = !isSignedIn;
+  // Wait for Clerk to load before showing auth UI to prevent flash
+  const showSignIn = isLoaded && !isSignedIn;
   const showUser = isLoaded && isSignedIn;
 
   return (

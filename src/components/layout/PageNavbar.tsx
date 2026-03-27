@@ -23,8 +23,8 @@ const NAV_LINKS = [
 export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl", activePage }: PageNavbarProps) {
   const { isLoaded, isSignedIn } = useAuth();
 
-  // Show sign-in button by default until Clerk confirms user is signed in
-  const showSignIn = !isSignedIn;
+  // Wait for Clerk to load before showing auth UI to prevent flash
+  const showSignIn = isLoaded && !isSignedIn;
   const showUser = isLoaded && isSignedIn;
 
   return (
