@@ -107,16 +107,16 @@ export function SlideNavControls({
                       ? isHidden
                         ? "w-4 h-2.5 rounded bg-amber-400/70 shadow-sm shadow-amber-400/30 ring-1 ring-amber-400/40 border border-dashed border-amber-400/60"
                         : hasChanges
-                          ? "w-4 h-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-500/40"
+                          ? "w-4 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50"
                           : "w-4 h-2.5 rounded-full bg-accent shadow-sm shadow-accent/40"
                       : isHidden
                         ? "w-2 h-2 rounded bg-amber-400/30 hover:bg-amber-400/50 border border-dashed border-amber-400/40"
                         : hasChanges
-                          ? "w-2 h-2 rounded-full bg-amber-500/70 hover:bg-amber-500 hover:scale-125 ring-1 ring-amber-500/30"
+                          ? "w-2.5 h-2.5 rounded-full bg-blue-500 hover:bg-blue-600 hover:scale-125 ring-2 ring-blue-500/30"
                           : "w-2 h-2 rounded-full bg-border hover:bg-text-tertiary hover:scale-125"
                   }`} />
                   {hasChanges && !isCurrent && (
-                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                   )}
                 </button>
               );

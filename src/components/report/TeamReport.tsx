@@ -83,7 +83,13 @@ function DiffHighlight({ slideIndex, children }: { slideIndex: number; children:
 
   return (
     <div className="version-diff-highlight relative">
-      <div className="absolute -inset-2 sm:-inset-3 rounded-2xl border-2 border-amber-500/40 pointer-events-none version-diff-glow" />
+      <div className="version-diff-border absolute -inset-2 sm:-inset-3 rounded-2xl pointer-events-none" />
+      <div className="version-diff-label absolute -top-2 sm:-top-3 left-3 sm:left-4 z-10 pointer-events-none">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-500 text-white text-[10px] font-bold rounded-md shadow-md shadow-blue-500/30 uppercase tracking-wider">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          Changed
+        </span>
+      </div>
       {children}
     </div>
   );

@@ -200,17 +200,17 @@ export function VersionHistoryPanel({
 
         {/* Active comparison banner */}
         {isComparing && (
-          <div className="px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between gap-2">
+          <div className="px-4 py-2.5 bg-blue-50 dark:bg-blue-950/50 border-b border-blue-300 dark:border-blue-500/40 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
-              <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
+              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse flex-shrink-0" />
+              <span className="text-[11px] font-bold text-blue-800 dark:text-blue-200">
                 Showing changes since v{comparingVersion}
               </span>
             </div>
             <button
               type="button"
               onClick={onClearCompare}
-              className="flex-shrink-0 px-2.5 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 rounded-md hover:bg-amber-500/25 transition-colors cursor-pointer"
+              className="flex-shrink-0 px-2.5 py-1 text-[10px] font-bold text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors cursor-pointer"
             >
               Clear
             </button>
@@ -269,7 +269,7 @@ export function VersionHistoryPanel({
                     <div className="relative z-10 w-[22px] flex items-center justify-center flex-shrink-0 pt-1">
                       <div className={`w-2.5 h-2.5 rounded-full transition-colors ${
                         isSelected
-                          ? "bg-amber-500 ring-2 ring-amber-500/30"
+                          ? "bg-blue-500 ring-2 ring-blue-500/30"
                           : "bg-border group-hover:bg-text-tertiary"
                       }`} />
                     </div>
@@ -277,7 +277,7 @@ export function VersionHistoryPanel({
                     {/* Version content */}
                     <div className={`flex-1 min-w-0 rounded-xl p-3 -ml-1 transition-colors ${
                       isSelected
-                        ? "bg-amber-500/8 ring-1 ring-amber-500/20"
+                        ? "bg-blue-50 dark:bg-blue-950/40 ring-2 ring-blue-400/40 dark:ring-blue-500/30"
                         : "group-hover:bg-surface-alt/60"
                     }`}>
                       <div className="flex items-center justify-between gap-2">
@@ -289,19 +289,19 @@ export function VersionHistoryPanel({
                             disabled={compareLoading}
                             className={`text-sm font-bold transition-colors cursor-pointer hover:underline disabled:opacity-50 ${
                               isSelected
-                                ? "text-amber-700 dark:text-amber-300"
+                                ? "text-blue-700 dark:text-blue-300"
                                 : "text-text-primary hover:text-accent"
                             }`}
                             title={isSelected ? "Click to stop comparing" : `Compare current with v${v.version}`}
                           >
                             v{v.version}
                             {isLoadingThis && (
-                              <span className="inline-block w-2.5 h-2.5 border-[1.5px] border-amber-500/30 border-t-amber-500 rounded-full animate-spin ml-1 align-middle" />
+                              <span className="inline-block w-2.5 h-2.5 border-[1.5px] border-blue-500/30 border-t-blue-500 rounded-full animate-spin ml-1 align-middle" />
                             )}
                           </button>
                           <span className="text-[10px] text-text-tertiary flex-shrink-0">{formatTime(v.createdAt)}</span>
                           {isSelected && (
-                            <span className="text-[9px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 px-1.5 py-0.5 rounded">
+                            <span className="text-[9px] font-bold text-white bg-blue-500 px-1.5 py-0.5 rounded shadow-sm">
                               Comparing
                             </span>
                           )}

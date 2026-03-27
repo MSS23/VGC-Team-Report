@@ -542,29 +542,59 @@ body {
 
 /* ── Version diff highlighting ─────────────────────────────────── */
 
-@keyframes version-diff-pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-}
-
-.version-diff-glow {
-  animation: version-diff-pulse 2s ease-in-out infinite;
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.1), inset 0 0 20px rgba(245, 158, 11, 0.03);
-}
-
 .version-diff-highlight {
   position: relative;
 }
 
-/* Subtle amber tint on the content when diff is active */
+/* Strong border around changed slides */
+.version-diff-border {
+  border: 3px solid #3b82f6;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.1),
+    0 0 24px rgba(59, 130, 246, 0.15),
+    0 0 48px rgba(59, 130, 246, 0.08);
+  animation: version-diff-pulse 2.5s ease-in-out infinite;
+}
+
+:is(.dark) .version-diff-border {
+  border-color: #60a5fa;
+  box-shadow:
+    0 0 0 1px rgba(96, 165, 250, 0.15),
+    0 0 24px rgba(96, 165, 250, 0.2),
+    0 0 48px rgba(96, 165, 250, 0.1);
+}
+
+@keyframes version-diff-pulse {
+  0%, 100% {
+    opacity: 0.7;
+    box-shadow:
+      0 0 0 1px rgba(59, 130, 246, 0.1),
+      0 0 24px rgba(59, 130, 246, 0.1),
+      0 0 48px rgba(59, 130, 246, 0.05);
+  }
+  50% {
+    opacity: 1;
+    box-shadow:
+      0 0 0 1px rgba(59, 130, 246, 0.2),
+      0 0 32px rgba(59, 130, 246, 0.2),
+      0 0 64px rgba(59, 130, 246, 0.1);
+  }
+}
+
+/* Tinted background behind changed content */
 .version-diff-highlight::before {
   content: "";
   position: absolute;
   inset: -8px;
   border-radius: 16px;
-  background: rgba(245, 158, 11, 0.03);
+  background: rgba(59, 130, 246, 0.04);
   pointer-events: none;
   z-index: -1;
+}
+
+:is(.dark) .version-diff-highlight::before {
+  background: rgba(96, 165, 250, 0.06);
 }
 
 @media (min-width: 640px) {
