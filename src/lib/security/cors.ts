@@ -5,6 +5,7 @@
 const ALLOWED_ORIGINS = new Set([
   "https://pokemonvgcteamreport.com",
   "https://www.pokemonvgcteamreport.com",
+  "https://vgc-team-report.vercel.app",
 ]);
 
 // Allow localhost in development
@@ -13,11 +14,17 @@ if (process.env.NODE_ENV !== "production") {
   ALLOWED_ORIGINS.add("http://127.0.0.1:3000");
 }
 
+/** Also allow Vercel preview deployments (*.vercel.app) */
+export function isDynamicAllowedOrigin(origin: string): boolean {
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+  // Allow all Vercel preview deployments for this project
+  if (/^https:\/\/vgc-team-report[a-z0-9-]*\.vercel\.app$/.test(origin)) return true;
+  return false;
+}
+
 export function getCorsHeaders(request: Request): Record<string, string> {
   const origin = request.headers.get("origin") ?? "";
-
-  // Only allow known origins
-  const allowedOrigin = ALLOWED_ORIGINS.has(origin) ? origin : "";
+  const allowedOrigin = isDynamicAllowedOrigin(origin) ? origin : "";
 
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
@@ -30,7 +37,6 @@ export function getCorsHeaders(request: Request): Record<string, string> {
 
 export function isAllowedOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
-  // No origin header = same-origin request (OK)
   if (!origin) return true;
-  return ALLOWED_ORIGINS.has(origin);
+  return isDynamicAllowedOrigin(origin);
 }
