@@ -1,14 +1,27 @@
-const CACHE_NAME = "vgc-team-report-v7";
-const SHARE_CACHE = "vgc-shares-v1";
-const API_CACHE = "vgc-api-v2";
+const CACHE_NAME = "vgc-team-report-v8";
+const SHARE_CACHE = "vgc-shares-v2";
+const API_CACHE = "vgc-api-v3";
 
-const PRECACHE_URLS = ["/", "/explore", "/champions", "/changelog", "/feedback", "/dashboard", "/compare", "/favicon.svg", "/icon-192.png", "/icon-512.png"];
+const PRECACHE_URLS = [
+  "/",
+  "/explore",
+  "/champions",
+  "/compare",
+  "/changelog",
+  "/feedback",
+  "/dashboard",
+  "/favicon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/manifest.json",
+];
 
 const OFFLINE_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#E11D48">
   <title>VGC Team Report — Offline</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,33 +35,25 @@ const OFFLINE_HTML = `<!DOCTYPE html>
       min-height: 100vh;
       padding: 2rem;
     }
-    .container {
-      text-align: center;
-      max-width: 400px;
-    }
+    .container { text-align: center; max-width: 400px; }
     .icon {
-      width: 64px;
-      height: 64px;
+      width: 64px; height: 64px;
       margin: 0 auto 1.5rem;
       border-radius: 50%;
       background: rgba(225, 29, 72, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
     }
-    h1 { font-size: 1.25rem; margin-bottom: 0.75rem; }
+    h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .subtitle { color: #E11D48; font-size: 0.8rem; font-weight: 600; margin-bottom: 1rem; }
     p { color: #7A7AA0; font-size: 0.875rem; line-height: 1.6; margin-bottom: 1.5rem; }
     button {
-      background: #E11D48;
-      color: white;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.75rem;
-      font-weight: 600;
-      font-size: 0.875rem;
-      cursor: pointer;
+      background: #E11D48; color: white; border: none;
+      padding: 0.75rem 2rem; border-radius: 0.75rem;
+      font-weight: 600; font-size: 0.875rem; cursor: pointer;
+      transition: opacity 0.2s;
     }
     button:hover { opacity: 0.9; }
+    .hint { color: #7A7AA0; font-size: 0.75rem; margin-top: 1rem; }
   </style>
 </head>
 <body>
@@ -65,8 +70,10 @@ const OFFLINE_HTML = `<!DOCTYPE html>
       </svg>
     </div>
     <h1>You're offline</h1>
-    <p>VGC Team Report needs an internet connection to load teams and shared reports. Previously viewed teams may still be available.</p>
+    <p class="subtitle">VGC Team Report</p>
+    <p>Check your connection and try again. Previously viewed teams and pages may still be available from cache.</p>
     <button onclick="window.location.reload()">Retry</button>
+    <p class="hint">Collaborative edits and version history require an active connection.</p>
   </div>
 </body>
 </html>`;
@@ -75,7 +82,8 @@ const OFFLINE_HTML = `<!DOCTYPE html>
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      await cache.addAll(PRECACHE_URLS);
+      // Precache in parallel, skip failures for individual URLs
+      await Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)));
       await cache.put(
         new Request("/_offline"),
         new Response(OFFLINE_HTML, {
@@ -87,7 +95,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean up old caches (keep sprite + share caches)
+// Activate: purge all old caches
 self.addEventListener("activate", (event) => {
   const keepCaches = [CACHE_NAME, SHARE_CACHE, API_CACHE];
   event.waitUntil(
@@ -106,23 +114,20 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
+  // Skip non-GET requests (POST saves, PATCH, DELETE, etc.)
   if (request.method !== "GET") return;
 
-  // Skip all cross-origin requests — let the browser handle them natively.
-  // Intercepting Showdown sprite requests can cause CORS/opaque response issues.
+  // Skip all cross-origin requests — let the browser handle them natively
   if (url.origin !== self.location.origin) return;
 
   // ── Share API data ──
-  // Cache share responses so previously viewed teams load offline
-  if (url.pathname.match(/^\/api\/share\/[A-Za-z0-9]{8}$/) && !url.searchParams.has("key")) {
+  // Cache public share reads so previously viewed teams load offline
+  if (url.pathname.match(/^\/api\/share\/[A-Za-z0-9]{8}$/) && !url.searchParams.has("key") && !url.searchParams.has("since")) {
     event.respondWith(
       caches.open(SHARE_CACHE).then((cache) =>
         fetch(request)
           .then((response) => {
-            if (response.ok) {
-              cache.put(request, response.clone());
-            }
+            if (response.ok) cache.put(request, response.clone());
             return response;
           })
           .catch(() =>
@@ -133,8 +138,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ── Cacheable API routes (explore, spotlight, creator) — stale-while-revalidate ──
-  if (url.pathname.match(/^\/api\/(explore|spotlight|creator\/|user\/reports|user\/saved)/)) {
+  // ── Cacheable API routes — stale-while-revalidate ──
+  if (url.pathname.match(/^\/api\/(explore|spotlight|creator\/|user\/reports|user\/saved|user\/collaborations)/)) {
     event.respondWith(
       caches.open(API_CACHE).then((cache) =>
         cache.match(request).then((cached) => {
@@ -149,14 +154,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ── Other API routes — network only ──
+  // ── Other API routes (versions, collaborators, auth, etc.) — network only ──
   if (url.pathname.startsWith("/api/")) return;
 
   // ── Static assets (JS, CSS, fonts, images) — cache-first ──
   if (
-    url.pathname.match(
-      /\.(js|css|woff2?|ttf|otf|svg|png|jpg|jpeg|gif|webp|ico)$/
-    ) ||
+    url.pathname.match(/\.(js|css|woff2?|ttf|otf|svg|png|jpg|jpeg|gif|webp|ico)$/) ||
     url.pathname.startsWith("/_next/static/")
   ) {
     event.respondWith(
