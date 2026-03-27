@@ -39,7 +39,19 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl",
 
           {/* Center: nav links (desktop) */}
           <nav className="hidden sm:flex items-center gap-1">
-            {NAV_LINKS.filter((l) => l.key !== "home").map((link) => (
+            {/* Create Report CTA — always visible */}
+            <a
+              href="/"
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                activePage === "home"
+                  ? "text-accent bg-accent-surface/50"
+                  : "text-accent hover:bg-accent-surface/30"
+              }`}
+            >
+              + Create
+            </a>
+            <span className="w-px h-4 bg-border mx-0.5" />
+            {NAV_LINKS.filter((l) => l.key !== "home" && l.key !== "feedback").map((link) => (
               <a
                 key={link.key}
                 href={link.href}
@@ -92,7 +104,11 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl",
       {/* Mobile bottom tab bar */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-border safe-bottom" aria-label="Mobile navigation">
         <div className="flex items-center justify-around px-2 py-1.5">
-          {NAV_LINKS.filter((l) => l.key !== "feedback" && l.key !== "changelog").map((link) => {
+          {/* Create / Home — prominent center action */}
+          {[
+            { href: "/", label: "Create", key: "home", icon: "M12 5v14M5 12h14" },
+            ...NAV_LINKS.filter((l) => l.key === "explore" || l.key === "champions" || l.key === "compare"),
+          ].map((link) => {
             const isActive = activePage === link.key;
             return (
               <a
