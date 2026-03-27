@@ -8,17 +8,19 @@ interface PageNavbarProps {
   darkMode: boolean;
   onToggleDarkMode: () => void;
   maxWidth?: string;
-  activePage?: "home" | "changelog" | "feedback" | "explore" | "dashboard" | "compare" | "privacy" | "creator";
+  activePage?: "home" | "changelog" | "feedback" | "explore" | "dashboard" | "compare" | "privacy" | "creator" | "champions";
 }
 
 const NAV_LINKS = [
   { href: "/", label: "Home", key: "home", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" },
   { href: "/explore", label: "Explore", key: "explore", icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" },
+  { href: "/champions", label: "Champions", key: "champions", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+  { href: "/compare", label: "Compare", key: "compare", icon: "M18 20V10M12 20V4M6 20v-6" },
   { href: "/changelog", label: "Updates", key: "changelog", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
   { href: "/feedback", label: "Feedback", key: "feedback", icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" },
 ] as const;
 
-export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-3xl", activePage }: PageNavbarProps) {
+export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl", activePage }: PageNavbarProps) {
   const { isLoaded, isSignedIn } = useAuth();
 
   // Show sign-in button by default until Clerk confirms user is signed in
@@ -90,7 +92,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-3xl",
       {/* Mobile bottom tab bar */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-border safe-bottom" aria-label="Mobile navigation">
         <div className="flex items-center justify-around px-2 py-1.5">
-          {NAV_LINKS.map((link) => {
+          {NAV_LINKS.filter((l) => l.key !== "feedback" && l.key !== "changelog").map((link) => {
             const isActive = activePage === link.key;
             return (
               <a

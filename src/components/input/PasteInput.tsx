@@ -195,7 +195,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
   return (
     <>
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} maxWidth="max-w-2xl" activePage="home" />
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} activePage="home" />
 
       <div className="w-full max-w-2xl mx-auto px-4 pt-4 pb-24 sm:pb-4">
 
@@ -445,44 +445,6 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       </motion.div>
 
 
-      {/* Quick links — visible near the action area so users know the site has more pages */}
-      <motion.div
-        className="mt-8 sm:mt-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.35, duration: 0.4 }}
-      >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">More</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {[
-            { href: "/explore", label: "Explore Teams", icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z", desc: "Community reports" },
-            { href: "/compare", label: "Compare", icon: "M18 20V10M12 20V4M6 20v-6", desc: "Side-by-side analysis" },
-            { href: "/changelog", label: "Updates", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", desc: "What's new" },
-            { href: "/champions", label: "Champions", icon: "M13 10V3L4 14h7v7l9-11h-7z", desc: "Mega Evolution" },
-          ].map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="flex items-center gap-2.5 px-3 py-2.5 bg-surface border border-border rounded-xl hover:border-accent/30 hover:bg-surface-alt/50 transition-all group"
-            >
-              <div className="w-7 h-7 rounded-lg bg-accent-surface/60 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/10 transition-colors">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                  <path d={link.icon} />
-                </svg>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-text-primary group-hover:text-accent transition-colors leading-tight">{link.label}</p>
-                <p className="text-[10px] text-text-tertiary leading-tight hidden sm:block">{link.desc}</p>
-              </div>
-            </a>
-          ))}
-        </div>
-      </motion.div>
-
       {/* Spotlight report */}
       {spotlight && (
         <motion.div
@@ -508,7 +470,11 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
       >
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-3">
+          <a href="/feedback" className="px-3 py-1.5 text-xs font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all">
+            Feedback
+          </a>
+          <span className="text-text-tertiary/30">|</span>
           <a href="/privacy" className="px-3 py-1.5 text-xs font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all">
             {t.privacy}
           </a>

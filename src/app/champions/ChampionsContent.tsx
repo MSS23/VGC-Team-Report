@@ -52,7 +52,7 @@ export function ChampionsContent() {
           },
         }}
       />
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} />
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="champions" />
 
       <main className="min-h-screen bg-background">
         {/* Hero */}
