@@ -120,15 +120,41 @@ export async function createLinearIssue(opts: {
     // Label creation is non-critical
   }
 
-  // Create the issue
+  // Find the Backlog state (triage entry point) and Community Feedback project
+  let stateId: string | undefined;
+  let projectId: string | undefined;
+  try {
+    const teamData = await linearQuery(`
+      query($teamId: String!) {
+        team(id: $teamId) {
+          states { nodes { id name type } }
+          projects { nodes { id name } }
+        }
+      }
+    `, { teamId });
+
+    stateId = teamData.team.states.nodes.find(
+      (s: { type: string }) => s.type === "backlog"
+    )?.id;
+
+    projectId = teamData.team.projects.nodes.find(
+      (p: { name: string }) => p.name === "Community Feedback"
+    )?.id;
+  } catch {
+    // Non-critical — issue will use defaults
+  }
+
+  // Create the issue in Backlog → Community Feedback project
   const result = await linearQuery(`
-    mutation($teamId: String!, $title: String!, $description: String!, $priority: Int!, $labelIds: [String!]) {
+    mutation($teamId: String!, $title: String!, $description: String!, $priority: Int!, $labelIds: [String!], $stateId: String, $projectId: String) {
       issueCreate(input: {
         teamId: $teamId
         title: $title
         description: $description
         priority: $priority
         labelIds: $labelIds
+        stateId: $stateId
+        projectId: $projectId
       }) {
         issue {
           id
@@ -143,6 +169,8 @@ export async function createLinearIssue(opts: {
     description: sections.join("\n"),
     priority: mapping.priority,
     labelIds: labelId ? [labelId] : [],
+    stateId: stateId ?? null,
+    projectId: projectId ?? null,
   });
 
   return result.issueCreate.issue;
