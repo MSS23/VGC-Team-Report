@@ -68,6 +68,12 @@ const SLUG_OVERRIDES: Record<string, string> = {
   // Bloodmoon Ursaluna (name order differs from Showdown slug)
   "bloodmoon-ursaluna": "ursaluna-bloodmoon",
 
+  // Mega Evolutions (Showdown merges "Mega X/Y" into "megax/megay")
+  "charizard-mega-x": "charizard-megax",
+  "charizard-mega-y": "charizard-megay",
+  "mewtwo-mega-x": "mewtwo-megax",
+  "mewtwo-mega-y": "mewtwo-megay",
+
   // Forms that match slug as-is (kept for documentation)
   "calyrex-ice": "calyrex-ice",
   "calyrex-shadow": "calyrex-shadow",

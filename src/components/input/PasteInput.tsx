@@ -93,8 +93,8 @@ function looksLikeShowdownPaste(text: string): boolean {
 }
 
 const POKEMON_SPRITES = [
-  "incineroar", "fluttermane", "rillaboom",
-  "urshifu", "tornadus", "landorus-therian",
+  "kangaskhan-mega", "salamence-mega", "incineroar",
+  "charizard-megay", "groudon-primal", "metagross-mega",
 ];
 
 export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect, darkMode, onToggleDarkMode }: PasteInputProps) {
