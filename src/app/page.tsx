@@ -409,6 +409,7 @@ function HomeContent() {
         lastShareResult={lastShareResult}
         onShareClick={handleShareClick}
         onReshare={handleReshare}
+        isOwner={isOwner}
         hasExistingShare={hasExistingShare()}
         editLinkCopied={editLinkCopied}
         onCopyEditLink={handleCopyEditLink}

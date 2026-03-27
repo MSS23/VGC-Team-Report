@@ -21,10 +21,17 @@ export async function GET(request: NextRequest) {
           ORDER BY deleted_at DESC
         `
       : await sql`
-          SELECT id, edit_token, data, created_at, updated_at, COALESCE(view_count, 0) as view_count, is_public
-          FROM shares
-          WHERE owner_id = ${userId} AND deleted_at IS NULL
-          ORDER BY updated_at DESC
+          SELECT s.id, s.edit_token, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, s.is_public,
+                 CASE WHEN s.owner_id = ${userId} THEN 0 ELSE 1 END as collab_order
+          FROM shares s
+          WHERE s.owner_id = ${userId} AND s.deleted_at IS NULL
+          UNION ALL
+          SELECT s.id, s.edit_token, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, s.is_public,
+                 1 as collab_order
+          FROM shares s
+          INNER JOIN collaborators c ON c.share_id = s.id AND c.user_id = ${userId}
+          WHERE s.deleted_at IS NULL AND s.owner_id != ${userId}
+          ORDER BY collab_order ASC, updated_at DESC
         `;
 
     const reports = rows.map((row) => {

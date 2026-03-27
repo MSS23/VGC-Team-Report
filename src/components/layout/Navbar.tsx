@@ -52,6 +52,9 @@ interface NavbarProps {
   onShareClick: () => void;
   onReshare: () => void;
 
+  // Ownership
+  isOwner: boolean;
+
   // Edit link
   hasExistingShare: boolean;
   editLinkCopied: boolean;
@@ -83,6 +86,7 @@ export function Navbar(props: NavbarProps) {
     isSampleTeam,
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare,
+    isOwner,
     hasExistingShare, editLinkCopied, onCopyEditLink,
     onUndo, onRedo, canUndo, canRedo,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
@@ -277,7 +281,7 @@ export function Navbar(props: NavbarProps) {
                   <Button variant="secondary" size="sm" onClick={onShareClick} disabled={shareStatus === "copying"} data-walkthrough="share-button">
                     {shareButtonText}
                   </Button>
-                  {hasExistingShare && (
+                  {hasExistingShare && isOwner && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -309,7 +313,7 @@ export function Navbar(props: NavbarProps) {
               <Button variant="secondary" size="sm" onClick={onReshare} disabled={shareStatus === "copying"}>
                 {shareStatus === "copying" ? t.saving : shareStatus === "copied" ? (lastShareResult?.updated ? t.savedBang : t.copied) : shareStatus === "error" ? t.failed : t.reshare}
               </Button>
-              {hasExistingShare && (
+              {hasExistingShare && isOwner && (
                 <Button
                   variant="ghost"
                   size="sm"

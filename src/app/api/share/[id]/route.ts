@@ -194,7 +194,7 @@ export async function GET(
             _editToken: ownerRows[0].edit_token as string,
             _version: Number(ownerRows[0].version),
             _isPublic: !!ownerRows[0].is_public,
-            _isOwner: isOwner,
+            _isOwner: isOwner || isCollaborator,
           });
         }
       }
