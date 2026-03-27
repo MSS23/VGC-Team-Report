@@ -309,6 +309,22 @@ export function Navbar(props: NavbarProps) {
               <Button variant="secondary" size="sm" onClick={onReshare} disabled={shareStatus === "copying"}>
                 {shareStatus === "copying" ? t.saving : shareStatus === "copied" ? (lastShareResult?.updated ? t.savedBang : t.copied) : shareStatus === "error" ? t.failed : t.reshare}
               </Button>
+              {hasExistingShare && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onCopyEditLink}
+                  title="Copy collab link — anyone with this link who signs in can edit"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                    <path d="M16 3.13a4 4 0 010 7.75" />
+                  </svg>
+                  <span className="hidden sm:inline">{editLinkCopied ? t.copied : "Collab"}</span>
+                </Button>
+              )}
               {showSignIn && (
                 <SignInButton mode="modal">
                   <button className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold text-accent bg-accent-surface/60 border border-accent/20 rounded-lg hover:bg-accent-surface transition-all cursor-pointer">
