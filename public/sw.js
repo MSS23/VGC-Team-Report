@@ -1,5 +1,4 @@
-const CACHE_NAME = "vgc-team-report-v6";
-const SPRITE_CACHE = "vgc-sprites-v1";
+const CACHE_NAME = "vgc-team-report-v7";
 const SHARE_CACHE = "vgc-shares-v1";
 const API_CACHE = "vgc-api-v2";
 
@@ -90,7 +89,7 @@ self.addEventListener("install", (event) => {
 
 // Activate: clean up old caches (keep sprite + share caches)
 self.addEventListener("activate", (event) => {
-  const keepCaches = [CACHE_NAME, SPRITE_CACHE, SHARE_CACHE, API_CACHE];
+  const keepCaches = [CACHE_NAME, SHARE_CACHE, API_CACHE];
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
@@ -110,26 +109,8 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET requests
   if (request.method !== "GET") return;
 
-  // ── Pokemon sprites (cross-origin) ──
-  // Cache sprites from Showdown CDN so teams render offline
-  if (url.hostname === "play.pokemonshowdown.com" && url.pathname.includes("/sprites/")) {
-    event.respondWith(
-      caches.open(SPRITE_CACHE).then((cache) =>
-        cache.match(request).then((cached) => {
-          if (cached) return cached;
-          return fetch(request).then((response) => {
-            if (response.ok) {
-              cache.put(request, response.clone());
-            }
-            return response;
-          }).catch(() => new Response("", { status: 404 }));
-        })
-      )
-    );
-    return;
-  }
-
-  // Skip other cross-origin requests
+  // Skip all cross-origin requests — let the browser handle them natively.
+  // Intercepting Showdown sprite requests can cause CORS/opaque response issues.
   if (url.origin !== self.location.origin) return;
 
   // ── Share API data ──

@@ -57,7 +57,7 @@ const nextConfig: NextConfig = {
               // Fonts: self + Google Fonts + Clerk
               "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com https://*.clerk.com https://clerk.pokemonvgcteamreport.com",
               // Connect: self, Clerk (all), Sentry, Vercel, PokePaste
-              "connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://clerk-telemetry.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live https://*.vercel.live https://pokepast.es",
+              "connect-src 'self' https://play.pokemonshowdown.com https://*.pokemonshowdown.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://clerk-telemetry.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live https://*.vercel.live https://pokepast.es",
               // Frames: Clerk OAuth, Cloudflare, Vercel Live
               "frame-src https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://challenges.cloudflare.com https://vercel.live https://*.vercel.live",
               // Workers
