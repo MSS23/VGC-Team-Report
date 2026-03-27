@@ -28,11 +28,13 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Cross-Origin-Opener-Policy",
-            value: "same-origin",
+            // unsafe-none required for Clerk OAuth popups (Google, Discord, Twitch sign-in)
+            value: "unsafe-none",
           },
           {
             key: "Cross-Origin-Resource-Policy",
-            value: "same-origin",
+            // cross-origin required for loading Showdown sprites from external domain
+            value: "cross-origin",
           },
           {
             key: "X-DNS-Prefetch-Control",
@@ -45,33 +47,32 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value: [
-              // Default: block everything not explicitly allowed
               "default-src 'self'",
-              // Scripts: self, Clerk (proxy domain + hosted), Vercel (analytics + live preview), Sentry
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://va.vercel-scripts.com https://vercel.live https://*.sentry.io https://challenges.cloudflare.com",
-              // Styles: self + inline (Tailwind, motion) + Google Fonts (Clerk modal) + Clerk hosted fonts
+              // Scripts: self, Clerk (all domains), Vercel, Sentry, Cloudflare
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://va.vercel-scripts.com https://vercel.live https://*.vercel.live https://*.sentry.io https://challenges.cloudflare.com",
+              // Styles: self + inline + Google Fonts + Clerk
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.com https://clerk.pokemonvgcteamreport.com",
-              // Images: self, Pokemon Showdown sprites, Clerk avatars, data URIs
+              // Images: self, Showdown sprites, Clerk, GitHub, data URIs
               "img-src 'self' data: blob: https://play.pokemonshowdown.com https://*.pokemonshowdown.com https://img.clerk.com https://*.clerk.com https://raw.githubusercontent.com",
-              // Fonts: self + Google Fonts (app + Clerk modal) + Clerk hosted fonts
-              "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://*.clerk.com https://clerk.pokemonvgcteamreport.com",
-              // Connect: self, API calls, Clerk (proxy + hosted), Sentry, Vercel Analytics
-              "connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com https://pokepast.es",
-              // Frames: Clerk (OAuth popups + proxy), Cloudflare challenges
-              "frame-src https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://challenges.cloudflare.com",
-              // Workers: self (service worker)
+              // Fonts: self + Google Fonts + Clerk
+              "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com https://*.clerk.com https://clerk.pokemonvgcteamreport.com",
+              // Connect: self, Clerk (all), Sentry, Vercel, PokePaste
+              "connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://clerk-telemetry.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live https://*.vercel.live https://pokepast.es",
+              // Frames: Clerk OAuth, Cloudflare, Vercel Live
+              "frame-src https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://challenges.cloudflare.com https://vercel.live https://*.vercel.live",
+              // Workers
               "worker-src 'self' blob:",
-              // Media: self
+              // Media
               "media-src 'self'",
-              // Object: none
+              // Object
               "object-src 'none'",
-              // Base URI: self
+              // Base URI
               "base-uri 'self'",
-              // Form actions: self
-              "form-action 'self'",
-              // Frame ancestors: none (prevent embedding)
+              // Form actions: self + Clerk OAuth redirects
+              "form-action 'self' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com",
+              // Frame ancestors: none (prevent embedding our site)
               "frame-ancestors 'none'",
-              // Force HTTPS for all resources
+              // Force HTTPS
               "upgrade-insecure-requests",
             ].join("; "),
           },
