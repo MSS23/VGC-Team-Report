@@ -117,7 +117,7 @@ export function ExploreFilters({
             onClick={() => onSearchCategoryChange(cat.value)}
             className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer active:scale-[0.97] ${
               searchCategory === cat.value
-                ? "bg-accent text-white shadow-sm shadow-accent/20"
+                ? "bg-accent text-white shadow-sm shadow-accent/20 ring-2 ring-accent/30 ring-offset-1 ring-offset-background"
                 : "bg-surface-alt/50 text-text-secondary hover:text-text-primary hover:bg-surface-alt"
             }`}
           >
@@ -226,11 +226,11 @@ export function ExploreFilters({
                 }}
                 className={`text-[10px] font-bold px-2 py-1 rounded-md border transition-all cursor-pointer ${
                   active
-                    ? "bg-accent text-white border-accent"
+                    ? "bg-accent text-white border-accent ring-1 ring-accent/30 ring-offset-1 ring-offset-background"
                     : "bg-surface-alt/50 text-text-tertiary border-transparent hover:text-text-secondary"
                 }`}
               >
-                {a}
+                {active && <span aria-hidden="true" className="mr-0.5">&#10003;</span>}{a}
               </button>
             );
           })}

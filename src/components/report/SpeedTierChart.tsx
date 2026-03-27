@@ -112,7 +112,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                     {/* Base bar */}
                     <div
                       className={`absolute inset-y-0 left-0 rounded-lg transition-all ${
-                        entry.hasSpeedBoost ? "bg-amber-500/70" : ""
+                        entry.hasSpeedBoost ? "bg-amber-500/70 bar-speed-boosted" : ""
                       }`}
                       style={{
                         width: `${entry.hasSpeedBoost ? percent : basePercent}%`,
@@ -161,8 +161,8 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             {t.base}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-amber-500/70" />
-            {t.itemBoosted}
+            <span className="w-3 h-3 rounded bg-amber-500/70 bar-speed-boosted" />
+            {t.itemBoosted} (striped)
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-px h-3.5 bg-text-tertiary/30" />
