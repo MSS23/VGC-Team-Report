@@ -9,6 +9,7 @@ import { useTranslation } from "@/lib/i18n";
 import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
 import { NotificationBell } from "@/components/ui/NotificationBell";
+import { VersionHistory } from "@/components/social/VersionHistory";
 
 interface NavbarProps {
   // Mode flags
@@ -54,6 +55,7 @@ interface NavbarProps {
 
   // Ownership
   isOwner: boolean;
+  activeShareId?: string | null;
 
   // Edit link
   hasExistingShare: boolean;
@@ -86,7 +88,7 @@ export function Navbar(props: NavbarProps) {
     isSampleTeam,
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare,
-    isOwner,
+    isOwner, activeShareId,
     hasExistingShare, editLinkCopied, onCopyEditLink,
     onUndo, onRedo, canUndo, canRedo,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
@@ -495,6 +497,14 @@ export function Navbar(props: NavbarProps) {
                         })}
                       </div>
                     </div>
+                  </>
+                )}
+
+                {/* Version history (only for owners/collaborators with an active share) */}
+                {activeShareId && isOwner && (
+                  <>
+                    <div className="border-t border-border/50 mx-3 my-1" />
+                    <VersionHistory shareId={activeShareId} />
                   </>
                 )}
 

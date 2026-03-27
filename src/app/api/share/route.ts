@@ -73,10 +73,35 @@ export async function POST(request: Request) {
 
     // Update existing share (increment version for collaborative sync)
     if (existingId && editToken) {
-      // Fetch old state for changelog diff
+      // Fetch old state for changelog diff and version snapshot
       const oldRows = await sql`
         SELECT data, COALESCE(version, 1) AS version FROM shares WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
       `;
+
+      // Snapshot old version before overwriting (fire-and-forget)
+      if (oldRows.length > 0) {
+        const oldVersion = Number(oldRows[0].version);
+        const oldData = oldRows[0].data;
+        try {
+          const { userId } = await auth();
+          const user = userId ? await currentUser() : null;
+          const editorName = user?.firstName
+            ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
+            : user?.username ?? null;
+          sql`
+            INSERT INTO share_versions (share_id, version, data, editor_id, editor_name)
+            VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb, ${userId ?? null}, ${editorName})
+            ON CONFLICT (share_id, version) DO NOTHING
+          `.catch(() => { /* version snapshot is non-critical */ });
+        } catch {
+          // Auth not available — snapshot without editor info
+          sql`
+            INSERT INTO share_versions (share_id, version, data)
+            VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb)
+            ON CONFLICT (share_id, version) DO NOTHING
+          `.catch(() => {});
+        }
+      }
 
       const rows = await sql`
         UPDATE shares

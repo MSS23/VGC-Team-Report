@@ -207,4 +207,19 @@ export async function ensureTable() {
     )
   `);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_edit_changelog_share ON edit_changelog(share_id, version DESC)`);
+
+  // Version snapshots for revert capability
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS share_versions (
+      id SERIAL PRIMARY KEY,
+      share_id TEXT NOT NULL,
+      version INTEGER NOT NULL,
+      data JSONB NOT NULL,
+      editor_id TEXT,
+      editor_name TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(share_id, version)
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_share_versions_share ON share_versions(share_id, version DESC)`);
 }
