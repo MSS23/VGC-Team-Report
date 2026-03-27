@@ -39,9 +39,9 @@ export async function POST(request: Request) {
     }
 
     // Trigger GitHub Actions workflow via repository_dispatch
-    const ghToken = process.env.GITHUB_DISPATCH_TOKEN;
+    const ghToken = process.env.GH_DISPATCH_TOKEN;
     if (!ghToken) {
-      console.warn("GITHUB_DISPATCH_TOKEN not set, skipping workflow trigger");
+      console.warn("GH_DISPATCH_TOKEN not set, skipping workflow trigger");
       return NextResponse.json({ ok: true, skipped: "no github token" });
     }
 
