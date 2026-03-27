@@ -4,28 +4,28 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 
-const STORAGE_KEY = "vgc-whats-new-v5";
+const STORAGE_KEY = "vgc-whats-new-v6";
 
 const FEATURES = [
   {
+    icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",
+    title: "Invite Collaborators",
+    desc: "Add signed-in users to co-edit your team reports. Search by name, manage access, and track who changed what in the edit history.",
+  },
+  {
     icon: "M13 10V3L4 14h7v7l9-11h-7z",
     title: "Pokemon Champions Ready",
-    desc: "Full Mega Evolution and Primal Reversion support. Build and share team reports for Regulation M-A \u2014 the official Pokemon Champions competitive format.",
+    desc: "Full Mega Evolution and Primal Reversion support for Regulation M-A \u2014 the official Pokemon Champions competitive format.",
   },
   {
-    icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
-    title: "30+ Mega Evolutions Added",
-    desc: "Kangaskhan-Mega, Salamence-Mega, Charizard-Mega-X/Y, Metagross-Mega, Groudon-Primal, Kyogre-Primal, and many more \u2014 all with accurate stats and abilities.",
+    icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+    title: "Edit History",
+    desc: "See who changed which sections of a report with timestamps and version tracking. Only logged-in edits are recorded.",
   },
   {
-    icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z",
-    title: "Real-Time Collaborative Editing",
-    desc: "Work on team reports together \u2014 live sync shows changes from other editors instantly with presence indicators.",
-  },
-  {
-    icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-    title: "Enhanced Security & Performance",
-    desc: "Redis caching for faster page loads, lazy-loaded components, CSRF protection, and hardened API security.",
+    icon: "M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z",
+    title: "Sign-in Required for Likes",
+    desc: "Likes are now tied to your account. Sign in to like reports and show your support for the community.",
   },
 ];
 
@@ -81,10 +81,10 @@ export function WhatsNewModal() {
               <span className="text-xs font-extrabold text-accent uppercase tracking-widest">What&apos;s New</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
-              <span className="text-accent">Champions</span> is here
+              Build together with <span className="text-accent">collaborators</span>
             </h2>
             <p className="text-sm text-text-secondary mt-2 max-w-sm mx-auto">
-              Pokemon Champions support with Mega Evolution, Regulation M-A, real-time collaborative editing, and faster performance.
+              Invite users to co-edit reports, track edit history, Pokemon Champions support, and likes now require sign-in.
             </p>
           </div>
 
