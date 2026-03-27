@@ -250,7 +250,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     if (!step || step.target === null) return; // virtual steps always valid
 
     let attempt = 0;
-    const MAX_ATTEMPTS = 4;
+    const MAX_ATTEMPTS = 5;
     let cancelled = false;
     let timerId: ReturnType<typeof setTimeout> | null = null;
 
@@ -264,7 +264,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
       }
 
       if (attempt < MAX_ATTEMPTS) {
-        timerId = setTimeout(check, 150);
+        timerId = setTimeout(check, 80);
         return;
       }
 
@@ -292,7 +292,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     };
 
     // Start first check after a short delay for the slide to render
-    timerId = setTimeout(check, 100);
+    timerId = setTimeout(check, 60);
 
     return () => {
       cancelled = true;
@@ -323,7 +323,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
       setHasAutoTriggered(true);
       setIsActive(true);
       setCurrentStepIndex(0);
-    }, 600);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [enabled, hasAutoTriggered, isSharedView]);

@@ -33,9 +33,9 @@ const NAVBAR_HEIGHT = 52;
 const MOBILE_BROWSER_CHROME_PAD = 60;
 
 // Smooth, snappy easing — fast start, gentle deceleration
-const EASE_OUT = "cubic-bezier(0.16, 1, 0.3, 1)";
-const SPOTLIGHT_DURATION = 350;
-const TOOLTIP_DURATION = 280;
+const EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)";
+const SPOTLIGHT_DURATION = 250;
+const TOOLTIP_DURATION = 220;
 
 export function WalkthroughOverlay({
   step,
@@ -52,6 +52,7 @@ export function WalkthroughOverlay({
   const prevStepRef = useRef(stepIndex);
   const positionedRef = useRef(false);
   const [renderKey, setRenderKey] = useState(0); // forces re-render after positioning
+  const [transitioning, setTransitioning] = useState(false); // true during cross-slide fade
   const isVirtual = step.target === null;
   const isLastStep = stepIndex === totalSteps - 1;
 
@@ -59,26 +60,12 @@ export function WalkthroughOverlay({
     setMounted(true);
   }, []);
 
-  // Lock scrolling while walkthrough is active
+  // Lock body scrolling while walkthrough is active (CSS-only, no event blocking)
   useEffect(() => {
-    const { style } = document.body;
-    const prevOverflow = style.overflow;
-    style.overflow = "hidden";
-
-    const block = (e: Event) => e.preventDefault();
-    document.addEventListener("wheel", block, { passive: false });
-    document.addEventListener("touchmove", block, { passive: false });
-
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
     return () => {
-      style.overflow = prevOverflow;
-      document.removeEventListener("wheel", block);
-      document.removeEventListener("touchmove", block);
-    };
-  }, []);
-
-  // Safety: restore scroll on unmount
-  useEffect(() => {
-    return () => {
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
     };
   }, []);
@@ -129,9 +116,8 @@ export function WalkthroughOverlay({
     return () => window.removeEventListener("keydown", handleKey);
   }, [onNext, onSkip]);
 
-  // Position the tooltip. Instead of blinking opacity 0→1 between steps,
-  // we keep the tooltip visible and smoothly transition its top/left.
-  // On the very first render we hide it until we know where to put it.
+  // Position the tooltip. On same-slide steps, smoothly transition position.
+  // On cross-slide steps, fade out → reposition → fade in to avoid clunky sliding.
   useIsomorphicLayoutEffect(() => {
     if (!mounted) return;
     const tt = tooltipRef.current;
@@ -188,10 +174,19 @@ export function WalkthroughOverlay({
       }
     };
 
-    // On step change, wait one frame for the new slide to render
+    // On step change, fade out briefly then reposition and fade back in
     if (stepChanged) {
-      const raf = requestAnimationFrame(() => position());
-      return () => cancelAnimationFrame(raf);
+      setTransitioning(true);
+      // Disable CSS position transitions during the jump
+      tt.style.transition = "none";
+      const timer = setTimeout(() => {
+        position();
+        // Re-enable transitions and fade back in
+        requestAnimationFrame(() => {
+          setTransitioning(false);
+        });
+      }, 120); // brief fade-out duration
+      return () => clearTimeout(timer);
     }
 
     position();
@@ -242,7 +237,7 @@ export function WalkthroughOverlay({
         onClick={onSkip}
       />
 
-      {/* Spotlight overlay — smoothly moves between targets */}
+      {/* Spotlight overlay — fades between targets on step change */}
       <div
         style={{
           position: "fixed",
@@ -251,14 +246,16 @@ export function WalkthroughOverlay({
           width: spotlightRect.width,
           height: spotlightRect.height,
           borderRadius: spotlightRect.borderRadius,
-          boxShadow: `0 0 0 9999px rgba(0,0,0,${OVERLAY_OPACITY})`,
+          boxShadow: `0 0 0 9999px rgba(0,0,0,${transitioning ? 0.65 : OVERLAY_OPACITY})`,
           zIndex: 9999,
           pointerEvents: "none",
-          transition: `top ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, left ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, width ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, height ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, border-radius ${SPOTLIGHT_DURATION}ms ${EASE_OUT}`,
+          transition: transitioning
+            ? `box-shadow 100ms ease-out`
+            : `top ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, left ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, width ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, height ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, border-radius ${SPOTLIGHT_DURATION}ms ${EASE_OUT}, box-shadow ${SPOTLIGHT_DURATION}ms ${EASE_OUT}`,
         }}
       />
 
-      {/* Tooltip — slides smoothly between positions instead of blinking */}
+      {/* Tooltip — fades between steps for clean transitions */}
       <div
         ref={tooltipRef}
         role="dialog"
@@ -270,11 +267,11 @@ export function WalkthroughOverlay({
           left: 0,
           zIndex: 10000,
           width: "min(360px, calc(100vw - 32px))",
-          opacity: isPositioned ? 1 : 0,
-          transform: isPositioned ? "scale(1)" : "scale(0.95)",
-          transition: isPositioned
-            ? `top ${TOOLTIP_DURATION}ms ${EASE_OUT}, left ${TOOLTIP_DURATION}ms ${EASE_OUT}, opacity 200ms ease, transform 200ms ${EASE_OUT}`
-            : "none",
+          opacity: isPositioned && !transitioning ? 1 : 0,
+          transform: isPositioned && !transitioning ? "scale(1) translateY(0)" : "scale(0.97) translateY(4px)",
+          transition: transitioning
+            ? `opacity 100ms ease-out, transform 100ms ease-out`
+            : `opacity ${TOOLTIP_DURATION}ms ${EASE_OUT}, transform ${TOOLTIP_DURATION}ms ${EASE_OUT}`,
         }}
         className="relative bg-surface rounded-2xl border border-border shadow-xl"
         onClick={(e) => e.stopPropagation()}
@@ -318,10 +315,9 @@ export function WalkthroughOverlay({
           {Array.from({ length: totalSteps }, (_, i) => (
             <div
               key={i}
-              className={`h-1 rounded-full flex-1 transition-all duration-500 ${
+              className={`h-1 rounded-full flex-1 transition-all duration-200 ${
                 i <= stepIndex ? "bg-accent" : "bg-surface-alt"
               }`}
-              style={{ transitionTimingFunction: EASE_OUT }}
             />
           ))}
         </div>
