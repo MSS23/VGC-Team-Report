@@ -110,7 +110,7 @@ function FeedbackInner() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} maxWidth="max-w-2xl" activePage="feedback" />
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="feedback" />
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14 pb-24 sm:pb-14">
         {submitted ? (

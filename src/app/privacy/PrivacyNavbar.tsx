@@ -8,7 +8,7 @@ export function PrivacyNavbar() {
   const { darkMode, setDarkMode } = useDarkMode();
   return (
     <I18nProvider>
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} maxWidth="max-w-2xl" activePage="privacy" />
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="privacy" />
     </I18nProvider>
   );
 }
