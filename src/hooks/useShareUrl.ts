@@ -79,6 +79,9 @@ export function useShareUrl() {
   // localStorage is only used to persist across page refreshes within the same editing session.
   const activeEditTokenRef = useRef<string | null>(null);
   const activeShareIdRef = useRef<string | null>(null);
+  // Reactive state version of activeShareIdRef — tracks whether a share session exists
+  // (set after sharing from home page, or when viewing own report at /s/{id})
+  const [sessionShareId, setSessionShareId] = useState<string | null>(null);
 
   // Fetch shared state on mount
   useEffect(() => {
@@ -129,6 +132,7 @@ export function useShareUrl() {
           if (editable && ownerEditToken) {
             activeEditTokenRef.current = ownerEditToken;
             activeShareIdRef.current = shareId;
+            setSessionShareId(shareId);
             storeShareInfo({ shareId, editToken: ownerEditToken });
           }
           settle(state as ShareableState, editable);
@@ -182,6 +186,7 @@ export function useShareUrl() {
             existingId: active?.shareId,
             editToken: active?.editToken,
             isPublic,
+            isPublish: true,
           }),
         });
         if (!res.ok) throw new Error("API error");
@@ -192,6 +197,7 @@ export function useShareUrl() {
         storeShareInfo({ shareId: id, editToken });
         activeEditTokenRef.current = editToken;
         activeShareIdRef.current = id;
+        setSessionShareId(id);
         setLastShareResult({ updated, editUrl, publicUrl });
       } catch {
         setShareStatus("error");
@@ -272,6 +278,7 @@ export function useShareUrl() {
       storeShareInfo({ shareId: id, editToken });
       activeEditTokenRef.current = editToken;
       activeShareIdRef.current = id;
+      setSessionShareId(id);
       setLastShareResult({ updated: false, editUrl, publicUrl });
 
       await navigator.clipboard.writeText(publicUrl);
@@ -303,6 +310,7 @@ export function useShareUrl() {
     }
     activeEditTokenRef.current = null;
     activeShareIdRef.current = null;
+    setSessionShareId(null);
   }, []);
 
   return {
@@ -320,6 +328,7 @@ export function useShareUrl() {
     exitSharedView,
     isEditingUnlocked,
     isOwner,
+    sessionShareId,
     lastShareResult,
     getEditUrl,
     hasExistingShare,

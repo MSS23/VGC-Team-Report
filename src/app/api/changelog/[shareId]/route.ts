@@ -53,7 +53,7 @@ export async function GET(
 
     // Fetch changelog entries
     const entries = await sql`
-      SELECT version, editor_id, editor_name, sections, created_at
+      SELECT version, editor_id, editor_name, sections, created_at, COALESCE(is_published, FALSE) as is_published
       FROM edit_changelog
       WHERE share_id = ${shareId}
       ORDER BY version DESC
@@ -65,6 +65,7 @@ export async function GET(
         version: e.version,
         editorName: e.editor_name,
         sections: e.sections,
+        isPublished: !!e.is_published,
         createdAt: (e.created_at as Date).toISOString(),
       })),
     });

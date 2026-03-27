@@ -211,6 +211,7 @@ export async function ensureTable() {
     )
   `);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_edit_changelog_share ON edit_changelog(share_id, version DESC)`);
+  await run(sql`ALTER TABLE edit_changelog ADD COLUMN IF NOT EXISTS is_published BOOLEAN DEFAULT FALSE`);
 
   // Version snapshots for revert capability
   await run(sql`

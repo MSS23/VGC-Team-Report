@@ -17,6 +17,7 @@ const ShareBodySchema = z.object({
   existingId: z.string().optional(),
   editToken: z.string().optional(),
   isPublic: z.boolean().optional(),
+  isPublish: z.boolean().optional(),
 });
 
 function generateId(): string {
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const { state, existingId, editToken, isPublic } = parsed.data;
+    const { state, existingId, editToken, isPublic, isPublish } = parsed.data;
 
     const sql = getDb();
 
@@ -128,8 +129,8 @@ export async function POST(request: Request) {
             const sections = detectChangedSections(oldState, state);
             if (sections.length > 0) {
               sql`
-                INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections)
-                VALUES (${existingId}, ${rows[0].version}, ${userId}, ${editorName}, ${JSON.stringify(sections)}::jsonb)
+                INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
+                VALUES (${existingId}, ${rows[0].version}, ${userId}, ${editorName}, ${JSON.stringify(sections)}::jsonb, ${isPublish ?? false})
               `.catch(() => { /* changelog insert is non-critical */ });
             }
           }
@@ -180,8 +181,8 @@ export async function POST(request: Request) {
           ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
           : user?.username ?? "Unknown";
         sql`
-          INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections)
-          VALUES (${id}, 1, ${ownerId}, ${editorName}, ${JSON.stringify(["Created report"])}::jsonb)
+          INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
+          VALUES (${id}, 1, ${ownerId}, ${editorName}, ${JSON.stringify(["Created report"])}::jsonb, TRUE)
         `.catch(() => {});
       } catch { /* skip */ }
     }
