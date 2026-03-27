@@ -8,6 +8,11 @@ const CANONICAL_HOST = 'pokemonvgcteamreport.com';
 
 export default clerkMiddleware(async (_auth, request: NextRequest) => {
   const { pathname, search } = request.nextUrl;
+
+  // Discord interaction endpoint — bypass all middleware, respond directly
+  if (pathname === '/api/discord') {
+    return NextResponse.next();
+  }
   const host = request.headers.get('host') ?? '';
   const isApiRoute = pathname.startsWith('/api');
 
