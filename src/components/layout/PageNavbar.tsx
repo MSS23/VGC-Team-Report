@@ -1,6 +1,7 @@
 "use client";
 
-import { SignInButton, UserButton, Show } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
+import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 
 interface PageNavbarProps {
@@ -18,6 +19,12 @@ const NAV_LINKS = [
 ] as const;
 
 export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-3xl", activePage }: PageNavbarProps) {
+  const { isLoaded, isSignedIn } = useAuth();
+
+  // Show sign-in button by default until Clerk confirms user is signed in
+  const showSignIn = !isSignedIn;
+  const showUser = isLoaded && isSignedIn;
+
   return (
     <>
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-surface/90 border-b border-border shadow-[0_1px_8px_rgba(0,0,0,0.06)]">
@@ -47,19 +54,21 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-3xl",
 
           {/* Right: auth + language + dark mode */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <Show when="signed-out">
+            {showSignIn && (
               <SignInButton mode="modal">
                 <button className="px-3 py-1.5 text-xs font-bold text-white bg-accent rounded-lg hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/20">
                   Sign In
                 </button>
               </SignInButton>
-            </Show>
-            <Show when="signed-in">
-              <a href="/dashboard" className="hidden sm:inline px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent hover:bg-surface-alt rounded-lg transition-all">
-                Dashboard
-              </a>
-              <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
-            </Show>
+            )}
+            {showUser && (
+              <>
+                <a href="/dashboard" className="hidden sm:inline px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent hover:bg-surface-alt rounded-lg transition-all">
+                  Dashboard
+                </a>
+                <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
+              </>
+            )}
 
             <LanguageSelector />
 
