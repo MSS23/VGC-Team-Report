@@ -10,6 +10,7 @@ export interface ReportTags {
 
 interface TeamMeta {
   roles: Record<string, string>;
+  spreadNotes: Record<string, string>;
   summary: string;
   tournamentName?: string;
   placement?: string;
@@ -26,7 +27,7 @@ function buildTeamKey(speciesKeys: string[]): string {
   return `vgc-meta-${sorted.join(",")}`;
 }
 
-const EMPTY_META: TeamMeta = { roles: {}, summary: "" };
+const EMPTY_META: TeamMeta = { roles: {}, spreadNotes: {}, summary: "" };
 
 export function useTeamMeta(speciesKeys: string[], persist = true) {
   const teamKey = buildTeamKey(speciesKeys);
@@ -73,6 +74,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
   }, [meta, teamKey, speciesKeys.length, persist]);
 
   const roles = meta.roles;
+  const spreadNotes = meta.spreadNotes ?? {};
   const summary = meta.summary;
   const tournamentName = meta.tournamentName;
   const placement = meta.placement;
@@ -85,6 +87,10 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
 
   const setRole = useCallback((species: string, text: string) => {
     setMeta((prev) => ({ ...prev, roles: { ...prev.roles, [species]: text } }));
+  }, []);
+
+  const setSpreadNote = useCallback((species: string, text: string) => {
+    setMeta((prev) => ({ ...prev, spreadNotes: { ...(prev.spreadNotes ?? {}), [species]: text } }));
   }, []);
 
   const setSummary = useCallback((text: string) => {
@@ -128,7 +134,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
   }, []);
 
   return {
-    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId,
-    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull,
+    roles, spreadNotes, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId,
+    setRole, setSpreadNote, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull,
   };
 }

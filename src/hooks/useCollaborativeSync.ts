@@ -16,6 +16,8 @@ interface UseCollaborativeSyncOptions {
   onRemoteUpdate: (state: ShareableState) => void;
 }
 
+export type SyncStatus = "idle" | "syncing" | "conflict" | "synced";
+
 /**
  * Polls the server for updates to a shared team report.
  * When another collaborator saves changes, this hook detects the newer
@@ -28,6 +30,8 @@ export function useCollaborativeSync({
   onRemoteUpdate,
 }: UseCollaborativeSyncOptions) {
   const [collaborators, setCollaborators] = useState(0);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+  const [lastRemoteUpdate, setLastRemoteUpdate] = useState<number | null>(null);
   const versionRef = useRef<number>(0);
   const isSaving = useRef(false);
 
@@ -75,10 +79,15 @@ export function useCollaborativeSync({
           // Server has a newer version than what we know
           if (serverVersion > versionRef.current) {
             versionRef.current = serverVersion;
+            setSyncStatus("syncing");
+            setLastRemoteUpdate(Date.now());
             // Strip internal fields before passing to handler
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { _editable, _version, ...state } = data;
+            const { _editable, _version, _isPublic, ...state } = data;
             onRemoteUpdate(state as ShareableState);
+            setSyncStatus("synced");
+            // Reset status after 3 seconds
+            setTimeout(() => { if (mounted) setSyncStatus("idle"); }, 3000);
           }
         }
       } catch {
@@ -97,5 +106,5 @@ export function useCollaborativeSync({
     };
   }, [enabled, shareId, editKey, onRemoteUpdate]);
 
-  return { collaborators, markSaving, updateVersion };
+  return { collaborators, syncStatus, lastRemoteUpdate, markSaving, updateVersion };
 }

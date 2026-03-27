@@ -87,6 +87,8 @@ function HomeContent() {
     editCalc,
     roles,
     setRole,
+    spreadNotes,
+    setSpreadNote,
     summary,
     setSummary,
     tournamentName,
@@ -432,6 +434,8 @@ function HomeContent() {
           speciesKeys={speciesKeys}
           roles={roles}
           onRoleChange={setRole}
+          spreadNotes={spreadNotes}
+          onSpreadNoteChange={isReadOnly ? undefined : setSpreadNote}
           teamSummary={summary}
           onTeamSummaryChange={setSummary}
           tournamentName={tournamentName}

@@ -24,6 +24,8 @@ interface TeamReportProps {
   speciesKeys: string[];
   roles: Record<string, string>;
   onRoleChange: (speciesKey: string, text: string) => void;
+  spreadNotes?: Record<string, string>;
+  onSpreadNoteChange?: (speciesKey: string, text: string) => void;
   teamSummary: string;
   onTeamSummaryChange: (text: string) => void;
   tournamentName?: string;
@@ -75,6 +77,8 @@ export function TeamReport({
   speciesKeys,
   roles,
   onRoleChange,
+  spreadNotes = {},
+  onSpreadNoteChange,
   teamSummary,
   onTeamSummaryChange,
   tournamentName,
@@ -152,6 +156,8 @@ export function TeamReport({
         pokemon={pokemon}
         note={notes[key] ?? ""}
         onNoteChange={(text) => onNoteChange(key, text)}
+        spreadNote={spreadNotes[key] ?? ""}
+        onSpreadNoteChange={onSpreadNoteChange ? (text) => onSpreadNoteChange(key, text) : undefined}
         calcs={calcs[key] ?? []}
         onAddCalc={(text, category) => onAddCalc(key, text, category)}
         onRemoveCalc={(index) => onRemoveCalc(key, index)}

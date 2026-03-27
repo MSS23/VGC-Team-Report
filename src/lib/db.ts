@@ -143,6 +143,29 @@ export async function ensureTable() {
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_deleted ON shares(deleted_at) WHERE deleted_at IS NOT NULL`);
 
+  // Collections (team archive / folders)
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS collections (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT,
+      regulation TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_collections_user ON collections(user_id, created_at DESC)`);
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS collection_items (
+      collection_id TEXT NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+      share_id TEXT NOT NULL,
+      added_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (collection_id, share_id)
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_collection_items_collection ON collection_items(collection_id)`);
+
   // Full-text search vector
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS search_vector tsvector`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_search ON shares USING GIN(search_vector) WHERE is_public = TRUE AND deleted_at IS NULL`);

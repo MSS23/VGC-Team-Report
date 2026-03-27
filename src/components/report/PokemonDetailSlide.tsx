@@ -16,6 +16,8 @@ interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;
   note: string;
   onNoteChange: (text: string) => void;
+  spreadNote?: string;
+  onSpreadNoteChange?: (text: string) => void;
   calcs: CalcEntry[];
   onAddCalc: (text: string, category: CalcCategory) => void;
   onRemoveCalc: (index: number) => void;
@@ -295,6 +297,8 @@ export function PokemonDetailSlide({
   pokemon,
   note,
   onNoteChange,
+  spreadNote = "",
+  onSpreadNoteChange,
   calcs,
   onAddCalc,
   onRemoveCalc,
@@ -520,8 +524,38 @@ export function PokemonDetailSlide({
         )}
       </div>
 
-      {/* Right Column: User Notes + Notable Calcs */}
+      {/* Right Column: EV Rationale + User Notes + Notable Calcs */}
       <div className="flex flex-col gap-4 sm:gap-6">
+        {/* EV Spread Rationale */}
+        {(spreadNote || !isReadOnly) && (
+          <div className="flex flex-col gap-2">
+            <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent opacity-70">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+              EV Rationale
+            </h3>
+            {isReadOnly ? (
+              spreadNote ? (
+                <div className="w-full bg-accent-surface/30 border border-accent/15 rounded-xl text-xs sm:text-sm text-text-primary whitespace-pre-wrap leading-relaxed p-3">
+                  {spreadNote}
+                </div>
+              ) : null
+            ) : (
+              <textarea
+                value={spreadNote}
+                onChange={(e) => onSpreadNoteChange?.(e.target.value)}
+                placeholder={`Why this spread? e.g. "108 SpD survives Timid Flutter Mane Moonblast"\n"68 Spe outspeeds Adamant Rillaboom by 1"`}
+                className="w-full min-h-[3.5rem] p-3 bg-accent-surface/20 border-2 border-accent/15 rounded-xl text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary/50 resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/40 leading-relaxed transition-shadow"
+                spellCheck={false}
+              />
+            )}
+          </div>
+        )}
+
         {/* Notes */}
         <div className="flex flex-col gap-2">
           <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="pokemon-notes">
