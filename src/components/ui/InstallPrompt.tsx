@@ -8,39 +8,38 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const DISMISS_KEY = "vgc-install-dismissed";
+const DISMISS_COOLDOWN = 14 * 24 * 60 * 60 * 1000; // 14 days
 
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOSPrompt, setShowIOSPrompt] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(true); // start hidden, reveal after checks
 
   useEffect(() => {
-    // Don't show if already dismissed recently (7 days)
+    // Don't show if already dismissed recently
     const dismissedAt = localStorage.getItem(DISMISS_KEY);
-    if (dismissedAt && Date.now() - Number(dismissedAt) < 7 * 24 * 60 * 60 * 1000) {
-      setDismissed(true);
-      return;
-    }
+    if (dismissedAt && Date.now() - Number(dismissedAt) < DISMISS_COOLDOWN) return;
 
-    // Don't show if already installed (standalone mode)
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      setDismissed(true);
-      return;
-    }
+    // Don't show if already installed
+    if (window.matchMedia("(display-mode: standalone)").matches) return;
 
     // Android/Chrome: capture the beforeinstallprompt event
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      // Delay reveal so it doesn't distract from first interaction
+      setTimeout(() => setDismissed(false), 15000);
     };
     window.addEventListener("beforeinstallprompt", handler);
 
-    // iOS Safari detection
+    // iOS Safari: show manual instructions after delay
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
     const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
     if (isIOS && isSafari) {
-      // Delay showing iOS prompt so it doesn't interrupt initial experience
-      const timer = setTimeout(() => setShowIOSPrompt(true), 30000);
+      const timer = setTimeout(() => {
+        setShowIOSPrompt(true);
+        setDismissed(false);
+      }, 45000);
       return () => {
         clearTimeout(timer);
         window.removeEventListener("beforeinstallprompt", handler);
@@ -67,14 +66,13 @@ export function InstallPrompt() {
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
   }, []);
 
-  // Nothing to show
   if (dismissed || (!deferredPrompt && !showIOSPrompt)) return null;
 
   return (
-    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 w-full max-w-sm px-4 animate-fade-in">
+    <div className="fixed bottom-20 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 w-full max-w-sm px-4 animate-fade-in">
       <div className="bg-surface border border-border rounded-2xl shadow-2xl p-4">
         <div className="flex items-start gap-3">
-          {/* Pokeball icon */}
+          {/* App icon */}
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
             <svg width="20" height="20" viewBox="0 0 32 32">
               <circle cx="16" cy="16" r="15" fill="#E11D48" stroke="#BE123C" strokeWidth="1"/>
@@ -88,16 +86,16 @@ export function InstallPrompt() {
             {deferredPrompt ? (
               <>
                 <p className="text-sm font-bold text-text-primary">
-                  Install VGC Team Report
+                  Get the app
                 </p>
-                <p className="text-xs text-text-tertiary mt-0.5">
-                  Add to your home screen for quick access
+                <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">
+                  Install VGC Team Report for offline access and a faster experience.
                 </p>
-                <div className="flex items-center gap-2 mt-3">
+                <div className="flex items-center gap-2 mt-2.5">
                   <button
                     type="button"
                     onClick={handleInstall}
-                    className="px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 transition-all cursor-pointer"
+                    className="px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/20"
                   >
                     Install
                   </button>
@@ -122,7 +120,7 @@ export function InstallPrompt() {
                     <polyline points="16 6 12 2 8 6" />
                     <line x1="12" y1="2" x2="12" y2="15" />
                   </svg>
-                  {" "}then &ldquo;Add to Home Screen&rdquo; for the full app experience
+                  {" "}then &ldquo;Add to Home Screen&rdquo; for offline access.
                 </p>
                 <button
                   type="button"
@@ -135,7 +133,6 @@ export function InstallPrompt() {
             )}
           </div>
 
-          {/* Close */}
           <button
             type="button"
             onClick={handleDismiss}
@@ -143,8 +140,7 @@ export function InstallPrompt() {
             aria-label="Dismiss"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>

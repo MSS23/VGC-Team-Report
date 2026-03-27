@@ -1,28 +1,47 @@
 {
+  "id": "/",
   "name": "VGC Team Report",
   "short_name": "VGC Report",
-  "description": "Build, share, and discover competitive Pokemon VGC team reports. Join the community.",
+  "description": "Build, analyze, and share competitive Pokemon VGC team reports with damage calcs, matchup plans, and presentation mode.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#0a0f1a",
   "theme_color": "#E11D48",
   "orientation": "any",
   "categories": ["games", "utilities", "social"],
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "shortcuts": [
     {
       "name": "Explore Teams",
+      "short_name": "Explore",
       "url": "/explore",
-      "description": "Browse community team reports"
+      "description": "Browse community team reports",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Champions",
+      "short_name": "Champions",
+      "url": "/champions",
+      "description": "Pokemon Champions format — Mega Evolutions",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "My Dashboard",
+      "short_name": "Dashboard",
       "url": "/dashboard",
-      "description": "Manage your team reports"
+      "description": "Manage your saved team reports",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Give Feedback",
+      "short_name": "Feedback",
       "url": "/feedback",
-      "description": "Request features or report bugs"
+      "description": "Request features or report bugs",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
   "icons": [
@@ -46,6 +65,22 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "VGC Team Report — Build and share competitive Pokemon teams"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "VGC Team Report on mobile"
     }
   ]
 }

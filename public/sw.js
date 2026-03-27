@@ -1,9 +1,9 @@
-const CACHE_NAME = "vgc-team-report-v5";
+const CACHE_NAME = "vgc-team-report-v6";
 const SPRITE_CACHE = "vgc-sprites-v1";
 const SHARE_CACHE = "vgc-shares-v1";
 const API_CACHE = "vgc-api-v2";
 
-const PRECACHE_URLS = ["/", "/explore", "/changelog", "/feedback", "/dashboard", "/favicon.svg", "/icon-192.png"];
+const PRECACHE_URLS = ["/", "/explore", "/champions", "/changelog", "/feedback", "/dashboard", "/compare", "/favicon.svg", "/icon-192.png", "/icon-512.png"];
 
 const OFFLINE_HTML = `<!DOCTYPE html>
 <html lang="en">
