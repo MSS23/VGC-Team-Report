@@ -30,6 +30,8 @@ interface SlideNavControlsProps {
   onMoveUp?: () => void;
   /** Move current slide down (swap with next). */
   onMoveDown?: () => void;
+  /** Set of slide indices that have version diff changes. */
+  changedSlides?: Set<number>;
 }
 
 export function SlideNavControls({
@@ -51,6 +53,7 @@ export function SlideNavControls({
   canMoveDown,
   onMoveUp,
   onMoveDown,
+  changedSlides,
 }: SlideNavControlsProps) {
   const { t } = useTranslation();
   const hiddenCount = hiddenStates?.filter(Boolean).length ?? 0;
@@ -88,25 +91,33 @@ export function SlideNavControls({
             {Array.from({ length: totalSlides }, (_, i) => {
               const isHidden = hiddenStates?.[i] ?? false;
               const isCurrent = i === currentSlide;
+              const hasChanges = changedSlides?.has(i) ?? false;
               return (
                 <button
                   key={i}
                   role="tab"
                   aria-selected={isCurrent}
                   onClick={() => onGoTo(i)}
-                  title={`${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}`}
-                  aria-label={`Go to ${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}`}
+                  title={`${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}${hasChanges ? " (changed)" : ""}`}
+                  aria-label={`Go to ${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}${hasChanges ? " (changed)" : ""}`}
                   className="relative flex items-center justify-center w-6 h-6 sm:w-auto sm:h-auto flex-shrink-0"
                 >
                   <span className={`block transition-all duration-300 ${
                     isCurrent
                       ? isHidden
                         ? "w-4 h-2.5 rounded bg-amber-400/70 shadow-sm shadow-amber-400/30 ring-1 ring-amber-400/40 border border-dashed border-amber-400/60"
-                        : "w-4 h-2.5 rounded-full bg-accent shadow-sm shadow-accent/40"
+                        : hasChanges
+                          ? "w-4 h-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-500/40"
+                          : "w-4 h-2.5 rounded-full bg-accent shadow-sm shadow-accent/40"
                       : isHidden
                         ? "w-2 h-2 rounded bg-amber-400/30 hover:bg-amber-400/50 border border-dashed border-amber-400/40"
-                        : "w-2 h-2 rounded-full bg-border hover:bg-text-tertiary hover:scale-125"
+                        : hasChanges
+                          ? "w-2 h-2 rounded-full bg-amber-500/70 hover:bg-amber-500 hover:scale-125 ring-1 ring-amber-500/30"
+                          : "w-2 h-2 rounded-full bg-border hover:bg-text-tertiary hover:scale-125"
                   }`} />
+                  {hasChanges && !isCurrent && (
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  )}
                 </button>
               );
             })}

@@ -37,10 +37,10 @@ export function ServiceWorkerRegistration() {
   if (!updateAvailable) return null;
 
   return (
-    <div className="fixed bottom-20 sm:bottom-4 right-4 z-50 animate-fade-in">
-      <div className="bg-surface border border-border rounded-xl shadow-2xl p-3 flex items-center gap-3 max-w-xs">
-        <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+    <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-4 z-50 w-[calc(100%-2rem)] sm:w-auto max-w-sm animate-toast-in">
+      <div className="bg-surface border border-border/60 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-3.5 flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
             <path d="M21 2v6h-6" />
             <path d="M3 12a9 9 0 0115-6.7L21 8" />
             <path d="M3 22v-6h6" />
@@ -48,13 +48,13 @@ export function ServiceWorkerRegistration() {
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-text-primary">Update available</p>
-          <p className="text-[10px] text-text-tertiary">New features and fixes ready.</p>
+          <p className="text-sm font-bold text-text-primary leading-tight">Update available</p>
+          <p className="text-xs text-text-tertiary mt-0.5">New features and fixes ready.</p>
         </div>
         <button
           type="button"
           onClick={handleUpdate}
-          className="px-3 py-1.5 text-xs font-bold text-white bg-accent rounded-lg hover:brightness-110 transition-all cursor-pointer flex-shrink-0"
+          className="px-4 py-2 text-xs font-bold text-white bg-accent rounded-xl hover:brightness-110 active:scale-[0.96] transition-all cursor-pointer flex-shrink-0 shadow-sm shadow-accent/20"
         >
           Refresh
         </button>

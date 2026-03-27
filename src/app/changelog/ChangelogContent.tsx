@@ -11,10 +11,32 @@ import { PageFooter } from "@/components/layout/PageFooter";
 const ENTRIES = [
   {
     date: "March 2026",
+    version: "4.3",
+    title: "PWA Mobile Polish & Version History Panel",
+    emoji: "\u2728",
+    highlight: true,
+    items: [
+      { type: "new" as const, text: "Version History side panel \u2014 Google Docs-style slide-out panel with timeline UI, version diffs, and one-click restore to any previous version." },
+      { type: "new" as const, text: "Version history for your own reports \u2014 no longer limited to shared views. See and restore past versions from the home page after sharing." },
+      { type: "new" as const, text: "Clock icon in the report navbar \u2014 quick-access button to open version history without digging through menus." },
+      { type: "new" as const, text: "Clickable \u201CSaved\u201D status \u2014 tap the auto-save badge while editing to open version history instantly." },
+      { type: "new" as const, text: "PWA standalone mode styles \u2014 installed app disables rubber-band bounce, adds status bar inset, and feels native." },
+      { type: "new" as const, text: "Install prompt redesigned as bottom sheet \u2014 full-width with scrim overlay, handle bar, and large touch targets." },
+      { type: "new" as const, text: "Dynamic theme-color \u2014 status bar matches your light/dark mode instead of static red." },
+      { type: "improved" as const, text: "Bottom tab bar upgraded \u2014 active pill indicator, icon bubbles, smoother press feedback, and Dashboard tab for signed-in users." },
+      { type: "improved" as const, text: "Frosted glass headers \u2014 both navbars now use backdrop-blur-2xl with saturation boost for a polished glass effect." },
+      { type: "improved" as const, text: "100dvh viewport \u2014 uses dynamic viewport height so mobile browser chrome doesn\u2019t cause layout jumps." },
+      { type: "improved" as const, text: "Safe area coverage \u2014 added safe-top and safe-x utilities for full edge-to-edge support on all devices." },
+      { type: "improved" as const, text: "SW update toast \u2014 centered and full-width on mobile with smoother entrance animation." },
+      { type: "improved" as const, text: "Revert button always visible on mobile \u2014 no more hover-only reveal on touch devices." },
+      { type: "improved" as const, text: "Manifest enhanced \u2014 launch_handler reuses existing window, handle_links opens in PWA, added Create shortcut." },
+    ],
+  },
+  {
+    date: "March 2026",
     version: "4.2",
     title: "Collaboration, Version History & Polish",
     emoji: "\uD83D\uDD12",
-    highlight: true,
     items: [
       { type: "new" as const, text: "Version History \u2014 every edit is snapshotted. Browse past versions and revert to any point with one click." },
       { type: "new" as const, text: "Manage Access panel \u2014 Google Docs-style access control. See who has access, add/remove collaborators, revoke collab links." },

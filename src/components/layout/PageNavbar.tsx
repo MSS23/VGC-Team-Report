@@ -29,7 +29,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl",
 
   return (
     <>
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-surface/90 border-b border-border shadow-[0_1px_8px_rgba(0,0,0,0.06)]">
+      <header className="sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 bg-surface/80 border-b border-border/60 shadow-[0_1px_12px_rgba(0,0,0,0.04)]">
         <div className={`${maxWidth} mx-auto px-4 sm:px-6 h-14 flex items-center justify-between`}>
           {/* Left: logo */}
           <a href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity">
@@ -102,28 +102,36 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl",
       </header>
 
       {/* Mobile bottom tab bar */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-border safe-bottom" aria-label="Mobile navigation">
-        <div className="flex items-center justify-around px-2 py-1.5">
-          {/* Create / Home — prominent center action */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-2xl border-t border-border/60 safe-bottom safe-x" aria-label="Mobile navigation">
+        <div className="flex items-center justify-around px-1 pt-1.5 pb-1">
           {[
             { href: "/", label: "Create", key: "home", icon: "M12 5v14M5 12h14" },
             ...NAV_LINKS.filter((l) => l.key === "explore" || l.key === "champions" || l.key === "compare"),
+            ...(isSignedIn ? [{ href: "/dashboard", label: "Dashboard", key: "dashboard" as const, icon: "M4 6h16M4 12h16M4 18h7" }] : []),
           ].map((link) => {
             const isActive = activePage === link.key;
             return (
               <a
                 key={link.key}
                 href={link.href}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-all min-w-[56px] active:scale-[0.93] ${
+                className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 min-w-[52px] active:scale-[0.90] active:opacity-70 ${
                   isActive
                     ? "text-accent"
-                    : "text-text-tertiary active:text-text-primary"
+                    : "text-text-tertiary"
                 }`}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round">
-                  <path d={link.icon} />
-                </svg>
-                <span className={`text-[10px] font-bold ${isActive ? "text-accent" : ""}`}>{link.label}</span>
+                {/* Active pill indicator */}
+                {isActive && (
+                  <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-5 h-[3px] rounded-full bg-accent animate-pop-in" />
+                )}
+                <span className={`flex items-center justify-center w-8 h-8 rounded-xl transition-colors duration-200 ${
+                  isActive ? "bg-accent/10" : ""
+                }`}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isActive ? "2.5" : "1.8"} strokeLinecap="round" strokeLinejoin="round">
+                    <path d={link.icon} />
+                  </svg>
+                </span>
+                <span className={`text-[10px] leading-none font-semibold transition-colors duration-200 ${isActive ? "text-accent" : ""}`}>{link.label}</span>
               </a>
             );
           })}

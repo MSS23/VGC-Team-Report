@@ -9,7 +9,7 @@ import { useTranslation } from "@/lib/i18n";
 import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
 import { NotificationBell } from "@/components/ui/NotificationBell";
-import { VersionHistory } from "@/components/social/VersionHistory";
+import { VersionHistoryPanel } from "@/components/social/VersionHistoryPanel";
 
 interface NavbarProps {
   // Mode flags
@@ -56,6 +56,7 @@ interface NavbarProps {
   // Ownership
   isOwner: boolean;
   activeShareId?: string | null;
+  sessionShareId?: string | null;
 
   // Edit link
   hasExistingShare: boolean;
@@ -67,6 +68,12 @@ interface NavbarProps {
   onRedo?: () => void;
   canUndo?: () => boolean;
   canRedo?: () => boolean;
+
+  // Version comparison
+  comparingVersion?: number | null;
+  onCompareVersion?: (version: number) => void;
+  onClearCompareVersion?: () => void;
+  compareLoading?: boolean;
 
   // Actions
   onShowShortcuts: (v: boolean) => void;
@@ -88,9 +95,10 @@ export function Navbar(props: NavbarProps) {
     isSampleTeam,
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare,
-    isOwner, activeShareId,
+    isOwner, activeShareId, sessionShareId,
     hasExistingShare, editLinkCopied, onCopyEditLink,
     onUndo, onRedo, canUndo, canRedo,
+    comparingVersion, onCompareVersion, onClearCompareVersion, compareLoading,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
     onReset, onExitSharedView,
   } = props;
@@ -98,7 +106,12 @@ export function Navbar(props: NavbarProps) {
   const { t } = useTranslation();
   const { isLoaded, isSignedIn } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [versionPanelOpen, setVersionPanelOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Derive the effective share ID for version history
+  const versionShareId = (activeShareId && isOwner) ? activeShareId : sessionShareId;
+  const canShowVersionHistory = !!versionShareId;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -125,13 +138,14 @@ export function Navbar(props: NavbarProps) {
   const showUser = isLoaded && isSignedIn;
 
   return (
+    <>
     <header
-      className={`sticky top-0 z-40 backdrop-blur-xl border-b transition-all duration-300 ${
+      className={`sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 border-b transition-all duration-300 ${
         isPresentationStyle
           ? "bg-transparent border-transparent"
           : scrolled
-            ? "bg-surface/95 border-border shadow-lg shadow-black/5"
-            : "bg-surface/90 border-border shadow-[0_1px_8px_rgba(0,0,0,0.06)]"
+            ? "bg-surface/90 border-border/60 shadow-lg shadow-black/5"
+            : "bg-surface/80 border-border/60 shadow-[0_1px_12px_rgba(0,0,0,0.04)]"
       }`}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2">
@@ -225,14 +239,26 @@ export function Navbar(props: NavbarProps) {
                 </span>
               )}
               {isSharedView && isEditingUnlocked && autoSaveStatus && autoSaveStatus !== "idle" && (
-                <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 ${
-                  autoSaveStatus === "saving" ? "text-text-tertiary bg-surface-alt/60"
-                    : autoSaveStatus === "saved" ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
-                    : "text-red-500 bg-red-500/10"
-                }`}>
+                <button
+                  type="button"
+                  onClick={canShowVersionHistory ? () => setVersionPanelOpen(true) : undefined}
+                  className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 transition-colors ${
+                    canShowVersionHistory ? "cursor-pointer hover:brightness-110" : ""
+                  } ${
+                    autoSaveStatus === "saving" ? "text-text-tertiary bg-surface-alt/60"
+                      : autoSaveStatus === "saved" ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                      : "text-red-500 bg-red-500/10"
+                  }`}
+                  title={canShowVersionHistory ? "Open version history" : undefined}
+                >
                   {autoSaveStatus === "saving" && <span className="w-2.5 h-2.5 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin" />}
                   {autoSaveStatus === "saving" ? "Saving..." : autoSaveStatus === "saved" ? "Saved" : "Save failed"}
-                </span>
+                  {autoSaveStatus === "saved" && canShowVersionHistory && (
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="ml-0.5 opacity-60">
+                      <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                    </svg>
+                  )}
+                </button>
               )}
               {isSharedView && isEditingUnlocked && collaborators !== undefined && collaborators > 1 && (
                 <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 text-blue-600 dark:text-blue-400 bg-blue-500/10">
@@ -396,6 +422,21 @@ export function Navbar(props: NavbarProps) {
             </a>
           )}
 
+          {/* Version history quick button */}
+          {canShowVersionHistory && !isPresentationStyle && (
+            <button
+              type="button"
+              onClick={() => setVersionPanelOpen(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
+              title="Version history"
+              aria-label="Open version history"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              </svg>
+            </button>
+          )}
+
           {/* ── Overflow menu (settings, auth, theme) ── */}
           <div className="relative" ref={menuRef}>
             <button
@@ -500,11 +541,21 @@ export function Navbar(props: NavbarProps) {
                   </>
                 )}
 
-                {/* Version history (only for owners/collaborators with an active share) */}
-                {activeShareId && isOwner && (
+                {/* Version history — opens side panel */}
+                {canShowVersionHistory && (
                   <>
                     <div className="border-t border-border/50 mx-3 my-1" />
-                    <VersionHistory shareId={activeShareId} />
+                    <button
+                      type="button"
+                      onClick={() => { setMenuOpen(false); setVersionPanelOpen(true); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      Version History
+                    </button>
                   </>
                 )}
 
@@ -526,5 +577,19 @@ export function Navbar(props: NavbarProps) {
         </div>
       </div>
     </header>
+
+    {/* Version history side panel */}
+    {canShowVersionHistory && (
+      <VersionHistoryPanel
+        shareId={versionShareId!}
+        open={versionPanelOpen}
+        onClose={() => setVersionPanelOpen(false)}
+        comparingVersion={comparingVersion}
+        onCompare={onCompareVersion}
+        onClearCompare={onClearCompareVersion}
+        compareLoading={compareLoading}
+      />
+    )}
+    </>
   );
 }

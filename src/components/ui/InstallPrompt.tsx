@@ -69,82 +69,97 @@ export function InstallPrompt() {
   if (dismissed || (!deferredPrompt && !showIOSPrompt)) return null;
 
   return (
-    <div className="fixed bottom-20 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 w-full max-w-sm px-4 animate-fade-in">
-      <div className="bg-surface border border-border rounded-2xl shadow-2xl p-4">
-        <div className="flex items-start gap-3">
-          {/* App icon */}
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-            <svg width="20" height="20" viewBox="0 0 32 32">
-              <circle cx="16" cy="16" r="15" fill="#E11D48" stroke="#BE123C" strokeWidth="1"/>
-              <rect x="1" y="14.5" width="30" height="3" fill="#BE123C"/>
-              <circle cx="16" cy="16" r="5" fill="white" stroke="#BE123C" strokeWidth="1.5"/>
-              <circle cx="16" cy="16" r="2" fill="#E11D48"/>
-            </svg>
-          </div>
+    <>
+      {/* Scrim overlay */}
+      <div
+        className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-[2px] animate-fade-in"
+        onClick={handleDismiss}
+        aria-hidden="true"
+      />
 
-          <div className="flex-1 min-w-0">
-            {deferredPrompt ? (
-              <>
-                <p className="text-sm font-bold text-text-primary">
-                  Get the app
-                </p>
-                <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">
-                  Install VGC Team Report for offline access and a faster experience.
-                </p>
-                <div className="flex items-center gap-2 mt-2.5">
+      {/* Bottom sheet */}
+      <div className="fixed bottom-0 left-0 right-0 z-[61] safe-bottom animate-sheet-up">
+        <div className="mx-auto max-w-lg">
+          <div className="bg-surface rounded-t-3xl shadow-[0_-8px_40px_rgba(0,0,0,0.12)] border-t border-x border-border/50 px-6 pt-3 pb-6">
+            {/* Handle bar */}
+            <div className="flex justify-center mb-4">
+              <div className="w-10 h-1 rounded-full bg-border" />
+            </div>
+
+            <div className="flex items-start gap-4">
+              {/* App icon — larger for sheet context */}
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/10 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <svg width="28" height="28" viewBox="0 0 32 32">
+                  <circle cx="16" cy="16" r="15" fill="#E11D48" stroke="#BE123C" strokeWidth="1"/>
+                  <rect x="1" y="14.5" width="30" height="3" fill="#BE123C"/>
+                  <circle cx="16" cy="16" r="5" fill="white" stroke="#BE123C" strokeWidth="1.5"/>
+                  <circle cx="16" cy="16" r="2" fill="#E11D48"/>
+                </svg>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                {deferredPrompt ? (
+                  <>
+                    <p className="text-base font-bold text-text-primary leading-tight">
+                      Install VGC Team Report
+                    </p>
+                    <p className="text-sm text-text-secondary mt-1 leading-relaxed">
+                      Get instant access from your home screen with offline support and a faster experience.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-base font-bold text-text-primary leading-tight">
+                      Add to Home Screen
+                    </p>
+                    <p className="text-sm text-text-secondary mt-1 leading-relaxed">
+                      Tap{" "}
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-surface-alt border border-border align-middle mx-0.5">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                          <polyline points="16 6 12 2 8 6" />
+                          <line x1="12" y1="2" x2="12" y2="15" />
+                        </svg>
+                      </span>
+                      {" "}then select <strong>&ldquo;Add to Home Screen&rdquo;</strong>
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Action buttons — full width on mobile for easy tapping */}
+            <div className="mt-5 flex flex-col gap-2.5">
+              {deferredPrompt ? (
+                <>
                   <button
                     type="button"
                     onClick={handleInstall}
-                    className="px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/20"
+                    className="w-full py-3 bg-accent text-white text-sm font-bold rounded-2xl hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-accent/20"
                   >
-                    Install
+                    Install App
                   </button>
                   <button
                     type="button"
                     onClick={handleDismiss}
-                    className="px-3 py-1.5 text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
+                    className="w-full py-3 text-sm font-semibold text-text-tertiary hover:text-text-primary hover:bg-surface-alt rounded-2xl transition-all cursor-pointer active:scale-[0.98]"
                   >
-                    Not now
+                    Maybe Later
                   </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="text-sm font-bold text-text-primary">
-                  Add to Home Screen
-                </p>
-                <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">
-                  Tap{" "}
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline -mt-0.5">
-                    <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-                    <polyline points="16 6 12 2 8 6" />
-                    <line x1="12" y1="2" x2="12" y2="15" />
-                  </svg>
-                  {" "}then &ldquo;Add to Home Screen&rdquo; for offline access.
-                </p>
+                </>
+              ) : (
                 <button
                   type="button"
                   onClick={handleDismiss}
-                  className="mt-2 text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
+                  className="w-full py-3 text-sm font-semibold text-text-secondary hover:text-text-primary bg-surface-alt rounded-2xl transition-all cursor-pointer active:scale-[0.98]"
                 >
                   Got it
                 </button>
-              </>
-            )}
+              )}
+            </div>
           </div>
-
-          <button
-            type="button"
-            onClick={handleDismiss}
-            className="w-6 h-6 flex items-center justify-center rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer flex-shrink-0"
-            aria-label="Dismiss"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }

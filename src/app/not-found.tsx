@@ -15,23 +15,23 @@ function NotFoundContent() {
   const { t } = useTranslation();
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="flex flex-col items-center gap-4 text-center animate-fade-in">
-        <div className="w-16 h-16 rounded-full bg-surface-alt flex items-center justify-center">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary">
+    <main className="min-h-dvh min-h-screen flex items-center justify-center p-6 safe-bottom safe-top">
+      <div className="flex flex-col items-center gap-5 text-center animate-fade-in max-w-xs">
+        <div className="w-20 h-20 rounded-2xl bg-surface-alt flex items-center justify-center">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary">
             <circle cx="12" cy="12" r="10" />
             <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
             <line x1="9" y1="9" x2="9.01" y2="9" />
             <line x1="15" y1="9" x2="15.01" y2="9" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-text-primary">{t.pageNotFound}</h1>
-        <p className="text-text-secondary text-sm max-w-xs">
+        <h1 className="text-2xl font-extrabold text-text-primary">{t.pageNotFound}</h1>
+        <p className="text-text-secondary text-sm leading-relaxed">
           {t.pageNotFoundDesc}
         </p>
         <Link
           href="/"
-          className="mt-2 px-5 py-2.5 bg-accent text-white rounded-xl font-semibold text-sm hover:bg-accent/90 transition-colors"
+          className="mt-1 px-6 py-3 bg-accent text-white rounded-2xl font-bold text-sm hover:brightness-110 active:scale-[0.97] transition-all shadow-sm shadow-accent/20"
         >
           {t.goHome}
         </Link>

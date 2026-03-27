@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
+import { ConnectivityStatus } from "@/components/ui/ConnectivityStatus";
 import { JsonLd } from "@/components/seo/JsonLd";
 import "./globals.css";
 
@@ -16,6 +17,18 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FAF9F6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B0B1A" },
+  ],
+};
 
 export const metadata: Metadata = {
   title: {
@@ -48,9 +61,12 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "VGC Report",
+    startupImage: [
+      // Use the app icon as fallback splash — better than blank white
+      { url: "/icon-512.png" },
+    ],
   },
   other: {
-    "theme-color": "#E11D48",
     "mobile-web-app-capable": "yes",
   },
   alternates: {
@@ -94,6 +110,7 @@ export default function RootLayout({
         />
         {children}
         <InstallPrompt />
+        <ConnectivityStatus />
         <Analytics />
         <ServiceWorkerRegistration />
         </ClerkProvider>

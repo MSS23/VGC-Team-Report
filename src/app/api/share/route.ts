@@ -79,8 +79,13 @@ export async function POST(request: Request) {
         SELECT data, COALESCE(version, 1) AS version FROM shares WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
       `;
 
-      // Snapshot old version before overwriting (fire-and-forget)
-      if (oldRows.length > 0) {
+      // Detect actual changes before creating a version
+      const oldState = oldRows.length > 0 ? (oldRows[0].data as Record<string, unknown>) : null;
+      const sections = detectChangedSections(oldState, state);
+      const hasDataChanges = sections.length > 0;
+
+      // Only snapshot and increment version when data actually changed
+      if (hasDataChanges && oldRows.length > 0) {
         const oldVersion = Number(oldRows[0].version);
         const oldData = oldRows[0].data;
         try {
@@ -106,7 +111,8 @@ export async function POST(request: Request) {
 
       const rows = await sql`
         UPDATE shares
-        SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(), version = COALESCE(version, 1) + 1,
+        SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(),
+            version = COALESCE(version, 1) + ${hasDataChanges ? 1 : 0},
             is_public = ${isPublic ?? false},
             search_vector =
               setweight(to_tsvector('english', ${searchCreator}), 'A') ||
@@ -118,23 +124,21 @@ export async function POST(request: Request) {
       `;
       if (rows.length > 0) {
         // Record changelog entry (fire-and-forget, only for authenticated users)
-        try {
-          const { userId } = await auth();
-          if (userId) {
-            const user = await currentUser();
-            const editorName = user?.firstName
-              ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-              : user?.username ?? "Unknown";
-            const oldState = oldRows.length > 0 ? (oldRows[0].data as Record<string, unknown>) : null;
-            const sections = detectChangedSections(oldState, state);
-            if (sections.length > 0) {
+        if (hasDataChanges) {
+          try {
+            const { userId } = await auth();
+            if (userId) {
+              const user = await currentUser();
+              const editorName = user?.firstName
+                ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
+                : user?.username ?? "Unknown";
               sql`
                 INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
                 VALUES (${existingId}, ${rows[0].version}, ${userId}, ${editorName}, ${JSON.stringify(sections)}::jsonb, ${isPublish ?? false})
               `.catch(() => { /* changelog insert is non-critical */ });
             }
-          }
-        } catch { /* not authenticated — skip changelog */ }
+          } catch { /* not authenticated — skip changelog */ }
+        }
 
         // Invalidate caches for this share and explore listings
         await Promise.all([

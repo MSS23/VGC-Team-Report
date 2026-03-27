@@ -12,6 +12,7 @@ interface UseSwipeNavigationOptions {
 /**
  * Adds horizontal swipe gesture detection for mobile slide navigation.
  * Returns a ref to attach to the swipeable container.
+ * Includes visual drag feedback and optional haptic vibration.
  */
 export function useSwipeNavigation({
   onSwipeLeft,
@@ -21,12 +22,14 @@ export function useSwipeNavigation({
 }: UseSwipeNavigationOptions) {
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const touchEnd = useRef<{ x: number; y: number } | null>(null);
+  const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
       if (!enabled) return;
       touchEnd.current = null;
+      isDragging.current = false;
       touchStart.current = {
         x: e.targetTouches[0].clientX,
         y: e.targetTouches[0].clientY,
@@ -37,11 +40,26 @@ export function useSwipeNavigation({
 
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
-      if (!enabled) return;
+      if (!enabled || !touchStart.current) return;
       touchEnd.current = {
         x: e.targetTouches[0].clientX,
         y: e.targetTouches[0].clientY,
       };
+
+      const deltaX = touchStart.current.x - touchEnd.current.x;
+      const deltaY = touchStart.current.y - touchEnd.current.y;
+
+      // Only apply visual feedback if horizontal swipe is dominant
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+        isDragging.current = true;
+        const el = containerRef.current;
+        if (el) {
+          // Clamp drag offset to a subtle range (-20px to 20px) with resistance
+          const offset = Math.max(-20, Math.min(20, -deltaX * 0.15));
+          el.style.transform = `translateX(${offset}px)`;
+          el.style.transition = "none";
+        }
+      }
     },
     [enabled]
   );
@@ -49,11 +67,24 @@ export function useSwipeNavigation({
   const handleTouchEnd = useCallback(() => {
     if (!enabled || !touchStart.current || !touchEnd.current) return;
 
+    const el = containerRef.current;
+
+    // Snap back with smooth transition
+    if (el && isDragging.current) {
+      el.style.transition = "transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)";
+      el.style.transform = "";
+    }
+
     const deltaX = touchStart.current.x - touchEnd.current.x;
     const deltaY = touchStart.current.y - touchEnd.current.y;
 
     // Only trigger if horizontal swipe is dominant (not vertical scroll)
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > threshold) {
+      // Haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(8);
+      }
+
       if (deltaX > 0) {
         onSwipeLeft(); // swipe left = next slide
       } else {
@@ -63,6 +94,7 @@ export function useSwipeNavigation({
 
     touchStart.current = null;
     touchEnd.current = null;
+    isDragging.current = false;
   }, [enabled, threshold, onSwipeLeft, onSwipeRight]);
 
   useEffect(() => {

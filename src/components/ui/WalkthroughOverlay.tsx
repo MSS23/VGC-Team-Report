@@ -215,6 +215,7 @@ export function WalkthroughOverlay({
 
       {/* Spotlight */}
       <div
+        className="walkthrough-spotlight"
         style={{
           position: "fixed",
           top: spot.top,

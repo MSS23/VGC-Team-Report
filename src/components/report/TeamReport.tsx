@@ -8,6 +8,7 @@ import type { SpriteConfig } from "@/lib/types/sprites";
 import type { ReportTags } from "@/lib/data/tags";
 import { TeamOverview } from "./TeamOverview";
 import { PokemonDetailSlide } from "./PokemonDetailSlide";
+import { useVersionDiff } from "@/lib/contexts/VersionDiffContext";
 
 // Lazy-load heavy analysis and matchup components
 const SpeedTierChart = dynamic(() => import("./SpeedTierChart").then(m => ({ default: m.SpeedTierChart })), {
@@ -73,6 +74,21 @@ interface TeamReportProps {
   onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
 }
 
+/** Wraps slide content with a highlight border when the slide has version diff changes. */
+function DiffHighlight({ slideIndex, children }: { slideIndex: number; children: React.ReactNode }) {
+  const { diff } = useVersionDiff();
+  const hasChanges = diff?.changedSlides.has(slideIndex) ?? false;
+
+  if (!hasChanges) return <>{children}</>;
+
+  return (
+    <div className="version-diff-highlight relative">
+      <div className="absolute -inset-2 sm:-inset-3 rounded-2xl border-2 border-amber-500/40 pointer-events-none version-diff-glow" />
+      {children}
+    </div>
+  );
+}
+
 export function TeamReport({
   analysis,
   creatorMode,
@@ -125,32 +141,34 @@ export function TeamReport({
   // Slide 0: Team Overview
   if (currentSlide === 0) {
     return (
-      <TeamOverview
-        pokemon={analysis.pokemon}
-        creatorMode={creatorMode}
-        speciesKeys={speciesKeys}
-        roles={roles}
-        onRoleChange={onRoleChange}
-        summary={teamSummary}
-        onSummaryChange={onTeamSummaryChange}
-        tournamentName={tournamentName}
-        onTournamentNameChange={onTournamentNameChange}
-        placement={placement}
-        onPlacementChange={onPlacementChange}
-        record={record}
-        onRecordChange={onRecordChange}
-        rentalCode={rentalCode}
-        onRentalCodeChange={onRentalCodeChange}
-        creatorName={creatorName}
-        onCreatorNameChange={onCreatorNameChange}
-        mvpIndex={mvpIndex ?? null}
-        onMvpIndexChange={onMvpIndexChange}
-        tags={tags}
-        onTagsChange={onTagsChange}
-        isReadOnly={isReadOnly}
-        getSpriteConfig={getSpriteConfig}
-        onReorderPokemon={onReorderPokemon}
-      />
+      <DiffHighlight slideIndex={0}>
+        <TeamOverview
+          pokemon={analysis.pokemon}
+          creatorMode={creatorMode}
+          speciesKeys={speciesKeys}
+          roles={roles}
+          onRoleChange={onRoleChange}
+          summary={teamSummary}
+          onSummaryChange={onTeamSummaryChange}
+          tournamentName={tournamentName}
+          onTournamentNameChange={onTournamentNameChange}
+          placement={placement}
+          onPlacementChange={onPlacementChange}
+          record={record}
+          onRecordChange={onRecordChange}
+          rentalCode={rentalCode}
+          onRentalCodeChange={onRentalCodeChange}
+          creatorName={creatorName}
+          onCreatorNameChange={onCreatorNameChange}
+          mvpIndex={mvpIndex ?? null}
+          onMvpIndexChange={onMvpIndexChange}
+          tags={tags}
+          onTagsChange={onTagsChange}
+          isReadOnly={isReadOnly}
+          getSpriteConfig={getSpriteConfig}
+          onReorderPokemon={onReorderPokemon}
+        />
+      </DiffHighlight>
     );
   }
 
@@ -161,33 +179,37 @@ export function TeamReport({
     const key = speciesKeys[pokemonIndex];
 
     return (
-      <PokemonDetailSlide
-        pokemon={pokemon}
-        note={notes[key] ?? ""}
-        onNoteChange={(text) => onNoteChange(key, text)}
-        spreadNote={spreadNotes[key] ?? ""}
-        onSpreadNoteChange={onSpreadNoteChange ? (text) => onSpreadNoteChange(key, text) : undefined}
-        calcs={calcs[key] ?? []}
-        onAddCalc={(text, category) => onAddCalc(key, text, category)}
-        onRemoveCalc={(index) => onRemoveCalc(key, index)}
-        onEditCalc={(index, updates) => onEditCalc(key, index, updates)}
-        isReadOnly={isReadOnly}
-        isPresentationMode={isPresentationMode}
-        shiny={getSpriteConfig?.(key)?.shiny}
-        animated={getSpriteConfig?.(key)?.animated}
-      />
+      <DiffHighlight slideIndex={currentSlide}>
+        <PokemonDetailSlide
+          pokemon={pokemon}
+          note={notes[key] ?? ""}
+          onNoteChange={(text) => onNoteChange(key, text)}
+          spreadNote={spreadNotes[key] ?? ""}
+          onSpreadNoteChange={onSpreadNoteChange ? (text) => onSpreadNoteChange(key, text) : undefined}
+          calcs={calcs[key] ?? []}
+          onAddCalc={(text, category) => onAddCalc(key, text, category)}
+          onRemoveCalc={(index) => onRemoveCalc(key, index)}
+          onEditCalc={(index, updates) => onEditCalc(key, index, updates)}
+          isReadOnly={isReadOnly}
+          isPresentationMode={isPresentationMode}
+          shiny={getSpriteConfig?.(key)?.shiny}
+          animated={getSpriteConfig?.(key)?.animated}
+        />
+      </DiffHighlight>
     );
   }
 
   // Speed tier chart slide (after all Pokemon, before matchups)
   if (currentSlide === pokemonCount + 1) {
     return (
-      <SpeedTierChart
-        pokemon={analysis.pokemon}
-        speciesKeys={speciesKeys}
-        getSpriteConfig={getSpriteConfig}
-        isPresentationMode={isPresentationMode}
-      />
+      <DiffHighlight slideIndex={pokemonCount + 1}>
+        <SpeedTierChart
+          pokemon={analysis.pokemon}
+          speciesKeys={speciesKeys}
+          getSpriteConfig={getSpriteConfig}
+          isPresentationMode={isPresentationMode}
+        />
+      </DiffHighlight>
     );
   }
 
@@ -198,19 +220,21 @@ export function TeamReport({
     if (matchupSlideIndex >= 0 && matchupSlideIndex < plans.length) {
       const plan = plans[matchupSlideIndex];
       return (
-        <MatchupPlanSlide
-          plan={plan}
-          yourPokemon={analysis.pokemon}
-          isReadOnly={isReadOnly}
-          onGamePlanNotesChange={onGamePlanNotesChange ?? (() => {})}
-          onGamePlanReplaysChange={onGamePlanReplaysChange ?? (() => {})}
-          onGamePlanBringChange={onGamePlanBringChange ?? (() => {})}
-          onReorderGamePlanBring={onReorderGamePlanBring ?? (() => {})}
-          onGamePlanResultChange={onGamePlanResultChange ?? (() => {})}
-          onAddGamePlan={onAddGamePlan ?? (() => {})}
-          onRemoveGamePlan={onRemoveGamePlan ?? (() => {})}
-          onRemove={onRemovePlan ?? (() => {})}
-        />
+        <DiffHighlight slideIndex={currentSlide}>
+          <MatchupPlanSlide
+            plan={plan}
+            yourPokemon={analysis.pokemon}
+            isReadOnly={isReadOnly}
+            onGamePlanNotesChange={onGamePlanNotesChange ?? (() => {})}
+            onGamePlanReplaysChange={onGamePlanReplaysChange ?? (() => {})}
+            onGamePlanBringChange={onGamePlanBringChange ?? (() => {})}
+            onReorderGamePlanBring={onReorderGamePlanBring ?? (() => {})}
+            onGamePlanResultChange={onGamePlanResultChange ?? (() => {})}
+            onAddGamePlan={onAddGamePlan ?? (() => {})}
+            onRemoveGamePlan={onRemoveGamePlan ?? (() => {})}
+            onRemove={onRemovePlan ?? (() => {})}
+          />
+        </DiffHighlight>
       );
     }
   }
@@ -219,14 +243,16 @@ export function TeamReport({
   const matchupSheetSlide = pokemonCount + 2 + plans.length;
   if (currentSlide === matchupSheetSlide) {
     return (
-      <MatchupSheet
-        plans={plans}
-        yourPokemon={analysis.pokemon}
-        isReadOnly={isReadOnly}
-        onReorderPlans={onReorderPlans ?? (() => {})}
-        onRemovePlan={onRemovePlan ?? (() => {})}
-        onAddPlan={onAddPlan ?? (() => {})}
-      />
+      <DiffHighlight slideIndex={matchupSheetSlide}>
+        <MatchupSheet
+          plans={plans}
+          yourPokemon={analysis.pokemon}
+          isReadOnly={isReadOnly}
+          onReorderPlans={onReorderPlans ?? (() => {})}
+          onRemovePlan={onRemovePlan ?? (() => {})}
+          onAddPlan={onAddPlan ?? (() => {})}
+        />
+      </DiffHighlight>
     );
   }
 

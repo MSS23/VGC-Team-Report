@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useCallback, useEffect, useRef } from "react";
+import { Suspense, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useHomePage } from "@/hooks/useHomePage";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
@@ -23,6 +23,9 @@ import { getSessionId } from "@/lib/utils/session-id";
 import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { I18nProvider } from "@/lib/i18n";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
+import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
+import { computeVersionDiff, type VersionDiff } from "@/lib/utils/version-diff";
+import type { ShareableState } from "@/lib/sharing/url-codec";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
 const ShareModal = dynamic(() => import("@/components/ui/ShareModal").then(m => ({ default: m.ShareModal })));
@@ -85,6 +88,7 @@ function HomeContent() {
     collaborators,
     syncStatus,
     activeShareId,
+    sessionShareId,
     editKeyFromUrl,
     saveFlash,
     showShortcutHint,
@@ -163,6 +167,75 @@ function HomeContent() {
 
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // ── Version comparison state ────────────────────────────────────
+  const [versionDiff, setVersionDiff] = useState<VersionDiff | null>(null);
+  const [compareLoading, setCompareLoading] = useState(false);
+  const comparingVersion = versionDiff?.version ?? null;
+
+  const handleCompareVersion = useCallback(async (version: number) => {
+    const shareId = activeShareId || sessionShareId;
+    if (!shareId) return;
+
+    setCompareLoading(true);
+    try {
+      const res = await fetch(`/api/share/${shareId}/versions/${version}`);
+      if (!res.ok) { setCompareLoading(false); return; }
+      const { data: oldData } = await res.json() as { data: ShareableState };
+
+      // Build current state for comparison
+      const currentState: ShareableState = {
+        paste,
+        notes,
+        calcs,
+        roles,
+        spreadNotes: Object.keys(spreadNotes).length > 0 ? spreadNotes : undefined,
+        teamSummary: summary || undefined,
+        tournamentName: tournamentName || undefined,
+        placement: placement || undefined,
+        record: record || undefined,
+        mvpIndex: mvpIndex ?? undefined,
+        rentalCode: rentalCode || undefined,
+        creatorName: creatorName || undefined,
+        matchupPlans: plans.map((p) => ({
+          opponentPaste: p.opponentPaste,
+          opponentLabel: p.opponentLabel,
+          showSlide: p.showSlide,
+          gamePlans: p.gamePlans?.map((gp) => ({
+            bring: gp.bring,
+            notes: gp.notes,
+            replays: gp.replays,
+            result: gp.result,
+          })),
+        })),
+        tags: tags && (tags.archetype?.length || tags.regulation || tags.eventType) ? tags : undefined,
+      };
+
+      const diff = computeVersionDiff(
+        currentState,
+        oldData,
+        version,
+        analysis?.pokemon.length ?? 0,
+        speciesKeys,
+        plans.length
+      );
+      setVersionDiff(diff);
+    } catch {
+      // ignore
+    } finally {
+      setCompareLoading(false);
+    }
+  }, [activeShareId, sessionShareId, paste, notes, calcs, roles, spreadNotes, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, tags, analysis, speciesKeys]);
+
+  const handleClearCompare = useCallback(() => {
+    setVersionDiff(null);
+  }, []);
+
+  const versionDiffContextValue = useMemo(() => ({
+    diff: versionDiff,
+    loading: compareLoading,
+    clearDiff: handleClearCompare,
+  }), [versionDiff, compareLoading, handleClearCompare]);
 
   // Swipe navigation for mobile
   const swipeRef = useSwipeNavigation({
@@ -382,7 +455,7 @@ function HomeContent() {
 
   // Show report
   return (
-    <main className={`bg-background ${isPresentationStyle ? "h-screen overflow-y-auto" : "min-h-screen"}`}>
+    <main className={`bg-background ${isPresentationStyle ? "h-dvh h-screen overflow-y-auto" : "min-h-dvh min-h-screen"}`}>
       <Navbar
         isPresentationStyle={isPresentationStyle}
         isSharedView={isSharedView}
@@ -411,6 +484,7 @@ function HomeContent() {
         onReshare={handleReshare}
         isOwner={isOwner}
         activeShareId={activeShareId}
+        sessionShareId={sessionShareId}
         hasExistingShare={hasExistingShare()}
         editLinkCopied={editLinkCopied}
         onCopyEditLink={handleCopyEditLink}
@@ -418,6 +492,10 @@ function HomeContent() {
         onRedo={handleRedo}
         canUndo={canUndo}
         canRedo={canRedo}
+        comparingVersion={comparingVersion}
+        onCompareVersion={handleCompareVersion}
+        onClearCompareVersion={handleClearCompare}
+        compareLoading={compareLoading}
         onShowShortcuts={setShowShortcutHint}
         onSetCreatorMode={setCreatorMode}
         onSetPresentationMode={setPresentationMode}
@@ -439,7 +517,39 @@ function HomeContent() {
         </div>
       )}
 
+      {/* Version comparison banner */}
+      {versionDiff && (
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 pt-2">
+          <div className="version-diff-banner flex items-center gap-3 px-4 py-3 bg-amber-500/10 border border-amber-500/25 rounded-2xl animate-fade-in">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                Comparing with version {versionDiff.version}
+              </p>
+              <p className="text-xs text-amber-600/80 dark:text-amber-400/70 mt-0.5">
+                {versionDiff.changedSlides.size === 0
+                  ? "No differences found"
+                  : `${versionDiff.changedFields.size} change${versionDiff.changedFields.size !== 1 ? "s" : ""} across ${versionDiff.changedSlides.size} slide${versionDiff.changedSlides.size !== 1 ? "s" : ""} — highlighted sections show what changed`
+                }
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleClearCompare}
+              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25 transition-colors border border-amber-500/20 cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Report content */}
+      <VersionDiffProvider value={versionDiffContextValue}>
       <div
         ref={swipeRef}
         className={`max-w-7xl mx-auto slide-content ${
@@ -523,6 +633,7 @@ function HomeContent() {
           onReorderPokemon={isReadOnly ? undefined : reorderPokemon}
         />
       </div>
+      </VersionDiffProvider>
 
       {/* Slide navigation */}
       <SlideNavControls
@@ -544,6 +655,7 @@ function HomeContent() {
         canMoveDown={canMoveSlideDown}
         onMoveUp={handleMoveSlideUp}
         onMoveDown={handleMoveSlideDown}
+        changedSlides={versionDiff?.changedSlides}
       />
 
       {/* Swipe hint for mobile (one-time) */}

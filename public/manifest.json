@@ -14,7 +14,18 @@
   "lang": "en",
   "dir": "ltr",
   "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
   "shortcuts": [
+    {
+      "name": "Create Report",
+      "short_name": "Create",
+      "url": "/",
+      "description": "Start a new VGC team report",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
     {
       "name": "Explore Teams",
       "short_name": "Explore",

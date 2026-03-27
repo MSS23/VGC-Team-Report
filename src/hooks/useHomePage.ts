@@ -384,6 +384,7 @@ export function useHomePage() {
     exitSharedView: share.exitSharedView,
     isEditingUnlocked: share.isEditingUnlocked,
     isOwner: share.isOwner,
+    sessionShareId: share.sessionShareId,
     lastShareResult: share.lastShareResult,
     hasExistingShare: share.hasExistingShare,
     showEditUrl: share.showEditUrl,

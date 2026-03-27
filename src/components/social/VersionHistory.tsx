@@ -51,8 +51,9 @@ export function VersionHistory({ shareId, onRevert }: VersionHistoryProps) {
       if (res.ok) {
         await fetchVersions();
         onRevert?.();
-        // Reload page to reflect reverted data
-        window.location.reload();
+        // Navigate to the share URL so reverted data loads correctly
+        // (works from both /s/{id} and the home page)
+        window.location.href = `/s/${shareId}`;
       }
     } catch {
       // ignore
@@ -152,7 +153,7 @@ export function VersionHistory({ shareId, onRevert }: VersionHistoryProps) {
                   type="button"
                   onClick={() => handleRevert(v.version)}
                   disabled={reverting !== null}
-                  className="opacity-0 group-hover:opacity-100 flex-shrink-0 px-2 py-1 text-[10px] font-bold text-accent bg-accent/10 rounded-md hover:bg-accent/20 transition-all cursor-pointer disabled:opacity-50"
+                  className="sm:opacity-0 sm:group-hover:opacity-100 flex-shrink-0 px-2.5 py-1.5 text-[10px] font-bold text-accent bg-accent/10 rounded-lg hover:bg-accent/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {reverting === v.version ? "..." : "Revert"}
                 </button>
