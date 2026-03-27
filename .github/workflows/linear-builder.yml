@@ -1,0 +1,182 @@
+name: Linear Builder
+
+on:
+  # Triggered by Linear webhook via repository_dispatch
+  repository_dispatch:
+    types: [linear-builder]
+  # Manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      issue_id:
+        description: "Linear issue UUID"
+        required: false
+      issue_identifier:
+        description: "Linear issue identifier (e.g. VGC-9)"
+        required: false
+      issue_title:
+        description: "Linear issue title"
+        required: false
+
+concurrency:
+  group: linear-builder
+  cancel-in-progress: false
+
+env:
+  LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+  DISCORD_BUILDS_WEBHOOK: ${{ secrets.DISCORD_BUILDS_WEBHOOK }}
+  LINEAR_TEAM_ID: "06531926-0387-4a3e-8325-8b7be754ced5"
+  IN_REVIEW_STATE_ID: "89e58e68-05e3-4dc9-a0e8-20344f1b1a00"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve issue details
+        id: issue
+        run: |
+          # From repository_dispatch
+          if [ -n "${{ github.event.client_payload.issue_id }}" ]; then
+            echo "id=${{ github.event.client_payload.issue_id }}" >> $GITHUB_OUTPUT
+            echo "identifier=${{ github.event.client_payload.issue_identifier }}" >> $GITHUB_OUTPUT
+            echo "title=${{ github.event.client_payload.issue_title }}" >> $GITHUB_OUTPUT
+            echo "description=${{ github.event.client_payload.issue_description }}" >> $GITHUB_OUTPUT
+            echo "Source: repository_dispatch"
+          # From workflow_dispatch
+          elif [ -n "${{ inputs.issue_identifier }}" ]; then
+            echo "id=${{ inputs.issue_id }}" >> $GITHUB_OUTPUT
+            echo "identifier=${{ inputs.issue_identifier }}" >> $GITHUB_OUTPUT
+            echo "title=${{ inputs.issue_title }}" >> $GITHUB_OUTPUT
+            echo "description=" >> $GITHUB_OUTPUT
+            echo "Source: workflow_dispatch"
+          # No issue provided — query Linear for oldest In Progress issue
+          else
+            echo "No issue provided, querying Linear..."
+            RESPONSE=$(curl -s -X POST 'https://api.linear.app/graphql' \
+              -H 'Content-Type: application/json' \
+              -H "Authorization: $LINEAR_API_KEY" \
+              -d '{"query":"{ team(id: \"'"$LINEAR_TEAM_ID"'\") { issues(filter: { state: { name: { eq: \"In Progress\" } } }, orderBy: updatedAt, first: 1) { nodes { id identifier title description } } } }"}')
+
+            ISSUE_ID=$(echo "$RESPONSE" | jq -r '.data.team.issues.nodes[0].id // empty')
+            if [ -z "$ISSUE_ID" ]; then
+              echo "No In Progress issues found."
+              echo "found=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            echo "id=$(echo "$RESPONSE" | jq -r '.data.team.issues.nodes[0].id')" >> $GITHUB_OUTPUT
+            echo "identifier=$(echo "$RESPONSE" | jq -r '.data.team.issues.nodes[0].identifier')" >> $GITHUB_OUTPUT
+            echo "title=$(echo "$RESPONSE" | jq -r '.data.team.issues.nodes[0].title')" >> $GITHUB_OUTPUT
+            echo "description=$(echo "$RESPONSE" | jq -r '.data.team.issues.nodes[0].description // empty')" >> $GITHUB_OUTPUT
+          fi
+          echo "found=true" >> $GITHUB_OUTPUT
+
+      - name: Notify Discord — No work
+        if: steps.issue.outputs.found == 'false'
+        run: |
+          curl -s -X POST "$DISCORD_BUILDS_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d '{"embeds":[{"title":"🔍 No Work Found","description":"Checked Linear — no issues in In Progress.","color":9807270,"footer":{"text":"VGC Team Report Builder"},"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}'
+
+      - name: Notify Discord — Build Started
+        if: steps.issue.outputs.found == 'true'
+        run: |
+          curl -s -X POST "$DISCORD_BUILDS_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d '{"embeds":[{"title":"🛠️ Build Started","description":"**${{ steps.issue.outputs.identifier }}: ${{ steps.issue.outputs.title }}**\nClaude is now implementing this issue.","color":16753920,"footer":{"text":"VGC Team Report Builder"},"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}'
+
+      - name: Run Claude Code
+        if: steps.issue.outputs.found == 'true'
+        id: claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          ISSUE_ID="${{ steps.issue.outputs.identifier }}"
+          ISSUE_TITLE="${{ steps.issue.outputs.title }}"
+          ISSUE_DESC="${{ steps.issue.outputs.description }}"
+
+          npx @anthropic-ai/claude-code -p \
+            "You are implementing a Linear issue for VGC Team Report (Next.js 16, React 19, TypeScript, Tailwind v4).
+
+          Issue: ${ISSUE_ID} — ${ISSUE_TITLE}
+          Description: ${ISSUE_DESC}
+
+          Instructions:
+          1. Read the issue carefully. Implement EXACTLY what is described, nothing more.
+          2. Explore the codebase first to understand existing patterns.
+          3. Implement the feature or fix.
+          4. Run 'npx tsc --noEmit' to verify no type errors.
+          5. Keep changes focused — no drive-by refactors or unrelated improvements.
+          6. When done, output IMPLEMENTATION_COMPLETE if successful, or IMPLEMENTATION_FAILED if you couldn't complete it." \
+            --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+            --dangerously-skip-permissions \
+            2>&1 | tee /tmp/claude-output.txt
+
+          if grep -q "IMPLEMENTATION_COMPLETE" /tmp/claude-output.txt; then
+            echo "result=success" >> $GITHUB_OUTPUT
+          else
+            echo "result=failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Type check
+        if: steps.issue.outputs.found == 'true' && steps.claude.outputs.result == 'success'
+        run: npx tsc --noEmit
+
+      - name: Build
+        if: steps.issue.outputs.found == 'true' && steps.claude.outputs.result == 'success'
+        run: npm run build
+
+      - name: Commit and push
+        if: steps.issue.outputs.found == 'true' && steps.claude.outputs.result == 'success'
+        run: |
+          git config user.name "Claude Builder"
+          git config user.email "noreply@anthropic.com"
+          git add -A
+
+          # Check if there are changes to commit
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "${{ steps.issue.outputs.identifier }}: ${{ steps.issue.outputs.title }}
+
+          Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+          git push origin main
+
+      - name: Update Linear — In Review
+        if: steps.issue.outputs.found == 'true' && steps.claude.outputs.result == 'success'
+        run: |
+          curl -s -X POST 'https://api.linear.app/graphql' \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -d '{"query":"mutation { issueUpdate(id: \"${{ steps.issue.outputs.id }}\", input: { stateId: \"'"$IN_REVIEW_STATE_ID"'\" }) { success } }"}'
+
+      - name: Notify Discord — Complete
+        if: steps.issue.outputs.found == 'true' && steps.claude.outputs.result == 'success'
+        run: |
+          curl -s -X POST "$DISCORD_BUILDS_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d '{"embeds":[{"title":"✅ Build Complete","description":"**${{ steps.issue.outputs.identifier }}: ${{ steps.issue.outputs.title }}**\nPushed to main and moved to In Review.\n\nChanges will auto-deploy to [pokemonvgcteamreport.com](https://pokemonvgcteamreport.com) via Vercel.","color":5763719,"footer":{"text":"VGC Team Report Builder"},"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}'
+
+      - name: Notify Discord — Failed
+        if: steps.issue.outputs.found == 'true' && (steps.claude.outputs.result == 'failed' || failure())
+        run: |
+          curl -s -X POST "$DISCORD_BUILDS_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d '{"embeds":[{"title":"❌ Build Failed","description":"**${{ steps.issue.outputs.identifier }}: ${{ steps.issue.outputs.title }}**\nImplementation had errors. Issue remains In Progress for manual review.","color":15548997,"footer":{"text":"VGC Team Report Builder"},"timestamp":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}]}'
