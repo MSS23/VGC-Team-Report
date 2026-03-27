@@ -119,7 +119,7 @@ export function SlideNavControls({
           </span>
           {/* Screen reader live region for slide changes */}
           <span className="sr-only" aria-live="polite" aria-atomic="true">
-            Slide {currentSlide + 1} of {totalSlides}: {slideLabels[currentSlide]}
+            Slide {currentSlide + 1} of {totalSlides}: {slideLabels[currentSlide]}{isLast ? " — End of report" : ""}
           </span>
         </div>
 
@@ -226,18 +226,30 @@ export function SlideNavControls({
             </button>
           )}
 
-          {/* Next button */}
-          <button
-            onClick={onNext}
-            disabled={isLast}
-            aria-label="Next slide"
-            className="flex-shrink-0 flex items-center justify-center w-11 h-11 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-xl sm:rounded-lg bg-surface text-text-primary border-2 border-border hover:bg-surface-alt hover:border-accent/30 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-          >
-            <span className="hidden sm:inline">{t.next}</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:ml-1 sm:w-3 sm:h-3">
-              <polyline points="9,18 15,12 9,6" />
-            </svg>
-          </button>
+          {/* Next / End button */}
+          {isLast ? (
+            <span
+              aria-label="End of report"
+              className="flex-shrink-0 flex items-center justify-center w-11 h-11 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-xl sm:rounded-lg bg-accent/10 text-accent border-2 border-accent/30 cursor-default select-none transition-all"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1 sm:w-3 sm:h-3">
+                <polyline points="20,6 9,17 4,12" />
+              </svg>
+              <span className="hidden sm:inline">End</span>
+            </span>
+          ) : (
+            <button
+              onClick={onNext}
+              disabled={isFirst && totalSlides <= 1}
+              aria-label="Next slide"
+              className="flex-shrink-0 flex items-center justify-center w-11 h-11 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-xl sm:rounded-lg bg-surface text-text-primary border-2 border-border hover:bg-surface-alt hover:border-accent/30 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              <span className="hidden sm:inline">{t.next}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:ml-1 sm:w-3 sm:h-3">
+                <polyline points="9,18 15,12 9,6" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -40,6 +40,10 @@ interface NavbarProps {
   saveFlash: boolean;
   autoSaveStatus?: "idle" | "saving" | "saved" | "error";
 
+  // Collaborative sync
+  collaborators?: number;
+  syncStatus?: string;
+
   // Share
   isSampleTeam?: boolean;
   shareStatus: string;
@@ -75,6 +79,7 @@ export function Navbar(props: NavbarProps) {
     darkMode, onDarkModeChange,
     genTheme, onGenThemeChange,
     warnings, saveFlash, autoSaveStatus,
+    collaborators, syncStatus,
     isSampleTeam,
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare,
@@ -232,6 +237,18 @@ export function Navbar(props: NavbarProps) {
                   <span className="w-2.5 h-2.5 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin" />
                 )}
                 {autoSaveStatus === "saving" ? "Saving..." : autoSaveStatus === "saved" ? "Saved" : "Save failed"}
+              </span>
+            )}
+            {isSharedView && isEditingUnlocked && collaborators !== undefined && collaborators > 1 && (
+              <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 text-blue-600 dark:text-blue-400 bg-blue-500/10">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                {collaborators} editing
+              </span>
+            )}
+            {isSharedView && isEditingUnlocked && syncStatus === "syncing" && (
+              <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 text-purple-600 dark:text-purple-400 bg-purple-500/10">
+                <span className="w-2.5 h-2.5 border-[1.5px] border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+                Syncing...
               </span>
             )}
           </div>

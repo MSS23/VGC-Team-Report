@@ -46,6 +46,19 @@ export function detectArchetypes(pokemon: AnalyzedPokemon[]): string[] {
     detected.push("Snow");
   }
 
+  // Primal Weather
+  if (species.some((s) => s.includes("-primal"))) {
+    detected.push("Primal Weather");
+  }
+
+  // Mega Offense
+  const hasMega = species.some((s) => s.includes("-mega"));
+  const items = pokemon.map((p) => p.parsed.item?.toLowerCase() ?? "");
+  const hasMegaStone = items.some((item) => item.endsWith("ite") || item.endsWith("ite x") || item.endsWith("ite y"));
+  if (hasMega || hasMegaStone) {
+    detected.push("Mega Offense");
+  }
+
   // Trick Room
   const hasTrickRoom = allMoves.includes("trick room");
   const slowCount = pokemon.filter((p) => {

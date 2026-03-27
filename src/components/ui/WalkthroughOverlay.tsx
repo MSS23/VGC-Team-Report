@@ -15,6 +15,7 @@ interface WalkthroughOverlayProps {
   stepIndex: number;
   totalSteps: number;
   onNext: () => void;
+  onPrev?: () => void;
   onSkip: () => void;
   guidePokemon?: string;
 }
@@ -42,6 +43,7 @@ export function WalkthroughOverlay({
   stepIndex,
   totalSteps,
   onNext,
+  onPrev,
   onSkip,
   guidePokemon,
 }: WalkthroughOverlayProps) {
@@ -101,20 +103,26 @@ export function WalkthroughOverlay({
     };
   }, [measureTarget]);
 
-  // Keyboard handling
+  // Keyboard handling — capture phase to block slide navigation during tour
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      // Block all navigation keys from reaching slide nav handlers
+      e.stopImmediatePropagation();
+
       if (e.key === "Escape") {
         e.preventDefault();
         onSkip();
-      } else if (e.key === "Enter" || e.key === " ") {
+      } else if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
         onNext();
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        onPrev?.();
       }
     };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [onNext, onSkip]);
+    window.addEventListener("keydown", handleKey, { capture: true });
+    return () => window.removeEventListener("keydown", handleKey, { capture: true });
+  }, [onNext, onSkip, onPrev]);
 
   // Position the tooltip. On same-slide steps, smoothly transition position.
   // On cross-slide steps, fade out → reposition → fade in to avoid clunky sliding.
@@ -322,9 +330,21 @@ export function WalkthroughOverlay({
           ))}
         </div>
         <div className="flex items-center justify-between px-5 pb-4">
-          <span className="text-xs text-text-tertiary tabular-nums font-medium">
-            {stepIndex + 1} {t.of} {totalSteps}
-          </span>
+          <div className="flex items-center gap-2">
+            {stepIndex > 0 && onPrev ? (
+              <button
+                onClick={onPrev}
+                aria-label="Previous step"
+                className="text-xs font-medium text-text-tertiary hover:text-text-secondary px-3 py-2 rounded-lg active:scale-[0.95] transition-all cursor-pointer"
+              >
+                &larr; {t.prev}
+              </button>
+            ) : (
+              <span className="text-xs text-text-tertiary tabular-nums font-medium">
+                {stepIndex + 1} {t.of} {totalSteps}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {!isLastStep && (
               <button

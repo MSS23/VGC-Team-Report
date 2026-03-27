@@ -20,7 +20,19 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+          },
+          {
+            key: "X-Permitted-Cross-Domain-Policies",
+            value: "none",
+          },
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin",
+          },
+          {
+            key: "Cross-Origin-Resource-Policy",
+            value: "same-origin",
           },
           {
             key: "X-DNS-Prefetch-Control",
@@ -59,6 +71,8 @@ const nextConfig: NextConfig = {
               "form-action 'self'",
               // Frame ancestors: none (prevent embedding)
               "frame-ancestors 'none'",
+              // Force HTTPS for all resources
+              "upgrade-insecure-requests",
             ].join("; "),
           },
         ],

@@ -1,15 +1,24 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 import type { MatchupPlan, GameResult } from "@/hooks/useMatchupPlans";
 import type { CalcEntry, CalcCategory } from "@/hooks/useDamageCalcs";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import type { ReportTags } from "@/lib/data/tags";
 import { TeamOverview } from "./TeamOverview";
-import { MatchupSheet } from "./MatchupSheet";
 import { PokemonDetailSlide } from "./PokemonDetailSlide";
-import { MatchupPlanSlide } from "./MatchupPlanSlide";
-import { SpeedTierChart } from "./SpeedTierChart";
+
+// Lazy-load heavy analysis and matchup components
+const SpeedTierChart = dynamic(() => import("./SpeedTierChart").then(m => ({ default: m.SpeedTierChart })), {
+  loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-96" />,
+});
+const MatchupPlanSlide = dynamic(() => import("./MatchupPlanSlide").then(m => ({ default: m.MatchupPlanSlide })), {
+  loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" />,
+});
+const MatchupSheet = dynamic(() => import("./MatchupSheet").then(m => ({ default: m.MatchupSheet })), {
+  loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" />,
+});
 
 interface TeamReportProps {
   analysis: TeamAnalysis;

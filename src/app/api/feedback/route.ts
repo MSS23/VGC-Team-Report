@@ -1,5 +1,7 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
+import { escapeHtml } from "@/lib/utils/sanitize";
+import { containsBlockedWords } from "@/lib/utils/word-filter";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -86,7 +88,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid submission", details: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { type, title, description, device, browser, screenSize, contact, sessionId } = parsed.data;
+    const { type, title: rawTitle, description: rawDescription, device, browser, screenSize, contact, sessionId } = parsed.data;
+
+    // Sanitize user-generated text
+    const title = escapeHtml(rawTitle);
+    const description = escapeHtml(rawDescription);
+
+    // Check for inappropriate content
+    if (containsBlockedWords(rawTitle) || containsBlockedWords(rawDescription)) {
+      return NextResponse.json({ error: "Submission contains inappropriate language" }, { status: 400 });
+    }
+
     const sql = getDb();
 
     // Save to database

@@ -14,8 +14,10 @@ import { useWalkthrough } from "@/hooks/useWalkthrough";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useTheme } from "@/hooks/useTheme";
 import { useShareFlow } from "@/hooks/useShareFlow";
+import { useCollaborativeSync } from "@/hooks/useCollaborativeSync";
 import { useSlideSystem } from "@/hooks/useSlideSystem";
 import { SAMPLE_PASTE } from "@/components/input/PasteInput";
+import { track } from "@vercel/analytics";
 import { useTranslation } from "@/lib/i18n";
 import { getTemplate } from "@/lib/templates";
 import type { SpriteConfig } from "@/lib/types/sprites";
@@ -162,6 +164,49 @@ export function useHomePage() {
   // ── Share flow (extracted) ───────────────────────────────────────
   const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t: t as unknown as Record<string, string> });
 
+  // ── Real-time collaborative sync (SSE) ──────────────────────────
+  const handleRemoteUpdate = useCallback((state: import("@/lib/sharing/url-codec").ShareableState) => {
+    setPaste(state.paste);
+    parseTeam(state.paste);
+    setNotesFull(state.notes ?? {});
+    setCalcsFull(state.calcs ?? {});
+    setMetaFull({
+      roles: state.roles ?? {},
+      spreadNotes: state.spreadNotes ?? {},
+      summary: state.teamSummary ?? "",
+      tournamentName: state.tournamentName ?? undefined,
+      placement: state.placement ?? undefined,
+      record: state.record ?? undefined,
+      mvpIndex: state.mvpIndex ?? null,
+      rentalCode: state.rentalCode ?? undefined,
+      creatorName: state.creatorName ?? undefined,
+      tags: state.tags ?? undefined,
+      templateId: state.templateId ?? undefined,
+    });
+    const rawPlans = Array.isArray(state.matchupPlans) ? state.matchupPlans : [];
+    setPlansFull(
+      rawPlans.map((p) => ({
+        id: crypto.randomUUID(),
+        ...p,
+        gamePlans: (p.gamePlans ?? []).map((gp) => ({
+          ...gp,
+          id: crypto.randomUUID(),
+          bring: gp.bring ?? [null, null, null, null],
+          notes: gp.notes ?? "",
+          replays: gp.replays ?? [],
+        })),
+      })),
+    );
+    if (Array.isArray(state.hiddenSlides)) setHiddenFull(state.hiddenSlides);
+  }, [setPaste, parseTeam, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
+
+  const { collaborators, syncStatus } = useCollaborativeSync({
+    shareId: share.activeShareId,
+    editKey: share.editKeyFromUrl,
+    enabled: share.isEditingUnlocked,
+    onRemoteUpdate: handleRemoteUpdate,
+  });
+
   // ── Slide system (extracted) ─────────────────────────────────────
   const slides = useSlideSystem({
     analysis, speciesKeys, plans, hiddenSlides, isHidden,
@@ -196,6 +241,7 @@ export function useHomePage() {
     currentStepIndex: walkthroughStepIndex,
     totalSteps: walkthroughTotalSteps,
     next: walkthroughNext,
+    prev: walkthroughPrev,
     skip: walkthroughSkip,
     start: startWalkthrough,
     guidePokemon: walkthroughGuidePokemon,
@@ -293,6 +339,9 @@ export function useHomePage() {
     setIsSampleTeam(teamPaste.trim() === SAMPLE_PASTE.trim());
     templateApplied.current = false; // reset so template applies on next parse
     parseTeam(teamPaste);
+    // Track team creation
+    const hasMega = teamPaste.includes("-Mega") || teamPaste.includes("-Primal");
+    track("team_created", { hasMega: hasMega ? "yes" : "no" });
   };
 
   const handleReset = useCallback(() => {
@@ -343,6 +392,10 @@ export function useHomePage() {
     setAllowComments: share.setAllowComments,
     autoSaveStatus: share.autoSaveStatus,
 
+    // Collaborative sync
+    collaborators,
+    syncStatus,
+
     saveFlash,
     showShortcutHint, setShowShortcutHint,
     isSampleTeam,
@@ -377,7 +430,7 @@ export function useHomePage() {
 
     // Walkthrough
     walkthroughActive, walkthroughStep, walkthroughStepIndex,
-    walkthroughTotalSteps, walkthroughNext, walkthroughSkip,
+    walkthroughTotalSteps, walkthroughNext, walkthroughPrev, walkthroughSkip,
     startWalkthrough, walkthroughGuidePokemon,
 
     // Undo / redo

@@ -1710,6 +1710,439 @@ export const POKEMON_DATA: Record<string, PokemonData> = {
     baseStats: { hp: 103, atk: 105, def: 72, spa: 105, spd: 75, spe: 65 },
     abilities: ["Intimidate", "Frisk", "Sap Sipper"],
   },
+
+  // ── Pokemon Champions — Base Forms (missing) ─────────────────────────────
+
+  "kangaskhan": {
+    name: "Kangaskhan",
+    types: ["Normal"],
+    baseStats: { hp: 105, atk: 95, def: 80, spa: 40, spd: 80, spe: 90 },
+    abilities: ["Early Bird", "Scrappy", "Inner Focus"],
+  },
+
+  "mawile": {
+    name: "Mawile",
+    types: ["Steel", "Fairy"],
+    baseStats: { hp: 50, atk: 85, def: 85, spa: 55, spd: 55, spe: 50 },
+    abilities: ["Hyper Cutter", "Intimidate", "Sheer Force"],
+  },
+
+  "gardevoir": {
+    name: "Gardevoir",
+    types: ["Psychic", "Fairy"],
+    baseStats: { hp: 68, atk: 65, def: 65, spa: 125, spd: 115, spe: 80 },
+    abilities: ["Synchronize", "Trace", "Telepathy"],
+  },
+
+  "lucario": {
+    name: "Lucario",
+    types: ["Fighting", "Steel"],
+    baseStats: { hp: 70, atk: 110, def: 70, spa: 115, spd: 70, spe: 90 },
+    abilities: ["Steadfast", "Inner Focus", "Justified"],
+  },
+
+  "blaziken": {
+    name: "Blaziken",
+    types: ["Fire", "Fighting"],
+    baseStats: { hp: 80, atk: 120, def: 70, spa: 110, spd: 70, spe: 80 },
+    abilities: ["Blaze", "Speed Boost"],
+  },
+
+  "lopunny": {
+    name: "Lopunny",
+    types: ["Normal"],
+    baseStats: { hp: 65, atk: 76, def: 84, spa: 54, spd: 96, spe: 105 },
+    abilities: ["Cute Charm", "Klutz", "Limber"],
+  },
+
+  "medicham": {
+    name: "Medicham",
+    types: ["Fighting", "Psychic"],
+    baseStats: { hp: 60, atk: 60, def: 75, spa: 60, spd: 75, spe: 80 },
+    abilities: ["Pure Power", "Telepathy"],
+  },
+
+  "manectric": {
+    name: "Manectric",
+    types: ["Electric"],
+    baseStats: { hp: 70, atk: 75, def: 60, spa: 105, spd: 60, spe: 105 },
+    abilities: ["Static", "Lightning Rod", "Minus"],
+  },
+
+  "gallade": {
+    name: "Gallade",
+    types: ["Psychic", "Fighting"],
+    baseStats: { hp: 68, atk: 125, def: 65, spa: 65, spd: 115, spe: 80 },
+    abilities: ["Steadfast", "Sharpness", "Justified"],
+  },
+
+  "audino": {
+    name: "Audino",
+    types: ["Normal"],
+    baseStats: { hp: 103, atk: 60, def: 86, spa: 60, spd: 86, spe: 50 },
+    abilities: ["Healer", "Regenerator", "Klutz"],
+  },
+
+  "diancie": {
+    name: "Diancie",
+    types: ["Rock", "Fairy"],
+    baseStats: { hp: 50, atk: 100, def: 150, spa: 100, spd: 150, spe: 50 },
+    abilities: ["Clear Body"],
+  },
+
+  // ── Pokemon Champions — Mega Evolutions ───────────────────────────────────
+
+  "kangaskhan-mega": {
+    name: "Kangaskhan-Mega",
+    types: ["Normal"],
+    baseStats: { hp: 105, atk: 125, def: 100, spa: 60, spd: 100, spe: 100 },
+    abilities: ["Parental Bond"],
+  },
+
+  "charizard-mega-x": {
+    name: "Charizard-Mega-X",
+    types: ["Fire", "Dragon"],
+    baseStats: { hp: 78, atk: 130, def: 111, spa: 130, spd: 85, spe: 100 },
+    abilities: ["Tough Claws"],
+  },
+
+  "charizard-mega-y": {
+    name: "Charizard-Mega-Y",
+    types: ["Fire", "Flying"],
+    baseStats: { hp: 78, atk: 104, def: 78, spa: 159, spd: 115, spe: 100 },
+    abilities: ["Drought"],
+  },
+
+  "venusaur-mega": {
+    name: "Venusaur-Mega",
+    types: ["Grass", "Poison"],
+    baseStats: { hp: 80, atk: 100, def: 123, spa: 122, spd: 120, spe: 80 },
+    abilities: ["Thick Fat"],
+  },
+
+  "blastoise-mega": {
+    name: "Blastoise-Mega",
+    types: ["Water"],
+    baseStats: { hp: 79, atk: 103, def: 120, spa: 135, spd: 115, spe: 78 },
+    abilities: ["Mega Launcher"],
+  },
+
+  "salamence-mega": {
+    name: "Salamence-Mega",
+    types: ["Dragon", "Flying"],
+    baseStats: { hp: 95, atk: 145, def: 130, spa: 120, spd: 90, spe: 120 },
+    abilities: ["Aerilate"],
+  },
+
+  "metagross-mega": {
+    name: "Metagross-Mega",
+    types: ["Steel", "Psychic"],
+    baseStats: { hp: 80, atk: 145, def: 150, spa: 105, spd: 110, spe: 110 },
+    abilities: ["Tough Claws"],
+  },
+
+  "gengar-mega": {
+    name: "Gengar-Mega",
+    types: ["Ghost", "Poison"],
+    baseStats: { hp: 60, atk: 65, def: 80, spa: 170, spd: 95, spe: 130 },
+    abilities: ["Shadow Tag"],
+  },
+
+  "mawile-mega": {
+    name: "Mawile-Mega",
+    types: ["Steel", "Fairy"],
+    baseStats: { hp: 50, atk: 105, def: 125, spa: 55, spd: 95, spe: 50 },
+    abilities: ["Huge Power"],
+  },
+
+  "gardevoir-mega": {
+    name: "Gardevoir-Mega",
+    types: ["Psychic", "Fairy"],
+    baseStats: { hp: 68, atk: 85, def: 65, spa: 165, spd: 135, spe: 100 },
+    abilities: ["Pixilate"],
+  },
+
+  "lucario-mega": {
+    name: "Lucario-Mega",
+    types: ["Fighting", "Steel"],
+    baseStats: { hp: 70, atk: 145, def: 88, spa: 140, spd: 70, spe: 112 },
+    abilities: ["Adaptability"],
+  },
+
+  "blaziken-mega": {
+    name: "Blaziken-Mega",
+    types: ["Fire", "Fighting"],
+    baseStats: { hp: 80, atk: 160, def: 80, spa: 130, spd: 80, spe: 100 },
+    abilities: ["Speed Boost"],
+  },
+
+  "lopunny-mega": {
+    name: "Lopunny-Mega",
+    types: ["Normal", "Fighting"],
+    baseStats: { hp: 65, atk: 136, def: 94, spa: 54, spd: 96, spe: 135 },
+    abilities: ["Scrappy"],
+  },
+
+  "scizor-mega": {
+    name: "Scizor-Mega",
+    types: ["Bug", "Steel"],
+    baseStats: { hp: 70, atk: 150, def: 140, spa: 65, spd: 100, spe: 75 },
+    abilities: ["Technician"],
+  },
+
+  "tyranitar-mega": {
+    name: "Tyranitar-Mega",
+    types: ["Rock", "Dark"],
+    baseStats: { hp: 100, atk: 164, def: 150, spa: 95, spd: 120, spe: 71 },
+    abilities: ["Sand Stream"],
+  },
+
+  "garchomp-mega": {
+    name: "Garchomp-Mega",
+    types: ["Dragon", "Ground"],
+    baseStats: { hp: 108, atk: 170, def: 115, spa: 120, spd: 95, spe: 92 },
+    abilities: ["Sand Force"],
+  },
+
+  "medicham-mega": {
+    name: "Medicham-Mega",
+    types: ["Fighting", "Psychic"],
+    baseStats: { hp: 60, atk: 100, def: 85, spa: 80, spd: 85, spe: 100 },
+    abilities: ["Pure Power"],
+  },
+
+  "manectric-mega": {
+    name: "Manectric-Mega",
+    types: ["Electric"],
+    baseStats: { hp: 70, atk: 75, def: 80, spa: 135, spd: 80, spe: 135 },
+    abilities: ["Intimidate"],
+  },
+
+  "abomasnow-mega": {
+    name: "Abomasnow-Mega",
+    types: ["Grass", "Ice"],
+    baseStats: { hp: 90, atk: 132, def: 105, spa: 132, spd: 105, spe: 30 },
+    abilities: ["Snow Warning"],
+  },
+
+  "gallade-mega": {
+    name: "Gallade-Mega",
+    types: ["Psychic", "Fighting"],
+    baseStats: { hp: 68, atk: 165, def: 95, spa: 65, spd: 115, spe: 110 },
+    abilities: ["Inner Focus"],
+  },
+
+  "audino-mega": {
+    name: "Audino-Mega",
+    types: ["Normal", "Fairy"],
+    baseStats: { hp: 103, atk: 60, def: 126, spa: 80, spd: 126, spe: 50 },
+    abilities: ["Healer"],
+  },
+
+  "diancie-mega": {
+    name: "Diancie-Mega",
+    types: ["Rock", "Fairy"],
+    baseStats: { hp: 50, atk: 160, def: 110, spa: 160, spd: 110, spe: 110 },
+    abilities: ["Magic Bounce"],
+  },
+
+  "alakazam-mega": {
+    name: "Alakazam-Mega",
+    types: ["Psychic"],
+    baseStats: { hp: 55, atk: 50, def: 65, spa: 175, spd: 105, spe: 150 },
+    abilities: ["Trace"],
+  },
+
+  "gyarados-mega": {
+    name: "Gyarados-Mega",
+    types: ["Water", "Dark"],
+    baseStats: { hp: 95, atk: 155, def: 109, spa: 70, spd: 130, spe: 81 },
+    abilities: ["Mold Breaker"],
+  },
+
+  "aerodactyl-mega": {
+    name: "Aerodactyl-Mega",
+    types: ["Rock", "Flying"],
+    baseStats: { hp: 80, atk: 135, def: 85, spa: 70, spd: 95, spe: 150 },
+    abilities: ["Tough Claws"],
+  },
+
+  "mewtwo-mega-x": {
+    name: "Mewtwo-Mega-X",
+    types: ["Psychic", "Fighting"],
+    baseStats: { hp: 106, atk: 190, def: 100, spa: 154, spd: 100, spe: 130 },
+    abilities: ["Steadfast"],
+  },
+
+  "mewtwo-mega-y": {
+    name: "Mewtwo-Mega-Y",
+    types: ["Psychic"],
+    baseStats: { hp: 106, atk: 150, def: 70, spa: 194, spd: 120, spe: 140 },
+    abilities: ["Insomnia"],
+  },
+
+  "ampharos-mega": {
+    name: "Ampharos-Mega",
+    types: ["Electric", "Dragon"],
+    baseStats: { hp: 90, atk: 95, def: 105, spa: 165, spd: 110, spe: 45 },
+    abilities: ["Mold Breaker"],
+  },
+
+  "steelix-mega": {
+    name: "Steelix-Mega",
+    types: ["Steel", "Ground"],
+    baseStats: { hp: 75, atk: 125, def: 230, spa: 55, spd: 95, spe: 30 },
+    abilities: ["Sand Force"],
+  },
+
+  "heracross-mega": {
+    name: "Heracross-Mega",
+    types: ["Bug", "Fighting"],
+    baseStats: { hp: 80, atk: 185, def: 115, spa: 40, spd: 105, spe: 75 },
+    abilities: ["Skill Link"],
+  },
+
+  "houndoom-mega": {
+    name: "Houndoom-Mega",
+    types: ["Dark", "Fire"],
+    baseStats: { hp: 75, atk: 90, def: 90, spa: 140, spd: 90, spe: 115 },
+    abilities: ["Solar Power"],
+  },
+
+  "aggron-mega": {
+    name: "Aggron-Mega",
+    types: ["Steel"],
+    baseStats: { hp: 70, atk: 140, def: 230, spa: 60, spd: 80, spe: 50 },
+    abilities: ["Filter"],
+  },
+
+  "banette-mega": {
+    name: "Banette-Mega",
+    types: ["Ghost"],
+    baseStats: { hp: 64, atk: 165, def: 75, spa: 93, spd: 83, spe: 75 },
+    abilities: ["Prankster"],
+  },
+
+  "absol-mega": {
+    name: "Absol-Mega",
+    types: ["Dark"],
+    baseStats: { hp: 65, atk: 150, def: 60, spa: 115, spd: 60, spe: 115 },
+    abilities: ["Magic Bounce"],
+  },
+
+  "altaria-mega": {
+    name: "Altaria-Mega",
+    types: ["Dragon", "Fairy"],
+    baseStats: { hp: 75, atk: 110, def: 110, spa: 110, spd: 105, spe: 80 },
+    abilities: ["Pixilate"],
+  },
+
+  "glalie-mega": {
+    name: "Glalie-Mega",
+    types: ["Ice"],
+    baseStats: { hp: 80, atk: 120, def: 80, spa: 120, spd: 80, spe: 100 },
+    abilities: ["Refrigerate"],
+  },
+
+  "latias-mega": {
+    name: "Latias-Mega",
+    types: ["Dragon", "Psychic"],
+    baseStats: { hp: 80, atk: 100, def: 120, spa: 140, spd: 150, spe: 110 },
+    abilities: ["Levitate"],
+  },
+
+  "latios-mega": {
+    name: "Latios-Mega",
+    types: ["Dragon", "Psychic"],
+    baseStats: { hp: 80, atk: 130, def: 100, spa: 160, spd: 120, spe: 110 },
+    abilities: ["Levitate"],
+  },
+
+  "swampert-mega": {
+    name: "Swampert-Mega",
+    types: ["Water", "Ground"],
+    baseStats: { hp: 100, atk: 150, def: 110, spa: 95, spd: 110, spe: 70 },
+    abilities: ["Swift Swim"],
+  },
+
+  "sceptile-mega": {
+    name: "Sceptile-Mega",
+    types: ["Grass", "Dragon"],
+    baseStats: { hp: 70, atk: 110, def: 75, spa: 145, spd: 85, spe: 145 },
+    abilities: ["Lightning Rod"],
+  },
+
+  "sableye-mega": {
+    name: "Sableye-Mega",
+    types: ["Dark", "Ghost"],
+    baseStats: { hp: 50, atk: 85, def: 125, spa: 85, spd: 115, spe: 20 },
+    abilities: ["Magic Bounce"],
+  },
+
+  "sharpedo-mega": {
+    name: "Sharpedo-Mega",
+    types: ["Water", "Dark"],
+    baseStats: { hp: 70, atk: 140, def: 70, spa: 110, spd: 65, spe: 105 },
+    abilities: ["Strong Jaw"],
+  },
+
+  "camerupt-mega": {
+    name: "Camerupt-Mega",
+    types: ["Fire", "Ground"],
+    baseStats: { hp: 70, atk: 120, def: 100, spa: 145, spd: 105, spe: 20 },
+    abilities: ["Sheer Force"],
+  },
+
+  "slowbro-mega": {
+    name: "Slowbro-Mega",
+    types: ["Water", "Psychic"],
+    baseStats: { hp: 95, atk: 75, def: 180, spa: 130, spd: 80, spe: 30 },
+    abilities: ["Shell Armor"],
+  },
+
+  "pinsir-mega": {
+    name: "Pinsir-Mega",
+    types: ["Bug", "Flying"],
+    baseStats: { hp: 65, atk: 155, def: 120, spa: 65, spd: 90, spe: 105 },
+    abilities: ["Aerilate"],
+  },
+
+  "pidgeot-mega": {
+    name: "Pidgeot-Mega",
+    types: ["Normal", "Flying"],
+    baseStats: { hp: 83, atk: 80, def: 80, spa: 135, spd: 80, spe: 121 },
+    abilities: ["No Guard"],
+  },
+
+  "beedrill-mega": {
+    name: "Beedrill-Mega",
+    types: ["Bug", "Poison"],
+    baseStats: { hp: 65, atk: 150, def: 40, spa: 15, spd: 80, spe: 145 },
+    abilities: ["Adaptability"],
+  },
+
+  // ── Pokemon Champions — Primal Reversions ─────────────────────────────────
+
+  "groudon-primal": {
+    name: "Groudon-Primal",
+    types: ["Ground", "Fire"],
+    baseStats: { hp: 100, atk: 180, def: 160, spa: 150, spd: 90, spe: 90 },
+    abilities: ["Desolate Land"],
+  },
+
+  "kyogre-primal": {
+    name: "Kyogre-Primal",
+    types: ["Water"],
+    baseStats: { hp: 100, atk: 150, def: 90, spa: 180, spd: 160, spe: 90 },
+    abilities: ["Primordial Sea"],
+  },
+
+  "rayquaza-mega": {
+    name: "Rayquaza-Mega",
+    types: ["Dragon", "Flying"],
+    baseStats: { hp: 105, atk: 180, def: 100, spa: 180, spd: 100, spe: 115 },
+    abilities: ["Delta Stream"],
+  },
 };
 
 export function lookupPokemon(species: string): PokemonData | null {

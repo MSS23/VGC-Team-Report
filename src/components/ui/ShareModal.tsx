@@ -49,8 +49,8 @@ export function ShareModal({
 
   // Build share text variants (only useful with short URLs)
   const twitterText = tournamentName
-    ? `Check out my ${tournamentName}${placement ? ` (${placement})` : ""} VGC team report: ${speciesText}\n\n${publicUrl}\n\nMade with @VGCTeamReport`
-    : `Check out my VGC team report: ${speciesText}\n\n${publicUrl}\n\nMade with @VGCTeamReport`;
+    ? `Check out my ${tournamentName}${placement ? ` (${placement})` : ""} VGC team report: ${speciesText}\n\n${publicUrl}\n\n#PokemonChampions #VGC2026\nMade with @VGCTeamReport`
+    : `Check out my VGC team report: ${speciesText}\n\n${publicUrl}\n\n#PokemonChampions #VGC2026\nMade with @VGCTeamReport`;
 
   const redditTitle = tournamentName
     ? `[Team Report] ${tournamentName}${placement ? ` - ${placement}` : ""}: ${speciesText}`

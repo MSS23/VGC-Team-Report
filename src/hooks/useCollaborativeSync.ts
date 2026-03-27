@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 
-const POLL_INTERVAL = 5000; // 5 seconds
+export type SyncStatus = "idle" | "connecting" | "syncing" | "synced" | "conflict" | "disconnected";
 
 interface UseCollaborativeSyncOptions {
   /** The share ID being edited */
@@ -16,12 +16,11 @@ interface UseCollaborativeSyncOptions {
   onRemoteUpdate: (state: ShareableState) => void;
 }
 
-export type SyncStatus = "idle" | "syncing" | "conflict" | "synced";
-
 /**
- * Polls the server for updates to a shared team report.
- * When another collaborator saves changes, this hook detects the newer
- * version and calls onRemoteUpdate with the updated state.
+ * Real-time collaborative sync via Server-Sent Events.
+ *
+ * Connects to /api/sync/{shareId} SSE stream for instant updates when
+ * another collaborator saves changes. Reconnects with exponential backoff.
  */
 export function useCollaborativeSync({
   shareId,
@@ -34,8 +33,10 @@ export function useCollaborativeSync({
   const [lastRemoteUpdate, setLastRemoteUpdate] = useState<number | null>(null);
   const versionRef = useRef<number>(0);
   const isSaving = useRef(false);
+  const onRemoteUpdateRef = useRef(onRemoteUpdate);
+  onRemoteUpdateRef.current = onRemoteUpdate;
 
-  /** Mark that we're about to save — skip the next poll to avoid self-triggering */
+  /** Mark that we're about to save — ignore the next version event to avoid self-triggering */
   const markSaving = useCallback(() => {
     isSaving.current = true;
   }, []);
@@ -46,65 +47,97 @@ export function useCollaborativeSync({
     isSaving.current = false;
   }, []);
 
+  /** Generate a stable session ID for presence tracking */
+  const sessionIdRef = useRef<string>("");
+  if (!sessionIdRef.current) {
+    sessionIdRef.current = Math.random().toString(36).slice(2, 10);
+  }
+
   useEffect(() => {
-    if (!enabled || !shareId || !editKey) return;
+    if (!enabled || !shareId || !editKey) {
+      setSyncStatus("idle");
+      setCollaborators(0);
+      return;
+    }
 
-    let mounted = true;
+    let eventSource: EventSource | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let retryCount = 0;
+    let disposed = false;
 
-    const poll = async () => {
-      if (!mounted || isSaving.current) return;
+    function connect() {
+      if (disposed) return;
 
-      try {
-        const url = versionRef.current > 0
-          ? `/api/share/${shareId}?key=${editKey}&since=${versionRef.current}`
-          : `/api/share/${shareId}?key=${editKey}`;
+      const params = new URLSearchParams({
+        key: editKey!,
+        session: sessionIdRef.current,
+        ...(versionRef.current > 0 ? { since: String(versionRef.current) } : {}),
+      });
 
-        const res = await fetch(url);
+      const url = `/api/sync/${shareId}?${params}`;
+      setSyncStatus("connecting");
 
-        if (!mounted) return;
+      const es = new EventSource(url);
+      eventSource = es;
 
-        // 304 = no changes since our version
-        if (res.status === 304) return;
+      es.addEventListener("version", (e) => {
+        if (isSaving.current) return;
 
-        if (res.ok) {
-          const data = await res.json();
-          const serverVersion = data._version ?? 0;
-
-          // First poll — just record the version
-          if (versionRef.current === 0) {
-            versionRef.current = serverVersion;
-            return;
-          }
-
-          // Server has a newer version than what we know
-          if (serverVersion > versionRef.current) {
-            versionRef.current = serverVersion;
+        try {
+          const { version, state } = JSON.parse(e.data);
+          if (version > versionRef.current) {
+            versionRef.current = version;
             setSyncStatus("syncing");
             setLastRemoteUpdate(Date.now());
-            // Strip internal fields before passing to handler
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { _editable, _version, _isPublic, ...state } = data;
-            onRemoteUpdate(state as ShareableState);
+            onRemoteUpdateRef.current(state as ShareableState);
             setSyncStatus("synced");
-            // Reset status after 3 seconds
-            setTimeout(() => { if (mounted) setSyncStatus("idle"); }, 3000);
+            setTimeout(() => {
+              if (!disposed) setSyncStatus("idle");
+            }, 3000);
           }
+        } catch {
+          // Malformed event — ignore
         }
-      } catch {
-        // Network error — silently retry on next interval
-      }
-    };
+      });
 
-    // Initial poll to get current version
-    poll();
+      es.addEventListener("presence", (e) => {
+        try {
+          const { collaborators: count } = JSON.parse(e.data);
+          setCollaborators(count);
+        } catch {
+          // Ignore
+        }
+      });
 
-    const interval = setInterval(poll, POLL_INTERVAL);
+      es.addEventListener("ping", () => {
+        retryCount = 0;
+      });
+
+      es.onopen = () => {
+        setSyncStatus("idle");
+        retryCount = 0;
+      };
+
+      es.onerror = () => {
+        es.close();
+        eventSource = null;
+        if (disposed) return;
+        setSyncStatus("disconnected");
+
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 30_000);
+        retryCount++;
+        retryTimer = setTimeout(connect, delay);
+      };
+    }
+
+    connect();
 
     return () => {
-      mounted = false;
-      clearInterval(interval);
+      disposed = true;
+      eventSource?.close();
+      if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [enabled, shareId, editKey, onRemoteUpdate]);
+  }, [enabled, shareId, editKey]);
 
   return { collaborators, syncStatus, lastRemoteUpdate, markSaving, updateVersion };
 }

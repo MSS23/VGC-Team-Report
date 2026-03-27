@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     default: "VGC Team Report",
     template: "%s | VGC Team Report",
   },
-  description: "The home for competitive Pokemon VGC team reports. Build detailed team breakdowns with notes, matchup plans, and damage calcs — then share them with the community or present at tournaments.",
+  description: "The home for competitive Pokemon VGC team reports — now supporting Pokemon Champions and Mega Evolution. Build detailed team breakdowns with notes, matchup plans, and damage calcs — then share them with the community or present at tournaments.",
   metadataBase: new URL("https://pokemonvgcteamreport.com"),
   openGraph: {
     title: "VGC Team Report — Build, Share & Discover Pokemon Teams",

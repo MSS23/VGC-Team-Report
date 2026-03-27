@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useCallback, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { useHomePage } from "@/hooks/useHomePage";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { PasteInput } from "@/components/input/PasteInput";
@@ -8,12 +9,10 @@ import { TeamReport } from "@/components/report/TeamReport";
 import { SlideNavControls } from "@/components/report/SlideNavControls";
 import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
 import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
-import { ShareModal } from "@/components/ui/ShareModal";
 import { ShareViewCTA } from "@/components/ui/ShareViewCTA";
 import { SwipeHint } from "@/components/ui/SwipeHint";
 import { Navbar } from "@/components/layout/Navbar";
 import { ReactionBar } from "@/components/social/ReactionBar";
-import { CommentSection } from "@/components/social/CommentSection";
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
 import { SaveButton } from "@/components/social/SaveButton";
@@ -21,6 +20,12 @@ import { ClaimButton } from "@/components/social/ClaimButton";
 import { getSessionId } from "@/lib/utils/session-id";
 import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { I18nProvider } from "@/lib/i18n";
+
+// Lazy-load heavy modal and social components (only rendered conditionally)
+const ShareModal = dynamic(() => import("@/components/ui/ShareModal").then(m => ({ default: m.ShareModal })));
+const CommentSection = dynamic(() => import("@/components/social/CommentSection").then(m => ({ default: m.CommentSection })), {
+  loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-32" />,
+});
 
 export default function Home() {
   return (
@@ -73,6 +78,8 @@ function HomeContent() {
     allowComments,
     setAllowComments,
     autoSaveStatus,
+    collaborators,
+    syncStatus,
     activeShareId,
     editKeyFromUrl,
     saveFlash,
@@ -134,6 +141,7 @@ function HomeContent() {
     walkthroughStepIndex,
     walkthroughTotalSteps,
     walkthroughNext,
+    walkthroughPrev,
     walkthroughSkip,
     startWalkthrough,
     walkthroughGuidePokemon,
@@ -351,6 +359,8 @@ function HomeContent() {
         warnings={warnings}
         saveFlash={saveFlash}
         autoSaveStatus={autoSaveStatus}
+        collaborators={collaborators}
+        syncStatus={syncStatus}
         isSampleTeam={isSampleTeam}
         shareStatus={shareStatus}
         shareButtonText={shareButtonText}
@@ -548,6 +558,7 @@ function HomeContent() {
           stepIndex={walkthroughStepIndex}
           totalSteps={walkthroughTotalSteps}
           onNext={walkthroughNext}
+          onPrev={walkthroughPrev}
           onSkip={walkthroughSkip}
           guidePokemon={walkthroughGuidePokemon}
         />

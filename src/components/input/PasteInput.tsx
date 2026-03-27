@@ -12,70 +12,65 @@ import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { WhatsNewModal } from "@/components/ui/WhatsNewModal";
 
 
-export const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
+export const SAMPLE_PASTE = `Kangaskhan-Mega @ Kangaskhanite
+Ability: Parental Bond
+Level: 50
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Fake Out
+- Return
+- Sucker Punch
+- Power-Up Punch
+
+Salamence-Mega @ Salamencite
+Ability: Aerilate
+Level: 50
+EVs: 4 Atk / 252 SpA / 252 Spe
+Naive Nature
+- Hyper Voice
+- Double-Edge
+- Flamethrower
+- Protect
+
+Incineroar @ Assault Vest
 Ability: Intimidate
 Level: 50
-Tera Type: Ghost
 EVs: 252 HP / 4 Atk / 76 Def / 108 SpD / 68 Spe
 Careful Nature
 - Fake Out
 - Knock Off
 - Flare Blitz
-- Parting Shot
-
-Flutter Mane @ Choice Specs
-Ability: Protosynthesis
-Level: 50
-Tera Type: Fairy
-EVs: 4 HP / 252 SpA / 252 Spe
-Timid Nature
-- Moonblast
-- Shadow Ball
-- Dazzling Gleam
-- Mystical Fire
-
-Rillaboom @ Assault Vest
-Ability: Grassy Surge
-Level: 50
-Tera Type: Fire
-EVs: 252 HP / 116 Atk / 4 Def / 92 SpD / 44 Spe
-Adamant Nature
-- Grassy Glide
-- Wood Hammer
 - U-turn
-- Fake Out
 
-Urshifu-Rapid-Strike @ Focus Sash
-Ability: Unseen Fist
+Tapu Fini @ Leftovers
+Ability: Misty Surge
 Level: 50
-Tera Type: Water
-EVs: 4 HP / 252 Atk / 252 Spe
-Jolly Nature
-- Surging Strikes
-- Close Combat
-- Aqua Jet
-- Detect
+EVs: 252 HP / 4 Def / 68 SpA / 108 SpD / 76 Spe
+Calm Nature
+- Muddy Water
+- Moonblast
+- Calm Mind
+- Protect
 
-Tornadus (M) @ Covert Cloak
-Ability: Prankster
-Level: 50
-Tera Type: Steel
-EVs: 4 HP / 252 SpA / 252 Spe
-Timid Nature
-- Tailwind
-- Hurricane
-- Icy Wind
-- Taunt
-
-Landorus-Therian @ Life Orb
+Landorus-Therian @ Choice Scarf
 Ability: Intimidate
 Level: 50
-Tera Type: Steel
 EVs: 4 HP / 252 Atk / 252 Spe
 Jolly Nature
 - Earthquake
 - Rock Slide
 - U-turn
+- Superpower
+
+Amoonguss @ Sitrus Berry
+Ability: Regenerator
+Level: 50
+EVs: 252 HP / 148 Def / 108 SpD
+Relaxed Nature
+IVs: 0 Spe
+- Spore
+- Rage Powder
+- Giga Drain
 - Protect`;
 
 interface PasteInputProps {
@@ -124,6 +119,15 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       localStorage.setItem("vgc-visited", "1");
     }
   }, []);
+  const [championsBannerDismissed, setChampionsBannerDismissed] = useState(true);
+  useEffect(() => {
+    setChampionsBannerDismissed(localStorage.getItem("vgc-champions-banner-dismissed") === "1");
+  }, []);
+  const dismissChampionsBanner = () => {
+    setChampionsBannerDismissed(true);
+    localStorage.setItem("vgc-champions-banner-dismissed", "1");
+  };
+
   const [spotlight, setSpotlight] = useState<ExploreReport | null>(null);
 
   // Fetch spotlight report once per session (delayed to avoid blocking render)
@@ -239,6 +243,40 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           {t.appSubtitle}
         </p>
       </motion.div>
+
+      {/* Champions announcement banner */}
+      {!championsBannerDismissed && (
+        <motion.a
+          href="/champions"
+          className="group flex items-center gap-3 mb-5 sm:mb-8 px-4 py-3 rounded-xl bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 hover:border-accent/40 transition-all relative"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.4 }}
+        >
+          <span className="text-xl sm:text-2xl flex-shrink-0">&#x1F525;</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs sm:text-sm font-bold text-text-primary leading-snug">
+              Pok&eacute;mon Champions is here!
+            </p>
+            <p className="text-[10px] sm:text-xs text-text-secondary mt-0.5">
+              Build your Mega Evolution team report for the new format.
+            </p>
+          </div>
+          <span className="text-xs font-bold text-accent group-hover:translate-x-0.5 transition-transform flex-shrink-0 hidden sm:inline">
+            Learn more &rarr;
+          </span>
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); dismissChampionsBanner(); }}
+            className="absolute top-2 right-2 p-1 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+            aria-label="Dismiss"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </motion.a>
+      )}
 
       {/* How it works — collapsible for returning mobile users */}
       <motion.div
@@ -424,7 +462,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             { href: "/explore", label: "Explore Teams", icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z", desc: "Community reports" },
             { href: "/compare", label: "Compare", icon: "M18 20V10M12 20V4M6 20v-6", desc: "Side-by-side analysis" },
             { href: "/changelog", label: "Updates", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", desc: "What's new" },
-            { href: "/feedback", label: "Feedback", icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", desc: "Bugs & ideas" },
+            { href: "/champions", label: "Champions", icon: "M13 10V3L4 14h7v7l9-11h-7z", desc: "Mega Evolution" },
           ].map((link) => (
             <a
               key={link.href}

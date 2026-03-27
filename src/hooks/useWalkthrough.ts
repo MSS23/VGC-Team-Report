@@ -265,35 +265,22 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     const step = filteredSteps[currentStepIndex];
     if (!step || step.target === null) return; // virtual steps always valid
 
-    let attempt = 0;
-    const MAX_ATTEMPTS = 5;
     let cancelled = false;
     let timerId: ReturnType<typeof setTimeout> | null = null;
+    let observer: MutationObserver | null = null;
 
-    const check = () => {
-      if (cancelled) return;
-      attempt++;
+    const onFound = () => {
+      // Target found — nothing to skip, clean up
+      if (observer) { observer.disconnect(); observer = null; }
+    };
 
-      if (isStepAvailable(step)) {
-        // Target found — nothing to skip
-        return;
-      }
-
-      if (attempt < MAX_ATTEMPTS) {
-        timerId = setTimeout(check, 80);
-        return;
-      }
-
+    const onGiveUp = () => {
       // Target not found after all retries — skip forward
       let nextIdx = currentStepIndex + 1;
       while (nextIdx < filteredSteps.length) {
         const candidate = filteredSteps[nextIdx];
-        // Virtual steps are always OK
         if (candidate.target === null) break;
-        // For steps on different slides, accept optimistically
-        // (this effect will re-check after navigation)
         if (candidate.slide !== step.slide && candidate.slide !== undefined) break;
-        // Same slide — check DOM directly
         if (isStepAvailable(candidate)) break;
         nextIdx++;
       }
@@ -305,12 +292,35 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
       }
     };
 
+    const check = () => {
+      if (cancelled) return;
+      if (isStepAvailable(step)) {
+        onFound();
+        return;
+      }
+      // Not found yet — set up MutationObserver to watch for the element
+      observer = new MutationObserver(() => {
+        if (cancelled) return;
+        if (isStepAvailable(step)) {
+          onFound();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      // Fallback timeout — give up after 2s if element never appears
+      timerId = setTimeout(() => {
+        if (cancelled) return;
+        if (observer) { observer.disconnect(); observer = null; }
+        if (!isStepAvailable(step)) onGiveUp();
+      }, 2000);
+    };
+
     // Start first check after a short delay for the slide to render
-    timerId = setTimeout(check, 60);
+    timerId = setTimeout(check, 80);
 
     return () => {
       cancelled = true;
       if (timerId !== null) clearTimeout(timerId);
+      if (observer) { observer.disconnect(); observer = null; }
     };
   }, [isActive, currentStepIndex, filteredSteps, isStepAvailable, goToSlide, endTour]);
 
@@ -355,6 +365,12 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     }
   }, [currentStepIndex, filteredSteps.length, endTour]);
 
+  const prev = useCallback(() => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex((i) => i - 1);
+    }
+  }, [currentStepIndex]);
+
   const skip = useCallback(() => {
     endTour();
   }, [endTour]);
@@ -375,6 +391,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     currentStepIndex,
     totalSteps: filteredSteps.length,
     next,
+    prev,
     skip,
     start,
     guidePokemon: randomPokemonName,

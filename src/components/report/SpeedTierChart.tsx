@@ -1,11 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { PokemonSprite } from "./PokemonSprite";
-import { TypeCoverageMatrix } from "./TypeCoverageMatrix";
-import { DefensiveCoverageChart } from "./DefensiveCoverageChart";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
+
+// Lazy-load defensive coverage chart (only rendered on the analysis slide)
+const DefensiveCoverageChart = dynamic(() => import("./DefensiveCoverageChart").then(m => ({ default: m.DefensiveCoverageChart })), {
+  loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-48" />,
+});
 
 interface SpeedTierChartProps {
   pokemon: AnalyzedPokemon[];
@@ -173,11 +177,6 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           </span>
         </div>
       </div>
-
-      <hr className="border-border" />
-
-      {/* Type Coverage */}
-      <TypeCoverageMatrix pokemon={pokemon} />
 
       <hr className="border-border" />
 

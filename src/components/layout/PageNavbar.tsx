@@ -1,6 +1,7 @@
 "use client";
 
 import { SignInButton, UserButton, Show } from "@clerk/nextjs";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
 
 interface PageNavbarProps {
   darkMode: boolean;
@@ -44,21 +45,23 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-3xl",
             ))}
           </nav>
 
-          {/* Right: auth + dark mode */}
-          <div className="flex items-center gap-2">
+          {/* Right: auth + language + dark mode */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <Show when="signed-out">
               <SignInButton mode="modal">
-                <button className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all cursor-pointer">
+                <button className="px-3 py-1.5 text-xs font-bold text-white bg-accent rounded-lg hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/20">
                   Sign In
                 </button>
               </SignInButton>
             </Show>
             <Show when="signed-in">
-              <a href="/dashboard" className="hidden sm:inline text-xs font-bold text-text-secondary hover:text-accent transition-colors">
+              <a href="/dashboard" className="hidden sm:inline px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent hover:bg-surface-alt rounded-lg transition-all">
                 Dashboard
               </a>
               <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
             </Show>
+
+            <LanguageSelector />
 
             <button
               onClick={onToggleDarkMode}

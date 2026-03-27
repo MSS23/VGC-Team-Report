@@ -31,6 +31,10 @@ const SLUG_MAP: Record<string, string> = {
   "tauros-paldea-combat": "tauros-paldeacombat", "tauros-paldea-blaze": "tauros-paldeablaze",
   "tauros-paldea-aqua": "tauros-paldeaaqua",
   "bloodmoon-ursaluna": "ursaluna-bloodmoon",
+  "charizard-mega-x": "charizard-megax",
+  "charizard-mega-y": "charizard-megay",
+  "mewtwo-mega-x": "mewtwo-megax",
+  "mewtwo-mega-y": "mewtwo-megay",
 };
 
 export function resolveSlug(species: string): string {

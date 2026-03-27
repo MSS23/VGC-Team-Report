@@ -10,6 +10,25 @@ import { PageFooter } from "@/components/layout/PageFooter";
 
 const ENTRIES = [
   {
+    date: "April 2026",
+    version: "4.0",
+    title: "Pokemon Champions",
+    emoji: "\uD83C\uDFC6",
+    highlight: true,
+    items: [
+      { type: "new" as const, text: "Pokemon Champions support \u2014 Mega Evolution and Primal Reversion parsing, display, and team building" },
+      { type: "new" as const, text: "Regulation M-A tag for the official Pokemon Champions competitive format" },
+      { type: "new" as const, text: "30+ Mega Evolution and Primal Pokemon added with accurate stats and abilities" },
+      { type: "new" as const, text: "Champions landing page with format details, team discovery, and SEO optimization" },
+      { type: "new" as const, text: "Real-time collaborative editing via Server-Sent Events with live presence indicators" },
+      { type: "new" as const, text: "Redis caching layer (Upstash) for faster Explore and Share page loads" },
+      { type: "improved" as const, text: "Lazy-loaded heavy components (SpeedTierChart, MatchupSheet, ShareModal) for faster initial page load" },
+      { type: "improved" as const, text: "Enhanced security: CSRF protection, CORS policy, input validation, expanded security headers" },
+      { type: "improved" as const, text: "Sample team updated to a Champions-format team featuring Kangaskhan-Mega and Salamence-Mega" },
+      { type: "improved" as const, text: "Share text now includes #PokemonChampions #VGC2026 hashtags for organic reach" },
+    ],
+  },
+  {
     date: "March 2026",
     version: "3.5",
     title: "Compare, Tags & Notifications",

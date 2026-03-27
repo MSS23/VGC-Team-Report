@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 import { extractSpecies } from "@/lib/utils/extract-species";
+import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,15 @@ export async function GET(request: Request) {
     const filterRegulation = url.searchParams.get("regulation") ?? "";
     const filterEventType = url.searchParams.get("eventType") ?? "";
     const filterArchetype = url.searchParams.get("archetype") ?? ""; // comma-separated
+
+    // ── Cache check ──────────────────────────────────────────────────
+    const cacheKey = CacheKeys.explore(
+      `${sort}:${q}:${searchType}:${cursor ?? ""}:${limit}:${filterRegulation}:${filterEventType}:${filterArchetype}`
+    );
+    const cached = await cacheGet<{ reports: unknown[]; nextCursor: string | null }>(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
 
     const sql = getDb();
 
@@ -157,7 +167,10 @@ export async function GET(request: Request) {
       else nextCursor = (last.created_at as Date).toISOString();
     }
 
-    return NextResponse.json({ reports, nextCursor });
+    const result = { reports, nextCursor };
+    // Cache for 60s — short TTL keeps data fresh while reducing DB load
+    await cacheSet(cacheKey, result, CacheTTL.EXPLORE_LIST);
+    return NextResponse.json(result);
   } catch (e) {
     console.error("Explore API error:", e);
     return NextResponse.json({ error: "Failed to load reports" }, { status: 500 });

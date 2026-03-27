@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useShareUrl } from "@/hooks/useShareUrl";
+import { track } from "@vercel/analytics";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 
@@ -35,8 +36,15 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
 
   const handleShareClick = useCallback(() => {
     if (!analysis || isSampleTeam) return;
-    copyShareUrl(buildShareState(), isPublic);
+    const state = buildShareState();
+    copyShareUrl(state, isPublic);
     setShowEditUrl(true);
+    // Track share event
+    const hasMega = analysis.pokemon.some((p) => p.parsed.species.includes("-Mega") || p.parsed.species.includes("-Primal"));
+    track("report_shared", {
+      regulation: (state.tags as Record<string, unknown>)?.regulation as string ?? "unknown",
+      hasMega: hasMega ? "yes" : "no",
+    });
   }, [analysis, isSampleTeam, copyShareUrl, buildShareState, isPublic]);
 
   const handleReshare = useCallback(() => {

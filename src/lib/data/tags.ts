@@ -1,11 +1,12 @@
 export const ARCHETYPES = [
   "Rain", "Sun", "Sand", "Snow", "Trick Room", "Semi-TR",
   "Hyper Offense", "Balance", "Bulky Offense", "Tailwind", "Goodstuffs",
+  "Mega Offense", "Primal Weather",
 ] as const;
 
 export const REGULATIONS = [
   "Reg A", "Reg B", "Reg C", "Reg D", "Reg E",
-  "Reg F", "Reg G", "Reg H", "Reg I",
+  "Reg F", "Reg G", "Reg H", "Reg I", "Reg M-A",
 ] as const;
 
 export const EVENT_TYPES = [

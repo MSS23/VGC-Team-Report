@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
+import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -139,6 +140,14 @@ export async function GET(
     }
 
     // Public access — read-only, no edit info leaked
+    // Check cache first for public reads (skip if polling for version changes)
+    if (!sinceVersion) {
+      const cached = await cacheGet<Record<string, unknown>>(CacheKeys.share(id));
+      if (cached) {
+        return NextResponse.json(cached);
+      }
+    }
+
     const rows = await sql`
       SELECT data, COALESCE(version, 1) AS version, is_public FROM shares WHERE id = ${id} AND deleted_at IS NULL
     `;
@@ -151,11 +160,18 @@ export async function GET(
       return new Response(null, { status: 304 });
     }
 
-    return NextResponse.json({
+    const responseData = {
       ...normalizeReportData(rows[0].data as Record<string, unknown>),
       _version: Number(rows[0].version),
       _isPublic: !!rows[0].is_public,
-    });
+    };
+
+    // Cache public shares for 5 minutes
+    if (rows[0].is_public) {
+      await cacheSet(CacheKeys.share(id), responseData, CacheTTL.SHARE_PUBLIC);
+    }
+
+    return NextResponse.json(responseData);
   } catch (e) {
     console.error("Share fetch error:", e);
     return NextResponse.json(

@@ -4,28 +4,28 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 
-const STORAGE_KEY = "vgc-whats-new-v4";
+const STORAGE_KEY = "vgc-whats-new-v5";
 
 const FEATURES = [
   {
-    icon: "M18 20V10M12 20V4M6 20v-6",
-    title: "Compare Teams",
-    desc: "New /compare page \u2014 paste two teams side-by-side to compare type coverage, speed tiers, and shared Pokemon at a glance.",
+    icon: "M13 10V3L4 14h7v7l9-11h-7z",
+    title: "Pokemon Champions Ready",
+    desc: "Full Mega Evolution and Primal Reversion support. Build and share team reports for Regulation M-A \u2014 the official Pokemon Champions competitive format.",
   },
   {
-    icon: "M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z",
-    title: "Tags & Filtering",
-    desc: "Tag your reports with archetype, regulation, and event type. Filter the Explore page to find exactly what you\u2019re looking for.",
+    icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
+    title: "30+ Mega Evolutions Added",
+    desc: "Kangaskhan-Mega, Salamence-Mega, Charizard-Mega-X/Y, Metagross-Mega, Groudon-Primal, Kyogre-Primal, and many more \u2014 all with accurate stats and abilities.",
   },
   {
-    icon: "M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0",
-    title: "Notifications",
-    desc: "Get notified when someone comments or reacts to your report, or when a creator you follow publishes a new team.",
+    icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z",
+    title: "Real-Time Collaborative Editing",
+    desc: "Work on team reports together \u2014 live sync shows changes from other editors instantly with presence indicators.",
   },
   {
-    icon: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6",
-    title: "Report Templates & QR Codes",
-    desc: "Choose Quick Share, Tournament Report, or Team Guide when creating. Rental codes now show scannable QR codes.",
+    icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+    title: "Enhanced Security & Performance",
+    desc: "Redis caching for faster page loads, lazy-loaded components, CSRF protection, and hardened API security.",
   },
 ];
 
@@ -81,10 +81,10 @@ export function WhatsNewModal() {
               <span className="text-xs font-extrabold text-accent uppercase tracking-widest">What&apos;s New</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
-              Compare, tag & get <span className="text-accent">notified</span>
+              <span className="text-accent">Champions</span> is here
             </h2>
             <p className="text-sm text-text-secondary mt-2 max-w-sm mx-auto">
-              Side-by-side team comparison, tag-based filtering, in-app notifications, report templates, and rental code QR codes.
+              Pokemon Champions support with Mega Evolution, Regulation M-A, real-time collaborative editing, and faster performance.
             </p>
           </div>
 
