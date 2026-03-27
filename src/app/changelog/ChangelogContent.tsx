@@ -21,6 +21,7 @@ const ENTRIES = [
       { type: "new" as const, text: "Collaborator management panel \u2014 search users by name, add or remove collaborators (owner only)" },
       { type: "new" as const, text: "\"Shared with me\" dashboard tab showing reports you've been invited to collaborate on" },
       { type: "new" as const, text: "Edit History changelog \u2014 see who changed which sections with timestamps and version numbers" },
+      { type: "new" as const, text: "Version snapshots \u2014 every edit saves a full snapshot of the previous state for revert capability" },
       { type: "new" as const, text: "Collab invite notifications \u2014 collaborators are notified when invited" },
       { type: "improved" as const, text: "Likes now require sign-in \u2014 anonymous users see the count with a \"Sign in to like\" prompt" },
       { type: "improved" as const, text: "Owners can edit reports without the edit key URL \u2014 auto-detected via authentication" },
