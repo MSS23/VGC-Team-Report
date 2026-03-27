@@ -1,0 +1,62 @@
+[
+  {
+    "name": "summary",
+    "description": "Weekly feedback summary with stats, trends, and recommendations",
+    "type": 1
+  },
+  {
+    "name": "popular",
+    "description": "Top 10 most-requested features from the last 90 days",
+    "type": 1
+  },
+  {
+    "name": "bugs",
+    "description": "All open bug reports sorted by recency",
+    "type": 1
+  },
+  {
+    "name": "status",
+    "description": "Check the status of a Linear issue",
+    "type": 1,
+    "options": [
+      {
+        "name": "issue",
+        "description": "Issue identifier (e.g., VGC-10)",
+        "type": 3,
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "approve",
+    "description": "Move a Linear issue from Backlog to Todo",
+    "type": 1,
+    "options": [
+      {
+        "name": "issue",
+        "description": "Issue identifier (e.g., VGC-10)",
+        "type": 3,
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "reject",
+    "description": "Move a Linear issue to Won't Do",
+    "type": 1,
+    "options": [
+      {
+        "name": "issue",
+        "description": "Issue identifier (e.g., VGC-10)",
+        "type": 3,
+        "required": true
+      },
+      {
+        "name": "reason",
+        "description": "Why this is being rejected",
+        "type": 3,
+        "required": false
+      }
+    ]
+  }
+]
