@@ -130,6 +130,38 @@ export async function POST(
   }
 }
 
+/**
+ * PATCH /api/share/{id}/collaborators — revoke collab link (regenerate edit token)
+ * Only the original owner can do this. Invalidates all existing ?key= links.
+ */
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: shareId } = await params;
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+
+    const ownerId = await getOwnerId(shareId);
+    if (ownerId !== userId) {
+      return NextResponse.json({ error: "Only the owner can revoke the link" }, { status: 403 });
+    }
+
+    // Generate new edit token
+    const crypto = await import("crypto");
+    const newToken = crypto.randomBytes(32).toString("hex");
+
+    const sql = getDb();
+    await sql`UPDATE shares SET edit_token = ${newToken} WHERE id = ${shareId}`;
+
+    return NextResponse.json({ success: true, message: "Collab link revoked. Old links no longer work." });
+  } catch (e) {
+    console.error("Revoke link error:", e);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

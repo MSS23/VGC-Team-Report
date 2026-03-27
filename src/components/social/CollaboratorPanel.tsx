@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 interface Collaborator {
   userId: string;
@@ -19,15 +20,22 @@ interface CollaboratorPanelProps {
 }
 
 export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
+  const { userId } = useAuth();
   const [open, setOpen] = useState(false);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState(false);
+  const [revokeConfirm, setRevokeConfirm] = useState(false);
+  const [revokeSuccess, setRevokeSuccess] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isOriginalOwner = userId === ownerId;
 
   const fetchCollaborators = useCallback(async () => {
     setLoading(true);
@@ -36,6 +44,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
       if (res.ok) {
         const data = await res.json();
         setCollaborators(data.collaborators ?? []);
+        if (data.ownerId) setOwnerId(data.ownerId);
       }
     } catch { /* silent */ }
     finally { setLoading(false); }
@@ -58,7 +67,6 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
         const res = await fetch(`/api/user/search?q=${encodeURIComponent(query.trim())}`);
         if (res.ok) {
           const data = await res.json();
-          // Filter out users who are already collaborators
           const existingIds = new Set(collaborators.map((c) => c.userId));
           setResults((data.users ?? []).filter((u: SearchResult) => !existingIds.has(u.id)));
         }
@@ -90,19 +98,32 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
     finally { setAdding(null); }
   };
 
-  const handleRemove = async (userId: string) => {
-    setRemoving(userId);
+  const handleRemove = async (targetUserId: string) => {
+    setRemoving(targetUserId);
     try {
       const res = await fetch(`/api/share/${shareId}/collaborators`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId: targetUserId }),
       });
       if (res.ok) {
-        setCollaborators((prev) => prev.filter((c) => c.userId !== userId));
+        setCollaborators((prev) => prev.filter((c) => c.userId !== targetUserId));
       }
     } catch { /* silent */ }
     finally { setRemoving(null); }
+  };
+
+  const handleRevokeLink = async () => {
+    setRevoking(true);
+    try {
+      const res = await fetch(`/api/share/${shareId}/collaborators`, { method: "PATCH" });
+      if (res.ok) {
+        setRevokeSuccess(true);
+        setRevokeConfirm(false);
+        setTimeout(() => setRevokeSuccess(false), 3000);
+      }
+    } catch { /* silent */ }
+    finally { setRevoking(false); }
   };
 
   return (
@@ -118,7 +139,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
           <path d="M23 21v-2a4 4 0 00-3-3.87" />
           <path d="M16 3.13a4 4 0 010 7.75" />
         </svg>
-        Collaborators
+        Manage Access
         {collaborators.length > 0 && (
           <span className="ml-1 px-1.5 py-0.5 text-[10px] font-extrabold bg-accent-surface text-accent rounded-full">
             {collaborators.length}
@@ -134,88 +155,147 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
 
       {open && (
         <div className="mt-3 border border-border rounded-xl bg-surface overflow-hidden animate-fade-in">
-          {/* Search input */}
-          <div className="p-3 border-b border-border">
-            <div className="relative">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search users to invite..."
-                className="w-full pl-8 pr-3 py-2 text-xs bg-surface-alt border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
-              />
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              {searching && (
-                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 border-[1.5px] border-accent/30 border-t-accent rounded-full animate-spin" />
+          {/* Search input (owner only) */}
+          {isOriginalOwner && (
+            <div className="p-3 border-b border-border">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search users to invite..."
+                  className="w-full pl-8 pr-3 py-2 text-xs bg-surface-alt border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+                />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                {searching && (
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 border-[1.5px] border-accent/30 border-t-accent rounded-full animate-spin" />
+                )}
+              </div>
+
+              {results.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {results.map((user) => (
+                    <div key={user.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-surface-alt/50">
+                      <img src={user.imageUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
+                      <span className="text-xs font-bold text-text-primary flex-1 truncate">{user.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleAdd(user)}
+                        disabled={adding === user.id}
+                        className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-accent text-white hover:brightness-110 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {adding === user.id ? "..." : "Add"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
+          )}
 
-            {/* Search results */}
-            {results.length > 0 && (
-              <div className="mt-2 space-y-1">
-                {results.map((user) => (
-                  <div key={user.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-surface-alt/50">
-                    <img
-                      src={user.imageUrl}
-                      alt=""
-                      className="w-6 h-6 rounded-full object-cover"
-                    />
-                    <span className="text-xs font-bold text-text-primary flex-1 truncate">{user.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleAdd(user)}
-                      disabled={adding === user.id}
-                      className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-accent text-white hover:brightness-110 transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      {adding === user.id ? "..." : "Add"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Current collaborators */}
+          {/* People with access */}
           {loading ? (
             <div className="px-4 py-6 text-center">
               <span className="inline-block w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
             </div>
-          ) : collaborators.length === 0 ? (
-            <div className="px-4 py-6 text-center text-xs text-text-tertiary">
-              No collaborators yet. Search for users above to invite them to edit this report.
-            </div>
           ) : (
             <div className="divide-y divide-border">
+              {/* Owner row (always shown) */}
+              <div className="flex items-center gap-2 px-4 py-3">
+                <div className="w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center flex-shrink-0">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold text-text-primary block">You</span>
+                  <span className="text-[10px] text-accent font-semibold">Owner</span>
+                </div>
+              </div>
+
+              {/* Collaborators */}
               {collaborators.map((collab) => (
                 <div key={collab.userId} className="flex items-center gap-2 px-4 py-3">
-                  <div className="w-7 h-7 rounded-full bg-accent-surface flex items-center justify-center flex-shrink-0">
-                    <span className="text-[10px] font-extrabold text-accent">
+                  <div className="w-7 h-7 rounded-full bg-surface-alt flex items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] font-extrabold text-text-secondary">
                       {collab.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-xs font-bold text-text-primary truncate block">{collab.name}</span>
                     <span className="text-[10px] text-text-tertiary">
-                      Added {new Date(collab.addedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      Can edit &middot; Added {new Date(collab.addedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(collab.userId)}
-                    disabled={removing === collab.userId}
-                    className="p-1.5 text-text-tertiary hover:text-red-500 transition-colors cursor-pointer disabled:opacity-50"
-                    title="Remove collaborator"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
+                  {isOriginalOwner && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(collab.userId)}
+                      disabled={removing === collab.userId}
+                      className="px-2 py-1 text-[10px] font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md transition-colors cursor-pointer disabled:opacity-50"
+                      title="Remove access"
+                    >
+                      {removing === collab.userId ? "..." : "Remove"}
+                    </button>
+                  )}
                 </div>
               ))}
+
+              {collaborators.length === 0 && (
+                <div className="px-4 py-4 text-center text-xs text-text-tertiary">
+                  No collaborators yet.{isOriginalOwner ? " Search above to invite people." : ""}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Revoke link section (owner only) */}
+          {isOriginalOwner && (
+            <div className="border-t border-border px-4 py-3">
+              {revokeSuccess ? (
+                <p className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Link revoked. Old collab links no longer work.
+                </p>
+              ) : revokeConfirm ? (
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] text-red-400 font-semibold flex-1">
+                    This will invalidate all existing collab links. Collaborators already added will keep access.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleRevokeLink}
+                    disabled={revoking}
+                    className="px-2.5 py-1 text-[10px] font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50 flex-shrink-0"
+                  >
+                    {revoking ? "..." : "Confirm"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRevokeConfirm(false)}
+                    className="px-2.5 py-1 text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-colors cursor-pointer flex-shrink-0"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setRevokeConfirm(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-text-tertiary hover:text-red-400 transition-colors cursor-pointer"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                  Revoke collab link
+                </button>
+              )}
             </div>
           )}
         </div>
