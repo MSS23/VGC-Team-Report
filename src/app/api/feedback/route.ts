@@ -3,6 +3,7 @@ import { isRateLimited } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/utils/sanitize";
 import { containsBlockedWords } from "@/lib/utils/word-filter";
 import { createLinearIssue } from "@/lib/linear";
+import { postFeedbackEmbed } from "@/lib/discord-bot";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -135,11 +136,34 @@ export async function POST(request: Request) {
       console.error("Linear issue creation failed:", e);
     }
 
-    // Send Discord notification with submitter name and Linear link
+    // Send Discord webhook (legacy) + bot embed with thread
+    let linearIdentifier: string | undefined;
+    if (linearUrl) {
+      const match = linearUrl.match(/\/issue\/(VGC-\d+)/);
+      if (match) linearIdentifier = match[1];
+    }
+
     try {
       await sendDiscordNotification(parsed.data, submitterName, linearUrl);
     } catch (e) {
-      console.error("Discord notification failed:", e);
+      console.error("Discord webhook failed:", e);
+    }
+
+    try {
+      await postFeedbackEmbed({
+        type,
+        title: rawTitle,
+        description: rawDescription,
+        submitterName,
+        contact,
+        device,
+        browser,
+        screenSize,
+        linearUrl,
+        linearIdentifier,
+      });
+    } catch (e) {
+      console.error("Discord bot embed failed:", e);
     }
 
     return NextResponse.json({ success: true });
