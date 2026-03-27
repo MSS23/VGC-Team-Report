@@ -95,14 +95,21 @@ export async function POST(request: Request) {
       // Token mismatch or not found — fall through to create new
     }
 
-    // Create new share — auto-link to authenticated user if signed in
+    // Create new share — requires authentication
     const id = generateId();
     const newEditToken = generateEditToken();
     let ownerId: string | null = null;
     try {
       const { userId } = await auth();
       ownerId = userId;
-    } catch { /* not authenticated — that's fine */ }
+    } catch { /* auth check failed */ }
+
+    if (!ownerId) {
+      return NextResponse.json(
+        { error: "Sign in to share your team report" },
+        { status: 401 }
+      );
+    }
 
     await sql`
       INSERT INTO shares (id, edit_token, data, version, is_public, owner_id, search_vector)

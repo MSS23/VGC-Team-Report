@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
-import { SignInButton, UserButton, Show } from "@clerk/nextjs";
+import { SignInButton, UserButton, Show, useUser } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
 import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
@@ -90,6 +90,7 @@ export function Navbar(props: NavbarProps) {
   } = props;
 
   const { t } = useTranslation();
+  const { isSignedIn } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -290,30 +291,58 @@ export function Navbar(props: NavbarProps) {
           {/* Share / Re-share */}
           {isLocalDraft && (
             <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onShareClick}
-                disabled={shareStatus === "copying" || isSampleTeam}
-                title={isSampleTeam ? "Load your own team to share — the sample is just a tutorial" : undefined}
-                data-walkthrough="share-button"
-              >
-                {shareButtonText}
-              </Button>
-              {hasExistingShare && (
+              {isSampleTeam ? (
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
-                  onClick={onCopyEditLink}
-                  title="Copy your private edit link"
-                  aria-label="Copy edit link"
+                  disabled
+                  title="Load your own team to share — the sample is just a tutorial"
+                  data-walkthrough="share-button"
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3" />
-                    <line x1="8" y1="12" x2="16" y2="12" />
-                  </svg>
-                  <span className="hidden sm:inline">{editLinkCopied ? t.copied : t.editLink}</span>
+                  {shareButtonText}
                 </Button>
+              ) : isSignedIn ? (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={onShareClick}
+                    disabled={shareStatus === "copying"}
+                    data-walkthrough="share-button"
+                  >
+                    {shareButtonText}
+                  </Button>
+                  {hasExistingShare && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onCopyEditLink}
+                      title="Copy your private edit link"
+                      aria-label="Copy edit link"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3" />
+                        <line x1="8" y1="12" x2="16" y2="12" />
+                      </svg>
+                      <span className="hidden sm:inline">{editLinkCopied ? t.copied : t.editLink}</span>
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <SignInButton mode="modal">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    data-walkthrough="share-button"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                      <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
+                      <polyline points="10 17 15 12 10 7" />
+                      <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                    Sign in to share
+                  </Button>
+                </SignInButton>
               )}
             </>
           )}
