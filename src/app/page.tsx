@@ -22,6 +22,7 @@ import { CollaboratorPanel } from "@/components/social/CollaboratorPanel";
 import { getSessionId } from "@/lib/utils/session-id";
 import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { I18nProvider } from "@/lib/i18n";
+import { SignInButton, useAuth } from "@clerk/nextjs";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
 const ShareModal = dynamic(() => import("@/components/ui/ShareModal").then(m => ({ default: m.ShareModal })));
@@ -160,6 +161,7 @@ function HomeContent() {
     handleDecodeFailed,
   } = useHomePage();
 
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const [showShareModal, setShowShareModal] = useState(false);
 
   // Swipe navigation for mobile
@@ -266,6 +268,38 @@ function HomeContent() {
           darkMode={darkMode}
           onToggleDarkMode={() => setDarkMode(!darkMode)}
         />
+      </main>
+    );
+  }
+
+  // Collab link sign-in gate: if ?key= present and user isn't signed in, prompt sign-in
+  if (!analysis && isSharePending && editKeyFromUrl && authLoaded && !isSignedIn) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-5 animate-fade-in text-center max-w-sm">
+          <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 00-3-3.87" />
+              <path d="M16 3.13a4 4 0 010 7.75" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-text-primary">You&apos;ve been invited to collaborate</h2>
+            <p className="text-sm text-text-secondary mt-1.5 leading-relaxed">
+              Sign in to edit this team report. Your changes will sync in real time with the owner.
+            </p>
+          </div>
+          <SignInButton mode="modal">
+            <button className="px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 transition-all cursor-pointer shadow-md shadow-accent/25">
+              Sign in to collaborate
+            </button>
+          </SignInButton>
+          <a href="/" className="text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors">
+            or go to home page
+          </a>
+        </div>
       </main>
     );
   }

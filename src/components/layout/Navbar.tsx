@@ -278,11 +278,20 @@ export function Navbar(props: NavbarProps) {
                     {shareButtonText}
                   </Button>
                   {hasExistingShare && (
-                    <Button variant="ghost" size="sm" onClick={onCopyEditLink} title="Copy your private edit link" className="hidden sm:inline-flex">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3" /><line x1="8" y1="12" x2="16" y2="12" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onCopyEditLink}
+                      title="Copy collab link — anyone with this link who signs in can edit"
+                      className="hidden sm:inline-flex"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                        <path d="M16 3.13a4 4 0 010 7.75" />
                       </svg>
-                      <span className="hidden lg:inline">{editLinkCopied ? t.copied : t.editLink}</span>
+                      <span className="hidden lg:inline">{editLinkCopied ? t.copied : "Collab"}</span>
                     </Button>
                   )}
                 </>
