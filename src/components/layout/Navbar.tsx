@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
-import { SignInButton, UserButton, Show, useUser } from "@clerk/nextjs";
+import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
 import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
@@ -90,21 +90,20 @@ export function Navbar(props: NavbarProps) {
   } = props;
 
   const { t } = useTranslation();
-  const { isSignedIn } = useUser();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const { isLoaded, isSignedIn } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close mobile menu on outside click
   useEffect(() => {
-    if (!mobileMenuOpen) return;
+    if (!menuOpen) return;
     const handleClick = (e: MouseEvent) => {
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
-        setMobileMenuOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [mobileMenuOpen]);
+  }, [menuOpen]);
 
   const isLocalDraft = !isSharedView && !isPresentationStyle;
   const [scrolled, setScrolled] = useState(false);
@@ -114,6 +113,9 @@ export function Navbar(props: NavbarProps) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const showSignIn = !isSignedIn;
+  const showUser = isLoaded && isSignedIn;
 
   return (
     <header
@@ -127,7 +129,7 @@ export function Navbar(props: NavbarProps) {
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2">
 
-        {/* -- Left -- */}
+        {/* ── Left ── */}
         <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
           {isLocalDraft ? (
             <>
@@ -149,197 +151,143 @@ export function Navbar(props: NavbarProps) {
                     type="button"
                     onClick={onUndo}
                     disabled={canUndo ? !canUndo() : true}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-text-tertiary"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
                     title="Undo (Ctrl+Z)"
-                    aria-label="Undo"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 10h10a5 5 0 015 5v0a5 5 0 01-5 5H8" />
-                      <polyline points="7 14 3 10 7 6" />
+                      <path d="M3 10h10a5 5 0 015 5v0a5 5 0 01-5 5H8" /><polyline points="7 14 3 10 7 6" />
                     </svg>
                   </button>
                   <button
                     type="button"
                     onClick={onRedo}
                     disabled={canRedo ? !canRedo() : true}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-text-tertiary"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
                     title="Redo (Ctrl+Shift+Z)"
-                    aria-label="Redo"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10H11a5 5 0 00-5 5v0a5 5 0 005 5h5" />
-                      <polyline points="17 14 21 10 17 6" />
+                      <path d="M21 10H11a5 5 0 00-5 5v0a5 5 0 005 5h5" /><polyline points="17 14 21 10 17 6" />
                     </svg>
                   </button>
                 </span>
               )}
             </>
           ) : isSharedView && !isPresentationStyle ? (
-            /* Shared view: show home logo link */
-            <a
-              href="/"
-              className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity"
-            >
+            <a href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity">
               <span className="text-text-primary">VGC Team</span>
               <span className="text-accent">Report</span>
             </a>
           ) : isPresentationStyle ? (
-            /* Presentation: show tournament + slide info on left */
             <div className="flex items-center gap-2 text-sm text-text-secondary">
               {tournamentName && (
                 <>
                   <span className="font-extrabold text-text-primary truncate tracking-tight">{tournamentName}</span>
                   {placement && (
-                    <span className="text-xs font-extrabold text-accent bg-accent-surface px-2.5 py-0.5 rounded-md flex-shrink-0 tracking-wide">{placement}</span>
+                    <span className="text-xs font-extrabold text-accent bg-accent-surface px-2.5 py-0.5 rounded-md flex-shrink-0">{placement}</span>
                   )}
                 </>
               )}
-              <span className="font-semibold text-text-primary truncate hidden sm:inline">
-                {slideLabels[currentSlide]}
-              </span>
-              <span className="text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">
-                {currentSlide + 1}/{totalSlides}
-              </span>
+              <span className="font-semibold text-text-primary truncate hidden sm:inline">{slideLabels[currentSlide]}</span>
+              <span className="text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">{currentSlide + 1}/{totalSlides}</span>
             </div>
           ) : null}
         </div>
 
-        {/* -- Center: slide info (local draft & shared views, not presentation) -- */}
+        {/* ── Center: slide info (not presentation) ── */}
         {!isPresentationStyle && (
-          <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary min-w-0">
-            {tournamentName && (
-              <>
-                <span className="font-extrabold text-text-primary truncate tracking-tight">{tournamentName}</span>
-                {placement && (
-                  <span className="text-xs font-extrabold text-accent bg-accent-surface px-2.5 py-0.5 rounded-md flex-shrink-0 tracking-wide">{placement}</span>
-                )}
-                {record && (
-                  <span className="text-text-tertiary font-semibold flex-shrink-0">({record})</span>
-                )}
-                <span className="text-text-tertiary">&middot;</span>
-              </>
-            )}
-            <span className="font-semibold text-text-primary truncate">{slideLabels[currentSlide]}</span>
-            <span className="text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums">{currentSlide + 1}/{totalSlides}</span>
-            {isSharedView && isEditingUnlocked && (
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md flex-shrink-0 uppercase tracking-wider">
-                {t.editing}
-              </span>
-            )}
-            {isSharedView && isEditingUnlocked && autoSaveStatus && autoSaveStatus !== "idle" && (
-              <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 transition-opacity duration-300 ${
-                autoSaveStatus === "saving"
-                  ? "text-text-tertiary bg-surface-alt/60"
-                  : autoSaveStatus === "saved"
-                    ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
-                    : "text-red-500 bg-red-500/10"
-              }`}>
-                {autoSaveStatus === "saving" && (
-                  <span className="w-2.5 h-2.5 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin" />
-                )}
-                {autoSaveStatus === "saving" ? "Saving..." : autoSaveStatus === "saved" ? "Saved" : "Save failed"}
-              </span>
-            )}
-            {isSharedView && isEditingUnlocked && collaborators !== undefined && collaborators > 1 && (
-              <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 text-blue-600 dark:text-blue-400 bg-blue-500/10">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                {collaborators} editing
-              </span>
-            )}
-            {isSharedView && isEditingUnlocked && syncStatus === "syncing" && (
-              <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 text-purple-600 dark:text-purple-400 bg-purple-500/10">
-                <span className="w-2.5 h-2.5 border-[1.5px] border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
-                Syncing...
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Mobile slide counter + tournament context (non-presentation) */}
-        {!isPresentationStyle && (
-          <div className="md:hidden flex flex-col items-center min-w-0 overflow-hidden flex-1 justify-center">
-            {tournamentName && scrolled && (
-              <div className="flex items-center gap-1.5 max-w-full">
-                <span className="text-[10px] font-extrabold text-text-primary truncate leading-none">{tournamentName}</span>
-                {placement && (
-                  <span className="text-[9px] font-extrabold text-accent bg-accent-surface px-1.5 py-0.5 rounded flex-shrink-0 leading-none">{placement}</span>
-                )}
-              </div>
-            )}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-text-primary font-semibold truncate">
-                {slideLabels[currentSlide]}
-              </span>
-              <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">
-                {currentSlide + 1}/{totalSlides}
-              </span>
-              {isSharedView && isEditingUnlocked && autoSaveStatus === "saving" && (
-                <span className="w-2.5 h-2.5 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
+          <>
+            {/* Desktop center */}
+            <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary min-w-0">
+              {tournamentName && (
+                <>
+                  <span className="font-extrabold text-text-primary truncate tracking-tight">{tournamentName}</span>
+                  {placement && (
+                    <span className="text-xs font-extrabold text-accent bg-accent-surface px-2.5 py-0.5 rounded-md flex-shrink-0">{placement}</span>
+                  )}
+                  {record && (
+                    <span className="text-text-tertiary font-semibold flex-shrink-0">({record})</span>
+                  )}
+                  <span className="text-text-tertiary">&middot;</span>
+                </>
               )}
-              {isSharedView && isEditingUnlocked && autoSaveStatus === "saved" && (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 flex-shrink-0">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
+              <span className="font-semibold text-text-primary truncate">{slideLabels[currentSlide]}</span>
+              <span className="text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums">{currentSlide + 1}/{totalSlides}</span>
+              {isSharedView && isEditingUnlocked && (
+                <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md flex-shrink-0 uppercase tracking-wider">
+                  {t.editing}
+                </span>
+              )}
+              {isSharedView && isEditingUnlocked && autoSaveStatus && autoSaveStatus !== "idle" && (
+                <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 ${
+                  autoSaveStatus === "saving" ? "text-text-tertiary bg-surface-alt/60"
+                    : autoSaveStatus === "saved" ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                    : "text-red-500 bg-red-500/10"
+                }`}>
+                  {autoSaveStatus === "saving" && <span className="w-2.5 h-2.5 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin" />}
+                  {autoSaveStatus === "saving" ? "Saving..." : autoSaveStatus === "saved" ? "Saved" : "Save failed"}
+                </span>
+              )}
+              {isSharedView && isEditingUnlocked && collaborators !== undefined && collaborators > 1 && (
+                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 text-blue-600 dark:text-blue-400 bg-blue-500/10">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  {collaborators} editing
+                </span>
               )}
             </div>
-          </div>
+
+            {/* Mobile center */}
+            <div className="md:hidden flex flex-col items-center min-w-0 overflow-hidden flex-1 justify-center">
+              {tournamentName && scrolled && (
+                <div className="flex items-center gap-1.5 max-w-full">
+                  <span className="text-[10px] font-extrabold text-text-primary truncate leading-none">{tournamentName}</span>
+                  {placement && (
+                    <span className="text-[9px] font-extrabold text-accent bg-accent-surface px-1.5 py-0.5 rounded flex-shrink-0 leading-none">{placement}</span>
+                  )}
+                </div>
+              )}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-text-primary font-semibold truncate">{slideLabels[currentSlide]}</span>
+                <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">{currentSlide + 1}/{totalSlides}</span>
+                {isSharedView && isEditingUnlocked && autoSaveStatus === "saving" && (
+                  <span className="w-2.5 h-2.5 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
+                )}
+                {isSharedView && isEditingUnlocked && autoSaveStatus === "saved" && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 flex-shrink-0">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </div>
+            </div>
+          </>
         )}
 
-        {/* -- Right: actions -- */}
-        <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+        {/* ── Right ── */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
 
           {/* Share / Re-share */}
           {isLocalDraft && (
             <>
               {isSampleTeam ? (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled
-                  title="Load your own team to share — the sample is just a tutorial"
-                  data-walkthrough="share-button"
-                >
+                <Button variant="secondary" size="sm" disabled title="Load your own team to share" data-walkthrough="share-button">
                   {shareButtonText}
                 </Button>
-              ) : isSignedIn ? (
+              ) : showUser ? (
                 <>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={onShareClick}
-                    disabled={shareStatus === "copying"}
-                    data-walkthrough="share-button"
-                  >
+                  <Button variant="secondary" size="sm" onClick={onShareClick} disabled={shareStatus === "copying"} data-walkthrough="share-button">
                     {shareButtonText}
                   </Button>
                   {hasExistingShare && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={onCopyEditLink}
-                      title="Copy your private edit link"
-                      aria-label="Copy edit link"
-                    >
+                    <Button variant="ghost" size="sm" onClick={onCopyEditLink} title="Copy your private edit link" className="hidden sm:inline-flex">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3" />
-                        <line x1="8" y1="12" x2="16" y2="12" />
+                        <path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3" /><line x1="8" y1="12" x2="16" y2="12" />
                       </svg>
-                      <span className="hidden sm:inline">{editLinkCopied ? t.copied : t.editLink}</span>
+                      <span className="hidden lg:inline">{editLinkCopied ? t.copied : t.editLink}</span>
                     </Button>
                   )}
                 </>
               ) : (
                 <SignInButton mode="modal">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    data-walkthrough="share-button"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                      <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
-                      <polyline points="10 17 15 12 10 7" />
-                      <line x1="15" y1="12" x2="3" y2="12" />
-                    </svg>
+                  <Button variant="secondary" size="sm" data-walkthrough="share-button">
                     Sign in to share
                   </Button>
                 </SignInButton>
@@ -348,216 +296,66 @@ export function Navbar(props: NavbarProps) {
           )}
           {isSharedView && isEditingUnlocked && (
             <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onReshare}
-                disabled={shareStatus === "copying"}
-                className="text-xs"
-              >
+              <Button variant="secondary" size="sm" onClick={onReshare} disabled={shareStatus === "copying"}>
                 {shareStatus === "copying" ? t.saving : shareStatus === "copied" ? (lastShareResult?.updated ? t.savedBang : t.copied) : shareStatus === "error" ? t.failed : t.reshare}
               </Button>
-              {/* Sign-in nudge / claim for editors */}
-              <Show when="signed-out">
+              {showSignIn && (
                 <SignInButton mode="modal">
-                  <button className="hidden md:inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold text-accent bg-accent-surface/60 border border-accent/20 rounded-lg hover:bg-accent-surface transition-all cursor-pointer">
+                  <button className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold text-accent bg-accent-surface/60 border border-accent/20 rounded-lg hover:bg-accent-surface transition-all cursor-pointer">
                     Sign in to save
                   </button>
                 </SignInButton>
-              </Show>
+              )}
             </>
           )}
 
-          {/* Gen theme selector (local draft & shared edit, large screens only) */}
-          {!isPresentationStyle && (isLocalDraft || (isSharedView && isEditingUnlocked)) && (
-            <div className={`hidden ${isSharedView && isEditingUnlocked ? "xl:flex" : "lg:flex"} items-center bg-surface-alt/50 rounded-lg p-1 gap-0.5`} title="Generation theme">
-              {GEN_THEMES.map((theme) => {
-                const isActive = genTheme === theme.id;
-                return (
-                  <button
-                    key={theme.id}
-                    type="button"
-                    onClick={() => onGenThemeChange(theme.id)}
-                    className={`group relative flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 cursor-pointer ${
-                      isActive ? "bg-surface scale-105" : "hover:bg-surface-alt"
-                    }`}
-                    style={isActive ? { boxShadow: `0 0 0 2px ${theme.badge}60, 0 2px 8px ${theme.badge}25` } : undefined}
-                    title={`${theme.label} (${theme.abbr})`}
-                    aria-label={`Set theme to ${theme.label}`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`https://play.pokemonshowdown.com/sprites/home/${theme.legendary}.png`}
-                      alt={theme.label}
-                      width={32}
-                      height={32}
-                      loading="lazy"
-                      className={`object-contain transition-all duration-200 ${
-                        isActive
-                          ? "scale-110"
-                          : "brightness-[0.5] grayscale opacity-60 group-hover:brightness-100 group-hover:grayscale-0 group-hover:opacity-90 group-hover:scale-105"
-                      }`}
-                      style={{
-                        maxWidth: 32,
-                        maxHeight: 32,
-                        ...(isActive ? { filter: `drop-shadow(0 0 8px ${theme.badge}90)` } : {}),
-                      }}
-                    />
-                    {isActive && (
-                      <span className="absolute -bottom-px left-1/2 -translate-x-1/2 h-[2.5px] w-5 rounded-full" style={{ backgroundColor: theme.badge }} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Auth */}
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <button className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all cursor-pointer">
-                Sign In
-              </button>
-            </SignInButton>
-          </Show>
-          <Show when="signed-in">
-            <NotificationBell enabled={true} />
-            <a href="/dashboard" className="hidden sm:inline text-xs font-bold text-text-secondary hover:text-accent transition-colors">Dashboard</a>
-            <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
-          </Show>
-
-          {/* Secondary controls — hidden on mobile behind overflow menu */}
-          <div className="hidden sm:flex items-center gap-2">
-            <a
-              href="/feedback"
-              className="p-2 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/60 transition-all"
-              title="Send Feedback"
-              aria-label="Send Feedback"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-              </svg>
-            </a>
-            <LanguageSelector />
-            <Toggle
-              checked={darkMode}
-              onChange={onDarkModeChange}
-              label={darkMode ? t.dark : t.light}
-            />
-          </div>
-
-          {/* Creator mode lock/unlock (local draft only) */}
+          {/* Creator mode toggle (local draft) */}
           {isLocalDraft && (
             <div data-walkthrough="creator-toggle">
               <Button
                 variant={creatorMode ? "secondary" : "ghost"}
                 size="sm"
                 onClick={() => onSetCreatorMode(!creatorMode)}
-                title={creatorMode ? "Lock editing (read-only)" : "Unlock editing"}
-                aria-label={creatorMode ? "Lock editing" : "Unlock editing"}
-                className={creatorMode
-                  ? "!bg-accent/15 !text-accent !border-accent/40 hover:!bg-accent/25"
-                  : ""
-                }
+                title={creatorMode ? "Lock editing" : "Unlock editing"}
+                className={creatorMode ? "!bg-accent/15 !text-accent !border-accent/40 hover:!bg-accent/25" : ""}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  {creatorMode
-                    ? <path d="M7 11V7a5 5 0 019.9-1" />
-                    : <path d="M7 11V7a5 5 0 0110 0v4" />
-                  }
+                  {creatorMode ? <path d="M7 11V7a5 5 0 019.9-1" /> : <path d="M7 11V7a5 5 0 0110 0v4" />}
                 </svg>
                 <span className="hidden sm:inline tracking-wide">{creatorMode ? t.editing : t.locked}</span>
               </Button>
             </div>
           )}
 
-          {/* Mobile overflow menu for secondary controls */}
-          <div className="sm:hidden relative" ref={mobileMenuRef}>
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
-              aria-label="More options"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="1" />
-                <circle cx="12" cy="5" r="1" />
-                <circle cx="12" cy="19" r="1" />
-              </svg>
-            </button>
-            {mobileMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-surface border border-border rounded-xl shadow-lg py-2 min-w-[200px] z-50 animate-fade-in">
-                <div className="px-4 py-3 flex items-center justify-between">
-                  <span className="text-sm font-bold text-text-secondary">{darkMode ? t.dark : t.light}</span>
-                  <Toggle checked={darkMode} onChange={(v) => { onDarkModeChange(v); setMobileMenuOpen(false); }} label="" />
-                </div>
-                <div className="border-t border-border mx-2" />
-                <div className="px-4 py-3">
-                  <LanguageSelector />
-                </div>
-                <div className="border-t border-border mx-2" />
-                <a
-                  href="/feedback"
-                  className="flex items-center gap-2.5 px-4 py-3 text-sm font-bold text-accent hover:bg-accent-surface/50 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                  </svg>
-                  Send Feedback
-                </a>
-              </div>
-            )}
-          </div>
-
-          {/* Present button (not in presentation mode) */}
-          {!isPresentationStyle && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => onSetPresentationMode(true)}
-              data-walkthrough="present-button"
-              aria-label="Start presentation"
-            >
+          {/* Present / Exit presentation */}
+          {!isPresentationStyle ? (
+            <Button variant="primary" size="sm" onClick={() => onSetPresentationMode(true)} data-walkthrough="present-button">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:hidden">
                 <polygon points="5,3 19,12 5,21" fill="currentColor" stroke="none" />
               </svg>
               <span className="hidden sm:inline">{t.present}</span>
             </Button>
-          )}
-
-          {/* Presentation mode: shortcuts + exit */}
-          {isPresentationStyle && (
+          ) : (
             <>
               <button
                 onClick={() => onShowShortcuts(true)}
                 className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer"
-                aria-label="Keyboard shortcuts"
                 title="Keyboard shortcuts (?)"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="4" width="20" height="16" rx="2" />
-                  <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
+                  <rect x="2" y="4" width="20" height="16" rx="2" /><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
                 </svg>
               </button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onSetPresentationMode(false)}
-                className="text-text-secondary hover:text-text-primary"
-              >
+              <Button variant="ghost" size="sm" onClick={() => onSetPresentationMode(false)}>
                 {t.exit}
               </Button>
             </>
           )}
 
-          {/* Build Your Own CTA (shared views only, not presentation, hide when editing to reduce clutter) */}
+          {/* Build Your Own (shared read-only views) */}
           {isSharedView && !isPresentationStyle && !isEditingUnlocked && (
-            <a
-              href="/"
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"
-            >
+            <a href="/" className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
               </svg>
@@ -565,6 +363,126 @@ export function Navbar(props: NavbarProps) {
               <span className="sm:hidden">Create</span>
             </a>
           )}
+
+          {/* ── Overflow menu (settings, auth, theme) ── */}
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+              aria-label="Settings"
+            >
+              {showUser ? (
+                <div className="w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center text-accent">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                  </svg>
+                </div>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
+                </svg>
+              )}
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl py-2 min-w-[240px] z-50 animate-fade-in">
+                {/* Account section */}
+                {showUser && (
+                  <>
+                    <div className="px-4 py-2.5 flex items-center gap-3">
+                      <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
+                      <div className="flex-1 min-w-0">
+                        <a href="/dashboard" className="text-sm font-bold text-text-primary hover:text-accent transition-colors" onClick={() => setMenuOpen(false)}>
+                          Dashboard
+                        </a>
+                      </div>
+                      <NotificationBell enabled={true} />
+                    </div>
+                    <div className="border-t border-border/50 mx-3 my-1" />
+                  </>
+                )}
+                {showSignIn && (
+                  <>
+                    <div className="px-4 py-2.5">
+                      <SignInButton mode="modal">
+                        <button
+                          className="w-full px-3 py-2 text-sm font-bold text-white bg-accent rounded-lg hover:brightness-110 transition-all cursor-pointer"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          Sign In
+                        </button>
+                      </SignInButton>
+                    </div>
+                    <div className="border-t border-border/50 mx-3 my-1" />
+                  </>
+                )}
+
+                {/* Dark mode */}
+                <div className="px-4 py-2.5 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-text-secondary">{darkMode ? t.dark : t.light} mode</span>
+                  <Toggle checked={darkMode} onChange={(v) => { onDarkModeChange(v); }} label="" />
+                </div>
+
+                {/* Language */}
+                <div className="px-4 py-2.5 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-text-secondary">Language</span>
+                  <LanguageSelector />
+                </div>
+
+                {/* Gen theme (only for drafts/editing) */}
+                {!isPresentationStyle && (isLocalDraft || (isSharedView && isEditingUnlocked)) && (
+                  <>
+                    <div className="border-t border-border/50 mx-3 my-1" />
+                    <div className="px-4 py-2.5">
+                      <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest mb-2 block">Theme</span>
+                      <div className="flex items-center gap-1">
+                        {GEN_THEMES.map((theme) => {
+                          const isActive = genTheme === theme.id;
+                          return (
+                            <button
+                              key={theme.id}
+                              type="button"
+                              onClick={() => { onGenThemeChange(theme.id); }}
+                              className={`relative flex items-center justify-center w-8 h-8 rounded-lg transition-all cursor-pointer ${
+                                isActive ? "bg-surface-alt scale-105" : "hover:bg-surface-alt/60 opacity-50 hover:opacity-90"
+                              }`}
+                              style={isActive ? { boxShadow: `0 0 0 2px ${theme.badge}60` } : undefined}
+                              title={theme.label}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={`https://play.pokemonshowdown.com/sprites/home/${theme.legendary}.png`}
+                                alt={theme.label}
+                                width={28}
+                                height={28}
+                                loading="lazy"
+                                className={`object-contain ${isActive ? "" : "grayscale"}`}
+                                style={{ maxWidth: 28, maxHeight: 28 }}
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Links */}
+                <div className="border-t border-border/50 mx-3 my-1" />
+                <a
+                  href="/feedback"
+                  className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                  </svg>
+                  Feedback
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
