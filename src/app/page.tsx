@@ -22,7 +22,7 @@ import { CollaboratorPanel } from "@/components/social/CollaboratorPanel";
 import { getSessionId } from "@/lib/utils/session-id";
 import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { I18nProvider } from "@/lib/i18n";
-import { SignInButton, useAuth } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
 const ShareModal = dynamic(() => import("@/components/ui/ShareModal").then(m => ({ default: m.ShareModal })));
@@ -288,15 +288,20 @@ function HomeContent() {
           <div>
             <h2 className="text-lg font-bold text-text-primary">You&apos;ve been invited to collaborate</h2>
             <p className="text-sm text-text-secondary mt-1.5 leading-relaxed">
-              Sign in to edit this team report. Your changes will sync in real time with the owner.
+              Create an account or sign in to edit this team report. Your changes will sync in real time with the owner.
             </p>
           </div>
+          <SignUpButton mode="modal">
+            <button className="w-full px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 transition-all cursor-pointer shadow-md shadow-accent/25">
+              Sign up to collaborate
+            </button>
+          </SignUpButton>
           <SignInButton mode="modal">
-            <button className="px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 transition-all cursor-pointer shadow-md shadow-accent/25">
-              Sign in to collaborate
+            <button className="text-sm font-semibold text-text-secondary hover:text-accent transition-colors cursor-pointer">
+              Already have an account? Sign in
             </button>
           </SignInButton>
-          <a href="/" className="text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors">
+          <a href="/" className="text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors mt-1">
             or go to home page
           </a>
         </div>
