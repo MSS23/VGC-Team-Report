@@ -265,10 +265,18 @@ export function useHomePage() {
 
   useEffect(() => {
     if (!share.sharedState) return;
+    // Start read-only; creator mode activates once edit access is confirmed
     setCreatorMode(false);
     setPaste(share.sharedState.paste);
     parseTeam(share.sharedState.paste);
   }, [share.sharedState, setPaste, parseTeam, setCreatorMode]);
+
+  // Auto-enable creator mode when editing is unlocked (owner or edit key)
+  useEffect(() => {
+    if (share.isEditingUnlocked) {
+      setCreatorMode(true);
+    }
+  }, [share.isEditingUnlocked, setCreatorMode]);
 
   useEffect(() => {
     if (!share.sharedState || !analysis || hasHydrated.current) return;
