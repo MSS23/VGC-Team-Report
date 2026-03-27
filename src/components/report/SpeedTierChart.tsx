@@ -6,7 +6,10 @@ import { PokemonSprite } from "./PokemonSprite";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
 
-// Lazy-load defensive coverage chart (only rendered on the analysis slide)
+// Lazy-load coverage charts (only rendered on the analysis slide)
+const OffensiveCoverageChart = dynamic(() => import("./OffensiveCoverageChart").then(m => ({ default: m.OffensiveCoverageChart })), {
+  loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-48" />,
+});
 const DefensiveCoverageChart = dynamic(() => import("./DefensiveCoverageChart").then(m => ({ default: m.DefensiveCoverageChart })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-48" />,
 });
@@ -177,6 +180,11 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           </span>
         </div>
       </div>
+
+      <hr className="border-border" />
+
+      {/* Offensive Coverage Heatmap */}
+      <OffensiveCoverageChart pokemon={pokemon} />
 
       <hr className="border-border" />
 
