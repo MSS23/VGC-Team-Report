@@ -8,6 +8,7 @@ import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { getSessionId } from "@/lib/utils/session-id";
 import { PageNavbar } from "@/components/layout/PageNavbar";
 import { PageFooter } from "@/components/layout/PageFooter";
+import { SignInButton, useAuth } from "@clerk/nextjs";
 
 const TYPES = [
   { value: "feature", label: "Feature Request", icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5", color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20", activeColor: "border-emerald-500/50 bg-emerald-500/15 shadow-emerald-500/10" },
@@ -53,6 +54,7 @@ export function FeedbackContent() {
 
 function FeedbackInner() {
   const { darkMode, setDarkMode } = useDarkMode();
+  const { isLoaded, isSignedIn } = useAuth();
   useEffect(() => { applyRandomAccent(); }, []);
 
   const [type, setType] = useState<string>("feature");
@@ -113,7 +115,29 @@ function FeedbackInner() {
       <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="feedback" />
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14 pb-24 sm:pb-14">
-        {submitted ? (
+        {/* Sign-in required gate */}
+        {isLoaded && !isSignedIn ? (
+          <motion.div
+            className="text-center py-16"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-5">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight mb-2">Sign in to give feedback</h1>
+            <p className="text-sm text-text-secondary mb-6 max-w-sm mx-auto leading-relaxed">
+              We require sign-in so we can follow up on your feedback and keep submissions high quality.
+            </p>
+            <SignInButton mode="modal">
+              <button className="px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide">
+                Sign in
+              </button>
+            </SignInButton>
+          </motion.div>
+        ) : submitted ? (
           <motion.div
             className="text-center py-16"
             initial={{ opacity: 0, scale: 0.95 }}

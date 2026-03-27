@@ -97,6 +97,10 @@ export async function ensureTable() {
     )
   `);
 
+  // Feedback submitter tracking
+  await run(sql`ALTER TABLE feedback ADD COLUMN IF NOT EXISTS submitter_id TEXT`);
+  await run(sql`ALTER TABLE feedback ADD COLUMN IF NOT EXISTS submitter_name TEXT`);
+
   // User-owned reports: links Clerk user ID to share edit tokens
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS owner_id TEXT`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_owner ON shares(owner_id) WHERE owner_id IS NOT NULL`);

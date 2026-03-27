@@ -2,6 +2,8 @@ import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/utils/sanitize";
 import { containsBlockedWords } from "@/lib/utils/word-filter";
+import { createLinearIssue } from "@/lib/linear";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -22,7 +24,7 @@ const TYPE_COLOR: Record<string, number> = {
 const FeedbackBody = z.object({
   type: z.enum(["feature", "bug", "improvement", "other"]),
   title: z.string().min(3).max(200),
-  description: z.string().min(3).max(2000),
+  description: z.string().min(10).max(2000),
   device: z.string().max(100).optional(),
   browser: z.string().max(100).optional(),
   screenSize: z.string().max(50).optional(),
@@ -30,16 +32,13 @@ const FeedbackBody = z.object({
   sessionId: z.string().optional(),
 });
 
-async function sendDiscordNotification(data: z.infer<typeof FeedbackBody>) {
-  // Read env var at call time, not module init time (serverless compatibility)
+async function sendDiscordNotification(data: z.infer<typeof FeedbackBody>, submitterName: string, linearUrl?: string) {
   const webhookUrl = process.env.DISCORD_FEEDBACK_WEBHOOK;
-  if (!webhookUrl) {
-    console.warn("DISCORD_FEEDBACK_WEBHOOK not set, skipping notification");
-    return;
-  }
+  if (!webhookUrl) return;
 
   const fields = [
     { name: "Description", value: data.description.slice(0, 1024), inline: false },
+    { name: "Submitted by", value: submitterName, inline: true },
   ];
   if (data.device || data.browser || data.screenSize) {
     fields.push({
@@ -53,10 +52,13 @@ async function sendDiscordNotification(data: z.infer<typeof FeedbackBody>) {
     });
   }
   if (data.contact) {
-    fields.push({ name: "Contact", value: data.contact, inline: false });
+    fields.push({ name: "Contact", value: data.contact, inline: true });
+  }
+  if (linearUrl) {
+    fields.push({ name: "Linear", value: `[View issue](${linearUrl})`, inline: true });
   }
 
-  const res = await fetch(webhookUrl, {
+  await fetch(webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -68,17 +70,19 @@ async function sendDiscordNotification(data: z.infer<typeof FeedbackBody>) {
         timestamp: new Date().toISOString(),
       }],
     }),
-  });
-
-  if (!res.ok) {
-    console.error("Discord webhook error:", res.status, await res.text().catch(() => ""));
-  }
+  }).catch((e) => console.error("Discord webhook error:", e));
 }
 
 export async function POST(request: Request) {
   try {
+    // Require authentication
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Sign in to submit feedback" }, { status: 401 });
+    }
+
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`feedback:${ip}`, 3, 60_000)) {
+    if (isRateLimited(`feedback:${userId}`, 3, 60_000)) {
       return NextResponse.json({ error: "Too many submissions. Please wait a minute." }, { status: 429 });
     }
 
@@ -90,26 +94,50 @@ export async function POST(request: Request) {
 
     const { type, title: rawTitle, description: rawDescription, device, browser, screenSize, contact, sessionId } = parsed.data;
 
-    // Sanitize user-generated text
     const title = escapeHtml(rawTitle);
     const description = escapeHtml(rawDescription);
 
-    // Check for inappropriate content
     if (containsBlockedWords(rawTitle) || containsBlockedWords(rawDescription)) {
       return NextResponse.json({ error: "Submission contains inappropriate language" }, { status: 400 });
     }
 
+    // Get the user's real name from Clerk
+    const user = await currentUser();
+    const submitterName = user?.firstName
+      ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
+      : user?.username ?? "Unknown User";
+    const submitterEmail = user?.emailAddresses?.[0]?.emailAddress ?? undefined;
+
     const sql = getDb();
 
-    // Save to database
+    // Save to database with user info
     await sql`
-      INSERT INTO feedback (type, title, description, device, browser, screen_size, contact, session_id)
-      VALUES (${type}, ${title}, ${description}, ${device ?? null}, ${browser ?? null}, ${screenSize ?? null}, ${contact ?? null}, ${sessionId ?? null})
+      INSERT INTO feedback (type, title, description, device, browser, screen_size, contact, session_id, submitter_id, submitter_name)
+      VALUES (${type}, ${title}, ${description}, ${device ?? null}, ${browser ?? null}, ${screenSize ?? null}, ${contact ?? null}, ${sessionId ?? null}, ${userId}, ${submitterName})
     `;
 
-    // Send Discord notification (awaited so errors are logged)
+    // Create Linear issue (fire-and-forget, non-blocking)
+    let linearUrl: string | undefined;
     try {
-      await sendDiscordNotification(parsed.data);
+      const issue = await createLinearIssue({
+        type,
+        title: rawTitle,
+        description: rawDescription,
+        submitterName,
+        submitterEmail,
+        device,
+        browser,
+        screenSize,
+        contact,
+      });
+      if (issue) linearUrl = issue.url;
+    } catch (e) {
+      console.error("Linear issue creation failed:", e);
+    }
+
+    // Send Discord notification with submitter name and Linear link
+    try {
+      await sendDiscordNotification(parsed.data, submitterName, linearUrl);
     } catch (e) {
       console.error("Discord notification failed:", e);
     }
