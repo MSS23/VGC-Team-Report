@@ -191,14 +191,10 @@ export function useShareUrl() {
         activeShareIdRef.current = id;
         setLastShareResult({ updated, editUrl, publicUrl });
       } catch {
-        const encoded = await encodeShareState(state);
-        publicUrl = `${window.location.origin}${window.location.pathname}#data=${encoded}`;
-        if (publicUrl.length > 10000) {
-          setUrlWarning(
-            `Share URL is very long (${Math.round(publicUrl.length / 1000)}KB). Some browsers may truncate it.`
-          );
-        }
-        setLastShareResult({ updated: false, publicUrl });
+        setShareStatus("error");
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => setShareStatus("idle"), 3000);
+        return;
       }
 
       await navigator.clipboard.writeText(publicUrl);
