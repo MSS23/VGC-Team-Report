@@ -65,6 +65,7 @@ export function useShareUrl() {
   const [urlWarning, setUrlWarning] = useState<string | null>(null);
   const [decodeFailed, setDecodeFailed] = useState(false);
   const [isEditingUnlocked, setIsEditingUnlocked] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [fetchedIsPublic, setFetchedIsPublic] = useState<boolean | null>(null);
   const [lastShareResult, setLastShareResult] = useState<{
     updated: boolean;
@@ -116,12 +117,13 @@ export function useShareUrl() {
           if (!data) return settle(null);
           const editable = data._editable === true;
           if (data._isPublic !== undefined) setFetchedIsPublic(!!data._isPublic);
-          // The API returns _editToken for owners viewing their own reports without ?key=
+          if (data._isOwner !== undefined) setIsOwner(!!data._isOwner);
+          // The API returns _editToken for owners/collaborators
           const ownerEditToken = data._editToken as string | undefined;
           // Strip internal flags before treating as ShareableState
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { _editable, _isPublic: _ip, _editToken: _et, ...state } = data;
-          // Set active edit session — either via edit key in URL or owner token from API
+          const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, ...state } = data;
+          // Set active edit session — either via edit key in URL or token from API
           const resolvedToken = editKeyFromUrl ?? ownerEditToken;
           if (editable && resolvedToken) {
             activeEditTokenRef.current = resolvedToken;
@@ -316,6 +318,7 @@ export function useShareUrl() {
     decodeFailed,
     exitSharedView,
     isEditingUnlocked,
+    isOwner,
     lastShareResult,
     getEditUrl,
     hasExistingShare,

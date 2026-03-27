@@ -383,6 +383,7 @@ export function useHomePage() {
     decodeFailed: share.decodeFailed,
     exitSharedView: share.exitSharedView,
     isEditingUnlocked: share.isEditingUnlocked,
+    isOwner: share.isOwner,
     lastShareResult: share.lastShareResult,
     hasExistingShare: share.hasExistingShare,
     showEditUrl: share.showEditUrl,

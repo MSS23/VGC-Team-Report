@@ -18,6 +18,7 @@ import { ViewCount } from "@/components/social/ViewCount";
 import { SaveButton } from "@/components/social/SaveButton";
 import { ClaimButton } from "@/components/social/ClaimButton";
 import { EditChangelog } from "@/components/social/EditChangelog";
+import { CollaboratorPanel } from "@/components/social/CollaboratorPanel";
 import { getSessionId } from "@/lib/utils/session-id";
 import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { I18nProvider } from "@/lib/i18n";
@@ -64,6 +65,7 @@ function HomeContent() {
     decodeFailed,
     exitSharedView,
     isEditingUnlocked,
+    isOwner,
     lastShareResult,
     hasExistingShare,
     showEditUrl,
@@ -513,9 +515,10 @@ function HomeContent() {
         </div>
       )}
 
-      {/* Edit changelog for collaborative editing (editors only) */}
+      {/* Collaborator management (owner only) + Edit changelog (all editors) */}
       {isSharedView && isEditingUnlocked && activeShareId && (
         <div className="max-w-7xl mx-auto px-2 sm:px-4">
+          {isOwner && <CollaboratorPanel shareId={activeShareId} />}
           <EditChangelog shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
         </div>
       )}

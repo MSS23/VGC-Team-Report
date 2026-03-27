@@ -168,23 +168,35 @@ export async function GET(
       userId = uid;
     } catch { /* not authenticated */ }
 
-    // If the user is the owner, grant full edit access (same as having the edit key)
+    // If the user is the owner or a collaborator, grant edit access
     if (userId) {
       const ownerRows = await sql`
         SELECT data, edit_token, COALESCE(version, 1) AS version, is_public, owner_id
         FROM shares WHERE id = ${id} AND deleted_at IS NULL
       `;
-      if (ownerRows.length > 0 && ownerRows[0].owner_id === userId) {
-        if (sinceVersion && Number(sinceVersion) >= Number(ownerRows[0].version)) {
-          return new Response(null, { status: 304 });
+      if (ownerRows.length > 0) {
+        const isOwner = ownerRows[0].owner_id === userId;
+        let isCollaborator = false;
+        if (!isOwner) {
+          const collabRows = await sql`
+            SELECT 1 FROM collaborators WHERE share_id = ${id} AND user_id = ${userId}
+          `;
+          isCollaborator = collabRows.length > 0;
         }
-        return NextResponse.json({
-          ...normalizeReportData(ownerRows[0].data as Record<string, unknown>),
-          _editable: true,
-          _editToken: ownerRows[0].edit_token as string,
-          _version: Number(ownerRows[0].version),
-          _isPublic: !!ownerRows[0].is_public,
-        });
+
+        if (isOwner || isCollaborator) {
+          if (sinceVersion && Number(sinceVersion) >= Number(ownerRows[0].version)) {
+            return new Response(null, { status: 304 });
+          }
+          return NextResponse.json({
+            ...normalizeReportData(ownerRows[0].data as Record<string, unknown>),
+            _editable: true,
+            _editToken: ownerRows[0].edit_token as string,
+            _version: Number(ownerRows[0].version),
+            _isPublic: !!ownerRows[0].is_public,
+            _isOwner: isOwner,
+          });
+        }
       }
     }
 

@@ -180,6 +180,20 @@ export async function ensureTable() {
     WHERE search_vector IS NULL AND is_public = TRUE AND deleted_at IS NULL
   `);
 
+  // Collaborators (co-editors for shared reports)
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS collaborators (
+      share_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      user_name TEXT NOT NULL,
+      added_by TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (share_id, user_id)
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_collaborators_user ON collaborators(user_id)`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_collaborators_share ON collaborators(share_id)`);
+
   // Edit changelog for collaborative editing
   await run(sql`
     CREATE TABLE IF NOT EXISTS edit_changelog (

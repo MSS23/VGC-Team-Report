@@ -30,10 +30,11 @@ function DashboardInner() {
   const { user, isLoaded } = useUser();
   useEffect(() => { applyRandomAccent(); }, []);
 
-  const [tab, setTab] = useState<"my" | "saved" | "feed" | "trash">("my");
+  const [tab, setTab] = useState<"my" | "saved" | "feed" | "collab" | "trash">("my");
   const [myReports, setMyReports] = useState<DashboardReport[]>([]);
   const [savedReports, setSavedReports] = useState<ExploreReport[]>([]);
   const [feedReports, setFeedReports] = useState<ExploreReport[]>([]);
+  const [collabReports, setCollabReports] = useState<ExploreReport[]>([]);
   const [trashReports, setTrashReports] = useState<DashboardReport[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +47,7 @@ function DashboardInner() {
   useEffect(() => {
     if (!user) return;
     setLoading(true);
-    const endpoint = tab === "my" ? "/api/user/reports" : tab === "trash" ? "/api/user/reports?trash=1" : tab === "feed" ? "/api/user/feed" : "/api/user/saved";
+    const endpoint = tab === "my" ? "/api/user/reports" : tab === "trash" ? "/api/user/reports?trash=1" : tab === "feed" ? "/api/user/feed" : tab === "collab" ? "/api/user/collaborations" : "/api/user/saved";
     fetch(endpoint)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -54,6 +55,7 @@ function DashboardInner() {
           if (tab === "my") setMyReports(data.reports);
           else if (tab === "trash") setTrashReports(data.reports);
           else if (tab === "feed") setFeedReports(data.reports);
+          else if (tab === "collab") setCollabReports(data.reports);
           else setSavedReports(data.reports);
         }
         setLoading(false);
@@ -226,7 +228,7 @@ function DashboardInner() {
             {/* Tabs + Sort */}
             <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
             <div className="flex items-center gap-1 p-1 bg-surface-alt/50 rounded-xl w-fit">
-              {(["my", "saved", "feed", "trash"] as const).map((t) => (
+              {(["my", "saved", "feed", "collab", "trash"] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
@@ -237,7 +239,7 @@ function DashboardInner() {
                       : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  {t === "my" ? "My Reports" : t === "feed" ? "Feed" : t === "trash" ? "Trash" : "Saved"}
+                  {t === "my" ? "My Reports" : t === "feed" ? "Feed" : t === "collab" ? "Shared with me" : t === "trash" ? "Trash" : "Saved"}
                 </button>
               ))}
             </div>
@@ -395,6 +397,12 @@ function DashboardInner() {
                     </a>
                   </div>
                 )}
+                {tab === "collab" && collabReports.length === 0 && (
+                  <div className="text-center py-16">
+                    <p className="text-sm text-text-secondary mb-2">No shared reports yet.</p>
+                    <p className="text-xs text-text-tertiary max-w-sm mx-auto">When someone invites you to collaborate on a team report, it will appear here.</p>
+                  </div>
+                )}
                 {tab === "trash" && trashReports.length === 0 && (
                   <div className="text-center py-16">
                     <p className="text-sm text-text-secondary mb-2">Trash is empty.</p>
@@ -443,6 +451,10 @@ function DashboardInner() {
                       ))
                     : tab === "feed"
                     ? feedReports.map((report) => (
+                        <ReportCard key={report.id} report={report} />
+                      ))
+                    : tab === "collab"
+                    ? collabReports.map((report) => (
                         <ReportCard key={report.id} report={report} />
                       ))
                     : null

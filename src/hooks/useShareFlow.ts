@@ -17,7 +17,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
   const {
     isSharedView, isSharePending, sharedState, shareId: activeShareId,
     editKeyFromUrl, copyShareUrl, freshShare, autoSave, shareStatus,
-    urlWarning, decodeFailed, exitSharedView, isEditingUnlocked,
+    urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, isOwner,
     lastShareResult, getEditUrl, hasExistingShare, clearStoredShare,
     fetchedIsPublic, autoSaveStatus,
   } = useShareUrl();
@@ -95,7 +95,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
 
   return {
     isSharedView, isSharePending, sharedState, activeShareId, editKeyFromUrl,
-    shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked,
+    shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, isOwner,
     lastShareResult, hasExistingShare, clearStoredShare,
     showEditUrl, setShowEditUrl, editLinkCopied, shareButtonText,
     handleShareClick, handleReshare, handleCopyEditLink, handleFreshReshare,

@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 
-export type NotificationType = "comment" | "reaction" | "new_report";
+export type NotificationType = "comment" | "reaction" | "new_report" | "collab_invite";
 
 /**
  * Create a notification for a single user.
