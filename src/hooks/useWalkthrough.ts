@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
 export interface WalkthroughStep {
   target: string | null; // data-walkthrough value, or null for centered (no spotlight)
@@ -169,14 +169,18 @@ interface UseWalkthroughOptions {
   /** Total number of physical slides (including hidden ones). Used to resolve matchup-sheet index. */
   totalPhysicalSlides?: number;
   isSharedView?: boolean;
+  /** Called when walkthrough starts/stops to enable creator mode during the tour */
+  onCreatorModeChange?: (enabled: boolean) => void;
+  creatorMode?: boolean;
   /** Maps physical slide index → virtual index (for hidden slide support). If not provided, assumes 1:1 mapping. */
   physicalToVirtual?: (physicalIndex: number) => number | null;
 }
 
-export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount, totalPhysicalSlides, isSharedView, physicalToVirtual }: UseWalkthroughOptions) {
+export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount, totalPhysicalSlides, isSharedView, onCreatorModeChange, creatorMode, physicalToVirtual }: UseWalkthroughOptions) {
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
+  const creatorModeBeforeTour = useRef<boolean | null>(null);
 
   // Pick a random pokemon index (stable per session)
   const [randomPokemonIndex] = useState(() =>
@@ -242,6 +246,18 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     }
   }, [isActive, currentStepIndex, filteredSteps, goToSlide, resolveSlide, physicalToVirtual]);
 
+  // Restore creator mode when walkthrough ends
+  const endTour = useCallback(() => {
+    setIsActive(false);
+    setSeenFlag();
+    // Restore creator mode to what it was before the tour
+    if (creatorModeBeforeTour.current !== null && onCreatorModeChange) {
+      onCreatorModeChange(creatorModeBeforeTour.current);
+      creatorModeBeforeTour.current = null;
+    }
+    goToSlide?.(0);
+  }, [goToSlide, onCreatorModeChange]);
+
   // Auto-skip steps whose target element doesn't exist in the DOM.
   // Uses retries because slide navigation + React render can take a few frames.
   useEffect(() => {
@@ -283,9 +299,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
       }
 
       if (nextIdx >= filteredSteps.length) {
-        setIsActive(false);
-        setSeenFlag();
-        goToSlide?.(0);
+        endTour();
       } else {
         setCurrentStepIndex(nextIdx);
       }
@@ -298,7 +312,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
       cancelled = true;
       if (timerId !== null) clearTimeout(timerId);
     };
-  }, [isActive, currentStepIndex, filteredSteps, isStepAvailable, goToSlide]);
+  }, [isActive, currentStepIndex, filteredSteps, isStepAvailable, goToSlide, endTour]);
 
   // Interpolate {{pokemon}} in the current step
   const currentStep = useMemo(() => {
@@ -321,6 +335,11 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
 
     const timer = setTimeout(() => {
       setHasAutoTriggered(true);
+      // Enable creator mode for the tour so all targets exist
+      if (!isSharedView && onCreatorModeChange) {
+        creatorModeBeforeTour.current = creatorMode ?? false;
+        onCreatorModeChange(true);
+      }
       setIsActive(true);
       setCurrentStepIndex(0);
     }, 400);
@@ -330,28 +349,25 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
 
   const next = useCallback(() => {
     if (currentStepIndex < filteredSteps.length - 1) {
-      // Advance to next step — the auto-skip effect will handle
-      // skipping over unavailable targets after the DOM settles
       setCurrentStepIndex((i) => i + 1);
     } else {
-      // Finished
-      setIsActive(false);
-      setSeenFlag();
-      // Navigate back to overview
-      goToSlide?.(0);
+      endTour();
     }
-  }, [currentStepIndex, filteredSteps.length, goToSlide]);
+  }, [currentStepIndex, filteredSteps.length, endTour]);
 
   const skip = useCallback(() => {
-    setIsActive(false);
-    setSeenFlag();
-    goToSlide?.(0);
-  }, [goToSlide]);
+    endTour();
+  }, [endTour]);
 
   const start = useCallback(() => {
     setCurrentStepIndex(0);
+    // Enable creator mode for the tour so all targets exist
+    if (!isSharedView && onCreatorModeChange) {
+      creatorModeBeforeTour.current = creatorMode ?? false;
+      onCreatorModeChange(true);
+    }
     setIsActive(true);
-  }, []);
+  }, [isSharedView, onCreatorModeChange, creatorMode]);
 
   return {
     isActive: isActive && enabled,

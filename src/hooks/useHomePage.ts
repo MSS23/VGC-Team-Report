@@ -19,6 +19,7 @@ import { SAMPLE_PASTE } from "@/components/input/PasteInput";
 import { useTranslation } from "@/lib/i18n";
 import { getTemplate } from "@/lib/templates";
 import type { SpriteConfig } from "@/lib/types/sprites";
+import { detectArchetypes } from "@/lib/analysis/detect-archetype";
 
 export function useHomePage() {
   const { t } = useTranslation();
@@ -65,8 +66,8 @@ export function useHomePage() {
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
-    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId,
-    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull,
+    roles, spreadNotes, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId,
+    setRole, setSpreadNote, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull,
   } = useTeamMeta(speciesKeys, shouldPersist);
   const {
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
@@ -108,7 +109,7 @@ export function useHomePage() {
     if (!snapshot) return;
     setNotesFull(snapshot.notes);
     setCalcsFull(snapshot.calcs);
-    setMetaFull({ roles: snapshot.roles, summary: snapshot.summary });
+    setMetaFull({ roles: snapshot.roles, spreadNotes: {}, summary: snapshot.summary });
     setPlansFull(snapshot.plans);
     undoRedo.doneRestoring();
   }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull]);
@@ -118,7 +119,7 @@ export function useHomePage() {
     if (!snapshot) return;
     setNotesFull(snapshot.notes);
     setCalcsFull(snapshot.calcs);
-    setMetaFull({ roles: snapshot.roles, summary: snapshot.summary });
+    setMetaFull({ roles: snapshot.roles, spreadNotes: {}, summary: snapshot.summary });
     setPlansFull(snapshot.plans);
     undoRedo.doneRestoring();
   }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull]);
@@ -134,6 +135,7 @@ export function useHomePage() {
     notes,
     calcs,
     roles,
+    spreadNotes: Object.keys(spreadNotes).length > 0 ? spreadNotes : undefined,
     teamSummary: summary,
     tournamentName: tournamentName || undefined,
     placement: placement || undefined,
@@ -155,7 +157,7 @@ export function useHomePage() {
     hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
     tags: tags && (tags.archetype?.length || tags.regulation || tags.eventType) ? tags : undefined,
     templateId: templateId || undefined,
-  }), [paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId]);
+  }), [paste, notes, calcs, roles, spreadNotes, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId]);
 
   // ── Share flow (extracted) ───────────────────────────────────────
   const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t: t as unknown as Record<string, string> });
@@ -204,6 +206,8 @@ export function useHomePage() {
     pokemonCount: analysis?.pokemon.length ?? 0,
     totalPhysicalSlides: slides.allSlideKeys.length,
     isSharedView: share.isSharedView,
+    onCreatorModeChange: setCreatorMode,
+    creatorMode,
     physicalToVirtual: useCallback((physical: number) => {
       const idx = slides.visibleIndices.indexOf(physical);
       return idx === -1 ? null : idx;
@@ -227,6 +231,7 @@ export function useHomePage() {
     setCalcsFull(share.sharedState.calcs ?? {});
     setMetaFull({
       roles: share.sharedState.roles ?? {},
+      spreadNotes: share.sharedState.spreadNotes ?? {},
       summary: share.sharedState.teamSummary ?? "",
       tournamentName: share.sharedState.tournamentName ?? undefined,
       placement: share.sharedState.placement ?? undefined,
@@ -269,6 +274,18 @@ export function useHomePage() {
       setSummary(tmpl.defaults.summaryPlaceholder);
     }
   }, [analysis, share.isSharedView, pendingTemplateId, setTemplateId, summary, setSummary]);
+
+  // ── Auto-detect archetypes when analysis appears (if no tags set) ──
+  const archetypeDetected = useRef(false);
+  useEffect(() => {
+    if (!analysis || share.isSharedView || archetypeDetected.current) return;
+    if (tags?.archetype && tags.archetype.length > 0) return; // user already set tags
+    archetypeDetected.current = true;
+    const detected = detectArchetypes(analysis.pokemon);
+    if (detected.length > 0) {
+      setTags({ ...tags, archetype: detected });
+    }
+  }, [analysis, share.isSharedView, tags, setTags]);
 
   // ── Actions ──────────────────────────────────────────────────────
   const handleAnalyze = (directPaste?: string) => {
@@ -333,7 +350,7 @@ export function useHomePage() {
 
     // Team content
     notes, setNote, calcs, addCalc, removeCalc, editCalc,
-    roles, setRole, summary, setSummary,
+    roles, setRole, spreadNotes, setSpreadNote, summary, setSummary,
     tournamentName, setTournamentName, placement, setPlacement,
     record, setRecord, mvpIndex, setMvpIndex,
     rentalCode, setRentalCode, creatorName, setCreatorName, tags, setTags, templateId, setTemplateId,
