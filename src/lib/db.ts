@@ -179,4 +179,18 @@ export async function ensureTable() {
       setweight(to_tsvector('english', COALESCE(data->>'teamSummary', '')), 'C')
     WHERE search_vector IS NULL AND is_public = TRUE AND deleted_at IS NULL
   `);
+
+  // Edit changelog for collaborative editing
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS edit_changelog (
+      id SERIAL PRIMARY KEY,
+      share_id TEXT NOT NULL,
+      version INTEGER NOT NULL,
+      editor_id TEXT,
+      editor_name TEXT,
+      sections JSONB NOT NULL DEFAULT '[]',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_edit_changelog_share ON edit_changelog(share_id, version DESC)`);
 }
