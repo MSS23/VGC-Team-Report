@@ -1,10 +1,30 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
+
+/** Migrate old calc entries that may be stored as plain strings to {text, category} objects */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function migrateCalcEntries(rawCalcs: any): Record<string, Array<{ text: string; category: string }>> {
+  if (!rawCalcs || typeof rawCalcs !== "object") return {};
+  const result: Record<string, Array<{ text: string; category: string }>> = {};
+  for (const [key, entries] of Object.entries(rawCalcs)) {
+    if (!Array.isArray(entries)) continue;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    result[key] = (entries as any[]).map((entry) => {
+      if (typeof entry === "string") return { text: entry, category: "offensive" };
+      if (entry && typeof entry === "object" && "text" in entry) {
+        return { text: entry.text ?? "", category: entry.category ?? "offensive" };
+      }
+      return { text: String(entry), category: "offensive" };
+    });
+  }
+  return result;
+}
 const KeySchema = z.string().regex(/^[0-9a-f]{64}$/, "Invalid edit key");
 
 /**
@@ -65,8 +85,9 @@ function normalizeReportData(data: Record<string, any>): Record<string, any> {
     ...data,
     paste: data.paste ?? "",
     notes: data.notes ?? {},
-    calcs: data.calcs ?? {},
+    calcs: migrateCalcEntries(data.calcs),
     roles: data.roles ?? {},
+    spreadNotes: data.spreadNotes ?? {},
     teamSummary: data.teamSummary ?? "",
     tournamentName: data.tournamentName ?? undefined,
     placement: data.placement ?? undefined,
@@ -75,6 +96,7 @@ function normalizeReportData(data: Record<string, any>): Record<string, any> {
     rentalCode: data.rentalCode ?? undefined,
     creatorName: data.creatorName ?? undefined,
     matchupPlans,
+    spriteSettings: data.spriteSettings ?? undefined,
     hiddenSlides: Array.isArray(data.hiddenSlides) ? data.hiddenSlides : [],
     allowComments: data.allowComments ?? false,
     tags: data.tags ?? undefined,
@@ -139,7 +161,34 @@ export async function GET(
       });
     }
 
-    // Public access — read-only, no edit info leaked
+    // Public access — check if the signed-in user is the owner
+    let userId: string | null = null;
+    try {
+      const { userId: uid } = await auth();
+      userId = uid;
+    } catch { /* not authenticated */ }
+
+    // If the user is the owner, grant full edit access (same as having the edit key)
+    if (userId) {
+      const ownerRows = await sql`
+        SELECT data, edit_token, COALESCE(version, 1) AS version, is_public, owner_id
+        FROM shares WHERE id = ${id} AND deleted_at IS NULL
+      `;
+      if (ownerRows.length > 0 && ownerRows[0].owner_id === userId) {
+        if (sinceVersion && Number(sinceVersion) >= Number(ownerRows[0].version)) {
+          return new Response(null, { status: 304 });
+        }
+        return NextResponse.json({
+          ...normalizeReportData(ownerRows[0].data as Record<string, unknown>),
+          _editable: true,
+          _editToken: ownerRows[0].edit_token as string,
+          _version: Number(ownerRows[0].version),
+          _isPublic: !!ownerRows[0].is_public,
+        });
+      }
+    }
+
+    // Non-owner public access — read-only, no edit info leaked
     // Check cache first for public reads (skip if polling for version changes)
     if (!sinceVersion) {
       const cached = await cacheGet<Record<string, unknown>>(CacheKeys.share(id));

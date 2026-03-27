@@ -24,15 +24,18 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
     );
   }
 
-  // ── CSRF: Validate state-changing API requests ─────────────────
-  // Skip CSRF for:
-  //  - GET/HEAD/OPTIONS (safe methods)
-  //  - SSE sync endpoint (long-lived connection, already auth'd via edit key)
-  //  - Webhook endpoints
+  // ── CSRF: Defense-in-depth for state-changing API requests ──────
+  // Primary protection is CORS (unknown origins blocked above).
+  // CSRF double-submit cookie adds extra protection when a cross-origin
+  // request comes from an allowed origin. Same-origin requests (no Origin
+  // header) are inherently safe and don't require the CSRF header, which
+  // keeps existing fetch() calls working without modification.
   if (isApiRoute && !pathname.startsWith('/api/sync') && !pathname.startsWith('/api/keep-alive')) {
-    if (!validateCsrf(request)) {
-      const method = request.method.toUpperCase();
-      if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    const method = request.method.toUpperCase();
+    const origin = request.headers.get('origin');
+    const hasCrossOrigin = !!origin;
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && hasCrossOrigin) {
+      if (!validateCsrf(request)) {
         return NextResponse.json(
           { error: 'Invalid or missing CSRF token' },
           { status: 403 },

@@ -17,6 +17,29 @@ function buildCalcsKey(speciesKeys: string[]): string {
 /** Per-Pokémon array of notable calc entries. */
 export type DamageCalcsMap = Record<string, CalcEntry[]>;
 
+/** Migrate old calc entries that may be plain strings to CalcEntry objects */
+function migrateCalcs(raw: unknown): DamageCalcsMap {
+  if (!raw || typeof raw !== "object") return {};
+  const result: DamageCalcsMap = {};
+  for (const [key, entries] of Object.entries(raw as Record<string, unknown>)) {
+    if (!Array.isArray(entries)) continue;
+    result[key] = entries.map((entry: unknown) => {
+      if (typeof entry === "string") {
+        return { text: entry, category: "offensive" as CalcCategory };
+      }
+      if (entry && typeof entry === "object" && "text" in entry) {
+        const e = entry as Record<string, unknown>;
+        return {
+          text: String(e.text ?? ""),
+          category: (["offensive", "defensive", "speed"].includes(e.category as string) ? e.category : "offensive") as CalcCategory,
+        };
+      }
+      return { text: String(entry), category: "offensive" as CalcCategory };
+    });
+  }
+  return result;
+}
+
 export function useDamageCalcs(speciesKeys: string[], persist = true) {
   const teamKey = buildCalcsKey(speciesKeys);
   const prevTeamKey = useRef(teamKey);
@@ -25,7 +48,7 @@ export function useDamageCalcs(speciesKeys: string[], persist = true) {
     if (!persist || speciesKeys.length === 0) return {};
     try {
       const stored = localStorage.getItem(teamKey);
-      return stored ? JSON.parse(stored) : {};
+      return stored ? migrateCalcs(JSON.parse(stored)) : {};
     } catch {
       return {};
     }
@@ -45,7 +68,7 @@ export function useDamageCalcs(speciesKeys: string[], persist = true) {
 
     try {
       const stored = localStorage.getItem(teamKey);
-      setCalcs(stored ? JSON.parse(stored) : {});
+      setCalcs(stored ? migrateCalcs(JSON.parse(stored)) : {});
     } catch {
       setCalcs({});
     }
@@ -87,8 +110,8 @@ export function useDamageCalcs(speciesKeys: string[], persist = true) {
     });
   }, []);
 
-  const setCalcsFull = useCallback((newCalcs: DamageCalcsMap) => {
-    setCalcs(newCalcs);
+  const setCalcsFull = useCallback((newCalcs: DamageCalcsMap | Record<string, unknown>) => {
+    setCalcs(migrateCalcs(newCalcs));
   }, []);
 
   const getCalcs = useCallback(

@@ -220,7 +220,7 @@ export function TeamOverview({
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
               <select
                 value={tags?.regulation ?? ""}
-                onChange={(e) => onTagsChange?.({ ...tags, regulation: e.target.value || undefined })}
+                onChange={(e) => onTagsChange?.({ ...(tags ?? {}), regulation: e.target.value || undefined })}
                 className="w-full sm:w-[140px] px-3 py-2 bg-surface border-2 border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
               >
                 <option value="">Regulation</option>
@@ -228,7 +228,7 @@ export function TeamOverview({
               </select>
               <select
                 value={tags?.eventType ?? ""}
-                onChange={(e) => onTagsChange?.({ ...tags, eventType: e.target.value || undefined })}
+                onChange={(e) => onTagsChange?.({ ...(tags ?? {}), eventType: e.target.value || undefined })}
                 className="w-full sm:w-[160px] px-3 py-2 bg-surface border-2 border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
               >
                 <option value="">Event Type</option>
@@ -245,7 +245,7 @@ export function TeamOverview({
                     onClick={() => {
                       const current = tags?.archetype ?? [];
                       const next = active ? current.filter((x) => x !== a) : [...current, a];
-                      onTagsChange?.({ ...tags, archetype: next.length > 0 ? next : undefined });
+                      onTagsChange?.({ ...(tags ?? {}), archetype: next.length > 0 ? next : undefined });
                     }}
                     className={`text-xs font-semibold px-2.5 py-1 rounded-md border transition-all ${
                       active

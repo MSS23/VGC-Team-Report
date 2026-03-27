@@ -116,14 +116,17 @@ export function useShareUrl() {
           if (!data) return settle(null);
           const editable = data._editable === true;
           if (data._isPublic !== undefined) setFetchedIsPublic(!!data._isPublic);
+          // The API returns _editToken for owners viewing their own reports without ?key=
+          const ownerEditToken = data._editToken as string | undefined;
           // Strip internal flags before treating as ShareableState
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { _editable, _isPublic: _ip, ...state } = data;
-          if (editable && editKeyFromUrl) {
-            // Only set active refs when we have a verified edit session
-            activeEditTokenRef.current = editKeyFromUrl;
+          const { _editable, _isPublic: _ip, _editToken: _et, ...state } = data;
+          // Set active edit session — either via edit key in URL or owner token from API
+          const resolvedToken = editKeyFromUrl ?? ownerEditToken;
+          if (editable && resolvedToken) {
+            activeEditTokenRef.current = resolvedToken;
             activeShareIdRef.current = shareId;
-            storeShareInfo({ shareId, editToken: editKeyFromUrl });
+            storeShareInfo({ shareId, editToken: resolvedToken });
           }
           settle(state as ShareableState, editable);
         })
