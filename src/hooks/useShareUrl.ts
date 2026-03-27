@@ -106,10 +106,12 @@ export function useShareUrl() {
     };
 
     if (shareId) {
-      // Build fetch URL with key if present
-      const fetchUrl = editKeyFromUrl
-        ? `/api/share/${shareId}?key=${encodeURIComponent(editKeyFromUrl)}`
-        : `/api/share/${shareId}`;
+      // Always fetch without the edit key first — the API will grant edit
+      // access to authenticated owners/collaborators automatically.
+      // The ?key= param is preserved in editKeyFromUrl for the sign-in gate
+      // in page.tsx. After sign-in, the page reloads and the authenticated
+      // request gets edit access without needing the key in the URL.
+      const fetchUrl = `/api/share/${shareId}`;
 
       fetch(fetchUrl)
         .then((r) => (r.ok ? r.json() : null))
@@ -118,17 +120,16 @@ export function useShareUrl() {
           const editable = data._editable === true;
           if (data._isPublic !== undefined) setFetchedIsPublic(!!data._isPublic);
           if (data._isOwner !== undefined) setIsOwner(!!data._isOwner);
-          // The API returns _editToken for owners/collaborators
+          // The API returns _editToken for authenticated owners/collaborators
           const ownerEditToken = data._editToken as string | undefined;
           // Strip internal flags before treating as ShareableState
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, ...state } = data;
-          // Set active edit session — either via edit key in URL or token from API
-          const resolvedToken = editKeyFromUrl ?? ownerEditToken;
-          if (editable && resolvedToken) {
-            activeEditTokenRef.current = resolvedToken;
+          // Set active edit session — only from server-provided token (authenticated)
+          if (editable && ownerEditToken) {
+            activeEditTokenRef.current = ownerEditToken;
             activeShareIdRef.current = shareId;
-            storeShareInfo({ shareId, editToken: resolvedToken });
+            storeShareInfo({ shareId, editToken: ownerEditToken });
           }
           settle(state as ShareableState, editable);
         })
