@@ -33,8 +33,9 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
   if (isApiRoute && !pathname.startsWith('/api/sync') && !pathname.startsWith('/api/keep-alive')) {
     const method = request.method.toUpperCase();
     const origin = request.headers.get('origin');
-    const hasCrossOrigin = !!origin;
-    if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && hasCrossOrigin) {
+    // Only enforce CSRF for truly cross-origin requests (origin present but NOT in our allowed list)
+    const isTrueCrossOrigin = !!origin && !isAllowedOrigin(request);
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && isTrueCrossOrigin) {
       if (!validateCsrf(request)) {
         return NextResponse.json(
           { error: 'Invalid or missing CSRF token' },
