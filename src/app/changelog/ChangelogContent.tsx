@@ -11,10 +11,23 @@ import { PageFooter } from "@/components/layout/PageFooter";
 const ENTRIES = [
   {
     date: "March 2026",
+    version: "4.4",
+    title: "Granular Version Diffs, Tour Visibility & Navbar Updates",
+    emoji: "\uD83D\uDD0D",
+    highlight: true,
+    items: [
+      { type: "new" as const, text: "Per-field version diff highlighting \u2014 comparing versions now highlights only the specific sections that changed (e.g. just Notes or Calcs) instead of the entire slide." },
+      { type: "new" as const, text: "Descriptive diff banner \u2014 version comparison now lists exactly what changed (e.g. \u201CTeam summary, Notes (Pikachu), Calcs (Urshifu)\u201D) instead of vague slide counts." },
+      { type: "new" as const, text: "Feedback link added to desktop navbar \u2014 now visible next to Updates for easy access from any page." },
+      { type: "improved" as const, text: "Walkthrough tour spotlight visibility \u2014 accent-colored ring in light mode, white glow ring in dark mode so highlighted areas are always clear." },
+      { type: "improved" as const, text: "Diff labels are contextual \u2014 each highlighted section shows what changed: \u201CSet changed\u201D, \u201CNotes changed\u201D, \u201CCalcs changed\u201D, \u201CSummary changed\u201D, etc." },
+    ],
+  },
+  {
+    date: "March 2026",
     version: "4.3",
     title: "PWA Mobile Polish & Version History Panel",
     emoji: "\u2728",
-    highlight: true,
     items: [
       { type: "new" as const, text: "Version History side panel \u2014 Google Docs-style slide-out panel with timeline UI, version diffs, and one-click restore to any previous version." },
       { type: "new" as const, text: "Version history for your own reports \u2014 no longer limited to shared views. See and restore past versions from the home page after sharing." },

@@ -11,6 +11,7 @@ import { NATURES } from "@/lib/data/natures";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
+import { FieldDiffHighlight } from "./TeamReport";
 
 interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;
@@ -26,6 +27,10 @@ interface PokemonDetailSlideProps {
   isPresentationMode?: boolean;
   shiny?: boolean;
   animated?: boolean;
+  /** Species key for diff highlighting */
+  speciesKey?: string;
+  /** Pokemon index for diff highlighting */
+  pokemonIndex?: number;
 }
 
 const STAT_COLORS: Record<string, string> = {
@@ -307,6 +312,8 @@ export function PokemonDetailSlide({
   isPresentationMode = false,
   shiny = false,
   animated = true,
+  speciesKey,
+  pokemonIndex,
 }: PokemonDetailSlideProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
@@ -366,6 +373,7 @@ export function PokemonDetailSlide({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-[45%_55%] gap-4 sm:gap-6 lg:gap-8 items-start animate-fade-in">
       {/* Left Column: Pokemon Info */}
+      <FieldDiffHighlight field={pokemonIndex !== undefined ? [`pokemon:${pokemonIndex}`] : []} label="Set changed">
       <div className="flex flex-col gap-4 sm:gap-6">
         {/* Header: Sprite + Name + Types */}
         <div className="flex items-start gap-4 sm:gap-6">
@@ -523,11 +531,13 @@ export function PokemonDetailSlide({
           </div>
         )}
       </div>
+      </FieldDiffHighlight>
 
       {/* Right Column: EV Rationale + User Notes + Notable Calcs */}
       <div className="flex flex-col gap-4 sm:gap-6">
         {/* EV Spread Rationale */}
         {(spreadNote || !isReadOnly) && (
+          <FieldDiffHighlight field={speciesKey ? [`spreadNotes:${speciesKey}`] : []} label="Spread notes changed">
           <div className="flex flex-col gap-2">
             <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent opacity-70">
@@ -554,9 +564,11 @@ export function PokemonDetailSlide({
               />
             )}
           </div>
+          </FieldDiffHighlight>
         )}
 
         {/* Notes */}
+        <FieldDiffHighlight field={speciesKey ? [`notes:${speciesKey}`] : []} label="Notes changed">
         <div className="flex flex-col gap-2">
           <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="pokemon-notes">
             {isPresentationMode ? t.notes : isReadOnly ? t.aboutThisPokemon : t.yourExplanation}
@@ -575,8 +587,10 @@ export function PokemonDetailSlide({
             />
           )}
         </div>
+        </FieldDiffHighlight>
 
         {/* Notable Calcs */}
+        <FieldDiffHighlight field={speciesKey ? [`calcs:${speciesKey}`] : []} label="Calcs changed">
         <div className="flex flex-col gap-4">
           <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="notable-calcs">
             {t.notableCalcs}
@@ -606,6 +620,7 @@ export function PokemonDetailSlide({
             />
           )}
         </div>
+        </FieldDiffHighlight>
       </div>
     </div>
   );

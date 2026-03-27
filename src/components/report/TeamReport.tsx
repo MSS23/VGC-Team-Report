@@ -74,20 +74,24 @@ interface TeamReportProps {
   onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
 }
 
-/** Wraps slide content with a highlight border when the slide has version diff changes. */
-function DiffHighlight({ slideIndex, children }: { slideIndex: number; children: React.ReactNode }) {
+/**
+ * Wraps a specific field/section with a highlight border when that field changed.
+ * Unlike the old DiffHighlight which wrapped entire slides, this targets individual fields.
+ */
+export function FieldDiffHighlight({ field, children, label }: { field: string | string[]; children: React.ReactNode; label?: string }) {
   const { diff } = useVersionDiff();
-  const hasChanges = diff?.changedSlides.has(slideIndex) ?? false;
+  const fields = Array.isArray(field) ? field : [field];
+  const hasChanges = diff ? fields.some((f) => diff.changedFields.has(f)) : false;
 
   if (!hasChanges) return <>{children}</>;
 
   return (
     <div className="version-diff-highlight relative">
-      <div className="version-diff-border absolute -inset-2 sm:-inset-3 rounded-2xl pointer-events-none" />
-      <div className="version-diff-label absolute -top-2 sm:-top-3 left-3 sm:left-4 z-10 pointer-events-none">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-500 text-white text-[10px] font-bold rounded-md shadow-md shadow-blue-500/30 uppercase tracking-wider">
-          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-          Changed
+      <div className="version-diff-border absolute -inset-1.5 sm:-inset-2 rounded-xl pointer-events-none" />
+      <div className="version-diff-label absolute -top-1.5 sm:-top-2 left-2 sm:left-3 z-10 pointer-events-none">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500 text-white text-[9px] font-bold rounded-md shadow-sm shadow-blue-500/30 uppercase tracking-wider">
+          <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+          {label ?? "Changed"}
         </span>
       </div>
       {children}
@@ -147,7 +151,6 @@ export function TeamReport({
   // Slide 0: Team Overview
   if (currentSlide === 0) {
     return (
-      <DiffHighlight slideIndex={0}>
         <TeamOverview
           pokemon={analysis.pokemon}
           creatorMode={creatorMode}
@@ -174,7 +177,6 @@ export function TeamReport({
           getSpriteConfig={getSpriteConfig}
           onReorderPokemon={onReorderPokemon}
         />
-      </DiffHighlight>
     );
   }
 
@@ -185,7 +187,6 @@ export function TeamReport({
     const key = speciesKeys[pokemonIndex];
 
     return (
-      <DiffHighlight slideIndex={currentSlide}>
         <PokemonDetailSlide
           pokemon={pokemon}
           note={notes[key] ?? ""}
@@ -200,22 +201,21 @@ export function TeamReport({
           isPresentationMode={isPresentationMode}
           shiny={getSpriteConfig?.(key)?.shiny}
           animated={getSpriteConfig?.(key)?.animated}
+          speciesKey={key}
+          pokemonIndex={pokemonIndex}
         />
-      </DiffHighlight>
     );
   }
 
   // Speed tier chart slide (after all Pokemon, before matchups)
   if (currentSlide === pokemonCount + 1) {
     return (
-      <DiffHighlight slideIndex={pokemonCount + 1}>
         <SpeedTierChart
           pokemon={analysis.pokemon}
           speciesKeys={speciesKeys}
           getSpriteConfig={getSpriteConfig}
           isPresentationMode={isPresentationMode}
         />
-      </DiffHighlight>
     );
   }
 
@@ -226,7 +226,6 @@ export function TeamReport({
     if (matchupSlideIndex >= 0 && matchupSlideIndex < plans.length) {
       const plan = plans[matchupSlideIndex];
       return (
-        <DiffHighlight slideIndex={currentSlide}>
           <MatchupPlanSlide
             plan={plan}
             yourPokemon={analysis.pokemon}
@@ -240,7 +239,6 @@ export function TeamReport({
             onRemoveGamePlan={onRemoveGamePlan ?? (() => {})}
             onRemove={onRemovePlan ?? (() => {})}
           />
-        </DiffHighlight>
       );
     }
   }
@@ -249,7 +247,6 @@ export function TeamReport({
   const matchupSheetSlide = pokemonCount + 2 + plans.length;
   if (currentSlide === matchupSheetSlide) {
     return (
-      <DiffHighlight slideIndex={matchupSheetSlide}>
         <MatchupSheet
           plans={plans}
           yourPokemon={analysis.pokemon}
@@ -258,7 +255,6 @@ export function TeamReport({
           onRemovePlan={onRemovePlan ?? (() => {})}
           onAddPlan={onAddPlan ?? (() => {})}
         />
-      </DiffHighlight>
     );
   }
 

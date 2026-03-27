@@ -165,3 +165,58 @@ export function computeVersionDiff(
     oldData: old,
   };
 }
+
+/** Field key labels for human-readable summaries */
+const FIELD_LABELS: Record<string, string> = {
+  teamSummary: "Team summary",
+  tournamentName: "Tournament name",
+  placement: "Placement",
+  record: "Record",
+  creatorName: "Creator name",
+  rentalCode: "Rental code",
+  mvpIndex: "MVP",
+  tags: "Tags",
+  teamComposition: "Team composition",
+  matchupPlans: "Matchup plans",
+};
+
+/**
+ * Turn a set of changed field keys into a human-readable summary string.
+ * e.g. "Team summary, Notes (Pikachu), Calcs (Urshifu) — highlighted in blue"
+ */
+export function summarizeChangedFields(fields: Set<string>): string {
+  const labels: string[] = [];
+
+  for (const field of fields) {
+    // Skip internal slide markers
+    if (field.startsWith("slide:")) continue;
+
+    // Direct labels
+    if (FIELD_LABELS[field]) {
+      labels.push(FIELD_LABELS[field]);
+      continue;
+    }
+
+    // Per-pokemon fields: "notes:pikachu" → "Notes (Pikachu)"
+    const match = field.match(/^(pokemon|notes|calcs|roles|spreadNotes):(.+)$/);
+    if (match) {
+      const [, type, key] = match;
+      const name = key.replace(/^./, (c) => c.toUpperCase());
+      const typeLabel =
+        type === "pokemon" ? "Set" :
+        type === "notes" ? "Notes" :
+        type === "calcs" ? "Calcs" :
+        type === "roles" ? "Role" :
+        type === "spreadNotes" ? "Spread notes" : type;
+      labels.push(`${typeLabel} (${name})`);
+    }
+  }
+
+  if (labels.length === 0) return "No differences found";
+
+  const MAX_SHOW = 4;
+  const shown = labels.slice(0, MAX_SHOW);
+  const rest = labels.length - MAX_SHOW;
+  const summary = shown.join(", ") + (rest > 0 ? ` +${rest} more` : "");
+  return `${summary} — highlighted in blue`;
+}

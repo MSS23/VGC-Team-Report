@@ -24,7 +24,7 @@ import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { I18nProvider } from "@/lib/i18n";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
-import { computeVersionDiff, type VersionDiff } from "@/lib/utils/version-diff";
+import { computeVersionDiff, summarizeChangedFields, type VersionDiff } from "@/lib/utils/version-diff";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
@@ -531,9 +531,9 @@ function HomeContent() {
                 Comparing with version {versionDiff.version}
               </p>
               <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mt-0.5">
-                {versionDiff.changedSlides.size === 0
+                {versionDiff.changedFields.size === 0
                   ? "No differences found between these versions"
-                  : `${versionDiff.changedFields.size} change${versionDiff.changedFields.size !== 1 ? "s" : ""} found across ${versionDiff.changedSlides.size} slide${versionDiff.changedSlides.size !== 1 ? "s" : ""} — look for the highlighted borders`
+                  : summarizeChangedFields(versionDiff.changedFields)
                 }
               </p>
             </div>

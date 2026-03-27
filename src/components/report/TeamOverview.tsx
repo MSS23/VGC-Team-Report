@@ -9,6 +9,7 @@ import { TeamStats } from "./TeamStats";
 import { useTranslation } from "@/lib/i18n";
 import { ARCHETYPES, REGULATIONS, EVENT_TYPES } from "@/lib/data/tags";
 import type { ReportTags } from "@/lib/data/tags";
+import { FieldDiffHighlight } from "./TeamReport";
 
 interface TeamOverviewProps {
   pokemon: AnalyzedPokemon[];
@@ -93,6 +94,7 @@ export function TeamOverview({
       {/* Tournament Context */}
       {isReadOnly ? (
         (hasTournamentInfo || rentalCode || hasCreatorInfo) && (
+          <FieldDiffHighlight field={["tournamentName", "placement", "record", "rentalCode", "creatorName", "tags"]} label="Info changed">
           <div className="flex flex-col gap-2 px-1">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               {tournamentName && (
@@ -159,8 +161,10 @@ export function TeamOverview({
               </div>
             )}
           </div>
+          </FieldDiffHighlight>
         )
       ) : (
+        <FieldDiffHighlight field={["tournamentName", "placement", "record", "rentalCode", "creatorName", "tags"]} label="Info changed">
         <div>
           <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-3" data-walkthrough="tournament-info">
             {t.tournamentInfo}
@@ -260,9 +264,11 @@ export function TeamOverview({
             </div>
           </div>
         </div>
+        </FieldDiffHighlight>
       )}
 
       {/* Team Summary */}
+      <FieldDiffHighlight field="teamSummary" label="Summary changed">
       <div>
         <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3 presenting:text-base presenting:mb-4" data-walkthrough="team-summary">
           {t.teamSummary}
@@ -305,6 +311,7 @@ export function TeamOverview({
           />
         )}
       </div>
+      </FieldDiffHighlight>
 
       {/* Team Stats Summary */}
       <div className="mb-3 sm:mb-4">
@@ -367,6 +374,7 @@ export function TeamOverview({
                 isDragOver ? "ring-2 ring-accent ring-offset-2 ring-offset-background scale-[1.02]" : ""
               }`}
             >
+              <FieldDiffHighlight field={[`pokemon:${i}`, `roles:${speciesKeys[i]}`]} label="Updated">
               <PokemonCard
                 pokemon={mon}
                 creatorMode={creatorMode}
@@ -378,6 +386,7 @@ export function TeamOverview({
                 shiny={sc?.shiny}
                 animated={sc?.animated}
               />
+              </FieldDiffHighlight>
             </div>
           );
         })}
