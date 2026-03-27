@@ -6,7 +6,7 @@ interface PageNavbarProps {
   darkMode: boolean;
   onToggleDarkMode: () => void;
   maxWidth?: string;
-  activePage?: "changelog" | "feedback" | "explore" | "dashboard" | "compare" | "privacy" | "creator";
+  activePage?: "home" | "changelog" | "feedback" | "explore" | "dashboard" | "compare" | "privacy" | "creator";
 }
 
 const NAV_LINKS = [

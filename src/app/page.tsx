@@ -234,13 +234,15 @@ function HomeContent() {
   // Show paste input if no analysis and not loading shared view
   if (!analysis && !sharedState && !isSharePending) {
     return (
-      <main className="min-h-screen p-4 sm:p-6">
+      <main className="min-h-screen">
         <PasteInput
           paste={paste}
           onPasteChange={setPaste}
           onAnalyze={handleAnalyze}
           selectedTemplate={pendingTemplateId}
           onTemplateSelect={setPendingTemplateId}
+          darkMode={darkMode}
+          onToggleDarkMode={() => setDarkMode(!darkMode)}
         />
       </main>
     );

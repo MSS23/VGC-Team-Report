@@ -4,12 +4,11 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { useTranslation } from "@/lib/i18n";
-import { LanguageSelector } from "@/components/ui/LanguageSelector";
+import { PageNavbar } from "@/components/layout/PageNavbar";
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { WhatsNewModal } from "@/components/ui/WhatsNewModal";
-import { SignInButton, UserButton, Show } from "@clerk/nextjs";
 
 
 export const SAMPLE_PASTE = `Incineroar @ Sitrus Berry
@@ -84,6 +83,8 @@ interface PasteInputProps {
   onAnalyze: (directPaste?: string) => void;
   selectedTemplate?: string;
   onTemplateSelect?: (id: string) => void;
+  darkMode: boolean;
+  onToggleDarkMode: () => void;
 }
 
 function looksLikeShowdownPaste(text: string): boolean {
@@ -100,7 +101,7 @@ const POKEMON_SPRITES = [
   "urshifu", "tornadus", "landorus-therian",
 ];
 
-export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect }: PasteInputProps) {
+export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect, darkMode, onToggleDarkMode }: PasteInputProps) {
   const { t } = useTranslation();
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -186,84 +187,10 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 pt-14 sm:pt-14 pb-20 sm:pb-0">
+    <>
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} maxWidth="max-w-2xl" activePage="home" />
 
-      {/* Top nav bar */}
-      <div className="fixed top-0 left-0 right-0 z-20 backdrop-blur-xl bg-background/80 border-b border-border/30">
-        <div className="max-w-2xl mx-auto px-4 h-12 flex items-center justify-between">
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-1.5 font-bold text-sm flex-shrink-0">
-            <span className="text-text-primary">VGC Team</span>
-            <span className="text-accent">Report</span>
-          </a>
-
-          {/* Page links (desktop only — mobile uses bottom tabs) */}
-          <nav className="hidden sm:flex items-center gap-0.5">
-            {[
-              { href: "/explore", label: "Explore", icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" },
-              { href: "/compare", label: "Compare", icon: "M18 20V10M12 20V4M6 20v-6" },
-              { href: "/dashboard", label: "Dashboard", icon: "M4 6h16M4 12h16m-7 6h7" },
-              { href: "/changelog", label: "Updates", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
-              { href: "/feedback", label: "Feedback", icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" },
-            ].map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 rounded-lg transition-all"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 opacity-70">
-                  <path d={link.icon} />
-                </svg>
-                {link.label}
-              </a>
-            ))}
-          </nav>
-
-          {/* Auth + language */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Show when="signed-out">
-              <SignInButton mode="modal">
-                <button className="px-3 py-1.5 text-xs font-bold text-text-secondary bg-surface border border-border rounded-lg hover:border-accent/30 hover:text-accent transition-all cursor-pointer">
-                  Sign In
-                </button>
-              </SignInButton>
-            </Show>
-            <Show when="signed-in">
-              <UserButton
-                appearance={{
-                  elements: { avatarBox: "w-7 h-7" },
-                }}
-              />
-            </Show>
-            <LanguageSelector />
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile bottom tab bar (same as PageNavbar) */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-border safe-bottom" aria-label="Mobile navigation">
-        <div className="flex items-center justify-around px-2 py-1.5">
-          {[
-            { href: "/", label: "Home", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1", active: true },
-            { href: "/explore", label: "Explore", icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z", active: false },
-            { href: "/compare", label: "Compare", icon: "M18 20V10M12 20V4M6 20v-6", active: false },
-            { href: "/dashboard", label: "Dashboard", icon: "M4 6h16M4 12h16m-7 6h7", active: false },
-          ].map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-all min-w-[56px] active:scale-[0.93] ${
-                link.active ? "text-accent" : "text-text-tertiary active:text-text-primary"
-              }`}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={link.active ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round">
-                <path d={link.icon} />
-              </svg>
-              <span className={`text-[10px] font-bold ${link.active ? "text-accent" : ""}`}>{link.label}</span>
-            </a>
-          ))}
-        </div>
-      </nav>
+      <div className="w-full max-w-2xl mx-auto px-4 pt-4 pb-24 sm:pb-4">
 
       {/* Animated sprites with floating effect */}
       <div className="flex justify-center gap-3 sm:gap-5 mb-5 sm:mb-10 overflow-hidden">
@@ -559,6 +486,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       </motion.div>
 
       <WhatsNewModal />
-    </div>
+      </div>
+    </>
   );
 }
