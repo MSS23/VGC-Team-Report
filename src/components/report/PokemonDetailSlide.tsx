@@ -6,7 +6,6 @@ import type { CalcEntry, CalcCategory } from "@/hooks/useDamageCalcs";
 import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
 import { CalcInput } from "./CalcInput";
-import { QuickCalc } from "./QuickCalc";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { NATURES } from "@/lib/data/natures";
 import { useTranslation } from "@/lib/i18n";
@@ -613,12 +612,7 @@ export function PokemonDetailSlide({
             </p>
           )}
 
-          {/* Interactive damage calculator */}
-          {!isReadOnly && (
-            <QuickCalc pokemon={pokemon} onAddCalc={onAddCalc} />
-          )}
-
-          {/* Manual calc text input */}
+          {/* Add calc input */}
           {!isReadOnly && (
             <CalcInput
               pokemonSpecies={parsed.species}
