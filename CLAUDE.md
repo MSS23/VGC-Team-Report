@@ -269,18 +269,14 @@ Only update the changelog when asked, or when a significant user-facing feature 
 
 ## Automated Monitoring (Vercel Cron)
 
-These run automatically — no manual trigger needed:
+Designed for Vercel Hobby (free tier) — all crons run once daily or weekly max.
 
 | Route | Schedule | What it does |
 |-------|----------|-------------|
-| `/api/cron/health-check` | Every 30 min | Pings site + API routes, alerts Discord on failure |
-| `/api/cron/error-spike` | Every 15 min | Probes endpoints for 5xx errors and slow responses (>5s) |
-| `/api/cron/stale-tickets` | Monday 9am | Flags In Progress tickets with no updates for 7+ days |
-| `/api/cron/weekly-digest` | Friday 5pm | Posts completed/in-progress/in-review summary to Discord |
-| `/api/cron/user-growth` | Friday 10am | Reports created, feedback, comments this week vs last week |
-| `/api/cron/dependency-check` | 1st of month | Checks npm packages for outdated deps, categorizes severity |
-| `/api/cron/seo-monitor` | Wednesday 8am | Checks key pages for missing meta tags, OG images, canonicals |
-| `/api/cron/db-backup-reminder` | Sunday 9am | Reports database size, row counts, and reminds to check Neon backups |
+| `/api/cron/daily-ops` | Daily 9am | Combined: site health check, stale ticket scan, SEO audit, DB health |
+| `/api/cron/weekly-report` | Friday 5pm | Combined: Linear progress digest, user growth vs last week, dependency updates |
+
+Both routes post results to Discord #builds. Only alerts on problems for daily ops; always posts the weekly summary.
 
 All cron routes require Vercel cron user-agent or `CRON_SECRET` bearer token.
 
