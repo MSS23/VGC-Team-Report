@@ -33,11 +33,13 @@ function ExploreInner() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<"newest" | "updated" | "popular">("newest");
+  const [sort, setSort] = useState<"newest" | "updated" | "popular" | "views">("newest");
   const [searchCategory, setSearchCategory] = useState<SearchCategory>("all");
   const [regulation, setRegulation] = useState("");
   const [eventType, setEventType] = useState("");
   const [archetype, setArchetype] = useState("");
+  const [species, setSpecies] = useState("");
+  const [placement, setPlacement] = useState("");
   const initialLoad = useRef(true);
 
   const fetchReports = useCallback(
@@ -50,6 +52,8 @@ function ExploreInner() {
       if (regulation) params.set("regulation", regulation);
       if (eventType) params.set("eventType", eventType);
       if (archetype) params.set("archetype", archetype);
+      if (species) params.set("species", species);
+      if (placement) params.set("placement", placement);
 
       const res = await fetch(`/api/explore?${params}`);
       if (!res.ok) throw new Error("Failed to fetch");
@@ -58,7 +62,7 @@ function ExploreInner() {
         nextCursor: string | null;
       }>;
     },
-    [query, sort, searchCategory, regulation, eventType, archetype],
+    [query, sort, searchCategory, regulation, eventType, archetype, species, placement],
   );
 
   // Initial + filter/sort change fetch
@@ -123,6 +127,10 @@ function ExploreInner() {
           onEventTypeChange={setEventType}
           archetype={archetype}
           onArchetypeChange={setArchetype}
+          species={species}
+          onSpeciesChange={setSpecies}
+          placement={placement}
+          onPlacementChange={setPlacement}
         />
 
         {/* Results */}

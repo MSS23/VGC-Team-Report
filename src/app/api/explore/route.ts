@@ -21,15 +21,17 @@ export async function GET(request: Request) {
     const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") ?? "12", 10) || 12, 1), 50);
     const q = url.searchParams.get("q")?.trim() ?? "";
     const sortParam = url.searchParams.get("sort") ?? "newest";
-    const sort = ["updated", "popular"].includes(sortParam) ? sortParam : "newest";
+    const sort = ["updated", "popular", "views"].includes(sortParam) ? sortParam : "newest";
     const searchType = url.searchParams.get("searchType") ?? "all";
     const filterRegulation = url.searchParams.get("regulation") ?? "";
     const filterEventType = url.searchParams.get("eventType") ?? "";
     const filterArchetype = url.searchParams.get("archetype") ?? ""; // comma-separated
+    const filterSpecies = url.searchParams.get("species") ?? ""; // comma-separated Pokemon names for multi-species filter
+    const filterPlacement = url.searchParams.get("placement") ?? ""; // e.g. "1st", "Top 4", "Top 8"
 
     // ── Cache check ──────────────────────────────────────────────────
     const cacheKey = CacheKeys.explore(
-      `${sort}:${q}:${searchType}:${cursor ?? ""}:${limit}:${filterRegulation}:${filterEventType}:${filterArchetype}`
+      `${sort}:${q}:${searchType}:${cursor ?? ""}:${limit}:${filterRegulation}:${filterEventType}:${filterArchetype}:${filterSpecies}:${filterPlacement}`
     );
     const cached = await cacheGet<{ reports: unknown[]; nextCursor: string | null }>(cacheKey);
     if (cached) {
@@ -61,6 +63,23 @@ export async function GET(request: Request) {
       : sql``;
     const searchCondition = (useFts && tsQuery) ? ftsCondition : ilikeFallback;
 
+    // Shared filter fragments for species and placement
+    // Species filter: match each requested species in the paste text (case-insensitive)
+    const speciesList = filterSpecies.split(",").map((s) => s.trim()).filter(Boolean);
+    const speciesCondition = speciesList.length > 0
+      ? speciesList.reduce((acc, sp) => sql`${acc} AND s.data->>'paste' ILIKE ${"%" + sp + "%"}`, sql``)
+      : sql``;
+    const placementCondition = filterPlacement
+      ? sql`AND s.data->>'placement' ILIKE ${"%" + filterPlacement + "%"}`
+      : sql``;
+    const tagFilters = sql`
+      ${filterRegulation ? sql`AND s.data->'tags'->>'regulation' = ${filterRegulation}` : sql``}
+      ${filterEventType ? sql`AND s.data->'tags'->>'eventType' = ${filterEventType}` : sql``}
+      ${filterArchetype ? sql`AND s.data->'tags'->'archetype' ?| ${filterArchetype.split(",").filter(Boolean)}` : sql``}
+      ${speciesCondition}
+      ${placementCondition}
+    `;
+
     if (sort === "popular") {
       // Sort by total reaction (like) count
       rows = await sql`
@@ -74,11 +93,21 @@ export async function GET(request: Request) {
         ) rc ON rc.share_id = s.id
         WHERE s.is_public = TRUE AND s.deleted_at IS NULL
           ${searchCondition}
-          ${filterRegulation ? sql`AND s.data->'tags'->>'regulation' = ${filterRegulation}` : sql``}
-          ${filterEventType ? sql`AND s.data->'tags'->>'eventType' = ${filterEventType}` : sql``}
-          ${filterArchetype ? sql`AND s.data->'tags'->'archetype' ?| ${filterArchetype.split(",").filter(Boolean)}` : sql``}
+          ${tagFilters}
           ${cursor ? sql`AND COALESCE(rc.like_count, 0) < ${parseInt(cursor, 10)}` : sql``}
         ORDER BY COALESCE(rc.like_count, 0) DESC, s.created_at DESC
+        LIMIT ${limit + 1}
+      `;
+    } else if (sort === "views") {
+      // Sort by view count
+      rows = await sql`
+        SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
+        FROM shares s
+        WHERE s.is_public = TRUE AND s.deleted_at IS NULL
+          ${searchCondition}
+          ${tagFilters}
+          ${cursor ? sql`AND COALESCE(s.view_count, 0) < ${parseInt(cursor, 10)}` : sql``}
+        ORDER BY COALESCE(s.view_count, 0) DESC, s.created_at DESC
         LIMIT ${limit + 1}
       `;
     } else {
@@ -89,9 +118,7 @@ export async function GET(request: Request) {
         FROM shares s
         WHERE s.is_public = TRUE AND s.deleted_at IS NULL
           ${searchCondition}
-          ${filterRegulation ? sql`AND s.data->'tags'->>'regulation' = ${filterRegulation}` : sql``}
-          ${filterEventType ? sql`AND s.data->'tags'->>'eventType' = ${filterEventType}` : sql``}
-          ${filterArchetype ? sql`AND s.data->'tags'->'archetype' ?| ${filterArchetype.split(",").filter(Boolean)}` : sql``}
+          ${tagFilters}
           ${cursor ? sql`AND ${col} < ${cursor}` : sql``}
         ORDER BY ${col} DESC
         LIMIT ${limit + 1}
@@ -163,6 +190,7 @@ export async function GET(request: Request) {
     if (hasMore) {
       const last = items[items.length - 1];
       if (sort === "popular") nextCursor = String(last.like_count ?? 0);
+      else if (sort === "views") nextCursor = String(last.view_count ?? 0);
       else if (sort === "updated") nextCursor = (last.updated_at as Date).toISOString();
       else nextCursor = (last.created_at as Date).toISOString();
     }
