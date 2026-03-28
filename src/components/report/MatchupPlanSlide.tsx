@@ -50,6 +50,84 @@ function totalEvs(evs: StatSpread): number {
   return evs.hp + evs.atk + evs.def + evs.spa + evs.spd + evs.spe;
 }
 
+/** Side-by-side speed tiers: your team vs opponent */
+function SpeedComparison({
+  yourPokemon,
+  opponentPokemon,
+}: {
+  yourPokemon: AnalyzedPokemon[];
+  opponentPokemon: OpponentPokemonInfo[];
+}) {
+  // Build combined speed entries
+  const entries: Array<{ species: string; speed: number; isYours: boolean }> = [];
+
+  yourPokemon.forEach((p) => {
+    entries.push({ species: p.parsed.species, speed: p.calculatedStats.spe, isYours: true });
+  });
+
+  opponentPokemon.forEach((p) => {
+    const speed = p.calculatedStats?.spe ?? (p.data?.baseStats.spe ?? 0);
+    if (speed > 0) entries.push({ species: p.parsed.species, speed, isYours: false });
+  });
+
+  // Sort fastest to slowest
+  entries.sort((a, b) => b.speed - a.speed);
+  const maxSpeed = entries[0]?.speed ?? 1;
+
+  if (entries.length === 0) return null;
+
+  return (
+    <div>
+      <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-3">
+        Speed Tiers
+      </h3>
+      <div className="bg-surface border border-border rounded-2xl p-3 sm:p-4">
+        <div className="space-y-1.5">
+          {entries.map((entry, i) => {
+            const pct = Math.max((entry.speed / maxSpeed) * 100, 8);
+            return (
+              <div key={`${entry.species}-${entry.isYours}-${i}`} className="flex items-center gap-2">
+                <div className="w-5 flex-shrink-0">
+                  <PokemonSprite species={entry.species} size={20} />
+                </div>
+                <span className={`text-xs font-semibold w-20 sm:w-24 truncate ${
+                  entry.isYours ? "text-accent" : "text-text-secondary"
+                }`}>
+                  {entry.species}
+                </span>
+                <div className="flex-1 h-4 bg-surface-alt rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: entry.isYours ? "var(--accent)" : "#64748b",
+                    }}
+                  />
+                </div>
+                <span className={`text-xs font-mono font-bold w-8 text-right tabular-nums ${
+                  entry.isYours ? "text-accent" : "text-text-secondary"
+                }`}>
+                  {entry.speed}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-4 mt-3 pt-2 border-t border-border-subtle">
+          <span className="flex items-center gap-1.5 text-[10px] font-semibold text-text-tertiary">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "var(--accent)" }} />
+            Your team
+          </span>
+          <span className="flex items-center gap-1.5 text-[10px] font-semibold text-text-tertiary">
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-500" />
+            Opponent
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MatchupPlanSlide({
   plan,
   yourPokemon,
@@ -231,6 +309,11 @@ export function MatchupPlanSlide({
           )}
         </div>
       </div>
+
+      {/* Speed Comparison */}
+      {opponentPokemon.length > 0 && (
+        <SpeedComparison yourPokemon={yourPokemon} opponentPokemon={opponentPokemon} />
+      )}
 
       {/* Game Plans */}
       <div ref={gamePlansRef} className="flex flex-col gap-4">

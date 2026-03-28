@@ -5,6 +5,23 @@ import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { Button } from "@/components/ui/Button";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { useTranslation } from "@/lib/i18n";
+import { ARCHETYPES } from "@/lib/data/tags";
+
+const ARCHETYPE_ICONS: Record<string, string> = {
+  Rain: "\u{1F327}\u{FE0F}",
+  Sun: "\u{2600}\u{FE0F}",
+  Sand: "\u{1F3DC}\u{FE0F}",
+  Snow: "\u{2744}\u{FE0F}",
+  "Trick Room": "\u{1F504}",
+  "Semi-TR": "\u{1F503}",
+  "Hyper Offense": "\u{2694}\u{FE0F}",
+  Balance: "\u{2696}\u{FE0F}",
+  "Bulky Offense": "\u{1F6E1}\u{FE0F}",
+  Tailwind: "\u{1F4A8}",
+  Goodstuffs: "\u{2B50}",
+  "Mega Offense": "\u{1F4A5}",
+  "Primal Weather": "\u{1F30B}",
+};
 
 interface AddOpponentInputProps {
   onAdd: (paste: string, label: string) => void;
@@ -72,6 +89,22 @@ export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
           placeholder={parsedResult?.teamName ? `${t.autoDetected}: ${parsedResult.teamName}` : t.opponentLabelPlaceholder}
           className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
         />
+        {/* Quick archetype label buttons */}
+        {!label.trim() && (
+          <div className="flex flex-wrap gap-1.5">
+            {ARCHETYPES.map((arch) => (
+              <button
+                key={arch}
+                type="button"
+                onClick={() => setLabel(arch)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-surface-alt/50 text-text-secondary border border-border hover:border-accent/30 hover:text-accent hover:bg-accent-surface/30 transition-all cursor-pointer"
+              >
+                <span className="text-[11px]">{ARCHETYPE_ICONS[arch] ?? ""}</span>
+                {arch}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="relative">
           <textarea
             value={paste}
