@@ -24,7 +24,8 @@ import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { I18nProvider } from "@/lib/i18n";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
-import { computeVersionDiff, summarizeChangedFields, type VersionDiff } from "@/lib/utils/version-diff";
+import { computeVersionDiff, summarizeChangedFields, getNavigableChanges, type VersionDiff, type DiffChange } from "@/lib/utils/version-diff";
+import { DiffNavigator } from "@/components/ui/DiffNavigator";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
@@ -253,6 +254,16 @@ function HomeContent() {
     loading: compareLoading,
     clearDiff: handleClearCompare,
   }), [versionDiff, compareLoading, handleClearCompare]);
+
+  const diffChanges = useMemo(() => {
+    if (!versionDiff || versionDiff.changedFields.size === 0) return [];
+    const pCount = analysis?.pokemon.length ?? 0;
+    return getNavigableChanges(versionDiff, pCount, speciesKeys, plans.length);
+  }, [versionDiff, analysis, speciesKeys, plans.length]);
+
+  const handleDiffNavigate = useCallback((change: DiffChange) => {
+    goToSlide(change.slide);
+  }, [goToSlide]);
 
   // Swipe navigation for mobile
   const swipeRef = useSwipeNavigation({
@@ -535,33 +546,20 @@ function HomeContent() {
         </div>
       )}
 
-      {/* Version comparison banner */}
-      {versionDiff && (
+      {/* Version comparison floating navigator */}
+      {versionDiff && diffChanges.length > 0 && (
+        <DiffNavigator
+          changes={diffChanges}
+          onNavigate={handleDiffNavigate}
+          onDismiss={handleClearCompare}
+          version={versionDiff.version}
+        />
+      )}
+      {versionDiff && diffChanges.length === 0 && (
         <div className="max-w-7xl mx-auto px-2 sm:px-4 pt-3">
-          <div className="version-diff-banner flex items-center gap-3 px-5 py-4 bg-blue-50 dark:bg-blue-950/60 border-2 border-blue-300 dark:border-blue-500/50 rounded-2xl shadow-lg shadow-blue-500/10">
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shadow-sm">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-blue-900 dark:text-blue-100">
-                Comparing with version {versionDiff.version}
-              </p>
-              <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mt-0.5">
-                {versionDiff.changedFields.size === 0
-                  ? "No differences found between these versions"
-                  : summarizeChangedFields(versionDiff.changedFields)
-                }
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleClearCompare}
-              className="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all shadow-sm cursor-pointer"
-            >
-              Dismiss
-            </button>
+          <div className="version-diff-banner flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-500/50 rounded-xl">
+            <p className="text-xs font-medium text-blue-700 dark:text-blue-300 flex-1">No differences found with version {versionDiff.version}</p>
+            <button type="button" onClick={handleClearCompare} className="text-xs font-bold text-blue-500 hover:text-blue-600 cursor-pointer">Dismiss</button>
           </div>
         </div>
       )}

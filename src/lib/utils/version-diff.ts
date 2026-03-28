@@ -166,6 +166,69 @@ export function computeVersionDiff(
   };
 }
 
+/** A single navigable change for the diff navigator UI */
+export interface DiffChange {
+  /** The field key (e.g. "teamSummary", "notes:pikachu") */
+  field: string;
+  /** Human-readable label */
+  label: string;
+  /** Which slide this change lives on */
+  slide: number;
+}
+
+/**
+ * Build an ordered list of navigable changes from a VersionDiff.
+ * Sorted by slide order so navigation feels natural (overview → pokemon → speed → matchups).
+ */
+export function getNavigableChanges(
+  diff: VersionDiff,
+  pokemonCount: number,
+  speciesKeys: string[],
+  plansCount: number
+): DiffChange[] {
+  const changes: DiffChange[] = [];
+
+  for (const field of diff.changedFields) {
+    if (field.startsWith("slide:")) continue;
+
+    let label = FIELD_LABELS[field];
+    let slide = 0;
+
+    if (label) {
+      // Overview fields are all on slide 0, except matchupPlans
+      if (field === "matchupPlans") {
+        slide = pokemonCount + 2 + plansCount; // matchup sheet
+      }
+    } else {
+      const match = field.match(/^(pokemon|notes|calcs|roles|spreadNotes):(.+)$/);
+      if (!match) continue;
+      const [, type, key] = match;
+      const name = key.replace(/^./, (c) => c.toUpperCase());
+      const typeLabel =
+        type === "pokemon" ? "Set" :
+        type === "notes" ? "Notes" :
+        type === "calcs" ? "Calcs" :
+        type === "roles" ? "Role" :
+        type === "spreadNotes" ? "Spread notes" : type;
+      label = `${typeLabel} (${name})`;
+
+      // Find which pokemon index this key belongs to
+      const pokemonIndex = speciesKeys.indexOf(key);
+      // pokemon paste changes show on the pokemon detail slide
+      // roles show on overview but we navigate to the pokemon slide for detail
+      slide = pokemonIndex >= 0 ? pokemonIndex + 1 : 0;
+    }
+
+    if (label) {
+      changes.push({ field, label, slide });
+    }
+  }
+
+  // Sort by slide order for natural navigation
+  changes.sort((a, b) => a.slide - b.slide);
+  return changes;
+}
+
 /** Field key labels for human-readable summaries */
 const FIELD_LABELS: Record<string, string> = {
   teamSummary: "Team summary",

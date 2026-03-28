@@ -81,12 +81,12 @@ interface TeamReportProps {
 export function FieldDiffHighlight({ field, children, label }: { field: string | string[]; children: React.ReactNode; label?: string }) {
   const { diff } = useVersionDiff();
   const fields = Array.isArray(field) ? field : [field];
-  const hasChanges = diff ? fields.some((f) => diff.changedFields.has(f)) : false;
+  const matchedField = diff ? fields.find((f) => diff.changedFields.has(f)) : undefined;
 
-  if (!hasChanges) return <>{children}</>;
+  if (!matchedField) return <>{children}</>;
 
   return (
-    <div className="version-diff-highlight relative">
+    <div className="version-diff-highlight relative" data-diff-field={matchedField}>
       <div className="version-diff-border absolute -inset-1.5 sm:-inset-2 rounded-xl pointer-events-none" />
       <div className="version-diff-label absolute -top-1.5 sm:-top-2 left-2 sm:left-3 z-10 pointer-events-none">
         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500 text-white text-[9px] font-bold rounded-md shadow-sm shadow-blue-500/30 uppercase tracking-wider">

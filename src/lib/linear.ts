@@ -88,8 +88,8 @@ export async function createLinearIssue(opts: {
 
   sections.push("", `*Source: VGC Team Report feedback form*`);
 
-  // Find or create the label
-  let labelId: string | undefined;
+  // Find or create labels (type label + no-claude default)
+  const labelIds: string[] = [];
   try {
     const labelsData = await linearQuery(`
       query($teamId: String!) {
@@ -99,14 +99,15 @@ export async function createLinearIssue(opts: {
       }
     `, { teamId });
 
-    const existingLabel = labelsData.team.labels.nodes.find(
-      (l: { name: string }) => l.name.toLowerCase() === mapping.label.toLowerCase()
-    );
+    const allLabels: { id: string; name: string }[] = labelsData.team.labels.nodes;
 
+    // Type label (Bug, Feature, etc.)
+    const existingLabel = allLabels.find(
+      (l) => l.name.toLowerCase() === mapping.label.toLowerCase()
+    );
     if (existingLabel) {
-      labelId = existingLabel.id;
+      labelIds.push(existingLabel.id);
     } else {
-      // Create the label
       const createLabel = await linearQuery(`
         mutation($teamId: String!, $name: String!) {
           issueLabelCreate(input: { teamId: $teamId, name: $name }) {
@@ -114,7 +115,13 @@ export async function createLinearIssue(opts: {
           }
         }
       `, { teamId, name: mapping.label });
-      labelId = createLabel.issueLabelCreate.issueLabel.id;
+      labelIds.push(createLabel.issueLabelCreate.issueLabel.id);
+    }
+
+    // no-claude label — all new issues get this by default so Claude skips them until manually removed
+    const noClaudeLabel = allLabels.find((l) => l.name === "no-claude");
+    if (noClaudeLabel) {
+      labelIds.push(noClaudeLabel.id);
     }
   } catch {
     // Label creation is non-critical
@@ -168,7 +175,7 @@ export async function createLinearIssue(opts: {
     title: `${opts.title}`,
     description: sections.join("\n"),
     priority: mapping.priority,
-    labelIds: labelId ? [labelId] : [],
+    labelIds: labelIds.length > 0 ? labelIds : [],
     stateId: stateId ?? null,
     projectId: projectId ?? null,
   });
