@@ -21,8 +21,10 @@ interface CreatorData {
   creator: string;
   isVerified: boolean;
   profile?: CreatorProfile;
+  followerCount: number;
   totalReports: number;
   totalReactions: number;
+  totalViews: number;
   reports: ExploreReport[];
 }
 
@@ -42,6 +44,7 @@ function CreatorProfileInner({ name }: { name: string }) {
   useEffect(() => { applyRandomAccent(); }, []);
   const [data, setData] = useState<CreatorData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<"newest" | "views">("newest");
 
   useEffect(() => {
     fetch(`/api/creator/${encodeURIComponent(name)}`)
@@ -140,28 +143,59 @@ function CreatorProfileInner({ name }: { name: string }) {
               )}
 
               {/* Stats */}
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-5 flex-wrap">
+                <div className="flex items-center gap-1.5">
                   <span className="text-xl font-extrabold text-text-primary">{data.totalReports}</span>
                   <span className="text-xs text-text-secondary font-semibold uppercase tracking-wider">{t.publicReports}</span>
                 </div>
                 <div className="w-px h-6 bg-border" />
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl font-extrabold text-text-primary">{data.totalViews.toLocaleString()}</span>
+                  <span className="text-xs text-text-secondary font-semibold uppercase tracking-wider">Views</span>
+                </div>
+                <div className="w-px h-6 bg-border" />
+                <div className="flex items-center gap-1.5">
                   <span className="text-xl font-extrabold text-text-primary">{data.totalReactions}</span>
                   <span className="text-xs text-text-secondary font-semibold uppercase tracking-wider">{t.totalReactions}</span>
+                </div>
+                <div className="w-px h-6 bg-border" />
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl font-extrabold text-text-primary">{data.followerCount}</span>
+                  <span className="text-xs text-text-secondary font-semibold uppercase tracking-wider">Followers</span>
                 </div>
               </div>
             </div>
 
-            {/* Reports grid */}
+            {/* Reports section */}
             {data.reports.length === 0 ? (
               <p className="text-sm text-text-secondary">{t.noCreatorReports}</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-                {data.reports.map((report) => (
-                  <ReportCard key={report.id} report={report} />
-                ))}
-              </div>
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-bold text-text-secondary uppercase tracking-wider">
+                    Reports ({data.reports.length})
+                  </h2>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as "newest" | "views")}
+                    className="px-3 py-1.5 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer"
+                  >
+                    <option value="newest">Newest first</option>
+                    <option value="views">Most viewed</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                  {[...data.reports]
+                    .sort((a, b) =>
+                      sortBy === "views"
+                        ? (b.viewCount ?? 0) - (a.viewCount ?? 0)
+                        : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                    )
+                    .map((report) => (
+                      <ReportCard key={report.id} report={report} />
+                    ))}
+                </div>
+              </>
             )}
           </motion.div>
         )}

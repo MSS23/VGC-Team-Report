@@ -25,10 +25,11 @@ export async function GET(
       ORDER BY created_at DESC
     `;
 
-    // Check verified status + profile
-    const [verifiedCheck, profileCheck] = await Promise.all([
+    // Check verified status, profile, and follower count
+    const [verifiedCheck, profileCheck, followerCheck] = await Promise.all([
       sql`SELECT name FROM verified_creators WHERE LOWER(name) = ${creatorName.toLowerCase()}`,
       sql`SELECT bio, twitter, discord, youtube FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`,
+      sql`SELECT COUNT(*)::int as count FROM follows WHERE LOWER(creator_name) = ${creatorName.toLowerCase()}`,
     ]);
     const isVerified = verifiedCheck.length > 0;
     const profile = profileCheck.length > 0 ? {
@@ -37,9 +38,13 @@ export async function GET(
       discord: (profileCheck[0].discord as string) || undefined,
       youtube: (profileCheck[0].youtube as string) || undefined,
     } : undefined;
+    const followerCount = Number(followerCheck[0]?.count ?? 0);
+
+    // Total views across all reports
+    const totalViews = rows.reduce((sum, r) => sum + (Number(r.view_count) || 0), 0);
 
     if (rows.length === 0) {
-      return NextResponse.json({ creator: creatorName, isVerified, profile, totalReports: 0, totalReactions: 0, reports: [] });
+      return NextResponse.json({ creator: creatorName, isVerified, profile, followerCount, totalReports: 0, totalReactions: 0, totalViews: 0, reports: [] });
     }
 
     const shareIds = rows.map((r) => r.id as string);
@@ -79,8 +84,10 @@ export async function GET(
       creator: creatorName,
       isVerified,
       profile,
+      followerCount,
       totalReports: reports.length,
       totalReactions,
+      totalViews,
       reports,
     });
   } catch (e) {
