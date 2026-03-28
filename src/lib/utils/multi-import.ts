@@ -5,7 +5,7 @@
  * - Raw Showdown format text
  */
 
-export type ImportSource = "pokepaste" | "pikalytics" | "replay" | "showdown" | "unknown";
+export type ImportSource = "pokepaste" | "pikalytics" | "showdown" | "unknown";
 
 export function detectImportSource(input: string): ImportSource {
   const trimmed = input.trim();
@@ -16,10 +16,6 @@ export function detectImportSource(input: string): ImportSource {
 
   if (/^https?:\/\/(www\.)?pikalytics\.com\/team/i.test(trimmed)) {
     return "pikalytics";
-  }
-
-  if (/^https?:\/\/replay\.pokemonshowdown\.com\//i.test(trimmed)) {
-    return "replay";
   }
 
   // Check if it looks like a Showdown paste (has Ability: and moves)
