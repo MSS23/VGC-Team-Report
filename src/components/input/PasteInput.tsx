@@ -464,9 +464,37 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         </motion.div>
       )}
 
+      {/* Feedback callout */}
+      <motion.div
+        className="mt-8 sm:mt-10"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45, duration: 0.4 }}
+      >
+        <a
+          href="/feedback"
+          className="group flex items-start gap-3 p-4 rounded-xl bg-surface border border-border hover:border-accent/30 transition-all"
+        >
+          <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/15 transition-colors">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">Got a feature idea or found a bug?</p>
+            <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">
+              Your feedback shapes this tool. Suggest features, report issues, or tell us what you&apos;d improve.
+            </p>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1">
+            <polyline points="9,18 15,12 9,6" />
+          </svg>
+        </a>
+      </motion.div>
+
       {/* Footer */}
       <motion.div
-        className="mt-10 sm:mt-14 space-y-3"
+        className="mt-8 sm:mt-10 space-y-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
