@@ -85,17 +85,20 @@ source .claude/scripts/linear.sh
 linear_get_in_progress
 ```
 
-### 2. Filter out `no-claude` issues
+### 2. Filter and prioritize
 
-**IMPORTANT:** Check each issue's labels. If an issue has the `no-claude` label, **skip it entirely** — do not implement, modify, or touch it. These are reserved for manual work. Only process issues that do NOT have the `no-claude` label.
+**Bug tickets are ALWAYS worked on — never skip bugs.** The `no-claude` label does NOT apply to bugs. If it has the Bug label, fix it regardless of other labels.
 
-### 3. Process tickets: highest priority first, one at a time
+For non-bug issues: if an issue has the `no-claude` label, **skip it entirely** — do not implement, modify, or touch it. These are reserved for manual work.
+
+### 3. Process tickets: bugs first, then by priority
 
 Work through all In Progress issues sequentially without asking between each:
 1. List them to the user briefly (note any skipped `no-claude` issues)
-2. Start with the **highest priority** ticket immediately
-3. For each: implement -> verify -> commit -> push -> update Linear -> Discord -> next ticket
-4. Continue until all In Progress tickets are done or the user interrupts
+2. **Bugs first** — always fix bugs before anything else, regardless of priority number
+3. Then remaining tickets by highest priority
+4. For each: implement -> verify -> commit -> push -> update Linear -> Discord -> next ticket
+5. Continue until all In Progress tickets are done or the user interrupts
 
 ### 4. After implementing a ticket
 

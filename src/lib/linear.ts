@@ -151,10 +151,13 @@ export async function createLinearIssue(opts: {
       labelIds.push(createLabel.issueLabelCreate.issueLabel.id);
     }
 
-    // no-claude label — all new issues get this by default so Claude skips them until manually removed
-    const noClaudeLabel = allLabels.find((l) => l.name === "no-claude");
-    if (noClaudeLabel) {
-      labelIds.push(noClaudeLabel.id);
+    // no-claude label — non-bug issues get this by default so Claude skips them until manually removed
+    // Bugs are NEVER tagged no-claude — they should be fixed immediately
+    if (opts.type !== "bug") {
+      const noClaudeLabel = allLabels.find((l) => l.name === "no-claude");
+      if (noClaudeLabel) {
+        labelIds.push(noClaudeLabel.id);
+      }
     }
   } catch {
     // Label creation is non-critical
