@@ -371,16 +371,16 @@ export function PokemonDetailSlide({
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-[45%_55%] gap-4 sm:gap-6 lg:gap-8 items-start animate-fade-in">
+    <div className="grid grid-cols-1 sm:grid-cols-[45%_55%] gap-3 sm:gap-6 lg:gap-8 items-start animate-fade-in">
       {/* Left Column: Pokemon Info */}
       <FieldDiffHighlight field={pokemonIndex !== undefined ? [`pokemon:${pokemonIndex}`] : []} label="Set changed">
-      <div className="flex flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col gap-3 sm:gap-6">
         {/* Header: Sprite + Name + Types */}
-        <div className="flex items-start gap-4 sm:gap-6">
+        <div className="flex items-start gap-3 sm:gap-6">
           <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
             <PokemonSprite
               species={parsed.species}
-              size={isPresentationMode ? 140 : 104}
+              size={isPresentationMode ? 140 : 80}
               className="sm:hidden"
               animated={animated}
               shiny={shiny}

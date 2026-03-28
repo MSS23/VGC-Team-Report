@@ -87,9 +87,10 @@ body {
     overscroll-behavior: none;
   }
 
-  /* Top safe area for status bar (viewport-fit=cover) */
+  /* Safe areas for status bar + bottom gesture bar (viewport-fit=cover) */
   body {
     padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   /* Sticky headers account for status bar inset */

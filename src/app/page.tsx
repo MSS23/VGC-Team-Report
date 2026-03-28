@@ -568,8 +568,8 @@ function HomeContent() {
       <VersionDiffProvider value={versionDiffContextValue}>
       <div
         ref={swipeRef}
-        className={`max-w-7xl mx-auto slide-content ${
-          isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-28 sm:pb-32" : "pb-20 sm:pb-20"
+        className={`max-w-7xl mx-auto slide-content safe-bottom ${
+          isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-32 sm:pb-36" : "pb-24 sm:pb-24"
         } ${
           isPresentationStyle
             ? "px-3 sm:px-8 py-2 sm:py-6"

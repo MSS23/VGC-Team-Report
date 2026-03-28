@@ -90,7 +90,7 @@ export function TeamOverview({
   };
 
   return (
-    <div className="flex flex-col gap-3 sm:gap-8 animate-fade-in">
+    <div className="flex flex-col gap-2 sm:gap-8 animate-fade-in">
       {/* Tournament Context */}
       {isReadOnly ? (
         (hasTournamentInfo || rentalCode || hasCreatorInfo) && (
@@ -270,7 +270,7 @@ export function TeamOverview({
       {/* Team Summary */}
       <FieldDiffHighlight field="teamSummary" label="Summary changed">
       <div>
-        <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3 presenting:text-base presenting:mb-4" data-walkthrough="team-summary">
+        <h3 className="text-[10px] sm:text-sm font-extrabold uppercase tracking-widest text-text-tertiary mb-1 sm:mb-3 presenting:text-base presenting:mb-4" data-walkthrough="team-summary">
           {t.teamSummary}
         </h3>
         {isReadOnly ? (
@@ -314,7 +314,7 @@ export function TeamOverview({
       </FieldDiffHighlight>
 
       {/* Team Stats Summary */}
-      <div className="mb-3 sm:mb-4">
+      <div className="mb-1 sm:mb-4">
         <TeamStats pokemon={pokemon} />
       </div>
 
@@ -393,7 +393,7 @@ export function TeamOverview({
       </div>
 
       {/* App trademark */}
-      <div className="text-center pt-4 border-t border-border-subtle">
+      <div className="text-center pt-2 sm:pt-4 border-t border-border-subtle">
         <p className="text-xs text-text-tertiary/60 font-medium">
           {t.builtWith}{" "}
           <a
