@@ -2143,6 +2143,128 @@ export const POKEMON_DATA: Record<string, PokemonData> = {
     baseStats: { hp: 105, atk: 180, def: 100, spa: 180, spd: 100, spe: 115 },
     abilities: ["Delta Stream"],
   },
+
+  // ── Missing Pokemon (VGC-52 bug fix) ──────────────────────────────────────
+
+  "empoleon": {
+    name: "Empoleon",
+    types: ["Water", "Steel"],
+    baseStats: { hp: 84, atk: 86, def: 88, spa: 111, spd: 101, spe: 60 },
+    abilities: ["Torrent", "Defiant"],
+  },
+
+  "skeledirge": {
+    name: "Skeledirge",
+    types: ["Fire", "Ghost"],
+    baseStats: { hp: 104, atk: 75, def: 100, spa: 110, spd: 75, spe: 66 },
+    abilities: ["Blaze", "Unaware"],
+  },
+
+  "magnezone": {
+    name: "Magnezone",
+    types: ["Electric", "Steel"],
+    baseStats: { hp: 70, atk: 70, def: 115, spa: 130, spd: 90, spe: 60 },
+    abilities: ["Magnet Pull", "Sturdy", "Analytic"],
+  },
+
+  "klefki": {
+    name: "Klefki",
+    types: ["Steel", "Fairy"],
+    baseStats: { hp: 57, atk: 80, def: 91, spa: 80, spd: 87, spe: 75 },
+    abilities: ["Prankster", "Magician"],
+  },
+
+  "vanilluxe": {
+    name: "Vanilluxe",
+    types: ["Ice"],
+    baseStats: { hp: 71, atk: 95, def: 85, spa: 110, spd: 95, spe: 79 },
+    abilities: ["Ice Body", "Snow Warning", "Weak Armor"],
+  },
+
+  "galvantula": {
+    name: "Galvantula",
+    types: ["Bug", "Electric"],
+    baseStats: { hp: 70, atk: 77, def: 60, spa: 97, spd: 60, spe: 108 },
+    abilities: ["Compound Eyes", "Unnerve", "Swarm"],
+  },
+
+  "swampert": {
+    name: "Swampert",
+    types: ["Water", "Ground"],
+    baseStats: { hp: 100, atk: 110, def: 90, spa: 85, spd: 90, spe: 60 },
+    abilities: ["Torrent", "Damp"],
+  },
+
+  "sceptile": {
+    name: "Sceptile",
+    types: ["Grass"],
+    baseStats: { hp: 70, atk: 85, def: 65, spa: 105, spd: 85, spe: 120 },
+    abilities: ["Overgrow", "Unburden"],
+  },
+
+  "toxicroak": {
+    name: "Toxicroak",
+    types: ["Poison", "Fighting"],
+    baseStats: { hp: 83, atk: 106, def: 65, spa: 86, spd: 65, spe: 85 },
+    abilities: ["Anticipation", "Dry Skin", "Poison Touch"],
+  },
+
+  "kingdra": {
+    name: "Kingdra",
+    types: ["Water", "Dragon"],
+    baseStats: { hp: 75, atk: 95, def: 95, spa: 95, spd: 95, spe: 85 },
+    abilities: ["Swift Swim", "Sniper", "Damp"],
+  },
+
+  "breloom": {
+    name: "Breloom",
+    types: ["Grass", "Fighting"],
+    baseStats: { hp: 60, atk: 130, def: 80, spa: 60, spd: 60, spe: 70 },
+    abilities: ["Effect Spore", "Poison Heal", "Technician"],
+  },
+
+  "zapdos": {
+    name: "Zapdos",
+    types: ["Electric", "Flying"],
+    baseStats: { hp: 90, atk: 90, def: 85, spa: 125, spd: 90, spe: 100 },
+    abilities: ["Pressure", "Static"],
+  },
+
+  "moltres": {
+    name: "Moltres",
+    types: ["Fire", "Flying"],
+    baseStats: { hp: 90, atk: 100, def: 90, spa: 125, spd: 85, spe: 90 },
+    abilities: ["Pressure", "Flame Body"],
+  },
+
+  "mienshao": {
+    name: "Mienshao",
+    types: ["Fighting"],
+    baseStats: { hp: 65, atk: 125, def: 60, spa: 95, spd: 60, spe: 105 },
+    abilities: ["Inner Focus", "Regenerator", "Reckless"],
+  },
+
+  "zoroark-hisui": {
+    name: "Zoroark-Hisui",
+    types: ["Normal", "Ghost"],
+    baseStats: { hp: 55, atk: 100, def: 60, spa: 125, spd: 60, spe: 110 },
+    abilities: ["Illusion"],
+  },
+
+  "grafaiai": {
+    name: "Grafaiai",
+    types: ["Poison", "Normal"],
+    baseStats: { hp: 63, atk: 95, def: 65, spa: 80, spd: 72, spe: 110 },
+    abilities: ["Unburden", "Poison Touch", "Prankster"],
+  },
+
+  "orthworm": {
+    name: "Orthworm",
+    types: ["Steel"],
+    baseStats: { hp: 70, atk: 85, def: 145, spa: 60, spd: 55, spe: 65 },
+    abilities: ["Earth Eater", "Sand Veil"],
+  },
+
 };
 
 export function lookupPokemon(species: string): PokemonData | null {
