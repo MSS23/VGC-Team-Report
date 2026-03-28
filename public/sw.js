@@ -1,7 +1,7 @@
 // Bump version to push updates to all installed PWA users
-const CACHE_NAME = "vgc-team-report-v12";
-const SHARE_CACHE = "vgc-shares-v2";
-const API_CACHE = "vgc-api-v3";
+const CACHE_NAME = "vgc-team-report-v13";
+const SHARE_CACHE = "vgc-shares-v3";
+const API_CACHE = "vgc-api-v4";
 
 const PRECACHE_URLS = [
   "/",
