@@ -14,9 +14,13 @@ interface UseSlideNavigationOptions {
   onTogglePresentation?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
+  onToggleCreatorMode?: () => void;
+  onToggleHideSlide?: () => void;
+  onMoveSlideUp?: () => void;
+  onMoveSlideDown?: () => void;
 }
 
-export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocusGuard = false, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation, onUndo, onRedo }: UseSlideNavigationOptions) {
+export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocusGuard = false, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation, onUndo, onRedo, onToggleCreatorMode, onToggleHideSlide, onMoveSlideUp, onMoveSlideDown }: UseSlideNavigationOptions) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // Reset to slide 0 when team changes (resetKey), or when totalSlides changes if no resetKey
@@ -95,12 +99,39 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
       } else if ((e.key === "p" || e.key === "P") && onTogglePresentation) {
         e.preventDefault();
         onTogglePresentation();
+      } else if ((e.key === "e" || e.key === "E") && onToggleCreatorMode) {
+        // E = toggle edit/lock mode
+        e.preventDefault();
+        onToggleCreatorMode();
+      } else if ((e.key === "h" || e.key === "H") && onToggleHideSlide) {
+        // H = hide/show current slide
+        e.preventDefault();
+        onToggleHideSlide();
+      } else if (e.key === "[" && onMoveSlideUp) {
+        // [ = move slide earlier
+        e.preventDefault();
+        onMoveSlideUp();
+      } else if (e.key === "]" && onMoveSlideDown) {
+        // ] = move slide later
+        e.preventDefault();
+        onMoveSlideDown();
+      } else if (e.key >= "1" && e.key <= "9") {
+        // Number keys 1-9 = jump to slide
+        const slideIndex = parseInt(e.key, 10) - 1;
+        if (slideIndex < totalSlides) {
+          e.preventDefault();
+          withTransition(() => setCurrentSlide(slideIndex));
+        }
+      } else if (e.key === "0") {
+        // 0 = jump to last slide
+        e.preventDefault();
+        withTransition(() => setCurrentSlide(totalSlides - 1));
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, totalSlides, bypassFocusGuard, withTransition, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation, onUndo, onRedo]);
+  }, [enabled, totalSlides, bypassFocusGuard, withTransition, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation, onUndo, onRedo, onToggleCreatorMode, onToggleHideSlide, onMoveSlideUp, onMoveSlideDown]);
 
   // Touch swipe listener with velocity-based detection
   useEffect(() => {

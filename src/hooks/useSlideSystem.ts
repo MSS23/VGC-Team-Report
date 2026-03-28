@@ -22,6 +22,9 @@ interface SlideSystemOptions {
   setShowShortcutHint: (fn: (v: boolean) => boolean) => void;
   handleUndo: () => void;
   handleRedo: () => void;
+  setCreatorMode: (v: boolean) => void;
+  onMoveSlideUp?: () => void;
+  onMoveSlideDown?: () => void;
   t: Record<string, string>;
 }
 
@@ -31,7 +34,7 @@ export function useSlideSystem(opts: SlideSystemOptions) {
     isHidden, toggleSlide, togglePlanSlide,
     creatorMode, presentationMode, paste,
     darkMode, setDarkMode, setPresentationMode, setShowShortcutHint,
-    handleUndo, handleRedo, t,
+    handleUndo, handleRedo, setCreatorMode, onMoveSlideUp, onMoveSlideDown, t,
   } = opts;
 
   // Build ALL slide keys and labels
@@ -95,9 +98,25 @@ export function useSlideSystem(opts: SlideSystemOptions) {
     onTogglePresentation: () => setPresentationMode(!presentationMode),
     onUndo: handleUndo,
     onRedo: handleRedo,
+    onToggleCreatorMode: () => setCreatorMode(!creatorMode),
+    onToggleHideSlide: creatorMode ? () => {
+      const key = allSlideKeys[physicalSlideRef.current ?? 0];
+      if (key) {
+        if (key.startsWith("matchup-")) {
+          const planId = key.replace("matchup-", "");
+          togglePlanSlide(planId);
+        } else {
+          toggleSlide(key);
+        }
+      }
+    } : undefined,
+    onMoveSlideUp: creatorMode ? onMoveSlideUp : undefined,
+    onMoveSlideDown: creatorMode ? onMoveSlideDown : undefined,
   });
 
   const physicalSlide = visibleIndices[currentSlide] ?? 0;
+  const physicalSlideRef = useRef(physicalSlide);
+  physicalSlideRef.current = physicalSlide;
 
   // Preserve physical slide position when visibleIndices changes
   const prevVisibleRef = useRef(visibleIndices);

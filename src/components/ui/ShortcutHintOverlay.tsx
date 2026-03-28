@@ -26,6 +26,11 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
 
   const SHORTCUTS_NORMAL = [
     { key: "P", label: t.enterPresentation },
+    { key: "E", label: "Toggle edit mode" },
+    { key: "1-9", label: "Jump to slide" },
+    { key: "0", label: "Jump to last slide" },
+    { key: "H", label: "Hide/show current slide" },
+    { key: "[ / ]", label: "Reorder slide up/down" },
   ];
   // Close on Escape key
   useEffect(() => {

@@ -214,6 +214,7 @@ export function useHomePage() {
     darkMode, setDarkMode, setPresentationMode,
     setShowShortcutHint: setShowShortcutHint as (fn: (v: boolean) => boolean) => void,
     handleUndo, handleRedo,
+    setCreatorMode,
     t: t as unknown as Record<string, string>,
   });
 
