@@ -24,6 +24,18 @@ const META_TARGETS = [
 ] as const;
 
 // --------------------------------------------------------------------------
+// Defender spread presets
+// --------------------------------------------------------------------------
+const SPREAD_PRESETS = [
+  { id: "default", label: "Default", evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, nature: "Hardy" },
+  { id: "phys-bulk", label: "252 HP / 252+ Def", evs: { hp: 252, atk: 0, def: 252, spa: 0, spd: 4, spe: 0 }, nature: "Bold" },
+  { id: "spec-bulk", label: "252 HP / 252+ SpD", evs: { hp: 252, atk: 0, def: 4, spa: 0, spd: 252, spe: 0 }, nature: "Calm" },
+  { id: "phys-offense", label: "252 Atk / 252 Spe", evs: { hp: 4, atk: 252, def: 0, spa: 0, spd: 0, spe: 252 }, nature: "Adamant" },
+  { id: "spec-offense", label: "252 SpA / 252 Spe", evs: { hp: 4, atk: 0, def: 0, spa: 252, spd: 0, spe: 252 }, nature: "Modest" },
+  { id: "standard-bulk", label: "252 HP / 4 Def", evs: { hp: 252, atk: 0, def: 4, spa: 0, spd: 0, spe: 0 }, nature: "Hardy" },
+] as const;
+
+// --------------------------------------------------------------------------
 // Types
 // --------------------------------------------------------------------------
 interface QuickCalcProps {
@@ -85,6 +97,12 @@ export function QuickCalc({ pokemon, onAddCalc }: QuickCalcProps) {
   const [isCalculating, setIsCalculating] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Defender spread configuration
+  const [defenderNature, setDefenderNature] = useState("Hardy");
+  const [defenderEvs, setDefenderEvs] = useState<Record<string, number>>({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
+  const [defenderItem, setDefenderItem] = useState("");
+  const [spreadPreset, setSpreadPreset] = useState("default");
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -135,7 +153,12 @@ export function QuickCalc({ pokemon, onAddCalc }: QuickCalcProps) {
           ivs: parsed.ivs,
         });
 
-        const defender = new Pokemon(gen, targetName, { level: 50 });
+        const defender = new Pokemon(gen, targetName, {
+          level: 50,
+          nature: defenderNature || "Hardy",
+          evs: defenderEvs,
+          ...(defenderItem ? { item: defenderItem } : {}),
+        });
         const move = new Move(gen, moveName);
         const calcResult = calculate(gen, attacker, defender, move);
 
@@ -170,7 +193,7 @@ export function QuickCalc({ pokemon, onAddCalc }: QuickCalcProps) {
         setIsCalculating(false);
       }
     },
-    [parsed]
+    [parsed, defenderNature, defenderEvs, defenderItem]
   );
 
   // Selecting a move triggers calc if target is set
@@ -212,6 +235,27 @@ export function QuickCalc({ pokemon, onAddCalc }: QuickCalcProps) {
     },
     [targetSearch, handleTargetSelect]
   );
+
+  // Apply a spread preset and re-run the calc
+  const handlePresetSelect = useCallback(
+    (presetId: string) => {
+      const preset = SPREAD_PRESETS.find((p) => p.id === presetId);
+      if (!preset) return;
+      setSpreadPreset(presetId);
+      setDefenderNature(preset.nature);
+      setDefenderEvs({ ...preset.evs });
+      setSaved(false);
+    },
+    []
+  );
+
+  // Re-run calc when defender spread changes (if move + target already set)
+  useEffect(() => {
+    if (selectedMove && target) {
+      runCalc(selectedMove, target);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defenderNature, defenderEvs, defenderItem]);
 
   // Save result as calc entry
   const handleSave = useCallback(() => {
@@ -387,6 +431,43 @@ export function QuickCalc({ pokemon, onAddCalc }: QuickCalcProps) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Target spread presets */}
+        <div>
+          <label className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider mb-2 block">
+            Target Spread
+          </label>
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
+            {SPREAD_PRESETS.map((preset) => {
+              const isActive = spreadPreset === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => handlePresetSelect(preset.id)}
+                  className={`shrink-0 px-2.5 py-1.5 rounded-full text-[11px] font-medium border transition-all whitespace-nowrap ${
+                    isActive
+                      ? "bg-accent/15 text-accent border-accent/40"
+                      : "bg-surface-alt text-text-secondary border-border hover:border-accent/30"
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
+          </div>
+          <input
+            type="text"
+            value={defenderItem}
+            onChange={(e) => {
+              setDefenderItem(e.target.value);
+              setSaved(false);
+            }}
+            placeholder="Item (optional, e.g. Assault Vest)"
+            className="w-full mt-2 px-3 py-2 bg-surface border border-border rounded-xl text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+            autoComplete="off"
+          />
         </div>
 
         {/* Loading state */}

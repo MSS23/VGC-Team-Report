@@ -16,10 +16,14 @@ curl -s -X POST 'https://api.linear.app/graphql' \
   -d '{"query":"{ team(id: \"06531926-0387-4a3e-8325-8b7be754ced5\") { issues(filter: { state: { name: { eq: \"In Progress\" } } }, orderBy: updatedAt, first: 10) { nodes { id identifier title description labels { nodes { name } } } } } }"}'
 ```
 
+### Filtering: `no-claude` label
+
+**IMPORTANT:** After fetching issues, check each issue's labels. If an issue has the `no-claude` label, **skip it entirely** — do not implement, modify, or touch it. These are reserved for manual work by the user. Only process issues that do NOT have the `no-claude` label.
+
 ### Sequential implementation
 
-If there are multiple In Progress issues:
-1. List them all to the user first
+If there are multiple In Progress issues (after filtering out `no-claude`):
+1. List them all to the user first (note any skipped `no-claude` issues)
 2. Implement the **oldest first** (first in the list)
 3. For each issue: implement → type-check → build → commit → push → update Linear → notify Discord
 4. Then move to the next issue
