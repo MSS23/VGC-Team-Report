@@ -23,7 +23,8 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
     process.env.NODE_ENV === 'production' &&
     host !== CANONICAL_HOST &&
     host !== `www.${CANONICAL_HOST}` &&
-    !host.includes('localhost')
+    !host.includes('localhost') &&
+    !host.includes('vercel.app')
   ) {
     return NextResponse.redirect(
       `https://${CANONICAL_HOST}${pathname}${search}`,
