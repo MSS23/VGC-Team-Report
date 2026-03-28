@@ -76,7 +76,7 @@ This provides: `linear_query`, `linear_move_issue`, `linear_comment`, `linear_co
 
 ## Linear Workflow
 
-When asked to check Linear, implement tickets, or build In Progress issues, follow this workflow:
+**At the start of every conversation**, check Linear for In Progress issues and begin working through them automatically. Do not wait to be asked — if there are tickets In Progress, start implementing.
 
 ### 1. Check for In Progress issues
 
@@ -91,10 +91,11 @@ linear_get_in_progress
 
 ### 3. Process tickets: highest priority first, one at a time
 
-Work through all In Progress issues sequentially (no need to ask between each):
-1. List them to the user first (note any skipped `no-claude` issues)
-2. Start with the **highest priority** ticket
+Work through all In Progress issues sequentially without asking between each:
+1. List them to the user briefly (note any skipped `no-claude` issues)
+2. Start with the **highest priority** ticket immediately
 3. For each: implement -> verify -> commit -> push -> update Linear -> Discord -> next ticket
+4. Continue until all In Progress tickets are done or the user interrupts
 
 ### 4. After implementing a ticket
 
