@@ -132,12 +132,15 @@ discord_notify_build() {
   local file_count=$(git_changed_files_count)
   local discord_files=$(git_changed_files | head -10 | sed 's/^/`/' | sed 's/$/`/' | tr '\n' '\\' | sed 's/\\/\\n/g')
 
-  local pr_line=""
   if [[ -n "$pr_url" ]]; then
-    pr_line="\\n[Review PR]($pr_url)"
+    # PR flow — needs merge before deploy
+    curl -s -X POST "$DISCORD_BUILDS_WEBHOOK" \
+      -H 'Content-Type: application/json' \
+      -d "{\"embeds\":[{\"title\":\"🔍 Ready for Review\",\"description\":\"**$issue_id: $title**\\n\\n[View commit \`$commit_short\`]($commit_url)\\n[Review PR]($pr_url)\\n\\n**Files changed ($file_count):**\\n$discord_files\\n\\n📋 Linear: moved to **In Review**\\n⏳ Waiting for PR merge to deploy.\",\"color\":16761095,\"footer\":{\"text\":\"VGC Team Report Builder\"}}]}"
+  else
+    # Direct-to-main — already deploying
+    curl -s -X POST "$DISCORD_BUILDS_WEBHOOK" \
+      -H 'Content-Type: application/json' \
+      -d "{\"embeds\":[{\"title\":\"🚀 Pushed to Main\",\"description\":\"**$issue_id: $title**\\n\\n[View commit \`$commit_short\`]($commit_url)\\n\\n**Files changed ($file_count):**\\n$discord_files\\n\\n📋 Linear: moved to **In Review**\\n✅ Auto-deploying via Vercel.\",\"color\":5763719,\"footer\":{\"text\":\"VGC Team Report Builder\"}}]}"
   fi
-
-  curl -s -X POST "$DISCORD_BUILDS_WEBHOOK" \
-    -H 'Content-Type: application/json' \
-    -d "{\"embeds\":[{\"title\":\"Build Ready for Review\",\"description\":\"**$issue_id: $title**\\n\\n[View commit \`$commit_short\`]($commit_url)${pr_line}\\n\\n**Files changed ($file_count):**\\n$discord_files\\n\\nAwaiting PR merge to deploy via Vercel.\",\"color\":5763719,\"footer\":{\"text\":\"VGC Team Report Builder\"}}]}"
 }
