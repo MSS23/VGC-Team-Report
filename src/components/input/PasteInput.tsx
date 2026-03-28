@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { detectImportSource } from "@/lib/utils/multi-import";
+import { parseReplay, replayTeamToPaste, type ReplayData } from "@/lib/utils/parse-replay";
 import { useTranslation } from "@/lib/i18n";
 import { PageNavbar } from "@/components/layout/PageNavbar";
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
@@ -154,10 +155,13 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
     return () => clearTimeout(timer);
   }, []);
 
+  const [replayData, setReplayData] = useState<ReplayData | null>(null);
+
   const isUrl = isPokePasteUrl(paste);
   const hasContent = paste.trim().length > 0;
   const importSource = hasContent ? detectImportSource(paste) : "unknown";
   const isPikalyticsUrl = importSource === "pikalytics";
+  const isReplayUrl = importSource === "replay";
 
   const handleAnalyze = () => {
     if (paste.trim() && !isUrl && !looksLikeShowdownPaste(paste)) {
@@ -171,7 +175,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
-      if (isUrl) {
+      if (isReplayUrl) {
+        handleFetchReplay();
+      } else if (isUrl) {
         handleFetchPaste();
       } else {
         handleAnalyze();
@@ -192,6 +198,34 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
     } finally {
       setIsFetching(false);
     }
+  };
+
+  const handleFetchReplay = async () => {
+    if (!isReplayUrl) return;
+    setIsFetching(true);
+    setFetchError(null);
+    setReplayData(null);
+    try {
+      const data = await parseReplay(paste.trim());
+      if (data.team1.pokemon.length === 0 && data.team2.pokemon.length === 0) {
+        setFetchError("Could not extract teams from this replay");
+        return;
+      }
+      setReplayData(data);
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : "Failed to fetch replay");
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  const handleSelectReplayTeam = (playerIndex: 1 | 2) => {
+    if (!replayData) return;
+    const team = playerIndex === 1 ? replayData.team1 : replayData.team2;
+    const pasteText = replayTeamToPaste(team);
+    onPasteChange(pasteText);
+    setReplayData(null);
+    onAnalyze(pasteText);
   };
 
   return (
@@ -360,13 +394,13 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           className="relative w-full h-44 sm:h-72 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none focus:border-accent/50 transition-all duration-300"
           spellCheck={false}
         />
-        {(isUrl || isPikalyticsUrl) && (
+        {(isUrl || isPikalyticsUrl || isReplayUrl) && (
           <motion.span
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="absolute top-3 right-3 px-2.5 py-1 bg-accent text-white text-[10px] font-extrabold rounded-md uppercase tracking-widest shadow-sm"
           >
-            {isPikalyticsUrl ? "Pikalytics" : t.pokePaste}
+            {isReplayUrl ? "Replay" : isPikalyticsUrl ? "Pikalytics" : t.pokePaste}
           </motion.span>
         )}
       </motion.div>
@@ -389,7 +423,82 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         animate={{ opacity: 1 }}
         transition={{ delay: 0.25, duration: 0.3 }}
       >
-        {isUrl ? (
+        {/* Replay team picker modal */}
+        {replayData && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-4 bg-surface border-2 border-accent/30 rounded-xl shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-sm font-bold text-text-primary">Choose a team from this replay</p>
+                <p className="text-[10px] text-text-tertiary mt-0.5">
+                  {replayData.format}{replayData.winner ? ` — Winner: ${replayData.winner}` : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplayData(null)}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { player: replayData.team1, index: 1 as const },
+                { player: replayData.team2, index: 2 as const },
+              ].map(({ player, index }) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleSelectReplayTeam(index)}
+                  className="flex flex-col gap-2 p-3 rounded-xl border-2 border-border hover:border-accent/50 hover:bg-accent/5 transition-all cursor-pointer text-left group"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-text-primary group-hover:text-accent transition-colors">
+                      {player.playerName || `Player ${index}`}
+                    </span>
+                    {replayData.winner === player.playerName && (
+                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">Winner</span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {player.pokemon.map((mon, i) => (
+                      <span key={i} className="text-[10px] font-semibold text-text-secondary bg-surface-alt px-1.5 py-0.5 rounded">
+                        {mon.species}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {isReplayUrl ? (
+          <motion.button
+            onClick={handleFetchReplay}
+            disabled={isFetching}
+            whileTap={{ scale: 0.97 }}
+            className="px-6 py-2.5 bg-accent text-white rounded-lg text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 shadow-md shadow-accent/30 cursor-pointer tracking-wide"
+          >
+            {isFetching ? (
+              <span className="flex items-center gap-2">
+                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Fetching replay...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                Import from Replay
+                <kbd className="text-[10px] opacity-60 hidden sm:inline font-[family-name:var(--font-mono)]">Ctrl+Enter</kbd>
+              </span>
+            )}
+          </motion.button>
+        ) : isUrl ? (
           <motion.button
             onClick={handleFetchPaste}
             disabled={isFetching}

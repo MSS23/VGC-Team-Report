@@ -75,6 +75,9 @@ interface NavbarProps {
   onClearCompareVersion?: () => void;
   compareLoading?: boolean;
 
+  // PDF Export
+  onExportPdf?: () => void;
+
   // Actions
   onShowShortcuts: (v: boolean) => void;
   onSetCreatorMode: (v: boolean) => void;
@@ -99,6 +102,7 @@ export function Navbar(props: NavbarProps) {
     hasExistingShare, editLinkCopied, onCopyEditLink,
     onUndo, onRedo, canUndo, canRedo,
     comparingVersion, onCompareVersion, onClearCompareVersion, compareLoading,
+    onExportPdf,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
     onReset, onExitSharedView,
   } = props;
@@ -420,6 +424,23 @@ export function Navbar(props: NavbarProps) {
               <span className="hidden sm:inline">{t.buildYourOwn}</span>
               <span className="sm:hidden">Create</span>
             </a>
+          )}
+
+          {/* PDF Export button */}
+          {onExportPdf && !isPresentationStyle && (
+            <button
+              type="button"
+              onClick={onExportPdf}
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
+              title="Export as PDF"
+              aria-label="Export report as PDF"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
           )}
 
           {/* Version history quick button */}

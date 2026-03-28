@@ -32,6 +32,7 @@ const ShareModal = dynamic(() => import("@/components/ui/ShareModal").then(m => 
 const CommentSection = dynamic(() => import("@/components/social/CommentSection").then(m => ({ default: m.CommentSection })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-32" />,
 });
+const PrintableReport = dynamic(() => import("@/components/ui/PdfExport").then(m => ({ default: m.PrintableReport })));
 
 export default function Home() {
   return (
@@ -230,6 +231,22 @@ function HomeContent() {
   const handleClearCompare = useCallback(() => {
     setVersionDiff(null);
   }, []);
+
+  // ── PDF Export state ─────────────────────────────────────────
+  const [isPdfPrinting, setIsPdfPrinting] = useState(false);
+
+  const handleExportPdf = useCallback(() => {
+    setIsPdfPrinting(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isPdfPrinting) return;
+    const raf = requestAnimationFrame(() => {
+      window.print();
+      setIsPdfPrinting(false);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [isPdfPrinting]);
 
   const versionDiffContextValue = useMemo(() => ({
     diff: versionDiff,
@@ -496,6 +513,7 @@ function HomeContent() {
         onCompareVersion={handleCompareVersion}
         onClearCompareVersion={handleClearCompare}
         compareLoading={compareLoading}
+        onExportPdf={analysis ? handleExportPdf : undefined}
         onShowShortcuts={setShowShortcutHint}
         onSetCreatorMode={setCreatorMode}
         onSetPresentationMode={setPresentationMode}
@@ -804,6 +822,30 @@ function HomeContent() {
               {" "}{t.oldEditLinkStops}
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Hidden print container for PDF export */}
+      {isPdfPrinting && analysis && (
+        <div id="print-container" className="hidden print:block" aria-hidden="true">
+          <PrintableReport
+            analysis={analysis}
+            notes={notes}
+            calcs={calcs}
+            roles={roles}
+            spreadNotes={spreadNotes}
+            speciesKeys={speciesKeys}
+            teamSummary={summary}
+            tournamentName={tournamentName}
+            placement={placement}
+            record={record}
+            rentalCode={rentalCode}
+            creatorName={creatorName}
+            mvpIndex={mvpIndex}
+            tags={tags}
+            plans={plans}
+            getSpriteConfig={getSpriteConfig}
+          />
         </div>
       )}
     </main>

@@ -500,6 +500,47 @@ body {
   .text-accent, [class*="text-accent"] {
     color: #E11D48 !important;
   }
+
+  /* ── PDF Export: print-container takes over ──────────────────── */
+
+  /* When the print container is present, hide everything else */
+  body > *:not(#print-container) {
+    display: none !important;
+  }
+  #print-container {
+    display: block !important;
+    position: static !important;
+  }
+
+  /* Page breaks between slides */
+  .print-slide {
+    page-break-after: always;
+    break-after: page;
+    padding: 0.5cm 0;
+  }
+  .print-slide:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Hide interactive controls inside print slides */
+  #print-container button,
+  #print-container [contenteditable],
+  #print-container textarea {
+    border: none !important;
+    outline: none !important;
+    resize: none !important;
+  }
+
+  /* Preserve colored backgrounds in print (sprites, type badges, stat bars) */
+  #print-container img,
+  #print-container [role="progressbar"] > div,
+  #print-container [class*="TypeBadge"],
+  #print-container [class*="type-badge"],
+  #print-container .print-color {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }
 
 /* ====================================================================
@@ -638,5 +679,69 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ── Print / PDF Export ───────────────────────────────────────── */
+
+@media print {
+  /* Hide everything except the print container */
+  body > *:not(#print-container) {
+    display: none !important;
+  }
+
+  #print-container {
+    display: block !important;
+  }
+
+  /* Page breaks between slides */
+  .print-slide {
+    page-break-after: always;
+    break-after: page;
+    padding: 16px 8px;
+  }
+
+  .print-slide:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Clean up interactive elements */
+  button:not(.print-keep),
+  [contenteditable],
+  .cursor-pointer {
+    cursor: default !important;
+  }
+
+  /* Remove shadows and borders for clean print */
+  .shadow-lg, .shadow-md, .shadow-sm, .shadow-2xl {
+    box-shadow: none !important;
+  }
+
+  /* Force white background for print */
+  body, html {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Ensure images print */
+  img {
+    max-width: 100% !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Print color-preserving elements */
+  .bg-accent, [class*="bg-"] {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Hide navbar, footer, overlays */
+  header, footer, nav,
+  [role="navigation"],
+  .fixed,
+  .sticky {
+    display: none !important;
   }
 }
