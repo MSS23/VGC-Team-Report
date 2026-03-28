@@ -8,6 +8,14 @@ export function ServiceWorkerRegistration() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
+    // Auto-reload when a new SW takes control (after skipWaiting)
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+
     navigator.serviceWorker.register("/sw.js").then((reg) => {
       // Check for updates on registration
       reg.addEventListener("updatefound", () => {
@@ -22,7 +30,7 @@ export function ServiceWorkerRegistration() {
         });
       });
 
-      // Also check for updates periodically (every 30 min)
+      // Check for updates periodically (every 30 min)
       setInterval(() => reg.update(), 30 * 60 * 1000);
     }).catch(() => {
       // Silent fail — SW is a progressive enhancement
