@@ -1,23 +1,31 @@
 # VGC Team Report
 
 Next.js 16, React 19, TypeScript, Tailwind CSS v4.
-Deployed on Vercel (auto-deploy from `main` on PR merge).
+Deployed on Vercel (auto-deploy from `main`).
 
 ## Automation Pipelines
 
 ```mermaid
 flowchart LR
-  subgraph "Ticket to Deploy"
+  subgraph "Daily Flow (trunk-based)"
+    W[Work on main] --> TC[tsc + build gate]
+    TC --> P[Push to main]
+    P --> V[Vercel auto-deploys]
+  end
+
+  subgraph "Linear Tickets"
     L[Linear: In Progress] --> C[Claude implements]
-    C --> TC[tsc + build gate]
-    TC --> BR[Feature branch + PR]
-    BR --> PV[Preview deploy\nhealth + SEO check]
-    PV --> LR[Linear: In Review\nwith commit + PR links]
-    LR --> D[Discord #builds]
-    D --> R[You review PR]
-    R --> M[Merge to main]
-    M --> V[Vercel deploys]
-    V --> HC[Health check\nevery 15 min]
+    C --> TC2[tsc + build gate]
+    TC2 --> CM[Commit with VGC-XX prefix]
+    CM --> P2[Push to main]
+    P2 --> UL[Update Linear\ncommit link + files]
+    UL --> D[Discord #builds]
+    D --> V2[Vercel deploys]
+  end
+
+  subgraph "Big Changes Only"
+    BIG[Risky/large feature] --> BR[Feature branch + PR]
+    BR --> REV[Review + merge]
   end
 
   subgraph "Feedback to Backlog"
@@ -33,11 +41,28 @@ flowchart LR
   end
 
   subgraph "Emergency"
-    BRK[Prod broken] --> INC[/incident]
-    INC --> HF[/hotfix]
-    HF --> PM[Post-mortem ticket]
+    BRK[Prod broken] --> INC[/incident or /hotfix]
+    INC --> PM[Post-mortem ticket]
   end
 ```
+
+## Git Strategy: Trunk-Based Development
+
+This is a high-velocity solo project (50+ pushes/day). Use **trunk-based development**:
+
+### Default: Push direct to main
+- For routine work, fixes, tweaks, iterative changes — commit and push to `main`
+- Vercel auto-deploys every push
+- Always type-check and build before pushing: `npx tsc --noEmit && npm run build`
+
+### Feature branches: Only when needed
+Use a branch + PR **only** for:
+- Large features that touch 10+ files
+- Risky changes (DB migrations, auth changes, payment integrations)
+- When the user explicitly asks for a PR
+- Work you want a clean revert point for
+
+Branch naming when used: `vgc-XX/brief-description`
 
 ## Linear Helper Script
 
@@ -64,15 +89,14 @@ linear_get_in_progress
 
 **IMPORTANT:** Check each issue's labels. If an issue has the `no-claude` label, **skip it entirely** — do not implement, modify, or touch it. These are reserved for manual work. Only process issues that do NOT have the `no-claude` label.
 
-### 3. Sequential implementation
+### 3. Process tickets: highest priority first, one at a time
 
-If there are multiple In Progress issues (after filtering out `no-claude`):
-1. List them all to the user first (note any skipped `no-claude` issues)
-2. Implement the **oldest first** (first in the list)
-3. For each issue: implement -> verify -> branch -> PR -> update Linear -> notify Discord
-4. Ask the user before starting the next issue
+Work through all In Progress issues sequentially (no need to ask between each):
+1. List them to the user first (note any skipped `no-claude` issues)
+2. Start with the **highest priority** ticket
+3. For each: implement -> verify -> commit -> push -> update Linear -> Discord -> next ticket
 
-### 4. After implementing an issue
+### 4. After implementing a ticket
 
 #### a. Verify the build
 
@@ -81,123 +105,55 @@ npx tsc --noEmit    # Fix any type errors before continuing
 npm run build       # Must pass — never push broken code
 ```
 
-#### b. Create a feature branch and commit
+#### b. Commit and push to main
 
 ```bash
-git checkout -b vgc-XX/brief-description
 git add <changed-files>
 git commit -m "VGC-XX: brief description"
-git push -u origin vgc-XX/brief-description
+git push origin main
 ```
 
-Branch naming: `vgc-XX/brief-description` (lowercase, kebab-case).
-
-#### c. Open a Pull Request
-
-```bash
-GH="/c/Users/msidh/gh/bin/gh.exe"
-PR_URL=$($GH pr create \
-  --title "VGC-XX: brief description" \
-  --body "$(cat <<'EOF'
-## Summary
-- <what changed and why>
-
-## Files changed
-- `path/to/file.tsx` — <what was modified>
-
-## Verification
-- [x] `tsc --noEmit` passes
-- [x] `npm run build` passes
-
-Closes VGC-XX
-EOF
-)" \
-  --base main \
-  --head vgc-XX/brief-description)
-
-echo "$PR_URL"
-```
-
-#### d. Validate preview deploy
-
-After opening the PR, Vercel creates a preview deployment. Wait for it and validate:
-
-```bash
-GH="/c/Users/msidh/gh/bin/gh.exe"
-
-# Get the preview URL from the PR checks (wait up to 3 min for Vercel)
-sleep 30
-PREVIEW_URL=$($GH pr checks --json "name,detailsUrl" 2>/dev/null | node -e "
-const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
-const v=d.find(c=>c.name.includes('Vercel')||c.name.includes('Preview'));
-if(v) console.log(v.detailsUrl);
-" 2>/dev/null)
-
-if [ -n "$PREVIEW_URL" ]; then
-  echo "Preview: $PREVIEW_URL"
-  # Quick health check against preview
-  STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PREVIEW_URL")
-  if [ "$STATUS" -ge 400 ]; then
-    echo "WARNING: Preview deploy returned HTTP $STATUS"
-  fi
-fi
-```
-
-If the preview returns errors, investigate before notifying the user to review.
-
-#### e. Update Linear with review context
+#### c. Update Linear with what changed
 
 ```bash
 source .claude/scripts/linear.sh
-linear_comment_with_changes "ISSUE_UUID" "$PR_URL"
+
+# Post comment with commit link + changed files
+COMMIT_SHORT=$(git_commit_short)
+COMMIT_URL=$(git_commit_url)
+FILE_COUNT=$(git_changed_files_count)
+
+# Use GraphQL variables to avoid JSON escaping issues
+AUTH=$(grep LINEAR_API_KEY "$PROJECT_ROOT/.env.local" | cut -d= -f2)
+BODY="## Changes
+
+[View commit ($COMMIT_SHORT)]($COMMIT_URL)
+
+**${FILE_COUNT} files changed:**
+$(git_changed_files | head -15 | sed 's/^/- /')"
+
+curl -s -X POST 'https://api.linear.app/graphql' \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: $AUTH" \
+  -d "$(node -e "console.log(JSON.stringify({
+    query: 'mutation(\$body: String!) { commentCreate(input: { issueId: \"ISSUE_UUID\", body: \$body }) { success } }',
+    variables: { body: process.argv[1] }
+  }, null, 0))" "$BODY")"
+
+# Move to In Review
 linear_move_issue "ISSUE_UUID" "$STATE_IN_REVIEW"
 ```
 
-This posts a comment on the Linear issue containing:
-- Link to the GitHub commit
-- Link to the PR for review
-- List of all changed files
-
-#### f. Bundle size check
-
-Before notifying, compare the build output size against main:
-
-```bash
-# Record build size from the branch build (already ran in step a)
-BRANCH_SIZE=$(du -sb .next/ 2>/dev/null | cut -f1)
-
-# Compare against main (approximate — check if size grew significantly)
-git stash
-git checkout main
-npm run build --quiet 2>/dev/null
-MAIN_SIZE=$(du -sb .next/ 2>/dev/null | cut -f1)
-git checkout -
-git stash pop 2>/dev/null
-
-if [ -n "$BRANCH_SIZE" ] && [ -n "$MAIN_SIZE" ]; then
-  DIFF=$((BRANCH_SIZE - MAIN_SIZE))
-  PERCENT=$(( (DIFF * 100) / MAIN_SIZE ))
-  if [ "$PERCENT" -gt 5 ]; then
-    echo "WARNING: Bundle size increased by ${PERCENT}% (+${DIFF} bytes)"
-    # Include in PR comment
-  fi
-fi
-```
-
-If bundle size increases >5%, add a warning to the PR description.
-
-#### g. Notify Discord #builds
+#### d. Notify Discord #builds
 
 ```bash
 source .claude/scripts/linear.sh
-discord_notify_build "VGC-XX" "Issue title" "$PR_URL"
+discord_notify_build "VGC-XX" "Issue title"
 ```
 
-#### h. Return to main
+#### e. Move to next ticket
 
-```bash
-git checkout main
-```
+Continue with the next highest-priority In Progress ticket. No need to ask the user between tickets unless something is unclear.
 
 ### Linear State IDs
 
@@ -208,68 +164,29 @@ Defined in `.claude/scripts/linear.sh`:
 ## Failure Handling
 
 ### Build fails (`tsc` or `npm run build`)
-- Fix the errors and re-run. **Never push or open a PR with a broken build.**
+- Fix the errors and re-run. **Never push broken code.**
 - If you cannot fix it after 2 attempts, stop and ask the user.
 
-### PR creation fails
-- Ensure the branch was pushed (`git push -u origin <branch>`)
-- Check `gh auth status` — re-auth if needed
-- Fall back to providing the user a manual PR link: `https://github.com/MSS23/VGC-Team-Report/compare/main...<branch>`
-
 ### Linear API fails
-- Still commit, push, and open the PR — the code work is the priority
-- Note to the user that the Linear update failed and they should move the issue manually
+- Still commit and push — the code work is the priority
+- Note to the user that the Linear update failed
 - Do not block the workflow on a Linear outage
 
-### Something breaks in production after merge
+### Something breaks in production
 - `git revert <commit> && git push origin main` to roll back
 - Notify Discord that the change was reverted
 - Move the Linear issue back to In Progress
 
-## Deploy Window
+## Mobile Quick-Add
 
-**Safe deploy hours:** Monday-Friday, 9am-9pm UK time.
+The `/add` page on the site lets you create Linear issues from your phone. Bookmark it on your Pixel home screen.
 
-Before merging a PR or suggesting the user merge:
-- Check the current time. If it's after 9pm or a weekend, warn: "This would deploy outside safe hours. Merge tomorrow morning instead?"
-- Exception: `/hotfix` overrides the deploy window for emergencies.
-- Rationale: if a deploy breaks something at midnight or on Saturday, nobody's watching.
-
-## Visual Regression (PR Review Aid)
-
-When a PR changes UI components (`.tsx` files in `src/components/` or `src/app/`), note which pages are likely affected in the PR description. The user should check these pages on the Vercel preview URL before merging.
-
-Key pages to visually check after UI changes:
-- Homepage (`/`)
-- Explore (`/explore`)
-- Dashboard (`/dashboard`)
-- Report view (`/s/[id]`)
-- Changelog (`/changelog`)
-
-For major UI changes, suggest the user open both the preview URL and production side-by-side.
-
-## Why One Ticket at a Time
-
-Always process Linear tickets **sequentially, not in parallel**:
-- Smaller PRs are easier to review as a solo dev
-- If something breaks, you know exactly which ticket caused it
-- No merge conflicts between parallel branches
-- You can course-correct between tickets
-
-## After a PR is Merged
-
-### Changelog update
-
-After the user merges a PR, update the changelog data in `src/app/changelog/ChangelogContent.tsx`:
-- Add the new feature/fix to the current version's `items` array
-- Use the correct type: `"new"`, `"improved"`, or `"fixed"`
-- Keep descriptions concise and user-facing (not developer-facing)
-
-Only update the changelog when asked, or when a significant user-facing feature ships.
+After brainstorming in Claude mobile, open `/add`, paste the idea, pick type/priority, and submit. It creates the Linear issue and fires a Discord notification.
 
 ## Automated Monitoring (Vercel Cron)
 
 Designed for Vercel Hobby (free tier) — all crons run once daily or weekly max.
+Real-time uptime monitoring handled by UptimeRobot (free, 5-min pings).
 
 | Route | Schedule | What it does |
 |-------|----------|-------------|
@@ -285,8 +202,8 @@ All cron routes require Vercel cron user-agent or `CRON_SECRET` bearer token.
 | Command | What it does |
 |---------|-------------|
 | `/plan-week` | Monday sprint planning — review backlog, pick tickets, post plan to Discord |
-| `/cancel-build` | Close a PR, delete branch, revert if merged, move Linear ticket back |
-| `/hotfix` | Emergency direct-to-main push with post-mortem ticket generation |
+| `/cancel-build` | Revert a commit, move Linear ticket back to In Progress |
+| `/hotfix` | Emergency fix with post-mortem ticket generation |
 | `/incident` | Structured incident response — Linear ticket, Discord alert, post-mortem template |
 | `/doctor` | Health check local dev env (Node, env vars, DB, ports, TypeScript, gh CLI) |
 | `/security-audit` | npm audit, secret scanning, CVE check, OWASP code patterns |
@@ -299,7 +216,7 @@ All cron routes require Vercel cron user-agent or `CRON_SECRET` bearer token.
 
 - Follow existing patterns in the codebase
 - Keep changes focused — no drive-by refactors
-- Type-check and build before committing
-- Branch names: `vgc-XX/brief-description`
+- Type-check and build before pushing
 - Commit messages: `VGC-XX: description` for Linear issues
-- PRs: always target `main`, include changed files list and verification checklist
+- Push direct to main (trunk-based development)
+- Feature branches only for large/risky changes when explicitly needed
