@@ -19,12 +19,14 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
   // ── Canonical redirect: vercel.app → custom domain ─────────────
   // Redirects all non-custom-domain traffic to the canonical URL.
   // Preserves path and query string. Skips in development.
+  // Allows Vercel preview deploys (unique hash URLs) to work without redirect.
+  const isPreviewDeploy = host.includes('vercel.app') && host !== 'vgc-team-report.vercel.app';
   if (
     process.env.NODE_ENV === 'production' &&
     host !== CANONICAL_HOST &&
     host !== `www.${CANONICAL_HOST}` &&
     !host.includes('localhost') &&
-    !host.includes('vercel.app')
+    !isPreviewDeploy
   ) {
     return NextResponse.redirect(
       `https://${CANONICAL_HOST}${pathname}${search}`,
