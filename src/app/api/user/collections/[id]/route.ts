@@ -1,0 +1,52 @@
+import { getDb } from "@/lib/db";
+import { extractSpecies } from "@/lib/utils/extract-species";
+import { auth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { id } = await params;
+    const sql = getDb();
+
+    // Verify ownership
+    const col = await sql`SELECT id FROM collections WHERE id = ${id} AND user_id = ${userId}`;
+    if (col.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // Get items with share data
+    const rows = await sql`
+      SELECT s.id, s.data, COALESCE(s.view_count, 0) as view_count, s.is_public, s.created_at, s.updated_at, ci.added_at
+      FROM collection_items ci
+      INNER JOIN shares s ON s.id = ci.share_id
+      WHERE ci.collection_id = ${id} AND s.deleted_at IS NULL
+      ORDER BY ci.added_at DESC
+    `;
+
+    const items = rows.map((row) => {
+      const data = row.data as Record<string, unknown>;
+      const paste = (data.paste as string) ?? "";
+      return {
+        id: row.id as string,
+        species: extractSpecies(paste),
+        tournamentName: (data.tournamentName as string) || undefined,
+        creatorName: (data.creatorName as string) || undefined,
+        placement: (data.placement as string) || undefined,
+        teamSummary: (data.teamSummary as string) || undefined,
+        createdAt: (row.created_at as Date).toISOString(),
+        updatedAt: (row.updated_at as Date).toISOString(),
+        viewCount: row.view_count as number,
+        addedAt: (row.added_at as Date).toISOString(),
+      };
+    });
+
+    return NextResponse.json({ items });
+  } catch (e) {
+    console.error("Collection detail error:", e);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  }
+}

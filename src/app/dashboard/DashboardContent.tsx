@@ -30,13 +30,14 @@ function DashboardInner() {
   const { user, isLoaded } = useUser();
   useEffect(() => { applyRandomAccent(); }, []);
 
-  const [tab, setTab] = useState<"my" | "saved" | "feed" | "collab" | "analytics" | "trash">("my");
+  const [tab, setTab] = useState<"my" | "saved" | "feed" | "collab" | "collections" | "analytics" | "trash">("my");
   const [myReports, setMyReports] = useState<DashboardReport[]>([]);
   const [savedReports, setSavedReports] = useState<ExploreReport[]>([]);
   const [feedReports, setFeedReports] = useState<ExploreReport[]>([]);
   const [collabReports, setCollabReports] = useState<ExploreReport[]>([]);
   const [trashReports, setTrashReports] = useState<DashboardReport[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [collections, setCollections] = useState<CollectionData[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Claim input
@@ -55,6 +56,19 @@ function DashboardInner() {
         .then((data) => { if (data) setAnalytics(data); setLoading(false); })
         .catch(() => setLoading(false));
       return;
+    }
+
+    if (tab === "collections") {
+      fetch("/api/user/collections")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => { if (data?.collections) setCollections(data.collections); setLoading(false); })
+        .catch(() => setLoading(false));
+      return;
+    }
+
+    // Load collections in background for the "add to collection" dropdown
+    if (tab === "my") {
+      fetch("/api/user/collections").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.collections) setCollections(data.collections); }).catch(() => {});
     }
 
     const endpoint = tab === "my" ? "/api/user/reports" : tab === "trash" ? "/api/user/reports?trash=1" : tab === "feed" ? "/api/user/feed" : tab === "collab" ? "/api/user/collaborations" : "/api/user/saved";
@@ -238,7 +252,7 @@ function DashboardInner() {
             {/* Tabs + Sort */}
             <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
             <div className="flex items-center gap-1 p-1 bg-surface-alt/50 rounded-xl w-fit">
-              {(["my", "saved", "feed", "collab", "analytics", "trash"] as const).map((t) => (
+              {(["my", "saved", "feed", "collab", "collections", "analytics", "trash"] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
@@ -247,11 +261,12 @@ function DashboardInner() {
                     tab === t
                       ? t === "trash" ? "bg-red-500/10 text-red-500 shadow-sm"
                         : t === "analytics" ? "bg-blue-500/10 text-blue-500 shadow-sm"
+                        : t === "collections" ? "bg-purple-500/10 text-purple-500 shadow-sm"
                         : "bg-surface text-text-primary shadow-sm"
                       : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  {t === "my" ? "My Reports" : t === "feed" ? "Feed" : t === "collab" ? "Shared with me" : t === "analytics" ? "Analytics" : t === "trash" ? "Trash" : "Saved"}
+                  {t === "my" ? "My Reports" : t === "feed" ? "Feed" : t === "collab" ? "Shared with me" : t === "collections" ? "Collections" : t === "analytics" ? "Analytics" : t === "trash" ? "Trash" : "Saved"}
                 </button>
               ))}
             </div>
@@ -421,6 +436,14 @@ function DashboardInner() {
                     <p className="text-xs text-text-tertiary">Deleted reports appear here for 30 days before being permanently removed.</p>
                   </div>
                 )}
+                {tab === "collections" && (
+                  <CollectionsPanel
+                    collections={collections}
+                    onUpdate={() => {
+                      fetch("/api/user/collections").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.collections) setCollections(data.collections); });
+                    }}
+                  />
+                )}
                 {tab === "analytics" && analytics && (
                   <AnalyticsPanel data={analytics} />
                 )}
@@ -447,6 +470,7 @@ function DashboardInner() {
                         <ManagedReportCard
                           key={report.id}
                           report={report}
+                          collections={collections}
                           onUpdate={(id, updates) => {
                             setMyReports((prev) => prev.map((r) => r.id === id ? { ...r, ...updates } : r));
                           }}
@@ -511,15 +535,31 @@ function ManagedReportCard({
   report,
   onUpdate,
   onDelete,
+  collections,
 }: {
   report: DashboardReport;
   onUpdate: (id: string, updates: Partial<DashboardReport>) => void;
   onDelete: (id: string) => void;
+  collections?: CollectionData[];
 }) {
   const [toggling, setToggling] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showCollectionMenu, setShowCollectionMenu] = useState(false);
+  const [addingTo, setAddingTo] = useState<string | null>(null);
   // 0 = idle, 1 = first confirm (Confirm/Cancel), 2 = second confirm (Are you sure?)
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
+
+  const addToCollection = async (collectionId: string) => {
+    setAddingTo(collectionId);
+    try {
+      await fetch("/api/user/collections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "add-item", collectionId, shareId: report.id }),
+      });
+    } catch { /* silent */ }
+    finally { setAddingTo(null); setShowCollectionMenu(false); }
+  };
 
   const toggleVisibility = async () => {
     if (toggling) return;
@@ -594,6 +634,32 @@ function ManagedReportCard({
           >
             Edit
           </a>
+          {collections && collections.length > 0 && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowCollectionMenu(!showCollectionMenu)}
+                className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md bg-purple-500/10 text-purple-500 border border-purple-500/20 hover:bg-purple-500/20 transition-all cursor-pointer"
+              >
+                + Collection
+              </button>
+              {showCollectionMenu && (
+                <div className="absolute left-0 top-full mt-1 z-10 bg-surface border border-border rounded-lg shadow-lg py-1 min-w-[160px]">
+                  {collections.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => addToCollection(c.id)}
+                      disabled={addingTo === c.id}
+                      className="w-full text-left px-3 py-1.5 text-xs font-medium text-text-primary hover:bg-surface-alt transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {addingTo === c.id ? "Adding..." : c.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         {deleteStep === 2 ? (
           <div className="flex items-center gap-1">
@@ -827,6 +893,215 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Collection data from /api/user/collections */
+interface CollectionData {
+  id: string;
+  name: string;
+  description?: string;
+  regulation?: string;
+  itemCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function CollectionsPanel({ collections, onUpdate }: { collections: CollectionData[]; onUpdate: () => void }) {
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newReg, setNewReg] = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandedItems, setExpandedItems] = useState<ExploreReport[]>([]);
+  const [loadingItems, setLoadingItems] = useState(false);
+
+  const handleCreate = async () => {
+    if (!newName.trim() || creating) return;
+    setCreating(true);
+    try {
+      const res = await fetch("/api/user/collections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create", name: newName.trim(), description: newDesc.trim() || undefined, regulation: newReg.trim() || undefined }),
+      });
+      if (res.ok) {
+        setNewName("");
+        setNewDesc("");
+        setNewReg("");
+        onUpdate();
+      }
+    } catch { /* silent */ }
+    finally { setCreating(false); }
+  };
+
+  const handleDelete = async (id: string) => {
+    await fetch("/api/user/collections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", collectionId: id }),
+    });
+    if (expanded === id) { setExpanded(null); setExpandedItems([]); }
+    onUpdate();
+  };
+
+  const handleExpand = async (id: string) => {
+    if (expanded === id) { setExpanded(null); setExpandedItems([]); return; }
+    setExpanded(id);
+    setLoadingItems(true);
+    try {
+      const res = await fetch(`/api/user/collections/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setExpandedItems(data.items ?? []);
+      }
+    } catch { /* silent */ }
+    finally { setLoadingItems(false); }
+  };
+
+  const handleRemoveItem = async (collectionId: string, shareId: string) => {
+    await fetch("/api/user/collections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "remove-item", collectionId, shareId }),
+    });
+    setExpandedItems((prev) => prev.filter((i) => i.id !== shareId));
+    onUpdate();
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Create new collection */}
+      <div className="bg-surface border border-border rounded-xl px-4 py-4">
+        <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-3">New Collection</p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="Collection name"
+            className="flex-1 px-3 py-2 bg-surface-alt border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40"
+          />
+          <input
+            type="text"
+            value={newDesc}
+            onChange={(e) => setNewDesc(e.target.value)}
+            placeholder="Description (optional)"
+            className="flex-1 px-3 py-2 bg-surface-alt border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40"
+          />
+          <select
+            value={newReg}
+            onChange={(e) => setNewReg(e.target.value)}
+            className="px-3 py-2 bg-surface-alt border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40"
+          >
+            <option value="">Regulation</option>
+            <option value="Reg H">Reg H</option>
+            <option value="Reg G">Reg G</option>
+            <option value="Reg F">Reg F</option>
+            <option value="Champions">Champions</option>
+          </select>
+          <button
+            onClick={handleCreate}
+            disabled={!newName.trim() || creating}
+            className="px-4 py-2 bg-accent text-white text-sm font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
+          >
+            {creating ? "Creating..." : "Create"}
+          </button>
+        </div>
+      </div>
+
+      {/* Existing collections */}
+      {collections.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-sm text-text-secondary mb-2">No collections yet.</p>
+          <p className="text-xs text-text-tertiary">Create a collection to organize your team reports — like playlists for teams.</p>
+        </div>
+      )}
+
+      {collections.map((c) => (
+        <div key={c.id} className="bg-surface border border-border rounded-xl overflow-hidden">
+          <button
+            type="button"
+            onClick={() => handleExpand(c.id)}
+            className="w-full px-4 py-3 flex items-center justify-between gap-3 hover:bg-surface-alt/30 transition-colors cursor-pointer"
+          >
+            <div className="text-left min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-text-primary truncate">{c.name}</h3>
+                {c.regulation && (
+                  <span className="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-accent-surface text-accent tracking-wide flex-shrink-0">
+                    {c.regulation}
+                  </span>
+                )}
+              </div>
+              {c.description && <p className="text-xs text-text-secondary mt-0.5 truncate">{c.description}</p>}
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <span className="text-xs font-bold text-text-tertiary">
+                {c.itemCount} {c.itemCount === 1 ? "team" : "teams"}
+              </span>
+              <svg
+                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                className={`text-text-tertiary transition-transform ${expanded === c.id ? "rotate-180" : ""}`}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+          </button>
+
+          {expanded === c.id && (
+            <div className="border-t border-border px-4 py-3">
+              {loadingItems ? (
+                <div className="flex justify-center py-4">
+                  <svg className="animate-spin h-4 w-4 text-text-tertiary" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                </div>
+              ) : expandedItems.length === 0 ? (
+                <p className="text-xs text-text-tertiary text-center py-4">
+                  No teams in this collection yet. Add teams from your reports using the menu on each report card.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {expandedItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-surface-alt/50 transition-colors">
+                      <a href={`/s/${item.id}`} className="flex items-center gap-3 min-w-0">
+                        <div className="flex items-center gap-0.5 flex-shrink-0">
+                          {item.species.slice(0, 3).map((s, j) => (
+                            <DashboardSprite key={j} species={s} />
+                          ))}
+                        </div>
+                        <span className="text-xs font-bold text-text-primary truncate">
+                          {item.tournamentName || item.species.join(" / ")}
+                        </span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(c.id, item.id)}
+                        className="p-1 text-text-tertiary hover:text-red-500 transition-colors cursor-pointer flex-shrink-0"
+                        title="Remove from collection"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-end mt-3 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => handleDelete(c.id)}
+                  className="px-3 py-1 text-[10px] font-bold rounded-md text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                >
+                  Delete Collection
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
