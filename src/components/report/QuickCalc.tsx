@@ -9,18 +9,20 @@ import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 // Meta targets — common VGC Pokemon for quick selection
 // --------------------------------------------------------------------------
 const META_TARGETS = [
-  "Incineroar",
-  "Rillaboom",
-  "Flutter Mane",
-  "Urshifu",
-  "Tornadus",
-  "Amoonguss",
-  "Landorus-Therian",
-  "Calyrex-Shadow",
-  "Ogerpon-Wellspring",
-  "Iron Hands",
-  "Kingambit",
-  "Gholdengo",
+  "Incineroar", "Rillaboom", "Flutter Mane", "Urshifu", "Urshifu-Rapid-Strike",
+  "Tornadus", "Amoonguss", "Landorus-Therian", "Calyrex-Shadow", "Calyrex-Ice",
+  "Ogerpon-Wellspring", "Ogerpon-Hearthflame", "Iron Hands", "Kingambit",
+  "Gholdengo", "Pelipper", "Dragonite", "Archaludon", "Farigiraf", "Indeedee-F",
+  "Whimsicott", "Grimmsnarl", "Dondozo", "Tatsugiri", "Chi-Yu", "Iron Bundle",
+  "Iron Valiant", "Roaring Moon", "Great Tusk", "Iron Treads", "Walking Wake",
+  "Gouging Fire", "Raging Bolt", "Iron Crown", "Iron Boulder",
+  "Entei", "Raikou", "Suicune", "Zapdos", "Heatran", "Cresselia",
+  "Kyogre", "Groudon", "Zacian", "Zacian-Crowned", "Miraidon", "Koraidon",
+  "Metagross", "Garchomp", "Tyranitar", "Salamence", "Blaziken", "Porygon2",
+  "Tsareena", "Arcanine", "Ninetales-Alola", "Torkoal", "Lilligant-Hisui",
+  "Annihilape", "Sneasler", "Palafin", "Armarouge", "Ceruledge",
+  "Volcarona", "Hydreigon", "Dragapult", "Ferrothorn", "Abomasnow",
+  "Gastrodon", "Toxapex", "Clefairy", "Dusclops", "Gothitelle",
 ] as const;
 
 // --------------------------------------------------------------------------
@@ -311,9 +313,9 @@ export function QuickCalc({ pokemon, onAddCalc }: QuickCalcProps) {
   const barMax = Math.max(result?.maxPercent ?? 0, 100);
 
   return (
-    <div className="border border-border rounded-xl bg-surface overflow-hidden animate-fade-in">
+    <div className="border border-border rounded-xl bg-surface animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-surface-alt border-b border-border">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-surface-alt border-b border-border rounded-t-xl">
         <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
           Quick Calc
         </span>
@@ -401,7 +403,7 @@ export function QuickCalc({ pokemon, onAddCalc }: QuickCalcProps) {
             />
             {/* Dropdown */}
             {showDropdown && filteredTargets.length > 0 && (
-              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-surface border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto scrollbar-none">
+              <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-surface border border-border rounded-xl shadow-2xl max-h-56 overflow-y-auto scrollbar-none">
                 {filteredTargets.map((t) => (
                   <button
                     key={t}
