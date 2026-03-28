@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import { ConnectivityStatus } from "@/components/ui/ConnectivityStatus";
@@ -112,6 +113,7 @@ export default function RootLayout({
         <InstallPrompt />
         <ConnectivityStatus />
         <Analytics />
+        <SpeedInsights />
         <ServiceWorkerRegistration />
         </ClerkProvider>
       </body>
