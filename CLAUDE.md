@@ -177,12 +177,6 @@ Defined in `.claude/scripts/linear.sh`:
 - Notify Discord that the change was reverted
 - Move the Linear issue back to In Progress
 
-## Mobile Quick-Add
-
-The `/add` page on the site lets you create Linear issues from your phone. Bookmark it on your Pixel home screen.
-
-After brainstorming in Claude mobile, open `/add`, paste the idea, pick type/priority, and submit. It creates the Linear issue and fires a Discord notification.
-
 ## Automated Monitoring (Vercel Cron)
 
 Designed for Vercel Hobby (free tier) — all crons run once daily or weekly max.
