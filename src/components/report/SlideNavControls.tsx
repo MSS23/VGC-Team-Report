@@ -63,10 +63,10 @@ export function SlideNavControls({
       role="navigation"
       aria-label="Slide navigation"
       data-walkthrough="slide-nav"
-      className={`fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl border-t transition-all duration-300 safe-bottom ${
+      className={`fixed bottom-0 left-0 right-0 z-50 border-t transition-opacity duration-200 safe-bottom ${
         autoHide
-          ? "bg-surface/0 border-transparent opacity-0 hover:opacity-100 hover:bg-surface/95 hover:border-border"
-          : "bg-surface/95 border-border shadow-[0_-2px_12px_rgba(0,0,0,0.06)]"
+          ? "bg-surface/0 border-transparent opacity-0 hover:opacity-100 hover:bg-surface hover:border-border"
+          : "bg-surface border-border shadow-[0_-2px_8px_rgba(0,0,0,0.04)]"
       }`}
     >
       {/* 3-zone layout: Left (prev) | Center (dots + label) | Right (actions + next) */}
