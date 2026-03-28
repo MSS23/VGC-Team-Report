@@ -37,13 +37,45 @@ async function linearQuery(query: string, variables?: Record<string, unknown>) {
   return data.data;
 }
 
-// Map feedback types to Linear label names and priorities (1=urgent, 2=high, 3=normal, 4=low)
+// Map feedback types to Linear label names and base priorities (1=urgent, 2=high, 3=normal, 4=low)
 const FEEDBACK_TO_LINEAR: Record<string, { label: string; priority: number }> = {
   bug: { label: "Bug", priority: 1 },
   feature: { label: "Feature", priority: 3 },
   improvement: { label: "Improvement", priority: 3 },
   other: { label: "Other", priority: 4 },
 };
+
+// Keywords that escalate priority (lower number = higher priority)
+const ESCALATION_KEYWORDS = [
+  "crash", "broken", "can't", "cannot", "error", "fail", "stuck",
+  "data loss", "lost my", "deleted", "wrong", "security", "login",
+];
+const HIGH_VALUE_KEYWORDS = [
+  "team builder", "pdf", "export", "share", "mobile", "tournament",
+  "payment", "pro", "subscribe",
+];
+
+/**
+ * Auto-triage: adjust priority based on content keywords.
+ * Bugs with crash/error keywords get bumped to urgent.
+ * Features mentioning high-value areas get bumped to high.
+ */
+function triagePriority(type: string, title: string, description: string): number {
+  const basePriority = FEEDBACK_TO_LINEAR[type]?.priority ?? 4;
+  const text = `${title} ${description}`.toLowerCase();
+
+  // Bugs with escalation keywords -> urgent (1)
+  if (type === "bug" && ESCALATION_KEYWORDS.some((kw) => text.includes(kw))) {
+    return 1;
+  }
+
+  // Features/improvements mentioning high-value areas -> high (2)
+  if ((type === "feature" || type === "improvement") && HIGH_VALUE_KEYWORDS.some((kw) => text.includes(kw))) {
+    return 2;
+  }
+
+  return basePriority;
+}
 
 /**
  * Create a Linear issue from a feedback submission.
@@ -67,6 +99,7 @@ export async function createLinearIssue(opts: {
   }
 
   const mapping = FEEDBACK_TO_LINEAR[opts.type] ?? FEEDBACK_TO_LINEAR.other;
+  const priority = triagePriority(opts.type, opts.title, opts.description);
 
   // Build rich description with metadata
   const sections: string[] = [
@@ -174,7 +207,7 @@ export async function createLinearIssue(opts: {
     teamId,
     title: `${opts.title}`,
     description: sections.join("\n"),
-    priority: mapping.priority,
+    priority,
     labelIds: labelIds.length > 0 ? labelIds : [],
     stateId: stateId ?? null,
     projectId: projectId ?? null,
