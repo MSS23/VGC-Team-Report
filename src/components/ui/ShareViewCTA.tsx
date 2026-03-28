@@ -13,31 +13,31 @@ export function ShareViewCTA({ onCreateOwn }: ShareViewCTAProps) {
 
   return (
     <div className="fixed bottom-14 sm:bottom-12 inset-x-0 z-30 pointer-events-none">
-      <div className="max-w-7xl mx-auto px-4 pb-2">
-        <div className="pointer-events-auto bg-surface/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl px-5 py-3.5 flex items-center justify-between gap-3 animate-fade-in">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 pb-1.5 sm:pb-2">
+        <div className="pointer-events-auto bg-surface/95 backdrop-blur-xl border border-border rounded-xl sm:rounded-2xl shadow-2xl px-3 py-2.5 sm:px-5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-3 animate-fade-in">
           <div className="min-w-0">
-            <p className="text-sm font-bold text-text-primary tracking-tight">
-              Build your own VGC team report
+            <p className="text-xs sm:text-sm font-bold text-text-primary tracking-tight">
+              Build your own team report
             </p>
             <p className="text-xs text-text-tertiary mt-0.5 hidden sm:block">
               Add notes, matchup plans, damage calcs — then share it with the community or present it at your next tournament.
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <button
               type="button"
               onClick={onCreateOwn}
-              className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer"
+              className="px-3.5 py-2 sm:px-5 sm:py-2.5 bg-accent text-white text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer"
             >
-              Create yours free
+              Create yours
             </button>
             <button
               type="button"
               onClick={() => setDismissed(true)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Dismiss"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>

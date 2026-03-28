@@ -90,7 +90,7 @@ export function TeamOverview({
   };
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-8 animate-fade-in">
+    <div className="flex flex-col gap-3 sm:gap-8 animate-fade-in">
       {/* Tournament Context */}
       {isReadOnly ? (
         (hasTournamentInfo || rentalCode || hasCreatorInfo) && (
@@ -277,8 +277,8 @@ export function TeamOverview({
           summary ? (
             <div className="relative">
               <div
-                className={`w-full p-5 sm:p-6 bg-surface border border-border rounded-xl text-base sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:bg-surface-alt presenting:border-border-subtle presenting:tracking-wide ${
-                  !summaryExpanded && summary.length > 200 ? "sm:min-h-[8rem] max-h-28 sm:max-h-none overflow-hidden" : "min-h-[8rem]"
+                className={`w-full p-3 sm:p-6 bg-surface border border-border rounded-xl text-sm sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:bg-surface-alt presenting:border-border-subtle presenting:tracking-wide ${
+                  !summaryExpanded && summary.length > 200 ? "sm:min-h-[8rem] max-h-24 sm:max-h-none overflow-hidden" : "sm:min-h-[8rem]"
                 }`}
               >
                 {summary}
@@ -319,10 +319,10 @@ export function TeamOverview({
       </div>
 
       {/* Pokemon Grid */}
-      <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-3 sm:gap-4 creator:gap-6 ${
+      <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-2 sm:gap-4 creator:gap-6 ${
         creatorMode
           ? "grid-cols-1 sm:grid-cols-2"
-          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          : "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3"
       }`}>
         {pokemon.map((mon, i) => {
           const sc = getSpriteConfig?.(speciesKeys[i]);

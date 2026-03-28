@@ -198,8 +198,8 @@ export function Navbar(props: NavbarProps) {
               )}
             </>
           ) : isSharedView && !isPresentationStyle ? (
-            <a href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity">
-              <span className="text-text-primary">VGC Team</span>
+            <a href="/" className="flex items-center gap-1 font-bold text-xs sm:text-sm hover:opacity-80 transition-opacity">
+              <span className="text-text-primary">VGC</span>
               <span className="text-accent">Report</span>
             </a>
           ) : isPresentationStyle ? (
@@ -415,23 +415,22 @@ export function Navbar(props: NavbarProps) {
             </>
           )}
 
-          {/* Build Your Own (shared read-only views) */}
+          {/* Build Your Own (shared read-only views) — hidden on mobile, ShareViewCTA handles it */}
           {isSharedView && !isPresentationStyle && !isEditingUnlocked && (
-            <a href="/" className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
+            <a href="/" className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
               </svg>
-              <span className="hidden sm:inline">{t.buildYourOwn}</span>
-              <span className="sm:hidden">Create</span>
+              {t.buildYourOwn}
             </a>
           )}
 
-          {/* PDF Export button */}
+          {/* PDF Export button — hidden on mobile to reduce navbar congestion */}
           {onExportPdf && !isPresentationStyle && (
             <button
               type="button"
               onClick={onExportPdf}
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
+              className="hidden sm:flex w-9 h-9 items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
               title="Export as PDF"
               aria-label="Export report as PDF"
             >
@@ -443,12 +442,12 @@ export function Navbar(props: NavbarProps) {
             </button>
           )}
 
-          {/* Version history quick button */}
+          {/* Version history quick button — hidden on mobile, accessible via overflow menu */}
           {canShowVersionHistory && !isPresentationStyle && (
             <button
               type="button"
               onClick={() => setVersionPanelOpen(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
+              className="hidden sm:flex w-9 h-9 items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
               title="Version history"
               aria-label="Open version history"
             >
@@ -576,6 +575,25 @@ export function Navbar(props: NavbarProps) {
                         <polyline points="12 6 12 12 16 14" />
                       </svg>
                       Version History
+                    </button>
+                  </>
+                )}
+
+                {/* PDF Export (mobile — hidden from top bar) */}
+                {onExportPdf && !isPresentationStyle && (
+                  <>
+                    <div className="border-t border-border/50 mx-3 my-1 sm:hidden" />
+                    <button
+                      type="button"
+                      onClick={() => { setMenuOpen(false); onExportPdf(); }}
+                      className="sm:hidden w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      Export as PDF
                     </button>
                   </>
                 )}

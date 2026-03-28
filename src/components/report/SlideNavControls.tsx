@@ -70,13 +70,13 @@ export function SlideNavControls({
       }`}
     >
       {/* 3-zone layout: Left (prev) | Center (dots + label) | Right (actions + next) */}
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-1.5 flex items-center gap-1.5 sm:gap-3">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-1.5 sm:py-1.5 flex items-center gap-1 sm:gap-3">
         {/* === LEFT: Prev button === */}
         <button
           onClick={onPrev}
           disabled={isFirst}
           aria-label="Previous slide"
-          className="flex-shrink-0 flex items-center justify-center w-11 h-11 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-xl sm:rounded-lg bg-surface text-text-primary border-2 border-border hover:bg-surface-alt hover:border-accent/30 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className="flex-shrink-0 flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-lg bg-surface text-text-primary border-2 border-border hover:bg-surface-alt hover:border-accent/30 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1 sm:w-3 sm:h-3">
             <polyline points="15,18 9,12 15,6" />
@@ -171,7 +171,7 @@ export function SlideNavControls({
             <button
               type="button"
               onClick={onToggleHide}
-              className={`relative flex items-center justify-center gap-1.5 w-10 h-10 sm:w-auto sm:h-auto sm:px-2.5 sm:py-2 rounded-lg border-2 text-xs font-bold transition-all duration-200 ${
+              className={`relative flex items-center justify-center gap-1.5 w-8 h-8 sm:w-auto sm:h-auto sm:px-2.5 sm:py-2 rounded-lg border-2 text-xs font-bold transition-all duration-200 ${
                 isCurrentHidden
                   ? "bg-amber-400/20 text-amber-700 dark:text-amber-300 border-amber-400/40 hover:bg-amber-400/30"
                   : "bg-surface-alt text-text-tertiary border-border hover:text-text-secondary hover:bg-surface-alt/80"
@@ -242,7 +242,7 @@ export function SlideNavControls({
           {isLast ? (
             <span
               aria-label="End of report"
-              className="flex-shrink-0 flex items-center justify-center w-11 h-11 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-xl sm:rounded-lg bg-accent/10 text-accent border-2 border-accent/30 cursor-default select-none transition-all"
+              className="flex-shrink-0 flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-lg bg-accent/10 text-accent border-2 border-accent/30 cursor-default select-none transition-all"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1 sm:w-3 sm:h-3">
                 <polyline points="20,6 9,17 4,12" />
@@ -254,7 +254,7 @@ export function SlideNavControls({
               onClick={onNext}
               disabled={isFirst && totalSlides <= 1}
               aria-label="Next slide"
-              className="flex-shrink-0 flex items-center justify-center w-11 h-11 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-xl sm:rounded-lg bg-surface text-text-primary border-2 border-border hover:bg-surface-alt hover:border-accent/30 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="flex-shrink-0 flex items-center justify-center w-9 h-9 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-xs font-bold rounded-lg bg-surface text-text-primary border-2 border-border hover:bg-surface-alt hover:border-accent/30 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               <span className="hidden sm:inline">{t.next}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:ml-1 sm:w-3 sm:h-3">
