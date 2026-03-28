@@ -11,10 +11,25 @@ import { PageFooter } from "@/components/layout/PageFooter";
 const ENTRIES = [
   {
     date: "March 2026",
+    version: "4.5",
+    title: "PDF Export, Replay Import & Keyboard Shortcuts",
+    emoji: "\uD83D\uDCE5",
+    highlight: true,
+    items: [
+      { type: "new" as const, text: "PDF export \u2014 download icon in the navbar renders all slides (overview, Pokemon details, speed tiers, coverage charts, matchup plans) with page breaks via the browser print dialog." },
+      { type: "new" as const, text: "Showdown replay import \u2014 paste a replay.pokemonshowdown.com URL, pick which player's team to analyze. Extracts species, moves used, abilities, items, and Tera types from the battle log." },
+      { type: "new" as const, text: "Keyboard shortcuts for editing \u2014 press 1-9 to jump to slides, 0 for last slide, E to toggle edit mode, H to hide/show current slide, [ and ] to reorder slides." },
+      { type: "improved" as const, text: "Version history only records real changes \u2014 auto-save no longer creates version entries when no data actually changed." },
+      { type: "improved" as const, text: "Version diff highlights use high-contrast blue borders with \u201CChanged\u201D labels, readable in both light and dark mode." },
+      { type: "improved" as const, text: "Slide nav dots show blue indicators for slides with changes during version comparison." },
+      { type: "improved" as const, text: "Shortcut hint overlay (press ?) updated with all new shortcuts." },
+    ],
+  },
+  {
+    date: "March 2026",
     version: "4.4",
     title: "Granular Version Diffs, Tour Visibility & Navbar Updates",
     emoji: "\uD83D\uDD0D",
-    highlight: true,
     items: [
       { type: "new" as const, text: "Per-field version diff highlighting \u2014 comparing versions now highlights only the specific sections that changed (e.g. just Notes or Calcs) instead of the entire slide." },
       { type: "new" as const, text: "Descriptive diff banner \u2014 version comparison now lists exactly what changed (e.g. \u201CTeam summary, Notes (Pikachu), Calcs (Urshifu)\u201D) instead of vague slide counts." },
