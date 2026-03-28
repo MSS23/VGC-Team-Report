@@ -558,10 +558,12 @@ function HomeContent() {
         />
       )}
       {versionDiff && diffChanges.length === 0 && (
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 pt-3">
-          <div className="version-diff-banner flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-500/50 rounded-xl">
-            <p className="text-xs font-medium text-blue-700 dark:text-blue-300 flex-1">No differences found with version {versionDiff.version}</p>
-            <button type="button" onClick={handleClearCompare} className="text-xs font-bold text-blue-500 hover:text-blue-600 cursor-pointer">Dismiss</button>
+        <div className="sticky top-14 z-30 bg-background/80 backdrop-blur-lg">
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
+            <div className="version-diff-banner flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-500/50 rounded-xl">
+              <p className="text-xs font-medium text-blue-700 dark:text-blue-300 flex-1">No differences found with version {versionDiff.version}</p>
+              <button type="button" onClick={handleClearCompare} className="text-xs font-bold text-blue-500 hover:text-blue-600 cursor-pointer">Dismiss</button>
+            </div>
           </div>
         </div>
       )}
