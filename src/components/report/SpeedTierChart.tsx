@@ -1,12 +1,13 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { PokemonSprite } from "./PokemonSprite";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
+import { POKEMON_DATA } from "@/lib/data/pokemon";
 
-// Lazy-load coverage charts (only rendered on the analysis slide)
 const OffensiveCoverageChart = dynamic(() => import("./OffensiveCoverageChart").then(m => ({ default: m.OffensiveCoverageChart })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-48" />,
 });
@@ -21,29 +22,65 @@ interface SpeedTierChartProps {
   isPresentationMode?: boolean;
 }
 
-const SPEED_BENCHMARKS = [
-  { value: 222, label: "150 base max+" },
-  { value: 203, label: "130 base max+" },
-  { value: 184, label: "110 base max+" },
-  { value: 150, label: "100 base max" },
-  { value: 127, label: "80 base max" },
-  { value: 97,  label: "50 base max" },
-];
+/** Common meta threats to show alongside your team for speed context */
+const META_THREATS = [
+  "flutter-mane", "iron-bundle", "raging-bolt", "calyrex-shadow",
+  "urshifu", "urshifu-rapid-strike", "tornadus", "landorus",
+  "incineroar", "rillaboom", "amoonguss", "iron-hands",
+  "chien-pao", "ogerpon", "kingambit", "archaludon",
+  "pelipper", "torkoal", "porygon2", "dusclops",
+] as const;
+
+type SpeedModifier = "tailwind" | "paralysis" | "icywind";
+
+const MODIFIER_CONFIG: Record<SpeedModifier, { label: string; icon: string; factor: number; description: string }> = {
+  tailwind: { label: "Tailwind", icon: "\u{1F4A8}", factor: 2, description: "\u00D72 speed" },
+  paralysis: { label: "Paralysis", icon: "\u{26A1}", factor: 0.5, description: "\u00D70.5 speed" },
+  icywind: { label: "Icy Wind", icon: "\u{2744}\u{FE0F}", factor: 0.67, description: "-1 stage" },
+};
+
+function calcSpeed(baseSpe: number, mod: Set<SpeedModifier>): number {
+  let speed = baseSpe;
+  if (mod.has("icywind")) speed = Math.floor(speed * 0.67);
+  if (mod.has("paralysis")) speed = Math.floor(speed * 0.5);
+  if (mod.has("tailwind")) speed = Math.floor(speed * 2);
+  return speed;
+}
+
+/** Calculate max speed at level 50 for a given base stat (31 IV, 252 EV, +nature) */
+function maxSpeed(baseSpe: number): number {
+  return Math.floor(((Math.floor(((2 * baseSpe + 31 + Math.floor(252 / 4)) * 50) / 100) + 5) * 1.1));
+}
+
+/** Calculate min speed at level 50 (0 IV, 0 EV, -nature) */
+function minSpeed(baseSpe: number): number {
+  return Math.floor(((Math.floor(((2 * baseSpe + 0) * 50) / 100) + 5) * 0.9));
+}
 
 export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode }: SpeedTierChartProps) {
   const { t } = useTranslation();
-  const entries = pokemon.map((mon, i) => {
+  const [activeModifiers, setActiveModifiers] = useState<Set<SpeedModifier>>(new Set());
+  const [showMetaThreats, setShowMetaThreats] = useState(false);
+
+  const toggleModifier = (mod: SpeedModifier) => {
+    setActiveModifiers(prev => {
+      const next = new Set(prev);
+      if (next.has(mod)) next.delete(mod); else next.add(mod);
+      return next;
+    });
+  };
+
+  // Build your team entries
+  const teamEntries = useMemo(() => pokemon.map((mon, i) => {
     const baseSpe = mon.calculatedStats.spe;
     const hasSpeedBoost = mon.itemBoost?.stat === "spe";
     const boostedSpe = hasSpeedBoost ? mon.itemBoost!.boostedValue : baseSpe;
-    const tailwindSpe = boostedSpe * 2;
 
-    // Determine the label for the speed boost source
     let speedBoostLabel = "";
     if (hasSpeedBoost && mon.parsed.item) {
       const item = mon.parsed.item.toLowerCase();
-      if (item === "choice scarf") speedBoostLabel = "scarf";
-      else if (item === "booster energy") speedBoostLabel = "booster";
+      if (item === "choice scarf") speedBoostLabel = "Scarf";
+      else if (item === "booster energy") speedBoostLabel = "Booster";
       else speedBoostLabel = mon.parsed.item;
     }
 
@@ -52,20 +89,56 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       speciesKey: speciesKeys[i],
       baseSpe,
       boostedSpe,
-      tailwindSpe,
       hasSpeedBoost,
       speedBoostLabel,
+      isYours: true as const,
     };
-  }).sort((a, b) => b.boostedSpe - a.boostedSpe);
+  }), [pokemon, speciesKeys]);
 
-  // Scale to max boosted speed only (not tailwind) so bars are readable
-  const maxSpeed = Math.max(...entries.map(e => e.boostedSpe), 200);
+  // Build meta threat entries (filter out Pokemon already on your team)
+  const metaEntries = useMemo(() => {
+    if (!showMetaThreats) return [];
+    const teamSpecies = new Set(pokemon.map(p => p.parsed.species.toLowerCase().replace(/\s+/g, "-")));
+    return META_THREATS
+      .filter(key => !teamSpecies.has(key))
+      .map(key => {
+        const data = POKEMON_DATA[key];
+        if (!data) return null;
+        const base = data.baseStats.spe;
+        return {
+          species: data.name,
+          speciesKey: key,
+          baseSpe: maxSpeed(base),
+          minSpe: minSpeed(base),
+          boostedSpe: maxSpeed(base),
+          hasSpeedBoost: false,
+          speedBoostLabel: "",
+          isYours: false as const,
+        };
+      })
+      .filter(Boolean) as Array<{
+        species: string; speciesKey: string; baseSpe: number; minSpe: number;
+        boostedSpe: number; hasSpeedBoost: boolean; speedBoostLabel: string; isYours: false;
+      }>;
+  }, [showMetaThreats, pokemon]);
 
-  const minTeamSpeed = Math.min(...entries.map(e => e.baseSpe));
-  const maxTeamBoosted = Math.max(...entries.map(e => e.boostedSpe));
-  const relevantBenchmarks = SPEED_BENCHMARKS.filter(
-    b => b.value >= minTeamSpeed * 0.8 && b.value <= maxTeamBoosted * 1.05
-  );
+  // Combine and apply modifiers
+  const allEntries = useMemo(() => {
+    const combined = [
+      ...teamEntries.map(e => ({
+        ...e,
+        displaySpeed: calcSpeed(e.boostedSpe, activeModifiers),
+      })),
+      ...metaEntries.map(e => ({
+        ...e,
+        displaySpeed: calcSpeed(e.boostedSpe, activeModifiers),
+        minSpe: e.minSpe,
+      })),
+    ];
+    return combined.sort((a, b) => b.displaySpeed - a.displaySpeed);
+  }, [teamEntries, metaEntries, activeModifiers]);
+
+  const maxDisplaySpeed = allEntries[0]?.displaySpeed ?? 200;
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
@@ -79,20 +152,61 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       </div>
 
       {/* Speed Tiers Section */}
-      <div className="flex flex-col gap-2" data-walkthrough="speed-tiers">
-        <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary">
-          {t.speedTiers}
-        </h3>
+      <div className="flex flex-col gap-3" data-walkthrough="speed-tiers">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary">
+            {t.speedTiers}
+          </h3>
+        </div>
 
-        <div className="flex flex-col gap-3">
-          {entries.map((entry) => {
-            const sc = getSpriteConfig?.(entry.speciesKey);
-            const percent = Math.min((entry.boostedSpe / maxSpeed) * 100, 100);
-            const basePercent = Math.min((entry.baseSpe / maxSpeed) * 100, 100);
+        {/* Modifier toggles */}
+        <div className="flex flex-wrap items-center gap-2">
+          {(Object.entries(MODIFIER_CONFIG) as [SpeedModifier, typeof MODIFIER_CONFIG[SpeedModifier]][]).map(([key, cfg]) => {
+            const active = activeModifiers.has(key);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleModifier(key)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                  active
+                    ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
+                    : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
+                }`}
+                title={cfg.description}
+              >
+                <span>{cfg.icon}</span>
+                {cfg.label}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setShowMetaThreats(!showMetaThreats)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+              showMetaThreats
+                ? "bg-blue-500/15 text-blue-500 border-blue-500/30"
+                : "bg-surface-alt/50 text-text-secondary border-border hover:border-blue-500/30 hover:text-blue-500"
+            }`}
+          >
+            <span>{"\u{1F30D}"}</span>
+            Meta Threats
+          </button>
+        </div>
+
+        {/* Speed bars */}
+        <div className="flex flex-col gap-2">
+          {allEntries.map((entry, i) => {
+            const sc = entry.isYours ? getSpriteConfig?.(entry.speciesKey) : undefined;
+            const percent = Math.max(Math.min((entry.displaySpeed / maxDisplaySpeed) * 100, 100), 6);
+
+            // Check for speed tie with adjacent entry
+            const prevSpeed = i > 0 ? allEntries[i - 1].displaySpeed : -1;
+            const isTie = entry.displaySpeed === prevSpeed;
 
             return (
-              <div key={entry.speciesKey} className="flex items-center gap-1.5 sm:gap-3">
-                {/* Name column -- fixed width */}
+              <div key={`${entry.speciesKey}-${entry.isYours}`} className={`flex items-center gap-1.5 sm:gap-3 ${!entry.isYours ? "opacity-70" : ""}`}>
+                {/* Name column */}
                 <div className="flex items-center gap-1.5 sm:gap-2 w-[6.5rem] sm:w-40 lg:w-48 flex-shrink-0 min-w-0">
                   <PokemonSprite
                     species={entry.species}
@@ -108,7 +222,9 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                     animated={sc?.animated}
                     shiny={sc?.shiny}
                   />
-                  <span className="text-xs sm:text-sm lg:text-base font-bold text-text-primary truncate">
+                  <span className={`text-xs sm:text-sm lg:text-base font-bold truncate ${
+                    entry.isYours ? "text-text-primary" : "text-text-tertiary"
+                  }`}>
                     {entry.species}
                   </span>
                 </div>
@@ -116,41 +232,37 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                 {/* Bar column */}
                 <div className="flex-1 flex items-center gap-2 min-w-0">
                   <div className="flex-1 h-7 sm:h-8 lg:h-10 bg-surface-alt rounded-lg overflow-hidden relative">
-                    {/* Base bar */}
                     <div
-                      className={`absolute inset-y-0 left-0 rounded-lg transition-all ${
-                        entry.hasSpeedBoost ? "bg-amber-500/70 bar-speed-boosted" : ""
+                      className={`absolute inset-y-0 left-0 rounded-lg transition-all duration-300 ${
+                        entry.hasSpeedBoost ? "bar-speed-boosted" : ""
                       }`}
                       style={{
-                        width: `${entry.hasSpeedBoost ? percent : basePercent}%`,
-                        backgroundColor: entry.hasSpeedBoost ? undefined : "var(--stat-spe)",
-                        opacity: entry.hasSpeedBoost ? undefined : 0.7,
+                        width: `${percent}%`,
+                        backgroundColor: entry.isYours
+                          ? entry.hasSpeedBoost ? "#f59e0b" : "var(--stat-spe)"
+                          : "#64748b",
+                        opacity: entry.isYours ? (entry.hasSpeedBoost ? 0.8 : 0.7) : 0.4,
                       }}
                     />
-                    {/* Benchmark lines inside the bar */}
-                    {relevantBenchmarks.map((b) => {
-                      const bp = (b.value / maxSpeed) * 100;
-                      if (bp > 98) return null;
-                      return (
-                        <div
-                          key={b.value}
-                          className="absolute top-0 bottom-0 w-px bg-text-tertiary/20"
-                          style={{ left: `${bp}%` }}
-                          title={`${b.value} — ${b.label}`}
-                        />
-                      );
-                    })}
+                    {/* Speed tie indicator */}
+                    {isTie && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                        TIE
+                      </div>
+                    )}
                   </div>
 
-                  {/* Speed value -- fixed width to prevent overlap */}
-                  <div className="w-16 sm:w-24 lg:w-28 flex-shrink-0 text-right">
+                  {/* Speed value */}
+                  <div className="w-14 sm:w-24 lg:w-28 flex-shrink-0 text-right">
                     <span className={`text-xs sm:text-sm lg:text-base font-[family-name:var(--font-mono)] font-extrabold tabular-nums ${
-                      entry.hasSpeedBoost ? "text-amber-500" : "text-text-primary"
+                      entry.isYours
+                        ? entry.hasSpeedBoost ? "text-amber-500" : "text-text-primary"
+                        : "text-text-tertiary"
                     }`}>
-                      {entry.hasSpeedBoost ? entry.boostedSpe : entry.baseSpe}
+                      {entry.displaySpeed}
                     </span>
-                    {entry.hasSpeedBoost && entry.speedBoostLabel && (
-                      <span className="text-xs text-amber-500/60 font-semibold ml-0.5">
+                    {entry.isYours && entry.hasSpeedBoost && entry.speedBoostLabel && (
+                      <span className="text-[10px] text-amber-500/60 font-semibold ml-0.5 hidden sm:inline">
                         {entry.speedBoostLabel}
                       </span>
                     )}
@@ -161,23 +273,29 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           })}
         </div>
 
-        {/* Tailwind note + Legend */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs font-semibold text-text-tertiary">
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs font-semibold text-text-tertiary">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded" style={{ backgroundColor: "var(--stat-spe)", opacity: 0.7 }} />
-            {t.base}
+            Your team
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-amber-500/70 bar-speed-boosted" />
-            {t.itemBoosted} (striped)
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-px h-3.5 bg-text-tertiary/30" />
-            {t.benchmarks}
-          </span>
-          <span className="ml-auto text-text-tertiary/60 font-medium">
-            {t.tailwindDoublesBase}
-          </span>
+          {teamEntries.some(e => e.hasSpeedBoost) && (
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded bg-amber-500/70 bar-speed-boosted" />
+              {t.itemBoosted}
+            </span>
+          )}
+          {showMetaThreats && (
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded bg-slate-500/40" />
+              Meta (max speed)
+            </span>
+          )}
+          {activeModifiers.size > 0 && (
+            <span className="ml-auto text-accent font-medium">
+              {Array.from(activeModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ")} applied
+            </span>
+          )}
         </div>
       </div>
 
