@@ -426,34 +426,40 @@ body {
 }
 
 /* ====================================================================
-   PRINT STYLES
+   PRINT / PDF EXPORT STYLES
    ==================================================================== */
 @media print {
-  /* Reset backgrounds and colors for ink-friendly output */
-  *, *::before, *::after {
-    background: white !important;
-    color: #1a1a2e !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
+  /* Page setup */
+  @page {
+    margin: 1cm;
+    size: A4;
   }
 
   body {
     font-size: 11pt;
     line-height: 1.4;
+    background: white !important;
+    color: #111827 !important;
   }
 
   body::before {
     display: none !important;
   }
 
-  /* Hide non-printable UI */
-  nav,
+  /* Hide all app chrome */
+  header, footer, nav,
+  [role="navigation"],
+  [role="dialog"],
   [data-walkthrough],
-  .slide-nav-controls,
-  button:not(.print-visible),
-  .animate-spin,
-  [role="dialog"] {
+  .fixed, .sticky,
+  .animate-spin {
     display: none !important;
+  }
+
+  /* Remove shadows everywhere */
+  *, *::before, *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 
   /* Show all content, remove scroll containers */
@@ -468,46 +474,12 @@ body {
     padding: 0.5cm !important;
   }
 
-  /* Keep cards together */
-  .card, [class*="Card"] {
-    break-inside: avoid;
-    border: 1px solid #ddd !important;
-    padding: 12pt !important;
-    margin-bottom: 12pt !important;
-  }
+  /* ── Print container: takes over entire page ──────────────────── */
 
-  /* Stat bars print-friendly */
-  [role="progressbar"] {
-    border: 1px solid #ccc !important;
-  }
-  [role="progressbar"] > div {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-
-  /* Type badges need color */
-  [class*="TypeBadge"], [class*="type-badge"] {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-
-  /* Page margins */
-  @page {
-    margin: 1.5cm;
-    size: A4;
-  }
-
-  /* Accent colors preserved */
-  .text-accent, [class*="text-accent"] {
-    color: #E11D48 !important;
-  }
-
-  /* ── PDF Export: print-container takes over ──────────────────── */
-
-  /* When the print container is present, hide everything else */
   body > *:not(#print-container) {
     display: none !important;
   }
+
   #print-container {
     display: block !important;
     position: static !important;
@@ -524,7 +496,14 @@ body {
     break-after: avoid;
   }
 
-  /* Hide interactive controls inside print slides */
+  /* Keep cards together on a page */
+  .card, [class*="Card"] {
+    break-inside: avoid;
+    border: 1px solid #E5E7EB !important;
+    margin-bottom: 8pt !important;
+  }
+
+  /* Clean up interactive elements */
   #print-container button,
   #print-container [contenteditable],
   #print-container textarea {
@@ -533,14 +512,28 @@ body {
     resize: none !important;
   }
 
-  /* Preserve colored backgrounds in print (sprites, type badges, stat bars) */
-  #print-container img,
-  #print-container [role="progressbar"] > div,
-  #print-container [class*="TypeBadge"],
-  #print-container [class*="type-badge"],
-  #print-container .print-color {
+  /* ── Preserve colors in print ──────────────────────────────── */
+  /* Type badges, stat bars, move type backgrounds, sprites */
+
+  #print-container * {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+  }
+
+  img {
+    max-width: 100% !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Accent colors */
+  .text-accent, [class*="text-accent"] {
+    color: #E11D48 !important;
+  }
+
+  /* Stat bar borders for clarity */
+  [role="progressbar"] {
+    border: 1px solid #E5E7EB !important;
   }
 }
 
@@ -683,66 +676,3 @@ body {
   }
 }
 
-/* ── Print / PDF Export ───────────────────────────────────────── */
-
-@media print {
-  /* Hide everything except the print container */
-  body > *:not(#print-container) {
-    display: none !important;
-  }
-
-  #print-container {
-    display: block !important;
-  }
-
-  /* Page breaks between slides */
-  .print-slide {
-    page-break-after: always;
-    break-after: page;
-    padding: 16px 8px;
-  }
-
-  .print-slide:last-child {
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-
-  /* Clean up interactive elements */
-  button:not(.print-keep),
-  [contenteditable],
-  .cursor-pointer {
-    cursor: default !important;
-  }
-
-  /* Remove shadows and borders for clean print */
-  .shadow-lg, .shadow-md, .shadow-sm, .shadow-2xl {
-    box-shadow: none !important;
-  }
-
-  /* Force white background for print */
-  body, html {
-    background: white !important;
-    color: black !important;
-  }
-
-  /* Ensure images print */
-  img {
-    max-width: 100% !important;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-
-  /* Print color-preserving elements */
-  .bg-accent, [class*="bg-"] {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-
-  /* Hide navbar, footer, overlays */
-  header, footer, nav,
-  [role="navigation"],
-  .fixed,
-  .sticky {
-    display: none !important;
-  }
-}

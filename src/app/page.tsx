@@ -242,11 +242,13 @@ function HomeContent() {
 
   useEffect(() => {
     if (!isPdfPrinting) return;
-    const raf = requestAnimationFrame(() => {
+    // Give React two frames + a small delay to fully render the print container
+    // (sprites and images need time to load)
+    const timer = setTimeout(() => {
       window.print();
       setIsPdfPrinting(false);
-    });
-    return () => cancelAnimationFrame(raf);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [isPdfPrinting]);
 
   const versionDiffContextValue = useMemo(() => ({
