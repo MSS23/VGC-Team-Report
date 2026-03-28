@@ -113,7 +113,8 @@ export function QuickCalc({ pokemon, onAddCalc }: QuickCalcProps) {
   // Defender config
   const [defenderNature, setDefenderNature] = useState("Hardy");
   const [defenderEvs, setDefenderEvs] = useState<Record<string, number>>({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
-  const [defenderItem, setDefenderItem] = useState("");
+  const [defenderItem, setDefenderItem] = useState(""); // committed value used in calc
+  const [defenderItemDraft, setDefenderItemDraft] = useState(""); // live input value
   const [spreadPreset, setSpreadPreset] = useState("default");
 
   // Full species list (loaded lazily)
@@ -467,11 +468,13 @@ export function QuickCalc({ pokemon, onAddCalc }: QuickCalcProps) {
             </div>
           )}
 
-          {/* Item input */}
+          {/* Item input — commits on blur or Enter to avoid recalc on every keystroke */}
           <input
             type="text"
-            value={defenderItem}
-            onChange={(e) => { setDefenderItem(e.target.value); setSaved(false); }}
+            value={defenderItemDraft}
+            onChange={(e) => setDefenderItemDraft(e.target.value)}
+            onBlur={() => { if (defenderItemDraft !== defenderItem) { setDefenderItem(defenderItemDraft); setSaved(false); } }}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setDefenderItem(defenderItemDraft); setSaved(false); (e.target as HTMLInputElement).blur(); } }}
             placeholder="Item (optional, e.g. Assault Vest)"
             className="w-full mt-2 px-3 py-2 bg-surface border border-border rounded-xl text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             autoComplete="off"
