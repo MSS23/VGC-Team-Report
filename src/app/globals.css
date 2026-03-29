@@ -544,6 +544,45 @@ body {
     transition: none !important;
   }
 
+  /* ── Force light-mode colors in print ──────────────────────── */
+  /* Overrides dark mode variables so PDF is always readable on white */
+
+  #print-container {
+    --background: #FAF9F6;
+    --foreground: #1A1A2E;
+    --surface: #FFFFFF;
+    --surface-alt: #F2F0EB;
+    --border: #E0DDD5;
+    --border-subtle: #F0EDE6;
+    --text-primary: #1A1A2E;
+    --text-secondary: #4A4A68;
+    --text-tertiary: #6E6E8A;
+    --accent: #E11D48;
+    --accent-light: #FDA4AF;
+    --accent-surface: #FFF1F2;
+    --success: #16A34A;
+    --warning: #D97706;
+    --danger: #DC2626;
+    --cell-immune: #E4E4E7;
+    --cell-immune-text: #71717A;
+    --cell-nve: #FEE2E2;
+    --cell-nve-text: #B91C1C;
+    --cell-se: #D1FAE5;
+    --cell-se-text: #065F46;
+    --cell-dse: #A5F3FC;
+    --cell-dse-text: #164E63;
+    --def-4x: #FECACA;
+    --def-4x-text: #991B1B;
+    --stat-hp: #FF5959;
+    --stat-atk: #F5AC78;
+    --stat-def: #FAE078;
+    --stat-spa: #9DB7F5;
+    --stat-spd: #A7DB8D;
+    --stat-spe: #FA92B2;
+    color: #1A1A2E !important;
+    background: white !important;
+  }
+
   /* ── Preserve colors in print ──────────────────────────────── */
 
   #print-container * {
@@ -568,6 +607,33 @@ body {
   /* Accent colors */
   .text-accent, [class*="text-accent"] {
     color: #E11D48 !important;
+  }
+
+  /* Stat bar backgrounds — force light mode */
+  #print-container .bg-surface-alt {
+    background-color: #F2F0EB !important;
+  }
+
+  #print-container .bg-surface {
+    background-color: #FFFFFF !important;
+  }
+
+  /* Borders — force light mode */
+  #print-container .border-border {
+    border-color: #E0DDD5 !important;
+  }
+
+  /* Text colors — force light mode readability */
+  #print-container .text-text-primary {
+    color: #1A1A2E !important;
+  }
+
+  #print-container .text-text-secondary {
+    color: #4A4A68 !important;
+  }
+
+  #print-container .text-text-tertiary {
+    color: #6E6E8A !important;
   }
 
   /* Stat bar borders for clarity */

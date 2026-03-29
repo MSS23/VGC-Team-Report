@@ -123,24 +123,43 @@ linear_comment_with_changes() {
 
 discord_notify_build() {
   # Posts build notification to Discord #builds
-  # Usage: discord_notify_build <issue_id> <title> [pr_url]
-  local issue_id="$1"
-  local title="$2"
+  # Usage: discord_notify_build [issue_id] [title] [pr_url]
+  # If issue_id/title are empty, falls back to the git commit message.
+  local issue_id="${1:-}"
+  local title="${2:-}"
   local pr_url="${3:-}"
   local commit_short=$(git_commit_short)
   local commit_url=$(git_commit_url)
   local file_count=$(git_changed_files_count)
   local discord_files=$(git_changed_files | head -10 | sed 's/^/`/' | sed 's/$/`/' | tr '\n' '\\' | sed 's/\\/\\n/g')
 
+  # Build the headline — use ticket info if available, otherwise commit message
+  local headline
+  if [[ -n "$issue_id" && -n "$title" ]]; then
+    headline="**$issue_id: $title**"
+  elif [[ -n "$title" ]]; then
+    headline="**$title**"
+  else
+    local commit_msg
+    commit_msg=$(git log -1 --pretty=%s)
+    headline="**$commit_msg**"
+  fi
+
+  # Linear line — only mention Linear if this is a ticket
+  local linear_line=""
+  if [[ -n "$issue_id" ]]; then
+    linear_line="\\n\\n📋 Linear: moved to **In Review**"
+  fi
+
   if [[ -n "$pr_url" ]]; then
     # PR flow — needs merge before deploy
     curl -s -X POST "$DISCORD_BUILDS_WEBHOOK" \
       -H 'Content-Type: application/json' \
-      -d "{\"embeds\":[{\"title\":\"🔍 Ready for Review\",\"description\":\"**$issue_id: $title**\\n\\n[View commit \`$commit_short\`]($commit_url)\\n[Review PR]($pr_url)\\n\\n**Files changed ($file_count):**\\n$discord_files\\n\\n📋 Linear: moved to **In Review**\\n⏳ Waiting for PR merge to deploy.\",\"color\":16761095,\"footer\":{\"text\":\"VGC Team Report Builder\"}}]}"
+      -d "{\"embeds\":[{\"title\":\"🔍 Ready for Review\",\"description\":\"$headline\\n\\n[View commit \`$commit_short\`]($commit_url)\\n[Review PR]($pr_url)\\n\\n**Files changed ($file_count):**\\n$discord_files$linear_line\\n⏳ Waiting for PR merge to deploy.\",\"color\":16761095,\"footer\":{\"text\":\"VGC Team Report Builder\"}}]}"
   else
     # Direct-to-main — already deploying
     curl -s -X POST "$DISCORD_BUILDS_WEBHOOK" \
       -H 'Content-Type: application/json' \
-      -d "{\"embeds\":[{\"title\":\"🚀 Pushed to Main\",\"description\":\"**$issue_id: $title**\\n\\n[View commit \`$commit_short\`]($commit_url)\\n\\n**Files changed ($file_count):**\\n$discord_files\\n\\n📋 Linear: moved to **In Review**\\n✅ Auto-deploying via Vercel.\",\"color\":5763719,\"footer\":{\"text\":\"VGC Team Report Builder\"}}]}"
+      -d "{\"embeds\":[{\"title\":\"🚀 Pushed to Main\",\"description\":\"$headline\\n\\n[View commit \`$commit_short\`]($commit_url)\\n\\n**Files changed ($file_count):**\\n$discord_files$linear_line\\n✅ Auto-deploying via Vercel.\",\"color\":5763719,\"footer\":{\"text\":\"VGC Team Report Builder\"}}]}"
   fi
 }

@@ -13,6 +13,7 @@ import { ItemIcon } from "./ItemIcon";
 import { PokemonDropdown } from "./PokemonDropdown";
 import { Button } from "@/components/ui/Button";
 import { FieldDiffHighlight } from "./TeamReport";
+import { useIsPrintMode } from "@/components/ui/PdfExport";
 import { GAME_COLORS, getReplayInfo, ReplayIcon } from "@/lib/utils/game-plan-helpers";
 import { useTranslation } from "@/lib/i18n";
 
@@ -390,7 +391,7 @@ function GamePlanSection({
   index,
   yourPokemon,
   isReadOnly,
-  isCollapsed,
+  isCollapsed: isCollapsedProp,
   canDelete,
   onToggle,
   onNotesChange,
@@ -401,6 +402,9 @@ function GamePlanSection({
   onDelete,
 }: GamePlanSectionProps) {
   const { t } = useTranslation();
+  // Force expanded in print mode so all game plans are visible in PDF
+  const isPrint = useIsPrintMode();
+  const isCollapsed = isPrint ? false : isCollapsedProp;
   const color = GAME_COLORS[index] ?? GAME_COLORS[0];
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [replayInput, setReplayInput] = useState("");

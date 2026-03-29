@@ -12,6 +12,7 @@ import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
 import { FieldDiffHighlight } from "./TeamReport";
+import { useIsPrintMode } from "@/components/ui/PdfExport";
 
 interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;
@@ -241,7 +242,10 @@ function CollapsibleCalcGroup({
   categories: CalcCategory[];
   translatedLabel: string;
 }) {
+  const isPrint = useIsPrintMode();
   const [isOpen, setIsOpen] = useState(!isPresentationMode);
+  // Force open in print mode so all calcs are visible in PDF
+  const effectiveOpen = isPrint || isOpen;
 
   return (
     <div className="presenting:flex-1 presenting:min-w-0">
@@ -258,7 +262,7 @@ function CollapsibleCalcGroup({
         </span>
         <span className={`flex-1 h-px ${cfg.tagBg}`} />
         <svg
-          className={`w-3.5 h-3.5 ${cfg.tagText} opacity-50 group-hover/header:opacity-100 transition-all duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 ${cfg.tagText} opacity-50 group-hover/header:opacity-100 transition-all duration-200 ${effectiveOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -271,8 +275,8 @@ function CollapsibleCalcGroup({
         className="transition-all duration-200 ease-in-out"
         style={{
           display: "grid",
-          gridTemplateRows: isOpen ? "1fr" : "0fr",
-          opacity: isOpen ? 1 : 0,
+          gridTemplateRows: effectiveOpen ? "1fr" : "0fr",
+          opacity: effectiveOpen ? 1 : 0,
         }}
       >
         <div className="overflow-hidden">

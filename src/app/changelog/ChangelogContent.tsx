@@ -11,6 +11,18 @@ import { PageFooter } from "@/components/layout/PageFooter";
 const ENTRIES = [
   {
     date: "March 2026",
+    version: "4.8",
+    title: "PDF Export Overhaul",
+    emoji: "\uD83D\uDCCE",
+    items: [
+      { type: "fixed" as const, text: "PDF export now works reliably \u2014 print container uses a React portal to render as a direct child of <body>, fixing the blank page issue." },
+      { type: "fixed" as const, text: "PDF always uses light-mode colors \u2014 all CSS variables are forced to light-mode values inside the print container, so exports are readable regardless of dark mode." },
+      { type: "improved" as const, text: "All collapsed sections expand automatically in PDF \u2014 damage calc groups (Offensive, Defensive, Speed) and game plan details are forced open during export." },
+      { type: "improved" as const, text: "Print styles force readable text, backgrounds, and borders \u2014 surface, text, and border colors are explicitly overridden for white paper." },
+    ],
+  },
+  {
+    date: "March 2026",
     version: "4.7",
     title: "Tournament Mode, Themes, Champions SEO & 17 Fixes",
     emoji: "\uD83C\uDFC6",
