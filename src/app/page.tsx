@@ -250,20 +250,40 @@ function HomeContent() {
   useEffect(() => {
     if (!isPdfPrinting) return;
     // Wait for the print container to actually render with content,
-    // then give sprites time to load before triggering print
+    // Wait for content to render, then wait for all images to load
     let cancelled = false;
     const waitForContent = () => {
       const container = document.getElementById("print-container");
       if (!cancelled && container && container.children.length > 0) {
-        // Content is rendered — wait for sprites to load
-        setTimeout(() => {
-          if (!cancelled) {
-            window.print();
-            setIsPdfPrinting(false);
-          }
-        }, 500);
+        // Content rendered — wait for all images to finish loading
+        const images = Array.from(container.querySelectorAll("img"));
+        const unloaded = images.filter((img) => !img.complete);
+        if (unloaded.length > 0) {
+          // Wait for remaining images
+          let loaded = 0;
+          const checkDone = () => {
+            loaded++;
+            if (!cancelled && loaded >= unloaded.length) {
+              setTimeout(() => {
+                if (!cancelled) { window.print(); setIsPdfPrinting(false); }
+              }, 200);
+            }
+          };
+          unloaded.forEach((img) => {
+            img.addEventListener("load", checkDone, { once: true });
+            img.addEventListener("error", checkDone, { once: true });
+          });
+          // Safety timeout — print anyway after 3s even if images fail
+          setTimeout(() => {
+            if (!cancelled) { window.print(); setIsPdfPrinting(false); }
+          }, 3000);
+        } else {
+          // All images already loaded
+          setTimeout(() => {
+            if (!cancelled) { window.print(); setIsPdfPrinting(false); }
+          }, 200);
+        }
       } else if (!cancelled) {
-        // Container not ready — retry next frame
         requestAnimationFrame(waitForContent);
       }
     };

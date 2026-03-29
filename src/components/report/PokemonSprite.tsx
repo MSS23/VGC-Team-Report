@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { getGenThemedSpriteUrls, isGenThemePixelated } from "@/lib/utils/sprite-url";
 import { useTheme } from "@/hooks/useTheme";
+import { useIsPrintMode } from "@/components/ui/PdfExport";
 
 interface PokemonSpriteProps {
   species: string;
@@ -15,6 +16,7 @@ interface PokemonSpriteProps {
 /**
  * Renders a Pokemon sprite that automatically adapts to the current
  * generation theme. Falls back through multiple sprite sources on error.
+ * In print mode, forces static PNGs (GIFs don't render in PDF).
  */
 export function PokemonSprite({
   species,
@@ -24,16 +26,20 @@ export function PokemonSprite({
   shiny = false,
 }: PokemonSpriteProps) {
   const { genTheme } = useTheme();
+  const isPrint = useIsPrintMode();
   const [urlIndex, setUrlIndex] = useState(0);
+
+  // In print mode, force static sprites (GIFs don't render in PDF)
+  const effectiveAnimated = isPrint ? false : animated;
 
   // Reset fallback index when inputs change
   useEffect(() => {
     setUrlIndex(0);
-  }, [species, shiny, animated, genTheme]);
+  }, [species, shiny, effectiveAnimated, genTheme]);
 
   const urls = useMemo(
-    () => getGenThemedSpriteUrls(species, genTheme, animated, shiny),
-    [species, genTheme, animated, shiny],
+    () => getGenThemedSpriteUrls(species, genTheme, effectiveAnimated, shiny),
+    [species, genTheme, effectiveAnimated, shiny],
   );
 
   const src = urls[Math.min(urlIndex, urls.length - 1)];
@@ -46,7 +52,7 @@ export function PokemonSprite({
       alt={species}
       width={size}
       height={size}
-      loading="lazy"
+      loading={isPrint ? "eager" : "lazy"}
       className={`object-contain ${className}`}
       style={{
         maxWidth: size,

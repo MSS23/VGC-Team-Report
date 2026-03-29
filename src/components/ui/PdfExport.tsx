@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 import type { MatchupPlan } from "@/hooks/useMatchupPlans";
@@ -14,6 +14,10 @@ import { MatchupPlanSlide } from "@/components/report/MatchupPlanSlide";
 import { MatchupSheet } from "@/components/report/MatchupSheet";
 import { PrintableTournamentMode } from "@/components/report/TournamentMode";
 import type { StatView } from "@/components/report/TournamentMode";
+
+/** Context to signal components they're rendering for print (use PNGs, not GIFs) */
+export const PrintContext = createContext(false);
+export function useIsPrintMode() { return useContext(PrintContext); }
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
@@ -93,19 +97,21 @@ export function PrintableReport({
   if (exportMode === "tournament-evs" || exportMode === "tournament-stats") {
     const statView: StatView = exportMode === "tournament-stats" ? "stats" : "evs";
     return (
-      <div className="print-slide">
-        <PrintableTournamentMode
-          analysis={analysis}
-          speciesKeys={speciesKeys}
-          getSpriteConfig={getSpriteConfig}
-          statView={statView}
-        />
-      </div>
+      <PrintContext.Provider value={true}>
+        <div className="print-slide">
+          <PrintableTournamentMode
+            analysis={analysis}
+            speciesKeys={speciesKeys}
+            getSpriteConfig={getSpriteConfig}
+            statView={statView}
+          />
+        </div>
+      </PrintContext.Provider>
     );
   }
 
   return (
-    <>
+    <PrintContext.Provider value={true}>
       {/* Slide 1: Team Overview */}
       <div className="print-slide">
         <TeamOverview
@@ -194,7 +200,7 @@ export function PrintableReport({
           />
         </div>
       )}
-    </>
+    </PrintContext.Provider>
   );
 }
 

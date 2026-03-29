@@ -506,11 +506,25 @@ body {
     break-after: avoid;
   }
 
-  /* Keep cards together on a page */
-  .card, [class*="Card"] {
+  /* Keep cards and sections together on a page */
+  .card, [class*="Card"],
+  .print-keep-together,
+  [role="list"] > *,
+  .grid > * {
     break-inside: avoid;
-    border: 1px solid #E5E7EB !important;
-    margin-bottom: 8pt !important;
+    page-break-inside: avoid;
+  }
+
+  /* Sections that contain grids should not break mid-grid */
+  .grid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Headings should not be orphaned at bottom of page */
+  h1, h2, h3, h4 {
+    break-after: avoid;
+    page-break-after: avoid;
   }
 
   /* Clean up interactive elements */
@@ -522,18 +536,31 @@ body {
     resize: none !important;
   }
 
+  /* Remove animations and transitions in print */
+  #print-container * {
+    animation: none !important;
+    transition: none !important;
+  }
+
   /* ── Preserve colors in print ──────────────────────────────── */
-  /* Type badges, stat bars, move type backgrounds, sprites */
 
   #print-container * {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 
+  /* Ensure all images render and don't overflow */
   img {
     max-width: 100% !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Force GIF images to not display (fallback PNGs should load instead) */
+  #print-container img[src$=".gif"] {
+    image-rendering: auto;
   }
 
   /* Accent colors */
