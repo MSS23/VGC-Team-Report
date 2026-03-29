@@ -398,12 +398,12 @@ export function Navbar(props: NavbarProps) {
             </div>
           )}
 
-          {/* Tournament mode toggle */}
+          {/* Tournament mode toggle — hidden on mobile, in overflow menu */}
           {onSetTournamentMode && !isPresentationStyle && (
             <button
               type="button"
               onClick={() => onSetTournamentMode(!tournamentMode)}
-              className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
+              className={`hidden sm:flex w-9 h-9 items-center justify-center rounded-lg transition-colors cursor-pointer ${
                 tournamentMode
                   ? "bg-amber-500/15 text-amber-500 ring-1 ring-amber-500/40"
                   : "text-text-tertiary hover:text-amber-500 hover:bg-surface-alt"
@@ -422,11 +422,8 @@ export function Navbar(props: NavbarProps) {
 
           {/* Present / Exit presentation */}
           {!isPresentationStyle ? (
-            <Button variant="primary" size="sm" onClick={() => onSetPresentationMode(true)} data-walkthrough="present-button">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:hidden">
-                <polygon points="5,3 19,12 5,21" fill="currentColor" stroke="none" />
-              </svg>
-              <span className="hidden sm:inline">{t.present}</span>
+            <Button variant="primary" size="sm" onClick={() => onSetPresentationMode(true)} data-walkthrough="present-button" className="hidden sm:inline-flex">
+              <span>{t.present}</span>
             </Button>
           ) : (
             <>
@@ -623,6 +620,37 @@ export function Navbar(props: NavbarProps) {
                         })}
                       </div>
                     </div>
+                  </>
+                )}
+
+                {/* Present mode (mobile) */}
+                {!isPresentationStyle && (
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); onSetPresentationMode(true); }}
+                    className="sm:hidden w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-accent hover:bg-surface-alt/50 transition-colors"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="5,3 19,12 5,21" fill="currentColor" stroke="none" />
+                    </svg>
+                    Present
+                  </button>
+                )}
+
+                {/* Tournament mode (mobile) */}
+                {onSetTournamentMode && !isPresentationStyle && (
+                  <>
+                    <div className="border-t border-border/50 mx-3 my-1 sm:hidden" />
+                    <button
+                      type="button"
+                      onClick={() => { setMenuOpen(false); onSetTournamentMode(!tournamentMode); }}
+                      className="sm:hidden w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={tournamentMode ? "text-amber-500" : ""}>
+                        <path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" />
+                      </svg>
+                      {tournamentMode ? "Exit Tournament Mode" : "Tournament Mode"}
+                    </button>
                   </>
                 )}
 
