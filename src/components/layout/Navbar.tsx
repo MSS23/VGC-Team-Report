@@ -78,6 +78,10 @@ interface NavbarProps {
   // PDF Export
   onExportPdf?: () => void;
 
+  // Tournament mode
+  tournamentMode?: boolean;
+  onSetTournamentMode?: (v: boolean) => void;
+
   // Actions
   onShowShortcuts: (v: boolean) => void;
   onSetCreatorMode: (v: boolean) => void;
@@ -103,6 +107,7 @@ export function Navbar(props: NavbarProps) {
     onUndo, onRedo, canUndo, canRedo,
     comparingVersion, onCompareVersion, onClearCompareVersion, compareLoading,
     onExportPdf,
+    tournamentMode, onSetTournamentMode,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
     onReset, onExitSharedView,
   } = props;
@@ -390,6 +395,28 @@ export function Navbar(props: NavbarProps) {
                 <span className="hidden sm:inline tracking-wide">{creatorMode ? t.editing : t.locked}</span>
               </Button>
             </div>
+          )}
+
+          {/* Tournament mode toggle */}
+          {onSetTournamentMode && !isPresentationStyle && (
+            <button
+              type="button"
+              onClick={() => onSetTournamentMode(!tournamentMode)}
+              className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
+                tournamentMode
+                  ? "bg-amber-500/15 text-amber-500 ring-1 ring-amber-500/40"
+                  : "text-text-tertiary hover:text-amber-500 hover:bg-surface-alt"
+              }`}
+              title={tournamentMode ? "Exit tournament mode" : "Tournament mode — quick battle reference"}
+              aria-label={tournamentMode ? "Exit tournament mode" : "Tournament mode"}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 010-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
+                <path d="M4 22h16" />
+                <path d="M10 22V2h4v20" />
+              </svg>
+            </button>
           )}
 
           {/* Present / Exit presentation */}

@@ -6,6 +6,7 @@ import { useHomePage } from "@/hooks/useHomePage";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { PasteInput } from "@/components/input/PasteInput";
 import { TeamReport } from "@/components/report/TeamReport";
+import { TournamentMode } from "@/components/report/TournamentMode";
 import { SlideNavControls } from "@/components/report/SlideNavControls";
 import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
 import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
@@ -170,6 +171,7 @@ function HomeContent() {
 
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const [showShareModal, setShowShareModal] = useState(false);
+  const [tournamentMode, setTournamentMode] = useState(false);
 
   // ── Version comparison state ────────────────────────────────────
   const [versionDiff, setVersionDiff] = useState<VersionDiff | null>(null);
@@ -529,6 +531,8 @@ function HomeContent() {
         onClearCompareVersion={handleClearCompare}
         compareLoading={compareLoading}
         onExportPdf={analysis ? handleExportPdf : undefined}
+        tournamentMode={tournamentMode}
+        onSetTournamentMode={analysis ? setTournamentMode : undefined}
         onShowShortcuts={setShowShortcutHint}
         onSetCreatorMode={setCreatorMode}
         onSetPresentationMode={setPresentationMode}
@@ -581,9 +585,17 @@ function HomeContent() {
             ? "px-3 sm:px-8 py-2 sm:py-6"
             : "px-2 sm:px-4 py-2 sm:py-6 creator:px-8 creator:py-8"
         }`}
-        key={physicalSlide}
-        style={{ viewTransitionName: "slide" }}
+        key={tournamentMode ? "tournament" : physicalSlide}
+        style={tournamentMode ? undefined : { viewTransitionName: "slide" }}
       >
+        {tournamentMode ? (
+          <TournamentMode
+            analysis={analysis!}
+            speciesKeys={speciesKeys}
+            getSpriteConfig={getSpriteConfig}
+          />
+        ) : (
+        <>
         {/* Hidden slide banner for creator */}
         {creatorMode && isSlideHiddenAt(physicalSlide) && (
           <div className="flex items-center gap-3 px-4 py-3 mb-5 bg-amber-500/8 border border-amber-500/25 rounded-2xl animate-fade-in">
@@ -654,31 +666,35 @@ function HomeContent() {
           getSpriteConfig={getSpriteConfig}
           onReorderPokemon={isReadOnly ? undefined : reorderPokemon}
         />
+        </>
+        )}
       </div>
       </VersionDiffProvider>
 
-      {/* Slide navigation */}
-      <SlideNavControls
-        currentSlide={currentSlide}
-        totalSlides={totalSlides}
-        isFirst={isFirst}
-        isLast={isLast}
-        onPrev={prevSlide}
-        onNext={nextSlide}
-        onGoTo={goToSlide}
-        slideLabels={slideLabels}
-        autoHide={presentationMode}
-        hiddenStates={creatorMode ? slideHiddenStates : undefined}
-        onToggleHide={creatorMode ? handleToggleCurrentSlide : undefined}
-        isCurrentHidden={creatorMode ? isSlideHiddenAt(physicalSlide) : false}
-        onShowShortcuts={() => setShowShortcutHint(true)}
-        onStartTour={!presentationMode ? startWalkthrough : undefined}
-        canMoveUp={canMoveSlideUp}
-        canMoveDown={canMoveSlideDown}
-        onMoveUp={handleMoveSlideUp}
-        onMoveDown={handleMoveSlideDown}
-        changedSlides={versionDiff?.changedSlides}
-      />
+      {/* Slide navigation — hidden in tournament mode */}
+      {!tournamentMode && (
+        <SlideNavControls
+          currentSlide={currentSlide}
+          totalSlides={totalSlides}
+          isFirst={isFirst}
+          isLast={isLast}
+          onPrev={prevSlide}
+          onNext={nextSlide}
+          onGoTo={goToSlide}
+          slideLabels={slideLabels}
+          autoHide={presentationMode}
+          hiddenStates={creatorMode ? slideHiddenStates : undefined}
+          onToggleHide={creatorMode ? handleToggleCurrentSlide : undefined}
+          isCurrentHidden={creatorMode ? isSlideHiddenAt(physicalSlide) : false}
+          onShowShortcuts={() => setShowShortcutHint(true)}
+          onStartTour={!presentationMode ? startWalkthrough : undefined}
+          canMoveUp={canMoveSlideUp}
+          canMoveDown={canMoveSlideDown}
+          onMoveUp={handleMoveSlideUp}
+          onMoveDown={handleMoveSlideDown}
+          changedSlides={versionDiff?.changedSlides}
+        />
+      )}
 
       {/* Swipe hint for mobile (one-time) */}
       <SwipeHint />

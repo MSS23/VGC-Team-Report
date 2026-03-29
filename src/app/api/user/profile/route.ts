@@ -4,12 +4,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { escapeHtml } from "@/lib/utils/sanitize";
 
+const VALID_THEMES = ["rose", "ocean", "emerald", "amber", "violet", "sunset"];
+
 const ProfileBody = z.object({
   bio: z.string().max(500).optional(),
   twitter: z.string().max(100).optional(),
   discord: z.string().max(100).optional(),
   youtube: z.string().max(100).optional(),
   isPublic: z.boolean().optional(),
+  accentTheme: z.string().max(20).optional().refine(
+    (v) => !v || VALID_THEMES.includes(v),
+    { message: "Invalid theme" }
+  ),
 });
 
 // GET: fetch current user's creator profile
@@ -23,7 +29,7 @@ export async function GET() {
       : user.username || "Unknown";
 
     const sql = getDb();
-    const rows = await sql`SELECT bio, twitter, discord, youtube, is_public FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`;
+    const rows = await sql`SELECT bio, twitter, discord, youtube, is_public, accent_theme FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`;
 
     return NextResponse.json({
       creatorName,
@@ -33,7 +39,8 @@ export async function GET() {
         discord: rows[0].discord || "",
         youtube: rows[0].youtube || "",
         isPublic: rows[0].is_public !== false,
-      } : { bio: "", twitter: "", discord: "", youtube: "", isPublic: true },
+        accentTheme: rows[0].accent_theme || null,
+      } : { bio: "", twitter: "", discord: "", youtube: "", isPublic: true, accentTheme: null },
     });
   } catch (e) {
     console.error("Profile GET error:", e);
@@ -55,19 +62,20 @@ export async function PUT(request: Request) {
     const parsed = ProfileBody.safeParse(raw);
     if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
-    const { bio, twitter, discord, youtube, isPublic } = parsed.data;
+    const { bio, twitter, discord, youtube, isPublic, accentTheme } = parsed.data;
     const isPublicValue = isPublic !== undefined ? isPublic : true;
     const sql = getDb();
 
     await sql`
-      INSERT INTO creator_profiles (name, bio, twitter, discord, youtube, is_public, updated_at)
-      VALUES (${creatorName}, ${bio ? escapeHtml(bio) : null}, ${twitter || null}, ${discord || null}, ${youtube || null}, ${isPublicValue}, NOW())
+      INSERT INTO creator_profiles (name, bio, twitter, discord, youtube, is_public, accent_theme, updated_at)
+      VALUES (${creatorName}, ${bio ? escapeHtml(bio) : null}, ${twitter || null}, ${discord || null}, ${youtube || null}, ${isPublicValue}, ${accentTheme || null}, NOW())
       ON CONFLICT (name) DO UPDATE SET
         bio = ${bio ? escapeHtml(bio) : null},
         twitter = ${twitter || null},
         discord = ${discord || null},
         youtube = ${youtube || null},
         is_public = ${isPublicValue},
+        accent_theme = ${accentTheme || null},
         updated_at = NOW()
     `;
 

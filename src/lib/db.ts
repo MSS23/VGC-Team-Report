@@ -80,6 +80,7 @@ export async function ensureTable() {
     )
   `);
   await run(sql`ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT TRUE`);
+  await run(sql`ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS accent_theme TEXT`);
 
   // Feedback / feature requests table
   await run(sql`

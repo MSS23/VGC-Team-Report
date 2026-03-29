@@ -5,9 +5,11 @@ import { motion } from "motion/react";
 import { I18nProvider } from "@/lib/i18n";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { applyAccentTheme, ACCENT_THEMES } from "@/lib/accent-themes";
 import { UserButton, Show, SignInButton } from "@clerk/nextjs";
 import { PageNavbar } from "@/components/layout/PageNavbar";
 import { PageFooter } from "@/components/layout/PageFooter";
+import { ThemePicker } from "@/components/ui/ThemePicker";
 
 interface Profile {
   bio: string;
@@ -15,6 +17,7 @@ interface Profile {
   discord: string;
   youtube: string;
   isPublic: boolean;
+  accentTheme: string | null;
 }
 
 export default function ProfilePage() {
@@ -30,22 +33,32 @@ function ProfileInner() {
   useEffect(() => { applyRandomAccent(); }, []);
 
   const [creatorName, setCreatorName] = useState("");
-  const [profile, setProfile] = useState<Profile>({ bio: "", twitter: "", discord: "", youtube: "", isPublic: true });
+  const [profile, setProfile] = useState<Profile>({ bio: "", twitter: "", discord: "", youtube: "", isPublic: true, accentTheme: null });
+  const [totalViews, setTotalViews] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    fetch("/api/user/profile")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) {
-          setCreatorName(data.creatorName);
-          setProfile(data.profile);
+    // Fetch profile and analytics in parallel
+    Promise.all([
+      fetch("/api/user/profile").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/user/analytics").then((r) => (r.ok ? r.json() : null)),
+    ]).then(([profileData, analyticsData]) => {
+      if (profileData) {
+        setCreatorName(profileData.creatorName);
+        setProfile(profileData.profile);
+        // Apply the user's saved theme instead of random
+        if (profileData.profile.accentTheme) {
+          const theme = ACCENT_THEMES.find((t) => t.id === profileData.profile.accentTheme);
+          if (theme) applyAccentTheme(theme);
         }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+      if (analyticsData?.overview) {
+        setTotalViews(analyticsData.overview.totalViews || 0);
+      }
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   const handleSave = async () => {
@@ -157,6 +170,12 @@ function ProfileInner() {
                     </div>
                   </div>
                 </div>
+
+                <ThemePicker
+                  totalViews={totalViews}
+                  selectedTheme={profile.accentTheme}
+                  onSelect={(themeId) => setProfile({ ...profile, accentTheme: themeId })}
+                />
 
                 <div className="flex items-center justify-between p-4 bg-surface-alt border border-border rounded-xl">
                   <div>
