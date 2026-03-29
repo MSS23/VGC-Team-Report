@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
+import { track } from "@vercel/analytics";
 
 interface FollowButtonProps {
   creatorName: string;
@@ -38,6 +39,7 @@ export function FollowButton({ creatorName }: FollowButtonProps) {
         body: JSON.stringify({ creatorName }),
       });
       setFollowing(!following);
+      track(following ? "creator_unfollowed" : "creator_followed", { creatorName });
     } catch { /* silent */ }
     finally { setLoading(false); }
   };

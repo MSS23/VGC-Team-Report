@@ -178,6 +178,7 @@ export function Navbar(props: NavbarProps) {
                     disabled={canUndo ? !canUndo() : true}
                     className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
                     title="Undo (Ctrl+Z)"
+                    aria-label="Undo (Ctrl+Z)"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M3 10h10a5 5 0 015 5v0a5 5 0 01-5 5H8" /><polyline points="7 14 3 10 7 6" />
@@ -189,6 +190,7 @@ export function Navbar(props: NavbarProps) {
                     disabled={canRedo ? !canRedo() : true}
                     className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
                     title="Redo (Ctrl+Shift+Z)"
+                    aria-label="Redo (Ctrl+Shift+Z)"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 10H11a5 5 0 00-5 5v0a5 5 0 005 5h5" /><polyline points="17 14 21 10 17 6" />
@@ -404,6 +406,7 @@ export function Navbar(props: NavbarProps) {
                 onClick={() => onShowShortcuts(true)}
                 className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer"
                 title="Keyboard shortcuts (?)"
+                aria-label="Keyboard shortcuts"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="4" width="20" height="16" rx="2" /><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
@@ -542,6 +545,7 @@ export function Navbar(props: NavbarProps) {
                               }`}
                               style={isActive ? { boxShadow: `0 0 0 2px ${theme.badge}60` } : undefined}
                               title={theme.label}
+                              aria-label={theme.label}
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img

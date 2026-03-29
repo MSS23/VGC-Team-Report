@@ -197,6 +197,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
                     onClick={() => toggleCategory(i)}
                     className={`flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${cfg.tagBg} ${cfg.tagText} hover:opacity-80 transition-opacity`}
                     title={t.changeCategory}
+                    aria-label={t.changeCategory}
                   >
                     {cfg.icon} {catLabelMap[cfg.label] ?? cfg.label}
                   </button>
@@ -214,6 +215,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
                     type="button"
                     onClick={() => handleRemoveParsed(i)}
                     className="text-text-tertiary hover:text-red-400 text-xs flex-shrink-0"
+                    aria-label="Remove calc"
                   >
                     ✕
                   </button>

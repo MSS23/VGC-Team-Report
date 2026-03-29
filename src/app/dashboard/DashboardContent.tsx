@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
 import { I18nProvider } from "@/lib/i18n";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
@@ -239,7 +238,7 @@ function DashboardInner() {
         </Show>
 
         <Show when="signed-in">
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+          <div className="animate-fade-in">
             {/* Header */}
             <div className="mb-4 sm:mb-8 flex items-center justify-between gap-3">
               <div>
@@ -257,43 +256,56 @@ function DashboardInner() {
               </a>
             </div>
 
-            {/* Tabs + Sort */}
-            <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
-            <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-surface-alt/50 rounded-xl overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
-              {(["my", "saved", "feed", "collab", "collections", "analytics", "trash"] as const).map((t) => {
-                const label = t === "my" ? "Reports" : t === "feed" ? "Feed" : t === "collab" ? "Shared" : t === "collections" ? "Collections" : t === "analytics" ? "Analytics" : t === "trash" ? "Trash" : "Saved";
-                return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTab(t)}
-                  className={`px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
-                    tab === t
-                      ? t === "trash" ? "bg-red-500/10 text-red-500 shadow-sm"
-                        : t === "analytics" ? "bg-blue-500/10 text-blue-500 shadow-sm"
-                        : t === "collections" ? "bg-purple-500/10 text-purple-500 shadow-sm"
-                        : "bg-surface text-text-primary shadow-sm"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
-                >
-                  {label}
-                </button>
-                );
-              })}
+            {/* Tabs */}
+            <div className="mb-3 sm:mb-6 -mx-3 sm:mx-0">
+              <div className="flex items-center gap-1 px-3 sm:px-1 py-1 bg-surface-alt/50 sm:rounded-xl overflow-x-auto scrollbar-none snap-x snap-mandatory">
+                {(["my", "saved", "feed", "collab", "collections", "analytics", "trash"] as const).map((t) => {
+                  const label = t === "my" ? "Reports" : t === "feed" ? "Feed" : t === "collab" ? "Shared" : t === "collections" ? "Collections" : t === "analytics" ? "Analytics" : t === "trash" ? "Trash" : "Saved";
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTab(t)}
+                      className={`px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-sm font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 snap-start ${
+                        tab === t
+                          ? t === "trash" ? "bg-red-500/10 text-red-500 shadow-sm"
+                            : t === "analytics" ? "bg-blue-500/10 text-blue-500 shadow-sm"
+                            : t === "collections" ? "bg-purple-500/10 text-purple-500 shadow-sm"
+                            : "bg-surface text-text-primary shadow-sm"
+                          : "text-text-tertiary hover:text-text-primary active:scale-[0.97]"
+                      }`}
+                    >
+                      {label}
+                      {t === "collab" && (() => {
+                        const pendingCount = collabReports.filter(r => r.collabStatus === "pending").length;
+                        return pendingCount > 0 ? (
+                          <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold bg-purple-500 text-white rounded-full">
+                            {pendingCount}
+                          </span>
+                        ) : null;
+                      })()}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+            {/* Sort (separate row on mobile) */}
             {tab === "my" && myReports.length > 1 && (
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "views" | "name")}
-                className="px-2 sm:px-3 py-1.5 sm:py-2 bg-surface border border-border rounded-lg text-[11px] sm:text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer flex-shrink-0"
-              >
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="views">Views</option>
-                <option value="name">Name</option>
-              </select>
+              <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
+                <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{myReports.length} reports</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "views" | "name")}
+                  className="px-2.5 py-1.5 bg-surface border border-border rounded-lg text-[11px] sm:text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="views">Most Views</option>
+                  <option value="name">Name</option>
+                </select>
+              </div>
             )}
-            </div>
 
             {/* Bulk actions */}
             {tab === "my" && myReports.length > 1 && (
@@ -533,7 +545,7 @@ function DashboardInner() {
                 </div>
               </>
             )}
-          </motion.div>
+          </div>
         </Show>
       </main>
       <PageFooter maxWidth="max-w-5xl" />
@@ -641,102 +653,106 @@ function ManagedReportCard({
       </a>
 
       {/* Management controls */}
-      <div className="px-2.5 sm:px-4 py-2 sm:py-3 border-t border-border bg-surface-alt/30 flex items-center justify-between gap-1.5 sm:gap-2">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggleVisibility}
-            disabled={toggling}
-            className={`inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md border transition-all cursor-pointer ${
-              report.isPublic
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                : "bg-surface-alt text-text-tertiary border-border"
-            }`}
-          >
-            {report.isPublic ? "Public" : "Private"}
-          </button>
-          <a
-            href={editUrl}
-            className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition-all"
-          >
-            Edit
-          </a>
-          {collections && collections.length > 0 && (
-            <div className="relative">
+      <div className="px-2.5 sm:px-4 py-2 sm:py-3 border-t border-border bg-surface-alt/30">
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={toggleVisibility}
+              disabled={toggling}
+              className={`inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md border transition-all cursor-pointer ${
+                report.isPublic
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                  : "bg-surface-alt text-text-tertiary border-border"
+              }`}
+            >
+              {report.isPublic ? "Public" : "Private"}
+            </button>
+            <a
+              href={editUrl}
+              className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition-all"
+            >
+              Edit
+            </a>
+            {collections && collections.length > 0 && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowCollectionMenu(!showCollectionMenu)}
+                  className="inline-flex items-center px-1.5 sm:px-2 py-1 text-[10px] font-bold rounded-md bg-purple-500/10 text-purple-500 border border-purple-500/20 hover:bg-purple-500/20 transition-all cursor-pointer"
+                  title="Add to collection"
+                >
+                  <span className="hidden sm:inline">+ Collection</span>
+                  <svg className="sm:hidden w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /></svg>
+                </button>
+                {showCollectionMenu && (
+                  <div className="absolute left-0 bottom-full mb-1 sm:bottom-auto sm:top-full sm:mt-1 z-10 bg-surface border border-border rounded-lg shadow-lg py-1 min-w-[160px]">
+                    {collections.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => addToCollection(c.id)}
+                        disabled={addingTo === c.id}
+                        className="w-full text-left px-3 py-2 text-xs font-medium text-text-primary hover:bg-surface-alt transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {addingTo === c.id ? "Adding..." : c.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          {deleteStep === 2 ? (
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-bold text-red-500 mr-0.5 hidden sm:inline">Sure?</span>
               <button
                 type="button"
-                onClick={() => setShowCollectionMenu(!showCollectionMenu)}
-                className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md bg-purple-500/10 text-purple-500 border border-purple-500/20 hover:bg-purple-500/20 transition-all cursor-pointer"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-2 py-1 text-[10px] font-bold rounded-md bg-red-500 text-white cursor-pointer"
               >
-                + Collection
+                {deleting ? "..." : "Delete"}
               </button>
-              {showCollectionMenu && (
-                <div className="absolute left-0 top-full mt-1 z-10 bg-surface border border-border rounded-lg shadow-lg py-1 min-w-[160px]">
-                  {collections.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => addToCollection(c.id)}
-                      disabled={addingTo === c.id}
-                      className="w-full text-left px-3 py-1.5 text-xs font-medium text-text-primary hover:bg-surface-alt transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      {addingTo === c.id ? "Adding..." : c.name}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={() => setDeleteStep(0)}
+                className="px-1.5 py-1 text-[10px] font-bold rounded-md text-text-tertiary cursor-pointer"
+              >
+                No
+              </button>
             </div>
+          ) : deleteStep === 1 ? (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setDeleteStep(2)}
+                className="px-2 py-1 text-[10px] font-bold rounded-md bg-red-500/10 text-red-500 border border-red-500/20 cursor-pointer"
+              >
+                Confirm
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteStep(0)}
+                className="px-1.5 py-1 text-[10px] font-bold rounded-md text-text-tertiary cursor-pointer"
+              >
+                No
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setDeleteStep(1)}
+              className="p-1.5 text-text-tertiary hover:text-red-500 transition-colors cursor-pointer flex-shrink-0"
+              title="Delete report"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+              </svg>
+            </button>
           )}
         </div>
-        {deleteStep === 2 ? (
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] font-bold text-red-500 mr-1">Are you sure?</span>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="px-2 py-1 text-[10px] font-bold rounded-md bg-red-500 text-white cursor-pointer"
-            >
-              {deleting ? "..." : "Delete"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setDeleteStep(0)}
-              className="px-2 py-1 text-[10px] font-bold rounded-md text-text-tertiary cursor-pointer"
-            >
-              Cancel
-            </button>
-          </div>
-        ) : deleteStep === 1 ? (
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setDeleteStep(2)}
-              className="px-2 py-1 text-[10px] font-bold rounded-md bg-red-500/10 text-red-500 border border-red-500/20 cursor-pointer"
-            >
-              Confirm
-            </button>
-            <button
-              type="button"
-              onClick={() => setDeleteStep(0)}
-              className="px-2 py-1 text-[10px] font-bold rounded-md text-text-tertiary cursor-pointer"
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setDeleteStep(1)}
-            className="p-1 text-text-tertiary hover:text-red-500 transition-colors cursor-pointer"
-            title="Delete report"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-            </svg>
-          </button>
-        )}
       </div>
     </div>
   );
@@ -772,27 +788,27 @@ function TrashReportCard({
 
   return (
     <div className="bg-surface rounded-xl border border-red-500/20 shadow-sm overflow-hidden opacity-75 hover:opacity-100 transition-opacity">
-      <div className="px-4 pt-4 pb-2">
-        <div className="flex items-center justify-center gap-1">
+      <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-1.5">
+        <div className="flex items-center justify-center gap-0.5">
           {report.species.map((species, i) => (
             <DashboardSprite key={i} species={species} />
           ))}
         </div>
       </div>
-      <div className="px-4 pb-2">
-        <h3 className="text-sm font-bold text-text-primary leading-tight line-clamp-1">
+      <div className="px-3 sm:px-4 pb-2">
+        <h3 className="text-xs sm:text-sm font-bold text-text-primary leading-tight line-clamp-1">
           {report.tournamentName || report.species.join(" / ")}
         </h3>
         <p className="text-[10px] text-red-500 dark:text-red-400 font-semibold mt-1">
           {daysRemaining > 0 ? `Permanently deleted in ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""}` : "Will be permanently deleted soon"}
         </p>
       </div>
-      <div className="px-4 py-3 border-t border-red-500/10 bg-surface-alt/30 flex items-center justify-end gap-2">
+      <div className="px-2.5 sm:px-4 py-2 sm:py-3 border-t border-red-500/10 bg-surface-alt/30 flex items-center justify-end gap-2">
         <button
           type="button"
           onClick={handleRestore}
           disabled={restoring}
-          className="px-3 py-1 text-[10px] font-bold rounded-md bg-accent/10 text-accent border border-accent/20 cursor-pointer hover:bg-accent/20 transition-all"
+          className="px-3 py-1.5 text-[10px] font-bold rounded-md bg-accent/10 text-accent border border-accent/20 cursor-pointer hover:bg-accent/20 transition-all active:scale-[0.97]"
         >
           {restoring ? "Restoring..." : "Restore"}
         </button>

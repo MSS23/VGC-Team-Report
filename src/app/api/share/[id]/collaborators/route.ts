@@ -123,7 +123,7 @@ export async function POST(
       "collab_invite",
       shareId,
       ownerName,
-      `${ownerName} invited you to collaborate on "${reportName}"`,
+      `${ownerName} invited you to collaborate on "${reportName}" — [View invite](/dashboard?tab=collab)`,
     ).catch(() => {});
 
     return NextResponse.json({ success: true, collaborator: { userId: targetUserId, name: targetName } });

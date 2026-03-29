@@ -27,6 +27,7 @@ import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
 import { computeVersionDiff, summarizeChangedFields, getNavigableChanges, type VersionDiff, type DiffChange } from "@/lib/utils/version-diff";
 import { DiffNavigator } from "@/components/ui/DiffNavigator";
 import type { ShareableState } from "@/lib/sharing/url-codec";
+import { track } from "@vercel/analytics";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
 const ShareModal = dynamic(() => import("@/components/ui/ShareModal").then(m => ({ default: m.ShareModal })));
@@ -285,6 +286,7 @@ function HomeContent() {
   useEffect(() => {
     if (!isSharedView || !activeShareId || viewTracked.current) return;
     viewTracked.current = true;
+    track("report_viewed", { shareId: activeShareId });
     const sessionId = getSessionId();
     if (!sessionId) return;
     fetch(`/api/views/${activeShareId}`, {

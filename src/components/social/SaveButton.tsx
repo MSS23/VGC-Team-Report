@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
+import { track } from "@vercel/analytics";
 
 interface SaveButtonProps {
   shareId: string;
@@ -38,6 +39,7 @@ export function SaveButton({ shareId }: SaveButtonProps) {
           body: JSON.stringify({ shareId }),
         });
         setSaved(false);
+        track("report_unsaved", { shareId });
       } else {
         await fetch("/api/user/saved", {
           method: "POST",
@@ -45,6 +47,7 @@ export function SaveButton({ shareId }: SaveButtonProps) {
           body: JSON.stringify({ shareId }),
         });
         setSaved(true);
+        track("report_saved", { shareId });
       }
     } catch {
       // silent

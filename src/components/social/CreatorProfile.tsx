@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { track } from "@vercel/analytics";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { PageNavbar } from "@/components/layout/PageNavbar";
@@ -41,7 +42,7 @@ function CreatorProfileInner({ name }: { name: string }) {
   const { darkMode, setDarkMode } = useDarkMode();
 
   // Random accent color on creator profile page
-  useEffect(() => { applyRandomAccent(); }, []);
+  useEffect(() => { applyRandomAccent(); track("creator_profile_visited", { creator: name }); }, [name]);
   const [data, setData] = useState<CreatorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<"newest" | "views">("newest");

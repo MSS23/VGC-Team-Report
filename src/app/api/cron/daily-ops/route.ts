@@ -180,10 +180,27 @@ async function createOpsTickets(issues: OpsIssue[]): Promise<string[]> {
   const teamId = process.env.LINEAR_TEAM_ID;
   if (!teamId) return [];
 
+  // Check for existing open ops tickets to avoid duplicates
+  const existingResult = await linearGql(
+    `query($teamId: String!) {
+      team(id: $teamId) {
+        issues(filter: { title: { contains: "[Ops Report]" }, state: { type: { nin: ["completed", "canceled"] } } }, first: 20) {
+          nodes { title }
+        }
+      }
+    }`,
+    { teamId }
+  );
+  const existingTitles = new Set<string>(
+    (existingResult?.data?.team?.issues?.nodes ?? []).map((n: { title: string }) => n.title)
+  );
+
   const labelId = await getOrCreateOpsLabel();
   const created: string[] = [];
 
   for (const issue of issues) {
+    // Skip if an open ticket with the same title already exists
+    if (existingTitles.has(issue.title)) continue;
     try {
       const result = await linearGql(
         `mutation($teamId: String!, $title: String!, $description: String!, $priority: Int!, $labelIds: [String!]) {
