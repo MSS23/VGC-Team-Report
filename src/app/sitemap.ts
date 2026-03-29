@@ -19,15 +19,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const shares = await sql`
       SELECT id, updated_at FROM shares
       WHERE is_public = TRUE AND deleted_at IS NULL
-      ORDER BY updated_at DESC
+      ORDER BY created_at DESC
       LIMIT 5000
     `;
 
     const sharePages: MetadataRoute.Sitemap = shares.map((row) => ({
       url: `${BASE}/s/${row.id}`,
       lastModified: new Date(row.updated_at as string),
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
     }));
 
     // Fetch distinct creator names from public shares

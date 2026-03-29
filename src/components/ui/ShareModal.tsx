@@ -30,6 +30,7 @@ export function ShareModal({
 }: ShareModalProps) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [discordCopied, setDiscordCopied] = useState(false);
+  const [publishPromptDismissed, setPublishPromptDismissed] = useState(false);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -215,6 +216,34 @@ export function ShareModal({
             </svg>
           </button>
         </div>
+
+        {/* Publish to community prompt — shown when report is private and not dismissed */}
+        {!isPublic && !publishPromptDismissed && (
+          <div className="mx-6 mb-4 rounded-xl border border-accent/30 bg-accent-surface/20 p-4">
+            <p className="text-sm font-semibold text-text-primary mb-1">
+              Your report is private
+            </p>
+            <p className="text-xs text-text-secondary mb-3">
+              Publish it to the Explore page so others can discover it?
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onTogglePublic(true)}
+                className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors cursor-pointer"
+              >
+                Publish
+              </button>
+              <button
+                type="button"
+                onClick={() => setPublishPromptDismissed(true)}
+                className="px-3.5 py-1.5 text-xs font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
+              >
+                Keep Private
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Visibility toggle */}
         <div className="px-6 py-4 border-t border-border">

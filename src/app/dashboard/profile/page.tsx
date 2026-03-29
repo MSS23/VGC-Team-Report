@@ -14,6 +14,7 @@ interface Profile {
   twitter: string;
   discord: string;
   youtube: string;
+  isPublic: boolean;
 }
 
 export default function ProfilePage() {
@@ -29,7 +30,7 @@ function ProfileInner() {
   useEffect(() => { applyRandomAccent(); }, []);
 
   const [creatorName, setCreatorName] = useState("");
-  const [profile, setProfile] = useState<Profile>({ bio: "", twitter: "", discord: "", youtube: "" });
+  const [profile, setProfile] = useState<Profile>({ bio: "", twitter: "", discord: "", youtube: "", isPublic: true });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -151,6 +152,22 @@ function ProfileInner() {
                       />
                     </div>
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-surface-alt border border-border rounded-xl">
+                  <div>
+                    <p className="text-sm font-bold text-text-primary">Public profile</p>
+                    <p className="text-xs text-text-secondary mt-0.5">When enabled, your creator page is discoverable by anyone</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={profile.isPublic}
+                    onClick={() => setProfile({ ...profile, isPublic: !profile.isPublic })}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${profile.isPublic ? "bg-accent" : "bg-border"}`}
+                  >
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${profile.isPublic ? "translate-x-5" : "translate-x-0"}`} />
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-3 pt-2">

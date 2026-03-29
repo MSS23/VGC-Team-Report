@@ -37,10 +37,16 @@ export async function GET(
     // Check verified status, profile, and follower count
     const [verifiedCheck, profileCheck, followerCheck] = await Promise.all([
       sql`SELECT name FROM verified_creators WHERE LOWER(name) = ${creatorName.toLowerCase()}`,
-      sql`SELECT bio, twitter, discord, youtube FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`,
+      sql`SELECT bio, twitter, discord, youtube, is_public FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`,
       sql`SELECT COUNT(*)::int as count FROM follows WHERE LOWER(creator_name) = ${creatorName.toLowerCase()}`,
     ]);
     const isVerified = verifiedCheck.length > 0;
+
+    // If creator has set their profile to private, return early
+    if (profileCheck.length > 0 && profileCheck[0].is_public === false) {
+      return NextResponse.json({ creator: creatorName, isPrivate: true, reports: [] });
+    }
+
     const profile = profileCheck.length > 0 ? {
       bio: (profileCheck[0].bio as string) || undefined,
       twitter: (profileCheck[0].twitter as string) || undefined,

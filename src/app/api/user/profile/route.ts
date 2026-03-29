@@ -9,6 +9,7 @@ const ProfileBody = z.object({
   twitter: z.string().max(100).optional(),
   discord: z.string().max(100).optional(),
   youtube: z.string().max(100).optional(),
+  isPublic: z.boolean().optional(),
 });
 
 // GET: fetch current user's creator profile
@@ -22,7 +23,7 @@ export async function GET() {
       : user.username || "Unknown";
 
     const sql = getDb();
-    const rows = await sql`SELECT bio, twitter, discord, youtube FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`;
+    const rows = await sql`SELECT bio, twitter, discord, youtube, is_public FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`;
 
     return NextResponse.json({
       creatorName,
@@ -31,7 +32,8 @@ export async function GET() {
         twitter: rows[0].twitter || "",
         discord: rows[0].discord || "",
         youtube: rows[0].youtube || "",
-      } : { bio: "", twitter: "", discord: "", youtube: "" },
+        isPublic: rows[0].is_public !== false,
+      } : { bio: "", twitter: "", discord: "", youtube: "", isPublic: true },
     });
   } catch (e) {
     console.error("Profile GET error:", e);
@@ -53,17 +55,19 @@ export async function PUT(request: Request) {
     const parsed = ProfileBody.safeParse(raw);
     if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
-    const { bio, twitter, discord, youtube } = parsed.data;
+    const { bio, twitter, discord, youtube, isPublic } = parsed.data;
+    const isPublicValue = isPublic !== undefined ? isPublic : true;
     const sql = getDb();
 
     await sql`
-      INSERT INTO creator_profiles (name, bio, twitter, discord, youtube, updated_at)
-      VALUES (${creatorName}, ${bio ? escapeHtml(bio) : null}, ${twitter || null}, ${discord || null}, ${youtube || null}, NOW())
+      INSERT INTO creator_profiles (name, bio, twitter, discord, youtube, is_public, updated_at)
+      VALUES (${creatorName}, ${bio ? escapeHtml(bio) : null}, ${twitter || null}, ${discord || null}, ${youtube || null}, ${isPublicValue}, NOW())
       ON CONFLICT (name) DO UPDATE SET
         bio = ${bio ? escapeHtml(bio) : null},
         twitter = ${twitter || null},
         discord = ${discord || null},
         youtube = ${youtube || null},
+        is_public = ${isPublicValue},
         updated_at = NOW()
     `;
 

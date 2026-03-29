@@ -79,6 +79,7 @@ export async function ensureTable() {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  await run(sql`ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT TRUE`);
 
   // Feedback / feature requests table
   await run(sql`
