@@ -76,7 +76,7 @@ interface NavbarProps {
   compareLoading?: boolean;
 
   // PDF Export
-  onExportPdf?: (mode?: "all-slides" | "tournament-evs" | "tournament-base") => void;
+  onExportPdf?: (mode?: "all-slides" | "tournament-evs" | "tournament-stats") => void;
 
   // Tournament mode
   tournamentMode?: boolean;
@@ -495,10 +495,10 @@ export function Navbar(props: NavbarProps) {
                     </button>
                     <button
                       className="w-full text-left px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-surface-alt/60 transition-colors flex items-center gap-2.5"
-                      onClick={() => { setExportMenuOpen(false); onExportPdf("tournament-base"); }}
+                      onClick={() => { setExportMenuOpen(false); onExportPdf("tournament-stats"); }}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
-                      Tournament (Base Stats)
+                      Tournament (Stats)
                     </button>
                   </div>
                 </>
@@ -670,11 +670,11 @@ export function Navbar(props: NavbarProps) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setMenuOpen(false); onExportPdf("tournament-base"); }}
+                      onClick={() => { setMenuOpen(false); onExportPdf("tournament-stats"); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
-                      Export Tournament (Base Stats)
+                      Export Tournament (Stats)
                     </button>
                   </>
                 )}

@@ -12,7 +12,7 @@ import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
 import type { PokemonType } from "@/lib/types/pokemon";
 
-export type StatView = "evs" | "base";
+export type StatView = "evs" | "stats";
 
 interface TournamentModeProps {
   analysis: TeamAnalysis;
@@ -35,7 +35,7 @@ function TypeDot({ type }: { type: PokemonType }) {
 }
 
 /** Stat label with value and nature highlight */
-function StatCell({ label, value, boosted, reduced, isBase }: { label: string; value: number; boosted: boolean; reduced: boolean; isBase?: boolean }) {
+function StatCell({ label, value, boosted, reduced, isStats }: { label: string; value: number; boosted: boolean; reduced: boolean; isStats?: boolean }) {
   return (
     <div className="flex flex-col items-center">
       <span className={`text-[9px] font-extrabold uppercase tracking-wider leading-none ${
@@ -46,7 +46,7 @@ function StatCell({ label, value, boosted, reduced, isBase }: { label: string; v
         {label}{boosted ? "\u2191" : reduced ? "\u2193" : ""}
       </span>
       <span className={`text-sm font-extrabold tabular-nums leading-tight mt-0.5 ${
-        isBase ? "text-text-primary" : value > 0 ? "text-text-primary" : "text-text-tertiary/40"
+        isStats ? "text-text-primary" : value > 0 ? "text-text-primary" : "text-text-tertiary/40"
       }`}>
         {value}
       </span>
@@ -71,14 +71,13 @@ function CompactCard({
   const sc = getSpriteConfig?.(speciesKey);
   const natureData = NATURES[parsed.nature];
   const evs = parsed.evs;
-  const baseStats = data?.baseStats;
 
   const statKeys = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
   const statLabels = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" };
 
   const stats = statKeys.map((key) => ({
     label: statLabels[key],
-    value: statView === "base" ? (baseStats?.[key] ?? 0) : evs[key],
+    value: statView === "stats" ? (calculatedStats[key] ?? 0) : evs[key],
     key,
   }));
 
@@ -108,10 +107,12 @@ function CompactCard({
                     borderColor: `${TYPE_COLORS[parsed.teraType].bg}40`,
                   }}
                 >
-                  <span className="text-[7px] font-extrabold uppercase tracking-wider" style={{ color: TYPE_COLORS[parsed.teraType].bg }}>
-                    Tera
+                  <span
+                    className="text-[9px] font-extrabold tracking-wide"
+                    style={{ color: TYPE_COLORS[parsed.teraType].bg }}
+                  >
+                    Tera {parsed.teraType}
                   </span>
-                  <TypeDot type={parsed.teraType} />
                 </span>
               </>
             )}
@@ -173,7 +174,7 @@ function CompactCard({
             value={s.value}
             boosted={natureData?.plus === s.key}
             reduced={natureData?.minus === s.key}
-            isBase={statView === "base"}
+            isStats={statView === "stats"}
           />
         ))}
       </div>
@@ -204,7 +205,7 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: Tourn
           Tournament Mode
         </span>
 
-        {/* EVs / Base Stats toggle */}
+        {/* EVs / Stats toggle */}
         <div className="ml-auto flex items-center bg-surface border border-border rounded-lg overflow-hidden">
           <button
             onClick={() => setStatView("evs")}
@@ -217,14 +218,14 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: Tourn
             EVs
           </button>
           <button
-            onClick={() => setStatView("base")}
+            onClick={() => setStatView("stats")}
             className={`px-2.5 py-1 text-[10px] sm:text-xs font-bold transition-colors ${
-              statView === "base"
+              statView === "stats"
                 ? "bg-amber-500/20 text-amber-500"
                 : "text-text-tertiary hover:text-text-secondary"
             }`}
           >
-            Base
+            Stats
           </button>
         </div>
       </div>
@@ -311,7 +312,7 @@ export function PrintableTournamentMode({
           Tournament Mode
         </span>
         <span className="ml-auto text-[10px] font-bold text-amber-500/60 uppercase tracking-wider">
-          {statView === "base" ? "Base Stats" : "EVs"}
+          {statView === "stats" ? "Stats" : "EVs"}
         </span>
       </div>
 

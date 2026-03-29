@@ -19,7 +19,7 @@ import type { StatView } from "@/components/report/TournamentMode";
 /*  Props                                                              */
 /* ------------------------------------------------------------------ */
 
-export type ExportMode = "all-slides" | "tournament-evs" | "tournament-base";
+export type ExportMode = "all-slides" | "tournament-evs" | "tournament-stats";
 
 export interface PdfExportProps {
   analysis: TeamAnalysis;
@@ -90,8 +90,8 @@ export function PrintableReport({
   const noop = () => {};
 
   // Tournament mode export
-  if (exportMode === "tournament-evs" || exportMode === "tournament-base") {
-    const statView: StatView = exportMode === "tournament-base" ? "base" : "evs";
+  if (exportMode === "tournament-evs" || exportMode === "tournament-stats") {
+    const statView: StatView = exportMode === "tournament-stats" ? "stats" : "evs";
     return (
       <div className="print-slide">
         <PrintableTournamentMode
