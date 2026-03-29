@@ -158,10 +158,10 @@ export function Navbar(props: NavbarProps) {
             : "bg-surface/80 border-border/60 shadow-[0_1px_12px_rgba(0,0,0,0.04)]"
       }`}
     >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-1.5 sm:py-2.5 flex items-center justify-between gap-1.5 sm:gap-2">
+      <div className="max-w-5xl mx-auto px-2.5 sm:px-6 py-1 sm:py-2.5 flex items-center justify-between gap-1 sm:gap-2">
 
         {/* ── Left ── */}
-        <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink-0">
           {isLocalDraft ? (
             <>
               <Button variant="ghost" size="sm" onClick={onReset}>
@@ -281,33 +281,23 @@ export function Navbar(props: NavbarProps) {
             </div>
 
             {/* Mobile center */}
-            <div className="md:hidden flex flex-col items-center min-w-0 overflow-hidden flex-1 justify-center">
-              {tournamentName && scrolled && (
-                <div className="flex items-center gap-1.5 max-w-full">
-                  <span className="text-[10px] font-extrabold text-text-primary truncate leading-none">{tournamentName}</span>
-                  {placement && (
-                    <span className="text-[9px] font-extrabold text-accent bg-accent-surface px-1.5 py-0.5 rounded flex-shrink-0 leading-none">{placement}</span>
-                  )}
-                </div>
+            <div className="md:hidden flex items-center justify-center min-w-0 overflow-hidden flex-1 gap-1.5">
+              <span className="text-[11px] text-text-primary font-semibold truncate max-w-[120px]">{slideLabels[currentSlide]}</span>
+              <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">{currentSlide + 1}/{totalSlides}</span>
+              {isSharedView && isEditingUnlocked && autoSaveStatus === "saving" && (
+                <span className="w-2 h-2 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
               )}
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-text-primary font-semibold truncate">{slideLabels[currentSlide]}</span>
-                <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">{currentSlide + 1}/{totalSlides}</span>
-                {isSharedView && isEditingUnlocked && autoSaveStatus === "saving" && (
-                  <span className="w-2.5 h-2.5 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
-                )}
-                {isSharedView && isEditingUnlocked && autoSaveStatus === "saved" && (
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 flex-shrink-0">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                )}
-              </div>
+              {isSharedView && isEditingUnlocked && autoSaveStatus === "saved" && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 flex-shrink-0">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
             </div>
           </>
         )}
 
         {/* ── Right ── */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
 
           {/* Share / Re-share */}
           {isLocalDraft && (
@@ -354,20 +344,20 @@ export function Navbar(props: NavbarProps) {
               <button
                 type="button"
                 onClick={() => onSetCreatorMode(!creatorMode)}
-                className={`sm:hidden w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                className={`sm:hidden w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
                   creatorMode
                     ? "text-accent bg-accent/10"
-                    : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
+                    : "text-text-tertiary hover:text-text-primary"
                 }`}
                 title={creatorMode ? "Switch to view mode" : "Switch to edit mode"}
                 aria-label={creatorMode ? "Switch to view mode" : "Switch to edit mode"}
               >
                 {creatorMode ? (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
                   </svg>
                 ) : (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
                   </svg>
                 )}
