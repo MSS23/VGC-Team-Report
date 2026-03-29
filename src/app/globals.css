@@ -87,15 +87,10 @@ body {
     overscroll-behavior: none;
   }
 
-  /* Safe areas for status bar + bottom gesture bar (viewport-fit=cover) */
-  body {
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  /* Sticky headers account for status bar inset */
+  /* Sticky headers extend behind status bar with safe area padding */
   .sticky-header-standalone {
-    top: env(safe-area-inset-top, 0px);
+    top: 0;
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   /* Disable text selection on nav elements for native feel */
@@ -111,6 +106,11 @@ body {
 
   /* PWA bottom nav gets extra padding for gesture bar */
   nav[aria-label="Mobile navigation"] {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
+  }
+
+  /* Slide nav also gets gesture bar padding in PWA */
+  [data-walkthrough="slide-nav"] {
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
   }
 }

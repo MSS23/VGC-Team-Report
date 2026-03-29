@@ -53,13 +53,13 @@ export function SlideNavControls({
       role="navigation"
       aria-label="Slide navigation"
       data-walkthrough="slide-nav"
-      className={`fixed bottom-0 left-0 right-0 z-50 transition-opacity duration-200 safe-bottom ${
+      className={`fixed bottom-0 left-0 right-0 z-50 transition-opacity duration-200 safe-bottom safe-x ${
         autoHide
-          ? "bg-surface/0 border-transparent opacity-0 hover:opacity-100 hover:bg-surface/95 hover:backdrop-blur-xl"
-          : "bg-surface/95 backdrop-blur-xl shadow-[0_-1px_0_rgba(var(--border-rgb,200,200,220),0.15)]"
+          ? "bg-surface/0 border-transparent opacity-0 hover:opacity-100 hover:bg-surface/95 hover:backdrop-blur-2xl"
+          : "bg-surface/95 backdrop-blur-2xl border-t border-border/60"
       }`}
     >
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-1.5 flex items-center gap-2 sm:gap-3">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-1.5 flex items-center gap-2 sm:gap-3">
         {/* === LEFT: Prev === */}
         <button
           onClick={onPrev}

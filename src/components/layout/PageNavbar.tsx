@@ -28,8 +28,8 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
 
   return (
     <>
-      <header className="sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 bg-surface/80 border-b border-border/60 shadow-[0_1px_12px_rgba(0,0,0,0.04)] sticky-header-standalone">
-        <div className="max-w-5xl mx-auto px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between">
+      <header className="sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 bg-surface/80 border-b border-border/60 shadow-[0_1px_8px_rgba(0,0,0,0.03)] sticky-header-standalone">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-12 sm:h-14 flex items-center justify-between">
           {/* Left: logo */}
           <a href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity">
             <span className="text-text-primary">VGC Team</span>
@@ -101,7 +101,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
       </header>
 
       {/* Mobile bottom tab bar — always render all 5 tabs to prevent layout shift */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-2xl border-t border-border/60 safe-bottom safe-x" aria-label="Mobile navigation">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-2xl backdrop-saturate-150 border-t border-border/60 safe-bottom safe-x" aria-label="Mobile navigation">
         <div className="flex items-center justify-around px-0.5 pt-1 pb-0.5">
           {[
             { href: "/", label: "Create", key: "home", icon: "M12 5v14M5 12h14" },
