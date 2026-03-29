@@ -101,8 +101,9 @@ function ProfileInner() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">Bio</label>
+                  <label htmlFor="profile-bio" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">Bio</label>
                   <textarea
+                    id="profile-bio"
                     value={profile.bio}
                     onChange={(e) => setProfile({ ...profile, bio: e.target.value.slice(0, 500) })}
                     placeholder="Tell the VGC community about yourself..."
@@ -115,10 +116,11 @@ function ProfileInner() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">Twitter / X</label>
+                    <label htmlFor="profile-twitter" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">Twitter / X</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary text-sm">@</span>
                       <input
+                        id="profile-twitter"
                         type="text"
                         value={profile.twitter}
                         onChange={(e) => setProfile({ ...profile, twitter: e.target.value.replace(/^@/, "") })}
@@ -129,8 +131,9 @@ function ProfileInner() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">Discord</label>
+                    <label htmlFor="profile-discord" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">Discord</label>
                     <input
+                      id="profile-discord"
                       type="text"
                       value={profile.discord}
                       onChange={(e) => setProfile({ ...profile, discord: e.target.value })}
@@ -140,10 +143,11 @@ function ProfileInner() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">YouTube</label>
+                    <label htmlFor="profile-youtube" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">YouTube</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary text-sm">@</span>
                       <input
+                        id="profile-youtube"
                         type="text"
                         value={profile.youtube}
                         onChange={(e) => setProfile({ ...profile, youtube: e.target.value.replace(/^@/, "") })}
@@ -175,7 +179,7 @@ function ProfileInner() {
                     type="button"
                     onClick={handleSave}
                     disabled={saving}
-                    className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all disabled:opacity-40 tracking-wide"
+                    className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all disabled:opacity-40 tracking-wide focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2"
                   >
                     {saving ? "Saving..." : "Save Profile"}
                   </button>

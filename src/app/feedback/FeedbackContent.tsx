@@ -228,10 +228,11 @@ function FeedbackInner() {
             >
               {/* Title */}
               <div>
-                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
+                <label htmlFor="feedback-title" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
                   Title <span className="text-accent">*</span>
                 </label>
                 <input
+                  id="feedback-title"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -243,11 +244,12 @@ function FeedbackInner() {
 
               {/* Description */}
               <div>
-                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
+                <label htmlFor="feedback-description" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
                   Description <span className="text-accent">*</span>
                 </label>
                 <div className="relative">
                   <textarea
+                    id="feedback-description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value.slice(0, 2000))}
                     placeholder={
@@ -290,10 +292,11 @@ function FeedbackInner() {
 
               {/* Contact (optional) */}
               <div>
-                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
+                <label htmlFor="feedback-contact" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
                   Contact <span className="text-text-tertiary font-medium normal-case">(optional — for follow-up)</span>
                 </label>
                 <input
+                  id="feedback-contact"
                   type="text"
                   value={contact}
                   onChange={(e) => setContact(e.target.value)}

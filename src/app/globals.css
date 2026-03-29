@@ -12,7 +12,7 @@
   --border-subtle: #F0EDE6;
   --text-primary: #1A1A2E;
   --text-secondary: #4A4A68;
-  --text-tertiary: #8A8AA3;
+  --text-tertiary: #6E6E8A;
   --accent: #E11D48;
   --accent-light: #FDA4AF;
   --accent-surface: #FFF1F2;
@@ -206,7 +206,7 @@ body {
   --border-subtle: #222244;
   --text-primary: #F0EDE6;
   --text-secondary: #C0C0D8;
-  --text-tertiary: #7A7AA0;
+  --text-tertiary: #9898B8;
   --accent: var(--accent-dark, #FB7185);
   --accent-light: #FDA4AF;
   --accent-surface: var(--accent-surface-dark, #3B1525);

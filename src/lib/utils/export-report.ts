@@ -1,8 +1,17 @@
-import html2canvas from "html2canvas-pro";
-import { jsPDF } from "jspdf";
+/** Lazy-load html2canvas-pro (avoids bundling ~200KB on initial page load) */
+async function getHtml2Canvas() {
+  const mod = await import("html2canvas-pro");
+  return mod.default;
+}
+
+/** Lazy-load jsPDF (avoids bundling ~300KB on initial page load) */
+async function getJsPDF() {
+  const mod = await import("jspdf");
+  return mod.jsPDF;
+}
 
 /** Shared options for html2canvas capture */
-function captureOptions(element: HTMLElement): Parameters<typeof html2canvas>[1] {
+function captureOptions(element: HTMLElement) {
   return {
     scale: 2,
     useCORS: true,
@@ -30,6 +39,7 @@ async function captureWithRetry(
   element: HTMLElement,
   retries = 2,
 ): Promise<HTMLCanvasElement> {
+  const html2canvas = await getHtml2Canvas();
   let lastError: unknown;
   for (let i = 0; i <= retries; i++) {
     try {
@@ -82,7 +92,8 @@ export async function exportAsPdf(
   const pdfWidth = 210; // A4 width in mm
   const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-  const pdf = new jsPDF({
+  const JsPDF = await getJsPDF();
+  const pdf = new JsPDF({
     orientation: pdfHeight > pdfWidth ? "portrait" : "landscape",
     unit: "mm",
     format: [pdfWidth, pdfHeight],

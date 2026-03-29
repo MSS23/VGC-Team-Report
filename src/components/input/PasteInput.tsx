@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { detectImportSource } from "@/lib/utils/multi-import";
@@ -9,8 +10,12 @@ import { PageNavbar } from "@/components/layout/PageNavbar";
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
-import { WhatsNewModal } from "@/components/ui/WhatsNewModal";
 import { resolveSlug } from "@/lib/utils/sprite-slug";
+
+const WhatsNewModal = dynamic(
+  () => import("@/components/ui/WhatsNewModal").then(m => ({ default: m.WhatsNewModal })),
+  { ssr: false }
+);
 
 
 export const SAMPLE_PASTE = `Kangaskhan-Mega @ Kangaskhanite

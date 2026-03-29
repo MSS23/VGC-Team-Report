@@ -22,8 +22,8 @@ const jetbrainsMono = JetBrains_Mono({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#FAF9F6" },
@@ -109,7 +109,7 @@ export default function RootLayout({
             browserRequirements: "Requires a modern web browser",
           }}
         />
-        {children}
+        <div id="main-content">{children}</div>
         <InstallPrompt />
         <ConnectivityStatus />
         <Analytics />

@@ -3,6 +3,8 @@ import { isRateLimited } from "@/lib/rate-limit";
 import { containsBlockedWords } from "@/lib/utils/word-filter";
 import { escapeHtml } from "@/lib/utils/sanitize";
 import { createNotification } from "@/lib/notifications";
+import { sendCommentNotificationEmail } from "@/lib/email";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -113,7 +115,35 @@ export async function POST(
     const ownerRows = await sql`SELECT owner_id FROM shares WHERE id = ${shareId}`;
     const ownerId = ownerRows[0]?.owner_id as string | undefined;
     if (ownerId) {
-      createNotification(ownerId, "comment", shareId, name, `${name} commented on your report`);
+      // Get the commenter's Clerk user ID (if logged in) to avoid self-notification
+      const { userId: commenterId } = await auth();
+      const isSelfComment = commenterId && commenterId === ownerId;
+
+      if (!isSelfComment) {
+        // In-app notification
+        createNotification(ownerId, "comment", shareId, name, `${name} commented on your report`);
+
+        // Email notification (fire-and-forget, never blocks response)
+        const reportTitle = (shareData.tournamentName as string) || (shareData.creatorName as string) || "your report";
+        (async () => {
+          try {
+            const client = await clerkClient();
+            const ownerUser = await client.users.getUser(ownerId);
+            const ownerEmail = ownerUser.emailAddresses?.[0]?.emailAddress;
+            if (ownerEmail) {
+              await sendCommentNotificationEmail({
+                ownerEmail,
+                commenterName: name,
+                commentBody: sanitizedBody,
+                reportTitle,
+                shareId,
+              });
+            }
+          } catch (e) {
+            console.warn("Comment email notification failed:", e);
+          }
+        })();
+      }
     }
 
     const row = rows[0];
