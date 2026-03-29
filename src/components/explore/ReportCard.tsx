@@ -32,7 +32,7 @@ function CardSprite({ species }: { species: string }) {
       alt={species}
       width={40}
       height={40}
-      className="object-contain"
+      className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
       loading="lazy"
       onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
     />
@@ -57,8 +57,8 @@ export function ReportCard({ report }: { report: ExploreReport }) {
       }}
     >
       {/* Sprites row */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="flex items-center justify-center gap-1">
+      <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-1.5 sm:pb-2">
+        <div className="flex items-center justify-center gap-0.5 sm:gap-1">
           {report.species.map((species, i) => (
             <CardSprite key={i} species={species} />
           ))}
@@ -66,7 +66,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
             (_, i) => (
               <div
                 key={`empty-${i}`}
-                className="w-10 h-10 rounded-full bg-surface-alt"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-surface-alt"
               />
             ),
           )}
@@ -74,14 +74,14 @@ export function ReportCard({ report }: { report: ExploreReport }) {
       </div>
 
       {/* Content */}
-      <div className="px-4 pb-4 space-y-2">
+      <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-1.5 sm:space-y-2">
         {/* Tournament + Placement */}
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-sm font-bold text-text-primary leading-tight group-hover:text-accent transition-colors line-clamp-1">
+        <div className="flex items-start justify-between gap-1.5">
+          <h3 className="text-xs sm:text-sm font-bold text-text-primary leading-tight group-hover:text-accent transition-colors line-clamp-2 sm:line-clamp-1">
             {report.tournamentName || report.species.join(" / ")}
           </h3>
           {report.placement && (
-            <span className="flex-shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-extrabold rounded-md tracking-wide bg-accent-surface text-accent">
+            <span className="flex-shrink-0 inline-flex items-center px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-extrabold rounded-md tracking-wide bg-accent-surface text-accent">
               {report.placement}
             </span>
           )}

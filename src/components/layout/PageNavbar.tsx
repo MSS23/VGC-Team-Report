@@ -29,8 +29,8 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl",
 
   return (
     <>
-      <header className="sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 bg-surface/80 border-b border-border/60 shadow-[0_1px_12px_rgba(0,0,0,0.04)]">
-        <div className={`${maxWidth} mx-auto px-4 sm:px-6 h-14 flex items-center justify-between`}>
+      <header className="sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 bg-surface/80 border-b border-border/60 shadow-[0_1px_12px_rgba(0,0,0,0.04)] sticky-header-standalone">
+        <div className={`${maxWidth} mx-auto px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between`}>
           {/* Left: logo */}
           <a href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity">
             <span className="text-text-primary">VGC Team</span>
@@ -103,7 +103,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl",
 
       {/* Mobile bottom tab bar */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-2xl border-t border-border/60 safe-bottom safe-x" aria-label="Mobile navigation">
-        <div className="flex items-center justify-around px-1 pt-1.5 pb-1">
+        <div className="flex items-center justify-around px-0.5 pt-1 pb-0.5">
           {[
             { href: "/", label: "Create", key: "home", icon: "M12 5v14M5 12h14" },
             ...NAV_LINKS.filter((l) => l.key === "explore" || l.key === "champions" || l.key === "compare"),
@@ -114,7 +114,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl",
               <a
                 key={link.key}
                 href={link.href}
-                className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 min-w-[52px] active:scale-[0.90] active:opacity-70 ${
+                className={`relative flex flex-col items-center gap-0 px-2.5 py-1 rounded-xl transition-all duration-200 min-w-[48px] active:scale-[0.90] active:opacity-70 ${
                   isActive
                     ? "text-accent"
                     : "text-text-tertiary"
@@ -122,16 +122,16 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl",
               >
                 {/* Active pill indicator */}
                 {isActive && (
-                  <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-5 h-[3px] rounded-full bg-accent animate-pop-in" />
+                  <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full bg-accent animate-pop-in" />
                 )}
-                <span className={`flex items-center justify-center w-8 h-8 rounded-xl transition-colors duration-200 ${
+                <span className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors duration-200 ${
                   isActive ? "bg-accent/10" : ""
                 }`}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isActive ? "2.5" : "1.8"} strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isActive ? "2.5" : "1.8"} strokeLinecap="round" strokeLinejoin="round">
                     <path d={link.icon} />
                   </svg>
                 </span>
-                <span className={`text-[10px] leading-none font-semibold transition-colors duration-200 ${isActive ? "text-accent" : ""}`}>{link.label}</span>
+                <span className={`text-[9px] leading-none font-semibold transition-colors duration-200 ${isActive ? "text-accent" : ""}`}>{link.label}</span>
               </a>
             );
           })}

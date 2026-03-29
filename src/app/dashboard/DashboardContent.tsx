@@ -220,7 +220,7 @@ function DashboardInner() {
     <div className="min-h-screen bg-background text-text-primary">
       <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} maxWidth="max-w-5xl" activePage="dashboard" />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14 pb-24 sm:pb-14">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-14 pb-28 sm:pb-14">
         <Show when="signed-out">
           <div className="text-center py-20">
             <h1 className="text-2xl font-extrabold mb-3">Sign in to access your dashboard</h1>
@@ -236,28 +236,33 @@ function DashboardInner() {
         <Show when="signed-in">
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
             {/* Header */}
-            <div className="mb-8">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                {isLoaded && user ? `Welcome, ${user.firstName || user.username || "Trainer"}` : "Dashboard"}
-              </h1>
-              <p className="text-sm text-text-secondary mt-1">
-                Manage your team reports and saved favorites.
-              </p>
-              <a href="/dashboard/profile" className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold text-accent hover:underline">
+            <div className="mb-4 sm:mb-8 flex items-center justify-between gap-3">
+              <div>
+                <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight">
+                  {isLoaded && user ? `${user.firstName || user.username || "Trainer"}'s Dashboard` : "Dashboard"}
+                </h1>
+                <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
+                  Manage your reports and favorites.
+                </p>
+              </div>
+              <a href="/dashboard/profile" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-accent bg-accent-surface/50 rounded-lg hover:bg-accent-surface transition-all">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                Edit Creator Profile
+                <span className="hidden sm:inline">Edit Profile</span>
+                <span className="sm:hidden">Profile</span>
               </a>
             </div>
 
             {/* Tabs + Sort */}
-            <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
-            <div className="flex items-center gap-1 p-1 bg-surface-alt/50 rounded-xl w-fit">
-              {(["my", "saved", "feed", "collab", "collections", "analytics", "trash"] as const).map((t) => (
+            <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
+            <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-surface-alt/50 rounded-xl overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
+              {(["my", "saved", "feed", "collab", "collections", "analytics", "trash"] as const).map((t) => {
+                const label = t === "my" ? "Reports" : t === "feed" ? "Feed" : t === "collab" ? "Shared" : t === "collections" ? "Collections" : t === "analytics" ? "Analytics" : t === "trash" ? "Trash" : "Saved";
+                return (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setTab(t)}
-                  className={`px-4 py-2 text-sm font-bold rounded-lg transition-all cursor-pointer ${
+                  className={`px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
                     tab === t
                       ? t === "trash" ? "bg-red-500/10 text-red-500 shadow-sm"
                         : t === "analytics" ? "bg-blue-500/10 text-blue-500 shadow-sm"
@@ -266,27 +271,28 @@ function DashboardInner() {
                       : "text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  {t === "my" ? "My Reports" : t === "feed" ? "Feed" : t === "collab" ? "Shared with me" : t === "collections" ? "Collections" : t === "analytics" ? "Analytics" : t === "trash" ? "Trash" : "Saved"}
+                  {label}
                 </button>
-              ))}
+                );
+              })}
             </div>
             {tab === "my" && myReports.length > 1 && (
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "views" | "name")}
-                className="px-3 py-2 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer"
+                className="px-2 sm:px-3 py-1.5 sm:py-2 bg-surface border border-border rounded-lg text-[11px] sm:text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer flex-shrink-0"
               >
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="views">Most views</option>
-                <option value="name">By name</option>
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="views">Views</option>
+                <option value="name">Name</option>
               </select>
             )}
             </div>
 
             {/* Bulk actions */}
             {tab === "my" && myReports.length > 1 && (
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-1.5 mb-3">
                 <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Bulk:</span>
                 <button
                   type="button"
@@ -320,13 +326,13 @@ function DashboardInner() {
               <>
               {/* Auto-detected reports from this browser */}
               {localTokens.length > 0 && (
-                <div className="bg-accent-surface/50 border-2 border-accent/20 rounded-xl px-4 py-3 mb-4 space-y-3">
-                  <div className="flex items-center justify-between gap-3">
+                <div className="bg-accent-surface/50 border-2 border-accent/20 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 space-y-2 sm:space-y-3">
+                  <div className="flex items-center justify-between gap-2 sm:gap-3">
                     <div>
-                      <p className="text-sm font-bold text-text-primary">
-                        {localTokens.length === 1 ? "Report found in this browser" : `${localTokens.length} reports found in this browser`}
+                      <p className="text-xs sm:text-sm font-bold text-text-primary">
+                        {localTokens.length === 1 ? "Report found in this browser" : `${localTokens.length} reports found`}
                       </p>
-                      <p className="text-xs text-text-secondary mt-0.5">
+                      <p className="text-[10px] sm:text-xs text-text-secondary mt-0.5">
                         Claim {localTokens.length === 1 ? "it" : "them"} to link to your account.
                       </p>
                     </div>
@@ -359,8 +365,8 @@ function DashboardInner() {
                 </div>
               )}
 
-              <div className="bg-surface border border-border rounded-xl px-4 py-3 mb-6">
-                <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">
+              <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-6">
+                <p className="text-[10px] sm:text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 sm:mb-2">
                   Claim an existing report
                 </p>
                 <div className="flex gap-2">
@@ -369,7 +375,7 @@ function DashboardInner() {
                     value={claimUrl}
                     onChange={(e) => setClaimUrl(e.target.value)}
                     placeholder="Paste edit link (/s/ID?key=...)"
-                    className="flex-1 px-3 py-2 bg-surface-alt border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
+                    className="flex-1 min-w-0 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-alt border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
                   />
                   <button
                     type="button"
@@ -400,7 +406,7 @@ function DashboardInner() {
             ) : (
               <>
                 {tab === "my" && myReports.length === 0 && (
-                  <div className="text-center py-16">
+                  <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-4">No reports yet. Create a team report or claim an existing one.</p>
                     <a href="/" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                       Create Report
@@ -408,7 +414,7 @@ function DashboardInner() {
                   </div>
                 )}
                 {tab === "saved" && savedReports.length === 0 && (
-                  <div className="text-center py-16">
+                  <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-4">No saved reports yet. Browse the Explore page and save teams you like.</p>
                     <a href="/explore" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                       Explore Teams
@@ -416,7 +422,7 @@ function DashboardInner() {
                   </div>
                 )}
                 {tab === "feed" && feedReports.length === 0 && (
-                  <div className="text-center py-16">
+                  <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-2">Your feed is empty.</p>
                     <p className="text-xs text-text-tertiary mb-4 max-w-sm mx-auto">Follow creators from the Explore page to see their new reports here.</p>
                     <a href="/explore" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
@@ -425,13 +431,13 @@ function DashboardInner() {
                   </div>
                 )}
                 {tab === "collab" && collabReports.length === 0 && (
-                  <div className="text-center py-16">
+                  <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-2">No shared reports yet.</p>
                     <p className="text-xs text-text-tertiary max-w-sm mx-auto">When someone invites you to collaborate on a team report, it will appear here.</p>
                   </div>
                 )}
                 {tab === "trash" && trashReports.length === 0 && (
-                  <div className="text-center py-16">
+                  <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-2">Trash is empty.</p>
                     <p className="text-xs text-text-tertiary">Deleted reports appear here for 30 days before being permanently removed.</p>
                   </div>
@@ -448,7 +454,7 @@ function DashboardInner() {
                   <AnalyticsPanel data={analytics} />
                 )}
                 {tab === "analytics" && !analytics && !loading && (
-                  <div className="text-center py-16">
+                  <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary">No analytics data available yet. Create some reports first!</p>
                   </div>
                 )}
@@ -459,7 +465,7 @@ function DashboardInner() {
                     </p>
                   </div>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
                   {tab === "my"
                     ? [...myReports].sort((a, b) => {
                         if (sortBy === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -523,7 +529,7 @@ function DashboardSprite({ species }: { species: string }) {
       alt={species}
       width={36}
       height={36}
-      className="object-contain"
+      className="w-7 h-7 sm:w-9 sm:h-9 object-contain"
       loading="lazy"
       onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
     />
@@ -594,19 +600,19 @@ function ManagedReportCard({
   return (
     <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
       <a href={`/s/${report.id}`} className="block hover:bg-surface-alt/30 transition-colors">
-        <div className="px-4 pt-4 pb-2">
-          <div className="flex items-center justify-center gap-1">
+        <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-1.5">
+          <div className="flex items-center justify-center gap-0.5">
             {report.species.map((species, i) => (
               <DashboardSprite key={i} species={species} />
             ))}
           </div>
         </div>
-        <div className="px-4 pb-2">
-          <h3 className="text-sm font-bold text-text-primary leading-tight line-clamp-1">
+        <div className="px-3 sm:px-4 pb-2">
+          <h3 className="text-xs sm:text-sm font-bold text-text-primary leading-tight line-clamp-1">
             {report.tournamentName || report.species.join(" / ")}
           </h3>
           {report.placement && (
-            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-extrabold rounded-md tracking-wide bg-accent-surface text-accent mt-1">
+            <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold rounded-md tracking-wide bg-accent-surface text-accent mt-1">
               {report.placement}
             </span>
           )}
@@ -614,7 +620,7 @@ function ManagedReportCard({
       </a>
 
       {/* Management controls */}
-      <div className="px-4 py-3 border-t border-border bg-surface-alt/30 flex items-center justify-between gap-2">
+      <div className="px-2.5 sm:px-4 py-2 sm:py-3 border-t border-border bg-surface-alt/30 flex items-center justify-between gap-1.5 sm:gap-2">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -795,10 +801,10 @@ interface AnalyticsData {
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="bg-surface border border-border rounded-xl px-4 py-3">
-      <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{label}</p>
-      <p className="text-2xl font-extrabold text-text-primary mt-1">{value}</p>
-      {sub && <p className="text-[10px] text-text-secondary mt-0.5">{sub}</p>}
+    <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-2.5 sm:py-3">
+      <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{label}</p>
+      <p className="text-lg sm:text-2xl font-extrabold text-text-primary mt-0.5 sm:mt-1">{value}</p>
+      {sub && <p className="text-[9px] sm:text-[10px] text-text-secondary mt-0.5 leading-tight">{sub}</p>}
     </div>
   );
 }
@@ -808,24 +814,24 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
   const maxMonthCount = Math.max(...monthlyActivity.map((m) => m.count), 1);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Overview stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <StatCard label="Total Views" value={overview.totalViews.toLocaleString()} />
         <StatCard label="Reports" value={overview.totalReports} sub={`${overview.publicReports} public / ${overview.privateReports} private`} />
         <StatCard label="Reactions" value={overview.totalReactions} sub={`on ${engagement.reportsWithReactions} report${engagement.reportsWithReactions !== 1 ? "s" : ""}`} />
         <StatCard label="Comments" value={overview.totalComments} sub={`on ${engagement.reportsWithComments} report${engagement.reportsWithComments !== 1 ? "s" : ""}`} />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="Saves by Others" value={overview.totalSaves} sub={`${engagement.reportsSaved} report${engagement.reportsSaved !== 1 ? "s" : ""} saved`} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <StatCard label="Saves" value={overview.totalSaves} sub={`${engagement.reportsSaved} report${engagement.reportsSaved !== 1 ? "s" : ""} saved`} />
         <StatCard label="Followers" value={overview.followers} />
       </div>
 
       {/* Monthly activity chart */}
       {monthlyActivity.length > 0 && (
-        <div className="bg-surface border border-border rounded-xl px-4 py-4">
-          <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-3">Reports Created (Last 6 Months)</p>
+        <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
+          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Reports Created (Last 6 Months)</p>
           <div className="flex items-end gap-2 h-24">
             {monthlyActivity.map((m) => (
               <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
@@ -849,29 +855,29 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
 
       {/* Top reports by views */}
       {topByViews.length > 0 && (
-        <div className="bg-surface border border-border rounded-xl px-4 py-4">
-          <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-3">Top Reports by Views</p>
-          <div className="space-y-2">
+        <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
+          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reports by Views</p>
+          <div className="space-y-1 sm:space-y-2">
             {topByViews.map((report, i) => (
               <a
                 key={report.id}
                 href={`/s/${report.id}`}
-                className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-surface-alt/50 transition-colors"
+                className="flex items-center justify-between gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-surface-alt/50 transition-colors"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-xs font-extrabold text-text-tertiary w-5">{i + 1}</span>
-                  <div className="flex items-center gap-0.5">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <span className="text-[10px] sm:text-xs font-extrabold text-text-tertiary w-4 sm:w-5 flex-shrink-0">{i + 1}</span>
+                  <div className="hidden sm:flex items-center gap-0.5">
                     {report.species.slice(0, 3).map((s, j) => (
                       <DashboardSprite key={j} species={s} />
                     ))}
                     {report.species.length > 3 && <span className="text-[10px] text-text-tertiary ml-1">+{report.species.length - 3}</span>}
                   </div>
-                  <span className="text-xs font-bold text-text-primary truncate">
+                  <span className="text-[11px] sm:text-xs font-bold text-text-primary truncate">
                     {report.tournamentName || report.species.join(" / ")}
                   </span>
                 </div>
-                <span className="text-xs font-extrabold text-text-secondary whitespace-nowrap">
-                  {report.viewCount.toLocaleString()} views
+                <span className="text-[10px] sm:text-xs font-extrabold text-text-secondary whitespace-nowrap flex-shrink-0">
+                  {report.viewCount.toLocaleString()}
                 </span>
               </a>
             ))}
@@ -881,8 +887,8 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
 
       {/* Top reactions */}
       {topReactions.length > 0 && (
-        <div className="bg-surface border border-border rounded-xl px-4 py-4">
-          <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-3">Top Reactions</p>
+        <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
+          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reactions</p>
           <div className="flex flex-wrap gap-3">
             {topReactions.map((r) => (
               <div key={r.type} className="flex items-center gap-1.5 bg-surface-alt/50 px-3 py-1.5 rounded-lg">
@@ -971,29 +977,29 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Create new collection */}
-      <div className="bg-surface border border-border rounded-xl px-4 py-4">
-        <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-3">New Collection</p>
+      <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
+        <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">New Collection</p>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Collection name"
-            className="flex-1 px-3 py-2 bg-surface-alt border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40"
+            className="flex-1 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-alt border border-border rounded-lg text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
           <input
             type="text"
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
             placeholder="Description (optional)"
-            className="flex-1 px-3 py-2 bg-surface-alt border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40"
+            className="flex-1 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-alt border border-border rounded-lg text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
           <select
             value={newReg}
             onChange={(e) => setNewReg(e.target.value)}
-            className="px-3 py-2 bg-surface-alt border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40"
+            className="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-alt border border-border rounded-lg text-xs sm:text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40"
           >
             <option value="">Regulation</option>
             <option value="Reg H">Reg H</option>

@@ -99,9 +99,19 @@ body {
   }
 
   /* Disable text selection on nav elements for native feel */
-  nav, header {
+  nav, header, button {
     -webkit-user-select: none;
     user-select: none;
+  }
+
+  /* Smoother transitions in standalone mode */
+  main {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* PWA bottom nav gets extra padding for gesture bar */
+  nav[aria-label="Mobile navigation"] {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
   }
 }
 
