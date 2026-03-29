@@ -52,6 +52,8 @@ export function useSwipeNavigation({
       // Only apply visual feedback if horizontal swipe is dominant
       if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
         isDragging.current = true;
+        // Prevent horizontal scroll — swipe should navigate slides, not scroll
+        e.preventDefault();
         const el = containerRef.current;
         if (el) {
           // Clamp drag offset to a subtle range (-20px to 20px) with resistance
@@ -102,7 +104,7 @@ export function useSwipeNavigation({
     if (!el || !enabled) return;
 
     el.addEventListener("touchstart", handleTouchStart, { passive: true });
-    el.addEventListener("touchmove", handleTouchMove, { passive: true });
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
     el.addEventListener("touchend", handleTouchEnd);
 
     return () => {

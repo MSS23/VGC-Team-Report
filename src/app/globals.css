@@ -348,6 +348,8 @@ body {
 /* Slide content fade transition — fast, no layout shift */
 .slide-content {
   animation: slide-fade-in 0.15s ease-out;
+  /* Only allow vertical pan — horizontal swipe is handled by JS for slide nav */
+  touch-action: pan-y;
 }
 @keyframes slide-fade-in {
   from { opacity: 0; }

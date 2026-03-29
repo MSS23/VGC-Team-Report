@@ -616,7 +616,7 @@ function HomeContent() {
       <VersionDiffProvider value={versionDiffContextValue}>
       <div
         ref={swipeRef}
-        className={`max-w-5xl mx-auto slide-content safe-bottom ${
+        className={`max-w-5xl mx-auto slide-content safe-bottom overflow-x-hidden ${
           isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-20 sm:pb-24" : "pb-16 sm:pb-16"
         } ${
           isPresentationStyle
