@@ -7,7 +7,6 @@ interface Collaborator {
   userId: string;
   name: string;
   addedAt: string;
-  isGuest?: boolean;
 }
 
 interface SearchResult {
@@ -34,8 +33,6 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
   const [revoking, setRevoking] = useState(false);
   const [revokeConfirm, setRevokeConfirm] = useState(false);
   const [revokeSuccess, setRevokeSuccess] = useState(false);
-  const [guestName, setGuestName] = useState("");
-  const [addingGuest, setAddingGuest] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isOriginalOwner = userId === ownerId;
@@ -114,29 +111,6 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
       }
     } catch { /* silent */ }
     finally { setRemoving(null); }
-  };
-
-  const handleAddGuest = async () => {
-    if (!guestName.trim() || addingGuest) return;
-    setAddingGuest(true);
-    try {
-      const res = await fetch(`/api/share/${shareId}/collaborators`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guestName: guestName.trim() }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCollaborators((prev) => [...prev, {
-          userId: data.collaborator.userId,
-          name: data.collaborator.name,
-          addedAt: new Date().toISOString(),
-          isGuest: true,
-        }]);
-        setGuestName("");
-      }
-    } catch { /* silent */ }
-    finally { setAddingGuest(false); }
   };
 
   const handleRevokeLink = async () => {
@@ -220,31 +194,6 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
                 </div>
               )}
 
-              {/* Add by name — for people not on the platform */}
-              <div className="mt-3 pt-3 border-t border-border">
-                <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-1.5">Add by name</p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
-                    placeholder="Type a name..."
-                    className="flex-1 min-w-0 px-3 py-1.5 text-xs bg-surface-alt border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
-                    onKeyDown={(e) => { if (e.key === "Enter") handleAddGuest(); }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddGuest}
-                    disabled={!guestName.trim() || addingGuest}
-                    className="px-2.5 py-1.5 text-[10px] font-bold rounded-md bg-surface border border-border text-text-secondary hover:border-accent/30 hover:text-accent transition-all cursor-pointer disabled:opacity-40 flex-shrink-0"
-                  >
-                    {addingGuest ? "..." : "Add"}
-                  </button>
-                </div>
-                <p className="text-[9px] text-text-tertiary mt-1">
-                  For collaborators who don&apos;t have an account yet.
-                </p>
-              </div>
             </div>
           )}
 
@@ -271,22 +220,15 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
               {/* Collaborators */}
               {collaborators.map((collab) => (
                 <div key={collab.userId} className="flex items-center gap-2 px-4 py-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${collab.isGuest ? "bg-amber-500/15" : "bg-surface-alt"}`}>
-                    <span className={`text-[10px] font-extrabold ${collab.isGuest ? "text-amber-600 dark:text-amber-400" : "text-text-secondary"}`}>
+                  <div className="w-7 h-7 rounded-full bg-surface-alt flex items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] font-extrabold text-text-secondary">
                       {collab.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-xs font-bold text-text-primary truncate block">
-                      {collab.name}
-                      {collab.isGuest && (
-                        <span className="ml-1.5 px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                          Guest
-                        </span>
-                      )}
-                    </span>
+                    <span className="text-xs font-bold text-text-primary truncate block">{collab.name}</span>
                     <span className="text-[10px] text-text-tertiary">
-                      {collab.isGuest ? "Co-creator" : "Can edit"} &middot; Added {new Date(collab.addedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      Can edit &middot; Added {new Date(collab.addedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                     </span>
                   </div>
                   {isOriginalOwner && (

@@ -40,7 +40,7 @@ export async function GET(
 
     const ownerId = await getOwnerId(shareId);
     const rows = await sql`
-      SELECT user_id, user_name, created_at, COALESCE(is_guest, FALSE) as is_guest FROM collaborators WHERE share_id = ${shareId} ORDER BY created_at ASC
+      SELECT user_id, user_name, created_at FROM collaborators WHERE share_id = ${shareId} ORDER BY created_at ASC
     `;
 
     return NextResponse.json({
@@ -49,7 +49,6 @@ export async function GET(
         userId: r.user_id,
         name: r.user_name,
         addedAt: (r.created_at as Date).toISOString(),
-        isGuest: !!r.is_guest,
       })),
     });
   } catch (e) {
@@ -79,29 +78,9 @@ export async function POST(
     }
 
     const body = await request.json();
-    const targetUserId = body.userId as string | undefined;
-    const guestName = body.guestName as string | undefined;
-
-    // Guest collaborator — add by name without a platform account
-    if (guestName && typeof guestName === "string" && guestName.trim()) {
-      const name = guestName.trim();
-      const crypto = await import("crypto");
-      const guestId = `guest_${crypto.randomBytes(6).toString("hex")}`;
-
-      const sql = getDb();
-      await sql`
-        INSERT INTO collaborators (share_id, user_id, user_name, added_by, is_guest)
-        VALUES (${shareId}, ${guestId}, ${name}, ${userId}, TRUE)
-      `;
-
-      // Invalidate share cache so public view picks up new collaborators
-      await cacheDel(CacheKeys.share(shareId)).catch(() => {});
-
-      return NextResponse.json({ success: true, collaborator: { userId: guestId, name, isGuest: true } });
-    }
-
+    const targetUserId = body.userId as string;
     if (!targetUserId || typeof targetUserId !== "string") {
-      return NextResponse.json({ error: "userId or guestName is required" }, { status: 400 });
+      return NextResponse.json({ error: "userId is required" }, { status: 400 });
     }
 
     // Prevent self-add

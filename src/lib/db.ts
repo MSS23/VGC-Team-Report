@@ -197,7 +197,6 @@ export async function ensureTable() {
   `);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_collaborators_user ON collaborators(user_id)`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_collaborators_share ON collaborators(share_id)`);
-  await run(sql`ALTER TABLE collaborators ADD COLUMN IF NOT EXISTS is_guest BOOLEAN DEFAULT FALSE`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_collaborators_user_name ON collaborators(LOWER(user_name))`);
 
   // Edit changelog for collaborative editing

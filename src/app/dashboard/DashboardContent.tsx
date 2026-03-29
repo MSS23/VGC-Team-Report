@@ -46,18 +46,6 @@ function DashboardInner() {
   const [claiming, setClaiming] = useState(false);
   const [claimResult, setClaimResult] = useState<string | null>(null);
 
-  // Guest collab claim
-  const [guestCollabs, setGuestCollabs] = useState<{ guestId: string; shareId: string; guestName: string; tournamentName?: string; creatorName?: string; addedAt: string }[]>([]);
-  const [claimingGuest, setClaimingGuest] = useState<string | null>(null);
-
-  // Check for guest collaborations to claim on load
-  useEffect(() => {
-    if (!user) return;
-    fetch("/api/user/guest-collabs")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data?.pending?.length) setGuestCollabs(data.pending); })
-      .catch(() => {});
-  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -229,37 +217,6 @@ function DashboardInner() {
     }
   };
 
-  const handleClaimGuestCollab = async (guestId: string, shareId: string) => {
-    setClaimingGuest(guestId);
-    try {
-      const res = await fetch("/api/user/guest-collabs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guestId, shareId }),
-      });
-      if (res.ok) {
-        setGuestCollabs((prev) => prev.filter((g) => g.guestId !== guestId));
-      }
-    } catch { /* silent */ }
-    finally { setClaimingGuest(null); }
-  };
-
-  const handleClaimAllGuestCollabs = async () => {
-    if (guestCollabs.length === 0) return;
-    setClaimingGuest("all");
-    for (const g of guestCollabs) {
-      try {
-        await fetch("/api/user/guest-collabs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ guestId: g.guestId, shareId: g.shareId }),
-        });
-      } catch { /* continue */ }
-    }
-    setGuestCollabs([]);
-    setClaimingGuest(null);
-  };
-
   return (
     <div className="min-h-screen bg-background text-text-primary">
       <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} maxWidth="max-w-5xl" activePage="dashboard" />
@@ -295,60 +252,6 @@ function DashboardInner() {
                 <span className="sm:hidden">Profile</span>
               </a>
             </div>
-
-            {/* Guest collab claim banner */}
-            {guestCollabs.length > 0 && (
-              <div className="bg-purple-500/5 border-2 border-purple-500/20 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-6 space-y-2">
-                <div className="flex items-center justify-between gap-2 sm:gap-3">
-                  <div>
-                    <p className="text-xs sm:text-sm font-bold text-text-primary flex items-center gap-1.5">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500 flex-shrink-0">
-                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <path d="M23 21v-2a4 4 0 00-3-3.87" />
-                        <path d="M16 3.13a4 4 0 010 7.75" />
-                      </svg>
-                      {guestCollabs.length === 1
-                        ? "You were added as a collaborator"
-                        : `You were added as a collaborator on ${guestCollabs.length} reports`}
-                    </p>
-                    <p className="text-[10px] sm:text-xs text-text-secondary mt-0.5">
-                      Claim to get full edit access and co-creator credit.
-                    </p>
-                  </div>
-                  {guestCollabs.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={handleClaimAllGuestCollabs}
-                      disabled={claimingGuest === "all"}
-                      className="px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-500 text-white text-[11px] sm:text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-purple-500/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
-                    >
-                      {claimingGuest === "all" ? "Claiming..." : "Claim All"}
-                    </button>
-                  )}
-                </div>
-                {guestCollabs.map((g) => (
-                  <div key={g.guestId} className="flex items-center justify-between gap-2 sm:gap-3 bg-surface/50 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2">
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-text-primary block truncate">
-                        {g.tournamentName || "Untitled report"}
-                      </span>
-                      {g.creatorName && (
-                        <span className="text-[10px] text-text-secondary">by {g.creatorName}</span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleClaimGuestCollab(g.guestId, g.shareId)}
-                      disabled={claimingGuest !== null}
-                      className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-purple-500 text-white text-[10px] sm:text-[11px] font-bold rounded-md hover:brightness-110 active:scale-[0.97] shadow-sm shadow-purple-500/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
-                    >
-                      {claimingGuest === g.guestId ? "..." : "Claim"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
 
             {/* Tabs + Sort */}
             <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
