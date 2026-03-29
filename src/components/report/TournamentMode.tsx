@@ -86,7 +86,7 @@ function CompactCard({
       {/* Top section: info left, sprite right */}
       <div className="flex">
         {/* Left: name, types, ability, moves */}
-        <div className="flex-1 min-w-0 p-2.5 sm:p-3 flex flex-col gap-1.5">
+        <div className="flex-1 min-w-0 p-2 sm:p-2.5 flex flex-col gap-1">
           {/* Species name */}
           <h3 className="text-sm sm:text-base font-extrabold text-text-primary tracking-tight truncate leading-tight">
             {parsed.species}
@@ -166,7 +166,7 @@ function CompactCard({
       </div>
 
       {/* Bottom: EV spread bar */}
-      <div className="flex items-center justify-between px-2.5 sm:px-3 py-1.5 border-t border-border bg-surface-alt/20">
+      <div className="flex items-center justify-between px-2 sm:px-2.5 py-1 border-t border-border bg-surface-alt/20">
         {stats.map((s) => (
           <StatCell
             key={s.key}
@@ -192,7 +192,7 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: Tourn
     .sort((a, b) => b.speed - a.speed);
 
   return (
-    <div className="flex flex-col gap-3 sm:gap-4 animate-fade-in">
+    <div className="flex flex-col gap-2.5 sm:gap-3 animate-fade-in">
       {/* Tournament mode header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500 flex-shrink-0">
@@ -231,7 +231,7 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: Tourn
       </div>
 
       {/* Pokemon cards — 2-column grid always */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+      <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
         {pokemon.map((mon, i) => (
           <CompactCard
             key={`${mon.parsed.species}-${i}`}

@@ -597,11 +597,11 @@ function HomeContent() {
       <div
         ref={swipeRef}
         className={`max-w-7xl mx-auto slide-content safe-bottom ${
-          isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-32 sm:pb-36" : "pb-24 sm:pb-24"
+          isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-20 sm:pb-24" : "pb-16 sm:pb-16"
         } ${
           isPresentationStyle
-            ? "px-3 sm:px-8 py-2 sm:py-6"
-            : "px-2 sm:px-4 py-2 sm:py-6 creator:px-8 creator:py-8"
+            ? "px-3 sm:px-8 py-2 sm:py-4"
+            : "px-2 sm:px-4 py-2 sm:py-4 creator:px-8 creator:py-6"
         }`}
         key={tournamentMode ? "tournament" : physicalSlide}
         style={tournamentMode ? undefined : { viewTransitionName: "slide" }}

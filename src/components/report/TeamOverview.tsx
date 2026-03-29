@@ -92,7 +92,7 @@ export function TeamOverview({
   };
 
   return (
-    <div className="flex flex-col gap-2 sm:gap-8 animate-fade-in">
+    <div className="flex flex-col gap-2 sm:gap-5 animate-fade-in">
       {/* Tournament Context */}
       {isReadOnly ? (
         (hasTournamentInfo || rentalCode || hasCreatorInfo) && (

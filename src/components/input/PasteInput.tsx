@@ -203,10 +203,10 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
     <>
       <PageNavbar darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} activePage="home" />
 
-      <div className="w-full max-w-2xl mx-auto px-4 pt-4 pb-24 sm:pb-4">
+      <div className="w-full max-w-2xl mx-auto px-4 pt-3 pb-8 sm:pb-4">
 
       {/* Animated sprites with floating effect */}
-      <div className="flex justify-center gap-3 sm:gap-5 mb-5 sm:mb-10 overflow-hidden">
+      <div className="flex justify-center gap-3 sm:gap-5 mb-4 sm:mb-8 overflow-hidden">
         {POKEMON_SPRITES.map((name, i) => (
           <motion.img
             key={name}
@@ -236,7 +236,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
       {/* Title — bold, distinctive */}
       <motion.div
-        className="text-center mb-4 sm:mb-8"
+        className="text-center mb-3 sm:mb-6"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
@@ -254,7 +254,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {!championsBannerDismissed && (
         <motion.a
           href="/champions"
-          className="group flex items-center gap-3 mb-5 sm:mb-8 px-4 py-3 rounded-xl bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 hover:border-accent/40 transition-all relative"
+          className="group flex items-center gap-3 mb-4 sm:mb-6 px-4 py-3 rounded-xl bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 hover:border-accent/40 transition-all relative"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.4 }}
@@ -286,7 +286,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
       {/* How it works — collapsible for returning mobile users */}
       <motion.div
-        className="mb-6 sm:mb-10"
+        className="mb-4 sm:mb-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.4 }}
@@ -362,7 +362,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           placeholder={
             "Incineroar @ Sitrus Berry\nAbility: Intimidate\nLevel: 50\nEVs: 252 HP / 4 Atk / 252 Spe\nCareful Nature\n- Fake Out\n- Knock Off\n- Flare Blitz\n- Parting Shot"
           }
-          className="relative w-full h-44 sm:h-72 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none focus:border-accent/50 transition-all duration-300"
+          className="relative w-full h-40 sm:h-56 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none focus:border-accent/50 transition-all duration-300"
           spellCheck={false}
         />
         {(isUrl || isPikalyticsUrl) && (
@@ -454,7 +454,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {/* Spotlight report */}
       {spotlight && (
         <motion.div
-          className="mt-8 sm:mt-10"
+          className="mt-6 sm:mt-8"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
@@ -471,7 +471,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
       {/* Feedback callout */}
       <motion.div
-        className="mt-8 sm:mt-10"
+        className="mt-6 sm:mt-8"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.45, duration: 0.4 }}
