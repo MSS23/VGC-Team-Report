@@ -101,13 +101,13 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl",
         </div>
       </header>
 
-      {/* Mobile bottom tab bar */}
+      {/* Mobile bottom tab bar — always render all 5 tabs to prevent layout shift */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-2xl border-t border-border/60 safe-bottom safe-x" aria-label="Mobile navigation">
         <div className="flex items-center justify-around px-0.5 pt-1 pb-0.5">
           {[
             { href: "/", label: "Create", key: "home", icon: "M12 5v14M5 12h14" },
             ...NAV_LINKS.filter((l) => l.key === "explore" || l.key === "champions" || l.key === "compare"),
-            ...(isSignedIn ? [{ href: "/dashboard", label: "Dashboard", key: "dashboard" as const, icon: "M4 6h16M4 12h16M4 18h7" }] : []),
+            { href: "/dashboard", label: "Dashboard", key: "dashboard" as const, icon: "M4 6h16M4 12h16M4 18h7" },
           ].map((link) => {
             const isActive = activePage === link.key;
             return (
