@@ -210,6 +210,18 @@ All cron routes require Vercel cron user-agent or `CRON_SECRET` bearer token.
 | `/onboard` | Generate contributor setup guide from current project state |
 | `/linear-add` | Create a Linear issue from conversation |
 
+## UI/UX Standards
+
+All UI work must follow `.claude/skills/ui-ux-pro-max/SKILL.md` — a comprehensive design intelligence guide covering:
+- Accessibility (CRITICAL): contrast 4.5:1, focus rings, aria-labels, keyboard nav
+- Touch targets: min 44x44px, 8px spacing, press feedback within 100ms
+- Performance: lazy loading, skeleton screens, CLS < 0.1
+- Consistent styling: SVG icons only, semantic color tokens, one primary CTA per screen
+- Layout: mobile-first, consistent max-width (`max-w-5xl`), 4/8px spacing rhythm
+- Animation: 150-300ms, transform/opacity only, respect reduced-motion
+
+Run through the pre-delivery checklist before pushing UI changes.
+
 ## Code Conventions
 
 - Follow existing patterns in the codebase
