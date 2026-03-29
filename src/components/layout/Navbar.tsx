@@ -359,6 +359,7 @@ export function Navbar(props: NavbarProps) {
                   size="sm"
                   onClick={onCopyEditLink}
                   title="Copy collab link — anyone with this link who signs in can edit"
+                  className="hidden sm:inline-flex"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
@@ -366,7 +367,7 @@ export function Navbar(props: NavbarProps) {
                     <path d="M23 21v-2a4 4 0 00-3-3.87" />
                     <path d="M16 3.13a4 4 0 010 7.75" />
                   </svg>
-                  <span className="hidden sm:inline">{editLinkCopied ? t.copied : "Collab"}</span>
+                  <span className="hidden lg:inline">{editLinkCopied ? t.copied : "Collab"}</span>
                 </Button>
               )}
               {showSignIn && (
@@ -379,9 +380,9 @@ export function Navbar(props: NavbarProps) {
             </>
           )}
 
-          {/* Creator mode toggle (local draft) */}
+          {/* Creator mode toggle (local draft) — hidden on mobile, in overflow menu */}
           {isLocalDraft && (
-            <div data-walkthrough="creator-toggle">
+            <div data-walkthrough="creator-toggle" className="hidden sm:block">
               <Button
                 variant={creatorMode ? "secondary" : "ghost"}
                 size="sm"
@@ -621,6 +622,36 @@ export function Navbar(props: NavbarProps) {
                       </div>
                     </div>
                   </>
+                )}
+
+                {/* Creator mode toggle (mobile) */}
+                {isLocalDraft && (
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); onSetCreatorMode(!creatorMode); }}
+                    className="sm:hidden w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={creatorMode ? "text-accent" : ""}>
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      {creatorMode ? <path d="M7 11V7a5 5 0 019.9-1" /> : <path d="M7 11V7a5 5 0 0110 0v4" />}
+                    </svg>
+                    {creatorMode ? "Lock Editing" : "Unlock Editing"}
+                  </button>
+                )}
+
+                {/* Collab link (mobile — for shared editable reports) */}
+                {isSharedView && isEditingUnlocked && hasExistingShare && isOwner && (
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); onCopyEditLink(); }}
+                    className="sm:hidden w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
+                    </svg>
+                    {editLinkCopied ? "Copied!" : "Copy Collab Link"}
+                  </button>
                 )}
 
                 {/* Present mode (mobile) */}
