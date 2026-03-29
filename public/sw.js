@@ -1,7 +1,7 @@
 // Bump version to push updates to all installed PWA users
-const CACHE_NAME = "vgc-team-report-v16";
-const SHARE_CACHE = "vgc-shares-v4";
-const API_CACHE = "vgc-api-v5";
+const CACHE_NAME = "vgc-team-report-v17";
+const SHARE_CACHE = "vgc-shares-v5";
+const API_CACHE = "vgc-api-v6";
 
 const PRECACHE_URLS = [
   "/",
@@ -11,9 +11,12 @@ const PRECACHE_URLS = [
   "/changelog",
   "/feedback",
   "/dashboard",
+  "/dashboard/profile",
+  "/privacy",
   "/favicon.svg",
   "/icon-192.png",
   "/icon-512.png",
+  "/apple-touch-icon.png",
   "/manifest.json",
 ];
 
@@ -169,6 +172,22 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Trim a cache to a max number of entries (FIFO)
+async function trimCache(cacheName, maxEntries) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length > maxEntries) {
+    await Promise.all(keys.slice(0, keys.length - maxEntries).map((k) => cache.delete(k)));
+  }
+}
+
+// Handle skip-waiting message from client
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -186,7 +205,10 @@ self.addEventListener("fetch", (event) => {
       caches.open(SHARE_CACHE).then((cache) =>
         cache.match(request).then((cached) => {
           const fetchPromise = fetch(request).then((response) => {
-            if (response.ok) cache.put(request, response.clone());
+            if (response.ok) {
+              cache.put(request, response.clone());
+              trimCache(SHARE_CACHE, 50);
+            }
             return response;
           }).catch(() => cached || Response.error());
           // Serve cached immediately, update in background
@@ -203,7 +225,10 @@ self.addEventListener("fetch", (event) => {
       caches.open(API_CACHE).then((cache) =>
         cache.match(request).then((cached) => {
           const fetchPromise = fetch(request).then((response) => {
-            if (response.ok) cache.put(request, response.clone());
+            if (response.ok) {
+              cache.put(request, response.clone());
+              trimCache(API_CACHE, 30);
+            }
             return response;
           }).catch(() => cached || Response.error());
           return cached || fetchPromise;
@@ -237,8 +262,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ── Shared team pages (/s/*) — network-first, cache fallback ──
-  if (url.pathname.startsWith("/s/")) {
+  // ── Shared team & embed pages (/s/*, /embed/*) — network-first, cache fallback ──
+  if (url.pathname.startsWith("/s/") || url.pathname.startsWith("/embed/")) {
     event.respondWith(
       fetch(request)
         .then((response) => {

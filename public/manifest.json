@@ -2,7 +2,7 @@
   "id": "/",
   "name": "VGC Team Report",
   "short_name": "VGC Report",
-  "description": "Build, analyze, and share competitive Pokemon VGC team reports. Collaborate in real time, track version history, and present in full-screen mode.",
+  "description": "Build, analyze, and share competitive Pokemon VGC team reports with EV spreads, damage calcs, matchup plans, and real-time collaboration.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -37,21 +37,21 @@
       "name": "Champions",
       "short_name": "Champions",
       "url": "/champions",
-      "description": "Pokemon Champions — Mega Evolutions",
+      "description": "World Championship winning teams",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Compare Teams",
       "short_name": "Compare",
       "url": "/compare",
-      "description": "Side-by-side team analysis",
+      "description": "Side-by-side team comparison",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "My Dashboard",
       "short_name": "Dashboard",
       "url": "/dashboard",
-      "description": "Manage your team reports and collaborations",
+      "description": "Manage your reports and collaborations",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
@@ -93,5 +93,12 @@
       "form_factor": "narrow",
       "label": "VGC Team Report on mobile"
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "url": "paste"
+    }
+  }
 }

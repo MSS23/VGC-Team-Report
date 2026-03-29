@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 export function ServiceWorkerRegistration() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const waitingWorkerRef = useRef<ServiceWorker | null>(null);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
@@ -17,6 +18,12 @@ export function ServiceWorkerRegistration() {
     });
 
     navigator.serviceWorker.register("/sw.js").then((reg) => {
+      // If there's already a waiting worker, show the prompt immediately
+      if (reg.waiting) {
+        waitingWorkerRef.current = reg.waiting;
+        setUpdateAvailable(true);
+      }
+
       // Check for updates on registration
       reg.addEventListener("updatefound", () => {
         const newWorker = reg.installing;
@@ -25,6 +32,7 @@ export function ServiceWorkerRegistration() {
         newWorker.addEventListener("statechange", () => {
           // New SW installed and waiting — prompt user to reload
           if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            waitingWorkerRef.current = newWorker;
             setUpdateAvailable(true);
           }
         });
@@ -39,7 +47,12 @@ export function ServiceWorkerRegistration() {
 
   const handleUpdate = useCallback(() => {
     setUpdateAvailable(false);
-    window.location.reload();
+    // Tell the waiting SW to activate — controllerchange listener will reload
+    if (waitingWorkerRef.current) {
+      waitingWorkerRef.current.postMessage({ type: "SKIP_WAITING" });
+    } else {
+      window.location.reload();
+    }
   }, []);
 
   if (!updateAvailable) return null;
