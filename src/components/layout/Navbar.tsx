@@ -350,6 +350,28 @@ export function Navbar(props: NavbarProps) {
           )}
           {isSharedView && isEditingUnlocked && (
             <>
+              {/* Edit/View toggle — visible on mobile for owners */}
+              <button
+                type="button"
+                onClick={() => onSetCreatorMode(!creatorMode)}
+                className={`sm:hidden w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                  creatorMode
+                    ? "text-accent bg-accent/10"
+                    : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
+                }`}
+                title={creatorMode ? "Switch to view mode" : "Switch to edit mode"}
+                aria-label={creatorMode ? "Switch to view mode" : "Switch to edit mode"}
+              >
+                {creatorMode ? (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
               <Button variant="secondary" size="sm" onClick={onReshare} disabled={shareStatus === "copying"}>
                 {shareStatus === "copying" ? t.saving : shareStatus === "copied" ? (lastShareResult?.updated ? t.savedBang : t.copied) : shareStatus === "error" ? t.failed : t.reshare}
               </Button>
