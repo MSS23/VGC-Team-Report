@@ -4,11 +4,12 @@ import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { PokemonSprite } from "./PokemonSprite";
-import { TypeBadge } from "./TypeBadge";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
+import { TYPE_COLORS } from "@/lib/utils/type-colors";
 import { NATURES } from "@/lib/data/natures";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
+import type { PokemonType } from "@/lib/types/pokemon";
 
 interface TournamentModeProps {
   analysis: TeamAnalysis;
@@ -16,7 +17,41 @@ interface TournamentModeProps {
   getSpriteConfig?: (key: string) => SpriteConfig;
 }
 
-function CompactPokemonCard({
+/** Small colored circle for a Pokemon type */
+function TypeDot({ type }: { type: PokemonType }) {
+  const colors = TYPE_COLORS[type];
+  return (
+    <span
+      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[7px] font-extrabold uppercase leading-none flex-shrink-0 shadow-sm"
+      style={{ backgroundColor: colors.bg, color: colors.text }}
+      title={type}
+    >
+      {type.slice(0, 2)}
+    </span>
+  );
+}
+
+/** Stat label with EV value and nature highlight */
+function StatCell({ label, ev, boosted, reduced }: { label: string; ev: number; boosted: boolean; reduced: boolean }) {
+  return (
+    <div className="flex flex-col items-center">
+      <span className={`text-[9px] font-extrabold uppercase tracking-wider leading-none ${
+        boosted ? "text-red-500 bg-red-500/15 px-1 rounded" :
+        reduced ? "text-blue-500 bg-blue-500/15 px-1 rounded" :
+        "text-text-tertiary"
+      }`}>
+        {label}{boosted ? "\u2191" : reduced ? "\u2193" : ""}
+      </span>
+      <span className={`text-sm font-extrabold tabular-nums leading-tight mt-0.5 ${
+        ev > 0 ? "text-text-primary" : "text-text-tertiary/40"
+      }`}>
+        {ev}
+      </span>
+    </div>
+  );
+}
+
+function CompactCard({
   pokemon,
   speciesKey,
   getSpriteConfig,
@@ -25,103 +60,113 @@ function CompactPokemonCard({
   speciesKey: string;
   getSpriteConfig?: (key: string) => SpriteConfig;
 }) {
-  const { t, language } = useTranslation();
+  const { language } = useTranslation();
   const { parsed, data, calculatedStats } = pokemon;
   const types = data?.types ?? [];
   const sc = getSpriteConfig?.(speciesKey);
   const natureData = NATURES[parsed.nature];
+  const evs = parsed.evs;
 
-  // Determine boosted/reduced stat for nature
-  const boostedStat = natureData?.plus;
-  const reducedStat = natureData?.minus;
+  const stats = [
+    { label: "H", ev: evs.hp, key: "hp" },
+    { label: "A", ev: evs.atk, key: "atk" },
+    { label: "B", ev: evs.def, key: "def" },
+    { label: "C", ev: evs.spa, key: "spa" },
+    { label: "D", ev: evs.spd, key: "spd" },
+    { label: "S", ev: evs.spe, key: "spe" },
+  ];
 
   return (
-    <div className="bg-surface border-2 border-border rounded-xl p-3 sm:p-4 flex flex-col gap-2 hover:border-amber-500/40 transition-colors">
-      {/* Header: sprite + name + types */}
-      <div className="flex items-center gap-2.5">
-        <PokemonSprite
-          species={parsed.species}
-          size={48}
-          animated={sc?.animated ?? true}
-          shiny={sc?.shiny}
-        />
-        <div className="flex-1 min-w-0">
-          <h3 className="text-base sm:text-lg font-extrabold text-text-primary tracking-tight truncate leading-tight">
+    <div className="bg-surface border border-border rounded-xl overflow-hidden hover:border-amber-500/30 transition-colors group">
+      {/* Top section: info left, sprite right */}
+      <div className="flex">
+        {/* Left: name, types, ability, moves */}
+        <div className="flex-1 min-w-0 p-2.5 sm:p-3 flex flex-col gap-1.5">
+          {/* Species name */}
+          <h3 className="text-sm sm:text-base font-extrabold text-text-primary tracking-tight truncate leading-tight">
             {parsed.species}
           </h3>
-          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+
+          {/* Types */}
+          <div className="flex items-center gap-1">
             {types.map((type) => (
-              <TypeBadge key={type} type={type} />
+              <TypeDot key={type} type={type} />
             ))}
             {parsed.teraType && (
-              <span className="flex items-center gap-0.5 ml-1">
-                <span className="text-[9px] text-text-tertiary font-semibold">{t.tera}:</span>
-                <TypeBadge type={parsed.teraType} />
-              </span>
+              <>
+                <span className="text-text-tertiary/40 mx-0.5">/</span>
+                <span className="inline-flex items-center gap-0.5">
+                  <span className="text-[8px] text-text-tertiary font-bold">T</span>
+                  <TypeDot type={parsed.teraType} />
+                </span>
+              </>
             )}
           </div>
+
+          {/* Ability */}
+          {parsed.ability && (
+            <p className="text-[11px] font-bold text-text-secondary leading-tight truncate">
+              {parsed.ability}
+            </p>
+          )}
+
+          {/* Moves */}
+          <div className="flex flex-col gap-0.5 mt-0.5">
+            {parsed.moves.map((move, i) => {
+              const style = getMoveTypeStyle(move);
+              const translatedMove = translateMove(move, language);
+              const bgColor = style?.color ?? "var(--color-text-tertiary)";
+              return (
+                <div
+                  key={i}
+                  className="flex items-center gap-1.5 text-[11px] font-bold leading-tight truncate"
+                >
+                  <span
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: typeof bgColor === "string" ? bgColor : undefined, opacity: 0.8 }}
+                  />
+                  <span className="truncate" style={{ color: style?.color ?? "var(--color-text-secondary)" }}>
+                    {translatedMove}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right: sprite + item */}
+        <div className="relative flex items-center justify-center w-24 sm:w-28 flex-shrink-0 bg-surface-alt/30">
+          <PokemonSprite
+            species={parsed.species}
+            size={80}
+            animated={sc?.animated ?? true}
+            shiny={sc?.shiny}
+          />
+          {parsed.item && (
+            <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 text-[8px] font-extrabold bg-surface/90 border border-border rounded-md text-text-secondary truncate max-w-[90px] backdrop-blur-sm">
+              {parsed.item}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Key info row: ability + item */}
-      <div className="flex items-center gap-2 text-xs flex-wrap">
-        {parsed.ability && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-surface-alt rounded-md font-semibold text-text-secondary border border-border-subtle">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary flex-shrink-0">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 16v-4M12 8h.01" />
-            </svg>
-            {parsed.ability}
-          </span>
-        )}
-        {parsed.item && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-surface-alt rounded-md font-semibold text-text-secondary border border-border-subtle">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary flex-shrink-0">
-              <path d="M20 12v10H4V12" /><path d="M2 7h20v5H2z" /><path d="M12 22V7" /><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
-            </svg>
-            {parsed.item}
-          </span>
-        )}
-      </div>
-
-      {/* Moves — 2x2 grid */}
-      <div className="grid grid-cols-2 gap-1">
-        {parsed.moves.map((move, i) => {
-          const style = getMoveTypeStyle(move);
-          const translatedMove = translateMove(move, language);
-          return (
-            <div
-              key={i}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-bold truncate"
-              style={style ?? {
-                backgroundColor: "var(--color-surface-alt)",
-                borderColor: "var(--color-border)",
-                color: "var(--color-text-secondary)",
-              }}
-            >
-              <span className="truncate">{translatedMove}</span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Speed stat — prominent for tournament play */}
-      <div className="flex items-center justify-between text-[11px] text-text-tertiary font-semibold pt-1 border-t border-border-subtle">
-        <span>
-          SPE: <span className={`font-extrabold text-sm ${
-            boostedStat === "spe" ? "text-red-500" : reducedStat === "spe" ? "text-blue-500" : "text-text-primary"
-          }`}>{calculatedStats.spe}</span>
-        </span>
-        <span className="text-text-tertiary">
-          {parsed.nature} {natureData ? `(+${natureData.plus}/-${natureData.minus})` : ""}
-        </span>
+      {/* Bottom: EV spread bar */}
+      <div className="flex items-center justify-between px-2.5 sm:px-3 py-1.5 border-t border-border bg-surface-alt/20">
+        {stats.map((s) => (
+          <StatCell
+            key={s.key}
+            label={s.label}
+            ev={s.ev}
+            boosted={natureData?.plus === s.key}
+            reduced={natureData?.minus === s.key}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
 export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: TournamentModeProps) {
-  const { t } = useTranslation();
   const pokemon = analysis.pokemon;
 
   // Sort by speed for the speed tier section
@@ -130,7 +175,7 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: Tourn
     .sort((a, b) => b.speed - a.speed);
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-6 animate-fade-in">
+    <div className="flex flex-col gap-3 sm:gap-4 animate-fade-in">
       {/* Tournament mode header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500 flex-shrink-0">
@@ -138,43 +183,19 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: Tourn
           <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
           <path d="M4 22h16" />
           <path d="M10 22V2h4v20" />
-          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 19.24 7 20" />
-          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 19.24 17 20" />
         </svg>
         <span className="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
           Tournament Mode
         </span>
         <span className="text-[10px] text-amber-500/70 font-medium ml-auto hidden sm:inline">
-          Quick battle reference
+          Tap trophy to exit
         </span>
       </div>
 
-      {/* Team sprite row — compact horizontal strip */}
-      <div className="flex items-center justify-center gap-1 sm:gap-3 px-2 py-2 bg-surface-alt/50 rounded-xl border border-border-subtle">
-        {pokemon.map((mon, i) => {
-          const sc = getSpriteConfig?.(speciesKeys[i]);
-          return (
-            <div key={i} className="flex flex-col items-center gap-0.5">
-              <PokemonSprite
-                species={mon.parsed.species}
-                size={40}
-                animated={sc?.animated ?? true}
-                shiny={sc?.shiny}
-              />
-              <span className="text-[9px] font-bold text-text-tertiary truncate max-w-[50px] text-center">
-                {mon.parsed.species.length > 8
-                  ? mon.parsed.species.slice(0, 7) + "."
-                  : mon.parsed.species}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Pokemon cards — condensed grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+      {/* Pokemon cards — 2-column grid always */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
         {pokemon.map((mon, i) => (
-          <CompactPokemonCard
+          <CompactCard
             key={`${mon.parsed.species}-${i}`}
             pokemon={mon}
             speciesKey={speciesKeys[i]}
@@ -184,11 +205,11 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: Tourn
       </div>
 
       {/* Speed tier quick reference */}
-      <div className="bg-surface border border-border rounded-xl p-3 sm:p-4">
-        <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-3">
+      <div className="bg-surface border border-border rounded-xl px-3 py-2.5">
+        <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary mb-2">
           Speed Tiers
         </h3>
-        <div className="flex flex-col gap-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-0.5">
           {speedTiers.map(({ mon, key, speed }, i) => {
             const sc = getSpriteConfig?.(key);
             const natureData = NATURES[mon.parsed.nature];
@@ -197,40 +218,27 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: Tourn
             return (
               <div
                 key={key + i}
-                className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-surface-alt/60 transition-colors"
+                className="flex items-center gap-1.5 py-0.5"
               >
-                <span className="text-xs font-[family-name:var(--font-mono)] font-bold text-text-tertiary w-5 text-right tabular-nums">
-                  {i + 1}
-                </span>
                 <PokemonSprite
                   species={mon.parsed.species}
-                  size={24}
+                  size={20}
                   animated={sc?.animated ?? true}
                   shiny={sc?.shiny}
                 />
-                <span className="text-sm font-bold text-text-primary flex-1 truncate">
+                <span className="text-xs font-bold text-text-primary flex-1 truncate">
                   {mon.parsed.species}
                 </span>
-                <span className={`text-sm font-extrabold font-[family-name:var(--font-mono)] tabular-nums ${
+                <span className={`text-xs font-extrabold tabular-nums ${
                   isBoosted ? "text-red-500" : isReduced ? "text-blue-500" : "text-text-primary"
                 }`}>
                   {speed}
                 </span>
-                {mon.parsed.item && (
-                  <span className="text-[10px] text-text-tertiary font-medium hidden sm:inline truncate max-w-[100px]">
-                    {mon.parsed.item}
-                  </span>
-                )}
               </div>
             );
           })}
         </div>
       </div>
-
-      {/* Footer */}
-      <p className="text-center text-[10px] text-text-tertiary/60 font-medium">
-        Press the trophy icon in the navbar to exit tournament mode
-      </p>
     </div>
   );
 }
