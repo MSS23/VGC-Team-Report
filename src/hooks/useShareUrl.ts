@@ -127,7 +127,7 @@ export function useShareUrl() {
           const ownerEditToken = data._editToken as string | undefined;
           // Strip internal flags before treating as ShareableState
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, ...state } = data;
+          const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, ...state } = data;
           // Set active edit session — only from server-provided token (authenticated)
           if (editable && ownerEditToken) {
             activeEditTokenRef.current = ownerEditToken;
