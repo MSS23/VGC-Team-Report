@@ -224,7 +224,7 @@ function DashboardInner() {
     <div className="min-h-screen bg-background text-text-primary">
       <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="dashboard" />
 
-      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-14 pb-28 sm:pb-14">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         <Show when="signed-out">
           <div className="text-center py-20">
             <h1 className="text-2xl font-extrabold mb-3">Sign in to access your dashboard</h1>
@@ -242,7 +242,7 @@ function DashboardInner() {
             {/* Header */}
             <div className="mb-4 sm:mb-8 flex items-center justify-between gap-3">
               <div>
-                <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                   {isLoaded && user ? `${user.firstName || user.username || "Trainer"}'s Dashboard` : "Dashboard"}
                 </h1>
                 <p className="text-xs sm:text-sm text-text-secondary mt-0.5">

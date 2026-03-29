@@ -241,7 +241,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <h1 className="text-3xl sm:text-5xl font-extrabold text-text-primary tracking-tight leading-none">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight leading-tight">
           {t.appTitle}
           <span className="text-accent"> {t.appTitleAccent}</span>
         </h1>
@@ -259,7 +259,11 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.4 }}
         >
-          <span className="text-xl sm:text-2xl flex-shrink-0">&#x1F525;</span>
+          <div className="w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+              <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs sm:text-sm font-bold text-text-primary leading-snug">
               Pok&eacute;mon Champions is here!
@@ -399,7 +403,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             onClick={handleFetchPaste}
             disabled={isFetching}
             whileTap={{ scale: 0.97 }}
-            className="px-6 py-2.5 bg-accent text-white rounded-lg text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 shadow-md shadow-accent/30 cursor-pointer tracking-wide"
+            className="px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 shadow-md shadow-accent/30 cursor-pointer tracking-wide"
           >
             {isFetching ? (
               <span className="flex items-center gap-2">
@@ -418,7 +422,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             onClick={handleAnalyze}
             disabled={!hasContent}
             whileTap={hasContent ? { scale: 0.97 } : undefined}
-            className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer tracking-wide ${
+            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer tracking-wide ${
               hasContent
                 ? "bg-accent text-white hover:brightness-110 shadow-md shadow-accent/30"
                 : "bg-surface-alt text-text-tertiary border-2 border-border cursor-not-allowed"

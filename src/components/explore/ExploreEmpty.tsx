@@ -35,7 +35,7 @@ export function ExploreEmpty({ hasSearch }: { hasSearch: boolean }) {
       {!hasSearch && (
         <a
           href="/"
-          className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide"
+          className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide"
         >
           {t.buildYourOwn}
         </a>

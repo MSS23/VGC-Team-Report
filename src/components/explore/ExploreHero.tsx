@@ -60,7 +60,7 @@ export function ExploreHero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
           {t.exploreTitle.replace("VGC Teams", "")}{" "}
           <span className="text-accent">VGC Teams</span>
         </h1>

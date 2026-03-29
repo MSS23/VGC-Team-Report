@@ -69,7 +69,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
           <div className="flex items-center gap-1.5 sm:gap-2">
             {showSignIn && (
               <SignInButton mode="modal">
-                <button className="px-3 py-1.5 text-xs font-bold text-white bg-accent rounded-lg hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/20">
+                <button className="px-3 py-1.5 text-xs font-bold text-white bg-accent rounded-xl hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/20">
                   Sign In
                 </button>
               </SignInButton>

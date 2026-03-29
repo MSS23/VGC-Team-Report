@@ -11,8 +11,8 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background">
       <PrivacyNavbar />
-      <main className="max-w-5xl mx-auto px-4 py-10 sm:py-14 pb-24 sm:pb-14">
-        <h1 className="text-3xl font-bold text-text-primary mb-2">Privacy Policy</h1>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight mb-2">Privacy Policy</h1>
         <p className="text-sm text-text-tertiary mb-10">Last updated: March 2026</p>
 
         <div className="space-y-8 text-sm text-text-secondary leading-relaxed">

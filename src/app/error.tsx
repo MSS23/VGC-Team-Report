@@ -41,7 +41,7 @@ function ErrorContent({
         <div className="flex items-center gap-3 mt-1">
           <button
             onClick={reset}
-            className="px-6 py-3 bg-accent text-white rounded-2xl font-bold text-sm hover:brightness-110 active:scale-[0.97] transition-all shadow-sm shadow-accent/20"
+            className="px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold hover:brightness-110 active:scale-[0.97] transition-all shadow-sm shadow-accent/20"
           >
             {t.tryAgain}
           </button>

@@ -65,7 +65,7 @@ export function ChampionsContent() {
                 Champions Ready
               </span>
             </div>
-            <h1 className="text-3xl sm:text-5xl font-extrabold text-text-primary tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight leading-tight">
               Pokemon Champions<br />
               <span className="text-accent">VGC Team Reports</span>
             </h1>
@@ -96,7 +96,7 @@ export function ChampionsContent() {
 
         {/* What is Pokemon Champions */}
         <section className="max-w-5xl mx-auto px-4 py-12">
-          <h2 className="text-2xl font-extrabold text-text-primary mb-4">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
             What is Pokemon Champions?
           </h2>
           <div className="space-y-4 text-text-secondary text-sm leading-relaxed">
@@ -116,7 +116,7 @@ export function ChampionsContent() {
 
         {/* Featured Mega Pokemon */}
         <section className="max-w-5xl mx-auto px-4 py-12">
-          <h2 className="text-2xl font-extrabold text-text-primary mb-6">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
             Featured Mega Evolutions
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -146,7 +146,7 @@ export function ChampionsContent() {
 
         {/* How it works */}
         <section className="max-w-5xl mx-auto px-4 py-12">
-          <h2 className="text-2xl font-extrabold text-text-primary mb-6">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
             How to Create a Champions Team Report
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -168,7 +168,7 @@ export function ChampionsContent() {
 
         {/* Key Events */}
         <section className="max-w-5xl mx-auto px-4 py-12">
-          <h2 className="text-2xl font-extrabold text-text-primary mb-6">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
             2026 Champions Tournament Calendar
           </h2>
           <div className="space-y-3">
@@ -197,7 +197,7 @@ export function ChampionsContent() {
 
         {/* CTA */}
         <section className="max-w-5xl mx-auto px-4 py-16 text-center">
-          <h2 className="text-2xl font-extrabold text-text-primary mb-3">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
             Ready for Champions?
           </h2>
           <p className="text-sm text-text-secondary mb-6 max-w-lg mx-auto">

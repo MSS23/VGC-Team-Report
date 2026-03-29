@@ -31,7 +31,7 @@ function NotFoundContent() {
         </p>
         <Link
           href="/"
-          className="mt-1 px-6 py-3 bg-accent text-white rounded-2xl font-bold text-sm hover:brightness-110 active:scale-[0.97] transition-all shadow-sm shadow-accent/20"
+          className="mt-1 px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold hover:brightness-110 active:scale-[0.97] transition-all shadow-sm shadow-accent/20"
         >
           {t.goHome}
         </Link>
