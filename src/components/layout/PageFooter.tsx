@@ -1,7 +1,6 @@
 "use client";
 
 interface PageFooterProps {
-  maxWidth?: string;
   hideFeedback?: boolean;
 }
 
@@ -12,9 +11,9 @@ const NAV_LINKS = [
   { href: "/privacy", label: "Privacy" },
 ] as const;
 
-export function PageFooter({ maxWidth = "max-w-3xl", hideFeedback = false }: PageFooterProps) {
+export function PageFooter({ hideFeedback = false }: PageFooterProps) {
   return (
-    <footer className={`${maxWidth} mx-auto px-4 sm:px-6 py-8 pb-24 sm:pb-8 border-t border-border/50 mt-12`}>
+    <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-24 sm:pb-8 border-t border-border/50 mt-12">
       {/* Feedback callout */}
       {!hideFeedback && (
         <a

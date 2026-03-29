@@ -203,7 +203,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
     <>
       <PageNavbar darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} activePage="home" />
 
-      <div className="w-full max-w-2xl mx-auto px-4 pt-3 pb-8 sm:pb-4">
+      <div className="w-full max-w-3xl mx-auto px-4 pt-3 pb-8 sm:pb-4">
 
       {/* Animated sprites with floating effect */}
       <div className="flex justify-center gap-3 sm:gap-5 mb-4 sm:mb-8 overflow-hidden">

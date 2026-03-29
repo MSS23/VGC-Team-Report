@@ -7,7 +7,6 @@ import { LanguageSelector } from "@/components/ui/LanguageSelector";
 interface PageNavbarProps {
   darkMode: boolean;
   onToggleDarkMode: () => void;
-  maxWidth?: string;
   activePage?: "home" | "changelog" | "feedback" | "explore" | "dashboard" | "compare" | "privacy" | "creator" | "champions";
 }
 
@@ -20,7 +19,7 @@ const NAV_LINKS = [
   { href: "/feedback", label: "Feedback", key: "feedback", icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" },
 ] as const;
 
-export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl", activePage }: PageNavbarProps) {
+export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavbarProps) {
   const { isLoaded, isSignedIn } = useAuth();
 
   // Wait for Clerk to load before showing auth UI to prevent flash
@@ -30,7 +29,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, maxWidth = "max-w-5xl",
   return (
     <>
       <header className="sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 bg-surface/80 border-b border-border/60 shadow-[0_1px_12px_rgba(0,0,0,0.04)] sticky-header-standalone">
-        <div className={`${maxWidth} mx-auto px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between`}>
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between">
           {/* Left: logo */}
           <a href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity">
             <span className="text-text-primary">VGC Team</span>

@@ -86,7 +86,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
         {/* Hero */}
         <section className="relative overflow-hidden py-12 sm:py-20 px-4">
           <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-transparent" />
-          <div className="relative max-w-4xl mx-auto">
+          <div className="relative max-w-5xl mx-auto">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-xs text-text-tertiary mb-6">
               <Link href="/champions" className="hover:text-accent transition-colors">Champions</Link>
@@ -132,7 +132,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
         </section>
 
         {/* Base Stats */}
-        <section className="max-w-4xl mx-auto px-4 py-8">
+        <section className="max-w-5xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-extrabold text-text-primary">Base Stats</h2>
             <span className="text-xs font-bold text-text-tertiary">BST: {bst}</span>
@@ -145,7 +145,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
         </section>
 
         {/* Teams Using This Pokemon */}
-        <section className="max-w-4xl mx-auto px-4 py-8">
+        <section className="max-w-5xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-extrabold text-text-primary">
               Teams with {mega.displayName}
@@ -185,7 +185,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
         </section>
 
         {/* VGC Tips */}
-        <section className="max-w-4xl mx-auto px-4 py-8">
+        <section className="max-w-5xl mx-auto px-4 py-8">
           <h2 className="text-xl font-extrabold text-text-primary mb-4">
             Using {mega.displayName} in VGC
           </h2>
@@ -211,7 +211,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
 
         {/* Related Megas */}
         {relatedMegas.length > 0 && (
-          <section className="max-w-4xl mx-auto px-4 py-8">
+          <section className="max-w-5xl mx-auto px-4 py-8">
             <h2 className="text-xl font-extrabold text-text-primary mb-4">
               Other Mega Evolutions
             </h2>
@@ -243,7 +243,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
         )}
 
         {/* CTA */}
-        <section className="max-w-4xl mx-auto px-4 py-12 text-center">
+        <section className="max-w-5xl mx-auto px-4 py-12 text-center">
           <h2 className="text-xl font-extrabold text-text-primary mb-3">
             Build a {mega.displayName} Team Report
           </h2>

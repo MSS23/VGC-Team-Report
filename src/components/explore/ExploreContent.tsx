@@ -108,9 +108,9 @@ function ExploreInner() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} maxWidth="max-w-7xl" activePage="explore" />
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="explore" />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pb-24 sm:pb-20">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pb-24 sm:pb-20">
         <ExploreHero />
 
         <SpotlightSection />
@@ -185,7 +185,7 @@ function ExploreInner() {
         )}
       </main>
 
-      <PageFooter maxWidth="max-w-7xl" />
+      <PageFooter />
     </div>
   );
 }

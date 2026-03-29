@@ -222,7 +222,7 @@ function DashboardInner() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} maxWidth="max-w-5xl" activePage="dashboard" />
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="dashboard" />
 
       <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-14 pb-28 sm:pb-14">
         <Show when="signed-out">
@@ -548,7 +548,7 @@ function DashboardInner() {
           </div>
         </Show>
       </main>
-      <PageFooter maxWidth="max-w-5xl" />
+      <PageFooter />
     </div>
   );
 }

@@ -456,7 +456,7 @@ function HomeContent() {
             </button>
           </div>
         ) : (
-          <div className="w-full max-w-7xl animate-fade-in px-4">
+          <div className="w-full max-w-5xl animate-fade-in px-4">
             {/* Skeleton: Tournament info */}
             <div className="flex items-center gap-3 mb-6">
               <div className="skeleton h-7 w-48" />
@@ -560,7 +560,7 @@ function HomeContent() {
 
       {/* URL length warning */}
       {urlWarning && (
-        <div className="max-w-7xl mx-auto px-4 pt-2">
+        <div className="max-w-5xl mx-auto px-4 pt-2">
           <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-600 dark:text-amber-400">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
@@ -583,7 +583,7 @@ function HomeContent() {
       )}
       {versionDiff && diffChanges.length === 0 && (
         <div className="sticky top-14 z-30 bg-background/80 backdrop-blur-lg">
-          <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
+          <div className="max-w-5xl mx-auto px-2 sm:px-4 py-2">
             <div className="version-diff-banner flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-500/50 rounded-xl">
               <p className="text-xs font-medium text-blue-700 dark:text-blue-300 flex-1">No differences found with version {versionDiff.version}</p>
               <button type="button" onClick={handleClearCompare} className="text-xs font-bold text-blue-500 hover:text-blue-600 cursor-pointer">Dismiss</button>
@@ -596,7 +596,7 @@ function HomeContent() {
       <VersionDiffProvider value={versionDiffContextValue}>
       <div
         ref={swipeRef}
-        className={`max-w-7xl mx-auto slide-content safe-bottom ${
+        className={`max-w-5xl mx-auto slide-content safe-bottom ${
           isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-20 sm:pb-24" : "pb-16 sm:pb-16"
         } ${
           isPresentationStyle
@@ -719,14 +719,14 @@ function HomeContent() {
 
       {/* Claim button for editors who are signed in */}
       {isSharedView && isEditingUnlocked && activeShareId && editKeyFromUrl && (
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
+        <div className="max-w-5xl mx-auto px-2 sm:px-4 py-2">
           <ClaimButton shareId={activeShareId} editToken={editKeyFromUrl} />
         </div>
       )}
 
       {/* Collaborator management (owner only) + Edit changelog (all editors) */}
       {isSharedView && isEditingUnlocked && activeShareId && (
-        <div className="max-w-7xl mx-auto px-2 sm:px-4">
+        <div className="max-w-5xl mx-auto px-2 sm:px-4">
           {isOwner && <CollaboratorPanel shareId={activeShareId} />}
           <EditChangelog shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
         </div>
@@ -734,7 +734,7 @@ function HomeContent() {
 
       {/* Social engagement section for public shared reports */}
       {isSharedView && !isEditingUnlocked && !isPresentationStyle && activeShareId && (
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-6 space-y-4">
+        <div className="max-w-5xl mx-auto px-2 sm:px-4 py-6 space-y-4">
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             {creatorName && <CreatorLink name={creatorName} />}
             <ViewCount count={viewCount} />

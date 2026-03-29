@@ -59,9 +59,9 @@ function CreatorProfileInner({ name }: { name: string }) {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} maxWidth="max-w-7xl" activePage="creator" />
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="creator" />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14 pb-24 sm:pb-14">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14 pb-24 sm:pb-14">
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="flex items-center gap-3 text-text-secondary">
@@ -201,7 +201,7 @@ function CreatorProfileInner({ name }: { name: string }) {
           </motion.div>
         )}
       </main>
-      <PageFooter maxWidth="max-w-7xl" />
+      <PageFooter />
     </div>
   );
 }

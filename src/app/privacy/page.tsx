@@ -11,7 +11,7 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background">
       <PrivacyNavbar />
-      <main className="max-w-2xl mx-auto px-4 py-10 sm:py-14 pb-24 sm:pb-14">
+      <main className="max-w-5xl mx-auto px-4 py-10 sm:py-14 pb-24 sm:pb-14">
         <h1 className="text-3xl font-bold text-text-primary mb-2">Privacy Policy</h1>
         <p className="text-sm text-text-tertiary mb-10">Last updated: March 2026</p>
 
@@ -98,7 +98,7 @@ export default function PrivacyPage() {
           </section>
         </div>
       </main>
-      <PageFooter maxWidth="max-w-2xl" hideFeedback />
+      <PageFooter hideFeedback />
     </div>
   );
 }

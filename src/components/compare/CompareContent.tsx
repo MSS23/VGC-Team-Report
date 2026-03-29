@@ -221,9 +221,9 @@ export function CompareContent() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} maxWidth="max-w-7xl" activePage="compare" />
+      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="compare" />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         {/* Hero */}
         <div className="text-center mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -348,7 +348,7 @@ export function CompareContent() {
         )}
       </main>
 
-      <PageFooter maxWidth="max-w-7xl" />
+      <PageFooter />
     </div>
   );
 }

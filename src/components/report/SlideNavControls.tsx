@@ -59,7 +59,7 @@ export function SlideNavControls({
           : "bg-surface/95 backdrop-blur-xl shadow-[0_-1px_0_rgba(var(--border-rgb,200,200,220),0.15)]"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-1.5 flex items-center gap-2 sm:gap-3">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-1.5 flex items-center gap-2 sm:gap-3">
         {/* === LEFT: Prev === */}
         <button
           onClick={onPrev}
