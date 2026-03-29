@@ -7,6 +7,7 @@ interface Collaborator {
   userId: string;
   name: string;
   addedAt: string;
+  status?: string;
 }
 
 interface SearchResult {
@@ -226,9 +227,16 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-xs font-bold text-text-primary truncate block">{collab.name}</span>
+                    <span className="text-xs font-bold text-text-primary truncate block">
+                      {collab.name}
+                      {collab.status === "pending" && (
+                        <span className="ml-1.5 px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                          Pending
+                        </span>
+                      )}
+                    </span>
                     <span className="text-[10px] text-text-tertiary">
-                      Can edit &middot; Added {new Date(collab.addedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      {collab.status === "pending" ? "Invite sent" : "Can edit"} &middot; Added {new Date(collab.addedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                     </span>
                   </div>
                   {isOriginalOwner && (

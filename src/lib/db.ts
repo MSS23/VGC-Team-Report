@@ -198,6 +198,10 @@ export async function ensureTable() {
   await run(sql`CREATE INDEX IF NOT EXISTS idx_collaborators_user ON collaborators(user_id)`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_collaborators_share ON collaborators(share_id)`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_collaborators_user_name ON collaborators(LOWER(user_name))`);
+  // Status: 'pending' (invite sent, no access yet) or 'accepted' (full collab access)
+  await run(sql`ALTER TABLE collaborators ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'accepted'`);
+  // Default existing rows to 'accepted' (they were added before the consent flow)
+  await run(sql`UPDATE collaborators SET status = 'accepted' WHERE status IS NULL`);
 
   // Edit changelog for collaborative editing
   await run(sql`

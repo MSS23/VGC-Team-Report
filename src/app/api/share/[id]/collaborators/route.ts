@@ -40,7 +40,8 @@ export async function GET(
 
     const ownerId = await getOwnerId(shareId);
     const rows = await sql`
-      SELECT user_id, user_name, created_at FROM collaborators WHERE share_id = ${shareId} ORDER BY created_at ASC
+      SELECT user_id, user_name, created_at, COALESCE(status, 'accepted') as status
+      FROM collaborators WHERE share_id = ${shareId} ORDER BY created_at ASC
     `;
 
     return NextResponse.json({
@@ -49,6 +50,7 @@ export async function GET(
         userId: r.user_id,
         name: r.user_name,
         addedAt: (r.created_at as Date).toISOString(),
+        status: r.status as string,
       })),
     });
   } catch (e) {
@@ -102,13 +104,10 @@ export async function POST(
 
     const sql = getDb();
     await sql`
-      INSERT INTO collaborators (share_id, user_id, user_name, added_by)
-      VALUES (${shareId}, ${targetUserId}, ${targetName}, ${userId})
+      INSERT INTO collaborators (share_id, user_id, user_name, added_by, status)
+      VALUES (${shareId}, ${targetUserId}, ${targetName}, ${userId}, 'pending')
       ON CONFLICT (share_id, user_id) DO NOTHING
     `;
-
-    // Invalidate share cache
-    await cacheDel(CacheKeys.share(shareId)).catch(() => {});
 
     // Send notification (fire-and-forget)
     const owner = await currentUser();

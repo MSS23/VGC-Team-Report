@@ -142,7 +142,7 @@ export async function GET(request: Request) {
       const queries: Promise<unknown>[] = [
         sql`SELECT share_id, COUNT(*)::int as count FROM reactions WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
         sql`SELECT share_id, COUNT(*)::int as count FROM comments WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
-        sql`SELECT share_id, user_name FROM collaborators WHERE share_id = ANY(${shareIds})`,
+        sql`SELECT share_id, user_name FROM collaborators WHERE share_id = ANY(${shareIds}) AND COALESCE(status, 'accepted') = 'accepted'`,
       ];
       if (creatorNames.length > 0) {
         queries.push(sql`SELECT name FROM verified_creators WHERE LOWER(name) = ANY(${creatorNames.map((n) => n.toLowerCase())})`);

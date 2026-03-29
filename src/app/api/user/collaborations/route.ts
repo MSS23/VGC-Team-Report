@@ -1,11 +1,13 @@
 import { getDb } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
+import { cacheDel, CacheKeys } from "@/lib/cache";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { NextResponse } from "next/server";
 
 /**
  * GET /api/user/collaborations
  * Returns reports where the current user is a collaborator (not owner).
+ * Includes both pending and accepted invites with status field.
  */
 export async function GET() {
   try {
@@ -15,7 +17,7 @@ export async function GET() {
     const sql = getDb();
     const rows = await sql`
       SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count,
-             s.is_public, c.created_at as invited_at
+             s.is_public, c.created_at as invited_at, COALESCE(c.status, 'accepted') as status
       FROM collaborators c
       JOIN shares s ON s.id = c.share_id
       WHERE c.user_id = ${userId} AND s.deleted_at IS NULL
@@ -38,12 +40,63 @@ export async function GET() {
         viewCount: row.view_count as number,
         invitedAt: (row.invited_at as Date).toISOString(),
         tags: (data.tags as Record<string, unknown>) || undefined,
+        collabStatus: row.status as string,
       };
     });
 
     return NextResponse.json({ reports });
   } catch (e) {
     console.error("Collaborations fetch error:", e);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  }
+}
+
+/**
+ * POST /api/user/collaborations
+ * Accept or decline a collab invite.
+ * Body: { shareId: string, action: 'accept' | 'decline' }
+ */
+export async function POST(request: Request) {
+  try {
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+
+    const body = await request.json();
+    const { shareId, action } = body as { shareId?: string; action?: string };
+
+    if (!shareId || !action || !["accept", "decline"].includes(action)) {
+      return NextResponse.json({ error: "shareId and action (accept/decline) required" }, { status: 400 });
+    }
+
+    const sql = getDb();
+
+    // Verify this user has a pending invite for this share
+    const existing = await sql`
+      SELECT 1 FROM collaborators
+      WHERE share_id = ${shareId} AND user_id = ${userId} AND COALESCE(status, 'accepted') = 'pending'
+    `;
+    if (existing.length === 0) {
+      return NextResponse.json({ error: "No pending invite found" }, { status: 404 });
+    }
+
+    if (action === "accept") {
+      await sql`
+        UPDATE collaborators SET status = 'accepted'
+        WHERE share_id = ${shareId} AND user_id = ${userId}
+      `;
+      // Bust cache so the report now shows this collaborator publicly
+      await cacheDel(CacheKeys.share(shareId)).catch(() => {});
+      return NextResponse.json({ success: true, status: "accepted" });
+    } else {
+      // Decline — remove the collaborator row entirely
+      await sql`
+        DELETE FROM collaborators
+        WHERE share_id = ${shareId} AND user_id = ${userId}
+      `;
+      return NextResponse.json({ success: true, status: "declined" });
+    }
+  } catch (e) {
+    console.error("Collab action error:", e);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

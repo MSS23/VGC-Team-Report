@@ -15,7 +15,7 @@ export async function generateMetadata({
     const sql = getDb();
     const [rows, collabRows] = await Promise.all([
       sql`SELECT data FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
-      sql`SELECT user_name FROM collaborators WHERE share_id = ${id}`,
+      sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
     ]);
     if (rows.length === 0) return { title: "VGC Team Report" };
 
@@ -84,7 +84,7 @@ export default async function SharePage({
     const sql = getDb();
     const [shareRows, jsonLdCollabRows] = await Promise.all([
       sql`SELECT data, created_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
-      sql`SELECT user_name FROM collaborators WHERE share_id = ${id}`,
+      sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
     ]);
     if (shareRows.length > 0) {
       const data = shareRows[0].data as Record<string, unknown>;

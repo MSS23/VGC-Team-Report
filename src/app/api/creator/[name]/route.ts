@@ -29,6 +29,7 @@ export async function GET(
       FROM shares s
       JOIN collaborators c ON c.share_id = s.id
       WHERE s.is_public = TRUE AND s.deleted_at IS NULL AND c.user_name ILIKE ${creatorName}
+        AND COALESCE(c.status, 'accepted') = 'accepted'
 
       ORDER BY created_at DESC
     `;
@@ -66,7 +67,8 @@ export async function GET(
         GROUP BY share_id
       `,
       sql`
-        SELECT share_id, user_name FROM collaborators WHERE share_id = ANY(${shareIds})
+        SELECT share_id, user_name FROM collaborators
+        WHERE share_id = ANY(${shareIds}) AND COALESCE(status, 'accepted') = 'accepted'
       `,
     ]);
 

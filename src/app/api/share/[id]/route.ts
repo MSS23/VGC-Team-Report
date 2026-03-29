@@ -180,6 +180,7 @@ export async function GET(
         if (!isOwner) {
           const collabRows = await sql`
             SELECT 1 FROM collaborators WHERE share_id = ${id} AND user_id = ${userId}
+              AND COALESCE(status, 'accepted') = 'accepted'
           `;
           isCollaborator = collabRows.length > 0;
         }
@@ -188,7 +189,7 @@ export async function GET(
           if (sinceVersion && Number(sinceVersion) >= Number(ownerRows[0].version)) {
             return new Response(null, { status: 304 });
           }
-          const collabNameRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id}`;
+          const collabNameRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`;
           return NextResponse.json({
             ...normalizeReportData(ownerRows[0].data as Record<string, unknown>),
             _editable: true,
@@ -223,8 +224,8 @@ export async function GET(
       return new Response(null, { status: 304 });
     }
 
-    // Fetch collaborator names for public display
-    const collabRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id}`;
+    // Fetch accepted collaborator names for public display
+    const collabRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`;
     const collaboratorNames = collabRows.map((r) => r.user_name as string);
 
     const responseData = {
