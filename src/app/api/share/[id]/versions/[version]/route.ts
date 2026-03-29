@@ -49,15 +49,18 @@ export async function GET(
       }
     }
 
-    // Fetch the version snapshot
+    // Fetch the version snapshot with editor info
     const versionRows = await sql`
-      SELECT data FROM share_versions WHERE share_id = ${id} AND version = ${targetVersion}
+      SELECT data, editor_name FROM share_versions WHERE share_id = ${id} AND version = ${targetVersion}
     `;
     if (versionRows.length === 0) {
       return NextResponse.json({ error: "Version not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: versionRows[0].data });
+    return NextResponse.json({
+      data: versionRows[0].data,
+      editorName: versionRows[0].editor_name ?? null,
+    });
   } catch (e) {
     console.error("Version fetch error:", e);
     return NextResponse.json({ error: "Failed" }, { status: 500 });

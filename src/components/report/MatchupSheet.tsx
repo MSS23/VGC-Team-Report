@@ -5,6 +5,7 @@ import type { MatchupPlan } from "@/hooks/useMatchupPlans";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { MatchupSheetRow } from "./MatchupSheetRow";
 import { AddOpponentInput } from "./AddOpponentInput";
+import { FieldDiffHighlight } from "./TeamReport";
 import { useTranslation } from "@/lib/i18n";
 
 const DRAG_TYPE = "application/x-matchup-plan";
@@ -60,7 +61,8 @@ export function MatchupSheet({
   };
 
   return (
-    <div className="space-y-6 animate-fade-in" data-walkthrough="matchup-sheet">
+    <FieldDiffHighlight field="matchupPlans" label="Plans changed">
+      <div className="space-y-6 animate-fade-in" data-walkthrough="matchup-sheet">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">{t.matchupSheet}</h2>
         {plans.length > 0 && (
@@ -107,7 +109,8 @@ export function MatchupSheet({
         </div>
       )}
 
-      {!isReadOnly && <AddOpponentInput onAdd={onAddPlan} />}
-    </div>
+        {!isReadOnly && <AddOpponentInput onAdd={onAddPlan} />}
+      </div>
+    </FieldDiffHighlight>
   );
 }

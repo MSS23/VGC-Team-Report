@@ -8,13 +8,14 @@ interface DiffNavigatorProps {
   onNavigate: (change: DiffChange) => void;
   onDismiss: () => void;
   version: number;
+  editorName?: string | null;
 }
 
 /**
  * Floating navigator bar for stepping through version diff changes.
  * Shows "1 of N" with prev/next buttons and the current change label.
  */
-export function DiffNavigator({ changes, onNavigate, onDismiss, version }: DiffNavigatorProps) {
+export function DiffNavigator({ changes, onNavigate, onDismiss, version, editorName }: DiffNavigatorProps) {
   const [index, setIndex] = useState(0);
   const count = changes.length;
 
@@ -92,9 +93,9 @@ export function DiffNavigator({ changes, onNavigate, onDismiss, version }: DiffN
         {/* Divider */}
         <span className="w-px h-5 bg-white/25 mx-0.5" />
 
-        {/* Version badge */}
+        {/* Version + editor badge */}
         <span className="text-[10px] font-bold opacity-60 whitespace-nowrap px-1 hidden sm:inline">
-          v{version}
+          v{version}{editorName ? ` by ${editorName}` : ""}
         </span>
 
         {/* Dismiss */}

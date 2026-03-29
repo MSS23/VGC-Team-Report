@@ -188,7 +188,7 @@ function HomeContent() {
     try {
       const res = await fetch(`/api/share/${shareId}/versions/${version}`);
       if (!res.ok) { setCompareLoading(false); return; }
-      const { data: oldData } = await res.json() as { data: ShareableState };
+      const { data: oldData, editorName: versionEditor } = await res.json() as { data: ShareableState; editorName?: string | null };
 
       // Build current state for comparison
       const currentState: ShareableState = {
@@ -224,7 +224,8 @@ function HomeContent() {
         version,
         analysis?.pokemon.length ?? 0,
         speciesKeys,
-        plans.length
+        plans.length,
+        versionEditor
       );
       setVersionDiff(diff);
     } catch {
@@ -599,6 +600,7 @@ function HomeContent() {
           onNavigate={handleDiffNavigate}
           onDismiss={handleClearCompare}
           version={versionDiff.version}
+          editorName={versionDiff.editorName}
         />
       )}
       {versionDiff && diffChanges.length === 0 && (

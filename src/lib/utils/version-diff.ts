@@ -13,6 +13,8 @@ export interface VersionDiff {
   changedSlides: Set<number>;
   /** The old version's data for showing previous values */
   oldData: ShareableState;
+  /** Name of the user who saved this version (null if unknown) */
+  editorName: string | null;
 }
 
 /**
@@ -42,7 +44,8 @@ export function computeVersionDiff(
   oldVersion: number,
   pokemonCount: number,
   speciesKeys: string[],
-  plansCount: number
+  plansCount: number,
+  editorName?: string | null
 ): VersionDiff {
   const changedFields = new Set<string>();
   const changedSlides = new Set<number>();
@@ -145,16 +148,38 @@ export function computeVersionDiff(
   }
 
   // --- Matchup plans ---
+  // Compare only user-editable content (opponent label, paste, game plan notes/brings/results)
+  // Ignore structural/layout fields that may change from code updates
   const currentPlans = current.matchupPlans ?? [];
   const oldPlans = old.matchupPlans ?? [];
 
-  if (JSON.stringify(currentPlans) !== JSON.stringify(oldPlans)) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const normalizePlan = (p: any) => ({
+    opponentLabel: p.opponentLabel ?? "",
+    opponentPaste: p.opponentPaste ?? "",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    gamePlans: Array.isArray(p.gamePlans)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? p.gamePlans.map((gp: any) => ({
+          notes: gp.notes ?? "",
+          bring: gp.bring ?? [],
+          result: gp.result ?? null,
+          replays: gp.replays ?? [],
+        }))
+      : [],
+  });
+
+  const currentNorm = currentPlans.map((p) => JSON.stringify(normalizePlan(p)));
+  const oldNorm = oldPlans.map((p) => JSON.stringify(normalizePlan(p)));
+
+  const plansChanged = currentNorm.length !== oldNorm.length ||
+    currentNorm.some((p: string, i: number) => p !== oldNorm[i]);
+
+  if (plansChanged) {
     changedFields.add("matchupPlans");
-    // Mark all matchup plan slides as changed
     for (let i = 0; i < plansCount; i++) {
       changedSlides.add(pokemonCount + 2 + i);
     }
-    // Matchup sheet (last slide)
     changedSlides.add(pokemonCount + 2 + plansCount);
   }
 
@@ -163,6 +188,7 @@ export function computeVersionDiff(
     changedFields,
     changedSlides,
     oldData: old,
+    editorName: editorName ?? null,
   };
 }
 

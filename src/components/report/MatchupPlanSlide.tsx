@@ -12,6 +12,7 @@ import { TypeBadge } from "./TypeBadge";
 import { ItemIcon } from "./ItemIcon";
 import { PokemonDropdown } from "./PokemonDropdown";
 import { Button } from "@/components/ui/Button";
+import { FieldDiffHighlight } from "./TeamReport";
 import { GAME_COLORS, getReplayInfo, ReplayIcon } from "@/lib/utils/game-plan-helpers";
 import { useTranslation } from "@/lib/i18n";
 
@@ -180,7 +181,8 @@ export function MatchupPlanSlide({
   };
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
+    <FieldDiffHighlight field="matchupPlans" label="Plans changed">
+      <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
@@ -360,7 +362,8 @@ export function MatchupPlanSlide({
           );
         })}
       </div>
-    </div>
+      </div>
+    </FieldDiffHighlight>
   );
 }
 
