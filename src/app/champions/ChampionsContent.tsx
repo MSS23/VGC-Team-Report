@@ -10,14 +10,14 @@ import { useEffect } from "react";
 import { track } from "@vercel/analytics";
 
 const MEGA_POKEMON = [
-  { name: "Kangaskhan-Mega", ability: "Parental Bond", types: ["Normal"] },
-  { name: "Salamence-Mega", ability: "Aerilate", types: ["Dragon", "Flying"] },
-  { name: "Metagross-Mega", ability: "Tough Claws", types: ["Steel", "Psychic"] },
-  { name: "Charizard-Mega-Y", ability: "Drought", types: ["Fire", "Flying"] },
-  { name: "Gengar-Mega", ability: "Shadow Tag", types: ["Ghost", "Poison"] },
-  { name: "Mawile-Mega", ability: "Huge Power", types: ["Steel", "Fairy"] },
-  { name: "Gardevoir-Mega", ability: "Pixilate", types: ["Psychic", "Fairy"] },
-  { name: "Lucario-Mega", ability: "Adaptability", types: ["Fighting", "Steel"] },
+  { name: "Kangaskhan-Mega", ability: "Parental Bond", types: ["Normal"], slug: "mega-kangaskhan" },
+  { name: "Salamence-Mega", ability: "Aerilate", types: ["Dragon", "Flying"], slug: "mega-salamence" },
+  { name: "Metagross-Mega", ability: "Tough Claws", types: ["Steel", "Psychic"], slug: "mega-metagross" },
+  { name: "Charizard-Mega-Y", ability: "Drought", types: ["Fire", "Flying"], slug: "mega-charizard-y" },
+  { name: "Gengar-Mega", ability: "Shadow Tag", types: ["Ghost", "Poison"], slug: "mega-gengar" },
+  { name: "Mawile-Mega", ability: "Huge Power", types: ["Steel", "Fairy"], slug: "mega-mawile" },
+  { name: "Gardevoir-Mega", ability: "Pixilate", types: ["Psychic", "Fairy"], slug: "mega-gardevoir" },
+  { name: "Lucario-Mega", ability: "Adaptability", types: ["Fighting", "Steel"], slug: "mega-lucario" },
 ];
 
 const TYPE_COLORS: Record<string, string> = {
@@ -121,11 +121,12 @@ export function ChampionsContent() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {MEGA_POKEMON.map((mon) => (
-              <div
+              <Link
                 key={mon.name}
-                className="rounded-xl border border-border bg-surface p-4 hover:border-accent/30 transition-colors"
+                href={`/champions/${mon.slug}`}
+                className="rounded-xl border border-border bg-surface p-4 hover:border-accent/30 transition-colors group"
               >
-                <h3 className="text-sm font-bold text-text-primary">{mon.name}</h3>
+                <h3 className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">{mon.name}</h3>
                 <p className="text-xs text-text-tertiary mt-0.5">{mon.ability}</p>
                 <div className="flex gap-1.5 mt-2">
                   {mon.types.map((t) => (
@@ -138,7 +139,7 @@ export function ChampionsContent() {
                     </span>
                   ))}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>

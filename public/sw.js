@@ -1,5 +1,5 @@
 // Bump version to push updates to all installed PWA users
-const CACHE_NAME = "vgc-team-report-v15";
+const CACHE_NAME = "vgc-team-report-v16";
 const SHARE_CACHE = "vgc-shares-v4";
 const API_CACHE = "vgc-api-v5";
 
@@ -180,18 +180,18 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   // ── Share API data ──
-  // Cache public share reads so previously viewed teams load offline
+  // Cache-first with background revalidation for offline tournament access
   if (url.pathname.match(/^\/api\/share\/[A-Za-z0-9]{8}$/) && !url.searchParams.has("key") && !url.searchParams.has("since")) {
     event.respondWith(
       caches.open(SHARE_CACHE).then((cache) =>
-        fetch(request)
-          .then((response) => {
+        cache.match(request).then((cached) => {
+          const fetchPromise = fetch(request).then((response) => {
             if (response.ok) cache.put(request, response.clone());
             return response;
-          })
-          .catch(() =>
-            cache.match(request).then((cached) => cached || Response.error())
-          )
+          }).catch(() => cached || Response.error());
+          // Serve cached immediately, update in background
+          return cached || fetchPromise;
+        })
       )
     );
     return;
