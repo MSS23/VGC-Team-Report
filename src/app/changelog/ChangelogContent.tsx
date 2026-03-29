@@ -11,6 +11,27 @@ import { PageFooter } from "@/components/layout/PageFooter";
 const ENTRIES = [
   {
     date: "March 2026",
+    version: "4.6",
+    title: "Co-Publishing, Collab Consent & Dashboard Polish",
+    emoji: "\uD83E\uDD1D",
+    highlight: true,
+    items: [
+      { type: "new" as const, text: "YouTube-style co-publishing \u2014 collab reports now appear on ALL collaborators\u2019 creator pages, not just the owner\u2019s. Co-creator names shown on explore cards, share pages, and SEO metadata." },
+      { type: "new" as const, text: "Collaborator consent flow \u2014 invites start as \u201Cpending\u201D. Collaborators must explicitly accept before getting edit access or public credit. Prevents fake attribution." },
+      { type: "new" as const, text: "Accept/Decline UI in dashboard \u2014 pending collab invites appear in the Shared tab with clear Accept and Decline buttons." },
+      { type: "new" as const, text: "Auto-create Linear tickets from daily ops \u2014 when the health check detects issues (site down, DB failure, SEO problems), it auto-creates tagged Linear tickets." },
+      { type: "improved" as const, text: "Dashboard PWA polish \u2014 tabs scroll horizontally on mobile, 2-column report grid, compact header, smaller sprites, tighter spacing throughout." },
+      { type: "improved" as const, text: "Bottom nav bar compacted \u2014 smaller icons/text, gesture bar padding in standalone PWA mode." },
+      { type: "improved" as const, text: "ReportCard responsive \u2014 sprites scale down on mobile (32px vs 40px desktop), titles allow 2-line clamp for readability." },
+      { type: "improved" as const, text: "Navbar height reduced to 48px on mobile with sticky-header-standalone class for PWA status bar." },
+      { type: "improved" as const, text: "CollaboratorPanel shows \u201CPending\u201D badge for unaccepted invites so owners know who hasn\u2019t responded." },
+      { type: "improved" as const, text: "Share cache invalidated when collaborators are added or removed \u2014 changes appear immediately." },
+      { type: "fixed" as const, text: "Fixed share page not loading \u2014 internal API fields (_version, _collaborators) were leaking into report state and breaking the paste parser." },
+      { type: "fixed" as const, text: "Canonical domain redirect \u2014 vgc-team-report.vercel.app now redirects to pokemonvgcteamreport.com." },
+    ],
+  },
+  {
+    date: "March 2026",
     version: "4.5",
     title: "PDF Export, Replay Import & Keyboard Shortcuts",
     emoji: "\uD83D\uDCE5",
