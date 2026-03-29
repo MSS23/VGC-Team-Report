@@ -6,7 +6,6 @@ export const alt = "VGC Team Report";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Minimal paste parser — extracts species + item from each block's first line
 function extractTeamFromPaste(paste: string): { species: string; item: string | null }[] {
   const blocks = paste.trim().split(/\n\s*\n/);
   const team: { species: string; item: string | null }[] = [];
@@ -18,16 +17,12 @@ function extractTeamFromPaste(paste: string): { species: string; item: string | 
     let species: string;
     let item: string | null = null;
 
-    // Split on " @ " for item
     const [before, ...rest] = firstLine.split(" @ ");
     if (rest.length > 0) item = rest.join(" @ ").trim();
 
     let namePart = before.trim();
-
-    // Remove gender suffix like " (M)" or " (F)"
     namePart = namePart.replace(/\s*\([MF]\)\s*$/, "");
 
-    // Check for nickname: "Nickname (Species)" pattern
     const nicknameMatch = namePart.match(/^.+\((.+)\)$/);
     if (nicknameMatch) {
       species = nicknameMatch[1].trim();
@@ -41,30 +36,20 @@ function extractTeamFromPaste(paste: string): { species: string; item: string | 
   return team.slice(0, 6);
 }
 
-// Use canonical slug resolver — single source of truth for all sprite slugs
 import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
 
-function toItemSlug(item: string): string {
-  return item
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, "")
-    .replace(/\s+/g, "-");
-}
-
-// Placement badge colors
-function getPlacementStyle(placement: string): { bg: string; border: string; color: string } {
+function getPlacementStyle(placement: string) {
   const p = placement.toLowerCase().trim();
   if (p === "1st" || p === "1" || p === "winner" || p === "champion") {
-    return { bg: "rgba(234,179,8,0.15)", border: "rgba(234,179,8,0.4)", color: "#EAB308" };
+    return { bg: "rgba(250,204,21,0.10)", border: "rgba(250,204,21,0.40)", text: "#FCD34D" };
   }
   if (p === "2nd" || p === "2" || p === "finalist" || p === "runner-up") {
-    return { bg: "rgba(148,163,184,0.15)", border: "rgba(148,163,184,0.4)", color: "#94A3B8" };
+    return { bg: "rgba(203,213,225,0.08)", border: "rgba(203,213,225,0.30)", text: "#E2E8F0" };
   }
   if (p === "3rd" || p === "3") {
-    return { bg: "rgba(217,119,6,0.15)", border: "rgba(217,119,6,0.4)", color: "#D97706" };
+    return { bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.30)", text: "#FDBA74" };
   }
-  // Top cut / other placements
-  return { bg: "rgba(225,29,72,0.12)", border: "rgba(225,29,72,0.25)", color: "#FB7185" };
+  return { bg: "rgba(244,63,94,0.07)", border: "rgba(244,63,94,0.22)", text: "#FDA4AF" };
 }
 
 export default async function Image({
@@ -95,7 +80,6 @@ export default async function Image({
 
   const team = extractTeamFromPaste(paste);
 
-  // If no team data, render a generic fallback
   if (team.length === 0) {
     return new ImageResponse(
       (
@@ -107,14 +91,14 @@ export default async function Image({
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            background: "linear-gradient(135deg, #0B0B1A 0%, #1C1C38 40%, #0B0B1A 100%)",
+            background: "#08080F",
             fontFamily: "system-ui, sans-serif",
           }}
         >
-          <div style={{ fontSize: 56, fontWeight: 800, color: "#F0EDE6" }}>
+          <div style={{ fontSize: 48, fontWeight: 800, color: "#F0EDE6" }}>
             VGC Team Report
           </div>
-          <div style={{ fontSize: 22, color: "#8A8AA3", marginTop: 16 }}>
+          <div style={{ fontSize: 18, color: "#64648A", marginTop: 14 }}>
             Team not found
           </div>
         </div>
@@ -124,13 +108,7 @@ export default async function Image({
   }
 
   const SPRITE_BASE = "https://play.pokemonshowdown.com/sprites";
-  const hasHeader = !!(tournamentName || creatorName);
   const placementColors = placement ? getPlacementStyle(placement) : null;
-
-  // Calculate sprite size based on team size
-  const spriteContainerSize = team.length <= 4 ? 150 : 140;
-  const spriteSize = team.length <= 4 ? 110 : 100;
-  const spriteGap = team.length <= 4 ? 28 : 16;
 
   return new ImageResponse(
     (
@@ -140,122 +118,94 @@ export default async function Image({
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(150deg, #0B0B1A 0%, #141428 35%, #1A1035 65%, #0B0B1A 100%)",
+          background: "#07070E",
           fontFamily: "system-ui, sans-serif",
           position: "relative",
           overflow: "hidden",
         }}
       >
-        {/* Subtle grid */}
+        {/* ── BG: base gradient ── */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)",
-            backgroundSize: "32px 32px",
+            background: "linear-gradient(165deg, #080812 0%, #0B0B1E 30%, #0F0D25 55%, #080810 100%)",
+            display: "flex",
           }}
         />
 
-        {/* Large glow behind team row */}
+        {/* BG: fine dot grid */}
         <div
           style={{
             position: "absolute",
-            top: "35%",
+            inset: 0,
+            display: "flex",
+            backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.015) 1px, transparent 0)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+
+        {/* BG: center ambient */}
+        <div
+          style={{
+            position: "absolute",
+            top: "40%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 800,
-            height: 400,
+            width: 1000,
+            height: 550,
             borderRadius: "50%",
-            background: "radial-gradient(ellipse, rgba(225,29,72,0.06) 0%, transparent 70%)",
+            background: "radial-gradient(ellipse, rgba(110,70,200,0.035) 0%, rgba(180,40,80,0.015) 45%, transparent 72%)",
+            display: "flex",
           }}
         />
 
-        {/* Top-right accent glow */}
-        <div
-          style={{
-            position: "absolute",
-            top: -100,
-            right: -100,
-            width: 350,
-            height: 350,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)",
-          }}
-        />
-
-        {/* Bottom-left accent glow */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: -80,
-            left: -80,
-            width: 300,
-            height: 300,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(225,29,72,0.08) 0%, transparent 70%)",
-          }}
-        />
-
-        {/* Top accent line */}
+        {/* Top accent */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            height: 3,
-            background: "linear-gradient(90deg, transparent, #E11D48, #8B5CF6, transparent)",
+            height: 2,
+            background: "linear-gradient(90deg, transparent 8%, rgba(225,29,72,0.55) 32%, rgba(139,92,246,0.45) 50%, rgba(99,102,241,0.35) 68%, transparent 92%)",
+            display: "flex",
           }}
         />
 
-        {/* Tournament header section */}
-        {hasHeader && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              marginBottom: 16,
-            }}
-          >
-            {/* Tournament name with optional placement badge */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 16,
-              }}
-            >
-              {tournamentName && (
-                <div
-                  style={{
-                    fontSize: 32,
-                    fontWeight: 800,
-                    color: "#F0EDE6",
-                    letterSpacing: "-0.02em",
-                    textAlign: "center",
-                    maxWidth: 700,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {tournamentName}
-                </div>
-              )}
+        {/* ── HEADER ── */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            paddingTop: 46,
+            position: "relative",
+          }}
+        >
+          {tournamentName ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div
+                style={{
+                  fontSize: 36,
+                  fontWeight: 800,
+                  color: "#F0EEF8",
+                  letterSpacing: "-0.03em",
+                  lineHeight: 1,
+                }}
+              >
+                {tournamentName}
+              </div>
               {placement && placementColors && (
                 <div
                   style={{
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: 800,
-                    color: placementColors.color,
+                    color: placementColors.text,
                     background: placementColors.bg,
                     border: `1.5px solid ${placementColors.border}`,
-                    padding: "5px 16px",
-                    borderRadius: 8,
+                    padding: "6px 16px",
+                    borderRadius: 9,
                     letterSpacing: "0.02em",
                   }}
                 >
@@ -263,179 +213,208 @@ export default async function Image({
                 </div>
               )}
             </div>
+          ) : (
+            <div style={{ fontSize: 32, fontWeight: 800, color: "#E0DEF0", display: "flex" }}>
+              Team Report
+            </div>
+          )}
 
-            {/* Creator name */}
-            {creatorName && (
-              <div
-                style={{
-                  fontSize: 18,
-                  color: "#8A8AA3",
-                  marginTop: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <span style={{ color: "#6A6A8A" }}>by</span> {creatorName}
-              </div>
-            )}
-          </div>
-        )}
+          {creatorName && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 7,
+                marginTop: 12,
+                fontSize: 17,
+              }}
+            >
+              <span style={{ color: "#505068" }}>by</span>
+              <span style={{ color: "#9898BE", fontWeight: 600 }}>{creatorName}</span>
+            </div>
+          )}
+        </div>
 
-        {/* Pokemon row */}
+        {/* ── POKEMON ROW ── */}
         <div
           style={{
             display: "flex",
+            flex: 1,
             alignItems: "center",
             justifyContent: "center",
-            gap: spriteGap,
-            marginTop: hasHeader ? 8 : 20,
             padding: "0 40px",
+            position: "relative",
           }}
         >
-          {team.map((mon, i) => {
-            const slug = toSpriteSlug(mon.species);
-            const spriteUrl = `${SPRITE_BASE}/home/${slug}.png`;
-            const itemUrl = mon.item
-              ? `${SPRITE_BASE}/itemicons/${toItemSlug(mon.item)}.png`
-              : null;
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "center",
+              gap: 14,
+            }}
+          >
+            {team.map((mon, i) => {
+              const slug = toSpriteSlug(mon.species);
+              const spriteUrl = `${SPRITE_BASE}/home/${slug}.png`;
 
-            return (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 8,
-                  position: "relative",
-                }}
-              >
-                {/* Sprite container */}
+              return (
                 <div
+                  key={i}
                   style={{
                     display: "flex",
+                    flexDirection: "column",
                     alignItems: "center",
-                    justifyContent: "center",
-                    width: spriteContainerSize,
-                    height: spriteContainerSize,
-                    borderRadius: 20,
-                    background: "linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    position: "relative",
-                    boxShadow: "0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)",
+                    width: 172,
                   }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={spriteUrl}
-                    alt={mon.species}
-                    width={spriteSize}
-                    height={spriteSize}
-                    style={{ objectFit: "contain" }}
-                  />
-                  {/* Item icon overlaid bottom-right */}
-                  {itemUrl && (
+                  {/* Card */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      width: 164,
+                      borderRadius: 18,
+                      background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.012) 100%)",
+                      border: "1px solid rgba(255,255,255,0.055)",
+                      boxShadow: "0 10px 36px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.045)",
+                      position: "relative",
+                      overflow: "hidden",
+                      paddingBottom: 16,
+                    }}
+                  >
+                    {/* Sprite area */}
                     <div
                       style={{
-                        position: "absolute",
-                        bottom: 6,
-                        right: 6,
-                        width: 32,
-                        height: 32,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        background: "rgba(11,11,26,0.9)",
-                        borderRadius: 8,
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                        width: "100%",
+                        height: 140,
+                        position: "relative",
                       }}
                     >
+                      {/* Floor reflection */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: 2,
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          width: 70,
+                          height: 18,
+                          borderRadius: "50%",
+                          background: "radial-gradient(ellipse, rgba(130,90,230,0.07) 0%, transparent 70%)",
+                          display: "flex",
+                        }}
+                      />
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={itemUrl}
-                        alt={mon.item ?? ""}
-                        width={24}
-                        height={24}
-                        style={{ objectFit: "contain" }}
+                        src={spriteUrl}
+                        alt={mon.species}
+                        width={116}
+                        height={116}
+                        style={{ objectFit: "contain", position: "relative" }}
                       />
                     </div>
-                  )}
+
+                    {/* Species name */}
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "#D0CEE0",
+                        textAlign: "center",
+                        maxWidth: 150,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        letterSpacing: "0.005em",
+                      }}
+                    >
+                      {mon.species}
+                    </div>
+
+                    {/* Item label */}
+                    {mon.item && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginTop: 6,
+                          padding: "3px 10px",
+                          borderRadius: 6,
+                          background: "rgba(255,255,255,0.03)",
+                          border: "1px solid rgba(255,255,255,0.04)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: "#8886A6",
+                            letterSpacing: "0.01em",
+                          }}
+                        >
+                          {mon.item}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {/* Species name */}
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: "#B0B0CC",
-                    textAlign: "center",
-                    maxWidth: spriteContainerSize,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {mon.species}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        {/* Bottom branding bar */}
+        {/* ── BOTTOM BAR ── */}
         <div
           style={{
             position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
-            height: 56,
+            height: 50,
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-            background: "linear-gradient(0deg, rgba(11,11,26,0.95), rgba(11,11,26,0.6))",
-            borderTop: "1px solid rgba(255,255,255,0.04)",
+            justifyContent: "space-between",
+            padding: "0 44px",
+            background: "linear-gradient(0deg, rgba(7,7,14,0.98) 0%, rgba(7,7,14,0.75) 55%, transparent 100%)",
           }}
         >
-          {/* Pokeball icon */}
-          <div
-            style={{
-              width: 22,
-              height: 22,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #E11D48, #BE123C)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 12px rgba(225,29,72,0.3)",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* Pokeball */}
             <div
               style={{
-                width: 8,
-                height: 8,
+                width: 18,
+                height: 18,
                 borderRadius: "50%",
-                background: "white",
-                border: "1.5px solid #BE123C",
+                background: "linear-gradient(145deg, #E11D48, #BE123C)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 0 10px rgba(225,29,72,0.22)",
               }}
-            />
+            >
+              <div
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "#FFF",
+                  border: "1.5px solid rgba(190,18,60,0.6)",
+                }}
+              />
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#68688A", letterSpacing: "0.03em" }}>
+              VGC Team Report
+            </span>
           </div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#8A8AA3", letterSpacing: "0.02em" }}>
-            VGC Team Report
-          </div>
-          <div
-            style={{
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              background: "#3A3A5A",
-            }}
-          />
-          <div style={{ fontSize: 14, color: "#5A5A78" }}>
+          <span style={{ fontSize: 12, color: "#404058", fontWeight: 500 }}>
             pokemonvgcteamreport.com
-          </div>
+          </span>
         </div>
       </div>
     ),

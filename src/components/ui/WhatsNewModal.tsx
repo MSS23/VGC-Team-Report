@@ -5,36 +5,69 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 
 const STORAGE_KEY = "vgc-whats-new-v8";
+const RETURNING_KEY = "vgc-has-visited";
 
-const FEATURES = [
+const WELCOME_FEATURES = [
   {
-    icon: "M6 3h12l4 6-10 13L2 9z",
-    title: "Tournament Day Mode",
-    desc: "Compact battle assistant \u2014 tap the trophy icon to see your team as condensed cards with moves, items, and speed tiers. Works offline at events.",
+    icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
+    title: "Paste & Analyze",
+    desc: "Paste your Showdown team and get an instant breakdown — stats, coverage, speed tiers, and more.",
   },
   {
-    icon: "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z",
-    title: "Unlock Accent Themes",
-    desc: "Earn color themes as your reports get views \u2014 Ocean Blue, Emerald, Amber, Violet, and Sunset. Select your theme on your profile page.",
+    icon: "M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z",
+    title: "Share with Your Team",
+    desc: "Get a shareable link for your team report. Add notes, damage calcs, and matchup plans your teammates can read.",
+  },
+  {
+    icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
+    title: "Explore the Community",
+    desc: "Browse team reports shared by other competitive players. Filter by format, tournament, or Pok\u00e9mon.",
   },
   {
     icon: "M13 10V3L4 14h7v7l9-11h-7z",
-    title: "32 Champions Pages",
-    desc: "Every Mega Evolution now has its own SEO landing page with stats, teams from the community, and related Megas.",
+    title: "Works Offline",
+    desc: "Reports you\u2019ve viewed are saved for offline use — perfect for checking your team at tournaments with bad signal.",
+  },
+];
+
+const WHATS_NEW_FEATURES = [
+  {
+    icon: "M6 3h12l4 6-10 13L2 9z",
+    title: "Tournament Day Mode",
+    desc: "Tap the trophy icon to see your team as compact battle-ready cards with moves, items, and speed tiers at a glance.",
+  },
+  {
+    icon: "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z",
+    title: "Earnable Color Themes",
+    desc: "Your reports now earn color themes as they get views — check your profile page to pick from Ocean Blue, Emerald, Amber, and more.",
+  },
+  {
+    icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
+    title: "Mega Evolution Hub",
+    desc: "Every Mega Evolution now has its own page with stats, community teams, and related picks to explore.",
   },
   {
     icon: "M5 12h14M12 5l7 7-7 7",
     title: "Offline at Tournaments",
-    desc: "Previously viewed reports load from cache when you\u2019re offline. An amber banner shows you\u2019re viewing a cached version.",
+    desc: "Previously viewed reports now load from your device when you\u2019re offline. An amber banner lets you know you\u2019re viewing a cached version.",
   },
 ];
 
 export function WhatsNewModal() {
   const [show, setShow] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   useEffect(() => {
     const seen = localStorage.getItem(STORAGE_KEY);
-    if (!seen) setShow(true);
+    const hasVisited = localStorage.getItem(RETURNING_KEY);
+
+    if (!seen) {
+      setIsNewUser(!hasVisited);
+      setShow(true);
+    }
+
+    // Mark that this user has visited (for future "new vs returning" detection)
+    localStorage.setItem(RETURNING_KEY, "1");
   }, []);
 
   const dismiss = () => {
@@ -43,6 +76,16 @@ export function WhatsNewModal() {
   };
 
   if (!show) return null;
+
+  const features = isNewUser ? WELCOME_FEATURES : WHATS_NEW_FEATURES;
+  const heading = isNewUser
+    ? <>Build your <span className="text-accent">team report</span></>
+    : <>Ready for <span className="text-accent">tournament day</span></>;
+  const subtext = isNewUser
+    ? "Create, share, and explore competitive VGC team reports with your community."
+    : "Here\u2019s what\u2019s new since your last visit.";
+  const ctaLabel = isNewUser ? "Get Started" : "Create a Report";
+  const badgeLabel = isNewUser ? "Welcome" : "What\u2019s New";
 
   return createPortal(
     <AnimatePresence>
@@ -78,19 +121,19 @@ export function WhatsNewModal() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
-              <span className="text-xs font-extrabold text-accent uppercase tracking-widest">What&apos;s New</span>
+              <span className="text-xs font-extrabold text-accent uppercase tracking-widest">{badgeLabel}</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
-              Ready for <span className="text-accent">tournament day</span>
+              {heading}
             </h2>
             <p className="text-sm text-text-secondary mt-2 max-w-sm mx-auto">
-              Compact battle mode, unlockable themes, 32 Mega Evolution pages, and offline access for events.
+              {subtext}
             </p>
           </div>
 
           {/* Features */}
           <div className="px-6 pb-2 space-y-3">
-            {FEATURES.map((f) => (
+            {features.map((f) => (
               <div key={f.title} className="flex items-start gap-3 p-3 rounded-xl bg-surface-alt/50">
                 <div className="w-9 h-9 rounded-lg bg-accent-surface flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
@@ -115,7 +158,7 @@ export function WhatsNewModal() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              Create a Report
+              {ctaLabel}
             </button>
             <a
               href="/explore"

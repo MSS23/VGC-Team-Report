@@ -68,12 +68,12 @@ function CompactCard({
   const evs = parsed.evs;
 
   const stats = [
-    { label: "H", ev: evs.hp, key: "hp" },
-    { label: "A", ev: evs.atk, key: "atk" },
-    { label: "B", ev: evs.def, key: "def" },
-    { label: "C", ev: evs.spa, key: "spa" },
-    { label: "D", ev: evs.spd, key: "spd" },
-    { label: "S", ev: evs.spe, key: "spe" },
+    { label: "HP", ev: evs.hp, key: "hp" },
+    { label: "Atk", ev: evs.atk, key: "atk" },
+    { label: "Def", ev: evs.def, key: "def" },
+    { label: "SpA", ev: evs.spa, key: "spa" },
+    { label: "SpD", ev: evs.spd, key: "spd" },
+    { label: "Spe", ev: evs.spe, key: "spe" },
   ];
 
   return (

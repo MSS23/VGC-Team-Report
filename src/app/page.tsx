@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { useHomePage } from "@/hooks/useHomePage";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
@@ -489,6 +490,7 @@ function HomeContent() {
 
   // Show report
   return (
+    <>
     <main className={`bg-background ${isPresentationStyle ? "h-dvh h-screen overflow-y-auto" : "min-h-dvh min-h-screen"}`}>
       <Navbar
         isPresentationStyle={isPresentationStyle}
@@ -845,29 +847,31 @@ function HomeContent() {
         </div>
       )}
 
-      {/* Hidden print container for PDF export */}
-      {isPdfPrinting && analysis && (
-        <div id="print-container" className="hidden print:block" aria-hidden="true">
-          <PrintableReport
-            analysis={analysis}
-            notes={notes}
-            calcs={calcs}
-            roles={roles}
-            spreadNotes={spreadNotes}
-            speciesKeys={speciesKeys}
-            teamSummary={summary}
-            tournamentName={tournamentName}
-            placement={placement}
-            record={record}
-            rentalCode={rentalCode}
-            creatorName={creatorName}
-            mvpIndex={mvpIndex}
-            tags={tags}
-            plans={plans}
-            getSpriteConfig={getSpriteConfig}
-          />
-        </div>
-      )}
     </main>
+    {/* Portal print container to body so CSS selector body > *:not(#print-container) works */}
+    {isPdfPrinting && analysis && createPortal(
+      <div id="print-container" className="hidden print:block" aria-hidden="true">
+        <PrintableReport
+          analysis={analysis}
+          notes={notes}
+          calcs={calcs}
+          roles={roles}
+          spreadNotes={spreadNotes}
+          speciesKeys={speciesKeys}
+          teamSummary={summary}
+          tournamentName={tournamentName}
+          placement={placement}
+          record={record}
+          rentalCode={rentalCode}
+          creatorName={creatorName}
+          mvpIndex={mvpIndex}
+          tags={tags}
+          plans={plans}
+          getSpriteConfig={getSpriteConfig}
+        />
+      </div>,
+      document.body
+    )}
+    </>
   );
 }

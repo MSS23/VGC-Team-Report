@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 import type { MatchupPlan } from "@/hooks/useMatchupPlans";
 import type { CalcEntry } from "@/hooks/useDamageCalcs";
@@ -213,15 +214,16 @@ export function PdfExportButton(props: PdfExportProps) {
         <DownloadIcon />
       </button>
 
-      {/* Hidden print container: invisible on screen, shown only during print */}
-      {isPrinting && (
+      {/* Portal print container to body so CSS selector body > *:not(#print-container) works */}
+      {isPrinting && createPortal(
         <div
           id="print-container"
           className="hidden print:block"
           aria-hidden="true"
         >
           <PrintableReport {...props} />
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
