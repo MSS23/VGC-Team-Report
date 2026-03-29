@@ -137,16 +137,19 @@ export async function GET(request: Request) {
     const creatorNames = [...new Set(items.map((r) => ((r.data as Record<string, unknown>).creatorName as string)).filter(Boolean))];
     let verifiedSet = new Set<string>();
 
+    const collabMap: Record<string, string[]> = {};
     if (shareIds.length > 0) {
       const queries: Promise<unknown>[] = [
         sql`SELECT share_id, COUNT(*)::int as count FROM reactions WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
         sql`SELECT share_id, COUNT(*)::int as count FROM comments WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
+        sql`SELECT share_id, user_name FROM collaborators WHERE share_id = ANY(${shareIds})`,
       ];
       if (creatorNames.length > 0) {
         queries.push(sql`SELECT name FROM verified_creators WHERE LOWER(name) = ANY(${creatorNames.map((n) => n.toLowerCase())})`);
       }
 
-      const [likeRows, commentRows, verifiedRows] = await Promise.all(queries) as [
+      const [likeRows, commentRows, collabRows, verifiedRows] = await Promise.all(queries) as [
+        Array<Record<string, unknown>>,
         Array<Record<string, unknown>>,
         Array<Record<string, unknown>>,
         Array<Record<string, unknown>>?,
@@ -158,6 +161,11 @@ export async function GET(request: Request) {
       }
       for (const r of commentRows) {
         commentMap[r.share_id as string] = r.count as number;
+      }
+      for (const c of collabRows) {
+        const sid = c.share_id as string;
+        if (!collabMap[sid]) collabMap[sid] = [];
+        collabMap[sid].push(c.user_name as string);
       }
       if (verifiedRows) {
         verifiedSet = new Set(verifiedRows.map((r) => (r.name as string).toLowerCase()));
@@ -183,6 +191,7 @@ export async function GET(request: Request) {
         commentCount: commentMap[sid] || undefined,
         isVerified: creatorNameStr ? verifiedSet.has(creatorNameStr.toLowerCase()) : false,
         tags: (data.tags as Record<string, unknown>) || undefined,
+        collaborators: collabMap[sid] ?? [],
       };
     });
 

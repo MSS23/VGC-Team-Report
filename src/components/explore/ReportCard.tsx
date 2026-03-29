@@ -21,6 +21,7 @@ export interface ExploreReport {
   commentCount?: number;
   isVerified?: boolean;
   tags?: { archetype?: string[]; regulation?: string; eventType?: string };
+  collaborators?: string[];
 }
 
 function CardSprite({ species }: { species: string }) {
@@ -87,9 +88,9 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           )}
         </div>
 
-        {/* Creator */}
+        {/* Creator + Collaborators */}
         {report.creatorName && (
-          <p className="text-xs text-text-secondary flex items-center gap-1">
+          <p className="text-xs text-text-secondary flex items-center gap-1 flex-wrap">
             <span>{t.byCreator}</span>
             <span
               className="font-semibold hover:text-accent transition-colors inline-flex items-center gap-1"
@@ -108,6 +109,28 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                 </span>
               )}
             </span>
+            {report.collaborators && report.collaborators.length > 0 && (
+              <>
+                <span className="text-text-tertiary">&</span>
+                {report.collaborators.slice(0, 2).map((name, i) => (
+                  <span key={name}>
+                    {i > 0 && <span className="text-text-tertiary">, </span>}
+                    <span
+                      className="font-semibold hover:text-accent transition-colors cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.location.href = `/creator/${encodeURIComponent(name)}`;
+                      }}
+                    >
+                      {name}
+                    </span>
+                  </span>
+                ))}
+                {report.collaborators.length > 2 && (
+                  <span className="text-text-tertiary">+{report.collaborators.length - 2}</span>
+                )}
+              </>
+            )}
             {report.placement && !report.isVerified && (
               <span className="text-[9px] text-text-tertiary italic ml-1">(self-reported)</span>
             )}

@@ -13,7 +13,10 @@ export async function generateMetadata({
 
   try {
     const sql = getDb();
-    const rows = await sql`SELECT data FROM shares WHERE id = ${id} AND deleted_at IS NULL`;
+    const [rows, collabRows] = await Promise.all([
+      sql`SELECT data FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
+      sql`SELECT user_name FROM collaborators WHERE share_id = ${id}`,
+    ]);
     if (rows.length === 0) return { title: "VGC Team Report" };
 
     const data = rows[0].data as Record<string, unknown>;
@@ -22,6 +25,7 @@ export async function generateMetadata({
     const creatorName = (data.creatorName as string) ?? "";
     const teamSummary = (data.teamSummary as string) ?? "";
     const species = extractSpecies(paste);
+    const collabNames = collabRows.map((r) => r.user_name as string);
 
     const title = tournamentName
       ? `${tournamentName} - VGC Team Report`
@@ -29,9 +33,13 @@ export async function generateMetadata({
         ? `${species.join(" / ")} - VGC Team Report`
         : "VGC Team Report";
 
+    const authorLabel = creatorName
+      ? `Team by ${creatorName}${collabNames.length ? ` with ${collabNames.join(", ")}` : ""}`
+      : undefined;
+
     const description = teamSummary
-      || (creatorName
-        ? `Team by ${creatorName}: ${species.join(", ")}`
+      || (authorLabel
+        ? `${authorLabel}: ${species.join(", ")}`
         : `Team: ${species.join(", ")}`);
 
     return {
@@ -74,12 +82,21 @@ export default async function SharePage({
   let jsonLd: Record<string, unknown> | null = null;
   try {
     const sql = getDb();
-    const rows = await sql`SELECT data, created_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`;
-    if (rows.length > 0) {
-      const data = rows[0].data as Record<string, unknown>;
+    const [shareRows, jsonLdCollabRows] = await Promise.all([
+      sql`SELECT data, created_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
+      sql`SELECT user_name FROM collaborators WHERE share_id = ${id}`,
+    ]);
+    if (shareRows.length > 0) {
+      const data = shareRows[0].data as Record<string, unknown>;
       const species = extractSpecies((data.paste as string) ?? "");
-      const creatorName = (data.creatorName as string) || undefined;
+      const ldCreatorName = (data.creatorName as string) || undefined;
       const tournamentName = (data.tournamentName as string) || undefined;
+      const ldCollabNames = jsonLdCollabRows.map((r) => r.user_name as string);
+
+      const authors = [
+        ...(ldCreatorName ? [{ "@type": "Person", name: ldCreatorName }] : []),
+        ...ldCollabNames.map((name) => ({ "@type": "Person", name })),
+      ];
 
       jsonLd = {
         "@context": "https://schema.org",
@@ -93,9 +110,9 @@ export default async function SharePage({
         description:
           (data.teamSummary as string) ||
           `VGC team: ${species.join(", ")}`,
-        datePublished: (rows[0].created_at as Date).toISOString(),
-        ...(creatorName && {
-          author: { "@type": "Person", name: creatorName },
+        datePublished: (shareRows[0].created_at as Date).toISOString(),
+        ...(authors.length > 0 && {
+          author: authors.length === 1 ? authors[0] : authors,
         }),
         isPartOf: {
           "@type": "WebApplication",

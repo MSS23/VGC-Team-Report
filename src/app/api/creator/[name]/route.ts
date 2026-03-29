@@ -17,11 +17,19 @@ export async function GET(
 
     const sql = getDb();
 
-    // Fetch public reports by this creator
+    // Fetch public reports where this person is the creator OR a collaborator
     const rows = await sql`
-      SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count
+      SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count, 'creator' as role
       FROM shares
       WHERE is_public = TRUE AND deleted_at IS NULL AND data->>'creatorName' ILIKE ${creatorName}
+
+      UNION
+
+      SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, 'collaborator' as role
+      FROM shares s
+      JOIN collaborators c ON c.share_id = s.id
+      WHERE s.is_public = TRUE AND s.deleted_at IS NULL AND c.user_name ILIKE ${creatorName}
+
       ORDER BY created_at DESC
     `;
 
@@ -49,16 +57,29 @@ export async function GET(
 
     const shareIds = rows.map((r) => r.id as string);
 
-    // Batch reaction counts
-    const reactionRows = await sql`
-      SELECT share_id, COUNT(*)::int as count
-      FROM reactions
-      WHERE share_id = ANY(${shareIds})
-      GROUP BY share_id
-    `;
+    // Batch reaction counts + collaborator names
+    const [reactionRows, collabRows] = await Promise.all([
+      sql`
+        SELECT share_id, COUNT(*)::int as count
+        FROM reactions
+        WHERE share_id = ANY(${shareIds})
+        GROUP BY share_id
+      `,
+      sql`
+        SELECT share_id, user_name FROM collaborators WHERE share_id = ANY(${shareIds})
+      `,
+    ]);
+
     const reactionMap: Record<string, number> = {};
     for (const r of reactionRows) {
       reactionMap[r.share_id as string] = r.count as number;
+    }
+
+    const collabMap: Record<string, string[]> = {};
+    for (const c of collabRows) {
+      const sid = c.share_id as string;
+      if (!collabMap[sid]) collabMap[sid] = [];
+      collabMap[sid].push(c.user_name as string);
     }
 
     const totalReactions = Object.values(reactionMap).reduce((a, b) => a + b, 0);
@@ -77,6 +98,8 @@ export async function GET(
         updatedAt: (row.updated_at as Date).toISOString(),
         viewCount: row.view_count as number,
         reactionCount: reactionMap[row.id as string] ?? 0,
+        collaborators: collabMap[row.id as string] ?? [],
+        role: row.role as string,
       };
     });
 

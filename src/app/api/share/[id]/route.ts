@@ -188,6 +188,7 @@ export async function GET(
           if (sinceVersion && Number(sinceVersion) >= Number(ownerRows[0].version)) {
             return new Response(null, { status: 304 });
           }
+          const collabNameRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id}`;
           return NextResponse.json({
             ...normalizeReportData(ownerRows[0].data as Record<string, unknown>),
             _editable: true,
@@ -195,6 +196,7 @@ export async function GET(
             _version: Number(ownerRows[0].version),
             _isPublic: !!ownerRows[0].is_public,
             _isOwner: isOwner || isCollaborator,
+            _collaborators: collabNameRows.map((r) => r.user_name as string),
           });
         }
       }
@@ -221,10 +223,15 @@ export async function GET(
       return new Response(null, { status: 304 });
     }
 
+    // Fetch collaborator names for public display
+    const collabRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id}`;
+    const collaboratorNames = collabRows.map((r) => r.user_name as string);
+
     const responseData = {
       ...normalizeReportData(rows[0].data as Record<string, unknown>),
       _version: Number(rows[0].version),
       _isPublic: !!rows[0].is_public,
+      _collaborators: collaboratorNames,
     };
 
     // Cache public shares for 5 minutes
