@@ -67,8 +67,8 @@ export function detectChangedSections(oldState: AnyState | null, newState: AnySt
     sections.push(`Spread notes (${changedSpreads.join(", ")})`);
   }
 
-  // Matchup plans
-  if (JSON.stringify(oldState.matchupPlans ?? []) !== JSON.stringify(newState.matchupPlans ?? [])) {
+  // Matchup plans — only compare user-editable content, not structural fields
+  if (matchupPlansChanged(oldState.matchupPlans ?? [], newState.matchupPlans ?? [])) {
     sections.push("Matchup plans");
   }
 
@@ -77,17 +77,29 @@ export function detectChangedSections(oldState: AnyState | null, newState: AnySt
     sections.push("Tags");
   }
 
-  // Hidden slides
-  if (JSON.stringify(oldState.hiddenSlides ?? []) !== JSON.stringify(newState.hiddenSlides ?? [])) {
-    sections.push("Hidden slides");
-  }
-
-  // Visibility
-  if ((oldState.allowComments ?? false) !== (newState.allowComments ?? false)) {
-    sections.push("Comment settings");
-  }
+  // Note: hiddenSlides and allowComments are UI preferences, not report content.
+  // They don't create version snapshots.
 
   return sections;
+}
+
+/** Compare matchup plans by user-editable content only (ignores structural fields like IDs, showSlide) */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function matchupPlansChanged(oldPlans: any[], newPlans: any[]): boolean {
+  if (oldPlans.length !== newPlans.length) return true;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const normalize = (p: any) => JSON.stringify({
+    opponentLabel: p.opponentLabel ?? "",
+    opponentPaste: p.opponentPaste ?? "",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    gamePlans: (p.gamePlans ?? []).map((gp: any) => ({
+      notes: gp.notes ?? "",
+      bring: gp.bring ?? [],
+      result: gp.result ?? null,
+      replays: gp.replays ?? [],
+    })),
+  });
+  return oldPlans.some((p, i) => normalize(p) !== normalize(newPlans[i]));
 }
 
 /** Returns keys where the value changed between two Record<string, unknown> objects */
