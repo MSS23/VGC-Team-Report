@@ -76,7 +76,7 @@ interface NavbarProps {
   compareLoading?: boolean;
 
   // PDF Export
-  onExportPdf?: () => void;
+  onExportPdf?: (mode?: "all-slides" | "tournament-evs" | "tournament-base") => void;
 
   // Tournament mode
   tournamentMode?: boolean;
@@ -115,6 +115,7 @@ export function Navbar(props: NavbarProps) {
   const { t } = useTranslation();
   const { isLoaded, isSignedIn } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [versionPanelOpen, setVersionPanelOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -455,21 +456,54 @@ export function Navbar(props: NavbarProps) {
             </a>
           )}
 
-          {/* PDF Export button — hidden on mobile to reduce navbar congestion */}
+          {/* PDF Export dropdown — hidden on mobile */}
           {onExportPdf && !isPresentationStyle && (
-            <button
-              type="button"
-              onClick={onExportPdf}
-              className="hidden sm:flex w-9 h-9 items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
-              title="Export as PDF"
-              aria-label="Export report as PDF"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-            </button>
+            <div className="relative hidden sm:block">
+              <button
+                type="button"
+                onClick={() => setExportMenuOpen(!exportMenuOpen)}
+                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
+                  exportMenuOpen ? "text-accent bg-surface-alt" : "text-text-tertiary hover:text-accent hover:bg-surface-alt"
+                }`}
+                title="Export as PDF"
+                aria-label="Export report as PDF"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </button>
+              {exportMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setExportMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 w-52 bg-surface border border-border rounded-xl shadow-xl overflow-hidden animate-fade-in">
+                    <button
+                      className="w-full text-left px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-surface-alt/60 transition-colors flex items-center gap-2.5"
+                      onClick={() => { setExportMenuOpen(false); onExportPdf("all-slides"); }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /><path d="M9 3v18" /></svg>
+                      All Slides
+                    </button>
+                    <div className="border-t border-border/50 mx-3 my-0.5" />
+                    <button
+                      className="w-full text-left px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-surface-alt/60 transition-colors flex items-center gap-2.5"
+                      onClick={() => { setExportMenuOpen(false); onExportPdf("tournament-evs"); }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
+                      Tournament (EVs)
+                    </button>
+                    <button
+                      className="w-full text-left px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-surface-alt/60 transition-colors flex items-center gap-2.5"
+                      onClick={() => { setExportMenuOpen(false); onExportPdf("tournament-base"); }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
+                      Tournament (Base Stats)
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
 
           {/* Version history quick button — hidden on mobile, accessible via overflow menu */}
@@ -610,21 +644,37 @@ export function Navbar(props: NavbarProps) {
                   </>
                 )}
 
-                {/* PDF Export (mobile — hidden from top bar) */}
+                {/* PDF Export (mobile — all three options) */}
                 {onExportPdf && !isPresentationStyle && (
                   <>
-                    <div className="border-t border-border/50 mx-3 my-1 sm:hidden" />
+                    <div className="border-t border-border/50 mx-3 my-1" />
                     <button
                       type="button"
-                      onClick={() => { setMenuOpen(false); onExportPdf(); }}
-                      className="sm:hidden w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                      onClick={() => { setMenuOpen(false); onExportPdf("all-slides"); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="7 10 12 15 17 10" />
                         <line x1="12" y1="15" x2="12" y2="3" />
                       </svg>
-                      Export as PDF
+                      Export All Slides
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setMenuOpen(false); onExportPdf("tournament-evs"); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
+                      Export Tournament (EVs)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setMenuOpen(false); onExportPdf("tournament-base"); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
+                      Export Tournament (Base Stats)
                     </button>
                   </>
                 )}

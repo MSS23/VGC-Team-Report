@@ -12,10 +12,14 @@ import { PokemonDetailSlide } from "@/components/report/PokemonDetailSlide";
 import { SpeedTierChart } from "@/components/report/SpeedTierChart";
 import { MatchupPlanSlide } from "@/components/report/MatchupPlanSlide";
 import { MatchupSheet } from "@/components/report/MatchupSheet";
+import { PrintableTournamentMode } from "@/components/report/TournamentMode";
+import type { StatView } from "@/components/report/TournamentMode";
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
 /* ------------------------------------------------------------------ */
+
+export type ExportMode = "all-slides" | "tournament-evs" | "tournament-base";
 
 export interface PdfExportProps {
   analysis: TeamAnalysis;
@@ -34,6 +38,7 @@ export interface PdfExportProps {
   tags?: ReportTags;
   plans: MatchupPlan[];
   getSpriteConfig?: (key: string) => SpriteConfig;
+  exportMode?: ExportMode;
 }
 
 /* ------------------------------------------------------------------ */
@@ -80,8 +85,24 @@ export function PrintableReport({
   tags,
   plans,
   getSpriteConfig,
+  exportMode = "all-slides",
 }: PdfExportProps) {
   const noop = () => {};
+
+  // Tournament mode export
+  if (exportMode === "tournament-evs" || exportMode === "tournament-base") {
+    const statView: StatView = exportMode === "tournament-base" ? "base" : "evs";
+    return (
+      <div className="print-slide">
+        <PrintableTournamentMode
+          analysis={analysis}
+          speciesKeys={speciesKeys}
+          getSpriteConfig={getSpriteConfig}
+          statView={statView}
+        />
+      </div>
+    );
+  }
 
   return (
     <>

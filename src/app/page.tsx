@@ -37,6 +37,7 @@ const CommentSection = dynamic(() => import("@/components/social/CommentSection"
   loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-32" />,
 });
 const PrintableReport = dynamic(() => import("@/components/ui/PdfExport").then(m => ({ default: m.PrintableReport })));
+import type { ExportMode } from "@/components/ui/PdfExport";
 
 export default function Home() {
   return (
@@ -239,20 +240,35 @@ function HomeContent() {
 
   // ── PDF Export state ─────────────────────────────────────────
   const [isPdfPrinting, setIsPdfPrinting] = useState(false);
+  const [exportMode, setExportMode] = useState<ExportMode>("all-slides");
 
-  const handleExportPdf = useCallback(() => {
+  const handleExportPdf = useCallback((mode: ExportMode = "all-slides") => {
+    setExportMode(mode);
     setIsPdfPrinting(true);
   }, []);
 
   useEffect(() => {
     if (!isPdfPrinting) return;
-    // Give React two frames + a small delay to fully render the print container
-    // (sprites and images need time to load)
-    const timer = setTimeout(() => {
-      window.print();
-      setIsPdfPrinting(false);
-    }, 300);
-    return () => clearTimeout(timer);
+    // Wait for the print container to actually render with content,
+    // then give sprites time to load before triggering print
+    let cancelled = false;
+    const waitForContent = () => {
+      const container = document.getElementById("print-container");
+      if (!cancelled && container && container.children.length > 0) {
+        // Content is rendered — wait for sprites to load
+        setTimeout(() => {
+          if (!cancelled) {
+            window.print();
+            setIsPdfPrinting(false);
+          }
+        }, 500);
+      } else if (!cancelled) {
+        // Container not ready — retry next frame
+        requestAnimationFrame(waitForContent);
+      }
+    };
+    requestAnimationFrame(waitForContent);
+    return () => { cancelled = true; };
   }, [isPdfPrinting]);
 
   const versionDiffContextValue = useMemo(() => ({
@@ -850,7 +866,7 @@ function HomeContent() {
     </main>
     {/* Portal print container to body so CSS selector body > *:not(#print-container) works */}
     {isPdfPrinting && analysis && createPortal(
-      <div id="print-container" className="hidden print:block" aria-hidden="true">
+      <div id="print-container" className="fixed left-[-9999px] top-0 w-[210mm] print:static print:left-auto print:w-auto" aria-hidden="true">
         <PrintableReport
           analysis={analysis}
           notes={notes}
@@ -868,6 +884,7 @@ function HomeContent() {
           tags={tags}
           plans={plans}
           getSpriteConfig={getSpriteConfig}
+          exportMode={exportMode}
         />
       </div>,
       document.body
