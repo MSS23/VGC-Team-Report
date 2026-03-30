@@ -133,75 +133,10 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [enabled, totalSlides, bypassFocusGuard, withTransition, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation, onUndo, onRedo, onToggleCreatorMode, onToggleHideSlide, onMoveSlideUp, onMoveSlideDown]);
 
-  // Touch swipe listener with velocity-based detection
-  useEffect(() => {
-    if (!enabled) return;
-
-    let startX = 0;
-    let startY = 0;
-    let startTime = 0;
-    let tracking = false; // true once we commit to a horizontal gesture
-    let decided = false;  // true once direction (horizontal vs vertical) is locked
-
-    const handleTouchStart = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      startX = touch.clientX;
-      startY = touch.clientY;
-      startTime = Date.now();
-      tracking = false;
-      decided = false;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (decided && !tracking) return; // vertical scroll — let it go
-
-      const touch = e.touches[0];
-      const dx = Math.abs(touch.clientX - startX);
-      const dy = Math.abs(touch.clientY - startY);
-
-      // Decide direction after 10px of movement
-      if (!decided && (dx > 10 || dy > 10)) {
-        decided = true;
-        tracking = dx > dy; // horizontal wins
-      }
-
-      // Once we're tracking a horizontal swipe, prevent vertical scroll
-      if (tracking) {
-        e.preventDefault();
-      }
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (!tracking) return; // was a vertical scroll, ignore
-
-      const touch = e.changedTouches[0];
-      const deltaX = touch.clientX - startX;
-      const absDeltaX = Math.abs(deltaX);
-      const elapsed = Math.max(Date.now() - startTime, 1);
-      const velocity = absDeltaX / elapsed; // px/ms
-
-      // Navigate if: distance-based (≥40px) OR velocity-based (fast flick ≥0.3 px/ms with ≥20px)
-      const distanceSwipe = absDeltaX >= 40;
-      const velocitySwipe = velocity >= 0.3 && absDeltaX >= 20;
-
-      if (distanceSwipe || velocitySwipe) {
-        if (deltaX < 0) {
-          withTransition(() => setCurrentSlide((prev) => Math.min(prev + 1, totalSlides - 1)));
-        } else {
-          withTransition(() => setCurrentSlide((prev) => Math.max(prev - 1, 0)));
-        }
-      }
-    };
-
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    window.addEventListener("touchend", handleTouchEnd, { passive: true });
-    return () => {
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, [enabled, totalSlides, withTransition]);
+  // Touch swipe is handled by useSwipeNavigation on the slide container.
+  // Having a second window-level handler here caused conflicts (double-firing,
+  // preventDefault blocking vertical scroll in PWA, swipe eating coverage-chart
+  // horizontal scroll). Removed in favour of the single container-scoped handler.
 
   return {
     currentSlide,

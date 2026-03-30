@@ -16,6 +16,7 @@ import { FieldDiffHighlight } from "./TeamReport";
 import { useIsPrintMode } from "@/components/ui/PdfExport";
 import { GAME_COLORS, getReplayInfo, ReplayIcon } from "@/lib/utils/game-plan-helpers";
 import { useTranslation } from "@/lib/i18n";
+import { hapticLight } from "@/lib/utils/haptics";
 
 interface OpponentPokemonInfo {
   parsed: ReturnType<typeof parseShowdownPaste>["pokemon"][number];
@@ -146,13 +147,18 @@ export function MatchupPlanSlide({
   const { t } = useTranslation();
   const STAT_LABELS = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe } as const;
   const [collapsedPlans, setCollapsedPlans] = useState<Set<string>>(new Set());
+  const [activeGameTab, setActiveGameTab] = useState(0);
   const gamePlansRef = useRef<HTMLDivElement>(null);
   const prevPlanCount = useRef(plan.gamePlans.length);
 
   useEffect(() => {
-    if (plan.gamePlans.length > prevPlanCount.current && gamePlansRef.current) {
-      const lastChild = gamePlansRef.current.lastElementChild;
-      lastChild?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (plan.gamePlans.length > prevPlanCount.current) {
+      // Auto-switch to the new tab on mobile
+      setActiveGameTab(plan.gamePlans.length - 1);
+      if (gamePlansRef.current) {
+        const lastChild = gamePlansRef.current.lastElementChild;
+        lastChild?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     }
     prevPlanCount.current = plan.gamePlans.length;
   }, [plan.gamePlans.length]);
@@ -215,9 +221,12 @@ export function MatchupPlanSlide({
         </div>
 
         <div className="bg-surface border border-border rounded-2xl p-3 sm:p-6">
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-5">
+          <div
+            className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none sm:grid sm:grid-cols-6 gap-3 sm:gap-5 pb-2 sm:pb-0 -mx-1 px-1 sm:mx-0 sm:px-0"
+            style={{ touchAction: "pan-x" }}
+          >
             {opponentPokemon.map((mon, i) => (
-              <div key={i} className="flex flex-col items-center text-center min-h-0">
+              <div key={i} className="flex-shrink-0 w-[140px] sm:w-auto sm:flex-shrink-[unset] snap-center flex flex-col items-center text-center min-h-0">
                 {/* Sprite — fixed height container for alignment */}
                 <div className="h-[56px] sm:h-[72px] flex items-end justify-center mb-1">
                   <PokemonSprite species={mon.parsed.species} size={56} className="sm:hidden" />
@@ -336,30 +345,69 @@ export function MatchupPlanSlide({
           )}
         </div>
 
+        {/* Mobile: tab bar for game plans */}
+        {plan.gamePlans.length > 1 && (
+          <div className="flex gap-1.5 sm:hidden" role="tablist" aria-label="Game plan tabs">
+            {plan.gamePlans.map((gp, gpIndex) => {
+              const color = GAME_COLORS[gpIndex] ?? GAME_COLORS[0];
+              const isActive = activeGameTab === gpIndex;
+              return (
+                <button
+                  key={gp.id}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`game-plan-panel-${gp.id}`}
+                  onClick={() => {
+                    setActiveGameTab(gpIndex);
+                    hapticLight();
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    isActive
+                      ? "bg-surface border border-border shadow-sm"
+                      : "text-text-tertiary hover:bg-surface-alt/50"
+                  }`}
+                >
+                  <span className={`inline-flex items-center justify-center w-6 h-6 rounded-md text-xs font-bold border ${color.badge}`}>
+                    {gpIndex + 1}
+                  </span>
+                  G{gpIndex + 1}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Mobile: only render active tab */}
         {plan.gamePlans.map((gp, gpIndex) => {
           const isCollapsed = collapsedPlans.has(gp.id);
           return (
-            <GamePlanSection
+            <div
               key={gp.id}
-              gamePlan={gp}
-              index={gpIndex}
-              matchupId={plan.id}
-              yourPokemon={yourPokemon}
-              isReadOnly={isReadOnly}
-              isCollapsed={isCollapsed}
-              canDelete={plan.gamePlans.length > 1}
-              onToggle={() => toggleCollapse(gp.id)}
-              onNotesChange={(notes) => onGamePlanNotesChange(plan.id, gp.id, notes)}
-              onReplaysChange={(replays) => onGamePlanReplaysChange(plan.id, gp.id, replays)}
-              onBringChange={(bringIndex, pokemonIndex) =>
-                onGamePlanBringChange(plan.id, gp.id, bringIndex, pokemonIndex)
-              }
-              onReorderBring={(fromIndex, toIndex) =>
-                onReorderGamePlanBring(plan.id, gp.id, fromIndex, toIndex)
-              }
-              onResultChange={(result) => onGamePlanResultChange(plan.id, gp.id, result)}
-              onDelete={() => onRemoveGamePlan(plan.id, gp.id)}
-            />
+              id={`game-plan-panel-${gp.id}`}
+              role="tabpanel"
+              className={plan.gamePlans.length > 1 && gpIndex !== activeGameTab ? "hidden sm:block" : ""}
+            >
+              <GamePlanSection
+                gamePlan={gp}
+                index={gpIndex}
+                matchupId={plan.id}
+                yourPokemon={yourPokemon}
+                isReadOnly={isReadOnly}
+                isCollapsed={isCollapsed}
+                canDelete={plan.gamePlans.length > 1}
+                onToggle={() => toggleCollapse(gp.id)}
+                onNotesChange={(notes) => onGamePlanNotesChange(plan.id, gp.id, notes)}
+                onReplaysChange={(replays) => onGamePlanReplaysChange(plan.id, gp.id, replays)}
+                onBringChange={(bringIndex, pokemonIndex) =>
+                  onGamePlanBringChange(plan.id, gp.id, bringIndex, pokemonIndex)
+                }
+                onReorderBring={(fromIndex, toIndex) =>
+                  onReorderGamePlanBring(plan.id, gp.id, fromIndex, toIndex)
+                }
+                onResultChange={(result) => onGamePlanResultChange(plan.id, gp.id, result)}
+                onDelete={() => onRemoveGamePlan(plan.id, gp.id)}
+              />
+            </div>
           );
         })}
       </div>

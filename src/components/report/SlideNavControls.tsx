@@ -1,6 +1,8 @@
 "use client";
 
+import { useRef, useState, useCallback } from "react";
 import { useTranslation } from "@/lib/i18n";
+import { hapticLight } from "@/lib/utils/haptics";
 
 interface SlideNavControlsProps {
   currentSlide: number;
@@ -48,6 +50,87 @@ export function SlideNavControls({
   const { t } = useTranslation();
   const hiddenCount = hiddenStates?.filter(Boolean).length ?? 0;
 
+  // --- Mobile progress bar state ---
+  const barRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [tooltipLabel, setTooltipLabel] = useState<string | null>(null);
+  const [tooltipX, setTooltipX] = useState(0);
+  const lastSlideRef = useRef(currentSlide);
+
+  const resolveSlideFromX = useCallback(
+    (clientX: number): number => {
+      const bar = barRef.current;
+      if (!bar) return currentSlide;
+      const rect = bar.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      return Math.min(totalSlides - 1, Math.max(0, Math.round(ratio * (totalSlides - 1))));
+    },
+    [currentSlide, totalSlides],
+  );
+
+  const handleBarTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      const touch = e.touches[0];
+      const idx = resolveSlideFromX(touch.clientX);
+      setIsDragging(true);
+      lastSlideRef.current = idx;
+
+      const bar = barRef.current;
+      if (bar) {
+        const rect = bar.getBoundingClientRect();
+        setTooltipX(touch.clientX - rect.left);
+      }
+      setTooltipLabel(slideLabels[idx] ?? null);
+
+      if (idx !== currentSlide) {
+        hapticLight();
+        onGoTo(idx);
+      }
+    },
+    [resolveSlideFromX, currentSlide, onGoTo, slideLabels],
+  );
+
+  const handleBarTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      const idx = resolveSlideFromX(touch.clientX);
+
+      const bar = barRef.current;
+      if (bar) {
+        const rect = bar.getBoundingClientRect();
+        setTooltipX(Math.max(0, Math.min(rect.width, touch.clientX - rect.left)));
+      }
+      setTooltipLabel(slideLabels[idx] ?? null);
+
+      if (idx !== lastSlideRef.current) {
+        lastSlideRef.current = idx;
+        hapticLight();
+        onGoTo(idx);
+      }
+    },
+    [isDragging, resolveSlideFromX, onGoTo, slideLabels],
+  );
+
+  const handleBarTouchEnd = useCallback(() => {
+    setIsDragging(false);
+    setTooltipLabel(null);
+  }, []);
+
+  const handleBarClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const idx = resolveSlideFromX(e.clientX);
+      if (idx !== currentSlide) {
+        hapticLight();
+        onGoTo(idx);
+      }
+    },
+    [resolveSlideFromX, currentSlide, onGoTo],
+  );
+
+  // Progress fraction for the bar
+  const progress = totalSlides <= 1 ? 1 : currentSlide / (totalSlides - 1);
+
   return (
     <div
       role="navigation"
@@ -59,7 +142,7 @@ export function SlideNavControls({
           : "bg-surface/95 backdrop-blur-2xl border-t border-border/60"
       }`}
     >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-1.5 flex items-center gap-2 sm:gap-3">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-1 sm:py-1.5 flex items-center gap-2 sm:gap-3">
         {/* === LEFT: Prev === */}
         <button
           onClick={onPrev}
@@ -73,10 +156,56 @@ export function SlideNavControls({
           <span className="hidden sm:inline">{t.prev}</span>
         </button>
 
-        {/* === CENTER: Dots + label === */}
+        {/* === CENTER: Mobile progress bar / Desktop dots === */}
         <div className="flex-1 min-w-0 flex items-center justify-center gap-2">
-          {/* Dots */}
-          <div role="tablist" aria-label="Slides" className="flex items-center gap-[5px] overflow-x-auto scrollbar-none">
+          {/* --- Mobile: draggable progress bar (< 640px) --- */}
+          <div className="flex sm:hidden flex-1 flex-col items-center gap-0.5">
+            <div
+              ref={barRef}
+              className="relative w-full h-5 flex items-center touch-none cursor-pointer"
+              onTouchStart={handleBarTouchStart}
+              onTouchMove={handleBarTouchMove}
+              onTouchEnd={handleBarTouchEnd}
+              onClick={handleBarClick}
+              role="slider"
+              aria-label="Slide progress"
+              aria-valuemin={1}
+              aria-valuemax={totalSlides}
+              aria-valuenow={currentSlide + 1}
+              aria-valuetext={slideLabels[currentSlide]}
+              tabIndex={0}
+            >
+              {/* Tooltip */}
+              {isDragging && tooltipLabel && (
+                <div
+                  className="absolute -top-8 px-2 py-0.5 rounded bg-surface-alt text-text-primary text-[11px] font-semibold shadow-lg whitespace-nowrap pointer-events-none -translate-x-1/2 border border-border/40"
+                  style={{ left: tooltipX }}
+                >
+                  {tooltipLabel}
+                </div>
+              )}
+
+              {/* Track */}
+              <div className="w-full h-1.5 rounded-full bg-text-tertiary/20 relative overflow-hidden">
+                {/* Filled portion */}
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-accent transition-[width] duration-100 ease-out"
+                  style={{ width: `${progress * 100}%` }}
+                />
+              </div>
+
+              {/* Thumb */}
+              <div
+                className={`absolute w-3 h-3 rounded-full bg-accent shadow-sm shadow-accent/30 -translate-x-1/2 pointer-events-none transition-opacity duration-150 ${
+                  isDragging ? "opacity-100 scale-110" : "opacity-70"
+                }`}
+                style={{ left: `${progress * 100}%` }}
+              />
+            </div>
+          </div>
+
+          {/* --- Desktop: dot indicators (sm: and above) --- */}
+          <div role="tablist" aria-label="Slides" className="hidden sm:flex items-center gap-[5px] overflow-x-auto scrollbar-none">
             {Array.from({ length: totalSlides }, (_, i) => {
               const isHidden = hiddenStates?.[i] ?? false;
               const isCurrent = i === currentSlide;
@@ -108,6 +237,7 @@ export function SlideNavControls({
               );
             })}
           </div>
+
           {/* Counter */}
           <span className="text-[11px] text-text-tertiary font-semibold tabular-nums flex-shrink-0">
             <span className="hidden sm:inline font-bold text-text-secondary">{slideLabels[currentSlide]}</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 // QRCode loaded dynamically — only needed when rental code is present
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { SpriteConfig } from "@/lib/types/sprites";
@@ -10,6 +10,69 @@ import { useTranslation } from "@/lib/i18n";
 import { ARCHETYPES, REGULATIONS, EVENT_TYPES } from "@/lib/data/tags";
 import type { ReportTags } from "@/lib/data/tags";
 import { FieldDiffHighlight } from "./TeamReport";
+import { hapticMedium } from "@/lib/utils/haptics";
+
+/** Wraps a card with a long-press gesture (500ms hold). Passes through all other props to a div. */
+function LongPressWrapper({
+  onLongPress,
+  children,
+  className,
+  draggable,
+  onDragStart,
+  onDragEnd,
+  onDragEnter,
+  onDragLeave,
+  onDragOver,
+  onDrop,
+}: {
+  onLongPress?: () => void;
+  children: React.ReactNode;
+  className?: string;
+  draggable?: boolean;
+  onDragStart?: React.DragEventHandler;
+  onDragEnd?: React.DragEventHandler;
+  onDragEnter?: React.DragEventHandler;
+  onDragLeave?: React.DragEventHandler;
+  onDragOver?: React.DragEventHandler;
+  onDrop?: React.DragEventHandler;
+}) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelled = useRef(false);
+
+  const start = useCallback(() => {
+    if (!onLongPress) return;
+    cancelled.current = false;
+    timer.current = setTimeout(() => {
+      if (!cancelled.current) {
+        hapticMedium();
+        onLongPress();
+      }
+    }, 500);
+  }, [onLongPress]);
+
+  const cancel = useCallback(() => {
+    cancelled.current = true;
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
+  return (
+    <div
+      className={className}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragEnter={onDragEnter}
+      onDragLeave={onDragLeave}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onTouchStart={start}
+      onTouchEnd={cancel}
+      onTouchMove={cancel}
+    >
+      {children}
+    </div>
+  );
+}
 
 interface TeamOverviewProps {
   pokemon: AnalyzedPokemon[];
@@ -36,6 +99,8 @@ interface TeamOverviewProps {
   isReadOnly: boolean;
   getSpriteConfig?: (key: string) => SpriteConfig;
   onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
+  /** Long-press a Pokemon card to navigate to its detail slide (mobile gesture) */
+  onPokemonLongPress?: (index: number) => void;
 }
 
 export function TeamOverview({
@@ -63,6 +128,7 @@ export function TeamOverview({
   isReadOnly,
   getSpriteConfig,
   onReorderPokemon,
+  onPokemonLongPress,
 }: TeamOverviewProps) {
   const { t } = useTranslation();
   const hasTournamentInfo = !!(tournamentName || placement || record);
@@ -331,10 +397,11 @@ export function TeamOverview({
           const isDragging = dragIndex === i;
           const isDragOver = dragOverIndex === i && dragIndex !== i;
           return (
-            <div
+            <LongPressWrapper
               key={`${mon.parsed.species}-${i}`}
+              onLongPress={onPokemonLongPress ? () => onPokemonLongPress(i) : undefined}
               draggable={canDrag}
-              onDragStart={(e) => {
+              onDragStart={(e: React.DragEvent) => {
                 setDragIndex(i);
                 e.dataTransfer.effectAllowed = "move";
                 e.dataTransfer.setData("text/plain", String(i));
@@ -389,7 +456,7 @@ export function TeamOverview({
                 animated={sc?.animated}
               />
               </FieldDiffHighlight>
-            </div>
+            </LongPressWrapper>
           );
         })}
       </div>

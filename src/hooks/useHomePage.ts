@@ -272,12 +272,8 @@ export function useHomePage() {
     parseTeam(share.sharedState.paste);
   }, [share.sharedState, setPaste, parseTeam, setCreatorMode]);
 
-  // Auto-enable creator mode when editing is unlocked (owner or edit key)
-  useEffect(() => {
-    if (share.isEditingUnlocked) {
-      setCreatorMode(true);
-    }
-  }, [share.isEditingUnlocked, setCreatorMode]);
+  // Reports always open in viewer mode — owners can toggle to edit manually.
+  // isEditingUnlocked still controls whether the edit toggle is available.
 
   useEffect(() => {
     if (!share.sharedState || !analysis || hasHydrated.current) return;

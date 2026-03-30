@@ -13,6 +13,8 @@ import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
 import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
 import { ShareViewCTA } from "@/components/ui/ShareViewCTA";
 import { SwipeHint } from "@/components/ui/SwipeHint";
+import { EditFab } from "@/components/ui/EditFab";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { Navbar } from "@/components/layout/Navbar";
 import { ReactionBar } from "@/components/social/ReactionBar";
 import { CreatorLink } from "@/components/social/CreatorLink";
@@ -307,6 +309,9 @@ function HomeContent() {
   const handleDiffNavigate = useCallback((change: DiffChange) => {
     goToSlide(change.slide);
   }, [goToSlide]);
+
+  // Long-press a Pokemon card in overview → jump to its detail slide
+  const handlePokemonLongPress = useCallback((index: number) => goToSlide(index + 1), [goToSlide]);
 
   // Swipe navigation for mobile
   const swipeRef = useSwipeNavigation({
@@ -705,6 +710,7 @@ function HomeContent() {
           onAddPlan={addPlan}
           getSpriteConfig={getSpriteConfig}
           onReorderPokemon={isReadOnly ? undefined : reorderPokemon}
+          onPokemonLongPress={handlePokemonLongPress}
         />
         </>
         )}
@@ -735,6 +741,22 @@ function HomeContent() {
           changedSlides={versionDiff?.changedSlides}
         />
       )}
+
+      {/* Edit mode FAB for mobile (shared views with edit access) */}
+      <EditFab
+        creatorMode={creatorMode}
+        onToggle={() => setCreatorMode(!creatorMode)}
+        visible={isSharedView && isEditingUnlocked && !isPresentationStyle}
+      />
+
+      {/* Pull-to-refresh for PWA shared views */}
+      <PullToRefresh
+        enabled={isSharedView && !isPresentationStyle}
+        onRefresh={async () => {
+          // Trigger a re-fetch by reloading the page in shared views
+          window.location.reload();
+        }}
+      />
 
       {/* Swipe hint for mobile (one-time) */}
       <SwipeHint />

@@ -25,11 +25,26 @@ export function useSwipeNavigation({
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const ignoreSwipe = useRef(false);
+
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
       if (!enabled) return;
       touchEnd.current = null;
       isDragging.current = false;
+
+      // Don't hijack swipes that start inside a horizontally scrollable element
+      // (e.g. coverage chart tables with overflow-x-auto)
+      let node = e.target as HTMLElement | null;
+      ignoreSwipe.current = false;
+      while (node && node !== containerRef.current) {
+        if (node.scrollWidth > node.clientWidth + 1 && getComputedStyle(node).overflowX !== "hidden") {
+          ignoreSwipe.current = true;
+          break;
+        }
+        node = node.parentElement;
+      }
+
       touchStart.current = {
         x: e.targetTouches[0].clientX,
         y: e.targetTouches[0].clientY,
@@ -40,7 +55,7 @@ export function useSwipeNavigation({
 
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
-      if (!enabled || !touchStart.current) return;
+      if (!enabled || !touchStart.current || ignoreSwipe.current) return;
       touchEnd.current = {
         x: e.targetTouches[0].clientX,
         y: e.targetTouches[0].clientY,
@@ -67,7 +82,13 @@ export function useSwipeNavigation({
   );
 
   const handleTouchEnd = useCallback(() => {
-    if (!enabled || !touchStart.current || !touchEnd.current) return;
+    if (!enabled || !touchStart.current || !touchEnd.current || ignoreSwipe.current) {
+      touchStart.current = null;
+      touchEnd.current = null;
+      isDragging.current = false;
+      ignoreSwipe.current = false;
+      return;
+    }
 
     const el = containerRef.current;
 

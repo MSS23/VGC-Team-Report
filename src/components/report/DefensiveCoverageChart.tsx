@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { PokemonType } from "@/lib/types/pokemon";
 import { getDefensiveProfile } from "@/lib/data/type-chart";
 import { TYPE_COLORS } from "@/lib/utils/type-colors";
+import { hapticLight } from "@/lib/utils/haptics";
 
 const ALL_TYPES: PokemonType[] = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -36,6 +38,7 @@ function effectivenessCell(mult: number): { bg: string; text: string; ring?: str
 }
 
 export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps) {
+  const [highlightedType, setHighlightedType] = useState<PokemonType | null>(null);
 
   const profiles = pokemon.map((mon) => {
     const types = mon.data?.types ?? [];
@@ -115,7 +118,7 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
       )}
 
       {/* Heatmap grid */}
-      <div className="overflow-x-auto -mx-2 px-2 scrollbar-none">
+      <div className="overflow-x-auto -mx-2 px-2 scrollbar-none" style={{ touchAction: "pan-x" }}>
         <table className="w-full border-collapse text-center" style={{ minWidth: 640 }}>
           <thead>
             <tr>
@@ -125,9 +128,16 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
               {ALL_TYPES.map((type) => {
                 const tc = TYPE_COLORS[type];
                 return (
-                  <th key={type} className="px-0.5 py-2">
+                  <th
+                    key={type}
+                    className="px-0.5 py-2 cursor-pointer select-none"
+                    onClick={() => {
+                      hapticLight();
+                      setHighlightedType((prev) => (prev === type ? null : type));
+                    }}
+                  >
                     <span
-                      className="inline-block w-full px-1 py-1 text-[9px] sm:text-[11px] font-bold uppercase rounded-md leading-tight"
+                      className={`inline-block w-full px-1 py-1 text-[9px] sm:text-[11px] font-bold uppercase rounded-md leading-tight transition-opacity ${highlightedType && highlightedType !== type ? "opacity-50" : ""}`}
                       style={{ backgroundColor: tc.bg, color: tc.text }}
                       title={type}
                     >
@@ -148,12 +158,14 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
                   const mult = p.profile[attackType];
                   const label = effectivenessLabel(mult);
                   const cell = effectivenessCell(mult);
+                  const isHighlighted = highlightedType === attackType;
+                  const isDimmed = highlightedType !== null && !isHighlighted;
                   return (
-                    <td key={attackType} className="px-0.5 py-1">
+                    <td key={attackType} className={`px-0.5 py-1 transition-opacity ${isDimmed ? "opacity-50" : ""}`}>
                       <span
-                        className={`inline-flex items-center justify-center w-full h-7 sm:h-8 rounded-lg text-[11px] sm:text-xs tabular-nums ${cell.bg} ${cell.text} ${cell.ring ?? ""} ${
+                        className={`inline-flex items-center justify-center w-full h-9 sm:h-8 rounded-lg text-[11px] sm:text-xs tabular-nums ${cell.bg} ${cell.text} ${cell.ring ?? ""} ${
                           mult >= 4 ? "font-black text-[13px] sm:text-sm" : mult >= 2 ? "font-extrabold" : "font-bold"
-                        }`}
+                        } ${isHighlighted ? "ring-2 ring-accent/40" : ""}`}
                         style={cell.style}
                         title={`${attackType} → ${p.species}: ${mult}x`}
                       >
@@ -169,21 +181,25 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
               <td className="sticky left-0 z-10 bg-background px-2 py-2 text-left text-[10px] sm:text-xs font-extrabold text-text-tertiary uppercase tracking-wider">
                 Team Weak
               </td>
-              {teamSummary.map(({ type, weakCount }) => (
-                <td key={type} className="px-0.5 py-1">
-                  <span className={`inline-flex items-center justify-center w-full h-7 sm:h-8 rounded-md text-[11px] sm:text-xs font-extrabold tabular-nums ${
-                    weakCount >= 3
-                      ? "bg-red-500/30 text-red-300 ring-1 ring-red-500/40"
-                      : weakCount === 2
-                        ? "bg-amber-500/20 text-amber-400"
-                        : weakCount === 1
-                          ? "text-text-tertiary"
-                          : "text-text-tertiary/25"
-                  }`}>
-                    {weakCount > 0 ? weakCount : "\u2013"}
-                  </span>
-                </td>
-              ))}
+              {teamSummary.map(({ type, weakCount }) => {
+                const isHighlighted = highlightedType === type;
+                const isDimmed = highlightedType !== null && !isHighlighted;
+                return (
+                  <td key={type} className={`px-0.5 py-1 transition-opacity ${isDimmed ? "opacity-50" : ""}`}>
+                    <span className={`inline-flex items-center justify-center w-full h-9 sm:h-8 rounded-md text-[11px] sm:text-xs font-extrabold tabular-nums ${
+                      weakCount >= 3
+                        ? "bg-red-500/30 text-red-300 ring-1 ring-red-500/40"
+                        : weakCount === 2
+                          ? "bg-amber-500/20 text-amber-400"
+                          : weakCount === 1
+                            ? "text-text-tertiary"
+                            : "text-text-tertiary/25"
+                    } ${isHighlighted ? "ring-2 ring-accent/40" : ""}`}>
+                      {weakCount > 0 ? weakCount : "\u2013"}
+                    </span>
+                  </td>
+                );
+              })}
             </tr>
           </tbody>
         </table>

@@ -10,6 +10,7 @@ import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
 import { NotificationBell } from "@/components/ui/NotificationBell";
 import { VersionHistoryPanel } from "@/components/social/VersionHistoryPanel";
+import { hapticLight, hapticMedium } from "@/lib/utils/haptics";
 
 interface NavbarProps {
   // Mode flags
@@ -308,7 +309,7 @@ export function Navbar(props: NavbarProps) {
                 </Button>
               ) : showUser ? (
                 <>
-                  <Button variant="secondary" size="sm" onClick={onShareClick} disabled={shareStatus === "copying"} data-walkthrough="share-button">
+                  <Button variant="secondary" size="sm" onClick={() => { hapticLight(); onShareClick(); }} disabled={shareStatus === "copying"} data-walkthrough="share-button">
                     {shareButtonText}
                   </Button>
                   {hasExistingShare && isOwner && (
@@ -343,7 +344,7 @@ export function Navbar(props: NavbarProps) {
               {/* Edit/View toggle — visible on mobile for owners */}
               <button
                 type="button"
-                onClick={() => onSetCreatorMode(!creatorMode)}
+                onClick={() => { hapticMedium(); onSetCreatorMode(!creatorMode); }}
                 className={`sm:hidden w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
                   creatorMode
                     ? "text-accent bg-accent/10"
@@ -398,7 +399,7 @@ export function Navbar(props: NavbarProps) {
               <Button
                 variant={creatorMode ? "secondary" : "ghost"}
                 size="sm"
-                onClick={() => onSetCreatorMode(!creatorMode)}
+                onClick={() => { hapticMedium(); onSetCreatorMode(!creatorMode); }}
                 title={creatorMode ? "Lock editing" : "Unlock editing"}
                 className={creatorMode ? "!bg-accent/15 !text-accent !border-accent/40 hover:!bg-accent/25" : ""}
               >
