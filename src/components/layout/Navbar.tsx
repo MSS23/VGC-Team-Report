@@ -312,23 +312,7 @@ export function Navbar(props: NavbarProps) {
                   <Button variant="secondary" size="sm" onClick={() => { hapticLight(); onShareClick(); }} disabled={shareStatus === "copying"} data-walkthrough="share-button">
                     {shareButtonText}
                   </Button>
-                  {hasExistingShare && isOwner && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={onCopyEditLink}
-                      title="Copy collab link — anyone with this link who signs in can edit"
-                      className="hidden sm:inline-flex"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <path d="M23 21v-2a4 4 0 00-3-3.87" />
-                        <path d="M16 3.13a4 4 0 010 7.75" />
-                      </svg>
-                      <span className="hidden lg:inline">{editLinkCopied ? t.copied : "Collab"}</span>
-                    </Button>
-                  )}
+                  {/* Collab link moved to overflow menu */}
                 </>
               ) : (
                 <SignInButton mode="modal">
@@ -341,27 +325,9 @@ export function Navbar(props: NavbarProps) {
           )}
           {isSharedView && isEditingUnlocked && (
             <>
-              {/* Edit toggle moved to FAB (bottom-right) — navbar only has save/collab */}
               <Button variant="secondary" size="sm" onClick={onReshare} disabled={shareStatus === "copying"}>
                 {shareStatus === "copying" ? t.saving : shareStatus === "copied" ? (lastShareResult?.updated ? t.savedBang : t.copied) : shareStatus === "error" ? t.failed : t.reshare}
               </Button>
-              {hasExistingShare && isOwner && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onCopyEditLink}
-                  title="Copy collab link — anyone with this link who signs in can edit"
-                  className="hidden sm:inline-flex"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 00-3-3.87" />
-                    <path d="M16 3.13a4 4 0 010 7.75" />
-                  </svg>
-                  <span className="hidden lg:inline">{editLinkCopied ? t.copied : "Collab"}</span>
-                </Button>
-              )}
               {showSignIn && (
                 <SignInButton mode="modal">
                   <button className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold text-accent bg-accent-surface/60 border border-accent/20 rounded-lg hover:bg-accent-surface transition-all cursor-pointer">
@@ -372,53 +338,10 @@ export function Navbar(props: NavbarProps) {
             </>
           )}
 
-          {/* Creator mode toggle (local draft) — hidden on mobile, in overflow menu */}
-          {isLocalDraft && (
-            <div data-walkthrough="creator-toggle" className="hidden sm:block">
-              <Button
-                variant={creatorMode ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => { hapticMedium(); onSetCreatorMode(!creatorMode); }}
-                title={creatorMode ? "Lock editing" : "Unlock editing"}
-                className={creatorMode ? "!bg-accent/15 !text-accent !border-accent/40 hover:!bg-accent/25" : ""}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  {creatorMode ? <path d="M7 11V7a5 5 0 019.9-1" /> : <path d="M7 11V7a5 5 0 0110 0v4" />}
-                </svg>
-                <span className="hidden sm:inline tracking-wide">{creatorMode ? t.editing : t.locked}</span>
-              </Button>
-            </div>
-          )}
+          {/* Creator mode toggle — in overflow menu */}
 
-          {/* Tournament mode toggle — hidden on mobile, in overflow menu */}
-          {onSetTournamentMode && !isPresentationStyle && (
-            <button
-              type="button"
-              onClick={() => onSetTournamentMode(!tournamentMode)}
-              className={`hidden sm:flex w-9 h-9 items-center justify-center rounded-lg transition-colors cursor-pointer ${
-                tournamentMode
-                  ? "bg-amber-500/15 text-amber-500 ring-1 ring-amber-500/40"
-                  : "text-text-tertiary hover:text-amber-500 hover:bg-surface-alt"
-              }`}
-              title={tournamentMode ? "Exit tournament mode" : "Tournament mode — quick battle reference"}
-              aria-label={tournamentMode ? "Exit tournament mode" : "Tournament mode"}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 9H4.5a2.5 2.5 0 010-5H6" />
-                <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
-                <path d="M4 22h16" />
-                <path d="M10 22V2h4v20" />
-              </svg>
-            </button>
-          )}
-
-          {/* Present / Exit presentation */}
-          {!isPresentationStyle ? (
-            <Button variant="primary" size="sm" onClick={() => onSetPresentationMode(true)} data-walkthrough="present-button" className="hidden sm:inline-flex">
-              <span>{t.present}</span>
-            </Button>
-          ) : (
+          {/* Exit presentation (only visible in presentation mode) */}
+          {isPresentationStyle && (
             <>
               <button
                 onClick={() => onShowShortcuts(true)}
@@ -446,70 +369,7 @@ export function Navbar(props: NavbarProps) {
             </a>
           )}
 
-          {/* PDF Export dropdown — hidden on mobile */}
-          {onExportPdf && !isPresentationStyle && (
-            <div className="relative hidden sm:block">
-              <button
-                type="button"
-                onClick={() => setExportMenuOpen(!exportMenuOpen)}
-                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
-                  exportMenuOpen ? "text-accent bg-surface-alt" : "text-text-tertiary hover:text-accent hover:bg-surface-alt"
-                }`}
-                title="Export as PDF"
-                aria-label="Export report as PDF"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-              </button>
-              {exportMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setExportMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 w-52 bg-surface border border-border rounded-xl shadow-xl overflow-hidden animate-fade-in">
-                    <button
-                      className="w-full text-left px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-surface-alt/60 transition-colors flex items-center gap-2.5"
-                      onClick={() => { setExportMenuOpen(false); onExportPdf("all-slides"); }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /><path d="M9 3v18" /></svg>
-                      All Slides
-                    </button>
-                    <div className="border-t border-border/50 mx-3 my-0.5" />
-                    <button
-                      className="w-full text-left px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-surface-alt/60 transition-colors flex items-center gap-2.5"
-                      onClick={() => { setExportMenuOpen(false); onExportPdf("tournament-evs"); }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
-                      Tournament (EVs)
-                    </button>
-                    <button
-                      className="w-full text-left px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-surface-alt/60 transition-colors flex items-center gap-2.5"
-                      onClick={() => { setExportMenuOpen(false); onExportPdf("tournament-stats"); }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
-                      Tournament (Stats)
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Version history quick button — hidden on mobile, accessible via overflow menu */}
-          {canShowVersionHistory && !isPresentationStyle && (
-            <button
-              type="button"
-              onClick={() => setVersionPanelOpen(true)}
-              className="hidden sm:flex w-9 h-9 items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
-              title="Version history"
-              aria-label="Open version history"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-              </svg>
-            </button>
-          )}
+          {/* PDF export, version history, tournament mode — all in overflow menu now */}
 
           {/* ── Overflow menu (settings, auth, theme) ── */}
           <div className="relative" ref={menuRef}>
@@ -616,12 +476,12 @@ export function Navbar(props: NavbarProps) {
                   </>
                 )}
 
-                {/* Creator mode toggle (mobile) */}
+                {/* Creator mode toggle */}
                 {isLocalDraft && (
                   <button
                     type="button"
                     onClick={() => { setMenuOpen(false); onSetCreatorMode(!creatorMode); }}
-                    className="sm:hidden w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={creatorMode ? "text-accent" : ""}>
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -631,12 +491,12 @@ export function Navbar(props: NavbarProps) {
                   </button>
                 )}
 
-                {/* Collab link (mobile — for shared editable reports) */}
-                {isSharedView && isEditingUnlocked && hasExistingShare && isOwner && (
+                {/* Collab link */}
+                {hasExistingShare && isOwner && (
                   <button
                     type="button"
                     onClick={() => { setMenuOpen(false); onCopyEditLink(); }}
-                    className="sm:hidden w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
@@ -646,12 +506,12 @@ export function Navbar(props: NavbarProps) {
                   </button>
                 )}
 
-                {/* Present mode (mobile) */}
+                {/* Present mode */}
                 {!isPresentationStyle && (
                   <button
                     type="button"
                     onClick={() => { setMenuOpen(false); onSetPresentationMode(true); }}
-                    className="sm:hidden w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-accent hover:bg-surface-alt/50 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-accent hover:bg-surface-alt/50 transition-colors"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="5,3 19,12 5,21" fill="currentColor" stroke="none" />
@@ -660,14 +520,14 @@ export function Navbar(props: NavbarProps) {
                   </button>
                 )}
 
-                {/* Tournament mode (mobile) */}
+                {/* Tournament mode */}
                 {onSetTournamentMode && !isPresentationStyle && (
                   <>
-                    <div className="border-t border-border/50 mx-3 my-1 sm:hidden" />
+                    <div className="border-t border-border/50 mx-3 my-1" />
                     <button
                       type="button"
                       onClick={() => { setMenuOpen(false); onSetTournamentMode(!tournamentMode); }}
-                      className="sm:hidden w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={tournamentMode ? "text-amber-500" : ""}>
                         <path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" />
