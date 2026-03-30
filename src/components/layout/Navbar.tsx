@@ -341,44 +341,7 @@ export function Navbar(props: NavbarProps) {
           )}
           {isSharedView && isEditingUnlocked && (
             <>
-              {/* Edit/View toggle — mobile: icon button, desktop: labeled button */}
-              <button
-                type="button"
-                onClick={() => { hapticMedium(); onSetCreatorMode(!creatorMode); }}
-                className={`sm:hidden w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
-                  creatorMode
-                    ? "text-accent bg-accent/10"
-                    : "text-text-tertiary hover:text-text-primary"
-                }`}
-                title={creatorMode ? "Switch to view mode" : "Switch to edit mode"}
-                aria-label={creatorMode ? "Switch to view mode" : "Switch to edit mode"}
-              >
-                {creatorMode ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                  </svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                  </svg>
-                )}
-              </button>
-              <Button
-                variant={creatorMode ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => { hapticMedium(); onSetCreatorMode(!creatorMode); }}
-                className={`hidden sm:inline-flex ${creatorMode ? "!bg-accent/15 !text-accent !border-accent/40 hover:!bg-accent/25" : ""}`}
-                title={creatorMode ? "Switch to view mode" : "Switch to edit mode"}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  {creatorMode ? (
-                    <><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></>
-                  ) : (
-                    <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>
-                  )}
-                </svg>
-                <span className="tracking-wide">{creatorMode ? "Editing" : "View only"}</span>
-              </Button>
+              {/* Edit toggle moved to FAB (bottom-right) — navbar only has save/collab */}
               <Button variant="secondary" size="sm" onClick={onReshare} disabled={shareStatus === "copying"}>
                 {shareStatus === "copying" ? t.saving : shareStatus === "copied" ? (lastShareResult?.updated ? t.savedBang : t.copied) : shareStatus === "error" ? t.failed : t.reshare}
               </Button>
