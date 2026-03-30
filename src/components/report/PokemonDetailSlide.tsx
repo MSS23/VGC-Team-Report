@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useIsMobile } from "@/hooks/useIsMobile";
 import { hapticLight } from "@/lib/utils/haptics";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { CalcEntry, CalcCategory } from "@/hooks/useDamageCalcs";
@@ -377,7 +376,6 @@ export function PokemonDetailSlide({
   };
 
   // ── Mobile card tabs ──────────────────────────────────────────────
-  const isMobile = useIsMobile();
   const MOBILE_TABS = ["set", "stats", "notes", "calcs"] as const;
   type MobileTab = typeof MOBILE_TABS[number];
   const [mobileTab, setMobileTab] = useState<MobileTab>("set");
@@ -638,11 +636,11 @@ export function PokemonDetailSlide({
     </FieldDiffHighlight>
   );
 
-  // ── Mobile: card-based tabbed layout ──────────────────────────────
-  if (isMobile) {
-    return (
-      <div className="flex flex-col gap-3 animate-fade-in">
-        {/* Hero header — always visible */}
+  // ── Single return: mobile tabs + desktop two-column via CSS ─────
+  return (
+    <div className="animate-fade-in">
+      {/* ── Mobile: card-based tabbed layout (< 640px) ── */}
+      <div className="sm:hidden flex flex-col gap-3">
         <FieldDiffHighlight field={pokemonIndex !== undefined ? [`pokemon:${pokemonIndex}`] : []} label="Set changed">
           {renderHeroHeader()}
         </FieldDiffHighlight>
@@ -666,43 +664,29 @@ export function PokemonDetailSlide({
           ))}
         </div>
 
-        {/* Active card content */}
         <div className="min-h-[200px]">
-          {mobileTab === "set" && (
-            <div className="flex flex-col gap-3">
-              {renderMoves()}
-            </div>
-          )}
-          {mobileTab === "stats" && (
-            <div className="flex flex-col gap-3">
-              {renderStats()}
-              {renderSpreadNote()}
-            </div>
-          )}
+          {mobileTab === "set" && <div className="flex flex-col gap-3">{renderMoves()}</div>}
+          {mobileTab === "stats" && <div className="flex flex-col gap-3">{renderStats()}{renderSpreadNote()}</div>}
           {mobileTab === "notes" && renderNotes()}
           {mobileTab === "calcs" && <div className="pb-6">{renderCalcs()}</div>}
         </div>
       </div>
-    );
-  }
 
-  // ── Desktop: original two-column layout ───────────────────────────
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-[45%_55%] gap-3 sm:gap-6 lg:gap-8 items-start animate-fade-in">
-      {/* Left Column: Pokemon Info */}
-      <FieldDiffHighlight field={pokemonIndex !== undefined ? [`pokemon:${pokemonIndex}`] : []} label="Set changed">
-      <div className="flex flex-col gap-3 sm:gap-6">
-        {renderHeroHeader()}
-        {renderMoves()}
-        {renderStats()}
-      </div>
-      </FieldDiffHighlight>
+      {/* ── Desktop: two-column layout (>= 640px) ── */}
+      <div className="hidden sm:grid sm:grid-cols-[45%_55%] gap-6 lg:gap-8 items-start">
+        <FieldDiffHighlight field={pokemonIndex !== undefined ? [`pokemon:${pokemonIndex}`] : []} label="Set changed">
+        <div className="flex flex-col gap-6">
+          {renderHeroHeader()}
+          {renderMoves()}
+          {renderStats()}
+        </div>
+        </FieldDiffHighlight>
 
-      {/* Right Column: EV Rationale + User Notes + Notable Calcs */}
-      <div className="flex flex-col gap-4 sm:gap-6">
-        {renderSpreadNote()}
-        {renderNotes()}
-        {renderCalcs()}
+        <div className="flex flex-col gap-6">
+          {renderSpreadNote()}
+          {renderNotes()}
+          {renderCalcs()}
+        </div>
       </div>
     </div>
   );

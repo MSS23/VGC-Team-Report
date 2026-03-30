@@ -3,7 +3,6 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
-import { useIsMobile } from "@/hooks/useIsMobile";
 import { hapticLight } from "@/lib/utils/haptics";
 
 const OffensiveCoverageChart = dynamic(() => import("./OffensiveCoverageChart").then(m => ({ default: m.OffensiveCoverageChart })), {
@@ -20,14 +19,12 @@ interface TeamCoverageSlideProps {
 type CoverageTab = "offensive" | "defensive";
 
 export function TeamCoverageSlide({ pokemon }: TeamCoverageSlideProps) {
-  const isMobile = useIsMobile();
   const [tab, setTab] = useState<CoverageTab>("offensive");
 
-  // Mobile: tabbed view — one chart at a time
-  if (isMobile) {
-    return (
-      <div className="flex flex-col gap-4 animate-fade-in pb-6">
-        {/* Tab bar */}
+  return (
+    <div className="animate-fade-in">
+      {/* ── Mobile: tabbed (< 640px) ── */}
+      <div className="sm:hidden flex flex-col gap-4 pb-6">
         <div className="flex gap-1 bg-surface-alt/60 rounded-xl p-1">
           <button
             type="button"
@@ -58,19 +55,16 @@ export function TeamCoverageSlide({ pokemon }: TeamCoverageSlideProps) {
             Defensive
           </button>
         </div>
-
         {tab === "offensive" && <OffensiveCoverageChart pokemon={pokemon} />}
         {tab === "defensive" && <DefensiveCoverageChart pokemon={pokemon} />}
       </div>
-    );
-  }
 
-  // Desktop: both charts stacked
-  return (
-    <div className="flex flex-col gap-8 animate-fade-in">
-      <OffensiveCoverageChart pokemon={pokemon} />
-      <hr className="border-border" />
-      <DefensiveCoverageChart pokemon={pokemon} />
+      {/* ── Desktop: both charts stacked (>= 640px) ── */}
+      <div className="hidden sm:flex sm:flex-col gap-8">
+        <OffensiveCoverageChart pokemon={pokemon} />
+        <hr className="border-border" />
+        <DefensiveCoverageChart pokemon={pokemon} />
+      </div>
     </div>
   );
 }
