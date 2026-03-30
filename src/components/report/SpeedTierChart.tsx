@@ -1,19 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import dynamic from "next/dynamic";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { PokemonSprite } from "./PokemonSprite";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
 import { POKEMON_DATA } from "@/lib/data/pokemon";
-
-const OffensiveCoverageChart = dynamic(() => import("./OffensiveCoverageChart").then(m => ({ default: m.OffensiveCoverageChart })), {
-  loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-48" />,
-});
-const DefensiveCoverageChart = dynamic(() => import("./DefensiveCoverageChart").then(m => ({ default: m.DefensiveCoverageChart })), {
-  loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-48" />,
-});
 
 interface SpeedTierChartProps {
   pokemon: AnalyzedPokemon[];
@@ -299,15 +291,6 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         </div>
       </div>
 
-      <hr className="border-border" />
-
-      {/* Offensive Coverage Heatmap */}
-      <OffensiveCoverageChart pokemon={pokemon} />
-
-      <hr className="border-border" />
-
-      {/* Defensive Coverage Heatmap */}
-      <DefensiveCoverageChart pokemon={pokemon} />
     </div>
   );
 }

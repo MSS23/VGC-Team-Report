@@ -14,6 +14,9 @@ import { useVersionDiff } from "@/lib/contexts/VersionDiffContext";
 const SpeedTierChart = dynamic(() => import("./SpeedTierChart").then(m => ({ default: m.SpeedTierChart })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-96" />,
 });
+const TeamCoverageSlide = dynamic(() => import("./TeamCoverageSlide").then(m => ({ default: m.TeamCoverageSlide })), {
+  loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" />,
+});
 const MatchupPlanSlide = dynamic(() => import("./MatchupPlanSlide").then(m => ({ default: m.MatchupPlanSlide })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" />,
 });
@@ -210,7 +213,7 @@ export function TeamReport({
     );
   }
 
-  // Speed tier chart slide (after all Pokemon, before matchups)
+  // Speed tier chart slide (after all Pokemon)
   if (currentSlide === pokemonCount + 1) {
     return (
         <SpeedTierChart
@@ -222,9 +225,16 @@ export function TeamReport({
     );
   }
 
+  // Team coverage slide (after speed tiers, before matchups)
+  if (currentSlide === pokemonCount + 2) {
+    return (
+        <TeamCoverageSlide pokemon={analysis.pokemon} />
+    );
+  }
+
   // Per-matchup plan slides (visibility handled by navigation layer)
   if (plans.length > 0) {
-    const matchupSlideIndex = currentSlide - pokemonCount - 2;
+    const matchupSlideIndex = currentSlide - pokemonCount - 3;
 
     if (matchupSlideIndex >= 0 && matchupSlideIndex < plans.length) {
       const plan = plans[matchupSlideIndex];
@@ -247,7 +257,7 @@ export function TeamReport({
   }
 
   // Last slide: Matchup sheet (always available — expandable rows for game plans)
-  const matchupSheetSlide = pokemonCount + 2 + plans.length;
+  const matchupSheetSlide = pokemonCount + 3 + plans.length;
   if (currentSlide === matchupSheetSlide) {
     return (
         <MatchupSheet
