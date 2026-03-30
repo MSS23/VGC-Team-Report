@@ -272,8 +272,13 @@ export function useHomePage() {
     parseTeam(share.sharedState.paste);
   }, [share.sharedState, setPaste, parseTeam, setCreatorMode]);
 
-  // Reports always open in viewer mode — owners can toggle to edit manually.
-  // isEditingUnlocked still controls whether the edit toggle is available.
+  // If the user arrived via an explicit edit link (?key=), open in edit mode.
+  // Otherwise reports open in viewer mode — owners can toggle to edit manually.
+  useEffect(() => {
+    if (share.isEditingUnlocked && share.editKeyFromUrl) {
+      setCreatorMode(true);
+    }
+  }, [share.isEditingUnlocked, share.editKeyFromUrl, setCreatorMode]);
 
   useEffect(() => {
     if (!share.sharedState || !analysis || hasHydrated.current) return;
