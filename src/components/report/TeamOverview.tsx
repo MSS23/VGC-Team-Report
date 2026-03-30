@@ -10,7 +10,9 @@ import { useTranslation } from "@/lib/i18n";
 import { ARCHETYPES, REGULATIONS, EVENT_TYPES } from "@/lib/data/tags";
 import type { ReportTags } from "@/lib/data/tags";
 import { FieldDiffHighlight } from "./TeamReport";
-import { hapticMedium } from "@/lib/utils/haptics";
+import { hapticMedium, hapticSuccess } from "@/lib/utils/haptics";
+import { detectImportSource } from "@/lib/utils/multi-import";
+import { fetchPokePaste } from "@/lib/utils/pokepaste";
 
 /** Wraps a card with a long-press gesture (500ms hold). Passes through all other props to a div. */
 function LongPressWrapper({
@@ -74,6 +76,93 @@ function LongPressWrapper({
   );
 }
 
+/** Compact inline panel for re-importing a team from a URL or paste */
+function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async () => {
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    setError("");
+
+    const source = detectImportSource(trimmed);
+    if (source === "pokepaste" || source === "pikalytics") {
+      setLoading(true);
+      try {
+        const result = await fetchPokePaste(trimmed);
+        if (!result.paste) {
+          setError("Could not fetch team from URL");
+          setLoading(false);
+          return;
+        }
+        hapticSuccess();
+        onUpdatePaste(result.paste);
+        setInput("");
+        setOpen(false);
+      } catch {
+        setError("Failed to fetch — check the URL");
+      }
+      setLoading(false);
+    } else if (source === "showdown") {
+      hapticSuccess();
+      onUpdatePaste(trimmed);
+      setInput("");
+      setOpen(false);
+    } else {
+      setError("Paste a Showdown export, PokePaste URL, or Pikalytics URL");
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-text-tertiary hover:text-accent border border-border-subtle hover:border-accent/30 rounded-lg transition-all cursor-pointer"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="16 16 12 12 8 16" />
+          <line x1="12" y1="12" x2="12" y2="21" />
+          <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+        </svg>
+        Update Team
+      </button>
+    );
+  }
+
+  return (
+    <div className="bg-surface border border-border rounded-xl p-3 sm:p-4 flex flex-col gap-2 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold uppercase tracking-widest text-text-tertiary">Update Team</span>
+        <button type="button" onClick={() => { setOpen(false); setError(""); }} className="text-text-tertiary hover:text-text-primary text-sm cursor-pointer">&#10005;</button>
+      </div>
+      <textarea
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder={"Paste a PokePaste URL, Pikalytics URL, or Showdown export...\n\npokepast.es/abc123\npikalytics.com/team/...\nOr paste the full Showdown text"}
+        className="w-full min-h-[4rem] sm:min-h-[5rem] p-2.5 bg-surface-alt border border-border-subtle rounded-lg text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary/50 resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 leading-relaxed"
+        spellCheck={false}
+        autoFocus
+      />
+      {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!input.trim() || loading}
+          className="px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+        >
+          {loading ? "Fetching..." : "Apply"}
+        </button>
+        <span className="text-[10px] text-text-tertiary">This will replace all Pokemon and reset calcs/notes</span>
+      </div>
+    </div>
+  );
+}
+
 interface TeamOverviewProps {
   pokemon: AnalyzedPokemon[];
   creatorMode: boolean;
@@ -101,6 +190,8 @@ interface TeamOverviewProps {
   onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
   /** Long-press a Pokemon card to navigate to its detail slide (mobile gesture) */
   onPokemonLongPress?: (index: number) => void;
+  /** Re-import a team from a new paste/URL — replaces the entire team */
+  onUpdatePaste?: (paste: string) => void;
 }
 
 export function TeamOverview({
@@ -129,6 +220,7 @@ export function TeamOverview({
   getSpriteConfig,
   onReorderPokemon,
   onPokemonLongPress,
+  onUpdatePaste,
 }: TeamOverviewProps) {
   const { t } = useTranslation();
   const hasTournamentInfo = !!(tournamentName || placement || record);
@@ -385,6 +477,11 @@ export function TeamOverview({
       <div className="mb-1 sm:mb-4">
         <TeamStats pokemon={pokemon} />
       </div>
+
+      {/* Update Team (creator mode only) */}
+      {creatorMode && !isReadOnly && onUpdatePaste && (
+        <UpdateTeamPanel onUpdatePaste={onUpdatePaste} />
+      )}
 
       {/* Pokemon Grid */}
       <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-2 sm:gap-4 creator:gap-6 ${

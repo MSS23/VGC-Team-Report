@@ -313,6 +313,12 @@ function HomeContent() {
   // Long-press a Pokemon card in overview → jump to its detail slide
   const handlePokemonLongPress = useCallback((index: number) => goToSlide(index + 1), [goToSlide]);
 
+  // Re-import: replace team paste and re-analyze
+  const handleUpdatePaste = useCallback((newPaste: string) => {
+    setPaste(newPaste);
+    handleAnalyze(newPaste);
+  }, [setPaste, handleAnalyze]);
+
   // Swipe navigation for mobile
   const swipeRef = useSwipeNavigation({
     onSwipeLeft: nextSlide,
@@ -711,6 +717,7 @@ function HomeContent() {
           getSpriteConfig={getSpriteConfig}
           onReorderPokemon={isReadOnly ? undefined : reorderPokemon}
           onPokemonLongPress={handlePokemonLongPress}
+          onUpdatePaste={isReadOnly ? undefined : handleUpdatePaste}
         />
         </>
         )}

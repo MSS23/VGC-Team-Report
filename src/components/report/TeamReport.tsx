@@ -76,6 +76,7 @@ interface TeamReportProps {
   getSpriteConfig?: (key: string) => SpriteConfig;
   onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
   onPokemonLongPress?: (index: number) => void;
+  onUpdatePaste?: (paste: string) => void;
 }
 
 /**
@@ -150,6 +151,7 @@ export function TeamReport({
   getSpriteConfig,
   onReorderPokemon,
   onPokemonLongPress,
+  onUpdatePaste,
 }: TeamReportProps) {
   const pokemonCount = analysis.pokemon.length;
 
@@ -182,6 +184,7 @@ export function TeamReport({
           getSpriteConfig={getSpriteConfig}
           onReorderPokemon={onReorderPokemon}
           onPokemonLongPress={onPokemonLongPress}
+          onUpdatePaste={onUpdatePaste}
         />
     );
   }
