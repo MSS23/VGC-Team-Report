@@ -83,16 +83,67 @@ function CompactCard({
 
   return (
     <div className="bg-surface border border-border rounded-xl overflow-hidden hover:border-amber-500/30 transition-colors group">
-      {/* Top section: info left, sprite right */}
-      <div className="flex">
-        {/* Left: name, types, ability, moves */}
-        <div className="flex-1 min-w-0 p-2 sm:p-2.5 flex flex-col gap-1">
-          {/* Species name */}
-          <h3 className="text-sm sm:text-base font-extrabold text-text-primary tracking-tight truncate leading-tight">
+      {/* ── Mobile: sprite top, info below ── */}
+      <div className="sm:hidden">
+        {/* Sprite row */}
+        <div className="relative flex items-center gap-2.5 p-2 pb-0">
+          <PokemonSprite
+            species={parsed.species}
+            size={48}
+            animated={sc?.animated ?? true}
+            shiny={sc?.shiny}
+          />
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-extrabold text-text-primary tracking-tight truncate leading-tight">
+              {parsed.species}
+            </h3>
+            <div className="flex items-center gap-1 mt-0.5">
+              {types.map((type) => (
+                <TypeDot key={type} type={type} />
+              ))}
+              {parsed.teraType && (
+                <>
+                  <span className="text-text-tertiary/30 mx-0.5 text-[8px]">{"\u2192"}</span>
+                  <span
+                    className="text-[8px] font-extrabold px-1 py-0.5 rounded border"
+                    style={{ color: TYPE_COLORS[parsed.teraType].bg, backgroundColor: `${TYPE_COLORS[parsed.teraType].bg}20`, borderColor: `${TYPE_COLORS[parsed.teraType].bg}40` }}
+                  >
+                    {parsed.teraType}
+                  </span>
+                </>
+              )}
+            </div>
+            {parsed.ability && (
+              <p className="text-[10px] font-bold text-text-secondary leading-tight truncate mt-0.5">{parsed.ability}</p>
+            )}
+          </div>
+          {parsed.item && (
+            <span className="absolute top-1.5 right-1.5 px-1 py-0.5 text-[7px] font-extrabold bg-surface-alt/80 border border-border rounded text-text-tertiary truncate max-w-[70px]">
+              {parsed.item}
+            </span>
+          )}
+        </div>
+        {/* Moves — 2x2 grid */}
+        <div className="grid grid-cols-2 gap-x-1 gap-y-0.5 px-2 py-1.5">
+          {parsed.moves.map((move, i) => {
+            const style = getMoveTypeStyle(move);
+            const translatedMove = translateMove(move, language);
+            return (
+              <div key={i} className="flex items-center gap-1 truncate">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: style?.color ?? "var(--color-text-tertiary)", opacity: 0.8 }} />
+                <span className="text-[10px] font-bold truncate" style={{ color: style?.color ?? "var(--color-text-secondary)" }}>{translatedMove}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Desktop: info left, sprite right (>= 640px) ── */}
+      <div className="hidden sm:flex">
+        <div className="flex-1 min-w-0 p-2.5 flex flex-col gap-1">
+          <h3 className="text-base font-extrabold text-text-primary tracking-tight truncate leading-tight">
             {parsed.species}
           </h3>
-
-          {/* Types + Tera */}
           <div className="flex items-center gap-1">
             {types.map((type) => (
               <TypeDot key={type} type={type} />
@@ -102,61 +153,34 @@ function CompactCard({
                 <span className="text-text-tertiary/30 mx-0.5 text-[10px]">{"\u2192"}</span>
                 <span
                   className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border"
-                  style={{
-                    backgroundColor: `${TYPE_COLORS[parsed.teraType].bg}20`,
-                    borderColor: `${TYPE_COLORS[parsed.teraType].bg}40`,
-                  }}
+                  style={{ backgroundColor: `${TYPE_COLORS[parsed.teraType].bg}20`, borderColor: `${TYPE_COLORS[parsed.teraType].bg}40` }}
                 >
-                  <span
-                    className="text-[9px] font-extrabold tracking-wide"
-                    style={{ color: TYPE_COLORS[parsed.teraType].bg }}
-                  >
+                  <span className="text-[9px] font-extrabold tracking-wide" style={{ color: TYPE_COLORS[parsed.teraType].bg }}>
                     Tera {parsed.teraType}
                   </span>
                 </span>
               </>
             )}
           </div>
-
-          {/* Ability */}
           {parsed.ability && (
-            <p className="text-[11px] font-bold text-text-secondary leading-tight truncate">
-              {parsed.ability}
-            </p>
+            <p className="text-[11px] font-bold text-text-secondary leading-tight truncate">{parsed.ability}</p>
           )}
-
-          {/* Moves */}
           <div className="flex flex-col gap-0.5 mt-0.5">
             {parsed.moves.map((move, i) => {
               const style = getMoveTypeStyle(move);
               const translatedMove = translateMove(move, language);
               const bgColor = style?.color ?? "var(--color-text-tertiary)";
               return (
-                <div
-                  key={i}
-                  className="flex items-center gap-1.5 text-[11px] font-bold leading-tight truncate"
-                >
-                  <span
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: typeof bgColor === "string" ? bgColor : undefined, opacity: 0.8 }}
-                  />
-                  <span className="truncate" style={{ color: style?.color ?? "var(--color-text-secondary)" }}>
-                    {translatedMove}
-                  </span>
+                <div key={i} className="flex items-center gap-1.5 text-[11px] font-bold leading-tight truncate">
+                  <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: typeof bgColor === "string" ? bgColor : undefined, opacity: 0.8 }} />
+                  <span className="truncate" style={{ color: style?.color ?? "var(--color-text-secondary)" }}>{translatedMove}</span>
                 </div>
               );
             })}
           </div>
         </div>
-
-        {/* Right: sprite + item */}
-        <div className="relative flex items-center justify-center w-24 sm:w-28 flex-shrink-0 bg-surface-alt/30">
-          <PokemonSprite
-            species={parsed.species}
-            size={80}
-            animated={sc?.animated ?? true}
-            shiny={sc?.shiny}
-          />
+        <div className="relative flex items-center justify-center w-28 flex-shrink-0 bg-surface-alt/30">
+          <PokemonSprite species={parsed.species} size={80} animated={sc?.animated ?? true} shiny={sc?.shiny} />
           {parsed.item && (
             <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 text-[8px] font-extrabold bg-surface/90 border border-border rounded-md text-text-secondary truncate max-w-[90px] backdrop-blur-sm">
               {parsed.item}
@@ -165,7 +189,7 @@ function CompactCard({
         </div>
       </div>
 
-      {/* Bottom: EV spread bar */}
+      {/* Bottom: stat bar */}
       <div className="flex items-center justify-between px-2 sm:px-2.5 py-1 border-t border-border bg-surface-alt/20">
         {stats.map((s) => (
           <StatCell
@@ -230,8 +254,8 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: Tourn
         </div>
       </div>
 
-      {/* Pokemon cards — 2-column grid always */}
-      <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+      {/* Pokemon cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2.5">
         {pokemon.map((mon, i) => (
           <CompactCard
             key={`${mon.parsed.species}-${i}`}
