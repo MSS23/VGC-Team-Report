@@ -680,7 +680,7 @@ export function PokemonDetailSlide({
             </div>
           )}
           {mobileTab === "notes" && renderNotes()}
-          {mobileTab === "calcs" && renderCalcs()}
+          {mobileTab === "calcs" && <div className="pb-6">{renderCalcs()}</div>}
         </div>
       </div>
     );

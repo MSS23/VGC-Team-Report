@@ -624,7 +624,7 @@ function HomeContent() {
       <div
         ref={swipeRef}
         className={`max-w-5xl mx-auto slide-content safe-bottom overflow-x-hidden ${
-          isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-20 sm:pb-24" : "pb-16 sm:pb-16"
+          isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-24 sm:pb-24" : "pb-20 sm:pb-16"
         } ${
           isPresentationStyle
             ? "px-3 sm:px-8 py-2 sm:py-4"
