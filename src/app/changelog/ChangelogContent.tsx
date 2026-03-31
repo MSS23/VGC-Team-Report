@@ -11,6 +11,15 @@ import { PageFooter } from "@/components/layout/PageFooter";
 const ENTRIES = [
   {
     date: "March 2026",
+    version: "4.10",
+    title: "Level 50 Enforcement",
+    emoji: "\u2696\uFE0F",
+    items: [
+      { type: "fixed" as const, text: "All Pokemon are now forced to level 50 \u2014 pasting a level 100 team (or any non-50 level) no longer carries that level through to stat calculations. Stats are always computed at the VGC-standard level 50." },
+    ],
+  },
+  {
+    date: "March 2026",
     version: "4.9",
     title: "Mobile UX Overhaul & Responsive Redesign",
     emoji: "\uD83D\uDCF1",
