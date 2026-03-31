@@ -24,9 +24,13 @@ async function runHealthCheck() {
   for (const ep of ENDPOINTS) {
     const start = Date.now();
     try {
+      const headers: Record<string, string> = { "User-Agent": "VGC-DailyOps/1.0" };
+      if (ep.path.startsWith("/api/") && process.env.CRON_SECRET) {
+        headers["Authorization"] = `Bearer ${process.env.CRON_SECRET}`;
+      }
       const res = await fetch(`${SITE_URL}${ep.path}`, {
         method: "GET",
-        headers: { "User-Agent": "VGC-DailyOps/1.0" },
+        headers,
         redirect: "follow",
       });
       results.push({ name: ep.name, status: res.status, ok: res.status < 400, ms: Date.now() - start });
