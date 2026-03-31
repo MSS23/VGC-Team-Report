@@ -108,7 +108,7 @@ function parsePokemonBlock(block: string): { pokemon: ParsedPokemon; warnings: s
     if (/^Ability:\s*/i.test(cleanLine)) {
       ability = cleanLine.replace(/^Ability:\s*/i, "").trim();
     } else if (/^Level:\s*/i.test(cleanLine)) {
-      level = parseInt(cleanLine.replace(/^Level:\s*/i, "").trim(), 10) || 50;
+      // VGC is always level 50 — ignore any parsed level
     } else if (/^Tera Type:\s*/i.test(cleanLine)) {
       const tt = cleanLine.replace(/^Tera Type:\s*/i, "").trim();
       if (POKEMON_TYPES.includes(tt as PokemonType)) {

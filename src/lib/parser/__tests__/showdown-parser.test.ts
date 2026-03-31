@@ -202,10 +202,10 @@ describe("parseShowdownPaste", () => {
   });
 
   describe("Level parsing", () => {
-    it("parses explicit level", () => {
+    it("forces level 50 even when paste specifies level 100", () => {
       const paste = `Garchomp @ Life Orb\nAbility: Rough Skin\nLevel: 100\n- Earthquake`;
       const result = parseShowdownPaste(paste);
-      expect(result.pokemon[0].level).toBe(100);
+      expect(result.pokemon[0].level).toBe(50);
     });
 
     it("defaults to level 50 when not specified", () => {
