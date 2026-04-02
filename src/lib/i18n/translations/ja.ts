@@ -99,7 +99,7 @@ const ja: TranslationKeys = {
   hiddenSlideTooltip: "このスライドは非表示です。クリックして再び表示します。",
 
   thisSlideIsHidden: "このスライドは非表示です",
-  hiddenSlideDescription: "共有・プレゼン時に閲覧者には表示されません。下の<strong>非表示</strong>をクリックして表示してください。",
+  hiddenSlideDescription: "共有・プレゼン時に閲覧者には表示されません。下の「非表示」をクリックして表示してください。",
   showSlide: "スライドを表示",
 
   publicLinkCopied: "公開リンクをコピーしました！",

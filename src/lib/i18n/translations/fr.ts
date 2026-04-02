@@ -99,7 +99,7 @@ const fr: TranslationKeys = {
   hiddenSlideTooltip: "Cette diapositive est cachee -- les spectateurs ne la verront pas. Cliquez pour la rendre visible.",
 
   thisSlideIsHidden: "Cette diapositive est cachee",
-  hiddenSlideDescription: "Les spectateurs ne la verront pas lors du partage ou de la presentation. Cliquez sur <strong>Cache</strong> ci-dessous pour la montrer.",
+  hiddenSlideDescription: "Les spectateurs ne la verront pas lors du partage ou de la presentation. Cliquez sur \"Cache\" ci-dessous pour la montrer.",
   showSlide: "Montrer la diapositive",
 
   publicLinkCopied: "Lien public copie !",

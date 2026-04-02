@@ -12,11 +12,12 @@ describe("isCronAuthorized", () => {
     process.env = originalEnv;
   });
 
-  it("allows Vercel cron user-agent", () => {
+  it("rejects Vercel cron user-agent without CRON_SECRET", () => {
+    delete process.env.CRON_SECRET;
     const req = new Request("http://localhost/api/cron/test", {
       headers: { "user-agent": "vercel-cron/1.0" },
     });
-    expect(isCronAuthorized(req)).toBe(true);
+    expect(isCronAuthorized(req)).toBe(false);
   });
 
   it("allows valid CRON_SECRET bearer token", () => {

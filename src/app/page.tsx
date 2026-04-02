@@ -659,7 +659,7 @@ function HomeContent() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">{t.thisSlideIsHidden}</p>
-              <p className="text-xs text-amber-600/80 dark:text-amber-400/70 mt-0.5" dangerouslySetInnerHTML={{ __html: t.hiddenSlideDescription }} />
+              <p className="text-xs text-amber-600/80 dark:text-amber-400/70 mt-0.5">{t.hiddenSlideDescription}</p>
             </div>
             <button
               type="button"

@@ -99,7 +99,7 @@ const zh: TranslationKeys = {
   hiddenSlideTooltip: "此幻灯片已隐藏。点击重新显示。",
 
   thisSlideIsHidden: "此幻灯片已隐藏",
-  hiddenSlideDescription: "分享或演示时观众看不到。点击下方<strong>已隐藏</strong>重新显示。",
+  hiddenSlideDescription: "分享或演示时观众看不到。点击下方「已隐藏」重新显示。",
   showSlide: "显示幻灯片",
 
   publicLinkCopied: "公开链接已复制！",

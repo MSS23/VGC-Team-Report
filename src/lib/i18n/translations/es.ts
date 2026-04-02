@@ -99,7 +99,7 @@ const es: TranslationKeys = {
   hiddenSlideTooltip: "Esta diapositiva esta oculta -- los espectadores no la veran al compartir o presentar. Haz clic para mostrarla de nuevo.",
 
   thisSlideIsHidden: "Esta diapositiva esta oculta",
-  hiddenSlideDescription: "Los espectadores no la veran al compartir o presentar. Haz clic en <strong>Oculto</strong> abajo para mostrarla.",
+  hiddenSlideDescription: "Los espectadores no la veran al compartir o presentar. Haz clic en \"Oculto\" abajo para mostrarla.",
   showSlide: "Mostrar diapositiva",
 
   publicLinkCopied: "Enlace publico copiado!",

@@ -107,7 +107,7 @@ const en = {
 
   // Hidden slide banner
   thisSlideIsHidden: "This slide is hidden",
-  hiddenSlideDescription: "Viewers won't see it when you share or present. Click <strong>Hidden</strong> below to show it again.",
+  hiddenSlideDescription: "Viewers won't see it when you share or present. Click \"Hidden\" below to show it again.",
   showSlide: "Show slide",
 
   // Share toast

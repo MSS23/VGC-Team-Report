@@ -152,7 +152,7 @@ export function ChampionsContent() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
               { step: "1", title: "Paste Your Team", desc: "Export your team from Pokemon Showdown or PokePaste and paste it into the editor. Mega Evolutions are automatically detected." },
-              { step: "2", title: "Add Notes & Calcs", desc: "Add strategy notes, damage calculations, EV spread rationale, and matchup plans for each Pokemon. Tag with Reg M-A." },
+              { step: "2", title: "Add Notes & Calcs", desc: "Add strategy notes, damage calculations, spread notes, and matchup plans for each Pokemon. Tag with Reg M-A." },
               { step: "3", title: "Share & Discover", desc: "Share your report with a link, embed it on Discord, or make it public for the community to explore and learn from." },
             ].map((item) => (
               <div key={item.step} className="text-center">

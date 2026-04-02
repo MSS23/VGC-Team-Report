@@ -99,7 +99,7 @@ const ko: TranslationKeys = {
   hiddenSlideTooltip: "이 슬라이드는 숨겨져 있습니다. 클릭하여 다시 표시합니다.",
 
   thisSlideIsHidden: "이 슬라이드는 숨겨져 있습니다",
-  hiddenSlideDescription: "공유/발표 시 시청자에게 보이지 않습니다. 아래의 <strong>숨김</strong>을 클릭하여 표시하세요.",
+  hiddenSlideDescription: "공유/발표 시 시청자에게 보이지 않습니다. 아래의 \"숨김\"을 클릭하여 표시하세요.",
   showSlide: "슬라이드 표시",
 
   publicLinkCopied: "공개 링크가 복사되었습니다!",

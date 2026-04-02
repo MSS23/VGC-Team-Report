@@ -1,3 +1,7 @@
+// NOTE: In-memory rate limiting is per-instance on serverless platforms like Vercel.
+// It provides basic burst protection within a single warm instance but does not
+// guarantee global rate limiting across all concurrent function invocations.
+// For stricter enforcement, use Upstash Redis or Vercel's built-in rate limiting.
 const hits = new Map<string, { count: number; resetAt: number }>();
 
 /**
@@ -18,15 +22,13 @@ export function isRateLimited(
   }
 
   entry.count++;
-  return entry.count > maxRequests;
-}
 
-// Clean up stale entries every 5 minutes
-if (typeof globalThis !== "undefined") {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of hits) {
-      if (now > entry.resetAt) hits.delete(key);
+  // Lazy cleanup: remove expired entries when map grows large
+  if (hits.size > 10_000) {
+    for (const [k, e] of hits) {
+      if (now > e.resetAt) hits.delete(k);
     }
-  }, 300_000);
+  }
+
+  return entry.count > maxRequests;
 }

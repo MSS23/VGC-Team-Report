@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
   const action = request.nextUrl.searchParams.get("action");
   const secret = request.nextUrl.searchParams.get("secret");
 
-  // Simple auth — use CRON_SECRET or a dedicated bot secret
-  const expectedSecret = process.env.CRON_SECRET ?? process.env.LINEAR_API_KEY;
+  // Require CRON_SECRET for bot endpoint auth
+  const expectedSecret = process.env.CRON_SECRET;
   if (secret !== expectedSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
