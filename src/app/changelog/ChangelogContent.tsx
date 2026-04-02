@@ -10,6 +10,21 @@ import { PageFooter } from "@/components/layout/PageFooter";
 
 const ENTRIES = [
   {
+    date: "April 2026",
+    version: "4.11",
+    title: "Security Hardening & Notes Consolidation",
+    emoji: "\uD83D\uDD12",
+    items: [
+      { type: "improved" as const, text: "EV Rationale merged into Notes \u2014 the separate \"EV Rationale\" section has been removed. All per-Pokemon notes are now in a single Notes field. Existing EV rationale content has been migrated into notes." },
+      { type: "fixed" as const, text: "API security hardening \u2014 protected the setup endpoint with bearer token auth, removed spoofable User-Agent cron authentication, and fixed a credential scope issue in the bot route." },
+      { type: "fixed" as const, text: "Fixed 6 npm dependency vulnerabilities including a high-severity SSRF in @clerk/backend. Next.js updated to 16.2.2." },
+      { type: "improved" as const, text: "Removed dangerouslySetInnerHTML usage \u2014 translation strings now render as plain text instead of raw HTML." },
+      { type: "improved" as const, text: "Share route input validation \u2014 the Zod schema now explicitly defines all accepted fields and strips unknown data instead of passing it through." },
+      { type: "improved" as const, text: "Deduplicated report normalization \u2014 the share and migrate routes now use a single shared normalizer instead of maintaining two copies." },
+      { type: "fixed" as const, text: "Rate limiter no longer uses setInterval on serverless \u2014 replaced with lazy cleanup to avoid cold start issues on Vercel." },
+    ],
+  },
+  {
     date: "March 2026",
     version: "4.10",
     title: "Level 50 Enforcement",
