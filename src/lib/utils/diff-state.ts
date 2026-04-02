@@ -61,11 +61,7 @@ export function detectChangedSections(oldState: AnyState | null, newState: AnySt
     sections.push(`Roles (${changedRoles.join(", ")})`);
   }
 
-  // Spread notes
-  const changedSpreads = diffRecordKeys(oldState.spreadNotes, newState.spreadNotes);
-  if (changedSpreads.length > 0) {
-    sections.push(`Spread notes (${changedSpreads.join(", ")})`);
-  }
+
 
   // Matchup plans — only compare user-editable content, not structural fields
   if (matchupPlansChanged(oldState.matchupPlans ?? [], newState.matchupPlans ?? [])) {

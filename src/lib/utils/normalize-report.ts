@@ -78,13 +78,29 @@ export function normalizeReportData(data: AnyRecord): AnyRecord {
   const rawPlans = Array.isArray(data.matchupPlans) ? data.matchupPlans : [];
   const matchupPlans = rawPlans.map((plan: AnyRecord) => migratePlan(plan));
 
+  // Merge legacy spreadNotes into notes
+  const notes: Record<string, string> = { ...(data.notes ?? {}) };
+  const spreadNotes = data.spreadNotes ?? {};
+  for (const [species, spreadNote] of Object.entries(spreadNotes)) {
+    if (typeof spreadNote === "string" && spreadNote.trim()) {
+      const existing = notes[species] ?? "";
+      if (existing && !existing.includes(spreadNote)) {
+        notes[species] = `${existing}\n\n${spreadNote}`;
+      } else if (!existing) {
+        notes[species] = spreadNote;
+      }
+    }
+  }
+
+  // Remove spreadNotes from output — it's been merged into notes
+  const { spreadNotes: _removed, ...rest } = data;
+
   return {
-    ...data,
+    ...rest,
     paste: data.paste ?? "",
-    notes: data.notes ?? {},
+    notes,
     calcs: migrateCalcEntries(data.calcs),
     roles: data.roles ?? {},
-    spreadNotes: data.spreadNotes ?? {},
     teamSummary: data.teamSummary ?? "",
     tournamentName: data.tournamentName ?? undefined,
     placement: data.placement ?? undefined,

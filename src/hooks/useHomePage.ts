@@ -68,8 +68,8 @@ export function useHomePage() {
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
-    roles, spreadNotes, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId,
-    setRole, setSpreadNote, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull,
+    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId,
+    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull,
   } = useTeamMeta(speciesKeys, shouldPersist);
   const {
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
@@ -111,7 +111,7 @@ export function useHomePage() {
     if (!snapshot) return;
     setNotesFull(snapshot.notes);
     setCalcsFull(snapshot.calcs);
-    setMetaFull({ roles: snapshot.roles, spreadNotes: {}, summary: snapshot.summary });
+    setMetaFull({ roles: snapshot.roles, summary: snapshot.summary });
     setPlansFull(snapshot.plans);
     undoRedo.doneRestoring();
   }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull]);
@@ -121,7 +121,7 @@ export function useHomePage() {
     if (!snapshot) return;
     setNotesFull(snapshot.notes);
     setCalcsFull(snapshot.calcs);
-    setMetaFull({ roles: snapshot.roles, spreadNotes: {}, summary: snapshot.summary });
+    setMetaFull({ roles: snapshot.roles, summary: snapshot.summary });
     setPlansFull(snapshot.plans);
     undoRedo.doneRestoring();
   }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull]);
@@ -137,7 +137,6 @@ export function useHomePage() {
     notes,
     calcs,
     roles,
-    spreadNotes: Object.keys(spreadNotes).length > 0 ? spreadNotes : undefined,
     teamSummary: summary,
     tournamentName: tournamentName || undefined,
     placement: placement || undefined,
@@ -159,7 +158,7 @@ export function useHomePage() {
     hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
     tags: tags && (tags.archetype?.length || tags.regulation || tags.eventType) ? tags : undefined,
     templateId: templateId || undefined,
-  }), [paste, notes, calcs, roles, spreadNotes, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId]);
+  }), [paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId]);
 
   // ── Share flow (extracted) ───────────────────────────────────────
   const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t: t as unknown as Record<string, string> });
@@ -172,7 +171,6 @@ export function useHomePage() {
     setCalcsFull(state.calcs ?? {});
     setMetaFull({
       roles: state.roles ?? {},
-      spreadNotes: state.spreadNotes ?? {},
       summary: state.teamSummary ?? "",
       tournamentName: state.tournamentName ?? undefined,
       placement: state.placement ?? undefined,
@@ -287,7 +285,6 @@ export function useHomePage() {
     setCalcsFull(share.sharedState.calcs ?? {});
     setMetaFull({
       roles: share.sharedState.roles ?? {},
-      spreadNotes: share.sharedState.spreadNotes ?? {},
       summary: share.sharedState.teamSummary ?? "",
       tournamentName: share.sharedState.tournamentName ?? undefined,
       placement: share.sharedState.placement ?? undefined,
@@ -415,7 +412,7 @@ export function useHomePage() {
 
     // Team content
     notes, setNote, calcs, addCalc, removeCalc, editCalc,
-    roles, setRole, spreadNotes, setSpreadNote, summary, setSummary,
+    roles, setRole, summary, setSummary,
     tournamentName, setTournamentName, placement, setPlacement,
     record, setRecord, mvpIndex, setMvpIndex,
     rentalCode, setRentalCode, creatorName, setCreatorName, tags, setTags, templateId, setTemplateId,

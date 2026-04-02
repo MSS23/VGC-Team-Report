@@ -110,8 +110,6 @@ function HomeContent() {
     editCalc,
     roles,
     setRole,
-    spreadNotes,
-    setSpreadNote,
     summary,
     setSummary,
     tournamentName,
@@ -198,7 +196,6 @@ function HomeContent() {
         notes,
         calcs,
         roles,
-        spreadNotes: Object.keys(spreadNotes).length > 0 ? spreadNotes : undefined,
         teamSummary: summary || undefined,
         tournamentName: tournamentName || undefined,
         placement: placement || undefined,
@@ -235,7 +232,7 @@ function HomeContent() {
     } finally {
       setCompareLoading(false);
     }
-  }, [activeShareId, sessionShareId, paste, notes, calcs, roles, spreadNotes, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, tags, analysis, speciesKeys]);
+  }, [activeShareId, sessionShareId, paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, tags, analysis, speciesKeys]);
 
   const handleClearCompare = useCallback(() => {
     setVersionDiff(null);
@@ -683,8 +680,6 @@ function HomeContent() {
           speciesKeys={speciesKeys}
           roles={roles}
           onRoleChange={setRole}
-          spreadNotes={spreadNotes}
-          onSpreadNoteChange={isReadOnly ? undefined : setSpreadNote}
           teamSummary={summary}
           onTeamSummaryChange={setSummary}
           tournamentName={tournamentName}
@@ -923,7 +918,6 @@ function HomeContent() {
           notes={notes}
           calcs={calcs}
           roles={roles}
-          spreadNotes={spreadNotes}
           speciesKeys={speciesKeys}
           teamSummary={summary}
           tournamentName={tournamentName}

@@ -30,7 +30,6 @@ export interface PdfExportProps {
   notes: Record<string, string>;
   calcs: Record<string, CalcEntry[]>;
   roles: Record<string, string>;
-  spreadNotes: Record<string, string>;
   speciesKeys: string[];
   teamSummary: string;
   tournamentName?: string;
@@ -77,7 +76,6 @@ export function PrintableReport({
   notes,
   calcs,
   roles,
-  spreadNotes,
   speciesKeys,
   teamSummary,
   tournamentName,
@@ -143,7 +141,6 @@ export function PrintableReport({
               pokemon={pokemon}
               note={notes[key] ?? ""}
               onNoteChange={noop}
-              spreadNote={spreadNotes[key] ?? ""}
               calcs={calcs[key] ?? []}
               onAddCalc={noop}
               onRemoveCalc={noop}

@@ -16,7 +16,6 @@ const ShareBodySchema = z.object({
     notes: z.record(z.string(), z.unknown()).optional(),
     calcs: z.record(z.string(), z.unknown()).optional(),
     roles: z.record(z.string(), z.unknown()).optional(),
-    spreadNotes: z.record(z.string(), z.unknown()).optional(),
     teamSummary: z.string().optional(),
     tournamentName: z.string().optional(),
     placement: z.string().optional(),

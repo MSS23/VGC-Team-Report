@@ -128,13 +128,6 @@ export function computeVersionDiff(
       hasChange = true;
     }
 
-    // Spread notes
-    if ((current.spreadNotes?.[key] ?? "") !== (old.spreadNotes?.[key] ?? "")) {
-      changedFields.add(`spreadNotes:${key}`);
-      changedSlides.add(slideIndex);
-      hasChange = true;
-    }
-
     if (hasChange) {
       changedFields.add(`slide:${slideIndex}`);
     }
@@ -226,7 +219,7 @@ export function getNavigableChanges(
         slide = pokemonCount + 2 + plansCount; // matchup sheet
       }
     } else {
-      const match = field.match(/^(pokemon|notes|calcs|roles|spreadNotes):(.+)$/);
+      const match = field.match(/^(pokemon|notes|calcs|roles):(.+)$/);
       if (!match) continue;
       const [, type, key] = match;
       const name = key.replace(/^./, (c) => c.toUpperCase());
@@ -234,8 +227,7 @@ export function getNavigableChanges(
         type === "pokemon" ? "Set" :
         type === "notes" ? "Notes" :
         type === "calcs" ? "Calcs" :
-        type === "roles" ? "Role" :
-        type === "spreadNotes" ? "Spread notes" : type;
+        type === "roles" ? "Role" : type;
       label = `${typeLabel} (${name})`;
 
       // Find which pokemon index this key belongs to
@@ -287,7 +279,7 @@ export function summarizeChangedFields(fields: Set<string>): string {
     }
 
     // Per-pokemon fields: "notes:pikachu" → "Notes (Pikachu)"
-    const match = field.match(/^(pokemon|notes|calcs|roles|spreadNotes):(.+)$/);
+    const match = field.match(/^(pokemon|notes|calcs|roles):(.+)$/);
     if (match) {
       const [, type, key] = match;
       const name = key.replace(/^./, (c) => c.toUpperCase());
@@ -295,8 +287,7 @@ export function summarizeChangedFields(fields: Set<string>): string {
         type === "pokemon" ? "Set" :
         type === "notes" ? "Notes" :
         type === "calcs" ? "Calcs" :
-        type === "roles" ? "Role" :
-        type === "spreadNotes" ? "Spread notes" : type;
+        type === "roles" ? "Role" : type;
       labels.push(`${typeLabel} (${name})`);
     }
   }
