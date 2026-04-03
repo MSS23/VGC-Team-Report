@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 import { createNotification } from "@/lib/notifications";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -64,6 +65,15 @@ export async function POST(
     }
     const { reactionType, sessionId } = parsed.data;
     const sql = getDb();
+
+    // Prevent owners from liking their own reports
+    const { userId } = await auth();
+    if (userId) {
+      const ownerCheck = await sql`SELECT owner_id FROM shares WHERE id = ${shareId}`;
+      if (ownerCheck.length > 0 && ownerCheck[0].owner_id === userId) {
+        return NextResponse.json({ error: "Cannot like your own report" }, { status: 403 });
+      }
+    }
 
     // Check if already exists
     const existing = await sql`

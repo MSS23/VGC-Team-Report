@@ -801,7 +801,7 @@ function HomeContent() {
               Fork Report
             </button>
           </div>
-          <ReactionBar shareId={activeShareId} />
+          <ReactionBar shareId={activeShareId} isOwner={isOwner} />
           {allowComments ? (
             <CommentSection shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
           ) : (

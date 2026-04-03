@@ -52,8 +52,15 @@ export async function GET(request: Request) {
     let rows;
 
     // Search condition builder — uses FTS when possible, ILIKE fallback for short queries
+    // When a specific searchType is selected, narrow both FTS and ILIKE to that field
     const ftsCondition = (useFts && tsQuery)
-      ? sql`AND s.search_vector @@ to_tsquery('english', ${tsQuery})`
+      ? (searchType === "pokemon"
+          ? sql`AND to_tsvector('english', COALESCE(s.data->>'paste', '')) @@ to_tsquery('english', ${tsQuery})`
+        : searchType === "tournament"
+          ? sql`AND to_tsvector('english', COALESCE(s.data->>'tournamentName', '')) @@ to_tsquery('english', ${tsQuery})`
+        : searchType === "creator"
+          ? sql`AND to_tsvector('english', COALESCE(s.data->>'creatorName', '')) @@ to_tsquery('english', ${tsQuery})`
+        : sql`AND s.search_vector @@ to_tsquery('english', ${tsQuery})`)
       : sql``;
     const ilikeFallback = (!useFts && searchPattern)
       ? (searchType === "pokemon" ? sql`AND s.data->>'paste' ILIKE ${searchPattern}`

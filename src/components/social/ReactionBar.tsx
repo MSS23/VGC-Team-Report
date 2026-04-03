@@ -8,9 +8,10 @@ import { track } from "@vercel/analytics";
 interface ReactionBarProps {
   shareId: string;
   compact?: boolean;
+  isOwner?: boolean;
 }
 
-export function ReactionBar({ shareId, compact = false }: ReactionBarProps) {
+export function ReactionBar({ shareId, compact = false, isOwner = false }: ReactionBarProps) {
   const sessionId = useSessionId();
   const { isSignedIn } = useAuth();
   const [likeCount, setLikeCount] = useState(0);
@@ -37,7 +38,7 @@ export function ReactionBar({ shareId, compact = false }: ReactionBarProps) {
   }, [shareId, sessionId]);
 
   const toggleLike = useCallback(async () => {
-    if (!sessionId || compact || !isSignedIn) return;
+    if (!sessionId || compact || !isSignedIn || isOwner) return;
 
     const wasLiked = liked;
     setLiked(!wasLiked);
@@ -54,7 +55,7 @@ export function ReactionBar({ shareId, compact = false }: ReactionBarProps) {
       setLiked(wasLiked);
       setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));
     }
-  }, [shareId, sessionId, liked, compact, isSignedIn]);
+  }, [shareId, sessionId, liked, compact, isSignedIn, isOwner]);
 
   if (!loaded) return null;
 
@@ -97,6 +98,18 @@ export function ReactionBar({ shareId, compact = false }: ReactionBarProps) {
           </button>
         </SignInButton>
       </div>
+    );
+  }
+
+  // Owner: show count only, no interaction
+  if (isOwner) {
+    return (
+      <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-surface border-2 border-border text-text-tertiary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+        </svg>
+        {likeCount > 0 && <span>{likeCount}</span>}
+      </span>
     );
   }
 
