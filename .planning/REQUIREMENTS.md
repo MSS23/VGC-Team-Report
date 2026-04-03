@@ -24,11 +24,11 @@ Requirements for Smart Explore Experience milestone. Each maps to roadmap phases
 
 ### Report Cards
 
-- [ ] **CARD-01**: Report card displays the team's top Pokemon species with sprites prominently
-- [ ] **CARD-02**: Report card shows archetype badge(s) (Rain, Trick Room, etc.) inline
-- [ ] **CARD-03**: Report card displays tournament placement with visual distinction for high placements (Top 4, Top 8)
-- [ ] **CARD-04**: Report card shows creator name with link to creator profile
-- [ ] **CARD-05**: Report card shows regulation tag visually
+- [x] **CARD-01**: Report card displays the team's top Pokemon species with sprites prominently
+- [x] **CARD-02**: Report card shows archetype badge(s) (Rain, Trick Room, etc.) inline
+- [x] **CARD-03**: Report card displays tournament placement with visual distinction for high placements (Top 4, Top 8)
+- [x] **CARD-04**: Report card shows creator name with link to creator profile
+- [x] **CARD-05**: Report card shows regulation tag visually
 - [ ] **CARD-06**: Enhanced cards load without increasing explore page CLS or degrading load time
 
 ### Shareable URLs
@@ -94,11 +94,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TOUR-03 | Phase 5 | Complete |
 | TOUR-04 | Phase 5 | Complete |
 | TOUR-05 | Phase 5 | Complete |
-| CARD-01 | Phase 6 | Pending |
-| CARD-02 | Phase 6 | Pending |
-| CARD-03 | Phase 6 | Pending |
-| CARD-04 | Phase 6 | Pending |
-| CARD-05 | Phase 6 | Pending |
+| CARD-01 | Phase 6 | Complete |
+| CARD-02 | Phase 6 | Complete |
+| CARD-03 | Phase 6 | Complete |
+| CARD-04 | Phase 6 | Complete |
+| CARD-05 | Phase 6 | Complete |
 | CARD-06 | Phase 6 | Pending |
 | URL-01 | Phase 3 | Complete |
 | URL-02 | Phase 3 | Complete |

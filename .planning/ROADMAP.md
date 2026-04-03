@@ -115,8 +115,12 @@ Plans:
   4. Creator name links to their creator profile page from the card
   5. Regulation tag is visible on every card without requiring hover or expansion
   6. The explore page CLS score is unchanged and median load time does not regress after the card changes
-**Plans:** TBD
+**Plans:** 2 plans
 **UI hint**: yes
+
+Plans:
+- [x] 06-01-PLAN.md — Enhance ReportCard visual hierarchy: larger sprites, archetype badges below title, regulation corner pill, creator link styling
+- [ ] 06-02-PLAN.md — Visual + performance verification checkpoint (Lighthouse CLS check)
 
 ---
 
@@ -132,4 +136,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Shareable Filter URLs | 0/2 | Not started | - |
 | 4. Pokemon Exclude Filter | 1/1 | Complete   | 2026-04-03 |
 | 5. Tournament Results Mode | 2/2 | Complete   | 2026-04-03 |
-| 6. Enhanced Report Cards | 0/TBD | Not started | - |
+| 6. Enhanced Report Cards | 0/2 | Not started | - |
