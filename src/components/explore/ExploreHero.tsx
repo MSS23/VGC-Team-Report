@@ -5,7 +5,7 @@ import { useTranslation } from "@/lib/i18n";
 
 const SHOWCASE_SPRITES = [
   "incineroar", "flutter-mane", "rillaboom", "urshifu-rapid-strike",
-  "calyrex-ice", "tornadus-therian", "ogerpon-hearthflame", "iron-hands",
+  "calyrex-ice", "tornadus-therian", "landorus-therian", "kingambit",
 ];
 
 import { resolveSlug } from "@/lib/utils/sprite-slug";
