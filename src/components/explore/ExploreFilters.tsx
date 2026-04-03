@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
-import { ARCHETYPES, REGULATIONS, EVENT_TYPES } from "@/lib/data/tags";
+import { ARCHETYPES, REGULATIONS } from "@/lib/data/tags";
+import { AnimatePresence, motion } from "motion/react";
+import { AdvancedFilterDrawer } from "./AdvancedFilterDrawer";
 
 export type SearchCategory = "all" | "pokemon" | "tournament" | "creator";
 
@@ -105,7 +107,14 @@ export function ExploreFilters({
   const { t } = useTranslation();
   const { user } = useUser();
   const [localQuery, setLocalQuery] = useState(query);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const advancedFilterCount = [
+    placement !== "",
+    eventType !== "",
+    followingOnly,
+  ].filter(Boolean).length;
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -121,7 +130,7 @@ export function ExploreFilters({
   }, [query]);
 
   return (
-    <div className="sticky top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/80 backdrop-blur-lg border-b border-border/50 mb-6 space-y-3">
+    <div className="sticky top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/80 backdrop-blur-lg border-b border-border/50 mb-6 space-y-3 relative">
       {/* Search category tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         {CATEGORIES.map((cat) => (
@@ -139,25 +148,46 @@ export function ExploreFilters({
             {cat.label}
           </button>
         ))}
-        {user && (
-          <button
-            type="button"
-            onClick={() => onFollowingOnlyChange(!followingOnly)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer active:scale-[0.97] ${
-              followingOnly
-                ? "bg-accent text-white shadow-sm shadow-accent/20 ring-2 ring-accent/30 ring-offset-1 ring-offset-background"
-                : "bg-surface-alt/50 text-text-secondary hover:text-text-primary hover:bg-surface-alt"
-            }`}
-            aria-pressed={followingOnly}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <polyline points="16 11 18 13 22 9" />
-            </svg>
-            Following
-          </button>
-        )}
+
+        {/* More filters button */}
+        <button
+          type="button"
+          onClick={() => setDrawerOpen(!drawerOpen)}
+          aria-expanded={drawerOpen}
+          aria-controls="advanced-filter-drawer"
+          className={`relative inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer active:scale-[0.97] ${
+            drawerOpen
+              ? "bg-surface-alt text-text-primary ring-2 ring-accent/30 ring-offset-1 ring-offset-background"
+              : "bg-surface-alt/50 text-text-secondary hover:text-text-primary hover:bg-surface-alt"
+          }`}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14" />
+            <line x1="4" y1="10" x2="4" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12" y2="3" />
+            <line x1="20" y1="21" x2="20" y2="16" />
+            <line x1="20" y1="12" x2="20" y2="3" />
+            <line x1="1" y1="14" x2="7" y2="14" />
+            <line x1="9" y1="8" x2="15" y2="8" />
+            <line x1="17" y1="16" x2="23" y2="16" />
+          </svg>
+          More filters
+          <AnimatePresence>
+            {advancedFilterCount > 0 && (
+              <motion.span
+                key="badge"
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.6, opacity: 0 }}
+                transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center bg-accent text-white text-[10px] font-bold rounded-full"
+              >
+                {advancedFilterCount}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
       </div>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -216,75 +246,42 @@ export function ExploreFilters({
         </div>
       </div>
 
-      {/* Species + placement filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={species}
-            onChange={(e) => onSpeciesChange(e.target.value)}
-            placeholder="Filter by Pokemon (comma-separated, e.g. Flutter Mane, Incineroar)"
-            className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
-          />
-          {species && (
-            <button
-              onClick={() => onSpeciesChange("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded text-text-tertiary hover:text-text-primary transition-colors"
-              aria-label="Clear species filter"
-            >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          )}
-        </div>
-        <div className="relative sm:w-36">
-          <select
-            value={placement}
-            onChange={(e) => onPlacementChange(e.target.value)}
-            className="w-full px-3 py-2 pr-8 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all appearance-none cursor-pointer"
+      {/* Species filter */}
+      <div className="relative">
+        <input
+          type="text"
+          value={species}
+          onChange={(e) => onSpeciesChange(e.target.value)}
+          placeholder="Filter by Pokemon (comma-separated, e.g. Flutter Mane, Incineroar)"
+          className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
+        />
+        {species && (
+          <button
+            onClick={() => onSpeciesChange("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded text-text-tertiary hover:text-text-primary transition-colors"
+            aria-label="Clear species filter"
           >
-            <option value="">Placement</option>
-            <option value="1st">1st Place</option>
-            <option value="Top 4">Top 4</option>
-            <option value="Top 8">Top 8</option>
-            <option value="Top 16">Top 16</option>
-          </select>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </div>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Tag filters */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-        <div className="flex gap-2">
-          <div className="relative">
-            <select
-              value={regulation}
-              onChange={(e) => onRegulationChange(e.target.value)}
-              className="w-full px-3 py-2 pr-8 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all appearance-none cursor-pointer"
-            >
-              <option value="">Regulation</option>
-              {REGULATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </div>
-          <div className="relative">
-            <select
-              value={eventType}
-              onChange={(e) => onEventTypeChange(e.target.value)}
-              className="w-full px-3 py-2 pr-8 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all appearance-none cursor-pointer"
-            >
-              <option value="">Event Type</option>
-              {EVENT_TYPES.map((e) => <option key={e} value={e}>{e}</option>)}
-            </select>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </div>
+        <div className="relative">
+          <select
+            value={regulation}
+            onChange={(e) => onRegulationChange(e.target.value)}
+            className="w-full px-3 py-2 pr-8 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all appearance-none cursor-pointer"
+          >
+            <option value="">Regulation</option>
+            {REGULATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </div>
         <div className="flex flex-wrap gap-1">
           {ARCHETYPES.map((a) => {
@@ -310,6 +307,19 @@ export function ExploreFilters({
           })}
         </div>
       </div>
+
+      {/* Advanced filter drawer */}
+      <AdvancedFilterDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        placement={placement}
+        onPlacementChange={onPlacementChange}
+        eventType={eventType}
+        onEventTypeChange={onEventTypeChange}
+        followingOnly={followingOnly}
+        onFollowingOnlyChange={onFollowingOnlyChange}
+        isAuthenticated={!!user}
+      />
     </div>
   );
 }
