@@ -5,13 +5,23 @@ import { z } from "zod";
 
 const FollowBody = z.object({ creatorName: z.string().min(1) });
 
-// GET: list followed creators
-export async function GET() {
+// GET: list followed creators, or check single creator with ?creator=X
+export async function GET(request: Request) {
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const sql = getDb();
+
+    // Single-creator check: GET /api/user/follow?creator=X
+    const url = new URL(request.url);
+    const creatorParam = url.searchParams.get("creator");
+    if (creatorParam) {
+      const row = await sql`SELECT 1 FROM follows WHERE user_id = ${userId} AND LOWER(creator_name) = ${creatorParam.toLowerCase()} LIMIT 1`;
+      return NextResponse.json({ following: row.length > 0 });
+    }
+
+    // Full list: GET /api/user/follow
     const rows = await sql`SELECT creator_name, created_at FROM follows WHERE user_id = ${userId} ORDER BY created_at DESC`;
     return NextResponse.json({ following: rows.map((r) => r.creator_name as string) });
   } catch (e) {
