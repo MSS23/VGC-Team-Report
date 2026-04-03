@@ -48,9 +48,9 @@ function CardSprite({ species }: { species: string }) {
     <img
       src={urls[Math.min(idx, urls.length - 1)]}
       alt={species}
-      width={40}
-      height={40}
-      className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+      width={48}
+      height={48}
+      className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
       loading="lazy"
       onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
     />
@@ -65,29 +65,46 @@ export function ReportCard({ report }: { report: ExploreReport }) {
     ? Object.values(report.reactionCounts).reduce((sum, c) => sum + c, 0)
     : 0);
 
+  // Archetype badges: show up to 3, then overflow
+  const archetypes = report.tags?.archetype ?? [];
+  const visibleArchetypes = archetypes.slice(0, 3);
+  const overflowArchetypes = archetypes.length > 3 ? archetypes.length - 3 : 0;
+
+  // Tags section: eventType only (archetypes moved above, regulation moved to corner)
+  const hasTagsSection = !!report.tags?.eventType;
+
   return (
     <motion.a
       href={`/s/${report.id}`}
-      className="block bg-surface rounded-xl border border-border shadow-sm hover:shadow-md hover:border-accent/30 overflow-hidden group card-hover"
+      className="relative block bg-surface rounded-xl border border-border shadow-sm hover:shadow-md hover:border-accent/30 overflow-hidden group card-hover"
       variants={{
         hidden: { opacity: 0, y: 12 },
         visible: { opacity: 1, y: 0 },
       }}
     >
+      {/* Regulation tag — always visible in top-right corner */}
+      {report.tags?.regulation && (
+        <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 z-10">
+          {report.tags.regulation}
+        </span>
+      )}
+
       {/* Sprites row */}
       <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-1.5 sm:pb-2">
-        <div className="flex items-center justify-center gap-0.5 sm:gap-1">
-          {report.species.map((species, i) => (
-            <CardSprite key={i} species={species} />
-          ))}
-          {Array.from({ length: Math.max(0, 6 - report.species.length) }).map(
-            (_, i) => (
-              <div
-                key={`empty-${i}`}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-surface-alt"
-              />
-            ),
-          )}
+        <div className="bg-surface-alt/30 rounded-lg py-2">
+          <div className="flex items-center justify-center gap-0.5 sm:gap-1">
+            {report.species.map((species, i) => (
+              <CardSprite key={i} species={species} />
+            ))}
+            {Array.from({ length: Math.max(0, 6 - report.species.length) }).map(
+              (_, i) => (
+                <div
+                  key={`empty-${i}`}
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-surface-alt"
+                />
+              ),
+            )}
+          </div>
         </div>
       </div>
 
@@ -110,12 +127,24 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           )}
         </div>
 
+        {/* Archetype badges — below title, up to 3 */}
+        {visibleArchetypes.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {visibleArchetypes.map((a) => (
+              <span key={a} className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-accent/10 text-accent">{a}</span>
+            ))}
+            {overflowArchetypes > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-surface-alt text-text-tertiary">+{overflowArchetypes}</span>
+            )}
+          </div>
+        )}
+
         {/* Creator + Collaborators */}
         {report.creatorName && (
           <p className="text-xs text-text-secondary flex items-center gap-1 flex-wrap">
             <span>{t.byCreator}</span>
             <span
-              className="font-semibold hover:text-accent transition-colors inline-flex items-center gap-1"
+              className="font-semibold text-accent/80 hover:text-accent hover:underline transition-colors inline-flex items-center gap-1"
               onClick={(e) => {
                 e.preventDefault();
                 window.location.href = `/creator/${encodeURIComponent(report.creatorName!)}`;
@@ -159,21 +188,10 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           </p>
         )}
 
-        {/* Tags */}
-        {report.tags && (report.tags.regulation || report.tags.eventType || report.tags.archetype?.length) && (
+        {/* Tags — eventType only (regulation in corner, archetypes above title) */}
+        {hasTagsSection && (
           <div className="flex flex-wrap gap-1">
-            {report.tags.regulation && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">{report.tags.regulation}</span>
-            )}
-            {report.tags.eventType && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">{report.tags.eventType}</span>
-            )}
-            {report.tags.archetype?.slice(0, 2).map((a) => (
-              <span key={a} className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-accent/10 text-accent">{a}</span>
-            ))}
-            {(report.tags.archetype?.length ?? 0) > 2 && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-surface-alt text-text-tertiary">+{(report.tags.archetype?.length ?? 0) - 2}</span>
-            )}
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">{report.tags!.eventType}</span>
           </div>
         )}
 
