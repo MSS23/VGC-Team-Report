@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: "**Goal:** Make the Explore page a powerful, intuitive discovery tool with better filters, richer report cards, shareable searches, and a cleaner mobile UX."
 status: executing
-stopped_at: Completed 02-01-PLAN.md — AdvancedFilterDrawer created, ExploreFilters refactored
-last_updated: "2026-04-03T11:50:09.078Z"
+stopped_at: Completed 03-01-PLAN.md — useExploreUrlSync hook created and integrated into ExploreContent
+last_updated: "2026-04-03T12:07:20.964Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
   percent: 0
 ---
 
@@ -18,8 +18,8 @@ progress:
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (shareable-filter-urls) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
 Last activity: 2026-04-03
 
@@ -30,7 +30,7 @@ Progress: [░░░░░░░░░░] 0%
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Players can build, document, share, and discover competitive VGC teams in one place
-**Current focus:** Phase 02 — advanced-filter-drawer
+**Current focus:** Phase 03 — shareable-filter-urls
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Accumulated Context
 
 | Phase 02-advanced-filter-drawer P01 | 4min | 2 tasks | 2 files |
+| Phase 03-shareable-filter-urls P01 | 15min | 2 tasks | 3 files |
 
 ### Decisions
 
@@ -58,6 +59,9 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 - Meta aggregation pipeline deferred; all v5.0 features work off existing `shares` table data
 - [Phase 02-advanced-filter-drawer]: Drawer open/close is local state in ExploreFilters — not lifted to ExploreContent
 - [Phase 02-advanced-filter-drawer]: useMediaQuery inline hook for JS-driven mobile/desktop drawer variant switching (required for correct ARIA roles)
+- [Phase 03-shareable-filter-urls]: Use replaceState not pushState for filter changes — prevents history pollution on every keystroke
+- [Phase 03-shareable-filter-urls]: Export parseFiltersFromUrl and buildUrlSearch as pure functions — enables unit tests without window/React mocks
+- [Phase 03-shareable-filter-urls]: URL param keys match existing API param keys (q, sort, searchType, regulation, eventType, archetype, species, placement, following)
 
 ### Pending Todos
 
@@ -69,8 +73,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T09:14:44.425Z
-Stopped at: Completed 02-01-PLAN.md — AdvancedFilterDrawer created, ExploreFilters refactored
+Last session: 2026-04-03T12:07:20.960Z
+Stopped at: Completed 03-01-PLAN.md — useExploreUrlSync hook created and integrated into ExploreContent
 Resume file: None
 
 ### Roadmap Evolution

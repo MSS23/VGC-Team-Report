@@ -33,9 +33,9 @@ Requirements for Smart Explore Experience milestone. Each maps to roadmap phases
 
 ### Shareable URLs
 
-- [ ] **URL-01**: User can copy a shareable URL that encodes the current explore filter state
-- [ ] **URL-02**: Opening a shared filter URL restores all active filters exactly
-- [ ] **URL-03**: Shareable URL includes regulation, species (include/exclude), archetype, placement, event type, sort, and search query
+- [x] **URL-01**: User can copy a shareable URL that encodes the current explore filter state
+- [x] **URL-02**: Opening a shared filter URL restores all active filters exactly
+- [x] **URL-03**: Shareable URL includes regulation, species (include/exclude), archetype, placement, event type, sort, and search query
 - [ ] **URL-04**: User sees a "Copy link" button near the filter bar when any filters are active
 
 ### Filter UX
@@ -45,7 +45,7 @@ Requirements for Smart Explore Experience milestone. Each maps to roadmap phases
 - [x] **UX-03**: Active advanced filters show a count badge on the "More filters" button
 - [x] **UX-04**: Advanced drawer works well on mobile with full-width sheet behavior
 - [x] **UX-05**: Primary filter bar retains the most-used filters (regulation, search, species include, archetype, sort)
-- [ ] **UX-06**: All filter changes are reflected in the URL immediately (for URL-01)
+- [x] **UX-06**: All filter changes are reflected in the URL immediately (for URL-01)
 
 ## Future Requirements
 
@@ -100,16 +100,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CARD-04 | Phase 6 | Pending |
 | CARD-05 | Phase 6 | Pending |
 | CARD-06 | Phase 6 | Pending |
-| URL-01 | Phase 3 | Pending |
-| URL-02 | Phase 3 | Pending |
-| URL-03 | Phase 3 | Pending |
+| URL-01 | Phase 3 | Complete |
+| URL-02 | Phase 3 | Complete |
+| URL-03 | Phase 3 | Complete |
 | URL-04 | Phase 3 | Pending |
 | UX-01 | Phase 2 | Complete |
 | UX-02 | Phase 2 | Complete |
 | UX-03 | Phase 2 | Complete |
 | UX-04 | Phase 2 | Complete |
 | UX-05 | Phase 2 | Complete |
-| UX-06 | Phase 3 | Pending |
+| UX-06 | Phase 3 | Complete |
 
 **Coverage:**
 - v5.0 requirements: 25 total
