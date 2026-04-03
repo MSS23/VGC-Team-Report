@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Follow Creators** - End-to-end creator follow system
 - [ ] **Phase 2: Advanced Filter Drawer** - Collapsible drawer that organizes complex filters, cleans up primary bar
 - [ ] **Phase 3: Shareable Filter URLs** - Every filter combination generates a copyable link
-- [ ] **Phase 4: Pokemon Exclude Filter** - Users can find teams WITHOUT specific Pokemon
+- [x] **Phase 4: Pokemon Exclude Filter** - Users can find teams WITHOUT specific Pokemon (completed 2026-04-03)
 - [ ] **Phase 5: Tournament Results Mode** - Preset browsing mode for tournament-placed teams
 - [ ] **Phase 6: Enhanced Report Cards** - Richer explore cards with sprites, badges, placement, and creator info
 
@@ -78,8 +78,10 @@ Plans:
   2. User can combine Pokemon exclusions with existing include filters simultaneously
   3. The exclude filter is accessible from both the primary bar and the advanced drawer
   4. Excluded Pokemon are visually distinct from included Pokemon in the active filter display
-**Plans:** TBD
-**UI hint**: yes
+**Plans:** 1/1 plans complete
+
+Plans:
+- [x] 04-01-PLAN.md — Add excludeSpecies end-to-end: API filtering, URL sync, primary bar + drawer UI with visual distinction
 
 ---
 
@@ -124,6 +126,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Follow Creators | 0/2 | In progress | - |
 | 2. Advanced Filter Drawer | 2/2 | In Progress|  |
 | 3. Shareable Filter URLs | 0/2 | Not started | - |
-| 4. Pokemon Exclude Filter | 0/TBD | Not started | - |
+| 4. Pokemon Exclude Filter | 1/1 | Complete   | 2026-04-03 |
 | 5. Tournament Results Mode | 0/TBD | Not started | - |
 | 6. Enhanced Report Cards | 0/TBD | Not started | - |

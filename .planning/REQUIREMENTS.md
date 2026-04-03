@@ -9,10 +9,10 @@ Requirements for Smart Explore Experience milestone. Each maps to roadmap phases
 
 ### Filtering
 
-- [ ] **FILT-01**: User can exclude specific Pokemon from explore results (e.g., "teams WITHOUT Flutter Mane")
-- [ ] **FILT-02**: User can apply multiple Pokemon exclusions simultaneously
-- [ ] **FILT-03**: User can combine Pokemon exclusion with existing include filters (e.g., "teams WITH Incineroar but WITHOUT Flutter Mane")
-- [ ] **FILT-04**: Exclude filter is accessible from both primary filter bar and advanced drawer
+- [x] **FILT-01**: User can exclude specific Pokemon from explore results (e.g., "teams WITHOUT Flutter Mane")
+- [x] **FILT-02**: User can apply multiple Pokemon exclusions simultaneously
+- [x] **FILT-03**: User can combine Pokemon exclusion with existing include filters (e.g., "teams WITH Incineroar but WITHOUT Flutter Mane")
+- [x] **FILT-04**: Exclude filter is accessible from both primary filter bar and advanced drawer
 
 ### Tournament Browsing
 
@@ -85,10 +85,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FILT-01 | Phase 4 | Pending |
-| FILT-02 | Phase 4 | Pending |
-| FILT-03 | Phase 4 | Pending |
-| FILT-04 | Phase 4 | Pending |
+| FILT-01 | Phase 4 | Complete |
+| FILT-02 | Phase 4 | Complete |
+| FILT-03 | Phase 4 | Complete |
+| FILT-04 | Phase 4 | Complete |
 | TOUR-01 | Phase 5 | Pending |
 | TOUR-02 | Phase 5 | Pending |
 | TOUR-03 | Phase 5 | Pending |

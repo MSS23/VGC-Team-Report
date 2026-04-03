@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: "**Goal:** Make the Explore page a powerful, intuitive discovery tool with better filters, richer report cards, shareable searches, and a cleaner mobile UX."
-status: executing
-stopped_at: Completed 03-01-PLAN.md — useExploreUrlSync hook created and integrated into ExploreContent
-last_updated: "2026-04-03T12:11:27.937Z"
+status: verifying
+stopped_at: "Completed 04-01-PLAN.md — Pokemon exclude filter end-to-end: API, URL sync, primary bar, and drawer"
+last_updated: "2026-04-03T12:24:10.477Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  completed_phases: 4
+  total_plans: 7
+  completed_plans: 7
   percent: 0
 ---
 
@@ -18,9 +18,9 @@ progress:
 
 ## Current Position
 
-Phase: 04
-Plan: Not started
-Status: Ready to execute
+Phase: 04 (pokemon-exclude-filter) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
 Last activity: 2026-04-03
 
 Progress: [░░░░░░░░░░] 0%
@@ -30,7 +30,7 @@ Progress: [░░░░░░░░░░] 0%
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Players can build, document, share, and discover competitive VGC teams in one place
-**Current focus:** Phase 03 — shareable-filter-urls
+**Current focus:** Phase 04 — pokemon-exclude-filter
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 | Phase 02-advanced-filter-drawer P01 | 4min | 2 tasks | 2 files |
 | Phase 03-shareable-filter-urls P01 | 15min | 2 tasks | 3 files |
+| Phase 04-pokemon-exclude-filter P01 | 15min | 2 tasks | 6 files |
 
 ### Decisions
 
@@ -62,6 +63,9 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 - [Phase 03-shareable-filter-urls]: Use replaceState not pushState for filter changes — prevents history pollution on every keystroke
 - [Phase 03-shareable-filter-urls]: Export parseFiltersFromUrl and buildUrlSearch as pure functions — enables unit tests without window/React mocks
 - [Phase 03-shareable-filter-urls]: URL param keys match existing API param keys (q, sort, searchType, regulation, eventType, archetype, species, placement, following)
+- [Phase 04-pokemon-exclude-filter]: NOT ILIKE reduce pattern mirrors include ILIKE pattern for consistent exclude SQL conditions
+- [Phase 04-pokemon-exclude-filter]: Red-400 color scheme for exclude inputs as visual language distinguishing exclude from include filters
+- [Phase 04-pokemon-exclude-filter]: excludeSpecies counted in advancedFilterCount badge since it also lives in the advanced drawer
 
 ### Pending Todos
 
@@ -73,8 +77,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T12:07:20.960Z
-Stopped at: Completed 03-01-PLAN.md — useExploreUrlSync hook created and integrated into ExploreContent
+Last session: 2026-04-03T12:24:10.473Z
+Stopped at: Completed 04-01-PLAN.md — Pokemon exclude filter end-to-end: API, URL sync, primary bar, and drawer
 Resume file: None
 
 ### Roadmap Evolution
