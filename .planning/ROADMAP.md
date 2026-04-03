@@ -43,7 +43,7 @@ Plans:
   3. A count badge on the "More filters" button shows how many advanced filters are currently active
   4. The primary filter bar retains regulation, search, species include, archetype, and sort — no other controls
   5. All drawer interactions work with keyboard and screen reader (accessible)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans executed
 **UI hint**: yes
 
 Plans:
@@ -61,8 +61,11 @@ Plans:
   2. Clicking "Copy link" copies a URL to clipboard that encodes all active filters
   3. Opening a copied URL in a new tab restores all filters exactly (regulation, species include/exclude, archetype, placement, event type, sort, search query)
   4. Every filter change updates the browser URL immediately without a page reload
-**Plans:** TBD
-**UI hint**: yes
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Create useExploreUrlSync hook + integrate into ExploreContent for bidirectional URL sync
+- [ ] 03-02-PLAN.md — Add Copy link button to ExploreFilters + visual verification checkpoint
 
 ---
 
@@ -119,8 +122,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Follow Creators | 0/2 | In progress | - |
-| 2. Advanced Filter Drawer | 1/2 | In Progress|  |
-| 3. Shareable Filter URLs | 0/TBD | Not started | - |
+| 2. Advanced Filter Drawer | 2/2 | In Progress|  |
+| 3. Shareable Filter URLs | 0/2 | Not started | - |
 | 4. Pokemon Exclude Filter | 0/TBD | Not started | - |
 | 5. Tournament Results Mode | 0/TBD | Not started | - |
 | 6. Enhanced Report Cards | 0/TBD | Not started | - |
