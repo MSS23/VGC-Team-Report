@@ -95,12 +95,12 @@ Plans:
   3. User can filter tournament results by placement tier (Top 4, Top 8, Top 16, etc.)
   4. Tournament mode filters can be combined with regulation and species include/exclude filters
   5. Report cards in tournament mode display placement prominently with visual distinction for Top 4 and Top 8
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 **UI hint**: yes
 
 Plans:
 - [ ] 05-01-PLAN.md — Tournament mode toggle + filter presets (URL sync, ExploreFilters button, preset behavior)
-- [ ] 05-02-PLAN.md — Enhanced placement badge styling on ReportCard (tiered gold/silver/bronze)
+- [x] 05-02-PLAN.md — Enhanced placement badge styling on ReportCard (tiered gold/silver/bronze)
 
 ---
 
@@ -131,5 +131,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Advanced Filter Drawer | 2/2 | In Progress|  |
 | 3. Shareable Filter URLs | 0/2 | Not started | - |
 | 4. Pokemon Exclude Filter | 1/1 | Complete   | 2026-04-03 |
-| 5. Tournament Results Mode | 0/2 | Not started | - |
+| 5. Tournament Results Mode | 1/2 | In Progress|  |
 | 6. Enhanced Report Cards | 0/TBD | Not started | - |
