@@ -24,6 +24,23 @@ export interface ExploreReport {
   collaborators?: string[];
 }
 
+function getPlacementStyle(placement: string): string {
+  if (placement === "1st") {
+    // Gold — champion treatment
+    return "bg-amber-500/20 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30";
+  }
+  if (placement === "Top 4") {
+    // Silver — finalist treatment
+    return "bg-slate-400/15 text-slate-600 dark:text-slate-300 ring-1 ring-slate-400/30";
+  }
+  if (placement === "Top 8") {
+    // Bronze — strong showing
+    return "bg-orange-500/15 text-orange-600 dark:text-orange-400 ring-1 ring-orange-500/25";
+  }
+  // Default — standard badge for Top 16 and other placements
+  return "bg-accent-surface text-accent";
+}
+
 function CardSprite({ species }: { species: string }) {
   const urls = getSpriteUrls(species);
   const [idx, setIdx] = useState(0);
@@ -82,7 +99,12 @@ export function ReportCard({ report }: { report: ExploreReport }) {
             {report.tournamentName || report.species.join(" / ")}
           </h3>
           {report.placement && (
-            <span className="flex-shrink-0 inline-flex items-center px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-extrabold rounded-md tracking-wide bg-accent-surface text-accent">
+            <span className={`flex-shrink-0 inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-extrabold rounded-md tracking-wide ${getPlacementStyle(report.placement)}`}>
+              {(report.placement === "1st" || report.placement === "Top 4") && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="flex-shrink-0">
+                  <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7.4L12 16.8l-6.3 4.6 2.3-7.4-6-4.6h7.6z" />
+                </svg>
+              )}
               {report.placement}
             </span>
           )}
