@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Follow Creators** - End-to-end creator follow system
 - [ ] **Phase 2: Advanced Filter Drawer** - Collapsible drawer that organizes complex filters, cleans up primary bar
 - [ ] **Phase 3: Shareable Filter URLs** - Every filter combination generates a copyable link
-- [x] **Phase 4: Pokemon Exclude Filter** - Users can find teams WITHOUT specific Pokemon (completed 2026-04-03)
+- [x] **Phase 4: Pokemon Exclude Filter** - Users can find teams WITHOUT specific Pokemon (completed 2026-04-03)
 - [ ] **Phase 5: Tournament Results Mode** - Preset browsing mode for tournament-placed teams
 - [ ] **Phase 6: Enhanced Report Cards** - Richer explore cards with sprites, badges, placement, and creator info
 
@@ -95,8 +95,12 @@ Plans:
   3. User can filter tournament results by placement tier (Top 4, Top 8, Top 16, etc.)
   4. Tournament mode filters can be combined with regulation and species include/exclude filters
   5. Report cards in tournament mode display placement prominently with visual distinction for Top 4 and Top 8
-**Plans:** TBD
+**Plans:** 2 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 05-01-PLAN.md — Tournament mode toggle + filter presets (URL sync, ExploreFilters button, preset behavior)
+- [ ] 05-02-PLAN.md — Enhanced placement badge styling on ReportCard (tiered gold/silver/bronze)
 
 ---
 
@@ -119,7 +123,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -127,5 +131,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Advanced Filter Drawer | 2/2 | In Progress|  |
 | 3. Shareable Filter URLs | 0/2 | Not started | - |
 | 4. Pokemon Exclude Filter | 1/1 | Complete   | 2026-04-03 |
-| 5. Tournament Results Mode | 0/TBD | Not started | - |
+| 5. Tournament Results Mode | 0/2 | Not started | - |
 | 6. Enhanced Report Cards | 0/TBD | Not started | - |
