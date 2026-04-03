@@ -85,37 +85,37 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FILT-01 | — | Pending |
-| FILT-02 | — | Pending |
-| FILT-03 | — | Pending |
-| FILT-04 | — | Pending |
-| TOUR-01 | — | Pending |
-| TOUR-02 | — | Pending |
-| TOUR-03 | — | Pending |
-| TOUR-04 | — | Pending |
-| TOUR-05 | — | Pending |
-| CARD-01 | — | Pending |
-| CARD-02 | — | Pending |
-| CARD-03 | — | Pending |
-| CARD-04 | — | Pending |
-| CARD-05 | — | Pending |
-| CARD-06 | — | Pending |
-| URL-01 | — | Pending |
-| URL-02 | — | Pending |
-| URL-03 | — | Pending |
-| URL-04 | — | Pending |
-| UX-01 | — | Pending |
-| UX-02 | — | Pending |
-| UX-03 | — | Pending |
-| UX-04 | — | Pending |
-| UX-05 | — | Pending |
-| UX-06 | — | Pending |
+| FILT-01 | Phase 4 | Pending |
+| FILT-02 | Phase 4 | Pending |
+| FILT-03 | Phase 4 | Pending |
+| FILT-04 | Phase 4 | Pending |
+| TOUR-01 | Phase 5 | Pending |
+| TOUR-02 | Phase 5 | Pending |
+| TOUR-03 | Phase 5 | Pending |
+| TOUR-04 | Phase 5 | Pending |
+| TOUR-05 | Phase 5 | Pending |
+| CARD-01 | Phase 6 | Pending |
+| CARD-02 | Phase 6 | Pending |
+| CARD-03 | Phase 6 | Pending |
+| CARD-04 | Phase 6 | Pending |
+| CARD-05 | Phase 6 | Pending |
+| CARD-06 | Phase 6 | Pending |
+| URL-01 | Phase 3 | Pending |
+| URL-02 | Phase 3 | Pending |
+| URL-03 | Phase 3 | Pending |
+| URL-04 | Phase 3 | Pending |
+| UX-01 | Phase 2 | Pending |
+| UX-02 | Phase 2 | Pending |
+| UX-03 | Phase 2 | Pending |
+| UX-04 | Phase 2 | Pending |
+| UX-05 | Phase 2 | Pending |
+| UX-06 | Phase 3 | Pending |
 
 **Coverage:**
 - v5.0 requirements: 25 total
-- Mapped to phases: 0
-- Unmapped: 25
+- Mapped to phases: 25
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-03*
-*Last updated: 2026-04-03 after initial definition*
+*Last updated: 2026-04-03 — traceability mapped after roadmap creation*
