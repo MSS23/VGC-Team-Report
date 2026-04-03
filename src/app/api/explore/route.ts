@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -28,17 +29,39 @@ export async function GET(request: Request) {
     const filterArchetype = url.searchParams.get("archetype") ?? ""; // comma-separated
     const filterSpecies = url.searchParams.get("species") ?? ""; // comma-separated Pokemon names for multi-species filter
     const filterPlacement = url.searchParams.get("placement") ?? ""; // e.g. "1st", "Top 4", "Top 8"
+    const filterFollowing = url.searchParams.get("following") === "1";
 
-    // ── Cache check ──────────────────────────────────────────────────
-    const cacheKey = CacheKeys.explore(
-      `${sort}:${q}:${searchType}:${cursor ?? ""}:${limit}:${filterRegulation}:${filterEventType}:${filterArchetype}:${filterSpecies}:${filterPlacement}`
-    );
-    const cached = await cacheGet<{ reports: unknown[]; nextCursor: string | null }>(cacheKey);
-    if (cached) {
-      return NextResponse.json(cached);
+    // ── Cache check (skip for user-specific following queries) ───────
+    let cacheKey: string | null = null;
+    if (!filterFollowing) {
+      cacheKey = CacheKeys.explore(
+        `${sort}:${q}:${searchType}:${cursor ?? ""}:${limit}:${filterRegulation}:${filterEventType}:${filterArchetype}:${filterSpecies}:${filterPlacement}`
+      );
+      const cached = await cacheGet<{ reports: unknown[]; nextCursor: string | null }>(cacheKey);
+      if (cached) {
+        return NextResponse.json(cached);
+      }
     }
 
     const sql = getDb();
+
+    // ── Following filter: fetch followed creators ────────────────────
+    let followingCreators: string[] = [];
+    if (filterFollowing) {
+      const { userId } = await auth();
+      if (!userId) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      const followRows = await sql`SELECT creator_name FROM follows WHERE user_id = ${userId}`;
+      followingCreators = followRows.map((r) => r.creator_name as string);
+      if (followingCreators.length === 0) {
+        return NextResponse.json({ reports: [], nextCursor: null });
+      }
+    }
+
+    const followingCondition = filterFollowing
+      ? sql`AND LOWER(s.data->>'creatorName') = ANY(${followingCreators.map(n => n.toLowerCase())})`
+      : sql``;
 
     // Build search condition based on searchType
     // Use full-text search for queries 3+ chars, fall back to ILIKE for short queries
@@ -101,6 +124,7 @@ export async function GET(request: Request) {
         WHERE s.is_public = TRUE AND s.deleted_at IS NULL
           ${searchCondition}
           ${tagFilters}
+          ${followingCondition}
           ${cursor ? sql`AND COALESCE(rc.like_count, 0) < ${parseInt(cursor, 10)}` : sql``}
         ORDER BY COALESCE(rc.like_count, 0) DESC, s.created_at DESC
         LIMIT ${limit + 1}
@@ -113,6 +137,7 @@ export async function GET(request: Request) {
         WHERE s.is_public = TRUE AND s.deleted_at IS NULL
           ${searchCondition}
           ${tagFilters}
+          ${followingCondition}
           ${cursor ? sql`AND COALESCE(s.view_count, 0) < ${parseInt(cursor, 10)}` : sql``}
         ORDER BY COALESCE(s.view_count, 0) DESC, s.created_at DESC
         LIMIT ${limit + 1}
@@ -126,6 +151,7 @@ export async function GET(request: Request) {
         WHERE s.is_public = TRUE AND s.deleted_at IS NULL
           ${searchCondition}
           ${tagFilters}
+          ${followingCondition}
           ${cursor ? sql`AND ${col} < ${cursor}` : sql``}
         ORDER BY ${col} DESC
         LIMIT ${limit + 1}
@@ -213,7 +239,10 @@ export async function GET(request: Request) {
 
     const result = { reports, nextCursor };
     // Cache for 60s — short TTL keeps data fresh while reducing DB load
-    await cacheSet(cacheKey, result, CacheTTL.EXPLORE_LIST);
+    // Skip cache for user-specific following queries
+    if (cacheKey) {
+      await cacheSet(cacheKey, result, CacheTTL.EXPLORE_LIST);
+    }
     return NextResponse.json(result);
   } catch (e) {
     console.error("Explore API error:", e);
