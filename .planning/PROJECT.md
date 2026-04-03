@@ -8,18 +8,16 @@ A web platform for competitive Pokemon VGC players to build detailed team report
 
 Players can build, document, share, and discover competitive VGC teams in one place — replacing the fragmented workflow of spreadsheets, Discord pastes, and scattered notes.
 
-## Current Milestone: v5.0 Smart Discovery & Meta Intelligence
+## Current Milestone: v5.0 Smart Explore Experience
 
-**Goal:** Transform the Explore page from a basic list into an intelligent discovery engine powered by aggregated app data — so players can find teams that counter their problems, study what's trending, and discover creative builds.
+**Goal:** Make the Explore page a powerful, intuitive discovery tool with better filters, richer report cards, shareable searches, and a cleaner mobile UX.
 
 **Target features:**
-- Smart Explore filters (counter-archetype queries, Pokemon include/exclude, meta badges)
-- Meta aggregation engine (top Pokemon, popular cores, archetype distribution, trends)
-- Trend indicators on explore results and report cards (rising/falling)
-- "Counter This" discovery (find teams that handle specific threats/archetypes)
-- Tournament results browsing (filter by placement, event type, recency)
-- Inspiration feed (novel/creative builds via diversity scoring)
-- Enhanced report cards (richer previews with meta context, trend badges)
+- Pokemon exclude filter ("teams WITHOUT Flutter Mane")
+- Tournament results mode (preset filter combos for browsing tournament placements)
+- Enhanced report cards (key Pokemon highlighted, archetype badges, placement prominence, creator info)
+- Shareable filter URLs (every filter combination generates a copyable link)
+- Advanced filter drawer (collapsible drawer for complex filters, clean mobile UX)
 
 ## Requirements
 
@@ -53,22 +51,25 @@ Players can build, document, share, and discover competitive VGC teams in one pl
 
 <!-- Current scope for v5.0. -->
 
-- [ ] Smart explore filters with counter-archetype queries
-- [ ] Meta aggregation engine from app's own shared reports
-- [ ] Trend indicators (rising/falling Pokemon and archetypes)
-- [ ] "Counter This" discovery queries
-- [ ] Tournament results browsing with placement/event filters
-- [ ] Inspiration feed surfacing novel/creative builds
-- [ ] Enhanced report cards with meta context and trend badges
+- [ ] Pokemon exclude filter for explore search
+- [ ] Tournament results browsing mode with preset filter combos
+- [ ] Enhanced report cards with richer previews
+- [ ] Shareable filter URLs for explore searches
+- [ ] Advanced filter drawer for mobile-friendly UX
 
 ### Out of Scope
 
 <!-- Explicit boundaries for v5.0. -->
 
-- External data APIs (Pikalytics, Smogon usage stats) — Use app's own data only; external integration deferred
-- Separate /meta page — All meta intelligence surfaces within enhanced /explore
-- Leaderboards and community tier lists — Deferred to future milestone
-- Practice mode / ladder tracking — Different focus area, future milestone
+- Meta aggregation engine (meta_snapshots table, daily cron pipeline) — Overkill for current data volume; deferred
+- Trend indicators (rising/falling badges) — Requires meta aggregation engine; deferred
+- Counter-archetype discovery filter — Depends on meta data; deferred
+- Popular cores display — Needs weeks of snapshot data; deferred
+- Inspiration/novelty feed — Needs data volume calibration; deferred
+- External data APIs (Pikalytics, Smogon) — No external dependencies
+- Separate /meta page — All discovery surfaces within /explore
+- Leaderboards and community tier lists — Future milestone
+- Practice mode / ladder tracking — Different focus area
 - Tournament lifecycle (round-by-round tracking) — Future milestone
 - Personal analytics (win/loss trends, most-brought stats) — Future milestone
 
@@ -83,18 +84,18 @@ Players can build, document, share, and discover competitive VGC teams in one pl
 
 ## Constraints
 
-- **Data source:** App's own public reports only — no external API dependencies
-- **Performance:** Explore page must remain fast (<1s load) even with richer data; pre-aggregate where possible
-- **Vercel Hobby:** Serverless function limits (10s timeout, 1MB response) constrain real-time aggregation
+- **Performance:** Explore page must remain fast (<1s load) even with richer cards and filters
+- **Vercel Hobby:** Serverless function limits (10s timeout, 1MB response)
 - **Incremental:** Must not break existing explore functionality; enhance progressively
+- **Mobile-first:** Filter drawer and enhanced cards must work well on mobile screens
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| App data only for meta intelligence | Creates data flywheel (more shares = better meta = more users), no external API cost/maintenance | — Pending |
-| Enhance /explore vs separate /meta page | Focused milestone, users already navigate to /explore, avoid splitting attention | — Pending |
-| Pre-aggregate meta stats | Vercel serverless has 10s timeout; real-time aggregation over growing dataset won't scale | — Pending |
+| Defer meta aggregation pipeline | Overkill for current data volume; focus on UX improvements first | ✓ Good |
+| Enhance /explore vs separate pages | Users already navigate to /explore; avoid splitting attention | ✓ Good |
+| Advanced filter drawer pattern | Existing filter bar at 8 params; adding more inline breaks mobile UX | — Pending |
 
 ## Evolution
 
@@ -114,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after milestone v5.0 initialization*
+*Last updated: 2026-04-03 after milestone v5.0 scope revision*
