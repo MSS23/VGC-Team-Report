@@ -120,7 +120,7 @@ Plans:
 
 Plans:
 - [x] 06-01-PLAN.md — Enhance ReportCard visual hierarchy: larger sprites, archetype badges below title, regulation corner pill, creator link styling
-- [ ] 06-02-PLAN.md — Visual + performance verification checkpoint (Lighthouse CLS check)
+- [x] 06-02-PLAN.md — Visual + performance verification checkpoint (Lighthouse CLS check)
 
 ---
 
