@@ -48,7 +48,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Create AdvancedFilterDrawer component + refactor ExploreFilters to integrate drawer
-- [ ] 02-02-PLAN.md — Smoke test spec compliance + visual verification checkpoint
+- [x] 02-02-PLAN.md — Smoke test spec compliance + visual verification checkpoint
 
 ---
 
