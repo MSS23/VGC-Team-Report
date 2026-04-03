@@ -41,6 +41,7 @@ function ExploreInner() {
   const [archetype, setArchetype] = useState("");
   const [species, setSpecies] = useState("");
   const [placement, setPlacement] = useState("");
+  const [followingOnly, setFollowingOnly] = useState(false);
   const initialLoad = useRef(true);
 
   const fetchReports = useCallback(
@@ -55,6 +56,7 @@ function ExploreInner() {
       if (archetype) params.set("archetype", archetype);
       if (species) params.set("species", species);
       if (placement) params.set("placement", placement);
+      if (followingOnly) params.set("following", "1");
 
       const res = await fetch(`/api/explore?${params}`);
       if (!res.ok) throw new Error("Failed to fetch");
@@ -63,7 +65,7 @@ function ExploreInner() {
         nextCursor: string | null;
       }>;
     },
-    [query, sort, searchCategory, regulation, eventType, archetype, species, placement],
+    [query, sort, searchCategory, regulation, eventType, archetype, species, placement, followingOnly],
   );
 
   // Initial + filter/sort change fetch
@@ -132,6 +134,8 @@ function ExploreInner() {
           onSpeciesChange={setSpecies}
           placement={placement}
           onPlacementChange={setPlacement}
+          followingOnly={followingOnly}
+          onFollowingOnlyChange={setFollowingOnly}
         />
 
         {/* Results */}

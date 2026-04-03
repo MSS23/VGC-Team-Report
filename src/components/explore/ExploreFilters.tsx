@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useUser } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
 import { ARCHETYPES, REGULATIONS, EVENT_TYPES } from "@/lib/data/tags";
 
@@ -23,6 +24,8 @@ interface ExploreFiltersProps {
   onSpeciesChange: (s: string) => void;
   placement: string;
   onPlacementChange: (p: string) => void;
+  followingOnly: boolean;
+  onFollowingOnlyChange: (v: boolean) => void;
 }
 
 const CATEGORIES: { value: SearchCategory; label: string; icon: React.ReactNode }[] = [
@@ -96,8 +99,11 @@ export function ExploreFilters({
   onSpeciesChange,
   placement,
   onPlacementChange,
+  followingOnly,
+  onFollowingOnlyChange,
 }: ExploreFiltersProps) {
   const { t } = useTranslation();
+  const { user } = useUser();
   const [localQuery, setLocalQuery] = useState(query);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -133,6 +139,25 @@ export function ExploreFilters({
             {cat.label}
           </button>
         ))}
+        {user && (
+          <button
+            type="button"
+            onClick={() => onFollowingOnlyChange(!followingOnly)}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer active:scale-[0.97] ${
+              followingOnly
+                ? "bg-accent text-white shadow-sm shadow-accent/20 ring-2 ring-accent/30 ring-offset-1 ring-offset-background"
+                : "bg-surface-alt/50 text-text-secondary hover:text-text-primary hover:bg-surface-alt"
+            }`}
+            aria-pressed={followingOnly}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <polyline points="16 11 18 13 22 9" />
+            </svg>
+            Following
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
