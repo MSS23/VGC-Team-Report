@@ -108,7 +108,26 @@ export function ExploreFilters({
   const { user } = useUser();
   const [localQuery, setLocalQuery] = useState(query);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const hasActiveFilters =
+    query !== "" ||
+    sort !== "newest" ||
+    searchCategory !== "all" ||
+    regulation !== "" ||
+    eventType !== "" ||
+    archetype !== "" ||
+    species !== "" ||
+    placement !== "" ||
+    followingOnly;
+
+  function handleCopyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   const advancedFilterCount = [
     placement !== "",
@@ -188,6 +207,40 @@ export function ExploreFilters({
             )}
           </AnimatePresence>
         </button>
+
+        {/* Copy link button — only when filters are active */}
+        <AnimatePresence>
+          {hasActiveFilters && (
+            <motion.button
+              key="copy-link"
+              type="button"
+              onClick={handleCopyLink}
+              aria-label="Copy shareable link to clipboard"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="ml-auto inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg whitespace-nowrap cursor-pointer active:scale-[0.97] transition-all bg-accent/10 text-accent hover:bg-accent/20"
+            >
+              {copied ? (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+                  </svg>
+                  Copy link
+                </>
+              )}
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
