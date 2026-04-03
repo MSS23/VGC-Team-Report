@@ -30,6 +30,8 @@ interface ExploreFiltersProps {
   onPlacementChange: (p: string) => void;
   followingOnly: boolean;
   onFollowingOnlyChange: (v: boolean) => void;
+  tournamentMode: boolean;
+  onTournamentModeChange: (v: boolean) => void;
 }
 
 const CATEGORIES: { value: SearchCategory; label: string; icon: React.ReactNode }[] = [
@@ -107,6 +109,8 @@ export function ExploreFilters({
   onPlacementChange,
   followingOnly,
   onFollowingOnlyChange,
+  tournamentMode,
+  onTournamentModeChange,
 }: ExploreFiltersProps) {
   const { t } = useTranslation();
   const { user } = useUser();
@@ -125,7 +129,8 @@ export function ExploreFilters({
     species !== "" ||
     excludeSpecies !== "" ||
     placement !== "" ||
-    followingOnly;
+    followingOnly ||
+    tournamentMode;
 
   function handleCopyLink() {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -139,7 +144,20 @@ export function ExploreFilters({
     eventType !== "",
     followingOnly,
     excludeSpecies !== "",
+    tournamentMode,
   ].filter(Boolean).length;
+
+  function handleTournamentToggle() {
+    const next = !tournamentMode;
+    onTournamentModeChange(next);
+    if (next) {
+      if (!placement) onPlacementChange("Top 8");
+      setDrawerOpen(true);
+    } else {
+      onPlacementChange("");
+      onEventTypeChange("");
+    }
+  }
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -155,7 +173,7 @@ export function ExploreFilters({
   }, [query]);
 
   return (
-    <div className="sticky top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/80 backdrop-blur-lg border-b border-border/50 mb-6 space-y-3 relative">
+    <div className={`sticky top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/80 backdrop-blur-lg border-b border-border/50 mb-6 space-y-3 relative${tournamentMode ? " border-t-2 border-t-amber-500/50" : ""}`}>
       {/* Search category tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         {CATEGORIES.map((cat) => (
@@ -173,6 +191,28 @@ export function ExploreFilters({
             {cat.label}
           </button>
         ))}
+
+        {/* Tournament Results toggle */}
+        <button
+          type="button"
+          onClick={handleTournamentToggle}
+          aria-pressed={tournamentMode}
+          className={`inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[44px] text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer active:scale-[0.97] ${
+            tournamentMode
+              ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-2 ring-amber-500/30 ring-offset-1 ring-offset-background font-bold"
+              : "bg-surface-alt/50 text-text-secondary hover:text-text-primary hover:bg-surface-alt"
+          }`}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9H4a2 2 0 01-2-2V4h4" />
+            <path d="M18 9h2a2 2 0 002-2V4h-4" />
+            <rect x="6" y="2" width="12" height="10" rx="2" />
+            <path d="M12 12v4" />
+            <path d="M8 20h8" />
+            <path d="M9 16h6" />
+          </svg>
+          <span className="hidden sm:inline">Tournament</span>
+        </button>
 
         {/* More filters button */}
         <button

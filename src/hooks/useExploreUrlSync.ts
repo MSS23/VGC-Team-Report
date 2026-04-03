@@ -14,6 +14,7 @@ export interface FilterState {
   excludeSpecies: string;
   placement: string;
   followingOnly: boolean;
+  tournamentMode: boolean;
 }
 
 export interface ExploreUrlSyncResult extends FilterState {
@@ -27,6 +28,7 @@ export interface ExploreUrlSyncResult extends FilterState {
   setExcludeSpecies: (v: string) => void;
   setPlacement: (v: string) => void;
   setFollowingOnly: (v: boolean) => void;
+  setTournamentMode: (v: boolean) => void;
 }
 
 const DEFAULTS: FilterState = {
@@ -40,6 +42,7 @@ const DEFAULTS: FilterState = {
   excludeSpecies: "",
   placement: "",
   followingOnly: false,
+  tournamentMode: false,
 };
 
 /** Pure function — parses URLSearchParams string into FilterState */
@@ -63,6 +66,7 @@ export function parseFiltersFromUrl(searchString: string): FilterState {
     excludeSpecies: params.get("excludeSpecies") ?? DEFAULTS.excludeSpecies,
     placement: params.get("placement") ?? DEFAULTS.placement,
     followingOnly: params.get("following") === "1",
+    tournamentMode: params.get("tournament") === "1",
   };
 }
 
@@ -80,6 +84,7 @@ export function buildUrlSearch(filters: FilterState): string {
   if (filters.excludeSpecies) params.set("excludeSpecies", filters.excludeSpecies);
   if (filters.placement) params.set("placement", filters.placement);
   if (filters.followingOnly) params.set("following", "1");
+  if (filters.tournamentMode) params.set("tournament", "1");
 
   return params.toString();
 }
@@ -114,6 +119,7 @@ export function useExploreUrlSync(): ExploreUrlSyncResult {
   const setExcludeSpecies = (v: string) => setFilters((f) => ({ ...f, excludeSpecies: v }));
   const setPlacement = (v: string) => setFilters((f) => ({ ...f, placement: v }));
   const setFollowingOnly = (v: boolean) => setFilters((f) => ({ ...f, followingOnly: v }));
+  const setTournamentMode = (v: boolean) => setFilters((f) => ({ ...f, tournamentMode: v }));
 
   return {
     ...filters,
@@ -127,5 +133,6 @@ export function useExploreUrlSync(): ExploreUrlSyncResult {
     setExcludeSpecies,
     setPlacement,
     setFollowingOnly,
+    setTournamentMode,
   };
 }

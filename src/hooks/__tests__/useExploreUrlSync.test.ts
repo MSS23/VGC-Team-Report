@@ -14,6 +14,7 @@ describe("parseFiltersFromUrl", () => {
     expect(result.excludeSpecies).toBe("");
     expect(result.placement).toBe("");
     expect(result.followingOnly).toBe(false);
+    expect(result.tournamentMode).toBe(false);
   });
 
   it("parses all filter params from URL", () => {
@@ -29,12 +30,19 @@ describe("parseFiltersFromUrl", () => {
     expect(result.species).toBe("Flutter Mane");
     expect(result.placement).toBe("top8");
     expect(result.followingOnly).toBe(true);
+    expect(result.tournamentMode).toBe(false);
   });
 
   it("boolean following param: '1' in URL -> true, absent -> false", () => {
     expect(parseFiltersFromUrl("?following=1").followingOnly).toBe(true);
     expect(parseFiltersFromUrl("?following=0").followingOnly).toBe(false);
     expect(parseFiltersFromUrl("").followingOnly).toBe(false);
+  });
+
+  it("boolean tournament param: 'tournament=1' in URL -> tournamentMode=true, absent -> false", () => {
+    expect(parseFiltersFromUrl("?tournament=1").tournamentMode).toBe(true);
+    expect(parseFiltersFromUrl("?tournament=0").tournamentMode).toBe(false);
+    expect(parseFiltersFromUrl("").tournamentMode).toBe(false);
   });
 });
 
@@ -51,6 +59,7 @@ describe("buildUrlSearch", () => {
       excludeSpecies: "",
       placement: "",
       followingOnly: false,
+      tournamentMode: false,
     });
     expect(result).toBe("");
   });
@@ -67,6 +76,7 @@ describe("buildUrlSearch", () => {
       excludeSpecies: "",
       placement: "",
       followingOnly: false,
+      tournamentMode: false,
     });
     const params = new URLSearchParams(result);
     expect(params.get("q")).toBe("test");
@@ -75,6 +85,7 @@ describe("buildUrlSearch", () => {
     expect(params.get("regulation")).toBe("Reg H");
     expect(params.has("eventType")).toBe(false);
     expect(params.has("following")).toBe(false);
+    expect(params.has("tournament")).toBe(false);
   });
 
   it("encodes following as '1' when true", () => {
@@ -89,6 +100,7 @@ describe("buildUrlSearch", () => {
       excludeSpecies: "",
       placement: "",
       followingOnly: true,
+      tournamentMode: false,
     });
     const params = new URLSearchParams(result);
     expect(params.get("following")).toBe("1");
@@ -106,9 +118,46 @@ describe("buildUrlSearch", () => {
       excludeSpecies: "Flutter Mane,Urshifu",
       placement: "",
       followingOnly: false,
+      tournamentMode: false,
     });
     const params = new URLSearchParams(result);
     expect(params.get("excludeSpecies")).toBe("Flutter Mane,Urshifu");
+  });
+
+  it("encodes tournamentMode as 'tournament=1' when true", () => {
+    const result = buildUrlSearch({
+      query: "",
+      sort: "newest",
+      searchCategory: "all",
+      regulation: "",
+      eventType: "",
+      archetype: "",
+      species: "",
+      excludeSpecies: "",
+      placement: "",
+      followingOnly: false,
+      tournamentMode: true,
+    });
+    const params = new URLSearchParams(result);
+    expect(params.get("tournament")).toBe("1");
+  });
+
+  it("omits tournament param when tournamentMode is false", () => {
+    const result = buildUrlSearch({
+      query: "",
+      sort: "newest",
+      searchCategory: "all",
+      regulation: "",
+      eventType: "",
+      archetype: "",
+      species: "",
+      excludeSpecies: "",
+      placement: "",
+      followingOnly: false,
+      tournamentMode: false,
+    });
+    const params = new URLSearchParams(result);
+    expect(params.has("tournament")).toBe(false);
   });
 
   it("round-trips: buildUrlSearch -> parseFiltersFromUrl returns original values", () => {
@@ -123,6 +172,26 @@ describe("buildUrlSearch", () => {
       excludeSpecies: "Flutter Mane",
       placement: "winner",
       followingOnly: true,
+      tournamentMode: false,
+    };
+    const search = buildUrlSearch(original);
+    const parsed = parseFiltersFromUrl("?" + search);
+    expect(parsed).toEqual(original);
+  });
+
+  it("round-trips tournamentMode=true through buildUrlSearch -> parseFiltersFromUrl", () => {
+    const original = {
+      query: "",
+      sort: "newest" as const,
+      searchCategory: "all" as const,
+      regulation: "",
+      eventType: "regional",
+      archetype: "",
+      species: "",
+      excludeSpecies: "",
+      placement: "Top 8",
+      followingOnly: false,
+      tournamentMode: true,
     };
     const search = buildUrlSearch(original);
     const parsed = parseFiltersFromUrl("?" + search);
