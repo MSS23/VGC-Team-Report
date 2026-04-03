@@ -13,6 +13,7 @@ import { SpotlightSection } from "./SpotlightCard";
 import { ReportCard, type ExploreReport } from "./ReportCard";
 import { ExploreEmpty } from "./ExploreEmpty";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { useExploreUrlSync } from "@/hooks/useExploreUrlSync";
 
 export function ExploreContent() {
   return (
@@ -33,16 +34,19 @@ function ExploreInner() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<"newest" | "updated" | "popular" | "views">("newest");
-  const [searchCategory, setSearchCategory] = useState<SearchCategory>("all");
-  const [regulation, setRegulation] = useState("");
-  const [eventType, setEventType] = useState("");
-  const [archetype, setArchetype] = useState("");
-  const [species, setSpecies] = useState("");
-  const [placement, setPlacement] = useState("");
-  const [followingOnly, setFollowingOnly] = useState(false);
   const initialLoad = useRef(true);
+
+  const {
+    query, setQuery,
+    sort, setSort,
+    searchCategory, setSearchCategory,
+    regulation, setRegulation,
+    eventType, setEventType,
+    archetype, setArchetype,
+    species, setSpecies,
+    placement, setPlacement,
+    followingOnly, setFollowingOnly,
+  } = useExploreUrlSync();
 
   const fetchReports = useCallback(
     async (cursor?: string) => {
