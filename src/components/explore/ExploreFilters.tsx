@@ -24,6 +24,8 @@ interface ExploreFiltersProps {
   onArchetypeChange: (a: string) => void;
   species: string;
   onSpeciesChange: (s: string) => void;
+  excludeSpecies: string;
+  onExcludeSpeciesChange: (s: string) => void;
   placement: string;
   onPlacementChange: (p: string) => void;
   followingOnly: boolean;
@@ -99,6 +101,8 @@ export function ExploreFilters({
   onArchetypeChange,
   species,
   onSpeciesChange,
+  excludeSpecies,
+  onExcludeSpeciesChange,
   placement,
   onPlacementChange,
   followingOnly,
@@ -119,6 +123,7 @@ export function ExploreFilters({
     eventType !== "" ||
     archetype !== "" ||
     species !== "" ||
+    excludeSpecies !== "" ||
     placement !== "" ||
     followingOnly;
 
@@ -133,6 +138,7 @@ export function ExploreFilters({
     placement !== "",
     eventType !== "",
     followingOnly,
+    excludeSpecies !== "",
   ].filter(Boolean).length;
 
   useEffect(() => {
@@ -321,6 +327,35 @@ export function ExploreFilters({
         )}
       </div>
 
+      {/* Exclude species filter */}
+      <div className="relative">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+        </div>
+        <input
+          type="text"
+          value={excludeSpecies}
+          onChange={(e) => onExcludeSpeciesChange(e.target.value)}
+          placeholder="Exclude Pokemon (e.g. Flutter Mane, Urshifu)"
+          className="w-full pl-8 pr-8 py-2 bg-surface border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-red-400/40 focus:border-red-400 transition-all"
+        />
+        {excludeSpecies && (
+          <button
+            onClick={() => onExcludeSpeciesChange("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded text-text-tertiary hover:text-text-primary transition-colors"
+            aria-label="Clear exclude species filter"
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
+      </div>
+
       {/* Tag filters */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         <div className="relative">
@@ -371,6 +406,8 @@ export function ExploreFilters({
         onEventTypeChange={onEventTypeChange}
         followingOnly={followingOnly}
         onFollowingOnlyChange={onFollowingOnlyChange}
+        excludeSpecies={excludeSpecies}
+        onExcludeSpeciesChange={onExcludeSpeciesChange}
         isAuthenticated={!!user}
       />
     </div>

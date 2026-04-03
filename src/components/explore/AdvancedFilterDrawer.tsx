@@ -13,6 +13,8 @@ interface AdvancedFilterDrawerProps {
   onEventTypeChange: (e: string) => void;
   followingOnly: boolean;
   onFollowingOnlyChange: (v: boolean) => void;
+  excludeSpecies: string;
+  onExcludeSpeciesChange: (s: string) => void;
   isAuthenticated: boolean;
 }
 
@@ -40,6 +42,8 @@ export function AdvancedFilterDrawer({
   onEventTypeChange,
   followingOnly,
   onFollowingOnlyChange,
+  excludeSpecies,
+  onExcludeSpeciesChange,
   isAuthenticated,
 }: AdvancedFilterDrawerProps) {
   const isDesktop = useMediaQuery("(min-width: 640px)");
@@ -50,6 +54,7 @@ export function AdvancedFilterDrawer({
     placement !== "",
     eventType !== "",
     followingOnly,
+    excludeSpecies !== "",
   ].filter(Boolean).length;
 
   // Focus first focusable element on open (mobile sheet)
@@ -115,6 +120,33 @@ export function AdvancedFilterDrawer({
   const filterContent = (
     <div className="p-4 sm:p-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Exclude species input */}
+        <div className="sm:col-span-2">
+          <label
+            htmlFor="filter-exclude-species"
+            className={`text-[11px] font-bold uppercase tracking-wide mb-1 block ${excludeSpecies !== "" ? "text-red-400" : "text-text-tertiary"}`}
+          >
+            Exclude Pokemon
+          </label>
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+            </div>
+            <input
+              id="filter-exclude-species"
+              type="text"
+              value={excludeSpecies}
+              onChange={(e) => onExcludeSpeciesChange(e.target.value)}
+              placeholder="e.g. Flutter Mane, Urshifu"
+              className="w-full pl-8 pr-3 py-2 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-red-400/40 focus:border-red-400 appearance-none"
+            />
+          </div>
+        </div>
+
         {/* Placement dropdown */}
         <div>
           <label
@@ -239,6 +271,7 @@ export function AdvancedFilterDrawer({
               onPlacementChange("");
               onEventTypeChange("");
               onFollowingOnlyChange(false);
+              onExcludeSpeciesChange("");
             }}
             className="text-xs font-bold text-accent hover:text-accent/80 transition-colors cursor-pointer min-h-[44px] flex items-center"
           >
