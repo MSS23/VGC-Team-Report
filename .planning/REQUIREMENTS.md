@@ -40,11 +40,11 @@ Requirements for Smart Explore Experience milestone. Each maps to roadmap phases
 
 ### Filter UX
 
-- [ ] **UX-01**: Complex filters (exclude, event type, placement tier) are organized in a collapsible advanced filter drawer
-- [ ] **UX-02**: Advanced drawer is accessible via a single "More filters" button on the primary bar
-- [ ] **UX-03**: Active advanced filters show a count badge on the "More filters" button
-- [ ] **UX-04**: Advanced drawer works well on mobile with full-width sheet behavior
-- [ ] **UX-05**: Primary filter bar retains the most-used filters (regulation, search, species include, archetype, sort)
+- [x] **UX-01**: Complex filters (exclude, event type, placement tier) are organized in a collapsible advanced filter drawer
+- [x] **UX-02**: Advanced drawer is accessible via a single "More filters" button on the primary bar
+- [x] **UX-03**: Active advanced filters show a count badge on the "More filters" button
+- [x] **UX-04**: Advanced drawer works well on mobile with full-width sheet behavior
+- [x] **UX-05**: Primary filter bar retains the most-used filters (regulation, search, species include, archetype, sort)
 - [ ] **UX-06**: All filter changes are reflected in the URL immediately (for URL-01)
 
 ## Future Requirements
@@ -104,11 +104,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | URL-02 | Phase 3 | Pending |
 | URL-03 | Phase 3 | Pending |
 | URL-04 | Phase 3 | Pending |
-| UX-01 | Phase 2 | Pending |
-| UX-02 | Phase 2 | Pending |
-| UX-03 | Phase 2 | Pending |
-| UX-04 | Phase 2 | Pending |
-| UX-05 | Phase 2 | Pending |
+| UX-01 | Phase 2 | Complete |
+| UX-02 | Phase 2 | Complete |
+| UX-03 | Phase 2 | Complete |
+| UX-04 | Phase 2 | Complete |
+| UX-05 | Phase 2 | Complete |
 | UX-06 | Phase 3 | Pending |
 
 **Coverage:**

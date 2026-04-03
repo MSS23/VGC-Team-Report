@@ -43,11 +43,11 @@ Plans:
   3. A count badge on the "More filters" button shows how many advanced filters are currently active
   4. The primary filter bar retains regulation, search, species include, archetype, and sort — no other controls
   5. All drawer interactions work with keyboard and screen reader (accessible)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 **UI hint**: yes
 
 Plans:
-- [ ] 02-01-PLAN.md — Create AdvancedFilterDrawer component + refactor ExploreFilters to integrate drawer
+- [x] 02-01-PLAN.md — Create AdvancedFilterDrawer component + refactor ExploreFilters to integrate drawer
 - [ ] 02-02-PLAN.md — Smoke test spec compliance + visual verification checkpoint
 
 ---
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Follow Creators | 0/2 | In progress | - |
-| 2. Advanced Filter Drawer | 0/2 | Not started | - |
+| 2. Advanced Filter Drawer | 1/2 | In Progress|  |
 | 3. Shareable Filter URLs | 0/TBD | Not started | - |
 | 4. Pokemon Exclude Filter | 0/TBD | Not started | - |
 | 5. Tournament Results Mode | 0/TBD | Not started | - |
