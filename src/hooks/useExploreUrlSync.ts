@@ -11,6 +11,7 @@ export interface FilterState {
   eventType: string;
   archetype: string;
   species: string;
+  excludeSpecies: string;
   placement: string;
   followingOnly: boolean;
 }
@@ -23,6 +24,7 @@ export interface ExploreUrlSyncResult extends FilterState {
   setEventType: (v: string) => void;
   setArchetype: (v: string) => void;
   setSpecies: (v: string) => void;
+  setExcludeSpecies: (v: string) => void;
   setPlacement: (v: string) => void;
   setFollowingOnly: (v: boolean) => void;
 }
@@ -35,6 +37,7 @@ const DEFAULTS: FilterState = {
   eventType: "",
   archetype: "",
   species: "",
+  excludeSpecies: "",
   placement: "",
   followingOnly: false,
 };
@@ -57,6 +60,7 @@ export function parseFiltersFromUrl(searchString: string): FilterState {
     eventType: params.get("eventType") ?? DEFAULTS.eventType,
     archetype: params.get("archetype") ?? DEFAULTS.archetype,
     species: params.get("species") ?? DEFAULTS.species,
+    excludeSpecies: params.get("excludeSpecies") ?? DEFAULTS.excludeSpecies,
     placement: params.get("placement") ?? DEFAULTS.placement,
     followingOnly: params.get("following") === "1",
   };
@@ -73,6 +77,7 @@ export function buildUrlSearch(filters: FilterState): string {
   if (filters.eventType) params.set("eventType", filters.eventType);
   if (filters.archetype) params.set("archetype", filters.archetype);
   if (filters.species) params.set("species", filters.species);
+  if (filters.excludeSpecies) params.set("excludeSpecies", filters.excludeSpecies);
   if (filters.placement) params.set("placement", filters.placement);
   if (filters.followingOnly) params.set("following", "1");
 
@@ -106,6 +111,7 @@ export function useExploreUrlSync(): ExploreUrlSyncResult {
   const setEventType = (v: string) => setFilters((f) => ({ ...f, eventType: v }));
   const setArchetype = (v: string) => setFilters((f) => ({ ...f, archetype: v }));
   const setSpecies = (v: string) => setFilters((f) => ({ ...f, species: v }));
+  const setExcludeSpecies = (v: string) => setFilters((f) => ({ ...f, excludeSpecies: v }));
   const setPlacement = (v: string) => setFilters((f) => ({ ...f, placement: v }));
   const setFollowingOnly = (v: boolean) => setFilters((f) => ({ ...f, followingOnly: v }));
 
@@ -118,6 +124,7 @@ export function useExploreUrlSync(): ExploreUrlSyncResult {
     setEventType,
     setArchetype,
     setSpecies,
+    setExcludeSpecies,
     setPlacement,
     setFollowingOnly,
   };

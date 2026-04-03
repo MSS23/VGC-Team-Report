@@ -11,6 +11,7 @@ describe("parseFiltersFromUrl", () => {
     expect(result.eventType).toBe("");
     expect(result.archetype).toBe("");
     expect(result.species).toBe("");
+    expect(result.excludeSpecies).toBe("");
     expect(result.placement).toBe("");
     expect(result.followingOnly).toBe(false);
   });
@@ -47,6 +48,7 @@ describe("buildUrlSearch", () => {
       eventType: "",
       archetype: "",
       species: "",
+      excludeSpecies: "",
       placement: "",
       followingOnly: false,
     });
@@ -62,6 +64,7 @@ describe("buildUrlSearch", () => {
       eventType: "",
       archetype: "",
       species: "",
+      excludeSpecies: "",
       placement: "",
       followingOnly: false,
     });
@@ -83,11 +86,29 @@ describe("buildUrlSearch", () => {
       eventType: "",
       archetype: "",
       species: "",
+      excludeSpecies: "",
       placement: "",
       followingOnly: true,
     });
     const params = new URLSearchParams(result);
     expect(params.get("following")).toBe("1");
+  });
+
+  it("includes excludeSpecies in URL when set", () => {
+    const result = buildUrlSearch({
+      query: "",
+      sort: "newest",
+      searchCategory: "all",
+      regulation: "",
+      eventType: "",
+      archetype: "",
+      species: "",
+      excludeSpecies: "Flutter Mane,Urshifu",
+      placement: "",
+      followingOnly: false,
+    });
+    const params = new URLSearchParams(result);
+    expect(params.get("excludeSpecies")).toBe("Flutter Mane,Urshifu");
   });
 
   it("round-trips: buildUrlSearch -> parseFiltersFromUrl returns original values", () => {
@@ -99,6 +120,7 @@ describe("buildUrlSearch", () => {
       eventType: "regional",
       archetype: "Trick Room",
       species: "Calyrex Shadow",
+      excludeSpecies: "Flutter Mane",
       placement: "winner",
       followingOnly: true,
     };

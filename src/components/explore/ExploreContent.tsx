@@ -44,6 +44,7 @@ function ExploreInner() {
     eventType, setEventType,
     archetype, setArchetype,
     species, setSpecies,
+    excludeSpecies, setExcludeSpecies,
     placement, setPlacement,
     followingOnly, setFollowingOnly,
   } = useExploreUrlSync();
@@ -59,6 +60,7 @@ function ExploreInner() {
       if (eventType) params.set("eventType", eventType);
       if (archetype) params.set("archetype", archetype);
       if (species) params.set("species", species);
+      if (excludeSpecies) params.set("excludeSpecies", excludeSpecies);
       if (placement) params.set("placement", placement);
       if (followingOnly) params.set("following", "1");
 
@@ -69,7 +71,7 @@ function ExploreInner() {
         nextCursor: string | null;
       }>;
     },
-    [query, sort, searchCategory, regulation, eventType, archetype, species, placement, followingOnly],
+    [query, sort, searchCategory, regulation, eventType, archetype, species, excludeSpecies, placement, followingOnly],
   );
 
   // Initial + filter/sort change fetch
@@ -136,6 +138,8 @@ function ExploreInner() {
           onArchetypeChange={setArchetype}
           species={species}
           onSpeciesChange={setSpecies}
+          excludeSpecies={excludeSpecies}
+          onExcludeSpeciesChange={setExcludeSpecies}
           placement={placement}
           onPlacementChange={setPlacement}
           followingOnly={followingOnly}

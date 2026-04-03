@@ -28,6 +28,7 @@ export async function GET(request: Request) {
     const filterEventType = url.searchParams.get("eventType") ?? "";
     const filterArchetype = url.searchParams.get("archetype") ?? ""; // comma-separated
     const filterSpecies = url.searchParams.get("species") ?? ""; // comma-separated Pokemon names for multi-species filter
+    const filterExcludeSpecies = url.searchParams.get("excludeSpecies") ?? ""; // comma-separated Pokemon names to exclude
     const filterPlacement = url.searchParams.get("placement") ?? ""; // e.g. "1st", "Top 4", "Top 8"
     const filterFollowing = url.searchParams.get("following") === "1";
 
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
     let cacheKey: string | null = null;
     if (!filterFollowing) {
       cacheKey = CacheKeys.explore(
-        `${sort}:${q}:${searchType}:${cursor ?? ""}:${limit}:${filterRegulation}:${filterEventType}:${filterArchetype}:${filterSpecies}:${filterPlacement}`
+        `${sort}:${q}:${searchType}:${cursor ?? ""}:${limit}:${filterRegulation}:${filterEventType}:${filterArchetype}:${filterSpecies}:${filterExcludeSpecies}:${filterPlacement}`
       );
       const cached = await cacheGet<{ reports: unknown[]; nextCursor: string | null }>(cacheKey);
       if (cached) {
@@ -99,6 +100,10 @@ export async function GET(request: Request) {
     const speciesCondition = speciesList.length > 0
       ? speciesList.reduce((acc, sp) => sql`${acc} AND s.data->>'paste' ILIKE ${"%" + sp + "%"}`, sql``)
       : sql``;
+    const excludeSpeciesList = filterExcludeSpecies.split(",").map((s) => s.trim()).filter(Boolean);
+    const excludeSpeciesCondition = excludeSpeciesList.length > 0
+      ? excludeSpeciesList.reduce((acc, sp) => sql`${acc} AND s.data->>'paste' NOT ILIKE ${"%" + sp + "%"}`, sql``)
+      : sql``;
     const placementCondition = filterPlacement
       ? sql`AND s.data->>'placement' ILIKE ${"%" + filterPlacement + "%"}`
       : sql``;
@@ -107,6 +112,7 @@ export async function GET(request: Request) {
       ${filterEventType ? sql`AND s.data->'tags'->>'eventType' = ${filterEventType}` : sql``}
       ${filterArchetype ? sql`AND s.data->'tags'->'archetype' ?| ${filterArchetype.split(",").filter(Boolean)}` : sql``}
       ${speciesCondition}
+      ${excludeSpeciesCondition}
       ${placementCondition}
     `;
 
