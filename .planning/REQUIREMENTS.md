@@ -16,10 +16,10 @@ Requirements for Smart Explore Experience milestone. Each maps to roadmap phases
 
 ### Tournament Browsing
 
-- [ ] **TOUR-01**: User can enter a "Tournament Results" browsing mode that presets filters for tournament-placed teams
-- [ ] **TOUR-02**: User can filter tournament results by event type (Regionals, Internationals, Worlds, Online)
-- [ ] **TOUR-03**: User can filter tournament results by placement tier (Top 4, Top 8, Top 16, etc.)
-- [ ] **TOUR-04**: User can combine tournament filters with regulation and species filters
+- [x] **TOUR-01**: User can enter a "Tournament Results" browsing mode that presets filters for tournament-placed teams
+- [x] **TOUR-02**: User can filter tournament results by event type (Regionals, Internationals, Worlds, Online)
+- [x] **TOUR-03**: User can filter tournament results by placement tier (Top 4, Top 8, Top 16, etc.)
+- [x] **TOUR-04**: User can combine tournament filters with regulation and species filters
 - [x] **TOUR-05**: Tournament mode displays placement prominently on report cards
 
 ### Report Cards
@@ -89,10 +89,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FILT-02 | Phase 4 | Complete |
 | FILT-03 | Phase 4 | Complete |
 | FILT-04 | Phase 4 | Complete |
-| TOUR-01 | Phase 5 | Pending |
-| TOUR-02 | Phase 5 | Pending |
-| TOUR-03 | Phase 5 | Pending |
-| TOUR-04 | Phase 5 | Pending |
+| TOUR-01 | Phase 5 | Complete |
+| TOUR-02 | Phase 5 | Complete |
+| TOUR-03 | Phase 5 | Complete |
+| TOUR-04 | Phase 5 | Complete |
 | TOUR-05 | Phase 5 | Complete |
 | CARD-01 | Phase 6 | Pending |
 | CARD-02 | Phase 6 | Pending |
