@@ -109,19 +109,24 @@ export async function GET(
     }
 
     // Non-owner public access — read-only, no edit info leaked
-    // Check cache first for public reads (skip if polling for version changes)
-    if (!sinceVersion) {
-      const cached = await cacheGet<Record<string, unknown>>(CacheKeys.share(id));
-      if (cached) {
-        return NextResponse.json(cached);
-      }
-    }
-
     const rows = await sql`
       SELECT data, COALESCE(version, 1) AS version, is_public FROM shares WHERE id = ${id} AND deleted_at IS NULL
     `;
     if (rows.length === 0) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // Private reports: only accessible by owner/collaborator (handled above) or with edit key
+    if (!rows[0].is_public) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // Check cache for public reads (after privacy gate, skip if polling)
+    if (!sinceVersion) {
+      const cached = await cacheGet<Record<string, unknown>>(CacheKeys.share(id));
+      if (cached) {
+        return NextResponse.json(cached);
+      }
     }
 
     // If polling with ?since=N, return 304 if version hasn't changed
@@ -136,14 +141,12 @@ export async function GET(
     const responseData = {
       ...normalizeReportData(rows[0].data as Record<string, unknown>),
       _version: Number(rows[0].version),
-      _isPublic: !!rows[0].is_public,
+      _isPublic: true,
       _collaborators: collaboratorNames,
     };
 
     // Cache public shares for 5 minutes
-    if (rows[0].is_public) {
-      await cacheSet(CacheKeys.share(id), responseData, CacheTTL.SHARE_PUBLIC);
-    }
+    await cacheSet(CacheKeys.share(id), responseData, CacheTTL.SHARE_PUBLIC);
 
     return NextResponse.json(responseData);
   } catch (e) {
