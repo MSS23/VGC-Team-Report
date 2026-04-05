@@ -7,7 +7,7 @@ import { LanguageSelector } from "@/components/ui/LanguageSelector";
 interface PageNavbarProps {
   darkMode: boolean;
   onToggleDarkMode: () => void;
-  activePage?: "home" | "changelog" | "feedback" | "explore" | "dashboard" | "compare" | "privacy" | "creator" | "champions";
+  activePage?: "home" | "changelog" | "feedback" | "explore" | "dashboard" | "compare" | "privacy" | "terms" | "creator" | "champions";
 }
 
 const NAV_LINKS = [
