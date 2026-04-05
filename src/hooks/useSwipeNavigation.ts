@@ -14,10 +14,13 @@ interface UseSwipeNavigationOptions {
  * Returns a ref to attach to the swipeable container.
  * Includes visual drag feedback and optional haptic vibration.
  */
+/** Width of the edge zone (px) where browser back/forward gestures trigger on Android/iOS */
+const EDGE_GUARD = 35;
+
 export function useSwipeNavigation({
   onSwipeLeft,
   onSwipeRight,
-  threshold = 50,
+  threshold = 80,
   enabled = true,
 }: UseSwipeNavigationOptions) {
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -33,10 +36,19 @@ export function useSwipeNavigation({
       touchEnd.current = null;
       isDragging.current = false;
 
+      const startX = e.targetTouches[0].clientX;
+
+      // Ignore swipes that start near screen edges — let the browser handle
+      // back/forward navigation (Android gesture nav, iOS edge swipe)
+      ignoreSwipe.current = false;
+      if (startX < EDGE_GUARD || startX > window.innerWidth - EDGE_GUARD) {
+        ignoreSwipe.current = true;
+        return;
+      }
+
       // Don't hijack swipes that start inside a horizontally scrollable element
       // (e.g. coverage chart tables with overflow-x-auto)
       let node = e.target as HTMLElement | null;
-      ignoreSwipe.current = false;
       while (node && node !== containerRef.current) {
         if (node.scrollWidth > node.clientWidth + 1 && getComputedStyle(node).overflowX !== "hidden") {
           ignoreSwipe.current = true;
@@ -46,7 +58,7 @@ export function useSwipeNavigation({
       }
 
       touchStart.current = {
-        x: e.targetTouches[0].clientX,
+        x: startX,
         y: e.targetTouches[0].clientY,
       };
     },
