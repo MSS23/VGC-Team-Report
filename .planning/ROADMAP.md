@@ -222,7 +222,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 11-01-PLAN.md — Data Rights Hub page (/dashboard/privacy) with export download and delete modal
+- [x] 11-01-PLAN.md — Data Rights Hub page (/dashboard/privacy) with export download and delete modal
 
 </details>
 
@@ -298,7 +298,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 8. Cookie Consent and Analytics Gating | v5.1 | 1/2 | In Progress|  |
 | 9. Data Export API | v5.1 | 1/1 | Complete   | 2026-04-05 |
 | 10. Account Deletion API | v5.1 | 1/1 | Complete   | 2026-04-05 |
-| 11. Data Rights Hub UI | v5.1 | 0/? | Not started | - |
+| 11. Data Rights Hub UI | v5.1 | 1/1 | Complete   | 2026-04-05 |
 | 12. Tour Discovery & First-Visit Onboarding | v5.2 | 0/? | Not started | - |
 | 13. Progress Bar Improvements | v5.2 | 0/? | Not started | - |
 | 14. Mobile Interaction Fixes | v5.2 | 0/? | Not started | - |
