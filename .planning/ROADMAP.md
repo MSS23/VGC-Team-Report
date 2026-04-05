@@ -171,7 +171,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md — Install vanilla-cookieconsent, create consent utility, CookieBanner, ConsentGate
-- [ ] 08-02-PLAN.md — Gate PostHog init + wire layout.tsx + human verify checkpoint
+- [x] 08-02-PLAN.md — Gate PostHog init + wire layout.tsx + human verify checkpoint
 **UI hint**: yes
 
 ---
