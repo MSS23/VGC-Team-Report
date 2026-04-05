@@ -278,9 +278,10 @@ export function SlideNavControls({
             })}
           </div>
 
-          {/* Current slide label */}
+          {/* Current slide label + counter */}
           <span className="text-[11px] text-text-tertiary font-semibold tabular-nums flex-shrink-0">
             <span className="font-bold text-text-secondary">{slideLabels[currentSlide]}</span>
+            <span className="ml-1.5 text-text-tertiary/70">{currentSlide + 1}/{totalSlides}</span>
           </span>
           <span className="sr-only" aria-live="polite" aria-atomic="true">
             Slide {currentSlide + 1} of {totalSlides}: {slideLabels[currentSlide]}

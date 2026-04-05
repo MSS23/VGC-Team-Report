@@ -14,7 +14,7 @@ import { hapticMedium, hapticSuccess } from "@/lib/utils/haptics";
 import { detectImportSource } from "@/lib/utils/multi-import";
 import { fetchPokePaste } from "@/lib/utils/pokepaste";
 
-/** Wraps a card with tap and long-press gestures. Tap navigates on mobile; long-press (500ms hold) also navigates + haptic. */
+/** Wraps a card with tap and long-press gestures. Tap navigates instantly on touch; long-press (500ms hold) also navigates + haptic. */
 function LongPressWrapper({
   onLongPress,
   onTap,
@@ -43,10 +43,12 @@ function LongPressWrapper({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelled = useRef(false);
   const didLongPress = useRef(false);
+  const [pressed, setPressed] = useState(false);
 
   const start = useCallback(() => {
     cancelled.current = false;
     didLongPress.current = false;
+    setPressed(true);
     if (!onLongPress) return;
     timer.current = setTimeout(() => {
       if (!cancelled.current) {
@@ -59,11 +61,13 @@ function LongPressWrapper({
 
   const move = useCallback(() => {
     cancelled.current = true;
+    setPressed(false);
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
   const end = useCallback((e: React.TouchEvent) => {
     if (timer.current) clearTimeout(timer.current);
+    setPressed(false);
     // Quick tap (not moved, not long-pressed) → navigate
     if (!cancelled.current && !didLongPress.current && onTap) {
       const target = e.target as HTMLElement;
@@ -76,7 +80,7 @@ function LongPressWrapper({
 
   return (
     <div
-      className={className}
+      className={`${className ?? ""} ${pressed ? "scale-[0.97] opacity-80" : ""} transition-transform duration-100`}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
@@ -87,6 +91,12 @@ function LongPressWrapper({
       onTouchStart={start}
       onTouchEnd={end}
       onTouchMove={move}
+      onClick={(e) => {
+        // Desktop click fallback — touch devices use onTap above
+        if (onTap && !(e.target as HTMLElement).closest('button, input, textarea, a, [role="button"], [contenteditable]')) {
+          onTap();
+        }
+      }}
     >
       {children}
     </div>
@@ -553,7 +563,7 @@ export function TeamOverview({
                 dragCounter.current = 0;
               }}
               className={`transition-all duration-200 rounded-2xl ${
-                canDrag ? "cursor-grab active:cursor-grabbing" : ""
+                canDrag ? "cursor-grab active:cursor-grabbing" : onPokemonLongPress ? "cursor-pointer" : ""
               } ${isDragging ? "opacity-40 scale-95" : ""} ${
                 isDragOver ? "ring-2 ring-accent ring-offset-2 ring-offset-background scale-[1.02]" : ""
               }`}
