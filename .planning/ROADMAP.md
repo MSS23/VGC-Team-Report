@@ -170,7 +170,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Install vanilla-cookieconsent, create consent utility, CookieBanner, ConsentGate
+- [x] 08-01-PLAN.md — Install vanilla-cookieconsent, create consent utility, CookieBanner, ConsentGate
 - [ ] 08-02-PLAN.md — Gate PostHog init + wire layout.tsx + human verify checkpoint
 **UI hint**: yes
 
@@ -286,7 +286,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 5. Tournament Results Mode | v5.0 | 2/2 | Complete | 2026-04-03 |
 | 6. Enhanced Report Cards | v5.0 | 0/2 | Not started | - |
 | 7. Legal Pages and Footer | v5.1 | 2/2 | Complete   | 2026-04-05 |
-| 8. Cookie Consent and Analytics Gating | v5.1 | 0/? | Not started | - |
+| 8. Cookie Consent and Analytics Gating | v5.1 | 1/2 | In Progress|  |
 | 9. Data Export API | v5.1 | 0/? | Not started | - |
 | 10. Account Deletion API | v5.1 | 0/? | Not started | - |
 | 11. Data Rights Hub UI | v5.1 | 0/? | Not started | - |
