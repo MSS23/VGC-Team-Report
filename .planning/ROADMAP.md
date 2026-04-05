@@ -218,8 +218,11 @@ Plans:
   2. Clicking "Download My Data" triggers the export API and initiates a file download without leaving the page
   3. Clicking "Delete My Account" opens a confirmation modal that requires the user to type "DELETE" before the action is enabled
   4. After successful deletion the user is signed out and redirected, and attempting to sign back in with the same credentials shows no account
-**Plans:** TBD
+**Plans:** 1 plan
 **UI hint**: yes
+
+Plans:
+- [ ] 11-01-PLAN.md — Data Rights Hub page (/dashboard/privacy) with export download and delete modal
 
 </details>
 
