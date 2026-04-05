@@ -92,7 +92,7 @@ export async function POST(request: Request) {
     if (existingId && editToken) {
       // Fetch old state for changelog diff and version snapshot
       const oldRows = await sql`
-        SELECT data, COALESCE(version, 1) AS version FROM shares WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
+        SELECT data, COALESCE(version, 1) AS version, is_public, owner_id FROM shares WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
       `;
 
       // Detect actual changes before creating a version
@@ -125,11 +125,29 @@ export async function POST(request: Request) {
         }
       }
 
+      // Only the owner can change visibility — collaborators keep the existing value
+      let effectiveIsPublic = isPublic ?? false;
+      if (oldRows.length > 0 && isPublic !== undefined) {
+        const currentIsPublic = !!oldRows[0].is_public;
+        if (isPublic !== currentIsPublic) {
+          // Visibility is changing — verify caller is the owner
+          let callerId: string | null = null;
+          try {
+            const { userId: uid } = await auth();
+            callerId = uid;
+          } catch { /* not authenticated */ }
+          if (!callerId || callerId !== oldRows[0].owner_id) {
+            // Not the owner — silently keep existing visibility (don't error, allow the data save)
+            effectiveIsPublic = currentIsPublic;
+          }
+        }
+      }
+
       const rows = await sql`
         UPDATE shares
         SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(),
             version = COALESCE(version, 1) + ${hasDataChanges ? 1 : 0},
-            is_public = ${isPublic ?? false},
+            is_public = ${effectiveIsPublic},
             search_vector =
               setweight(to_tsvector('english', ${searchCreator}), 'A') ||
               setweight(to_tsvector('english', ${searchTournament}), 'A') ||
