@@ -161,8 +161,19 @@ export function WalkthroughOverlay({
       // For targeted steps, wait until the element exists
       const el = document.querySelector(`[data-walkthrough="${step.target}"]`);
       if (el) {
-        positionTooltip();
-        requestAnimationFrame(() => { if (!cancelled) setVisible(true); });
+        // Temporarily unlock scroll so scrollIntoView works on mobile
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+        el.scrollIntoView({ block: "center", behavior: "smooth" });
+        // Re-lock after scroll settles, then position tooltip
+        setTimeout(() => {
+          if (cancelled) return;
+          document.documentElement.style.overflow = "hidden";
+          document.body.style.overflow = "hidden";
+          positionTooltip();
+          requestAnimationFrame(() => { if (!cancelled) setVisible(true); });
+        }, 400);
+        return;
       } else if (attempts < maxAttempts) {
         // Element not in DOM yet (slide still rendering) — retry
         setTimeout(tryPosition, 100);
