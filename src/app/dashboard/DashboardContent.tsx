@@ -254,6 +254,11 @@ function DashboardInner() {
                 <span className="hidden sm:inline">Edit Profile</span>
                 <span className="sm:hidden">Profile</span>
               </a>
+              <a href="/dashboard/privacy" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span className="hidden sm:inline">Privacy</span>
+                <span className="sm:hidden">Data</span>
+              </a>
             </div>
 
             {/* Tabs */}
