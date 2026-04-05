@@ -205,7 +205,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 10-01-PLAN.md — Implement DELETE /api/user/delete: 15-step FK-safe cascade, Clerk deletion, Redis flush
+- [x] 10-01-PLAN.md — Implement DELETE /api/user/delete: 15-step FK-safe cascade, Clerk deletion, Redis flush
 
 ---
 
@@ -297,7 +297,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 7. Legal Pages and Footer | v5.1 | 2/2 | Complete   | 2026-04-05 |
 | 8. Cookie Consent and Analytics Gating | v5.1 | 1/2 | In Progress|  |
 | 9. Data Export API | v5.1 | 1/1 | Complete   | 2026-04-05 |
-| 10. Account Deletion API | v5.1 | 0/? | Not started | - |
+| 10. Account Deletion API | v5.1 | 1/1 | Complete   | 2026-04-05 |
 | 11. Data Rights Hub UI | v5.1 | 0/? | Not started | - |
 | 12. Tour Discovery & First-Visit Onboarding | v5.2 | 0/? | Not started | - |
 | 13. Progress Bar Improvements | v5.2 | 0/? | Not started | - |
