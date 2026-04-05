@@ -32,6 +32,7 @@ import { computeVersionDiff, summarizeChangedFields, getNavigableChanges, type V
 const DiffNavigator = dynamic(() => import("@/components/ui/DiffNavigator").then(m => ({ default: m.DiffNavigator })));
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import { track } from "@vercel/analytics";
+import posthog from "posthog-js";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
 const ShareModal = dynamic(() => import("@/components/ui/ShareModal").then(m => ({ default: m.ShareModal })));
@@ -335,6 +336,7 @@ function HomeContent() {
     if (!isSharedView || !activeShareId || viewTracked.current) return;
     viewTracked.current = true;
     track("report_viewed", { shareId: activeShareId });
+    posthog.capture("report_viewed", { share_id: activeShareId });
     const sessionId = getSessionId();
     if (!sessionId) return;
     fetch(`/api/views/${activeShareId}`, {
@@ -585,6 +587,7 @@ function HomeContent() {
         onSetPresentationMode={setPresentationMode}
         onReset={handleReset}
         onExitSharedView={exitSharedView}
+        onStartTour={!presentationMode ? startWalkthrough : undefined}
       />
 
       {/* URL length warning */}
@@ -735,7 +738,6 @@ function HomeContent() {
           onToggleHide={creatorMode ? handleToggleCurrentSlide : undefined}
           isCurrentHidden={creatorMode ? isSlideHiddenAt(physicalSlide) : false}
           onShowShortcuts={() => setShowShortcutHint(true)}
-          onStartTour={!presentationMode ? startWalkthrough : undefined}
           canMoveUp={canMoveSlideUp}
           canMoveDown={canMoveSlideDown}
           onMoveUp={handleMoveSlideUp}

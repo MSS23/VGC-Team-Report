@@ -89,6 +89,9 @@ interface NavbarProps {
   onSetPresentationMode: (v: boolean) => void;
   onReset: () => void;
   onExitSharedView: () => void;
+
+  // Tour
+  onStartTour?: () => void;
 }
 
 export function Navbar(props: NavbarProps) {
@@ -110,7 +113,7 @@ export function Navbar(props: NavbarProps) {
     onExportPdf,
     tournamentMode, onSetTournamentMode,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
-    onReset, onExitSharedView,
+    onReset, onExitSharedView, onStartTour,
   } = props;
 
   const { t } = useTranslation();
@@ -586,6 +589,25 @@ export function Navbar(props: NavbarProps) {
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
                       Export Tournament (Stats)
+                    </button>
+                  </>
+                )}
+
+                {/* Tour */}
+                {onStartTour && (
+                  <>
+                    <div className="border-t border-border/50 mx-3 my-1" />
+                    <button
+                      type="button"
+                      onClick={() => { setMenuOpen(false); onStartTour(); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                      {t.takeATour}
                     </button>
                   </>
                 )}

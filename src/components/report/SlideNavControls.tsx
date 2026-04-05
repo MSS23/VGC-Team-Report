@@ -1,8 +1,50 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { hapticLight } from "@/lib/utils/haptics";
+
+/** Small tooltip that explains what the navigation bar does */
+function NavHelpTooltip() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent | TouchEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("touchstart", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("touchstart", close);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-xs font-bold text-text-tertiary hover:text-accent hover:bg-accent/5 transition-all"
+        aria-label="Navigation help"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute bottom-full right-0 mb-2 w-56 px-3 py-2.5 rounded-lg bg-surface-alt border border-border shadow-xl text-xs text-text-secondary leading-relaxed z-50 animate-fade-in">
+          <p className="font-bold text-text-primary mb-1">Slide Navigation</p>
+          <p>Drag the bar or tap anywhere on it to jump between slides. Use arrow keys on desktop. Swipe left/right on mobile.</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface SlideNavControlsProps {
   currentSlide: number;
@@ -18,7 +60,6 @@ interface SlideNavControlsProps {
   onToggleHide?: () => void;
   isCurrentHidden?: boolean;
   onShowShortcuts?: () => void;
-  onStartTour?: () => void;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
   onMoveUp?: () => void;
@@ -40,7 +81,6 @@ export function SlideNavControls({
   onToggleHide,
   isCurrentHidden = false,
   onShowShortcuts,
-  onStartTour,
   canMoveUp,
   canMoveDown,
   onMoveUp,
@@ -238,11 +278,9 @@ export function SlideNavControls({
             })}
           </div>
 
-          {/* Counter */}
+          {/* Current slide label */}
           <span className="text-[11px] text-text-tertiary font-semibold tabular-nums flex-shrink-0">
-            <span className="hidden sm:inline font-bold text-text-secondary">{slideLabels[currentSlide]}</span>
-            <span className="hidden sm:inline mx-1 text-text-tertiary/30">&middot;</span>
-            {currentSlide + 1}/{totalSlides}
+            <span className="font-bold text-text-secondary">{slideLabels[currentSlide]}</span>
           </span>
           <span className="sr-only" aria-live="polite" aria-atomic="true">
             Slide {currentSlide + 1} of {totalSlides}: {slideLabels[currentSlide]}
@@ -310,23 +348,8 @@ export function SlideNavControls({
             </button>
           )}
 
-          {/* Tour — mobile only (icon), desktop shows text */}
-          {onStartTour && (
-            <button
-              type="button"
-              onClick={onStartTour}
-              className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-xs font-bold text-text-tertiary hover:text-accent hover:bg-accent/5 transition-all"
-              aria-label={t.takeATour}
-              title={t.takeATour}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              <span className="hidden sm:inline ml-1">{t.takeATour}</span>
-            </button>
-          )}
+          {/* Help tooltip — explains the navigation bar */}
+          <NavHelpTooltip />
 
           {/* Keyboard shortcuts — desktop only */}
           {onShowShortcuts && (

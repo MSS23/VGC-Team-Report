@@ -14,9 +14,10 @@ import { hapticMedium, hapticSuccess } from "@/lib/utils/haptics";
 import { detectImportSource } from "@/lib/utils/multi-import";
 import { fetchPokePaste } from "@/lib/utils/pokepaste";
 
-/** Wraps a card with a long-press gesture (500ms hold). Passes through all other props to a div. */
+/** Wraps a card with tap and long-press gestures. Tap navigates on mobile; long-press (500ms hold) also navigates + haptic. */
 function LongPressWrapper({
   onLongPress,
+  onTap,
   children,
   className,
   draggable,
@@ -28,6 +29,7 @@ function LongPressWrapper({
   onDrop,
 }: {
   onLongPress?: () => void;
+  onTap?: () => void;
   children: React.ReactNode;
   className?: string;
   draggable?: boolean;
@@ -40,22 +42,37 @@ function LongPressWrapper({
 }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelled = useRef(false);
+  const didLongPress = useRef(false);
 
   const start = useCallback(() => {
-    if (!onLongPress) return;
     cancelled.current = false;
+    didLongPress.current = false;
+    if (!onLongPress) return;
     timer.current = setTimeout(() => {
       if (!cancelled.current) {
+        didLongPress.current = true;
         hapticMedium();
         onLongPress();
       }
     }, 500);
   }, [onLongPress]);
 
-  const cancel = useCallback(() => {
+  const move = useCallback(() => {
     cancelled.current = true;
     if (timer.current) clearTimeout(timer.current);
   }, []);
+
+  const end = useCallback((e: React.TouchEvent) => {
+    if (timer.current) clearTimeout(timer.current);
+    // Quick tap (not moved, not long-pressed) → navigate
+    if (!cancelled.current && !didLongPress.current && onTap) {
+      const target = e.target as HTMLElement;
+      // Don't navigate if tapping an interactive child element
+      if (!target.closest('button, input, textarea, a, [role="button"], [contenteditable]')) {
+        onTap();
+      }
+    }
+  }, [onTap]);
 
   return (
     <div
@@ -68,8 +85,8 @@ function LongPressWrapper({
       onDragOver={onDragOver}
       onDrop={onDrop}
       onTouchStart={start}
-      onTouchEnd={cancel}
-      onTouchMove={cancel}
+      onTouchEnd={end}
+      onTouchMove={move}
     >
       {children}
     </div>
@@ -497,6 +514,7 @@ export function TeamOverview({
             <LongPressWrapper
               key={`${mon.parsed.species}-${i}`}
               onLongPress={onPokemonLongPress ? () => onPokemonLongPress(i) : undefined}
+              onTap={onPokemonLongPress ? () => onPokemonLongPress(i) : undefined}
               draggable={canDrag}
               onDragStart={(e: React.DragEvent) => {
                 setDragIndex(i);

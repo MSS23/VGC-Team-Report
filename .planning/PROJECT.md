@@ -8,16 +8,17 @@ A web platform for competitive Pokemon VGC players to build detailed team report
 
 Players can build, document, share, and discover competitive VGC teams in one place — replacing the fragmented workflow of spreadsheets, Discord pastes, and scattered notes.
 
-## Current Milestone: v5.0 Smart Explore Experience
+## Current Milestone: v5.2 UX Feedback Polish
 
-**Goal:** Make the Explore page a powerful, intuitive discovery tool with better filters, richer report cards, shareable searches, and a cleaner mobile UX.
+**Goal:** Address 6 user-reported UX issues from real testing — improve first-visit onboarding, mobile interactions, and navigation discoverability.
 
 **Target features:**
-- Pokemon exclude filter ("teams WITHOUT Flutter Mane")
-- Tournament results mode (preset filter combos for browsing tournament placements)
-- Enhanced report cards (key Pokemon highlighted, archetype badges, placement prominence, creator info)
-- Shareable filter URLs (every filter combination generates a copyable link)
-- Advanced filter drawer (collapsible drawer for complex filters, clean mobile UX)
+- Auto-show tour/tutorial on first visit (currently requires manual discovery)
+- Fix mobile rendering/CLS issues (layout shift on initial load, especially via Discord webview)
+- Fix mobile Pokemon tile interaction (tap should navigate to details, not require long-press)
+- Separate progress bar ? icon from full site tour (? should explain the progress bar itself)
+- Reconsider progress bar M/N framing
+- Add Tour/Tutorial option to hamburger menu for easy re-discovery
 
 ## Requirements
 
@@ -49,17 +50,19 @@ Players can build, document, share, and discover competitive VGC teams in one pl
 
 ### Active
 
-<!-- Current scope for v5.0. -->
+<!-- Current scope for v5.1. -->
 
-- [ ] Pokemon exclude filter for explore search
-- [ ] Tournament results browsing mode with preset filter combos
-- [ ] Enhanced report cards with richer previews
-- [ ] Shareable filter URLs for explore searches
-- [ ] Advanced filter drawer for mobile-friendly UX
+- [ ] GDPR-compliant privacy policy (legal basis, data categories, retention, rights, third parties)
+- [ ] Terms of Service page (acceptable use, disclaimers, liability, Pokemon IP)
+- [ ] Cookie consent banner with opt-in/opt-out controls
+- [ ] Data export endpoint (GDPR Article 20 — data portability)
+- [ ] Account and data deletion endpoint (GDPR Article 17 — right to erasure)
+- [ ] CCPA disclosures (categories collected, right to know, right to delete, Do Not Sell)
+- [ ] Legal page links in site footer
 
 ### Out of Scope
 
-<!-- Explicit boundaries for v5.0. -->
+<!-- Explicit boundaries for v5.1. -->
 
 - Meta aggregation engine (meta_snapshots table, daily cron pipeline) — Overkill for current data volume; deferred
 - Trend indicators (rising/falling badges) — Requires meta aggregation engine; deferred
@@ -115,4 +118,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after milestone v5.0 scope revision*
+*Last updated: 2026-04-05 after milestone v5.2 UX Feedback Polish started*

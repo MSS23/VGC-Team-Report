@@ -1,68 +1,35 @@
 # Requirements: VGC Team Report
 
-**Defined:** 2026-04-03
+**Defined:** 2026-04-05
 **Core Value:** Players can build, document, share, and discover competitive VGC teams in one place
 
-## v5.0 Requirements
+## v5.2 Requirements
 
-Requirements for Smart Explore Experience milestone. Each maps to roadmap phases.
+Requirements for UX Feedback Polish milestone. Sourced from real user testing feedback.
 
-### Filtering
+### Onboarding & Tour Discovery
 
-- [x] **FILT-01**: User can exclude specific Pokemon from explore results (e.g., "teams WITHOUT Flutter Mane")
-- [x] **FILT-02**: User can apply multiple Pokemon exclusions simultaneously
-- [x] **FILT-03**: User can combine Pokemon exclusion with existing include filters (e.g., "teams WITH Incineroar but WITHOUT Flutter Mane")
-- [x] **FILT-04**: Exclude filter is accessible from both primary filter bar and advanced drawer
+- [ ] **TOUR-01**: User sees the site tour automatically on their first visit without needing to discover it manually
+- [ ] **TOUR-02**: User can find and trigger the site tour from the hamburger/mobile navigation menu
+- [ ] **TOUR-03**: The ? icon on the progress bar explains only the progress bar feature, not the full site tour
 
-### Tournament Browsing
+### Mobile Interaction
 
-- [x] **TOUR-01**: User can enter a "Tournament Results" browsing mode that presets filters for tournament-placed teams
-- [x] **TOUR-02**: User can filter tournament results by event type (Regionals, Internationals, Worlds, Online)
-- [x] **TOUR-03**: User can filter tournament results by placement tier (Top 4, Top 8, Top 16, etc.)
-- [x] **TOUR-04**: User can combine tournament filters with regulation and species filters
-- [x] **TOUR-05**: Tournament mode displays placement prominently on report cards
+- [ ] **MOBILE-01**: User can tap a Pokemon tile on mobile to navigate to its details (no long-press required)
+- [ ] **MOBILE-02**: Pages render without visible layout shift or re-rendering flash on mobile, including when opened via Discord in-app browser
 
-### Report Cards
+### Progress Bar
 
-- [x] **CARD-01**: Report card displays the team's top Pokemon species with sprites prominently
-- [x] **CARD-02**: Report card shows archetype badge(s) (Rain, Trick Room, etc.) inline
-- [x] **CARD-03**: Report card displays tournament placement with visual distinction for high placements (Top 4, Top 8)
-- [x] **CARD-04**: Report card shows creator name with link to creator profile
-- [x] **CARD-05**: Report card shows regulation tag visually
-- [ ] **CARD-06**: Enhanced cards load without increasing explore page CLS or degrading load time
-
-### Shareable URLs
-
-- [x] **URL-01**: User can copy a shareable URL that encodes the current explore filter state
-- [x] **URL-02**: Opening a shared filter URL restores all active filters exactly
-- [x] **URL-03**: Shareable URL includes regulation, species (include/exclude), archetype, placement, event type, sort, and search query
-- [ ] **URL-04**: User sees a "Copy link" button near the filter bar when any filters are active
-
-### Filter UX
-
-- [x] **UX-01**: Complex filters (exclude, event type, placement tier) are organized in a collapsible advanced filter drawer
-- [x] **UX-02**: Advanced drawer is accessible via a single "More filters" button on the primary bar
-- [x] **UX-03**: Active advanced filters show a count badge on the "More filters" button
-- [x] **UX-04**: Advanced drawer works well on mobile with full-width sheet behavior
-- [x] **UX-05**: Primary filter bar retains the most-used filters (regulation, search, species include, archetype, sort)
-- [x] **UX-06**: All filter changes are reflected in the URL immediately (for URL-01)
+- [ ] **NAV-01**: The progress bar presents navigation state without implying task completion (replace M/N progress framing)
 
 ## Future Requirements
 
-Deferred to future milestones. Tracked but not in current roadmap.
+Deferred to future releases. Tracked but not in current roadmap.
 
-### Meta Intelligence
+### Tour Enhancements
 
-- **META-01**: User can see top Pokemon by usage for the current regulation
-- **META-02**: User can see archetype distribution percentages
-- **META-03**: User can see rising/falling trend indicators on Pokemon
-- **META-04**: User can find teams that counter a specific archetype
-- **META-05**: User can discover novel/creative builds via diversity scoring
-
-### Analytics
-
-- **ANLYT-01**: User can track personal win/loss trends over time
-- **ANLYT-02**: User can see which Pokemon they bring most frequently
+- **TOUR-F01**: Redesign tour content and steps for better clarity
+- **TOUR-F02**: Context-sensitive tooltips that appear on first use of specific features
 
 ## Out of Scope
 
@@ -70,14 +37,10 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Meta aggregation pipeline (snapshots table, cron) | Overkill for current data volume; revisit when report count grows |
-| Trend badges on cards | Requires meta aggregation engine |
-| Counter-archetype discovery filter | Requires meta data pipeline |
-| Popular cores display | Needs weeks of snapshot data to be meaningful |
-| Separate /meta page | All discovery surfaces within /explore |
-| External API integration | No external dependencies; app's own data only |
-| AI-generated team recommendations | Hallucination risk; ground in community data instead |
-| Tier lists | No battle outcome data to support rankings |
+| Redesigning tour content/steps | Focus is on discoverability, not content changes |
+| Adding new tour steps | Separate initiative |
+| Desktop-specific UX changes | Feedback was mobile-focused; desktop works adequately |
+| Full navigation redesign | Only the progress bar framing needs adjustment |
 
 ## Traceability
 
@@ -85,37 +48,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FILT-01 | Phase 4 | Complete |
-| FILT-02 | Phase 4 | Complete |
-| FILT-03 | Phase 4 | Complete |
-| FILT-04 | Phase 4 | Complete |
-| TOUR-01 | Phase 5 | Complete |
-| TOUR-02 | Phase 5 | Complete |
-| TOUR-03 | Phase 5 | Complete |
-| TOUR-04 | Phase 5 | Complete |
-| TOUR-05 | Phase 5 | Complete |
-| CARD-01 | Phase 6 | Complete |
-| CARD-02 | Phase 6 | Complete |
-| CARD-03 | Phase 6 | Complete |
-| CARD-04 | Phase 6 | Complete |
-| CARD-05 | Phase 6 | Complete |
-| CARD-06 | Phase 6 | Pending |
-| URL-01 | Phase 3 | Complete |
-| URL-02 | Phase 3 | Complete |
-| URL-03 | Phase 3 | Complete |
-| URL-04 | Phase 3 | Pending |
-| UX-01 | Phase 2 | Complete |
-| UX-02 | Phase 2 | Complete |
-| UX-03 | Phase 2 | Complete |
-| UX-04 | Phase 2 | Complete |
-| UX-05 | Phase 2 | Complete |
-| UX-06 | Phase 3 | Complete |
+| TOUR-01 | Phase 12 | Pending |
+| TOUR-02 | Phase 12 | Pending |
+| TOUR-03 | Phase 13 | Pending |
+| MOBILE-01 | Phase 14 | Pending |
+| MOBILE-02 | Phase 14 | Pending |
+| NAV-01 | Phase 13 | Pending |
 
 **Coverage:**
-- v5.0 requirements: 25 total
-- Mapped to phases: 25
+- v5.2 requirements: 6 total
+- Mapped to phases: 6
 - Unmapped: 0
 
 ---
-*Requirements defined: 2026-04-03*
-*Last updated: 2026-04-03 — traceability mapped after roadmap creation*
+*Requirements defined: 2026-04-05*

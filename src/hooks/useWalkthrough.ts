@@ -336,9 +336,9 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     };
   }, [filteredSteps, currentStepIndex, randomPokemonName]);
 
-  // Auto-trigger on first visit (never on shared views)
+  // Auto-trigger on first visit (including shared views via Discord links)
   useEffect(() => {
-    if (!enabled || hasAutoTriggered || isSharedView) return;
+    if (!enabled || hasAutoTriggered) return;
     if (getSeenFlag()) {
       setHasAutoTriggered(true);
       return;

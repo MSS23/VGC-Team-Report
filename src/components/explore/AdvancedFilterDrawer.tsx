@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useSyncExternalStore, useRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { EVENT_TYPES } from "@/lib/data/tags";
 
@@ -19,18 +19,15 @@ interface AdvancedFilterDrawerProps {
 }
 
 function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mql = window.matchMedia(query);
-    setMatches(mql.matches);
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, [query]);
-
-  return matches;
+  return useSyncExternalStore(
+    (callback) => {
+      const mql = window.matchMedia(query);
+      mql.addEventListener("change", callback);
+      return () => mql.removeEventListener("change", callback);
+    },
+    () => window.matchMedia(query).matches,
+    () => false, // SSR fallback
+  );
 }
 
 export function AdvancedFilterDrawer({
