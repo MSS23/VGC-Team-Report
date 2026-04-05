@@ -848,6 +848,7 @@ function HomeContent() {
           creatorName={creatorName}
           placement={placement}
           isPublic={isPublic}
+          isOwner={isOwner}
           onTogglePublic={handleSetPublic}
           allowComments={allowComments}
           onToggleComments={(v) => {

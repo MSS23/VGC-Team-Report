@@ -10,6 +10,7 @@ interface ShareModalProps {
   creatorName?: string;
   placement?: string;
   isPublic: boolean;
+  isOwner?: boolean;
   onTogglePublic: (v: boolean) => void;
   allowComments: boolean;
   onToggleComments: (v: boolean) => void;
@@ -23,6 +24,7 @@ export function ShareModal({
   creatorName,
   placement,
   isPublic,
+  isOwner = true,
   onTogglePublic,
   allowComments,
   onToggleComments,
@@ -218,7 +220,7 @@ export function ShareModal({
         </div>
 
         {/* Publish to community prompt — shown when report is private and not dismissed */}
-        {!isPublic && !publishPromptDismissed && (
+        {!isPublic && !publishPromptDismissed && isOwner && (
           <div className="mx-6 mb-4 rounded-xl border border-accent/30 bg-accent-surface/20 p-4">
             <p className="text-sm font-semibold text-text-primary mb-1">
               Your report is private
@@ -245,12 +247,13 @@ export function ShareModal({
           </div>
         )}
 
-        {/* Visibility toggle */}
+        {/* Visibility toggle — only owner can change */}
         <div className="px-6 py-4 border-t border-border">
           <button
             type="button"
-            onClick={() => onTogglePublic(!isPublic)}
-            className="flex items-center gap-3 w-full text-left group cursor-pointer"
+            onClick={() => isOwner && onTogglePublic(!isPublic)}
+            disabled={!isOwner}
+            className={`flex items-center gap-3 w-full text-left group ${isOwner ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
           >
             <div className={`relative inline-flex h-[24px] w-[42px] items-center rounded-full transition-all duration-300 flex-shrink-0 ${
               isPublic ? "bg-accent shadow-md shadow-accent/30" : "bg-border"
@@ -264,7 +267,9 @@ export function ShareModal({
                 {isPublic ? "Listed on Explore" : "List on Explore"}
               </div>
               <div className="text-xs text-text-tertiary">
-                {isPublic
+                {!isOwner
+                  ? "Only the report owner can change visibility."
+                  : isPublic
                   ? "Your team is visible in the public gallery. Toggle off to unlist."
                   : "Currently unlisted. Toggle on to feature in the public gallery."}
               </div>
