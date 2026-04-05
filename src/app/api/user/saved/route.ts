@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -66,6 +67,10 @@ export async function POST(request: Request) {
       ON CONFLICT DO NOTHING
     `;
 
+    captureServerEvent(userId, "report_saved", {
+      report_id: parsed.data.shareId,
+    });
+
     return NextResponse.json({ saved: true });
   } catch (e) {
     console.error("Save report error:", e);
@@ -92,6 +97,10 @@ export async function DELETE(request: Request) {
       DELETE FROM saved_reports
       WHERE user_id = ${userId} AND share_id = ${parsed.data.shareId}
     `;
+
+    captureServerEvent(userId, "report_unsaved", {
+      report_id: parsed.data.shareId,
+    });
 
     return NextResponse.json({ unsaved: true });
   } catch (e) {

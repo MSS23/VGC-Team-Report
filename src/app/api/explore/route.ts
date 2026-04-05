@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -249,6 +250,22 @@ export async function GET(request: Request) {
     if (cacheKey) {
       await cacheSet(cacheKey, result, CacheTTL.EXPLORE_LIST);
     }
+
+    // Track searches (only when user actively searched or filtered, not browse)
+    if (q || filterRegulation || filterArchetype || filterSpecies) {
+      captureServerEvent(ip, "explore_searched", {
+        query: q || null,
+        sort,
+        search_type: searchType,
+        filter_regulation: filterRegulation || null,
+        filter_archetype: filterArchetype || null,
+        filter_species: filterSpecies || null,
+        filter_placement: filterPlacement || null,
+        result_count: reports.length,
+        has_results: reports.length > 0,
+      });
+    }
+
     return NextResponse.json(result);
   } catch (e) {
     console.error("Explore API error:", e);

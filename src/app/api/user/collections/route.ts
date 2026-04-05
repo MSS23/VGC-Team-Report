@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -82,6 +83,10 @@ export async function POST(request: Request) {
         INSERT INTO collections (id, user_id, name, description, regulation)
         VALUES (${id}, ${userId}, ${name}, ${description ?? null}, ${regulation ?? null})
       `;
+      captureServerEvent(userId, "collection_created", {
+        collection_id: id,
+        has_regulation: !!regulation,
+      });
       return NextResponse.json({ id, name });
     }
 
@@ -98,6 +103,10 @@ export async function POST(request: Request) {
         ON CONFLICT DO NOTHING
       `;
       await sql`UPDATE collections SET updated_at = NOW() WHERE id = ${collectionId}`;
+      captureServerEvent(userId, "collection_item_added", {
+        collection_id: collectionId,
+        report_id: shareId,
+      });
       return NextResponse.json({ added: true });
     }
 
@@ -115,6 +124,7 @@ export async function POST(request: Request) {
       const collectionId = raw.collectionId as string;
       if (!collectionId) return NextResponse.json({ error: "Missing collectionId" }, { status: 400 });
       await sql`DELETE FROM collections WHERE id = ${collectionId} AND user_id = ${userId}`;
+      captureServerEvent(userId, "collection_deleted", { collection_id: collectionId });
       return NextResponse.json({ deleted: true });
     }
 

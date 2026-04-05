@@ -3,6 +3,7 @@ import { isRateLimited } from "@/lib/rate-limit";
 import { notifyFollowers } from "@/lib/notifications";
 import { detectChangedSections } from "@/lib/utils/diff-state";
 import { cacheInvalidatePrefix, cacheDel, CacheKeys } from "@/lib/cache";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -160,6 +161,15 @@ export async function POST(request: Request) {
           cacheDel(CacheKeys.share(existingId)),
           cacheInvalidatePrefix("explore:"),
         ]);
+
+        // Track server-side
+        captureServerEvent(ip, "report_updated", {
+          report_id: existingId,
+          version: rows[0].version,
+          sections_changed: hasDataChanges ? sections : [],
+          is_publish: isPublish ?? false,
+        });
+
         return NextResponse.json({ id: existingId, editToken, updated: true, version: rows[0].version, isPublic: rows[0].is_public });
       }
       // Token mismatch or not found — fall through to create new
@@ -213,6 +223,16 @@ export async function POST(request: Request) {
     if (isPublic && state.creatorName) {
       notifyFollowers(state.creatorName as string, id, ownerId ?? undefined);
     }
+
+    // Track server-side
+    captureServerEvent(ownerId, "report_created", {
+      report_id: id,
+      is_public: isPublic ?? false,
+      has_tournament: !!state.tournamentName,
+      has_matchup_plans: (state.matchupPlans?.length ?? 0) > 0,
+      has_notes: !!state.notes && Object.keys(state.notes).length > 0,
+      creator_name: state.creatorName ?? null,
+    });
 
     return NextResponse.json({ id, editToken: newEditToken, updated: false, version: 1, isPublic: isPublic ?? false });
   } catch (e) {

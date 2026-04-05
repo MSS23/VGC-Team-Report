@@ -16,3 +16,17 @@ export function getPostHogServer(): PostHog | null {
 
   return posthogClient;
 }
+
+/**
+ * Fire-and-forget server-side event capture.
+ * Safe to call without awaiting — silently no-ops if PostHog is unconfigured.
+ */
+export function captureServerEvent(
+  distinctId: string,
+  event: string,
+  properties?: Record<string, unknown>,
+) {
+  const ph = getPostHogServer();
+  if (!ph) return;
+  ph.capture({ distinctId, event, properties });
+}

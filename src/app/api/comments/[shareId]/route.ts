@@ -4,6 +4,7 @@ import { containsBlockedWords } from "@/lib/utils/word-filter";
 import { escapeHtml } from "@/lib/utils/sanitize";
 import { createNotification } from "@/lib/notifications";
 import { sendCommentNotificationEmail } from "@/lib/email";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -145,6 +146,11 @@ export async function POST(
         })();
       }
     }
+
+    captureServerEvent(sessionId, "comment_posted", {
+      report_id: shareId,
+      comment_length: sanitizedBody.length,
+    });
 
     const row = rows[0];
     return NextResponse.json({

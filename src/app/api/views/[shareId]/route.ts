@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -44,6 +45,12 @@ export async function POST(
     if (rows.length === 0) {
       return NextResponse.json({ viewCount: 0 });
     }
+
+    captureServerEvent(parsed.data.sessionId, "report_viewed", {
+      report_id: shareId,
+      view_count: rows[0].view_count,
+    });
+
     return NextResponse.json({ viewCount: rows[0].view_count });
   } catch (e) {
     console.error("View count error:", e);

@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -38,12 +39,25 @@ export async function POST(request: Request) {
       SELECT COUNT(*)::int as count FROM comment_flags WHERE comment_id = ${commentId}
     `;
 
-    if ((flagCount[0]?.count as number) >= FLAG_THRESHOLD) {
+    const count = flagCount[0]?.count as number;
+
+    if (count >= FLAG_THRESHOLD) {
       // Auto-delete the comment and its flags
       await sql`DELETE FROM comments WHERE id = ${commentId}`;
       await sql`DELETE FROM comment_flags WHERE comment_id = ${commentId}`;
+
+      captureServerEvent(sessionId, "comment_auto_removed", {
+        comment_id: commentId,
+        flag_count: count,
+      });
+
       return NextResponse.json({ flagged: true, autoRemoved: true });
     }
+
+    captureServerEvent(sessionId, "comment_flagged", {
+      comment_id: commentId,
+      flag_count: count,
+    });
 
     return NextResponse.json({ flagged: true, autoRemoved: false });
   } catch (e) {

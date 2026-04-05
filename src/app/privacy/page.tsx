@@ -61,9 +61,10 @@ export default function PrivacyPage() {
                 <span className="text-text-tertiary">Legal basis: Art 6(1)(b) &mdash; necessary for contract performance (delivering the core functionality you requested).</span>
               </li>
               <li>
-                <strong>Analytics data</strong> (page views, referrer, country via Vercel Analytics) &mdash;
-                Anonymous usage data collected to understand traffic patterns and improve the app.
-                No personally identifiable information is collected by our analytics.
+                <strong>Analytics data</strong> (page views, feature usage, referrer, country via Vercel Analytics and PostHog) &mdash;
+                Usage data collected to understand traffic patterns, feature adoption, and improve the app.
+                PostHog analytics are linked to your account when signed in (identified profiles only) to provide
+                a better experience; anonymous visitors are not tracked individually.
                 <br />
                 <span className="text-text-tertiary">Legal basis: Art 6(1)(f) &mdash; legitimate interest (understanding usage to improve the service); Art 6(1)(a) &mdash; consent when cookie consent is granted for non-essential analytics cookies.</span>
               </li>
@@ -102,8 +103,8 @@ export default function PrivacyPage() {
                 30 days of an account deletion request.
               </li>
               <li>
-                <strong>Analytics data</strong> &mdash; Retained for 12 months by Vercel. We do not store
-                analytics data independently.
+                <strong>Analytics data</strong> &mdash; Retained for 12 months by Vercel and PostHog.
+                We do not store analytics data independently outside these services.
               </li>
               <li>
                 <strong>Redis cache data</strong> &mdash; TTL-based, typically purged within 24 hours.
@@ -151,6 +152,12 @@ export default function PrivacyPage() {
                 <strong>Upstash</strong> &mdash; Redis cache for session management and rate limiting.{" "}
                 <a href="https://upstash.com/trust/dpa.pdf" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                   View Upstash DPA
+                </a>
+              </li>
+              <li>
+                <strong>PostHog</strong> &mdash; Product analytics and feature usage tracking (EU-hosted).{" "}
+                <a href="https://posthog.com/dpa" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                  View PostHog DPA
                 </a>
               </li>
               <li>
@@ -251,9 +258,10 @@ export default function PrivacyPage() {
                 from consent requirements.
               </li>
               <li>
-                <strong>Analytics cookies</strong> &mdash; Vercel Analytics cookies are only set
-                when you grant consent through our cookie banner. You can change your preferences
-                at any time using the &quot;Cookie Settings&quot; link in the footer.
+                <strong>Analytics cookies</strong> &mdash; Vercel Analytics and PostHog cookies are
+                only set when you grant consent through our cookie banner. PostHog uses cookies to
+                link page views into sessions and identify returning users. You can change your
+                preferences at any time using the &quot;Cookie Settings&quot; link in the footer.
               </li>
             </ul>
           </section>

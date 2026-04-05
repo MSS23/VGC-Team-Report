@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
+import posthog from "posthog-js";
 
 interface FollowButtonProps {
   creatorName: string;
@@ -40,6 +41,7 @@ export function FollowButton({ creatorName }: FollowButtonProps) {
       });
       setFollowing(!following);
       track(following ? "creator_unfollowed" : "creator_followed", { creatorName });
+      posthog.capture(following ? "creator_unfollowed" : "creator_followed", { creator_name: creatorName });
     } catch { /* silent */ }
     finally { setLoading(false); }
   };

@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 import { createNotification } from "@/lib/notifications";
 import { cacheDel, CacheKeys } from "@/lib/cache";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -126,6 +127,11 @@ export async function POST(
       `${ownerName} invited you to collaborate on "${reportName}" — [View invite](/dashboard?tab=collab)`,
     ).catch(() => {});
 
+    captureServerEvent(userId, "collaborator_invited", {
+      report_id: shareId,
+      target_user_id: targetUserId,
+    });
+
     return NextResponse.json({ success: true, collaborator: { userId: targetUserId, name: targetName } });
   } catch (e) {
     console.error("Add collaborator error:", e);
@@ -190,6 +196,11 @@ export async function DELETE(
 
     // Invalidate share cache
     await cacheDel(CacheKeys.share(shareId)).catch(() => {});
+
+    captureServerEvent(userId, "collaborator_removed", {
+      report_id: shareId,
+      target_user_id: targetUserId,
+    });
 
     return NextResponse.json({ success: true });
   } catch (e) {

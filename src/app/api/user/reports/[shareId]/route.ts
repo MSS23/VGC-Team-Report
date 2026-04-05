@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -38,6 +39,7 @@ export async function PATCH(
       if (rows.length === 0) {
         return NextResponse.json({ error: "Not found or not in trash" }, { status: 404 });
       }
+      captureServerEvent(userId, "report_restored", { report_id: shareId });
       return NextResponse.json({ id: shareId, restored: true });
     }
 
@@ -50,6 +52,10 @@ export async function PATCH(
       if (rows.length === 0) {
         return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
       }
+      captureServerEvent(userId, "report_visibility_changed", {
+        report_id: shareId,
+        is_public: !!rows[0].is_public,
+      });
       return NextResponse.json({ id: shareId, isPublic: rows[0].is_public });
     }
 
@@ -82,6 +88,8 @@ export async function DELETE(
     if (rows.length === 0) {
       return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
     }
+
+    captureServerEvent(userId, "report_deleted", { report_id: shareId });
 
     return NextResponse.json({ deleted: true });
   } catch (e) {

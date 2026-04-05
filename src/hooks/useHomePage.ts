@@ -18,6 +18,7 @@ import { useCollaborativeSync } from "@/hooks/useCollaborativeSync";
 import { useSlideSystem } from "@/hooks/useSlideSystem";
 import { SAMPLE_PASTE } from "@/components/input/PasteInput";
 import { track } from "@vercel/analytics";
+import posthog from "posthog-js";
 import { useTranslation } from "@/lib/i18n";
 import { getTemplate } from "@/lib/templates";
 import type { SpriteConfig } from "@/lib/types/sprites";
@@ -349,6 +350,7 @@ export function useHomePage() {
     // Track team creation
     const hasMega = teamPaste.includes("-Mega") || teamPaste.includes("-Primal");
     track("team_created", { hasMega: hasMega ? "yes" : "no" });
+    posthog.capture("team_created", { has_mega: hasMega, pokemon_count: teamPaste.split(/\n\n+/).filter(Boolean).length });
   };
 
   const handleReset = useCallback(() => {

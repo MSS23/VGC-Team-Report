@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -42,6 +43,11 @@ export async function POST(request: Request) {
 
     const sql = getDb();
     await sql`INSERT INTO follows (user_id, creator_name) VALUES (${userId}, ${parsed.data.creatorName}) ON CONFLICT DO NOTHING`;
+
+    captureServerEvent(userId, "creator_followed", {
+      creator_name: parsed.data.creatorName,
+    });
+
     return NextResponse.json({ followed: true });
   } catch (e) {
     console.error("Follow POST error:", e);
@@ -61,6 +67,11 @@ export async function DELETE(request: Request) {
 
     const sql = getDb();
     await sql`DELETE FROM follows WHERE user_id = ${userId} AND creator_name = ${parsed.data.creatorName}`;
+
+    captureServerEvent(userId, "creator_unfollowed", {
+      creator_name: parsed.data.creatorName,
+    });
+
     return NextResponse.json({ unfollowed: true });
   } catch (e) {
     console.error("Follow DELETE error:", e);

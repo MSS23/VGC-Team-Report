@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
 import { track } from "@vercel/analytics";
+import posthog from "posthog-js";
 
 interface ReactionBarProps {
   shareId: string;
@@ -44,6 +45,7 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
     setLiked(!wasLiked);
     setLikeCount((c) => Math.max(0, c + (wasLiked ? -1 : 1)));
     track("report_reacted", { shareId, action: wasLiked ? "removed" : "added" });
+    posthog.capture("report_reacted", { share_id: shareId, action: wasLiked ? "removed" : "added" });
 
     try {
       await fetch(`/api/reactions/${shareId}`, {

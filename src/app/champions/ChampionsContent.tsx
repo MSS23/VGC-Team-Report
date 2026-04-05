@@ -8,6 +8,7 @@ import { PageFooter } from "@/components/layout/PageFooter";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { useEffect } from "react";
 import { track } from "@vercel/analytics";
+import posthog from "posthog-js";
 
 const MEGA_POKEMON = [
   { name: "Kangaskhan-Mega", ability: "Parental Bond", types: ["Normal"], slug: "mega-kangaskhan" },
@@ -34,6 +35,7 @@ export function ChampionsContent() {
   useEffect(() => {
     applyRandomAccent();
     track("champions_page_visited");
+    posthog.capture("champions_page_visited");
   }, []);
 
   return (

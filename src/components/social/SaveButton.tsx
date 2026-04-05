@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
+import posthog from "posthog-js";
 
 interface SaveButtonProps {
   shareId: string;
@@ -40,6 +41,7 @@ export function SaveButton({ shareId }: SaveButtonProps) {
         });
         setSaved(false);
         track("report_unsaved", { shareId });
+        posthog.capture("report_unsaved", { share_id: shareId });
       } else {
         await fetch("/api/user/saved", {
           method: "POST",
@@ -48,6 +50,7 @@ export function SaveButton({ shareId }: SaveButtonProps) {
         });
         setSaved(true);
         track("report_saved", { shareId });
+        posthog.capture("report_saved", { share_id: shareId });
       }
     } catch {
       // silent

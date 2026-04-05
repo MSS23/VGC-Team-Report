@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "motion/react";
 import { track } from "@vercel/analytics";
+import posthog from "posthog-js";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { PageNavbar } from "@/components/layout/PageNavbar";
@@ -28,7 +29,7 @@ function ExploreInner() {
   const { darkMode, setDarkMode } = useDarkMode();
 
   // Random accent color on explore page
-  useEffect(() => { applyRandomAccent(); track("explore_visited"); }, []);
+  useEffect(() => { applyRandomAccent(); track("explore_visited"); posthog.capture("explore_visited"); }, []);
 
   const [reports, setReports] = useState<ExploreReport[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);

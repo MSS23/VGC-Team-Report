@@ -4,6 +4,7 @@ import { escapeHtml } from "@/lib/utils/sanitize";
 import { containsBlockedWords } from "@/lib/utils/word-filter";
 import { createLinearIssue } from "@/lib/linear";
 import { postFeedbackEmbed } from "@/lib/discord-bot";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -165,6 +166,13 @@ export async function POST(request: Request) {
     } catch (e) {
       console.error("Discord bot embed failed:", e);
     }
+
+    captureServerEvent(userId, "feedback_submitted", {
+      feedback_type: type,
+      has_contact: !!contact,
+      has_device_info: !!(device || browser),
+      linear_created: !!linearUrl,
+    });
 
     return NextResponse.json({ success: true });
   } catch (e) {

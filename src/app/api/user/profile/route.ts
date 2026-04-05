@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -78,6 +79,15 @@ export async function PUT(request: Request) {
         accent_theme = ${accentTheme || null},
         updated_at = NOW()
     `;
+
+    captureServerEvent(user.id, "profile_updated", {
+      has_bio: !!bio,
+      has_twitter: !!twitter,
+      has_discord: !!discord,
+      has_youtube: !!youtube,
+      is_public: isPublicValue,
+      accent_theme: accentTheme || null,
+    });
 
     return NextResponse.json({ success: true });
   } catch (e) {

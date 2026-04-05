@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useShareUrl } from "@/hooks/useShareUrl";
 import { track } from "@vercel/analytics";
+import posthog from "posthog-js";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 
@@ -44,6 +45,12 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     track("report_shared", {
       regulation: (state.tags as Record<string, unknown>)?.regulation as string ?? "unknown",
       hasMega: hasMega ? "yes" : "no",
+    });
+    posthog.capture("report_shared", {
+      regulation: (state.tags as Record<string, unknown>)?.regulation as string ?? "unknown",
+      has_mega: hasMega,
+      is_public: isPublic,
+      pokemon_count: analysis.pokemon.length,
     });
   }, [analysis, isSampleTeam, copyShareUrl, buildShareState, isPublic]);
 

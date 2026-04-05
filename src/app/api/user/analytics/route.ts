@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
+import { getPostHogServer } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -71,12 +72,13 @@ export async function GET() {
       WHERE s.owner_id = ${userId} AND sr.user_id != ${userId}
     `;
 
-    // Followers count
+    // Followers count — get creator name from user's reports, then count follows
     const [followerCount] = await sql`
-      SELECT COUNT(*) as followers FROM follows WHERE creator_name = (
-        SELECT COALESCE(
-          (SELECT name FROM creator_profiles WHERE name = (
-            SELECT data->>'creatorName' FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL LIMIT 1
+      SELECT COUNT(*) as followers FROM follows
+      WHERE LOWER(creator_name) = LOWER(
+        COALESCE(
+          (SELECT name FROM creator_profiles WHERE LOWER(name) = LOWER(
+            (SELECT data->>'creatorName' FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL LIMIT 1)
           )),
           (SELECT data->>'creatorName' FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL LIMIT 1)
         )
@@ -121,6 +123,23 @@ export async function GET() {
       };
     };
 
+    // Enrich PostHog user profile with latest stats (fire-and-forget)
+    const ph = getPostHogServer();
+    if (ph) {
+      ph.identify({
+        distinctId: userId,
+        properties: {
+          total_reports: Number(totals.total_reports),
+          public_reports: Number(totals.public_reports),
+          total_views: Number(totals.total_views),
+          total_reactions: Number(reactionTotals.total_reactions),
+          total_comments: Number(commentTotals.total_comments),
+          total_saves: Number(saveTotals.total_saves),
+          followers: Number(followerCount?.followers ?? 0),
+        },
+      });
+    }
+
     return NextResponse.json({
       overview: {
         totalReports: Number(totals.total_reports),
@@ -130,7 +149,7 @@ export async function GET() {
         totalReactions: Number(reactionTotals.total_reactions),
         totalComments: Number(commentTotals.total_comments),
         totalSaves: Number(saveTotals.total_saves),
-        followers: Number(followerCount.followers),
+        followers: Number(followerCount?.followers ?? 0),
       },
       topByViews: topByViews.map(formatReport),
       recentReports: recentReports.map(formatReport),

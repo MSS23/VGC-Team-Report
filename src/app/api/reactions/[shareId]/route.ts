@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { isRateLimited } from "@/lib/rate-limit";
 import { createNotification } from "@/lib/notifications";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -102,6 +103,11 @@ export async function POST(
         createNotification(ownerId, "reaction", shareId, null, `Someone liked your report`);
       }
     }
+
+    captureServerEvent(sessionId, action === "added" ? "reaction_added" : "reaction_removed", {
+      report_id: shareId,
+      reaction_type: reactionType,
+    });
 
     return NextResponse.json({ action });
   } catch (e) {
