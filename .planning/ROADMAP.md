@@ -185,7 +185,10 @@ Plans:
   2. The exported JSON contains data from all 13 user-linked tables (teams, shares, notes, collections, collaborations, follows, bookmarks, reactions, comments, notifications, matchup plans, feedback, edit changelog)
   3. The export endpoint returns HTTP 429 if the same user requests a second export within 24 hours
   4. An unauthenticated request to the export endpoint returns HTTP 401
-**Plans:** TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 09-01-PLAN.md — Create GET /api/user/export with Clerk auth, Redis rate limit, 12-table parallel query, JSON file download
 
 ---
 
