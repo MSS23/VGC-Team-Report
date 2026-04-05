@@ -151,8 +151,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Rewrite /privacy (GDPR Art. 13 compliance, DPA links, CCPA disclosure) + add Terms and Cookie Settings to PageFooter
-- [ ] 07-02-PLAN.md — Create /terms page with Terms of Service content and TermsNavbar component
+- [x] 07-01-PLAN.md — Rewrite /privacy (GDPR Art. 13 compliance, DPA links, CCPA disclosure) + add Terms and Cookie Settings to PageFooter
+- [x] 07-02-PLAN.md — Create /terms page with Terms of Service content and TermsNavbar component
 **UI hint**: yes
 
 ---
@@ -281,7 +281,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 4. Pokemon Exclude Filter | v5.0 | 1/1 | Complete | 2026-04-03 |
 | 5. Tournament Results Mode | v5.0 | 2/2 | Complete | 2026-04-03 |
 | 6. Enhanced Report Cards | v5.0 | 0/2 | Not started | - |
-| 7. Legal Pages and Footer | v5.1 | 0/2 | Not started | - |
+| 7. Legal Pages and Footer | v5.1 | 2/2 | Complete   | 2026-04-05 |
 | 8. Cookie Consent and Analytics Gating | v5.1 | 0/? | Not started | - |
 | 9. Data Export API | v5.1 | 0/? | Not started | - |
 | 10. Account Deletion API | v5.1 | 0/? | Not started | - |
