@@ -1,25 +1,17 @@
-# Roadmap — v5.0 Smart Explore Experience
+# Roadmap — VGC Team Report
 
-## Milestone: v5.0
+## Milestones
 
-**Goal:** Make the Explore page a powerful, intuitive discovery tool with better filters, richer report cards, shareable searches, and a cleaner mobile UX.
+- **v5.0 Smart Explore Experience** — Phases 1-6 (in progress)
+- **v5.1 Legal Compliance & Data Protection** — Phases 7-11 (planned)
+- **v5.2 UX Feedback Polish** — Phases 12-14 (planned)
 
-## Phases
+---
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+<details>
+<summary>v5.0 Smart Explore Experience (Phases 1-6)</summary>
 
-Decimal phases appear between their surrounding integers in numeric order.
-
-- [x] **Phase 1: Follow Creators** - End-to-end creator follow system
-- [ ] **Phase 2: Advanced Filter Drawer** - Collapsible drawer that organizes complex filters, cleans up primary bar
-- [ ] **Phase 3: Shareable Filter URLs** - Every filter combination generates a copyable link
-- [x] **Phase 4: Pokemon Exclude Filter** - Users can find teams WITHOUT specific Pokemon (completed 2026-04-03)
-- [x] **Phase 5: Tournament Results Mode** - Preset browsing mode for tournament-placed teams (completed 2026-04-03)
-- [ ] **Phase 6: Enhanced Report Cards** - Richer explore cards with sprites, badges, placement, and creator info
-
-## Phase Details
+**Milestone Goal:** Make the Explore page a powerful, intuitive discovery tool with better filters, richer report cards, shareable searches, and a cleaner mobile UX.
 
 ### Phase 1: Follow Creators
 **Goal:** Build end-to-end creator follow system — DB schema, API routes, follow/unfollow button on creator profiles, follow counts, and "Following" filter on explore page.
@@ -122,18 +114,178 @@ Plans:
 - [x] 06-01-PLAN.md — Enhance ReportCard visual hierarchy: larger sprites, archetype badges below title, regulation corner pill, creator link styling
 - [x] 06-02-PLAN.md — Visual + performance verification checkpoint (Lighthouse CLS check)
 
+</details>
+
+---
+
+<details>
+<summary>v5.1 Legal Compliance & Data Protection (Phases 7-11)</summary>
+
+**Milestone Goal:** Make VGC Team Report legally compliant with GDPR and CCPA — privacy policy, terms of service, cookie consent, user data rights, and proper data handling.
+
+## Phases
+
+**Phase Numbering:**
+- Integer phases (1, 2, 3): Planned milestone work
+- Decimal phases (7.1, 7.2): Urgent insertions (marked with INSERTED)
+
+Decimal phases appear between their surrounding integers in numeric order.
+
+- [ ] **Phase 7: Legal Pages and Footer** - GDPR/CCPA-compliant privacy policy, terms of service, and footer links on every page
+- [ ] **Phase 8: Cookie Consent and Analytics Gating** - Cookie consent banner with one-click reject and full Vercel Analytics gating
+- [ ] **Phase 9: Data Export API** - Authenticated users can download all their data as structured JSON
+- [ ] **Phase 10: Account Deletion API** - Authenticated users can permanently erase their account and all associated data
+- [ ] **Phase 11: Data Rights Hub UI** - Self-service dashboard section surfaces export and deletion as visible user controls
+
+## Phase Details
+
+### Phase 7: Legal Pages and Footer
+**Goal:** Users can read compliant legal pages and the site footer links to them from every page — unblocking all other compliance phases.
+**Depends on:** Nothing (first phase of v5.1)
+**Requirements:** LEGAL-01, LEGAL-02, LEGAL-03, SITE-01, SITE-02
+**Success Criteria** (what must be TRUE):
+  1. User can navigate to `/privacy` and read a full GDPR Article 13-compliant privacy policy that names specific legal bases, retention periods, and all third-party processors (Clerk, Vercel, Neon, Upstash) with DPA links
+  2. User can navigate to `/terms` and read terms of service covering acceptable use, Pokemon trademark notice, IP disclaimers, and liability limits
+  3. The privacy policy contains an explicit CCPA "Do Not Sell My Personal Information" section affirming no data is sold
+  4. Every page on the site shows a footer with working links to Privacy Policy, Terms of Service, and Cookie Settings
+**Plans:** 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Rewrite /privacy (GDPR Art. 13 compliance, DPA links, CCPA disclosure) + add Terms and Cookie Settings to PageFooter
+- [ ] 07-02-PLAN.md — Create /terms page with Terms of Service content and TermsNavbar component
+**UI hint**: yes
+
+---
+
+### Phase 8: Cookie Consent and Analytics Gating
+**Goal:** Users are asked for cookie consent on first visit with a legally compliant banner, and Vercel Analytics does not fire until consent is granted.
+**Depends on:** Phase 7
+**Requirements:** COOKIE-01, COOKIE-02, COOKIE-03, COOKIE-04
+**Success Criteria** (what must be TRUE):
+  1. A new visitor sees a cookie consent banner that offers "Accept All" and "Reject All" buttons with equal visual prominence — rejection requires exactly one click
+  2. Opening DevTools Network in a fresh incognito tab shows zero Vercel Analytics requests before the user interacts with the banner
+  3. After accepting, Vercel Analytics loads normally; after rejecting, it remains blocked for the entire session
+  4. Returning to the site in a new browser session preserves the user's previous consent choice without showing the banner again
+  5. User can re-open cookie preferences at any time by clicking "Cookie Settings" in the site footer
+**Plans:** TBD
+**UI hint**: yes
+
+---
+
+### Phase 9: Data Export API
+**Goal:** An authenticated user can request and download all their personal data as a structured JSON file covering all 13 database tables.
+**Depends on:** Phase 7
+**Requirements:** DATA-01
+**Success Criteria** (what must be TRUE):
+  1. An authenticated user can trigger a data export via `GET /api/user/export` and receive a downloadable JSON file
+  2. The exported JSON contains data from all 13 user-linked tables (teams, shares, notes, collections, collaborations, follows, bookmarks, reactions, comments, notifications, matchup plans, feedback, edit changelog)
+  3. The export endpoint returns HTTP 429 if the same user requests a second export within 24 hours
+  4. An unauthenticated request to the export endpoint returns HTTP 401
+**Plans:** TBD
+
+---
+
+### Phase 10: Account Deletion API
+**Goal:** An authenticated user can permanently erase their account — all data across 13 database tables, their Clerk identity, and any Redis cache entries — in the correct cascade order.
+**Depends on:** Phase 9
+**Requirements:** DATA-02, DATA-03
+**Success Criteria** (what must be TRUE):
+  1. An authenticated user can trigger account deletion via `DELETE /api/user/delete` and their data is removed from all 13 database tables
+  2. After deletion completes, querying every affected table for the deleted user ID returns zero rows (no ghost records)
+  3. The Clerk user record is deleted only after all database cascade steps succeed — not before
+  4. All Redis cache keys associated with the deleted user are flushed as the final step
+  5. An unauthenticated request to the delete endpoint returns HTTP 401
+**Plans:** TBD
+
+---
+
+### Phase 11: Data Rights Hub UI
+**Goal:** Users can access self-service data export and account deletion from a dedicated section in their dashboard, with appropriate confirmation flows to prevent accidents.
+**Depends on:** Phase 10
+**Requirements:** DATA-04
+**Success Criteria** (what must be TRUE):
+  1. An authenticated user can navigate to `/dashboard/privacy` and see both a "Download My Data" button and a "Delete My Account" button
+  2. Clicking "Download My Data" triggers the export API and initiates a file download without leaving the page
+  3. Clicking "Delete My Account" opens a confirmation modal that requires the user to type "DELETE" before the action is enabled
+  4. After successful deletion the user is signed out and redirected, and attempting to sign back in with the same credentials shows no account
+**Plans:** TBD
+**UI hint**: yes
+
+</details>
+
+---
+
+## v5.2 UX Feedback Polish (Phases 12-14)
+
+**Milestone Goal:** Address 6 user-reported UX issues from real testing — improve first-visit onboarding, mobile interactions, and navigation discoverability. All fixes target existing features; no new infrastructure.
+
+## Phases
+
+- [ ] **Phase 12: Tour Discovery & First-Visit Onboarding** - Tour auto-shows on first visit and is accessible from the hamburger menu at any time
+- [ ] **Phase 13: Progress Bar Improvements** - Progress bar ? tooltip explains the bar itself, and the bar framing no longer implies task completion
+- [ ] **Phase 14: Mobile Interaction Fixes** - Pokemon tile tap navigates directly on mobile, and pages render without layout shift in all mobile contexts including Discord in-app browser
+
+## Phase Details
+
+### Phase 12: Tour Discovery & First-Visit Onboarding
+**Goal:** New users encounter the tour automatically, and returning users can always find it again without hunting.
+**Depends on:** Nothing (standalone UX fix)
+**Requirements:** TOUR-01, TOUR-02
+**Success Criteria** (what must be TRUE):
+  1. A first-time visitor lands on the app and the site tour starts automatically — no button needed to trigger it
+  2. The auto-tour only fires once per browser; returning visits do not re-trigger it
+  3. A user on mobile can open the hamburger menu and tap a clearly labelled "Tour" or "Take the tour" option to start the tour at any time
+  4. The tour option in the hamburger menu is visible whether or not the user has previously completed the tour
+**Plans:** TBD
+**UI hint**: yes
+
+---
+
+### Phase 13: Progress Bar Improvements
+**Goal:** The progress bar and its help affordance communicate navigation state accurately — the ? explains the bar, and the bar framing does not suggest task completion.
+**Depends on:** Phase 12
+**Requirements:** TOUR-03, NAV-01
+**Success Criteria** (what must be TRUE):
+  1. Clicking or tapping the ? icon on the progress bar opens a tooltip or popover that explains what the progress bar represents — it does not launch the full site tour
+  2. The progress bar displays current position without using M/N numeric framing (e.g., "3/6") that implies a checklist or task sequence
+  3. A user who has never seen the site can look at the progress bar and understand it as a navigation indicator, not a to-do list
+**Plans:** TBD
+**UI hint**: yes
+
+---
+
+### Phase 14: Mobile Interaction Fixes
+**Goal:** Mobile users can interact with Pokemon tiles by tapping normally, and pages load without visible layout shift or re-render flash on any mobile context.
+**Depends on:** Nothing (independent bug fixes)
+**Requirements:** MOBILE-01, MOBILE-02
+**Success Criteria** (what must be TRUE):
+  1. Tapping a Pokemon tile on a touch device navigates to that Pokemon's detail view — no long-press or second interaction required
+  2. The app loads without a visible flash or layout shift on iOS Safari and Android Chrome
+  3. The app loads without a visible flash or layout shift when opened from a Discord in-app browser link
+  4. No existing desktop Pokemon tile interaction is changed by the mobile tap fix
+**Plans:** TBD
+**UI hint**: yes
+
 ---
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Follow Creators | 0/2 | In progress | - |
-| 2. Advanced Filter Drawer | 2/2 | In Progress|  |
-| 3. Shareable Filter URLs | 0/2 | Not started | - |
-| 4. Pokemon Exclude Filter | 1/1 | Complete   | 2026-04-03 |
-| 5. Tournament Results Mode | 2/2 | Complete   | 2026-04-03 |
-| 6. Enhanced Report Cards | 0/2 | Not started | - |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Follow Creators | v5.0 | 0/2 | In progress | - |
+| 2. Advanced Filter Drawer | v5.0 | 2/2 | In Progress | - |
+| 3. Shareable Filter URLs | v5.0 | 0/2 | Not started | - |
+| 4. Pokemon Exclude Filter | v5.0 | 1/1 | Complete | 2026-04-03 |
+| 5. Tournament Results Mode | v5.0 | 2/2 | Complete | 2026-04-03 |
+| 6. Enhanced Report Cards | v5.0 | 0/2 | Not started | - |
+| 7. Legal Pages and Footer | v5.1 | 0/2 | Not started | - |
+| 8. Cookie Consent and Analytics Gating | v5.1 | 0/? | Not started | - |
+| 9. Data Export API | v5.1 | 0/? | Not started | - |
+| 10. Account Deletion API | v5.1 | 0/? | Not started | - |
+| 11. Data Rights Hub UI | v5.1 | 0/? | Not started | - |
+| 12. Tour Discovery & First-Visit Onboarding | v5.2 | 0/? | Not started | - |
+| 13. Progress Bar Improvements | v5.2 | 0/? | Not started | - |
+| 14. Mobile Interaction Fixes | v5.2 | 0/? | Not started | - |
