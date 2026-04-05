@@ -202,7 +202,10 @@ Plans:
   3. The Clerk user record is deleted only after all database cascade steps succeed — not before
   4. All Redis cache keys associated with the deleted user are flushed as the final step
   5. An unauthenticated request to the delete endpoint returns HTTP 401
-**Plans:** TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 10-01-PLAN.md — Implement DELETE /api/user/delete: 15-step FK-safe cascade, Clerk deletion, Redis flush
 
 ---
 
