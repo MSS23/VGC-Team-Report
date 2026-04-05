@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { href: "/explore", label: "Explore" },
   { href: "/changelog", label: "Changelog" },
   { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
 ] as const;
 
 export function PageFooter({ hideFeedback = false }: PageFooterProps) {
@@ -57,6 +58,13 @@ export function PageFooter({ hideFeedback = false }: PageFooterProps) {
               {link.label}
             </a>
           ))}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("open-cookie-settings"))}
+            className="px-2.5 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all cursor-pointer"
+          >
+            Cookie Settings
+          </button>
         </nav>
       </div>
     </footer>
