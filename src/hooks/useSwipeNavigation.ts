@@ -14,13 +14,18 @@ interface UseSwipeNavigationOptions {
  * Returns a ref to attach to the swipeable container.
  * Includes visual drag feedback and optional haptic vibration.
  */
-/** Width of the edge zone (px) where browser back/forward gestures trigger on Android/iOS */
-const EDGE_GUARD = 35;
+/** Width of the edge zone (px) where browser back/forward gestures trigger on Android/iOS.
+ *  Disabled in PWA standalone mode since there's no browser navigation to conflict with. */
+const EDGE_GUARD = 30;
+
+function isStandalonePwa(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches;
+}
 
 export function useSwipeNavigation({
   onSwipeLeft,
   onSwipeRight,
-  threshold = 80,
+  threshold = 55,
   enabled = true,
 }: UseSwipeNavigationOptions) {
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -39,9 +44,10 @@ export function useSwipeNavigation({
       const startX = e.targetTouches[0].clientX;
 
       // Ignore swipes that start near screen edges — let the browser handle
-      // back/forward navigation (Android gesture nav, iOS edge swipe)
+      // back/forward navigation (Android gesture nav, iOS edge swipe).
+      // Skip this guard in PWA standalone mode (no browser nav to conflict with).
       ignoreSwipe.current = false;
-      if (startX < EDGE_GUARD || startX > window.innerWidth - EDGE_GUARD) {
+      if (!isStandalonePwa() && (startX < EDGE_GUARD || startX > window.innerWidth - EDGE_GUARD)) {
         ignoreSwipe.current = true;
         return;
       }
