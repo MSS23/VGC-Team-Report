@@ -5,7 +5,7 @@ import { PostHogProvider as PHProvider, usePostHog } from "posthog-js/react";
 import { useEffect, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
-import { hasAnalyticsConsent } from "@/lib/consent";
+import { hasAnalyticsConsent, onConsentChange } from "@/lib/consent";
 
 function PostHogPageView() {
   const pathname = usePathname();
@@ -44,32 +44,39 @@ function PostHogIdentify() {
   return null;
 }
 
+function initPostHog() {
+  if (typeof window === "undefined" || !process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) return;
+  if (posthog.__loaded) return; // already initialized
+  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN, {
+    api_host:
+      process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com",
+    person_profiles: "identified_only",
+    capture_pageview: false, // We handle this manually above
+    capture_pageleave: true,
+    // Exception autocapture — sends $exception events for unhandled errors
+    autocapture: true,
+    capture_exceptions: true,
+    // Session replay
+    session_recording: {
+      maskAllInputs: false,
+      maskInputOptions: { password: true },
+    },
+    loaded: (posthog) => {
+      if (process.env.NODE_ENV === "development") posthog.debug();
+    },
+  });
+}
+
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
-      hasAnalyticsConsent()
-    ) {
-      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN, {
-        api_host:
-          process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com",
-        person_profiles: "identified_only",
-        capture_pageview: false, // We handle this manually above
-        capture_pageleave: true,
-        // Exception autocapture — sends $exception events for unhandled errors
-        autocapture: true,
-        capture_exceptions: true,
-        // Session replay
-        session_recording: {
-          maskAllInputs: false,
-          maskInputOptions: { password: true },
-        },
-        loaded: (posthog) => {
-          if (process.env.NODE_ENV === "development") posthog.debug();
-        },
-      });
-    }
+    // Init immediately if user already consented
+    if (hasAnalyticsConsent()) initPostHog();
+
+    // Listen for future consent changes (user accepts cookie banner)
+    const unsub = onConsentChange((accepted) => {
+      if (accepted) initPostHog();
+    });
+    return unsub;
   }, []);
 
   if (!process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) {
