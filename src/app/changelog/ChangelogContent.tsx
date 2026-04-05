@@ -11,6 +11,21 @@ import { PageFooter } from "@/components/layout/PageFooter";
 const ENTRIES = [
   {
     date: "April 2026",
+    version: "5.2",
+    title: "UX Feedback Polish",
+    emoji: "\u2728",
+    items: [
+      { type: "new" as const, text: "Tour auto-shows on first visit \u2014 new visitors (including those arriving via shared Discord links) now see the guided tour automatically without needing to discover it." },
+      { type: "new" as const, text: "\"Take a Tour\" in settings menu \u2014 the tour can now be re-triggered anytime from the overflow/settings menu, making it easy to find." },
+      { type: "new" as const, text: "Tap to navigate on mobile \u2014 tapping a Pokemon tile on mobile now navigates directly to its detail slide. Long-press still works too." },
+      { type: "improved" as const, text: "Progress bar help tooltip \u2014 the ? icon on the navigation bar now explains the bar itself instead of launching the full site tour." },
+      { type: "improved" as const, text: "Slide label replaces M/N counter \u2014 the navigation bar now shows the current slide name instead of a numeric \"3/14\" counter that felt like progress tracking." },
+      { type: "fixed" as const, text: "Mobile layout shift fixed \u2014 useIsMobile and useMediaQuery now use useSyncExternalStore, eliminating the flash where mobile pages briefly rendered as desktop." },
+      { type: "fixed" as const, text: "Cookie consent no longer blocks the page \u2014 the entire site was hidden until cookies were accepted. Analytics are now gated independently while the page always renders." },
+    ],
+  },
+  {
+    date: "April 2026",
     version: "4.11",
     title: "Security Hardening & Notes Consolidation",
     emoji: "\uD83D\uDD12",
