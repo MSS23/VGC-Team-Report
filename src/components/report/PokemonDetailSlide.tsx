@@ -381,6 +381,16 @@ export function PokemonDetailSlide({
     hapticLight();
   }, []);
 
+  // Listen for walkthrough tab switch events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent).detail as MobileTab;
+      if (MOBILE_TABS.includes(tab)) setMobileTab(tab);
+    };
+    window.addEventListener("walkthrough-tab", handler);
+    return () => window.removeEventListener("walkthrough-tab", handler);
+  }, []);
+
   const mobileTabLabels: Record<MobileTab, string> = {
     set: t.moves ?? "Set",
     stats: t.stats ?? "Stats",

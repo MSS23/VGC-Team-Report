@@ -9,6 +9,8 @@ export interface WalkthroughStep {
   placement: "above" | "below" | "center";
   slide?: number | "pokemon" | "speed" | "matchup-sheet"; // which slide to navigate to
   mobileSkip?: boolean;
+  /** On mobile, switch to this tab in PokemonDetailSlide before showing the step */
+  mobileTab?: "set" | "stats" | "notes" | "calcs";
 }
 
 export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
@@ -64,6 +66,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
       "Explain why you chose this spread for {{pokemon}}, its role, and key matchups. This text is shown when you share the report.",
     placement: "below",
     slide: "pokemon",
+    mobileTab: "notes",
   },
   {
     target: "notable-calcs",
@@ -72,6 +75,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
       "Add damage calcs, speed benchmarks, and survival checks. They\u2019re organized into Offensive, Defensive, and Speed categories \u2014 each collapsible.",
     placement: "above",
     slide: "pokemon",
+    mobileTab: "calcs",
   },
 
   // --- Speed Tier Chart ---
@@ -217,7 +221,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     []
   );
 
-  // Navigate to the correct slide when step changes
+  // Navigate to the correct slide (and mobile tab) when step changes
   useEffect(() => {
     if (!isActive || !goToSlide) return;
     const step = filteredSteps[currentStepIndex];
@@ -228,6 +232,10 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     const virtualIdx = physicalToVirtual ? physicalToVirtual(physicalIdx) : physicalIdx;
     if (virtualIdx !== null) {
       goToSlide(virtualIdx);
+    }
+    // Switch mobile tab if step requires it (e.g. notes/calcs tabs on Pokemon detail)
+    if (step.mobileTab && isMobile()) {
+      window.dispatchEvent(new CustomEvent("walkthrough-tab", { detail: step.mobileTab }));
     }
   }, [isActive, currentStepIndex, filteredSteps, goToSlide, resolveSlide, physicalToVirtual]);
 
