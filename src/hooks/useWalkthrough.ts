@@ -112,28 +112,13 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     placement: "below",
     mobileSkip: true,
   },
-  {
-    target: "creator-toggle",
-    title: "Lock / Unlock Editing",
-    description:
-      "Preview the clean read-only view your viewers will see. Unlock anytime to keep editing.",
-    placement: "below",
-    mobileSkip: true,
-  },
-  {
-    target: "present-button",
-    title: "Presentation Mode",
-    description:
-      "Full-screen slide deck \u2014 perfect for team calls or streams. Use arrow keys to navigate, Esc to exit. Press D for dark mode.",
-    placement: "below",
-  },
 
   // --- Finish ---
   {
     target: null,
     title: "You\u2019re all set!",
     description:
-      "Your work saves automatically to your browser. Try the generation theme selector to change the look. Click the tour button anytime to replay this guide.",
+      "Your work saves automatically to your browser. Use the settings menu (\u2699\uFE0F) for presentation mode, editing lock, themes, and more. Click \u201CTake a tour\u201D in the menu anytime to replay this guide.",
     placement: "center",
     slide: 0,
   },
@@ -192,7 +177,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
   const randomPokemonName = pokemonNames?.[randomPokemonIndex] ?? "your Pokemon";
 
   // Targets that only exist in creator/owner mode (input fields, not read-only views)
-  const CREATOR_ONLY_TARGETS = ["share-button", "creator-toggle", "tournament-info"];
+  const CREATOR_ONLY_TARGETS = ["share-button", "tournament-info"];
 
   const filteredSteps = useMemo(() => {
     let steps = WALKTHROUGH_STEPS;
