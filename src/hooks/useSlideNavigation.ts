@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 interface UseSlideNavigationOptions {
   totalSlides: number;
@@ -57,81 +57,102 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
     withTransition(() => setCurrentSlide((prev) => Math.max(prev - 1, 0)));
   }, [totalSlides, withTransition]);
 
-  // Keyboard listener
+  // Store callbacks in refs so the keydown listener never needs re-attaching
+  const callbacksRef = useRef({
+    onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp,
+    onTogglePresentation, onUndo, onRedo, onToggleCreatorMode,
+    onToggleHideSlide, onMoveSlideUp, onMoveSlideDown,
+  });
+  callbacksRef.current = {
+    onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp,
+    onTogglePresentation, onUndo, onRedo, onToggleCreatorMode,
+    onToggleHideSlide, onMoveSlideUp, onMoveSlideDown,
+  };
+
+  const totalSlidesRef = useRef(totalSlides);
+  totalSlidesRef.current = totalSlides;
+
+  const bypassFocusGuardRef = useRef(bypassFocusGuard);
+  bypassFocusGuardRef.current = bypassFocusGuard;
+
+  // Keyboard listener — only re-attaches when `enabled` changes
   useEffect(() => {
     if (!enabled) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const cbs = callbacksRef.current;
+      const total = totalSlidesRef.current;
+
       // Focus guard: skip when cursor is in a textarea or input (unless bypassed for presentation mode)
-      if (!bypassFocusGuard) {
+      if (!bypassFocusGuardRef.current) {
         const tag = (e.target as HTMLElement)?.tagName;
         if (tag === "TEXTAREA" || tag === "INPUT") return;
       }
 
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey && onUndo) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey && cbs.onUndo) {
         e.preventDefault();
-        onUndo();
+        cbs.onUndo();
         return;
-      } else if ((e.ctrlKey || e.metaKey) && ((e.key === "z" && e.shiftKey) || e.key === "y") && onRedo) {
+      } else if ((e.ctrlKey || e.metaKey) && ((e.key === "z" && e.shiftKey) || e.key === "y") && cbs.onRedo) {
         e.preventDefault();
-        onRedo();
+        cbs.onRedo();
         return;
       }
 
       if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
-        withTransition(() => setCurrentSlide((prev) => Math.min(prev + 1, totalSlides - 1)));
+        withTransition(() => setCurrentSlide((prev) => Math.min(prev + 1, total - 1)));
       } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
         withTransition(() => setCurrentSlide((prev) => Math.max(prev - 1, 0)));
-      } else if (e.key === "Escape" && onEscape) {
+      } else if (e.key === "Escape" && cbs.onEscape) {
         e.preventDefault();
-        onEscape();
-      } else if ((e.key === "d" || e.key === "D") && onToggleDarkMode) {
+        cbs.onEscape();
+      } else if ((e.key === "d" || e.key === "D") && cbs.onToggleDarkMode) {
         e.preventDefault();
-        onToggleDarkMode();
-      } else if ((e.key === "f" || e.key === "F") && onToggleFullscreen) {
+        cbs.onToggleDarkMode();
+      } else if ((e.key === "f" || e.key === "F") && cbs.onToggleFullscreen) {
         e.preventDefault();
-        onToggleFullscreen();
-      } else if (e.key === "?" && onShowHelp) {
+        cbs.onToggleFullscreen();
+      } else if (e.key === "?" && cbs.onShowHelp) {
         e.preventDefault();
-        onShowHelp();
-      } else if ((e.key === "p" || e.key === "P") && onTogglePresentation) {
+        cbs.onShowHelp();
+      } else if ((e.key === "p" || e.key === "P") && cbs.onTogglePresentation) {
         e.preventDefault();
-        onTogglePresentation();
-      } else if ((e.key === "e" || e.key === "E") && onToggleCreatorMode) {
+        cbs.onTogglePresentation();
+      } else if ((e.key === "e" || e.key === "E") && cbs.onToggleCreatorMode) {
         // E = toggle edit/lock mode
         e.preventDefault();
-        onToggleCreatorMode();
-      } else if ((e.key === "h" || e.key === "H") && onToggleHideSlide) {
+        cbs.onToggleCreatorMode();
+      } else if ((e.key === "h" || e.key === "H") && cbs.onToggleHideSlide) {
         // H = hide/show current slide
         e.preventDefault();
-        onToggleHideSlide();
-      } else if (e.key === "[" && onMoveSlideUp) {
+        cbs.onToggleHideSlide();
+      } else if (e.key === "[" && cbs.onMoveSlideUp) {
         // [ = move slide earlier
         e.preventDefault();
-        onMoveSlideUp();
-      } else if (e.key === "]" && onMoveSlideDown) {
+        cbs.onMoveSlideUp();
+      } else if (e.key === "]" && cbs.onMoveSlideDown) {
         // ] = move slide later
         e.preventDefault();
-        onMoveSlideDown();
+        cbs.onMoveSlideDown();
       } else if (e.key >= "1" && e.key <= "9") {
         // Number keys 1-9 = jump to slide
         const slideIndex = parseInt(e.key, 10) - 1;
-        if (slideIndex < totalSlides) {
+        if (slideIndex < total) {
           e.preventDefault();
           withTransition(() => setCurrentSlide(slideIndex));
         }
       } else if (e.key === "0") {
         // 0 = jump to last slide
         e.preventDefault();
-        withTransition(() => setCurrentSlide(totalSlides - 1));
+        withTransition(() => setCurrentSlide(total - 1));
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, totalSlides, bypassFocusGuard, withTransition, onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp, onTogglePresentation, onUndo, onRedo, onToggleCreatorMode, onToggleHideSlide, onMoveSlideUp, onMoveSlideDown]);
+  }, [enabled, withTransition]);
 
   // Touch swipe is handled by useSwipeNavigation on the slide container.
   // Having a second window-level handler here caused conflicts (double-firing,

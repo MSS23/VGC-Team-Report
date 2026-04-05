@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { DiffChange } from "@/lib/utils/version-diff";
 
 interface DiffNavigatorProps {
@@ -36,20 +36,24 @@ export function DiffNavigator({ changes, onNavigate, onDismiss, version, editorN
     }, 200);
   }, [changes, count, onNavigate]);
 
-  const handlePrev = () => go(index - 1);
-  const handleNext = () => go(index + 1);
+  const handlePrev = useCallback(() => go(index - 1), [go, index]);
+  const handleNext = useCallback(() => go(index + 1), [go, index]);
 
-  // Keyboard: left/right arrows when this is visible
+  // Stable ref so keyboard listener doesn't re-attach on every render
+  const navRef = useRef({ handlePrev, handleNext });
+  navRef.current = { handlePrev, handleNext };
+
+  // Keyboard: J/K when this is visible — attaches once
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       // Don't capture if user is typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
-      if (e.key === "j" || e.key === "J") { e.preventDefault(); handleNext(); }
-      if (e.key === "k" || e.key === "K") { e.preventDefault(); handlePrev(); }
+      if (e.key === "j" || e.key === "J") { e.preventDefault(); navRef.current.handleNext(); }
+      if (e.key === "k" || e.key === "K") { e.preventDefault(); navRef.current.handlePrev(); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  });
+  }, []);
 
   if (count === 0) return null;
 
