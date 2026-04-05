@@ -6,6 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import { ConnectivityStatus } from "@/components/ui/ConnectivityStatus";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { JsonLd } from "@/components/seo/JsonLd";
 import "./globals.css";
 
@@ -91,6 +92,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <ClerkProvider>
+        <PostHogProvider>
         <JsonLd
           data={{
             "@context": "https://schema.org",
@@ -115,6 +117,7 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
         <ServiceWorkerRegistration />
+        </PostHogProvider>
         </ClerkProvider>
       </body>
     </html>
