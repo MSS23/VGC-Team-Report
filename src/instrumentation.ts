@@ -1,4 +1,4 @@
-import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs";
+import { SimpleLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { logs } from "@opentelemetry/api-logs";
 import { resourceFromAttributes } from "@opentelemetry/resources";
@@ -15,7 +15,7 @@ export async function register() {
       _provider = new LoggerProvider({
         resource: resourceFromAttributes({ "service.name": "vgc-team-report" }),
         processors: [
-          new BatchLogRecordProcessor(
+          new SimpleLogRecordProcessor(
             new OTLPLogExporter({
               url: `https://eu.i.posthog.com/i/v1/logs?token=${token}`,
               headers: {
