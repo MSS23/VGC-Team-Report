@@ -167,7 +167,11 @@ Plans:
   3. After accepting, Vercel Analytics loads normally; after rejecting, it remains blocked for the entire session
   4. Returning to the site in a new browser session preserves the user's previous consent choice without showing the banner again
   5. User can re-open cookie preferences at any time by clicking "Cookie Settings" in the site footer
-**Plans:** TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Install vanilla-cookieconsent, create consent utility, CookieBanner, ConsentGate
+- [ ] 08-02-PLAN.md — Gate PostHog init + wire layout.tsx + human verify checkpoint
 **UI hint**: yes
 
 ---
