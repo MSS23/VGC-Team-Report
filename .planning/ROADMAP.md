@@ -188,7 +188,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 09-01-PLAN.md — Create GET /api/user/export with Clerk auth, Redis rate limit, 12-table parallel query, JSON file download
+- [x] 09-01-PLAN.md — Create GET /api/user/export with Clerk auth, Redis rate limit, 12-table parallel query, JSON file download
 
 ---
 
@@ -296,7 +296,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 6. Enhanced Report Cards | v5.0 | 0/2 | Not started | - |
 | 7. Legal Pages and Footer | v5.1 | 2/2 | Complete   | 2026-04-05 |
 | 8. Cookie Consent and Analytics Gating | v5.1 | 1/2 | In Progress|  |
-| 9. Data Export API | v5.1 | 0/? | Not started | - |
+| 9. Data Export API | v5.1 | 1/1 | Complete   | 2026-04-05 |
 | 10. Account Deletion API | v5.1 | 0/? | Not started | - |
 | 11. Data Rights Hub UI | v5.1 | 0/? | Not started | - |
 | 12. Tour Discovery & First-Visit Onboarding | v5.2 | 0/? | Not started | - |
