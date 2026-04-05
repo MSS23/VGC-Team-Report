@@ -56,7 +56,7 @@ export function ChampionsContent() {
       />
       <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="champions" />
 
-      <main className="min-h-screen bg-background">
+      <main className="min-h-screen bg-background pb-24 sm:pb-0">
         {/* Hero */}
         <section className="relative overflow-hidden py-16 sm:py-24 px-4">
           <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-transparent" />
