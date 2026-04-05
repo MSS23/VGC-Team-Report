@@ -52,7 +52,7 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               // Scripts: self, Clerk (all domains), Vercel, Sentry, Cloudflare, PostHog
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://va.vercel-scripts.com https://vercel.live https://*.vercel.live https://*.sentry.io https://challenges.cloudflare.com https://us-assets.i.posthog.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://va.vercel-scripts.com https://vercel.live https://*.vercel.live https://*.sentry.io https://challenges.cloudflare.com https://eu-assets.i.posthog.com",
               // Styles: self + inline + Google Fonts + Clerk
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.com https://clerk.pokemonvgcteamreport.com",
               // Images: self, Showdown sprites, Clerk, GitHub, data URIs
@@ -60,7 +60,7 @@ const nextConfig: NextConfig = {
               // Fonts: self + Google Fonts + Clerk
               "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com https://*.clerk.com https://clerk.pokemonvgcteamreport.com",
               // Connect: self, Clerk (all), Sentry, Vercel, PokePaste, PostHog
-              "connect-src 'self' https://play.pokemonshowdown.com https://*.pokemonshowdown.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://clerk-telemetry.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live https://*.vercel.live https://pokepast.es https://us.i.posthog.com https://*.posthog.com",
+              "connect-src 'self' https://play.pokemonshowdown.com https://*.pokemonshowdown.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://clerk-telemetry.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live https://*.vercel.live https://pokepast.es https://eu.i.posthog.com https://*.posthog.com",
               // Frames: Clerk OAuth, Cloudflare, Vercel Live
               "frame-src https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://challenges.cloudflare.com https://vercel.live https://*.vercel.live",
               // Workers

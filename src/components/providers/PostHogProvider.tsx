@@ -47,11 +47,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (
       typeof window !== "undefined" &&
-      process.env.NEXT_PUBLIC_POSTHOG_KEY
+      process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
     ) {
-      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
+      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN, {
         api_host:
-          process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
+          process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com",
         person_profiles: "identified_only",
         capture_pageview: false, // We handle this manually above
         capture_pageleave: true,
@@ -62,7 +62,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+  if (!process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) {
     return <>{children}</>;
   }
 
