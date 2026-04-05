@@ -7,6 +7,8 @@ import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistra
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import { ConnectivityStatus } from "@/components/ui/ConnectivityStatus";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { CookieBanner } from "@/components/providers/CookieBanner";
+import { ConsentGate } from "@/components/providers/ConsentGate";
 import { JsonLd } from "@/components/seo/JsonLd";
 import "./globals.css";
 
@@ -92,6 +94,8 @@ export default function RootLayout({
           Skip to content
         </a>
         <ClerkProvider>
+        <CookieBanner />
+        <ConsentGate>
         <PostHogProvider>
         <JsonLd
           data={{
@@ -118,6 +122,7 @@ export default function RootLayout({
         <SpeedInsights />
         <ServiceWorkerRegistration />
         </PostHogProvider>
+        </ConsentGate>
         </ClerkProvider>
       </body>
     </html>
