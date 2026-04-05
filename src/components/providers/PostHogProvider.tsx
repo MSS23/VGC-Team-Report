@@ -48,8 +48,8 @@ function initPostHog() {
   if (typeof window === "undefined" || !process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) return;
   if (posthog.__loaded) return; // already initialized
   posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN, {
-    api_host:
-      process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com",
+    api_host: "/ingest",
+    ui_host: "https://eu.posthog.com",
     person_profiles: "identified_only",
     capture_pageview: false, // We handle this manually above
     capture_pageleave: true,
