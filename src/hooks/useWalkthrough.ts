@@ -45,7 +45,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     target: "pokemon-grid",
     title: "Pokemon Cards",
     description:
-      "Your full team at a glance. Click a role label to describe each mon\u2019s job (e.g. \u201cSpread Attacker\u201d). Star your MVP!",
+      "Your full team at a glance. Tap a card to see its detail slide. Star your MVP!",
     placement: "above",
     slide: 0,
   },
@@ -55,7 +55,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     target: null,
     title: "{{pokemon}}\u2019s Detail Slide",
     description:
-      "Every Pokemon gets a dedicated slide with its full set, stats, and EV spread shown on the left.",
+      "Every Pokemon gets a dedicated slide. On mobile, use the tabs to switch between Set, Stats, Notes, and Calcs.",
     placement: "center",
     slide: "pokemon",
   },
@@ -103,7 +103,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     target: "slide-nav",
     title: "Slide Navigation",
     description:
-      "Use these controls or arrow keys to move between slides. Click any dot to jump directly. You can hide slides from viewers too.",
+      "Navigate between slides here. On mobile, drag the progress bar or tap to jump. On desktop, use arrow keys or click the dots.",
     placement: "above",
   },
 
