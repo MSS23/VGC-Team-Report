@@ -1,324 +1,417 @@
 # Pitfalls Research
 
-**Domain:** Meta intelligence & smart discovery on a competitive gaming platform (small dataset)
-**Researched:** 2026-04-03
-**Confidence:** HIGH — based on existing codebase analysis + verified patterns from Neon/Vercel/Postgres/Upstash documentation
+**Domain:** GDPR/CCPA compliance added to an existing Next.js app (Clerk + Neon Postgres + Upstash Redis + Vercel)
+**Researched:** 2026-04-05
+**Confidence:** HIGH — Clerk/Neon/Redis behaviour verified via official docs; regulatory patterns verified via enforcement records (CNIL, ICO 2025)
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Showing Meta Stats Before You Have Enough Data (Cold Start Credibility Collapse)
+### Pitfall 1: Incomplete Deletion — Orphaned Data Across 13 Tables
 
 **What goes wrong:**
-You display "Top Pokemon This Week: Incineroar 100%" because 3 reports were posted, all using Incineroar. Users see this, distrust the entire feature, and never come back to check it. The feature is live but broken in terms of credibility from day one.
+The deletion endpoint deletes `shares` rows for the user but misses data the user owns indirectly. After deletion, the following tables still contain personal data tied to that user:
+
+| Table | Column(s) that reference the deleted user |
+|-------|-------------------------------------------|
+| `saved_reports` | `user_id` |
+| `follows` | `user_id` |
+| `collections` | `user_id` |
+| `collection_items` | cascades from `collections` — but only if the FK DELETE CASCADE fires correctly |
+| `collaborators` | `user_id`, `user_name`, `added_by` |
+| `edit_changelog` | `editor_id`, `editor_name` |
+| `share_versions` | `editor_id`, `editor_name` |
+| `notifications` | `user_id`, `source_user_name` |
+| `comments` | `session_id` (if that session maps back to a user) |
+| `reactions` | `session_id` (same caveat) |
+| `feedback` | `submitter_id`, `submitter_name`, `contact` |
+
+The `shares` table uses soft-delete (`deleted_at`) for its own rows, but soft-delete is NOT erasure. The data is still stored, still readable by DB queries, still in backups. GDPR Article 17 requires data to be gone, not flagged.
 
 **Why it happens:**
-Developers ship the aggregation pipeline and UI together. There is no threshold check — if the query returns data, it renders. Early-stage apps always have sparse data but the UI is designed for steady-state.
+Deletion logic is written against the primary "owner" path — deleting the user's own `shares` rows. The relational data created as a side-effect of using the app (follows, collaborations, notifications, feedback submissions) is not mapped before implementation.
 
 **How to avoid:**
-- Define a minimum corpus threshold before showing any "meta" label. Suggested minimums: 20+ public reports for a regulation before showing archetype distribution; 50+ for trend indicators; 10+ for "Counter This" recommendations.
-- Gate the UI explicitly: show a "Not enough data yet for [Reg G] meta" placeholder rather than misleading percentages.
-- Implement a `data_confidence` field in the aggregation result that the UI reads before rendering badges.
-- Seed the feature with the existing corpus — audit the current share count per regulation before shipping.
+Build a deletion checklist from the schema before writing a single line of deletion code. The correct order for this schema:
+
+```
+1. DELETE FROM notifications WHERE user_id = $userId
+2. DELETE FROM follows WHERE user_id = $userId
+3. DELETE FROM saved_reports WHERE user_id = $userId
+4. DELETE FROM collaborators WHERE user_id = $userId
+5. UPDATE edit_changelog SET editor_id = NULL, editor_name = '[deleted]' WHERE editor_id = $userId
+6. UPDATE share_versions SET editor_id = NULL, editor_name = '[deleted]' WHERE editor_id = $userId
+7. UPDATE feedback SET submitter_id = NULL, submitter_name = '[deleted]', contact = NULL WHERE submitter_id = $userId
+8. DELETE FROM collections WHERE user_id = $userId  -- collection_items cascade
+9. Hard-DELETE or anonymize shares WHERE owner_id = $userId (do not rely on soft-delete)
+10. Call Clerk Backend API: DELETE /v1/users/{userId}
+```
+
+For `edit_changelog` and `share_versions`, anonymization (nulling the editor fields) is preferable to hard deletion because removing those rows would corrupt the version history of reports co-edited by others — a legitimate competing interest.
 
 **Warning signs:**
-- Percentages showing a single Pokemon at 100% usage
-- Trend arrows showing "rising" on day 1 of a new regulation
-- "Counter This" returning 0 or 1 results and showing them as authoritative
+- Deletion endpoint only touches the `shares` table
+- "Account deleted" confirmation fires before all steps above complete
+- No transaction discipline across the multi-table delete (partial failure leaves orphaned rows)
 
 **Phase to address:**
-Meta aggregation engine phase — build the minimum threshold check before building the UI layer. Do not ship UI before defining and enforcing corpus minimums.
+Phase: Account and Data Deletion — must be the first working endpoint built, before any cookie consent or policy UI work.
 
 ---
 
-### Pitfall 2: JSONB Aggregation Without Extracted Columns (Query Performance Cliff)
+### Pitfall 2: Clerk Holds Personal Data That Lives Entirely Outside Your Database
 
 **What goes wrong:**
-Aggregation queries scan all `shares` rows extracting `data->>'paste'` or `data->'tags'->>'regulation'` via JSONB operators. At 500 rows this is fast enough. At 2,000+ rows with multiple concurrent explore requests, query time climbs over 1-2 seconds. Neon's serverless HTTP driver has no persistent connection overhead, but the query itself degrades. Combined with Vercel Hobby's 10s function timeout, a complex aggregation that hits TOAST decompression on large paste blobs becomes a real failure risk.
+Clerk stores on its own infrastructure — independent of your Neon Postgres — the following personal data:
+- Email address
+- Display name
+- Profile image URL
+- OAuth provider identity (Google, Discord, Twitch account links)
+- Session history and device metadata
+
+Deleting the user from Neon does NOT delete them from Clerk. The user still exists in Clerk's dashboard and their PII is still being processed by Clerk on your behalf. GDPR Article 17 erasure obligation extends to all data processors — Clerk is your data processor.
+
+The inverse problem also exists: if Clerk is deleted first and the Neon deletion fails, the user's data remains in Neon with no Clerk user attached — orphaned PII with no owner.
+
+Clerk's `user.deleted` webhook (Svix-backed) uses exponential backoff retry but is not guaranteed delivery. Reports in community forums confirm missed events on cold Vercel starts and during payload validation failures. If the webhook is the sole trigger for DB cleanup, a delivery failure produces permanent orphaned data with no detection mechanism.
 
 **Why it happens:**
-All VGC team data lives in the `data JSONB` column. Tags, archetype, regulation, species — all are JSONB paths. Aggregation via `GROUP BY data->'tags'->>'regulation'` cannot use the existing GIN index (GIN is for containment/existence, not GROUP BY). The planner does a sequential scan every time.
+Developers treat Clerk as "just auth" and forget it is a data processor holding personal data. The DPA Clerk offers (clerk.com/legal/dpa) confirms they process personal data on your behalf — meaning your GDPR Article 17 obligation extends to Clerk's copy.
 
 **How to avoid:**
-- Extract the top aggregation keys (regulation, archetype array, placement tier) as real computed columns with B-tree indexes: `ALTER TABLE shares ADD COLUMN regulation TEXT GENERATED ALWAYS AS (data->'tags'->>'regulation') STORED`.
-- For species/Pokemon frequency aggregation, do NOT run `jsonb_each` in real-time per request. Pre-compute via the daily cron and store results in a dedicated `meta_snapshots` table or Upstash Redis key.
-- Species counting from the paste text requires string parsing — keep this in the pre-compute step, never inline in the explore API.
-- The existing `idx_shares_public_updated` partial index is good for explore ordering. Add a similar partial index on the extracted `regulation` column immediately when adding it.
+- Initiate deletion from your side first (Neon + Redis), then call Clerk Backend API as the final step.
+- Do not rely on `user.deleted` webhook as the trigger for DB deletion. Use it only as a reconciliation signal.
+- Implement a `deletion_requests` table with step-level status tracking. Mark each step completed atomically. A background cron can catch failed steps.
+- Sign Clerk's DPA (clerk.com/legal/dpa) before any EU user data is processed. Keep a record of the signing date.
 
 **Warning signs:**
-- Explore page response time > 500ms when aggregation is added
-- Neon slow query logs showing sequential scans on `shares` with JSONB operator conditions
-- Aggregation route approaching or timing out under 10s Vercel limit
+- Deletion flow uses `user.deleted` webhook as the entry point rather than a user-initiated API route
+- No logging of Clerk Backend API call success/failure during deletion
+- No reconciliation mechanism between Clerk user list and local `owner_id` values in Neon
 
 **Phase to address:**
-Database schema phase — extracted columns must be added before writing any aggregation queries. Retrofitting indexes after the feature is live requires a migration with `CONCURRENTLY` and a maintenance window.
+Phase: Account and Data Deletion — Clerk deletion must be in scope alongside Neon deletion, not deferred.
 
 ---
 
-### Pitfall 3: Stale Trend Indicators Showing Outdated Meta (TTL Mismatch)
+### Pitfall 3: Redis Cache Surfaces Deleted User Data After Erasure
 
 **What goes wrong:**
-A Pokemon gets banned mid-regulation or a new dominant strategy emerges. The "Rising" badge on Koraidon persists for hours because the trend cache TTL is set to 6+ hours. Players see contradictory information — the community knows the meta shifted but the app shows yesterday's trend arrows. Trust in the feature erodes.
+After a user is deleted and their Neon rows are gone, Upstash Redis may still hold:
+- Explore page results (`explore:*` keys) that include that user's public reports
+- Creator profile caches (`creator:*` keys)
+- User-specific cached API responses
+
+Because Upstash uses TTL-based expiration, deleted user data remains visible in explore queries and creator profile pages for the full TTL duration — potentially hours. A user who believes they have been erased is still visible to other users through cached responses.
+
+GDPR Article 17 requires erasure "without undue delay." A multi-hour cache window is almost certainly "undue delay" under current 2025 enforcement posture.
 
 **Why it happens:**
-Trend data is expensive to compute so developers set long TTLs. But VGC meta can shift materially within 24-48 hours after a major tournament posts results. The existing explore cache uses 60s TTL (reasonable for pagination). Trend data naturally gets a longer TTL as a "heavier" computation but the cost of staleness is higher than the cost of recomputation for a small dataset.
+TTL-based expiration is designed for performance, not compliance. Developers assume TTL expiry counts as deletion. It does not — the data is still stored and served during the TTL window.
 
 **How to avoid:**
-- Separate TTL tiers by data type: explore pagination (60s), individual report cards (5 min), trend indicators (15-30 min), archetype distribution snapshot (1-6 hours depending on regulation age).
-- Add a `computed_at` timestamp to every aggregation result so the UI can show "Updated 45 minutes ago" rather than displaying numbers as if they are live.
-- Invalidate trend cache on new public report creation (the share creation webhook should call `cacheDel(CacheKeys.trendSnapshot(regulation))`) — this keeps data near-live during active posting periods.
-- Do NOT tie trend cache invalidation to the explore list cache invalidation — they have different staleness tolerances.
+In the deletion endpoint, after Neon rows are deleted, immediately flush the relevant Redis key patterns before returning a success response:
+
+```typescript
+// After DB deletes, before returning 200:
+const creatorName = /* resolved before starting deletion */;
+
+// Flush explore cache (broad invalidation — acceptable on user deletion which is rare)
+const exploreKeys = await redis.keys('explore:*');
+if (exploreKeys.length > 0) await redis.del(...exploreKeys);
+
+// Flush creator-specific keys
+if (creatorName) {
+  const creatorKeys = await redis.keys(`creator:${creatorName}*`);
+  if (creatorKeys.length > 0) await redis.del(...creatorKeys);
+}
+```
+
+For production Redis with large keyspaces, use `SCAN` cursor iteration rather than `keys()` to avoid blocking.
 
 **Warning signs:**
-- Meta badge showing a Pokemon as "Rising" when it was recently used less or banned
-- Cache TTL set uniformly across all aggregation types
-- No `computed_at` or `last_updated` timestamp on trend data returned from the API
+- Deletion endpoint returns 200 without any Redis operations
+- Explore page still shows a deleted user's reports immediately after deletion
+- No `SCAN`/`DEL` calls anywhere in the deletion code path
 
 **Phase to address:**
-Cache architecture phase — define the TTL matrix before implementing any aggregation. The Upstash Redis key namespace should encode the cache tier (e.g., `meta:trend:regG:v1` vs `meta:arch:regG:v1`).
+Phase: Account and Data Deletion — cache invalidation is part of deletion, not a post-MVP cleanup concern.
 
 ---
 
-### Pitfall 4: Small Sample Size Percentages Displayed as Authoritative (Statistical Misleading)
+### Pitfall 4: Cookie Consent Dark Patterns That Regulators Actively Fine
 
 **What goes wrong:**
-The meta panel shows "Trick Room: 67%" — but there are only 6 Regulation G reports and 4 of them happen to be TR. This misleads players who trust the platform's aggregated data as representative of the actual competitive meta. It is worse than showing nothing because it looks authoritative.
+In 2025, regulators have issued hundreds of millions in fines specifically for consent banner dark patterns. All of the following are easy to accidentally implement in a Next.js app:
+
+1. **Asymmetric buttons** — "Accept All" is a solid primary button; "Reject" is greyed-out or styled as secondary. CNIL fined Google €200M explicitly for this pattern.
+2. **Multi-click reject** — Accepting takes one click; rejecting requires opening "Manage Preferences" and unchecking each category. ICO issued 134 warnings in its first-200-site review sweep in January 2025.
+3. **Pre-checked analytics toggles** — Any non-essential category toggle defaulted to ON is invalid consent under GDPR Article 7. Consent must be an active affirmative action.
+4. **Consent wall** — Banner blocks access to content until the user accepts. Conditioning site access on cookie acceptance is a dark pattern under EDPB guidance.
+5. **Cookies fired before consent** — Analytics scripts in `layout.tsx` fire immediately on every page render, including the initial render before the banner is shown or any consent is recorded. This is the most common Next.js-specific violation and makes the banner legally meaningless.
 
 **Why it happens:**
-Percentage calculations are trivially easy to implement and look good in UI. Developers naturally compute `count / total * 100` without attaching sample size or confidence context. The VGC ecosystem itself has this problem — external tools like Pikalytics use 182-371 teams as their sample and still qualify their data. At app scale, especially early, the sample will frequently be under 20 per regulation.
+Developers build the banner UI in isolation. The `<Analytics />` component from Vercel is placed in `layout.tsx` because that is the obvious location. It fires on every render. The banner is visible but the consent is technically worthless because the analytics script already executed before the user saw the banner.
 
 **How to avoid:**
-- Always co-render the sample size with any percentage: "Trick Room 67% (n=6)" not "Trick Room 67%".
-- Use confidence-adjusted display: show exact count for n<10, show percentage + n for 10-50, show percentage with confidence band for 50+.
-- Suppress trend arrows entirely when the rolling window has fewer than 15 data points.
-- For "Counter This" results, show the count of matching teams found, not just the teams themselves: "4 teams found that run Rain + Incineroar counter cores."
-- Do NOT display normalized percentages from small samples on report cards as meta badges — these travel far and get screenshotted without the sample size context.
+- Never place `<Analytics />` unconditionally in `layout.tsx`. Gate it behind a consent state check.
+- Read consent from `localStorage` synchronously on mount to avoid a flash of incorrect state.
+- Make "Accept All" and "Reject All" visually identical in weight — same size, same border, same contrast ratio.
+- One-click rejection: if the banner offers "Accept All," it must also offer "Reject All" at the same level, not nested in a preferences modal.
+- Never pre-check any non-essential category toggle.
+
+```tsx
+// Correct pattern
+function ConsentAwareAnalytics() {
+  const consent = useConsentStore(); // reads localStorage synchronously
+  if (!consent.analytics) return null;
+  return <Analytics />;
+}
+// Use <ConsentAwareAnalytics /> in layout instead of bare <Analytics />
+```
 
 **Warning signs:**
-- Any percentage display that does not include n= sample size
-- Trend arrows appearing on regulations that were published less than 2 weeks ago
-- "Top 5 Pokemon" list that only includes 5 unique Pokemon because there are only 5 reports
+- `<Analytics />` appears in `layout.tsx` without a consent check wrapping it
+- "Reject" option requires more than one click from the initial banner state
+- Any toggle in a preferences pane defaults to checked/on
 
 **Phase to address:**
-UI/UX phase for all meta-displaying components. Add a `sampleSize` field to every aggregation API response and make it mandatory in the TypeScript type — failing to pass it should be a type error, not a UI decision.
+Phase: Cookie Consent Banner — dark pattern avoidance must be an explicit acceptance criterion, not an afterthought.
 
 ---
 
-### Pitfall 5: Breaking Existing Explore UX with Filter Proliferation
+### Pitfall 5: Privacy Policy Missing Legally Required Sections
 
 **What goes wrong:**
-The existing filter bar has 7 parameters (query, sort, searchCategory, regulation, eventType, archetype, species, placement). Adding counter-archetype query, include/exclude Pokemon, meta badge filter, tournament tier, inspiration mode, and trend filter pushes the visible controls past 12-15 fields. The filter UI becomes unusable on mobile, the URL becomes 400+ characters long, and users stop filtering entirely.
+The existing `/privacy` page is informative but does not satisfy the legal disclosure requirements of GDPR Article 13 or CCPA. Missing sections that regulators specifically check:
+
+**GDPR Article 13 — required, currently absent from the existing page:**
+- Legal basis for each category of processing (must name the Article 6 basis: contract performance, legitimate interest, or consent — per processing activity)
+- Data retention periods with specific timeframes per category (the existing policy states "according to Vercel's data retention policy" — this does not satisfy Article 13(2)(a))
+- Identity and contact details of the data controller (a name and email address)
+- Right to lodge a complaint with a supervisory authority
+- Right to withdraw consent if consent is the legal basis for any processing
+- Third-party data processors listed by name with their role (Clerk, Neon/Vercel, Upstash, Vercel Analytics are all processors)
+- International transfer basis for US-based processors (Clerk is US-based; must name the transfer mechanism)
+
+**CCPA — required, currently absent:**
+- Enumerated categories of personal information collected
+- Purposes for collection per category
+- Categories of third parties the data is shared with
+- "Do Not Sell or Share My Personal Information" disclosure (even if you do not sell data, you must disclose that you do not)
+- How California consumers can submit a rights request (email address or web form)
+- Response timeframe (45 days under CCPA)
 
 **Why it happens:**
-Each new feature in v5.0 naturally wants its own filter. Developers add them incrementally — each individual addition seems reasonable. The cumulative effect is catastrophic to the UX. The existing `ExploreFilters.tsx` component already has 15 props.
+The existing policy is written as a developer explanation of what the app does, not against a regulatory checklist. Vague language like "analytics data is retained according to Vercel's data retention policy" feels complete but shifts responsibility without satisfying Article 13.
 
 **How to avoid:**
-- Enforce a "one primary filter bar, one advanced drawer" rule from day one. The visible filter bar stays at its current 8 slots maximum. Every new filter for v5.0 goes into a collapsible "Advanced / Meta Filters" drawer.
-- New meta-specific filters (trend badge, counter-archetype mode, inspiration feed) should be implemented as distinct UI modes or tabs, not additional filter inputs — e.g., "Discovery Mode: [Browse | Trending | Counter | Inspiration]" as a mode switcher, not 4 extra dropdowns.
-- Before adding any filter parameter to the explore API, audit whether it can be expressed through existing parameters (e.g., "meta badge" filter can be expressed as a sort + threshold, not a new param).
-- The URL should remain shareable: test every filter combination as a URL string — if it exceeds 200 characters under common usage, the filter design is wrong.
+Write the policy section by section against GDPR Article 13 and CCPA checklists. For each processing activity, explicitly state: what data, why (purpose), legal basis, how long, who has access.
+
+Specific values to commit to for this app:
+- Team reports/shares: retained until deleted by user or account deletion request
+- Vercel Analytics: 90-day rolling window (Vercel's documented Analytics retention)
+- Clerk auth data: retained until account deleted; then per Clerk DPA retention schedule
+- Upstash Redis cache: ephemeral, not persistent storage — state this explicitly
+- Feedback submissions: retained up to 12 months for product improvement purposes
+- Data controller contact: a real reachable email (privacy@pokemonvgcteamreport.com or personal email)
 
 **Warning signs:**
-- `ExploreFilters.tsx` prop interface grows beyond 20 props
-- Mobile filter bar requires 3+ rows to display all controls
-- Users report "how do I reset filters" confusion
-- URL query strings over 300 characters in normal usage
+- Policy uses phrases like "according to [vendor]'s policy" rather than stating actual periods
+- No mention of GDPR Article 6 legal bases
+- No right to lodge a DPA complaint
+- No third-party processor list
+- No CCPA rights exercise mechanism or response timeframe
 
 **Phase to address:**
-Explore UX phase — define the filter taxonomy (primary vs. advanced vs. mode) before implementing any feature. Do not add a single new filter parameter without first auditing the full parameter list.
+Phase: Privacy Policy and Terms of Service — write against regulatory checklists, not as informal prose.
 
 ---
 
-### Pitfall 6: Real-Time Aggregation on Every Explore Request (Vercel Timeout Bomb)
+### Pitfall 6: Data Export That Misses Related Tables and Returns an Unusable Format
 
 **What goes wrong:**
-The `/api/explore` route or a new `/api/meta` route runs a full-table aggregation on every request — counting Pokemon, computing archetype distributions, computing trend deltas. At 200 concurrent users, this generates 200 simultaneous `GROUP BY` queries against Neon. Neon's connection pool (via PgBouncer in transaction mode) gets saturated, p99 query times spike, and the Vercel Hobby 10s timeout kills requests. The explore page shows errors to users.
+An export endpoint that only returns `shares` rows does not satisfy GDPR Article 20 (right to data portability). A complete export for this schema must include all of:
+- All shares owned by the user (including full `data` JSONB)
+- All collections and their collection_items
+- Saved/bookmarked reports (list of share IDs)
+- Follows (list of creator names followed)
+- Notifications history
+- Collaborations (reports the user co-edits)
+- Edit changelog entries authored by the user
+- Share version snapshots authored by the user
+- Feedback submissions
+
+GDPR Article 20 requires the export in a "structured, commonly used and machine-readable format." A raw JSON dump technically qualifies but a ZIP archive containing named JSON files per category (`reports.json`, `collections.json`, `follows.json`, etc.) is significantly better and reduces the risk of a regulator arguing the format was not "intelligible."
 
 **Why it happens:**
-It works in development where the dataset is small and there is no concurrency. Developers ship without load testing the aggregation query path. The Neon serverless driver creates a new HTTP connection per invocation — the connection overhead alone adds 20-50ms per request, multiplied by aggregation complexity.
+Export is built as "give them their reports." The `data` JSONB column is large and visually dominant; relational metadata tables are overlooked. The same incomplete data map that causes the deletion pitfall also causes the export gap.
 
 **How to avoid:**
-- Never put aggregation queries on the hot explore request path. All meta aggregation must happen in the cron pipeline and be stored as pre-computed snapshots.
-- Implement the aggregation result as a write-through cache: cron runs aggregation → stores result in `meta_snapshots` table AND Upstash Redis → explore/meta endpoints read from Redis only.
-- The existing `CacheTTL.TOP_POKEMON = 600` (10 min) key already exists in `cache.ts` — use this pattern as the blueprint. Aggregation writes to cache, explore reads from cache, never runs aggregation inline.
-- If you need sub-10-minute freshness for any aggregation, use Upstash Redis and invalidate on new public share creation, not on every read.
-- The daily cron already runs — extend it to refresh meta snapshots rather than building a separate scheduled endpoint.
+Build export against the same 13-table checklist used for deletion — every table that deletion touches, export must also touch. Return a ZIP with named JSON files. Include a `README.txt` explaining each file's structure. Set an async path (return a download link when ready) for users with more than 50 reports, to stay within Vercel's 10s function timeout.
 
 **Warning signs:**
-- Any `GROUP BY` or `COUNT(DISTINCT)` on `shares` without first checking a cache result
-- Aggregation query inside the same serverless function that handles explore pagination
-- Meta endpoint response time > 500ms under normal conditions
+- Export endpoint queries only the `shares` table
+- Export returns a single JSON object rather than named sections per data category
+- No handling for the case where a user has enough reports to exceed the function timeout
 
 **Phase to address:**
-Aggregation engine phase — the cron pipeline must be built before any meta UI component is built. If the UI can be built without a cron, the architecture is wrong.
+Phase: Account and Data Deletion — export and deletion endpoints should be built in parallel against the same data map.
 
 ---
 
-### Pitfall 7: Counter-Team Discovery Returning Semantically Incorrect Results
+### Pitfall 7: Legal Basis Conflict for Existing Users' Historical Data
 
 **What goes wrong:**
-A player asks "find teams that counter Rain" — the feature returns teams that include Incineroar (a Rain check) but the teams are actually Rain teams themselves (they happen to run Incineroar as a flex slot). The user trusts the result, copies the team structure, and shows up to a tournament with a Rain team they thought was a Rain counter.
+GDPR has retroactive effect: its scope covers ongoing processing regardless of when data was collected. The existing app collected user registrations, comments, reactions, follows, and feedback submissions before any consent mechanism or published privacy policy existed. Adding a cookie consent banner now and claiming "consent" as the legal basis going forward does not retroactively legitimise historical data. More critically, if you claim "consent" as the basis for analytics but consent was not collected at the time of collection, you are now in breach for the historical data — not cured by adding a banner today.
 
 **Why it happens:**
-"Counter This" is implemented as a filter inclusion query: find teams that include common Rain counters (Incineroar, Torkoal, etc.). But a Rain team also runs Incineroar. The presence of a counter Pokemon does not mean the team counters the archetype. Without archetype exclusion logic, the results are polluted.
+Developers apply the new legal basis going forward and assume the past is forgiven. The regulatory reality is that historical data must also have a documented legal basis, or it must be deleted.
 
 **How to avoid:**
-- "Counter This [Archetype]" must combine: (1) includes known counter Pokemon for that archetype AND (2) NOT tagged as the same archetype itself.
-- Use the existing `detectArchetypes` function output (stored in `data->'tags'->'archetype'`) for the exclusion filter — this is already computed at report creation time.
-- Add a confidence score to counter-team results based on: number of counter Pokemon present, how highly placed the report is, how recently it was shared.
-- In the UI, label results clearly as "Teams with [Archetype] counters" not "Teams that beat [Archetype]" — the distinction is critical in a game where 6 Pokemon must cover multiple threats.
-- For the initial phase, limit "Counter This" to archetypes with 5+ known counter Pokemon in the VGC pool and 10+ tagged teams in the corpus.
+For each existing data category, determine which Article 6 basis applies retroactively and document it:
+
+| Data category | Retroactive basis | Rationale |
+|---------------|-------------------|-----------|
+| Shares, collections, profiles | Contract performance (6(1)(b)) | Processing is necessary to deliver the service the user signed up for |
+| Follows, saved reports, notifications | Legitimate interest (6(1)(f)) | Core platform social features; user would reasonably expect this |
+| Vercel Analytics (anonymous, no PII) | Legitimate interest (6(1)(f)) | Truly anonymous aggregate data; passes the balancing test |
+| Feedback submissions | Legitimate interest (6(1)(f)) | Product improvement; contact field is optional |
+| Clerk auth data | Contract performance (6(1)(b)) | Authentication is necessary for the account-based service |
+
+Do NOT claim consent as the legal basis for data you already hold if you did not collect consent at the time of collection. Write a brief internal Legitimate Interest Assessment (LIA) — a one-page document recording that you performed the three-part test — before publishing the policy. You do not publish the LIA; it is your compliance record.
 
 **Warning signs:**
-- Counter results include teams tagged as the same archetype being queried against
-- Zero exclusion logic in the counter query (pure inclusion-only filter)
-- UI copy uses absolute language ("beats", "counters") rather than qualified language ("includes checks to")
+- Privacy policy claims "consent" as the basis for analytics but there was no consent banner before the compliance milestone
+- No written LIA for any processing relying on legitimate interest
+- Policy claims contract performance for community features that do not require an account (comments, reactions are session-based, not account-gated)
 
 **Phase to address:**
-Counter discovery phase — write the counter logic specification (archetype + counter Pokemon map + exclusion rules) before writing any SQL. The archetype exclusion is the difference between useful and misleading.
+Phase: Privacy Policy and Terms of Service — legal basis decisions must be made before the policy is drafted.
 
 ---
 
 ## Technical Debt Patterns
 
-Shortcuts that seem reasonable but create long-term problems.
-
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Inline aggregation on explore route | No new infrastructure | Timeout at scale, cannot cache independently | Never — use cron pre-compute always |
-| No minimum corpus threshold | Feature ships immediately | Credibility collapse on sparse data | Never — threshold is 1 constant |
-| Single cache TTL for all meta data | Simpler cache logic | Trend data goes stale fast, snapshot data wastes compute | Only for MVP if clearly documented and short-lived |
-| JSONB path expressions in GROUP BY | No schema migration needed | Full table sequential scan, degrades linearly | OK for n<100 reports during development only |
-| Percentage display without sample size | Cleaner UI | Misleads users, screenshots spread bad info | Never on public-facing meta surfaces |
-| Adding all new filters to the primary filter bar | Fastest to implement | UX collapse, filter bar unusable on mobile | Never — use advanced drawer pattern from start |
-| Hard-coding counter Pokemon lists | Ships faster than DB-driven approach | Wrong when Pokemon are added/removed from regulation | Acceptable in Phase 1 with a clear replacement plan |
+| Soft-delete (`deleted_at`) as "erasure" | Preserves data for recovery | Not GDPR Article 17 compliant; data remains in DB, backups, and caches | Never for compliance — anonymize or hard-delete |
+| Relying on `user.deleted` webhook for DB cleanup | Avoids building an explicit deletion endpoint | Webhook failures leave orphaned PII; no audit trail | Never as the primary deletion path |
+| Single JSON blob for data export | Simple to implement | Incomplete (misses 10+ tables); may not satisfy Article 20 "intelligible format" | Only as a declared placeholder with a clear follow-up ticket |
+| Blanket "legitimate interest" for all processing | Avoids consent UI complexity | Legitimate interest cannot justify non-essential analytics cookies; regulators scrutinise this heavily in 2025 | Only for truly necessary processing with a documented LIA |
+| Loading `<Analytics />` in root layout unconditionally | Simpler layout.tsx structure | Regulators treat this as consent never obtained; the banner becomes legally meaningless | Never if you have EU users |
+| Skipping Clerk DPA | Saves one legal admin step | You are processing EU personal data without a contractual basis with your processor | Never if you have EU users |
 
 ---
 
 ## Integration Gotchas
 
-Common mistakes when connecting to external services.
-
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Neon + Vercel serverless | Running aggregation queries inline on hot path; each invocation creates a new HTTP connection adding 20-50ms overhead | Pre-compute in cron, read pre-computed result from Redis on hot path; use `neon()` driver (HTTP, not TCP) |
-| Upstash Redis | Using pattern-based `SCAN` to invalidate all explore cache keys after a new report is created | Use namespaced key groups; invalidate the specific trend snapshot key, leave explore pagination cache intact |
-| Upstash Redis | Storing large aggregation objects (species counts for all regulations) as a single Redis key | Namespace by regulation + format: `meta:pokemon:regG:v1` so individual regulation data can be independently refreshed |
-| Vercel cron (Hobby) | Writing aggregation logic that takes >10s when corpus grows | Batch the aggregation: run per-regulation in separate cron invocations, not one mega-query for all regulations |
-| Neon JSONB + GIN index | Expecting GIN index to accelerate GROUP BY aggregation on JSONB paths | GIN only accelerates containment/existence checks (`@>`, `?`). GROUP BY on JSONB paths requires extracted columns with B-tree indexes |
-| `extractSpecies()` utility | Calling it per-row inside the explore API response builder for aggregation purposes | It's fine per-row for display; never loop-call it to build frequency counts — that belongs in the pre-compute step |
+| Clerk | Using `user.deleted` webhook as the authoritative deletion trigger | Use an explicit user-initiated API route; use the webhook only for reconciliation |
+| Clerk | Not checking the Clerk Backend API DELETE response code | On non-200, mark deletion as incomplete in a `deletion_requests` table; retry via cron |
+| Clerk | Assuming all user PII is in your Neon DB | Clerk holds: email, name, profile image, OAuth tokens, session history, device metadata — none are in Neon |
+| Clerk | Not signing the DPA before EU users are processed | Fetch the DPA from clerk.com/legal/dpa, sign it, record the date |
+| Upstash Redis | Calling `redis.keys('explore:*')` in production with a large keyspace | Use SCAN cursor iteration to avoid blocking the event loop |
+| Upstash Redis | Returning deletion success before Redis flush completes | Flush cache synchronously within the deletion handler; do not fire and forget |
+| Vercel Analytics | `<Analytics />` in root `layout.tsx` | Gate behind a consent check; render conditionally after consent state resolves |
+| Neon Postgres | Wrapping all deletion steps in a single DB transaction | The Clerk API call cannot be in a DB transaction; use a step/saga pattern with status tracking |
+| Neon Postgres | Deleting `collection_items` explicitly before `collections` | `collection_items` has `ON DELETE CASCADE` from `collections`; the cascade fires automatically |
 
 ---
 
 ## Performance Traps
 
-Patterns that work at small scale but fail as usage grows.
-
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| `data->>'paste' ILIKE '%pokemon%'` for species filtering (already in prod) | Acceptable today; degrades as corpus grows | Acceptable for pagination; never use for aggregation counting | ~500 rows under concurrent load |
-| Real-time trend delta calculation (compare last 7 days vs prior 7 days) | Works in dev; 2+ seconds in prod | Pre-compute trend delta in cron, store delta direction as `+1/0/-1` in snapshot | ~200 public reports |
-| JSONB `jsonb_each_text()` to count species per regulation | Correct result but full table scan | Pre-extract species counts in cron into normalized `meta_pokemon_usage` table | ~300 reports |
-| Cursor pagination + aggregation in same query | One slow query blocks the page load | Separate pagination query from aggregation fetch; aggregate is a sidebar widget, not part of the list query | From day one of adding aggregation |
-| Showing explore results + meta panel in a single API response | Simplifies frontend state | Aggregation failure blocks explore list | Never — keep them as independent fetches |
-| Caching explore results with meta data embedded | Simpler to implement | Changing meta TTL requires changing explore cache TTL | Never — cache them under separate keys |
+| Synchronous `redis.keys('explore:*')` on large keyspace during deletion | Deletion endpoint times out (Vercel 10s limit) | Use SCAN cursor; or fire Redis flush as a background job after returning 200 | At ~10,000+ Redis keys |
+| Data export generating all rows in memory simultaneously | Export endpoint timeout or 1MB Vercel response limit hit | Stream ZIP generation; paginate DB queries; offer async download link | At ~100+ reports per user |
+| Polling for consent state on every page render | Layout shift; analytics flicker on/off | Read consent from localStorage synchronously on mount; hydrate once | From day one |
 
 ---
 
 ## Security Mistakes
 
-Domain-specific security issues beyond general web security.
-
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Exposing raw species frequency counts keyed by share ID | Reveals which reports are driving meta trends; privacy concern for private-adjacent patterns | Aggregate only, never expose per-share breakdown in meta API |
-| Counter-team query accepting arbitrary Pokemon name as input | SQL injection via unvalidated species name in JSONB ILIKE filter (already partially exists in species filter) | Validate Pokemon names against a known allowlist (all ~1,000 valid species names) before using in query |
-| Meta snapshot endpoint without rate limiting | Aggregation endpoint abused as a scraping tool | Apply the existing `isRateLimited` pattern to any new `/api/meta` route |
-| Trend data that implicitly reveals posting velocity | If trend shows "7 new Rain teams this hour", an attacker can infer site activity patterns | Coarsen trend time windows to day-level, not hour-level |
-| Inspiration feed surfacing private-intent reports | A report marked public but submitted with a note "draft, not for sharing" gets surfaced as an "inspiration" pick | Respect `is_public` flag strictly; consider adding a `discoverable` flag separate from `is_public` for future opt-in discovery |
+| Deletion endpoint accessible without re-authentication confirmation | Attacker with a stolen session deletes the account | Require Clerk re-auth or a fresh session token before initiating deletion |
+| Export endpoint scoped by request body user ID rather than auth context | Attacker exports another user's data | Always scope export queries to `WHERE owner_id = $userId` derived from Clerk `auth()`, never from the request payload |
+| Storing consent choice in URL params or unencrypted cookies | Consent can be spoofed or replayed | Store consent in localStorage; sync to DB if needed; never trust client-submitted consent for gating server-side behaviour |
+| Logging PII fields (name, email) in deletion success/failure logs | PII persists in Vercel log drain after erasure | Log only the user ID, not name or email, in all deletion-related log lines |
 
 ---
 
 ## UX Pitfalls
 
-Common user experience mistakes in this domain.
-
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Showing trend arrows with no baseline explanation | "Rising since when? Compared to what?" — users don't know how to interpret the indicator | Add tooltip on hover: "Usage up 12% vs last 14 days (n=43 reports)" |
-| Meta panel that updates on every filter change | Confusing — the "current meta" changes when you filter by a tournament tier | Meta panel shows global meta; make it clear it is independent of active filters |
-| "Counter This" placed in the filter bar | Looks like a filter but it is a discovery mode — users get confused when results look like normal explore results | Implement as a separate "Counter Mode" view state, not a filter parameter |
-| Inspiration feed mixed with regular explore results | Creative/novel builds look like they have lower engagement (they do — they're new) | Separate inspiration feed as an explicit tab or mode, not a sort option |
-| Trend badge on every report card | Visual noise; badges lose meaning when everything has one | Only badge reports where the team's usage is statistically meaningful: top 5 Pokemon AND the team is in the top-used archetype |
-| Displaying meta badges to logged-out users without explanation | "Meta" and "Rising" labels are meaningless to casual visitors | Add brief explainer tooltip for first-time visitors; consider gating meta badges to logged-in users |
-| Filter count badge showing "7 filters active" | Users forget what they filtered on; explore results look empty and they don't know why | Show active filter chips/pills inline, each dismissible individually |
+| Consent banner blocks page content until interacted with | Users bounce; frustration with the app before they start | Banner can overlay content but content must remain accessible; never use a full-screen modal that blocks all interaction |
+| Cookie settings only accessible from footer | Users cannot change consent after initial choice without hunting for it | Add "Cookie Settings" link in both footer AND account settings page |
+| Account deletion is instant with no confirmation | Accidental deletion of all team reports and data | Require typed confirmation ("DELETE") and show a summary of what will be permanently removed; consider a 30-day grace period |
+| Data export returns synchronously for large accounts | Request times out; user gets an empty response | Show "Your export is being prepared" state; provide a download link when ready or use polling |
+| Privacy policy is a dense legal wall | Users do not read it; regulators check for "plain language" compliance | Use section headers, short paragraphs, a summary box at the top ("Here's the short version") alongside the full text |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-Things that appear complete but are missing critical pieces.
-
-- [ ] **Meta aggregation engine:** Often missing minimum corpus threshold enforcement — verify that the API returns a `sampleSize` field and the UI reads it before rendering percentages or badges.
-- [ ] **Trend indicators:** Often missing the time-window baseline — verify that "rising" is computed against a defined prior window (e.g., prior 14 days) not just "has any data".
-- [ ] **Counter This discovery:** Often missing archetype exclusion filter — verify that Rain teams do NOT appear in "Counter Rain" results by testing with known Rain-tagged reports.
-- [ ] **Pre-computed snapshots:** Often missing the cron registration in `vercel.json` — verify that the aggregation cron is listed in `vercel.json` `crons` array and has a tested auth path.
-- [ ] **JSONB aggregation query:** Often missing extracted column indexes — verify that `EXPLAIN ANALYZE` on the aggregation query shows an Index Scan, not a Seq Scan.
-- [ ] **Inspiration feed diversity scoring:** Often missing normalization against report age — a "diverse" team from 6 months ago with an outdated regulation is not useful inspiration.
-- [ ] **Cache invalidation on new report:** Often missing the `cacheDel(trendCacheKey)` call in the share-creation flow — verify by creating a report and checking whether trend data refreshes within 1 minute.
-- [ ] **Mobile filter UX:** Often missing a "clear all filters" affordance — verify that the filter bar on mobile has a visible reset path that does not require clearing each filter individually.
+- [ ] **Deletion endpoint:** Verify ALL 13 tables are addressed — after a test deletion, run `SELECT COUNT(*) FROM notifications WHERE user_id = $testId` (and equivalent for each table); all must return 0
+- [ ] **Deletion endpoint:** Verify Redis cache is flushed — check Upstash console immediately after deletion; no `explore:*` or `creator:*` keys for that user should remain
+- [ ] **Deletion endpoint:** Verify Clerk user is gone — call `GET /v1/users/{userId}` from Clerk Backend API after deletion; must return 404
+- [ ] **Cookie consent:** Verify no analytics fire before banner interaction — open fresh incognito window, check DevTools Network tab; zero requests to analytics endpoints should appear before the consent banner is interacted with
+- [ ] **Cookie consent:** Verify "Reject All" is achievable in exactly one click from the initial banner state, without opening any preferences pane
+- [ ] **Privacy policy:** Verify every processing activity lists a named GDPR Article 6 legal basis
+- [ ] **Privacy policy:** Verify specific retention periods are stated — no "according to vendor policy" language anywhere
+- [ ] **Privacy policy:** Verify Clerk, Neon/Vercel, Upstash, and Vercel Analytics are named as data processors
+- [ ] **Data export:** Verify export covers all 13 user-linked tables, not just `shares` — diff the export output against the deletion checklist
+- [ ] **CCPA:** Verify "Do Not Sell or Share My Personal Information" language appears in the footer and within the privacy policy
+- [ ] **CCPA:** Verify a rights request submission mechanism (email address or web form) is described in the policy with a response timeframe
 
 ---
 
 ## Recovery Strategies
 
-When pitfalls occur despite prevention, how to recover.
-
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Cold start credibility collapse (bad meta shown) | LOW | Add threshold check constant, deploy, misleading badges disappear immediately without data migration |
-| JSONB aggregation timeout in production | MEDIUM | Disable the meta endpoint immediately (feature flag or env var), add extracted columns migration, re-enable after migration lands |
-| Stale trend data visible for hours | LOW | Shorten TTL constant in `CacheTTL`, trigger manual `cacheDel` on trend keys via a one-off API call or Redis CLI |
-| Counter discovery returning wrong results | MEDIUM | Add archetype exclusion clause to counter query + deploy; wrong results disappear; existing cached results expire within TTL |
-| Filter proliferation breaking mobile UX | HIGH | Requires component refactor — moving filters to drawer is a UI rebuild not a config change; plan the drawer pattern from day one to avoid this |
-| Explore page timeout from inline aggregation | HIGH | Requires architectural change: extract aggregation to cron, remove from request path; this is a 2-4 hour fix but requires data pipeline work |
+| Discovered orphaned rows after a "completed" deletion | MEDIUM | Build an audit query per table against known deleted `owner_id` values; batch-delete orphaned rows; document in a post-incident ticket |
+| Consent banner found to be firing analytics before consent interaction | HIGH (regulatory exposure) | Gate `<Analytics />` immediately; if EU users were affected and the window was weeks+, consider notifying the relevant DPA |
+| Privacy policy challenged by regulator as incomplete | HIGH | Engage legal counsel; update policy with required sections; notify users of material changes via email or in-app notice |
+| Clerk DPA not signed before EU user data was processed | MEDIUM | Sign DPA retroactively (Clerk allows this); document the signing date; no user notification required unless a breach occurred |
+| Data export found incomplete after a user received it | LOW (if caught pre-complaint) | Update export endpoint immediately; proactively send the corrected export to the affected user |
 
 ---
 
 ## Pitfall-to-Phase Mapping
 
-How roadmap phases should address these pitfalls.
-
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Cold start credibility collapse | Phase 1: Aggregation engine (define minimums first) | Unit test: aggregation returns `confidence: "low"` when `sampleSize < 20` |
-| JSONB aggregation performance cliff | Phase 1: Database schema (extracted columns before queries) | `EXPLAIN ANALYZE` shows Index Scan on extracted column |
-| Stale trend TTL mismatch | Phase 1: Cache architecture (TTL matrix before any caching) | Integration test: new report creation triggers trend cache invalidation within 1 minute |
-| Small sample misleading percentages | Phase 2: UI components (sampleSize is typed required field) | TypeScript compile error if component renders percentage without sampleSize prop |
-| Filter proliferation breaking UX | Phase 2: Explore UX (filter taxonomy defined before new filters added) | Mobile viewport test: filter bar fits in one row without scrolling |
-| Real-time aggregation timeout bomb | Phase 1: Aggregation engine (cron-only aggregation from start) | Load test: 50 concurrent explore requests with meta panel do not exceed 1s p99 |
-| Counter-team wrong results | Phase 3: Counter discovery (spec written before SQL) | E2E test: Rain-tagged report never appears in "Counter Rain" results |
-| Inspiration feed surfacing stale content | Phase 3: Inspiration feed (recency weight defined in scoring) | Manual test: reports from outdated regulations do not appear in inspiration feed |
+| Incomplete deletion across 13 tables | Phase: Account and Data Deletion | Query every table for ghost rows after a test deletion |
+| Clerk holds independent user PII | Phase: Account and Data Deletion | Confirm Clerk Backend API call in code; confirm 404 on `GET /v1/users/{id}` after deletion |
+| Redis cache serves deleted user data | Phase: Account and Data Deletion | Upstash console check immediately post-deletion; cache keys must be gone |
+| Cookie consent dark patterns | Phase: Cookie Consent Banner | Manual QA: incognito window, DevTools Network tab, count clicks to reject |
+| Privacy policy missing required sections | Phase: Privacy Policy and Terms of Service | Line-by-line review against GDPR Article 13 + CCPA checklists |
+| Data export misses related tables | Phase: Account and Data Deletion | Diff export output against the 13-table deletion checklist |
+| Legal basis conflict for historical data | Phase: Privacy Policy and Terms of Service | Write LIA documents before drafting the policy; legal basis listed per processing activity |
 
 ---
 
 ## Sources
 
-- Neon serverless driver documentation: https://neon.com/docs/serverless/serverless-driver
-- Neon connection pooling: https://neon.com/docs/connect/connection-pooling
-- Vercel Hobby plan function limits: https://vercel.com/docs/plans/hobby
-- Vercel function duration configuration: https://vercel.com/docs/functions/configuring-functions/duration
-- Postgres GIN index behavior: https://pganalyze.com/blog/gin-index
-- JSONB TOAST performance cliff: https://pganalyze.com/blog/5mins-postgres-jsonb-toast
-- JSONB planner selectivity estimation bugs: https://pganalyze.com/blog/5mins-postgres-planner-jsonb-selectivity
-- Postgres materialized views strategy: https://stormatics.tech/blogs/postgresql-materialized-views-when-caching-your-query-results-makes-sense
-- VGC Data sample sizes (182-371 teams per update): https://x.com/VGCdata
-- Upstash Redis cache invalidation strategies: https://dohost.us/index.php/2026/03/12/cache-invalidation-strategies-keeping-your-data-fresh-in-redis/
-- Filter UX: Baymard Institute product list best practices: https://baymard.com/blog/current-state-product-list-and-filtering
-- Smashing Magazine filter patterns: https://www.smashingmagazine.com/2021/07/frustrating-design-patterns-broken-frozen-filters/
-- Existing codebase: `src/app/api/explore/route.ts`, `src/lib/cache.ts`, `src/lib/db.ts`, `src/lib/analysis/detect-archetype.ts`
+- [Clerk Data Processing Addendum](https://clerk.com/legal/dpa) — Clerk's DPA and EU transfer basis
+- [Clerk Webhooks Overview — Svix retry behaviour](https://clerk.com/docs/guides/development/webhooks/overview) — Confirms exponential backoff retry; not a guaranteed-delivery system
+- [GDPR Article 13 — Information to be provided](https://gdpr-info.eu/art-13-gdpr/) — Authoritative text on required privacy notice elements
+- [GDPR Article 17 — Right to erasure](https://gdpr-info.eu/art-17-gdpr/) — Authoritative text on deletion obligations
+- [GDPR Article 20 — Right to data portability](https://gdpr-info.eu/art-20-gdpr/) — Authoritative text on export format requirements
+- [Vercel Analytics Privacy and Compliance](https://vercel.com/docs/analytics/privacy-policy) — Confirms no cookies used; consent for analytics still required under ePrivacy Directive
+- [CNIL Cookie Enforcement 2025](https://secureprivacy.ai/blog/gdpr-cookie-consent-requirements-2025) — Enforcement records including Google €200M and SHEIN €150M for dark patterns
+- [ICO 1000 Website Review 2025](https://www.auditzo.com/blog/gdpr-cookie-consent-rules-2025) — 134 warnings from 200 sites reviewed in January 2025 sweep
+- [Upstash Redis Compliance](https://upstash.com/docs/redis/help/compliance) — GDPR posture; cache invalidation is application-layer responsibility
+- [CCPA Do Not Sell or Share — OneTrust guidance](https://www.onetrust.com/blog/navigating-the-cpras-do-not-sell-or-share-requirement/) — CPRA opt-out requirement details
+- [GDPR Legitimate Interest — IAPP guide](https://iapp.org/news/a/how-right-erasure-applied-under-gdpr-complete-guide-organizational-compliance/) — Three-part LIA test
+- [CCPA Privacy Policy Requirements 2025](https://secureprivacy.ai/blog/ccpa-privacy-policy-requirements-2025) — Enumerated required sections including retention and ADMT disclosures
 
 ---
-*Pitfalls research for: Meta intelligence & smart discovery — VGC Team Report v5.0*
-*Researched: 2026-04-03*
+
+*Pitfalls research for: GDPR/CCPA compliance — Clerk + Neon Postgres + Upstash Redis + Vercel Analytics on VGC Team Report*
+*Researched: 2026-04-05*

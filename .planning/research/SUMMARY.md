@@ -1,17 +1,17 @@
 # Project Research Summary
 
-**Project:** VGC Team Report — v5.0 Smart Discovery & Meta Intelligence
-**Domain:** Competitive gaming meta analytics layer on an existing team-sharing platform
-**Researched:** 2026-04-03
+**Project:** VGC Team Report v5.1 — Legal Compliance and Data Protection
+**Domain:** GDPR/CCPA compliance integration into existing Next.js + Clerk + Neon Postgres app
+**Researched:** 2026-04-05
 **Confidence:** HIGH
 
 ## Executive Summary
 
-VGC Team Report v5.0 adds a meta intelligence and smart discovery layer on top of an already-functional team-sharing platform. The core challenge is not technology selection — no new npm packages are needed — but architectural discipline: all expensive aggregations must be pre-computed in the existing daily cron and served from Redis cache at request time. The Vercel Hobby 10-second serverless timeout and Neon's per-invocation HTTP connection model make on-demand aggregation a reliability time bomb as the dataset grows, even at a few hundred reports.
+VGC Team Report v5.1 is a compliance milestone, not a product discovery exercise. The scope is defined by legal obligation: GDPR applies unconditionally to any site collecting personal data from EU residents (email, OAuth identity, analytics), and the app has real users in that category. The required features are non-negotiable — Privacy Policy, cookie consent with analytics gating, data export, and account deletion. The good news is that all the infrastructure needed already exists: Clerk handles auth and user deletion, Neon Postgres holds the data, Upstash Redis handles caching, and the App Router handles static pages. Only one net-new npm package is warranted (`vanilla-cookieconsent` v3.1.0, ~10KB).
 
-The recommended approach is a three-tier architecture: (1) a `meta_snapshots` Postgres table and a `pokemon_usage_history` table populated by the existing `daily-ops` cron, (2) a new `/api/meta` route that serves pre-computed snapshots from Redis with a 1-hour TTL, and (3) UI components (`MetaBar`, `TrendBadge`) that fetch snapshot data once on regulation change and render inline on `/explore`. The counter-archetype discovery feature extends `/api/explore` with a static TypeScript counter-map rather than a separate endpoint or database table. This keeps the API surface minimal and the data pipeline entirely within existing infrastructure.
+The recommended approach is incremental delivery in dependency order: static legal pages first (zero risk, no dependencies), then cookie consent (independent of data APIs), then data export and account deletion APIs (highest complexity, deepest legal exposure), then a Data Rights Hub UI that surfaces the APIs to users. This order means the highest-value legal coverage (Privacy Policy, Terms of Service, cookie consent) ships earliest and is not blocked by the more complex deletion work.
 
-The single largest risk is credibility collapse from showing misleading meta statistics before sufficient data exists. Every percentage displayed must include its sample size, every trend indicator must enforce a minimum corpus threshold (20+ reports for archetypes, 50+ for trend arrows), and the UI must show a "not enough data" state rather than statistically meaningless figures. Secondary risks are filter proliferation (the existing filter bar is already at 8 params; all v5.0 filters must route through an advanced drawer or mode-switcher pattern) and counter-discovery returning semantically incorrect results (Rain teams appearing in "Counter Rain" results because they run Incineroar). Both are architecture decisions that must be locked before any implementation starts.
+The dominant risks are implementation completeness, not technology selection. Incomplete deletion (missing one of 13 tables) is a GDPR Article 17 violation. Analytics firing before consent makes the banner legally meaningless. A privacy policy using vague vendor-deferring language instead of specific retention periods and named legal bases fails Article 13. Each pitfall is easy to get wrong and requires explicit checklists at verification time, not just code review.
 
 ---
 
@@ -19,153 +19,128 @@ The single largest risk is credibility collapse from showing misleading meta sta
 
 ### Recommended Stack
 
-No new npm packages are required. All v5.0 capability is delivered by extending existing infrastructure: `@neondatabase/serverless` for two new tables, `@upstash/redis` for two new cache key families, and the existing Vercel cron slot for daily aggregation. The critical stack addition is a `meta_snapshots` Postgres table (keyed by `regulation`, `window_days`, `snapshot_date`) and a `pokemon_usage_history` table for trend delta computation. A GIN index on `shares(data->'tags'->'archetype')` accelerates counter-query filtering. All trend scoring is a simple percentage delta between two time windows — no statistics library needed.
+The existing stack covers almost everything. No database migrations, no new infrastructure, no new auth layers. The entire compliance feature set is API routes, React components, and static pages on top of what already exists in production. Clerk's `clerkClient.users.deleteUser()` handles auth-layer erasure; `@neondatabase/serverless` handles data export queries and deletion transactions; `@upstash/redis` handles rate limiting and cache invalidation; Next.js App Router handles static legal pages.
 
-**Core technologies (extensions to existing stack):**
-- `@neondatabase/serverless` ^1.0.2 — two new tables (`meta_snapshots`, `pokemon_usage_history`) + GIN index on archetype JSONB
-- `@upstash/redis` ^1.37.0 — new cache keys: `meta:snapshot:{regulation}:{days}d` (6h TTL), `meta:trend:{species}:{regulation}` (6h TTL)
-- Vercel cron (`/api/cron/daily-ops`) — absorbs `runMetaAggregation()` as a parallel sub-task; no new cron route (Hobby is capped at 2)
-- Postgres window functions — pure SQL trend delta computation (prior 7-day vs current 7-day counts per regulation)
+The only justified net-new dependency is `vanilla-cookieconsent` v3.1.0 — a pure vanilla JS/ESM library (~10KB) that provides a GDPR-compliant consent banner with per-category callbacks. It avoids the hydration issues of React-specific consent libraries and requires no SaaS fees or external scripts. All paid CMPs (Termly, Cookiebot, OneTrust) are explicitly out of scope for a hobby app with no advertising.
+
+**Core technologies (net-new for v5.1):**
+- `vanilla-cookieconsent` ^3.1.0: cookie consent banner — lightweight ESM, per-category callbacks, no SaaS fees
+- `GET /api/user/export` (custom route, no new package): GDPR Article 20 data portability
+- `DELETE /api/user/delete` (custom route, no new package): GDPR Article 17 right to erasure
+
+**Existing stack leveraged (no changes required):**
+- `@clerk/nextjs` ^7.0.6: `deleteUser()`, `getUser()`, `auth()` — all GDPR deletion/export APIs are present in this version
+- `@neondatabase/serverless` ^1.0.2: parallel table queries for export; ordered transactional delete
+- `@upstash/redis` ^1.37.0: rate-limit export endpoint (1 per 24h); flush user cache keys on deletion
+- Clerk `user.deleted` webhook (svix): safety-net reconciliation signal only — not the primary deletion trigger
 
 ### Expected Features
 
-The feature dependency tree has one root: the meta aggregation engine. Nothing else ships without it. Counter-archetype discovery, trend badges, popular cores, and the inspiration feed all depend on `meta_snapshots` being populated and accurate.
+The feature set is fully determined by legal requirements. There is no ambiguity about what must ship.
 
-**Must have (v5.0 core — table stakes and top differentiators):**
-- Meta aggregation engine (`meta_snapshots` table + daily cron) — without this nothing else works
-- Top Pokemon stats bar on explore — users expect usage % ranked list (Pikalytics shows this as headline stat)
-- Archetype distribution summary — "what % of meta is Rain right now" (MTGGoldfish model)
-- Trend badges on explore cards — rising/falling indicator; no competing platform combines live reports with trend context
-- Counter-archetype discovery filter — "teams that counter Rain"; no existing VGC platform does this
-- Enhanced tournament results browsing UI — backend already supports it; UI consolidation only
+**Must have (table stakes — GDPR legally required):**
+- Privacy Policy page (`/privacy`) — GDPR Art. 13/14 mandatory; must name legal bases, retention periods, processors, user rights
+- Terms of Service page (`/terms`) — essential for a UGC platform; Pokemon IP disclaimer required
+- Cookie consent banner — blocks Vercel Analytics until explicit opt-in; "Accept All" + "Reject All" with equal visual prominence
+- Vercel Analytics conditional loading — technical enforcement; `<Analytics />` must not render without consent
+- Data deletion endpoint (`DELETE /api/user/delete`) — GDPR Art. 17; cascades 13 tables + Clerk deletion in correct order
+- Data export endpoint (`GET /api/user/export`) — GDPR Art. 20; all 13 user-linked tables as structured JSON
+- Footer legal links — links to `/privacy`, `/terms`, and cookie settings trigger on every page
 
-**Should have (v5.x — add after data validation):**
-- Popular cores display — co-occurrence stats need 2+ weeks of snapshot data to be meaningful
-- Meta badges on report cards — "#1 Rain team this week" — needs threshold tuning before shipping
-- Pokemon exclude filter — small SQL extension to existing filterSpecies param
-- Smart filter presets — one-click discovery pills ("Top Placing Reg I Teams", "Rising Tricks")
+**Should have (best practice, low cost):**
+- CCPA "Do Not Sell" disclosure — one paragraph in Privacy Policy; zero implementation cost
+- Cookie preference center — "Cookie Settings" link to re-open consent UI after initial decision
+- In-app Data Rights Hub (`/dashboard/privacy`) — surfaces export and delete as self-service UI behind auth
 
-**Defer (v6+):**
-- Novelty/inspiration feed — requires calibrating novelty score against real data volume; high risk of surfacing low-quality teams
-- Matchup plan aggregation — requires parsing unstructured matchup fields at scale
-- Creator meta influence tracking — requires verified creator system maturation
-
-**Anti-features (never build):**
-- External API integration (Pikalytics/Smogon) — creates external dependency, undermines data flywheel
-- Separate /meta page — fragments user journey, explicitly rejected per PROJECT.md
-- Tier list — no battle outcome data; misleading at app's data scale
-- Real-time aggregation on every request — Vercel timeout bomb at scale
+**Defer to v2+:**
+- Automated data retention enforcement (cron purge of old deleted accounts)
+- Formal audit log of data access requests
+- Async export with polling for large accounts (relevant at 100+ reports per user)
+- Article 30 Records of Processing Activities (SME exemption applies; not required)
 
 ### Architecture Approach
 
-The architecture follows a strict separation between data production (daily cron) and data consumption (API routes + UI). The `daily-ops` cron extended with `runMetaAggregation()` is the only place that touches raw `shares` data for aggregation. Every API route reads from `meta_snapshots` via Redis cache. The `/api/meta` route is a new, thin snapshot-serving route. The `/api/explore` route is extended backward-compatibly with three new optional params (`counterTarget`, `sort=inspiration`, `trendWindow`). Counter logic lives in a static TypeScript file (`lib/data/counter-map.ts`), not a database table.
+The architecture is an additive layer on top of the existing system — no existing routes, components, or DB schema change. New files fit cleanly into established codebase patterns: `components/legal/` mirrors `components/social/` and `components/ui/`; `lib/consent.ts` follows the `lib/db.ts` utility pattern; `app/dashboard/privacy/` sits inside the already-Clerk-protected dashboard.
 
-**Major components (build order — Tier 1 before Tier 2 before Tier 3):**
+The critical architectural decision is that cookie consent is client-side state managed in a `cookie_consent` cookie, not middleware. Vercel Analytics is a React component mounted in `layout.tsx` — only client-side conditional rendering can suppress it. Middleware cannot suppress component mounting and runs on every request for UI state only relevant on first visit.
 
-Tier 1 — Data Foundation:
-1. `db.ts` — `meta_snapshots` + `pokemon_usage_history` table creation + GIN index
-2. `lib/meta/aggregation.ts` — `runMetaAggregation()` (isolated, testable, used by cron)
-3. `daily-ops/route.ts` — wire in aggregation as parallel sub-task
-4. `cache.ts` — `CacheKeys.meta()` + `CacheTTL.META_SNAPSHOT` (3600s)
-
-Tier 2 — API Routes:
-5. `/api/meta/route.ts` — snapshot serve route (Redis TTL → Postgres fallback)
-6. `/api/explore/route.ts` — extend with `counterTarget` + `inspirationMode` params
-7. `lib/data/counter-map.ts` — static threat → counter species mapping (~20 meta threats)
-
-Tier 3 — UI Components:
-8. `TrendBadge.tsx` — atomic rising/falling indicator
-9. `MetaBar.tsx` — top 6 Pokemon + archetype distribution strip above explore grid
-10. `ReportCard.tsx` — add optional trend data prop + TrendBadge slot
-11. `ExploreFilters.tsx` — counter-query chip + inspiration toggle (advanced drawer, not primary bar)
-12. `ExploreContent.tsx` — wire MetaBar state, new filter params, `/api/meta` fetch on regulation change
+**Major components:**
+1. `CookieBanner` (new client component) — renders consent UI on first visit; writes `cookie_consent` cookie; one-click reject required
+2. `ConsentGate` (new client component) — wraps `<Analytics />` and `<SpeedInsights />`; renders nothing if consent not granted
+3. `lib/consent.ts` (new utility) — `getConsentLevel()` / `setConsentLevel()` cookie helpers shared by banner and gate
+4. `GET /api/user/export/route.ts` (new API route) — parallel `Promise.all` queries across all 13 tables; JSON with `Content-Disposition: attachment`; rate-limited
+5. `DELETE /api/user/delete/route.ts` (new API route) — 16-step ordered cascade (DB first, Clerk API step 15, Redis flush step 16)
+6. `/app/terms/page.tsx` (new static page) — Terms of Service
+7. `/app/privacy/page.tsx` (modified) — expanded from current stub to full GDPR/CCPA policy
+8. `/app/dashboard/privacy/page.tsx` (new) — Data Rights Hub with export and delete triggers
+9. `PageFooter.tsx` (modified) — add Terms link to `NAV_LINKS`
+10. `layout.tsx` (modified) — mount `<CookieBanner />`; wrap analytics in `<ConsentGate>`
 
 ### Critical Pitfalls
 
-1. **Cold start credibility collapse** — Showing misleading stats with sparse data (e.g., "100% Incineroar" from 3 reports). Prevent by: enforce minimum corpus thresholds (20+ reports for archetypes, 50+ for trend arrows) before any meta badge renders; return `data_confidence: "low"` field in aggregation API; show "Not enough data yet for [Reg]" placeholder. This must be built into the aggregation engine before the UI layer, not retrofitted.
+1. **Analytics firing before consent is obtained** — Placing `<Analytics />` unconditionally in `layout.tsx` means the consent banner is legally meaningless. The script executes on first render before the user sees the banner. Gate with `<ConsentGate>` from day one; verify with a fresh incognito window and DevTools Network tab — zero analytics requests should appear before banner interaction.
 
-2. **Real-time aggregation timeout bomb** — Putting `GROUP BY` / `COUNT` on `shares` in the explore hot path will exceed Vercel's 10s limit as data grows and saturate Neon's connection pool under concurrency. Prevent by: all aggregation runs in the daily cron only; explore and meta routes read exclusively from `meta_snapshots` via Redis cache. Never put a `GROUP BY shares` in an on-demand route.
+2. **Incomplete deletion across 13 tables** — Deleting only `shares` rows leaves personal data in `notifications`, `follows`, `collections`, `collaborators`, `edit_changelog`, `share_versions`, `saved_reports`, `reactions`, `comments`, and `feedback`. Each missed table is a GDPR Article 17 violation. Build against a 13-table checklist; verify by querying every table for ghost rows after a test deletion.
 
-3. **Counter discovery returning wrong results** — Rain teams appear in "Counter Rain" because they run Incineroar. Prevent by: counter query must combine `includes counter species` AND `NOT tagged as target archetype`; use existing `data->'tags'->'archetype'` JSONB for exclusion filter; label results as "Teams with Rain checks" not "Teams that beat Rain"; write the counter logic spec before writing any SQL.
+3. **Clerk deletion ordered incorrectly** — Deleting the Clerk user before Neon DB purge means if the cascade fails mid-run, the user's data remains permanently orphaned with no Clerk identity to associate it with. Correct order: DB cascade first (steps 1-14), Clerk API call last (step 15), Redis flush last (step 16).
 
-4. **Small sample percentages displayed as authoritative** — "67% Trick Room" from n=6 is worse than showing nothing; screenshots spread without sample context. Prevent by: always co-render `n=` with any percentage; make `sampleSize` a required TypeScript field in every aggregation API response type; suppress trend arrows for regulations with fewer than 15 data points.
+4. **Cookie consent dark patterns** — Pre-checked analytics toggles, asymmetric button styling, or multi-click rejection paths are the exact patterns CNIL fined Google €200M for. "Reject All" must be achievable in exactly one click from the initial banner, visually equal in weight to "Accept All". Any toggle in a preferences pane must default to off.
 
-5. **Filter proliferation breaking mobile UX** — The existing filter bar already has 8 params; v5.0 adds counter-archetype, inspiration mode, trend filter, exclude filter. Prevent by: enforce "one primary bar, one advanced drawer" rule before any new filter is added; implement counter/inspiration as mode switchers (not filter inputs); test every filter combination as a shareable URL under 200 characters.
+5. **Privacy Policy missing legally required sections** — The current `/privacy` stub does not satisfy GDPR Article 13: it lacks named Article 6 legal bases per processing activity, specific retention periods (not "per vendor policy"), a named data controller contact, the right to lodge a DPA complaint, or a complete third-party processor list. The policy must be written against regulatory checklists, not as developer prose.
 
 ---
 
 ## Implications for Roadmap
 
-Based on the dependency tree and pitfall mapping, 3 implementation phases are recommended.
+Based on combined research, a 5-phase structure is recommended. Dependencies drive the order: legal pages have no dependencies; cookie consent depends only on `lib/consent.ts` and `layout.tsx`; data APIs require the full schema (already confirmed by codebase inspection); the Data Rights Hub UI depends on both APIs being deployed.
 
-### Phase 1: Data Foundation & Aggregation Engine
+### Phase 1: Legal Pages and Footer
+**Rationale:** Zero dependencies, zero risk. Delivers the highest legal coverage (Art. 13/14 policy, ToS IP disclaimer) with no impact on existing functionality. The Privacy Policy must exist before any consent banner references it and before cookie consent can be considered complete. Can ship same day.
+**Delivers:** Compliant `/privacy` page rewrite, new `/terms` page, footer links (Terms + cookie settings trigger) on all pages
+**Addresses:** Privacy Policy, Terms of Service, Footer Legal Links, CCPA "Do Not Sell" disclosure (as inline section of `/privacy`)
+**Avoids:** Pitfall 5 (policy missing required sections) — write section-by-section against GDPR Art. 13 + CCPA checklists, state specific retention periods, name each processor
 
-**Rationale:** Everything downstream depends on `meta_snapshots` existing and being populated. The cron must run before any API route or UI component can be tested with real data. Schema decisions (extracted columns, index types) must be made before queries are written or they are expensive to retrofit. The TTL matrix must be defined before any caching is added or it will be inconsistent.
+### Phase 2: Cookie Consent and Analytics Gating
+**Rationale:** Independent of data deletion APIs; can ship in parallel or sequentially after Phase 1. Must ship before any analytics are considered compliant. The `ConsentGate` pattern is the single most important technical correctness requirement in this milestone.
+**Delivers:** `CookieBanner`, `ConsentGate`, `lib/consent.ts`, modified `layout.tsx` — analytics fully gated behind consent; one-click reject; equal-weight buttons
+**Addresses:** Cookie consent banner, Vercel Analytics conditional loading, Cookie preference center (footer "Cookie Settings" link)
+**Avoids:** Pitfall 4 (dark patterns — asymmetric buttons, pre-checked toggles, analytics firing before consent)
 
-**Delivers:** Working daily aggregation pipeline; `meta_snapshots` and `pokemon_usage_history` tables populated; Redis cache keys operational; minimum corpus threshold enforcement in place; `/api/meta` route serving snapshots.
+### Phase 3: Data Export API
+**Rationale:** Simpler of the two data APIs (read-only, no cascade risk). Building and verifying the 13-table data map here also validates the completeness checklist before committing to the irreversible deletion cascade in Phase 4. Getting export right first de-risks Phase 4.
+**Delivers:** `GET /api/user/export/route.ts` — authenticated, parallel queries across all 13 tables, JSON download, rate-limited (1 per 24h via Upstash Redis)
+**Addresses:** Data export endpoint (GDPR Art. 20)
+**Avoids:** Pitfall 6 (export missing related tables) — diff export output against the 13-table deletion checklist
 
-**Addresses:** Meta aggregation engine (P1 feature), top Pokemon stats, archetype distribution.
+### Phase 4: Account Deletion API
+**Rationale:** Highest-complexity, highest-stakes work. Must be last of the backend phases because it is irreversible and requires the complete 13-table map validated in Phase 3. The correct FK-safe cascade order is non-trivial and requires explicit verification against the codebase schema.
+**Delivers:** `DELETE /api/user/delete/route.ts` — 16-step ordered cascade (DB first, Clerk API step 15, Redis flush step 16); includes feedback row anonymisation
+**Addresses:** Data deletion endpoint (GDPR Art. 17)
+**Avoids:** Pitfall 1 (incomplete deletion), Pitfall 2 (Clerk deletion order), Pitfall 3 (Redis cache serving deleted user data post-erasure)
 
-**Avoids:**
-- Real-time aggregation timeout bomb (Pitfall 6) — cron-only aggregation established from day 1
-- JSONB aggregation performance cliff (Pitfall 2) — schema + indexes before queries
-- Stale trend TTL mismatch (Pitfall 3) — TTL matrix defined at cache layer setup
-- Cold start credibility collapse (Pitfall 1) — threshold enforcement built into aggregation output
-
-**Research flag:** Standard patterns — cron extension and Postgres table creation are well-documented within the existing codebase. No additional research phase needed.
-
----
-
-### Phase 2: Explore UI — MetaBar, Trend Badges & Counter Discovery
-
-**Rationale:** With the data pipeline running, all three visible differentiators can be built in parallel. MetaBar and TrendBadge share the same `/api/meta` data source. Counter discovery is an extension to `/api/explore` (not a new route) and uses the static counter-map config. The filter taxonomy (primary bar vs. advanced drawer vs. mode switcher) must be locked at the start of this phase, not after components are built.
-
-**Delivers:** MetaBar strip above explore grid; trend badges on report cards; "Counter This" mode in ExploreFilters; enhanced tournament results browsing UI (filter consolidation).
-
-**Addresses:** Trend badges (P1 differentiator), counter-archetype discovery (P1 differentiator), enhanced tournament results browsing (P1 low-complexity).
-
-**Avoids:**
-- Counter discovery wrong results (Pitfall 7) — counter spec written before SQL; archetype exclusion logic required
-- Small sample misleading percentages (Pitfall 4) — `sampleSize` typed as required in component props
-- Filter proliferation breaking mobile UX (Pitfall 5) — advanced drawer pattern defined before any new filter is added
-- Anti-pattern: separate /meta page — all intelligence surfaces inline on /explore
-- Anti-pattern: fetching meta on every filter change — MetaBar fetches once per regulation change only
-
-**Research flag:** Counter-map content (which species counter which threats) is game-knowledge that may need curation. The TypeScript file ships with ~20 top meta threats and their 2-3 primary counters. Accuracy is "good enough for discovery" — this is not a research blocker but should be reviewed by someone with current VGC meta knowledge before shipping.
-
----
-
-### Phase 3: Polish & v5.x Features
-
-**Rationale:** Popular cores and meta badges on cards require 2+ weeks of snapshot history to have meaningful data. This phase runs after the pipeline has been live long enough to validate data quality. The inspiration feed (novelty scoring) is deferred to v6+ per FEATURES.md recommendation — it requires calibrating thresholds against real data volume and risks surfacing jank teams.
-
-**Delivers:** Popular cores co-occurrence display; meta badges on individual report cards ("#1 Rain team this week"); Pokemon exclude filter; smart filter presets as one-click discovery pills.
-
-**Addresses:** Popular cores (P2), meta badges (P2), Pokemon exclude filter (P2), smart filter presets (P2).
-
-**Avoids:**
-- Inspiration feed surfacing stale/low-quality content — deferred until data volume supports calibration
-- Meta badge threshold errors — badges only ship after tuning against real snapshot data
-
-**Research flag:** Novelty scoring thresholds for the inspiration feed (v6+ feature) will need a dedicated research or calibration phase once sufficient data exists. No research needed for Phase 3 itself.
-
----
+### Phase 5: Data Rights Hub UI
+**Rationale:** Depends on Phases 3 and 4 being deployed and verified in production. Surfaces the compliance APIs as self-service UI within the already-auth-protected dashboard. Low technical complexity but highest user-facing trust value.
+**Delivers:** `/app/dashboard/privacy/page.tsx` — "Download My Data" button (triggers export download); "Delete My Account" button (typed "DELETE" confirmation modal, deletion flow, sign-out redirect)
+**Addresses:** In-app "My Data" settings page
+**Avoids:** UX pitfall — deletion must require typed confirmation and display a summary of what will be permanently removed; no accidental one-click account erasure
 
 ### Phase Ordering Rationale
 
-- **Data before UI:** The architecture has strict Tier 1 → Tier 2 → Tier 3 dependencies. No UI component can be meaningfully tested without real snapshot data. Building UI against mock data creates false confidence.
-- **Engine before badges:** Every visible meta feature (trend badges, MetaBar, counter filter) reads from `meta_snapshots`. If the schema changes after UI is built, components break. Locking schema in Phase 1 protects Phase 2 work.
-- **Counter logic spec before SQL:** The counter-discovery feature is the highest semantic risk in the project. Writing the archetype exclusion spec before any implementation eliminates the most credibility-damaging bug (Pitfall 7).
-- **Popular cores after data maturity:** Co-occurrence statistics from fewer than 50 reports per regulation produce misleading "cores." Phase 3 timing ensures the feature launches with credible data.
+- Phase 1 before all others: the Privacy Policy is referenced by the cookie consent banner copy and by both data rights endpoints — it must exist first.
+- Phases 2, 3, and 4 are independent of each other but all benefit from Phase 1 completing first. They can be parallelized but sequential delivery reduces context-switching.
+- Phase 4 (deletion) benefits from Phase 3 (export) completing first: the same 13-table data map is used for both, and the read-only export is safer to validate than the irreversible deletion.
+- Phase 5 strictly depends on Phases 3 and 4 being deployed and smoke-tested in production.
 
 ### Research Flags
 
-Phases needing deeper research during planning:
-- **Phase 2 (counter-map content):** The static `COUNTER_MAP` TypeScript file must contain accurate game-knowledge for Regulation I/H. This is VGC domain knowledge, not engineering research — but it must be reviewed before shipping.
+Phases needing deeper research during planning: none. The domain is defined by primary law (GDPR Articles 13, 17, 20), and the architecture was validated by direct codebase inspection of the full 15-table schema. No unknowns remain in engineering patterns or legal requirements.
 
-Phases with standard patterns (no research-phase needed):
-- **Phase 1:** Postgres table creation, cron extension, Redis cache keys — all follow documented patterns already present in the codebase.
-- **Phase 3:** All Phase 3 features are extensions of patterns established in Phases 1-2.
+Phases with well-documented standard patterns (skip research-phase for all):
+- **Phase 1:** Static Next.js App Router pages — no research needed
+- **Phase 2:** `vanilla-cookieconsent` v3.1.0 fully documented at cookieconsent.orestbida.com; auth pattern identical to existing routes
+- **Phase 3:** Auth pattern identical to existing `/api/user/analytics/route.ts`; `Promise.all` timeout mitigation is documented
+- **Phase 4:** Cascade order determined by direct schema inspection; Clerk delete API confirmed in official docs
+- **Phase 5:** Follows existing dashboard page patterns in the codebase
 
 ---
 
@@ -173,41 +148,43 @@ Phases with standard patterns (no research-phase needed):
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | No new packages; all conclusions based on existing installed versions and verified Neon/Vercel docs confirming constraints (Hobby cron limit, pg_cron paid-only) |
-| Features | MEDIUM-HIGH | Competitive analysis from live sites (Pikalytics, LimitlessVGC, VictoryRoad, MTGGoldfish); VGC-specific gaps inferred from platform comparison; table stakes well-established |
-| Architecture | HIGH | Based on direct codebase inspection of all relevant files (`explore/route.ts`, `cache.ts`, `db.ts`, `daily-ops/route.ts`, component tree) — not inference |
-| Pitfalls | HIGH | Sourced from Neon/Vercel official docs + Postgres internals documentation + Baymard filter UX research; all pitfalls verified against existing codebase patterns |
+| Stack | HIGH | `vanilla-cookieconsent` v3.1.0 confirmed from GitHub releases (Feb 2025); Clerk `deleteUser()` API confirmed from official docs; all other capabilities verified from existing production dependencies — no version upgrades needed |
+| Features | HIGH | GDPR Articles 13, 17, 20 sourced from primary law text; CCPA thresholds verified from CA AG official sources; Clerk and Vercel processor status verified from official DPAs |
+| Architecture | HIGH | Based on direct codebase inspection of `src/lib/db.ts` (full 15-table schema), all existing API routes, middleware, layout, and footer — not inferred from external documentation |
+| Pitfalls | HIGH | Regulatory enforcement patterns verified from CNIL and ICO 2025 enforcement records; Clerk webhook unreliability confirmed from official Svix docs; Vercel timeout constraints from official Vercel docs |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Counter-map content accuracy:** The TypeScript counter-map ships with curated species mappings. These must be reviewed against current Regulation I/H meta before the feature launches. This is a content gap, not an engineering gap.
-- **Minimum corpus thresholds:** Suggested thresholds (20+ for archetypes, 50+ for trend arrows) are conservative estimates. The actual current share count per regulation should be audited before Phase 1 begins — if most regulations have fewer than 50 reports, the meta features will show "not enough data" placeholders on launch and need a data-seeding strategy or adjusted thresholds.
-- **`extractSpecies()` vs SQL-side parsing:** STACK.md notes that `extractSpecies()` (TypeScript utility) handles paste parsing for display, while aggregation should use SQL `regexp_matches`. The aggregation implementation must confirm the SQL approach produces equivalent results before trusting snapshot data.
+- **CCPA formal legal review (MEDIUM confidence):** Research confirmed VGC Team Report does not plausibly meet CCPA thresholds, but this is from legal publisher sources, not a licensed attorney. A one-paragraph "we do not sell data" disclosure in the Privacy Policy costs one sentence and mitigates any edge-case exposure.
+- **Neon production region:** If the production Neon Postgres instance is in a US region, EU-US data transfers require naming the transfer mechanism in the Privacy Policy (Standard Contractual Clauses via Neon's DPA). Verify the production database region before drafting the Privacy Policy's processor section.
+- **Feedback row handling:** Research recommends anonymising feedback rows (null out `submitter_id`, `submitter_name`, `contact`) rather than hard-deleting them, to preserve bug reports for the app owner. This is a business decision that must be documented explicitly in the Privacy Policy's retention section.
+- **Export response size at scale:** The `Promise.all` parallel query pattern is sufficient for current data volumes. If any user has 100+ reports with large JSONB blobs, export may approach Vercel's 1MB response limit. This is a known deferred concern; add `LIMIT 1000` per table and a `truncated: true` flag as a precaution at build time.
 
 ---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Neon Docs — pg_cron extension — confirmed paid-plan-only
-- Vercel Docs — Cron Jobs Usage & Pricing — confirmed Hobby = daily max, 2 job limit
-- Neon Docs — serverless driver connection model — per-invocation HTTP connection overhead
-- PostgreSQL Docs — GIN index behavior (containment/existence only, not GROUP BY)
-- Direct codebase inspection: `src/app/api/explore/route.ts`, `src/lib/cache.ts`, `src/lib/db.ts`, `src/app/api/cron/daily-ops/route.ts`, `src/components/explore/`
+- [GDPR Article 13 — gdpr-info.eu](https://gdpr-info.eu/art-13-gdpr/) — required privacy notice elements
+- [GDPR Article 17 — gdpr-info.eu](https://gdpr-info.eu/art-17-gdpr/) — right to erasure obligations
+- [GDPR Article 20 — gdpr-info.eu](https://gdpr-info.eu/art-20-gdpr/) — data portability format requirements
+- [Clerk docs — deleteUser()](https://clerk.com/docs/reference/backend/user/delete-user) — confirmed API in `@clerk/nextjs` ^7.x
+- [Clerk Data Processing Addendum](https://clerk.com/legal/dpa) — processor status, EU transfer basis, DPA signing requirement
+- [vanilla-cookieconsent GitHub releases](https://github.com/orestbida/cookieconsent/releases) — v3.1.0 confirmed February 2025
+- [vanilla-cookieconsent official docs](https://cookieconsent.orestbida.com/) — category configuration, ESM format, callback API
+- [ICO Right to Data Portability Guidance](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/individual-rights/individual-rights/right-to-data-portability/) — UK supervisory authority guidance
+- Direct codebase inspection: `src/lib/db.ts`, `src/middleware.ts`, `src/app/api/user/analytics/route.ts`, `src/app/api/cleanup/route.ts`, `src/app/privacy/page.tsx`, `src/components/layout/PageFooter.tsx`, `src/app/layout.tsx`
 
 ### Secondary (MEDIUM confidence)
-- Pikalytics, LimitlessVGC, VictoryRoad, MTGGoldfish — live competitive platform feature analysis
-- VGCdata (Twitter/X) — sample sizes for VGC usage stats (182-371 teams per update cycle)
-- Upstash Blog — Redis sorted sets for ranking (sorted set upgrade path rationale)
-- Baymard Institute — product list filter UX best practices (advanced drawer pattern)
-
-### Tertiary (LOW confidence)
-- Novelty scoring thresholds — inferred from overlap count heuristic; needs calibration against real data
-- Counter-map accuracy for Regulation I — based on general VGC knowledge; needs domain expert review
+- [CCPA Applicability 2026 — feroot.com](https://www.feroot.com/blog/ccpa-applicability-website-california-law/) — consistent with CA AG official thresholds
+- [GDPR Cookie Consent 2026 — secureprivacy.ai](https://secureprivacy.ai/blog/gdpr-cookie-consent-requirements-2025) — enforcement posture, consistent with regulator guidance
+- [CNIL Cookie Enforcement 2025](https://secureprivacy.ai/blog/gdpr-cookie-consent-requirements-2025) — Google €200M and SHEIN €150M fines for dark patterns
+- [ICO 1000 Website Review 2025](https://www.auditzo.com/blog/gdpr-cookie-consent-rules-2025) — 134 warnings from 200 sites in January 2025 sweep
+- [CCPA Do Not Sell requirements — Termly](https://termsbox.com/blog/ccpa-do-not-sell-page-requirements) — affirmative non-selling statement sufficient when data is not sold
 
 ---
 
-*Research completed: 2026-04-03*
+*Research completed: 2026-04-05*
 *Ready for roadmap: yes*
