@@ -3,8 +3,8 @@ import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { logs } from "@opentelemetry/api-logs";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 
-// Lazy-init: created inside register() when env vars are guaranteed available
-export let loggerProvider: LoggerProvider;
+// Stored reference for forceFlush() in route handlers
+let _provider: LoggerProvider | null = null;
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
@@ -12,7 +12,7 @@ export async function register() {
 
     const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
     if (token) {
-      loggerProvider = new LoggerProvider({
+      _provider = new LoggerProvider({
         resource: resourceFromAttributes({ "service.name": "vgc-team-report" }),
         processors: [
           new BatchLogRecordProcessor(
@@ -25,11 +25,24 @@ export async function register() {
           ),
         ],
       });
-      logs.setGlobalLoggerProvider(loggerProvider);
+      logs.setGlobalLoggerProvider(_provider);
     }
   }
 
   if (process.env.NEXT_RUNTIME === "edge") {
     await import("../sentry.edge.config");
   }
+}
+
+/**
+ * Get the global OTel logger. Safe to call from any API route —
+ * uses the global provider set by register(), not a module export.
+ */
+export function getLogger(name = "vgc-team-report") {
+  return logs.getLoggerProvider().getLogger(name);
+}
+
+/** Flush pending logs. Call inside after() in route handlers. */
+export async function flushLogs() {
+  if (_provider) await _provider.forceFlush();
 }

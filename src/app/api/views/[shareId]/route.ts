@@ -3,7 +3,7 @@ import { isRateLimited } from "@/lib/rate-limit";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { SeverityNumber } from "@opentelemetry/api-logs";
 import { after } from "next/server";
-import { loggerProvider } from "@/instrumentation";
+import { getLogger, flushLogs } from "@/instrumentation";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -55,32 +55,28 @@ export async function POST(
     });
 
     // OTel log to PostHog
-    if (loggerProvider) {
-      const logger = loggerProvider.getLogger("vgc-team-report");
-      logger.emit({
-        body: `Report viewed: ${shareId}`,
-        severityNumber: SeverityNumber.INFO,
-        attributes: {
-          endpoint: "/api/views",
-          share_id: shareId,
-          view_count: rows[0].view_count,
-        },
-      });
-      after(async () => { await loggerProvider.forceFlush(); });
-    }
+    const logger = getLogger();
+    logger.emit({
+      body: `Report viewed: ${shareId}`,
+      severityNumber: SeverityNumber.INFO,
+      attributes: {
+        endpoint: "/api/views",
+        share_id: shareId,
+        view_count: rows[0].view_count,
+      },
+    });
+    after(flushLogs);
 
     return NextResponse.json({ viewCount: rows[0].view_count });
   } catch (e) {
     console.error("View count error:", e);
-    if (loggerProvider) {
-      const logger = loggerProvider.getLogger("vgc-team-report");
-      logger.emit({
-        body: `View count error: ${e instanceof Error ? e.message : String(e)}`,
-        severityNumber: SeverityNumber.ERROR,
-        attributes: { endpoint: "/api/views" },
-      });
-      after(async () => { await loggerProvider.forceFlush(); });
-    }
+    const errLogger = getLogger();
+    errLogger.emit({
+      body: `View count error: ${e instanceof Error ? e.message : String(e)}`,
+      severityNumber: SeverityNumber.ERROR,
+      attributes: { endpoint: "/api/views" },
+    });
+    after(flushLogs);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
