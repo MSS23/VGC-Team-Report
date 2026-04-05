@@ -95,8 +95,6 @@ export default function RootLayout({
         </a>
         <ClerkProvider>
         <CookieBanner />
-        <ConsentGate>
-        <PostHogProvider>
         <JsonLd
           data={{
             "@context": "https://schema.org",
@@ -118,10 +116,9 @@ export default function RootLayout({
         <div id="main-content">{children}</div>
         <InstallPrompt />
         <ConnectivityStatus />
-        <Analytics />
-        <SpeedInsights />
         <ServiceWorkerRegistration />
-        </PostHogProvider>
+        <ConsentGate>
+          <PostHogProvider><Analytics /><SpeedInsights /></PostHogProvider>
         </ConsentGate>
         </ClerkProvider>
       </body>
