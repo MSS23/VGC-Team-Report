@@ -5,6 +5,7 @@ import { PostHogProvider as PHProvider, usePostHog } from "posthog-js/react";
 import { useEffect, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { hasAnalyticsConsent } from "@/lib/consent";
 
 function PostHogPageView() {
   const pathname = usePathname();
@@ -47,7 +48,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (
       typeof window !== "undefined" &&
-      process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+      process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+      hasAnalyticsConsent()
     ) {
       posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN, {
         api_host:
@@ -55,6 +57,14 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         person_profiles: "identified_only",
         capture_pageview: false, // We handle this manually above
         capture_pageleave: true,
+        // Exception autocapture — sends $exception events for unhandled errors
+        autocapture: true,
+        capture_exceptions: true,
+        // Session replay
+        session_recording: {
+          maskAllInputs: false,
+          maskInputOptions: { password: true },
+        },
         loaded: (posthog) => {
           if (process.env.NODE_ENV === "development") posthog.debug();
         },
