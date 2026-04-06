@@ -138,7 +138,7 @@ function EditableCalcEntry({
 
   return (
     <div
-      className={`group flex items-start gap-3 px-4 py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-lg transition-colors presenting:px-5`}
+      className={`group flex items-start gap-3 px-4 py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-lg transition-all hover:shadow-sm presenting:px-5`}
     >
       <span className={`${cfg.bulletColor} text-sm mt-px flex-shrink-0 presenting:text-base`}>&#9656;</span>
       {editing && !isReadOnly ? (
@@ -481,7 +481,7 @@ export function PokemonDetailSlide({
           return (
             <div
               key={move}
-              className={`px-3 sm:px-4 py-2.5 sm:py-3 border rounded-lg text-xs sm:text-sm font-bold text-center transition-colors ${
+              className={`px-3.5 sm:px-5 py-3 sm:py-3.5 border rounded-xl text-xs sm:text-sm font-bold text-center transition-all hover:scale-[1.02] hover:shadow-sm ${
                 typeStyle ? "shadow-sm" : "text-text-primary bg-surface border-border"
               }`}
               style={typeStyle ?? undefined}
@@ -518,7 +518,7 @@ export function PokemonDetailSlide({
                   {natureData?.minus === stat && <span className="text-[11px]">{"\u25BC"}</span>}
                   {statLabels[stat]}
                 </span>
-                <div className="flex-1 h-2.5 sm:h-3 bg-surface-alt rounded-full overflow-hidden">
+                <div className="flex-1 h-3 sm:h-3.5 bg-surface-alt rounded-full overflow-hidden shadow-inner">
                   <div
                     className="h-full rounded-full animate-bar-fill"
                     style={{
@@ -582,7 +582,7 @@ export function PokemonDetailSlide({
         {t.notableCalcs}
       </h3>
       {calcs.length > 0 ? (
-        <div className="flex flex-col gap-5 sm:flex-row sm:gap-3 sm:items-start">
+        <div className="flex flex-col gap-5 sm:flex-row sm:gap-4 lg:gap-5 sm:items-start">
           {renderCalcGroup(offensiveCalcs, "offensive", calcs)}
           {renderCalcGroup(defensiveCalcs, "defensive", calcs)}
           {renderCalcGroup(speedCalcs, "speed", calcs)}
@@ -643,7 +643,7 @@ export function PokemonDetailSlide({
       </div>
 
       {/* ── Desktop: two-column layout (>= 640px) ── */}
-      <div className="hidden sm:grid sm:grid-cols-[9fr_11fr] gap-6 lg:gap-8 items-start">
+      <div className="hidden sm:grid sm:grid-cols-[9fr_11fr] gap-6 lg:gap-10 items-start">
         <FieldDiffHighlight field={pokemonIndex !== undefined ? [`pokemon:${pokemonIndex}`] : []} label="Set changed">
         <div className="flex flex-col gap-6 min-w-0">
           {renderHeroHeader()}

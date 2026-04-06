@@ -277,7 +277,7 @@ export function TeamOverview({
   };
 
   return (
-    <div className="flex flex-col gap-2 sm:gap-5 animate-fade-in">
+    <div className="flex flex-col gap-3 sm:gap-6 animate-fade-in">
       {/* Tournament Context */}
       {isReadOnly ? (
         (hasTournamentInfo || rentalCode || hasCreatorInfo) && (
@@ -285,12 +285,12 @@ export function TeamOverview({
           <div className="flex flex-col gap-2 px-1">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               {tournamentName && (
-                <h2 className="text-lg sm:text-2xl font-extrabold text-text-primary tracking-tight">
+                <h2 className="text-xl sm:text-3xl font-extrabold text-text-primary tracking-tight leading-tight">
                   {tournamentName}
                 </h2>
               )}
               {placement && (
-                <span className="text-sm font-extrabold text-accent bg-accent-surface px-3 py-1 rounded-md border border-accent/20 tracking-wide">
+                <span className="text-sm font-extrabold text-accent bg-accent-surface px-3.5 py-1.5 rounded-lg border border-accent/20 tracking-wide shadow-sm shadow-accent/10">
                   {placement}
                 </span>
               )}
@@ -464,7 +464,7 @@ export function TeamOverview({
           summary ? (
             <div className="relative">
               <div
-                className={`w-full p-3 sm:p-6 bg-surface border border-border rounded-xl text-sm sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:bg-surface-alt presenting:border-border-subtle presenting:tracking-wide ${
+                className={`w-full p-3 sm:p-6 bg-surface border border-border border-l-[3px] border-l-accent/30 rounded-xl text-sm sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed shadow-sm presenting:text-xl presenting:leading-9 presenting:p-8 presenting:bg-surface-alt presenting:border-border-subtle presenting:tracking-wide ${
                   !summaryExpanded && summary.length > 200 ? "sm:min-h-[8rem] max-h-24 sm:max-h-none overflow-hidden" : "sm:min-h-[8rem]"
                 }`}
               >
@@ -511,7 +511,7 @@ export function TeamOverview({
       )}
 
       {/* Pokemon Grid */}
-      <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-2 sm:gap-4 creator:gap-6 ${
+      <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-2.5 sm:gap-5 creator:gap-6 ${
         creatorMode
           ? "grid-cols-1 sm:grid-cols-2"
           : "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3"
@@ -587,7 +587,7 @@ export function TeamOverview({
       </div>
 
       {/* App trademark */}
-      <div className="text-center pt-2 sm:pt-4 border-t border-border-subtle">
+      <div className="text-center pt-4 sm:pt-6 mt-2 border-t border-border-subtle">
         <p className="text-xs text-text-tertiary/60 font-medium">
           {t.builtWith}{" "}
           <a

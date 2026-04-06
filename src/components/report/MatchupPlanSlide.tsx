@@ -193,7 +193,7 @@ export function MatchupPlanSlide({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
-          vs. {plan.opponentLabel}
+          <span className="text-accent">vs.</span> {plan.opponentLabel}
         </h2>
         {!isReadOnly && (
           <Button
@@ -502,7 +502,7 @@ function GamePlanSection({
   };
 
   return (
-    <div className={`bg-surface border border-border rounded-2xl border-l-[3px] ${color.accent}`}>
+    <div className={`bg-surface border border-border rounded-2xl border-l-[3px] ${color.accent} shadow-sm`}>
       {/* Header — always visible */}
       <button
         type="button"
@@ -573,7 +573,7 @@ function GamePlanSection({
             {/* Bring Four — Lead / Back split */}
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Lead */}
-              <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 border border-border-subtle">
+              <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 sm:p-4 border border-border-subtle">
                 <div className="flex items-center gap-2 mb-2.5">
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-500/20 text-blue-400">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /></svg>
@@ -631,7 +631,7 @@ function GamePlanSection({
               )}
 
               {/* Back */}
-              <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 border border-border-subtle">
+              <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 sm:p-4 border border-border-subtle">
                 <div className="flex items-center gap-2 mb-2.5">
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-500/20 text-amber-400">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>

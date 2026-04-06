@@ -660,7 +660,7 @@ function HomeContent() {
         } ${
           isPresentationStyle
             ? "px-3 sm:px-8 py-2 sm:py-4"
-            : "px-2 sm:px-4 py-2 sm:py-4 creator:px-8 creator:py-6"
+            : "px-2 sm:px-6 lg:px-8 py-2 sm:py-6 creator:px-8 creator:py-6"
         }`}
         key={tournamentMode ? "tournament" : physicalSlide}
         style={tournamentMode ? undefined : { viewTransitionName: "slide" }}

@@ -59,10 +59,9 @@ export function TeamCoverageSlide({ pokemon }: TeamCoverageSlideProps) {
         {tab === "defensive" && <DefensiveCoverageChart pokemon={pokemon} />}
       </div>
 
-      {/* ── Desktop: both charts stacked (>= 640px) ── */}
-      <div className="hidden sm:flex sm:flex-col gap-8">
+      {/* ── Desktop: side-by-side charts (>= 640px) ── */}
+      <div className="hidden sm:grid sm:grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
         <OffensiveCoverageChart pokemon={pokemon} />
-        <hr className="border-border" />
         <DefensiveCoverageChart pokemon={pokemon} />
       </div>
     </div>
