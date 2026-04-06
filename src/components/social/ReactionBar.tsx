@@ -84,22 +84,21 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
     );
   }
 
-  // Not signed in: show count + sign-in prompt
+  // Not signed in: clickable heart that opens sign-in modal
   if (!isSignedIn) {
     return (
-      <div className="flex items-center gap-3">
-        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-surface border-2 border-border text-text-tertiary">
+      <SignInButton mode="modal">
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-surface border-2 border-border text-text-secondary hover:border-red-500/30 hover:bg-red-500/5 hover:text-red-500 transition-all cursor-pointer active:scale-95"
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
           </svg>
-          {likeCount > 0 && <span>{likeCount}</span>}
-        </span>
-        <SignInButton mode="modal">
-          <button className="text-xs font-bold text-text-tertiary hover:text-accent transition-colors cursor-pointer">
-            Sign in to like
-          </button>
-        </SignInButton>
-      </div>
+          <span>Like</span>
+          {likeCount > 0 && <span className="opacity-70">{likeCount}</span>}
+        </button>
+      </SignInButton>
     );
   }
 

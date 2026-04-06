@@ -802,6 +802,12 @@ function HomeContent() {
       {/* Social engagement section for public shared reports */}
       {isSharedView && !isEditingUnlocked && !isPresentationStyle && activeShareId && (
         <div className="relative z-40 max-w-5xl mx-auto px-2 sm:px-4 py-6 mb-24 sm:mb-16 space-y-4">
+          {/* Like + Save — primary actions, prominent */}
+          <div className="flex items-center gap-3">
+            <ReactionBar shareId={activeShareId} isOwner={isOwner} />
+            <SaveButton shareId={activeShareId} />
+          </div>
+          {/* Creator info + secondary actions */}
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             {creatorName && <CreatorLink name={creatorName} />}
             <ViewCount count={viewCount} />
@@ -831,7 +837,6 @@ function HomeContent() {
                 {isPublic ? "Public" : "Private"}
               </button>
             )}
-            <SaveButton shareId={activeShareId} />
             <button
               type="button"
               onClick={handleForkReport}
@@ -848,7 +853,6 @@ function HomeContent() {
               Fork Report
             </button>
           </div>
-          <ReactionBar shareId={activeShareId} isOwner={isOwner} />
           {allowComments ? (
             <CommentSection shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
           ) : (

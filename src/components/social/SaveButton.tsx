@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, SignInButton } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
 import posthog from "posthog-js";
 
@@ -27,7 +27,31 @@ export function SaveButton({ shareId }: SaveButtonProps) {
       .catch(() => {});
   }, [user, shareId]);
 
-  if (!user) return null;
+  // Guest: show save button with sign-in prompt
+  if (!user) {
+    return (
+      <SignInButton mode="modal">
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-surface border-2 border-border text-text-secondary hover:border-accent/30 hover:text-accent transition-all cursor-pointer active:scale-95"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+          </svg>
+          Save
+        </button>
+      </SignInButton>
+    );
+  }
 
   const toggle = async () => {
     if (loading) return;
@@ -64,15 +88,15 @@ export function SaveButton({ shareId }: SaveButtonProps) {
       type="button"
       onClick={toggle}
       disabled={loading}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 transition-all cursor-pointer ${
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 cursor-pointer active:scale-95 ${
         saved
-          ? "bg-accent-surface border-accent/40 text-accent"
-          : "bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent"
+          ? "bg-accent-surface border-2 border-accent/40 text-accent shadow-sm shadow-accent/10"
+          : "bg-surface border-2 border-border text-text-secondary hover:border-accent/30 hover:text-accent"
       }`}
     >
       <svg
-        width="14"
-        height="14"
+        width="16"
+        height="16"
         viewBox="0 0 24 24"
         fill={saved ? "currentColor" : "none"}
         stroke="currentColor"
@@ -82,7 +106,7 @@ export function SaveButton({ shareId }: SaveButtonProps) {
       >
         <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
       </svg>
-      {saved ? "Saved" : "Save"}
+      <span>{saved ? "Saved" : "Save"}</span>
     </button>
   );
 }
