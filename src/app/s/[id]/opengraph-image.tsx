@@ -8,6 +8,11 @@ export const alt = "VGC Team Report";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+// Render at 2x for Retina/HiDPI sharpness (Discord, Twitter, etc.)
+const SCALE = 2;
+const W = 1200 * SCALE;
+const H = 630 * SCALE;
+
 // ── Inline paste parser (edge-compatible, no heavy deps) ───────
 interface OGPokemon {
   species: string;
@@ -127,11 +132,11 @@ export default async function Image({
             background: "#08080F", fontFamily: "system-ui, sans-serif",
           }}
         >
-          <div style={{ fontSize: 48, fontWeight: 800, color: "#F0EDE6" }}>VGC Team Report</div>
-          <div style={{ fontSize: 18, color: "#64648A", marginTop: 14 }}>Team not found</div>
+          <div style={{ fontSize: 96, fontWeight: 800, color: "#F0EDE6" }}>VGC Team Report</div>
+          <div style={{ fontSize: 36, color: "#64648A", marginTop: 28 }}>Team not found</div>
         </div>
       ),
-      { ...size },
+      { width: W, height: H },
     );
   }
 
@@ -158,57 +163,57 @@ export default async function Image({
         <div style={{
           position: "absolute", inset: 0, display: "flex",
           backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.015) 1px, transparent 0)",
-          backgroundSize: "28px 28px",
+          backgroundSize: "56px 56px",
         }} />
 
         {/* BG: center ambient glow */}
         <div style={{
           position: "absolute", top: "35%", left: "50%", transform: "translate(-50%, -50%)",
-          width: 1000, height: 500, borderRadius: "50%",
+          width: 2000, height: 1000, borderRadius: "50%",
           background: "radial-gradient(ellipse, rgba(110,70,200,0.04) 0%, rgba(180,40,80,0.018) 45%, transparent 72%)",
           display: "flex",
         }} />
 
         {/* Top accent line */}
         <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: 3, display: "flex",
+          position: "absolute", top: 0, left: 0, right: 0, height: 6, display: "flex",
           background: "linear-gradient(90deg, transparent 5%, rgba(225,29,72,0.6) 28%, rgba(139,92,246,0.5) 50%, rgba(99,102,241,0.4) 72%, transparent 95%)",
         }} />
 
         {/* ── HEADER ── */}
         <div style={{
           display: "flex", flexDirection: "column", alignItems: "center",
-          paddingTop: 36, position: "relative", gap: 10,
+          paddingTop: 72, position: "relative", gap: 20,
         }}>
           {/* Tournament name + placement + record row */}
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
             {tournamentName ? (
               <div style={{
-                fontSize: 34, fontWeight: 800, color: "#F0EEF8",
+                fontSize: 68, fontWeight: 800, color: "#F0EEF8",
                 letterSpacing: "-0.03em", lineHeight: 1,
               }}>
                 {tournamentName}
               </div>
             ) : (
-              <div style={{ fontSize: 30, fontWeight: 800, color: "#E0DEF0", display: "flex" }}>
+              <div style={{ fontSize: 60, fontWeight: 800, color: "#E0DEF0", display: "flex" }}>
                 Team Report
               </div>
             )}
             {placement && placementColors && (
               <div style={{
-                fontSize: 16, fontWeight: 800, color: placementColors.text,
-                background: placementColors.bg, border: `1.5px solid ${placementColors.border}`,
-                padding: "5px 14px", borderRadius: 8, letterSpacing: "0.02em",
-                boxShadow: `0 0 20px ${placementColors.glow}`,
+                fontSize: 32, fontWeight: 800, color: placementColors.text,
+                background: placementColors.bg, border: `3px solid ${placementColors.border}`,
+                padding: "10px 28px", borderRadius: 16, letterSpacing: "0.02em",
+                boxShadow: `0 0 40px ${placementColors.glow}`,
               }}>
                 {placement}
               </div>
             )}
             {record && (
               <div style={{
-                fontSize: 15, fontWeight: 700, color: "#A0A0C0",
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
-                padding: "4px 12px", borderRadius: 7,
+                fontSize: 30, fontWeight: 700, color: "#A0A0C0",
+                background: "rgba(255,255,255,0.04)", border: "2px solid rgba(255,255,255,0.06)",
+                padding: "8px 24px", borderRadius: 14,
               }}>
                 {record}
               </div>
@@ -216,39 +221,39 @@ export default async function Image({
           </div>
 
           {/* Creator + metadata tags row */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
             {creatorName && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 32 }}>
                 <span style={{ color: "#505068" }}>by</span>
                 <span style={{ color: "#9898BE", fontWeight: 600 }}>{creatorName}</span>
               </div>
             )}
             {creatorName && hasMetadata && (
-              <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.08)", display: "flex" }} />
+              <div style={{ width: 2, height: 32, background: "rgba(255,255,255,0.08)", display: "flex" }} />
             )}
             {tags.regulation && (
               <div style={{
-                fontSize: 12, fontWeight: 700, color: "#8B8BBA",
-                background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.18)",
-                padding: "3px 10px", borderRadius: 5, letterSpacing: "0.03em",
+                fontSize: 24, fontWeight: 700, color: "#8B8BBA",
+                background: "rgba(139,92,246,0.08)", border: "2px solid rgba(139,92,246,0.18)",
+                padding: "6px 20px", borderRadius: 10, letterSpacing: "0.03em",
               }}>
                 {tags.regulation}
               </div>
             )}
             {tags.eventType && (
               <div style={{
-                fontSize: 12, fontWeight: 700, color: "#7A8AAA",
-                background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.14)",
-                padding: "3px 10px", borderRadius: 5,
+                fontSize: 24, fontWeight: 700, color: "#7A8AAA",
+                background: "rgba(99,102,241,0.06)", border: "2px solid rgba(99,102,241,0.14)",
+                padding: "6px 20px", borderRadius: 10,
               }}>
                 {tags.eventType}
               </div>
             )}
             {tags.archetype && tags.archetype.slice(0, 2).map((arch, i) => (
               <div key={i} style={{
-                fontSize: 12, fontWeight: 700, color: "#8A8AAA",
-                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-                padding: "3px 10px", borderRadius: 5,
+                fontSize: 24, fontWeight: 700, color: "#8A8AAA",
+                background: "rgba(255,255,255,0.03)", border: "2px solid rgba(255,255,255,0.06)",
+                padding: "6px 20px", borderRadius: 10,
               }}>
                 {arch}
               </div>
@@ -259,10 +264,10 @@ export default async function Image({
         {/* ── POKEMON GRID ── */}
         <div style={{
           display: "flex", flex: 1, alignItems: "center", justifyContent: "center",
-          padding: "0 36px", position: "relative",
+          padding: "0 72px", position: "relative",
         }}>
           <div style={{
-            display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 10,
+            display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 20,
           }}>
             {team.map((mon, i) => {
               const slug = toSpriteSlug(mon.species);
@@ -270,46 +275,46 @@ export default async function Image({
 
               return (
                 <div key={i} style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", width: 176,
+                  display: "flex", flexDirection: "column", alignItems: "center", width: 352,
                 }}>
                   {/* Card */}
                   <div style={{
                     display: "flex", flexDirection: "column", alignItems: "center",
-                    width: 168, borderRadius: 16,
+                    width: 336, borderRadius: 32,
                     background: "linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.012) 100%)",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)",
-                    position: "relative", overflow: "hidden", paddingBottom: 14,
+                    border: "2px solid rgba(255,255,255,0.06)",
+                    boxShadow: "0 16px 64px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.05)",
+                    position: "relative", overflow: "hidden", paddingBottom: 28,
                   }}>
                     {/* Sprite area */}
                     <div style={{
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      width: "100%", height: 120, position: "relative",
+                      width: "100%", height: 240, position: "relative",
                     }}>
                       {/* Floor reflection */}
                       <div style={{
                         position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)",
-                        width: 60, height: 16, borderRadius: "50%",
+                        width: 120, height: 32, borderRadius: "50%",
                         background: "radial-gradient(ellipse, rgba(130,90,230,0.08) 0%, transparent 70%)",
                         display: "flex",
                       }} />
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={spriteUrl} alt={mon.species}
-                        width={100} height={100}
+                        width={200} height={200}
                         style={{ objectFit: "contain", position: "relative" }}
                       />
                     </div>
 
                     {/* Type badges row */}
                     {mon.types.length > 0 && (
-                      <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                         {mon.types.map((t, ti) => (
                           <div key={ti} style={{
-                            fontSize: 9, fontWeight: 800, letterSpacing: "0.05em",
+                            fontSize: 18, fontWeight: 800, letterSpacing: "0.05em",
                             color: TYPE_TEXT[t] ?? "#FFFFFF",
                             background: TYPE_BG[t] ?? "#666",
-                            padding: "2px 7px", borderRadius: 4,
+                            padding: "4px 14px", borderRadius: 8,
                             textTransform: "uppercase",
                           }}>
                             {t}
@@ -320,8 +325,8 @@ export default async function Image({
 
                     {/* Species name */}
                     <div style={{
-                      fontSize: 13, fontWeight: 700, color: "#D0CEE0",
-                      textAlign: "center", maxWidth: 155,
+                      fontSize: 26, fontWeight: 700, color: "#D0CEE0",
+                      textAlign: "center", maxWidth: 310,
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                       letterSpacing: "0.005em",
                     }}>
@@ -331,8 +336,8 @@ export default async function Image({
                     {/* Ability */}
                     {mon.ability && (
                       <div style={{
-                        fontSize: 10, fontWeight: 600, color: "#7878A0",
-                        textAlign: "center", marginTop: 3,
+                        fontSize: 20, fontWeight: 600, color: "#7878A0",
+                        textAlign: "center", marginTop: 6,
                       }}>
                         {mon.ability}
                       </div>
@@ -342,11 +347,11 @@ export default async function Image({
                     {mon.item && (
                       <div style={{
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        marginTop: 5, padding: "2px 8px", borderRadius: 5,
-                        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)",
+                        marginTop: 10, padding: "4px 16px", borderRadius: 10,
+                        background: "rgba(255,255,255,0.03)", border: "2px solid rgba(255,255,255,0.05)",
                       }}>
                         <span style={{
-                          fontSize: 10, fontWeight: 600, color: "#8886A6", letterSpacing: "0.01em",
+                          fontSize: 20, fontWeight: 600, color: "#8886A6", letterSpacing: "0.01em",
                         }}>
                           {mon.item}
                         </span>
@@ -356,15 +361,15 @@ export default async function Image({
                     {/* Tera type indicator */}
                     {mon.teraType && (
                       <div style={{
-                        display: "flex", alignItems: "center", gap: 4, marginTop: 4,
+                        display: "flex", alignItems: "center", gap: 8, marginTop: 8,
                       }}>
                         <div style={{
-                          width: 8, height: 8, borderRadius: 2, transform: "rotate(45deg)",
+                          width: 16, height: 16, borderRadius: 4, transform: "rotate(45deg)",
                           background: TYPE_BG[mon.teraType] ?? "#888",
-                          boxShadow: `0 0 6px ${TYPE_BG[mon.teraType] ?? "#888"}44`,
+                          boxShadow: `0 0 12px ${TYPE_BG[mon.teraType] ?? "#888"}44`,
                           display: "flex",
                         }} />
-                        <span style={{ fontSize: 9, fontWeight: 700, color: "#6868A0" }}>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: "#6868A0" }}>
                           Tera {mon.teraType}
                         </span>
                       </div>
@@ -378,33 +383,33 @@ export default async function Image({
 
         {/* ── BOTTOM BAR ── */}
         <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0, height: 46,
-          display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px",
+          position: "absolute", bottom: 0, left: 0, right: 0, height: 92,
+          display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 80px",
           background: "linear-gradient(0deg, rgba(7,7,14,0.98) 0%, rgba(7,7,14,0.8) 50%, transparent 100%)",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
             {/* Pokeball icon */}
             <div style={{
-              width: 18, height: 18, borderRadius: "50%",
+              width: 36, height: 36, borderRadius: "50%",
               background: "linear-gradient(145deg, #E11D48, #BE123C)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 0 10px rgba(225,29,72,0.22)",
+              boxShadow: "0 0 20px rgba(225,29,72,0.22)",
             }}>
               <div style={{
-                width: 6, height: 6, borderRadius: "50%",
-                background: "#FFF", border: "1.5px solid rgba(190,18,60,0.6)",
+                width: 12, height: 12, borderRadius: "50%",
+                background: "#FFF", border: "3px solid rgba(190,18,60,0.6)",
               }} />
             </div>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#68688A", letterSpacing: "0.03em" }}>
+            <span style={{ fontSize: 26, fontWeight: 700, color: "#68688A", letterSpacing: "0.03em" }}>
               VGC Team Report
             </span>
           </div>
-          <span style={{ fontSize: 11, color: "#404058", fontWeight: 500 }}>
+          <span style={{ fontSize: 22, color: "#404058", fontWeight: 500 }}>
             pokemonvgcteamreport.com
           </span>
         </div>
       </div>
     ),
-    { ...size },
+    { width: W, height: H },
   );
 }
