@@ -138,7 +138,7 @@ function EditableCalcEntry({
 
   return (
     <div
-      className={`group flex items-start gap-3 px-4 py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-lg transition-all hover:shadow-sm presenting:px-5`}
+      className={`group flex items-start gap-2.5 px-3 py-2.5 sm:px-4 sm:py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-lg transition-all hover:shadow-sm presenting:px-5`}
     >
       <span className={`${cfg.bulletColor} text-sm mt-px flex-shrink-0 presenting:text-base`}>&#9656;</span>
       {editing && !isReadOnly ? (
@@ -247,7 +247,7 @@ function CollapsibleCalcGroup({
   const effectiveOpen = isPrint || isReadOnly || isOpen;
 
   return (
-    <div className="sm:flex-1 sm:min-w-0">
+    <div>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 w-full mb-1 group/header cursor-pointer"
@@ -261,7 +261,7 @@ function CollapsibleCalcGroup({
         </span>
         <span className={`flex-1 h-px ${cfg.tagBg}`} />
         <svg
-          className={`w-3.5 h-3.5 ${cfg.tagText} opacity-50 group-hover/header:opacity-100 transition-all duration-200 sm:hidden ${effectiveOpen ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 ${cfg.tagText} opacity-50 group-hover/header:opacity-100 transition-all duration-200 ${effectiveOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -271,9 +271,9 @@ function CollapsibleCalcGroup({
         </svg>
       </button>
       <div
-        className={`grid transition-all duration-200 ease-in-out ${effectiveOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 sm:grid-rows-[1fr] sm:opacity-100"}`}
+        className={`grid transition-all duration-200 ease-in-out ${effectiveOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
       >
-        <div className={`overflow-hidden ${effectiveOpen ? "" : "sm:overflow-visible"}`}>
+        <div className="overflow-hidden">
         <div className="flex flex-col gap-2 pt-1">
           {entries.map((entry) => {
             const globalIndex = globalCalcs.indexOf(entry);
@@ -582,7 +582,7 @@ export function PokemonDetailSlide({
         {t.notableCalcs}
       </h3>
       {calcs.length > 0 ? (
-        <div className="flex flex-col gap-5 sm:flex-row sm:gap-4 lg:gap-5 sm:items-start">
+        <div className="flex flex-col gap-5 sm:gap-4">
           {renderCalcGroup(offensiveCalcs, "offensive", calcs)}
           {renderCalcGroup(defensiveCalcs, "defensive", calcs)}
           {renderCalcGroup(speedCalcs, "speed", calcs)}
@@ -652,7 +652,7 @@ export function PokemonDetailSlide({
         </div>
         </FieldDiffHighlight>
 
-        <div className="flex flex-col gap-6 min-w-0">
+        <div className="flex flex-col gap-6 min-w-0 sm:max-h-[calc(100dvh-10rem)] sm:overflow-y-auto sm:scrollbar-thin sm:pr-1">
           {renderNotes()}
           {renderCalcs()}
         </div>

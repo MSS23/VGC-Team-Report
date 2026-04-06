@@ -347,7 +347,7 @@ export function MatchupPlanSlide({
 
         {/* Mobile: tab bar for game plans */}
         {plan.gamePlans.length > 1 && (
-          <div className="flex gap-1.5 sm:hidden" role="tablist" aria-label="Game plan tabs">
+          <div className={`flex gap-1.5 ${plan.gamePlans.length === 2 ? "lg:hidden" : "sm:hidden"}`} role="tablist" aria-label="Game plan tabs">
             {plan.gamePlans.map((gp, gpIndex) => {
               const color = GAME_COLORS[gpIndex] ?? GAME_COLORS[0];
               const isActive = activeGameTab === gpIndex;
@@ -378,8 +378,7 @@ export function MatchupPlanSlide({
         )}
 
         {/* Mobile: only render active tab; Desktop: side-by-side columns */}
-        <div className={`flex flex-col gap-4 ${plan.gamePlans.length > 1 ? "sm:grid sm:gap-3" : ""}`}
-          style={plan.gamePlans.length > 1 ? { gridTemplateColumns: `repeat(${plan.gamePlans.length}, minmax(0, 1fr))` } : undefined}
+        <div className={`flex flex-col gap-4 ${plan.gamePlans.length === 2 ? "lg:grid lg:grid-cols-2 lg:gap-4" : ""}`}
         >
         {plan.gamePlans.map((gp, gpIndex) => {
           const isCollapsed = collapsedPlans.has(gp.id);
@@ -388,7 +387,7 @@ export function MatchupPlanSlide({
               key={gp.id}
               id={`game-plan-panel-${gp.id}`}
               role="tabpanel"
-              className={plan.gamePlans.length > 1 && gpIndex !== activeGameTab ? "hidden sm:block" : ""}
+              className={plan.gamePlans.length > 1 && gpIndex !== activeGameTab ? `hidden ${plan.gamePlans.length === 2 ? "lg:block" : "sm:block"}` : ""}
             >
               <GamePlanSection
                 gamePlan={gp}
@@ -502,7 +501,7 @@ function GamePlanSection({
   };
 
   return (
-    <div className={`bg-surface border border-border rounded-2xl border-l-[3px] ${color.accent} shadow-sm`}>
+    <div className={`bg-surface border border-border rounded-2xl border-l-[3px] ${color.accent} shadow-sm transition-shadow hover:shadow-md`}>
       {/* Header — always visible */}
       <button
         type="button"
