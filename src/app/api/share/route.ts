@@ -25,7 +25,7 @@ const ShareBodySchema = z.object({
     rentalCode: z.string().optional(),
     creatorName: z.string().optional(),
     spriteSettings: z.unknown().optional(),
-    hiddenSlides: z.array(z.number()).optional(),
+    hiddenSlides: z.array(z.union([z.number(), z.string()])).optional(),
     allowComments: z.boolean().optional(),
     tags: z.object({
       regulation: z.string().optional(),
