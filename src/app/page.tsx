@@ -17,6 +17,7 @@ import { EditFab } from "@/components/ui/EditFab";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { Navbar } from "@/components/layout/Navbar";
 import { ReactionBar } from "@/components/social/ReactionBar";
+import { SaveButton } from "@/components/social/SaveButton";
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
 const ClaimButton = dynamic(() => import("@/components/social/ClaimButton").then(m => ({ default: m.ClaimButton })));
@@ -800,7 +801,7 @@ function HomeContent() {
 
       {/* Social engagement section for public shared reports */}
       {isSharedView && !isEditingUnlocked && !isPresentationStyle && activeShareId && (
-        <div className="max-w-5xl mx-auto px-2 sm:px-4 py-6 space-y-4">
+        <div className="relative z-40 max-w-5xl mx-auto px-2 sm:px-4 py-6 mb-24 sm:mb-16 space-y-4">
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             {creatorName && <CreatorLink name={creatorName} />}
             <ViewCount count={viewCount} />
@@ -830,6 +831,7 @@ function HomeContent() {
                 {isPublic ? "Public" : "Private"}
               </button>
             )}
+            <SaveButton shareId={activeShareId} />
             <button
               type="button"
               onClick={handleForkReport}
@@ -1028,7 +1030,36 @@ function HomeContent() {
         className="fixed left-[-9999px] top-0 w-[210mm] print:static print:left-auto print:w-auto"
         aria-hidden="true"
         data-export-theme={exportTheme}
-        style={(exportMode === "tournament-evs" || exportMode === "tournament-stats") ? { backgroundColor: exportTheme === "dark" ? "#0B0B1A" : "#FAF9F6", padding: "16px" } : undefined}
+        style={(exportMode === "tournament-evs" || exportMode === "tournament-stats") ? {
+          backgroundColor: exportTheme === "dark" ? "#0B0B1A" : "#FAF9F6",
+          padding: "16px",
+          colorAdjust: "exact",
+          WebkitPrintColorAdjust: "exact",
+          printColorAdjust: "exact",
+          ...exportTheme === "dark" ? {
+            "--background": "#0B0B1A", "--foreground": "#F0EDE6",
+            "--surface": "#141428", "--surface-alt": "#1C1C38",
+            "--border": "#2A2A52", "--border-subtle": "#222244",
+            "--text-primary": "#F0EDE6", "--text-secondary": "#C0C0D8", "--text-tertiary": "#9898B8",
+            "--accent": "#FB7185", "--accent-light": "#FDA4AF", "--accent-surface": "#3B1525",
+            "--color-background": "#0B0B1A", "--color-foreground": "#F0EDE6",
+            "--color-surface": "#141428", "--color-surface-alt": "#1C1C38",
+            "--color-border": "#2A2A52", "--color-border-subtle": "#222244",
+            "--color-text-primary": "#F0EDE6", "--color-text-secondary": "#C0C0D8", "--color-text-tertiary": "#9898B8",
+            "--color-accent": "#FB7185", "--color-accent-light": "#FDA4AF", "--color-accent-surface": "#3B1525",
+          } as React.CSSProperties : {
+            "--background": "#FAF9F6", "--foreground": "#1A1A2E",
+            "--surface": "#FFFFFF", "--surface-alt": "#F2F0EB",
+            "--border": "#E0DDD5", "--border-subtle": "#F0EDE6",
+            "--text-primary": "#1A1A2E", "--text-secondary": "#4A4A68", "--text-tertiary": "#6E6E8A",
+            "--accent": "#E11D48", "--accent-light": "#FDA4AF", "--accent-surface": "#FFF1F2",
+            "--color-background": "#FAF9F6", "--color-foreground": "#1A1A2E",
+            "--color-surface": "#FFFFFF", "--color-surface-alt": "#F2F0EB",
+            "--color-border": "#E0DDD5", "--color-border-subtle": "#F0EDE6",
+            "--color-text-primary": "#1A1A2E", "--color-text-secondary": "#4A4A68", "--color-text-tertiary": "#6E6E8A",
+            "--color-accent": "#E11D48", "--color-accent-light": "#FDA4AF", "--color-accent-surface": "#FFF1F2",
+          } as React.CSSProperties,
+        } : undefined}
       >
         <PrintableReport
           analysis={analysis}

@@ -220,34 +220,60 @@ body {
    EXPORT THEME OVERRIDES — force light/dark on print container
    ==================================================================== */
 
-[data-export-theme="light"] {
-  --background: #FAF9F6;
-  --foreground: #1A1A2E;
-  --surface: #FFFFFF;
-  --surface-alt: #F2F0EB;
-  --border: #E0DDD5;
-  --border-subtle: #F0EDE6;
-  --text-primary: #1A1A2E;
-  --text-secondary: #4A4A68;
-  --text-tertiary: #6E6E8A;
-  --accent: #E11D48;
-  --accent-light: #FDA4AF;
-  --accent-surface: #FFF1F2;
+[data-export-theme="light"],
+[data-export-theme="light"] * {
+  --background: #FAF9F6 !important;
+  --foreground: #1A1A2E !important;
+  --surface: #FFFFFF !important;
+  --surface-alt: #F2F0EB !important;
+  --border: #E0DDD5 !important;
+  --border-subtle: #F0EDE6 !important;
+  --text-primary: #1A1A2E !important;
+  --text-secondary: #4A4A68 !important;
+  --text-tertiary: #6E6E8A !important;
+  --accent: #E11D48 !important;
+  --accent-light: #FDA4AF !important;
+  --accent-surface: #FFF1F2 !important;
+  --color-background: #FAF9F6 !important;
+  --color-foreground: #1A1A2E !important;
+  --color-surface: #FFFFFF !important;
+  --color-surface-alt: #F2F0EB !important;
+  --color-border: #E0DDD5 !important;
+  --color-border-subtle: #F0EDE6 !important;
+  --color-text-primary: #1A1A2E !important;
+  --color-text-secondary: #4A4A68 !important;
+  --color-text-tertiary: #6E6E8A !important;
+  --color-accent: #E11D48 !important;
+  --color-accent-light: #FDA4AF !important;
+  --color-accent-surface: #FFF1F2 !important;
 }
 
-[data-export-theme="dark"] {
-  --background: #0B0B1A;
-  --foreground: #F0EDE6;
-  --surface: #141428;
-  --surface-alt: #1C1C38;
-  --border: #2A2A52;
-  --border-subtle: #222244;
-  --text-primary: #F0EDE6;
-  --text-secondary: #C0C0D8;
-  --text-tertiary: #9898B8;
-  --accent: #FB7185;
-  --accent-light: #FDA4AF;
-  --accent-surface: #3B1525;
+[data-export-theme="dark"],
+[data-export-theme="dark"] * {
+  --background: #0B0B1A !important;
+  --foreground: #F0EDE6 !important;
+  --surface: #141428 !important;
+  --surface-alt: #1C1C38 !important;
+  --border: #2A2A52 !important;
+  --border-subtle: #222244 !important;
+  --text-primary: #F0EDE6 !important;
+  --text-secondary: #C0C0D8 !important;
+  --text-tertiary: #9898B8 !important;
+  --accent: #FB7185 !important;
+  --accent-light: #FDA4AF !important;
+  --accent-surface: #3B1525 !important;
+  --color-background: #0B0B1A !important;
+  --color-foreground: #F0EDE6 !important;
+  --color-surface: #141428 !important;
+  --color-surface-alt: #1C1C38 !important;
+  --color-border: #2A2A52 !important;
+  --color-border-subtle: #222244 !important;
+  --color-text-primary: #F0EDE6 !important;
+  --color-text-secondary: #C0C0D8 !important;
+  --color-text-tertiary: #9898B8 !important;
+  --color-accent: #FB7185 !important;
+  --color-accent-light: #FDA4AF !important;
+  --color-accent-surface: #3B1525 !important;
 }
 
 @media print {
