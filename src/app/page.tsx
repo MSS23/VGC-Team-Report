@@ -557,7 +557,7 @@ function HomeContent() {
   // Show report
   return (
     <>
-    <main className={`bg-background ${isPresentationStyle ? "h-dvh h-screen overflow-y-auto" : "min-h-dvh min-h-screen"}`}>
+    <main className={`bg-background ${isPresentationStyle ? "h-dvh h-screen overflow-y-auto" : "min-h-dvh min-h-screen"}`} style={{ scrollPaddingTop: "4rem" }}>
       <Navbar
         isPresentationStyle={isPresentationStyle}
         isSharedView={isSharedView}
@@ -649,7 +649,7 @@ function HomeContent() {
       <div
         ref={swipeRef}
         className={`max-w-5xl mx-auto slide-content safe-bottom overflow-x-hidden ${
-          isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-36 sm:pb-24" : "pb-32 sm:pb-20"
+          isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-40 sm:pb-36" : "pb-40 sm:pb-36"
         } ${
           isPresentationStyle
             ? "px-3 sm:px-8 py-2 sm:py-4"
