@@ -243,8 +243,8 @@ function CollapsibleCalcGroup({
 }) {
   const isPrint = useIsPrintMode();
   const [isOpen, setIsOpen] = useState(!isPresentationMode);
-  // Force open in print mode so all calcs are visible in PDF
-  const effectiveOpen = isPrint || isOpen;
+  // Force open in print mode or read-only (guest) view so all calcs are visible
+  const effectiveOpen = isPrint || isReadOnly || isOpen;
 
   return (
     <div className="presenting:flex-1 presenting:min-w-0">
