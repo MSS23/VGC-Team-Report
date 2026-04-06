@@ -117,9 +117,11 @@ export default function RootLayout({
         <InstallPrompt />
         <ConnectivityStatus />
         <ServiceWorkerRegistration />
-        <ConsentGate>
-          <PostHogProvider><Analytics /><SpeedInsights /></PostHogProvider>
-        </ConsentGate>
+        <PostHogProvider>
+          <ConsentGate>
+            <Analytics /><SpeedInsights />
+          </ConsentGate>
+        </PostHogProvider>
         </ClerkProvider>
       </body>
     </html>
