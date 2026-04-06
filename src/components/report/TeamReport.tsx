@@ -12,7 +12,7 @@ import { useVersionDiff } from "@/lib/contexts/VersionDiffContext";
 
 // Lazy-load heavy analysis and matchup components
 const SpeedTierChart = dynamic(() => import("./SpeedTierChart").then(m => ({ default: m.SpeedTierChart })), {
-  loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-96" />,
+  loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-96" data-walkthrough="speed-tiers" />,
 });
 const TeamCoverageSlide = dynamic(() => import("./TeamCoverageSlide").then(m => ({ default: m.TeamCoverageSlide })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" />,
@@ -21,7 +21,7 @@ const MatchupPlanSlide = dynamic(() => import("./MatchupPlanSlide").then(m => ({
   loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" />,
 });
 const MatchupSheet = dynamic(() => import("./MatchupSheet").then(m => ({ default: m.MatchupSheet })), {
-  loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" />,
+  loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" data-walkthrough="matchup-sheet" />,
 });
 
 interface TeamReportProps {

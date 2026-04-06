@@ -415,9 +415,11 @@ function HomeContent() {
   }, [isPokemonSlide, isMatchupPlanSlide, physicalSlide, pokemonCount, reorderPokemon, reorderPlans]);
 
   // Scroll to top of slide content when navigating between slides
+  // Skip during walkthrough — the overlay handles its own scroll positioning
   useEffect(() => {
+    if (walkthroughActive) return;
     window.scrollTo({ top: 0, behavior: "instant" });
-  }, [physicalSlide]);
+  }, [physicalSlide, walkthroughActive]);
 
   const handleCreateOwn = useCallback(() => {
     handleReset();
