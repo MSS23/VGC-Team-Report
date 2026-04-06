@@ -60,11 +60,13 @@ function ReportDropdown({
   loading,
   onSelect,
   variant,
+  disabledId,
 }: {
   reports: UserReport[];
   loading: boolean;
   onSelect: (shareId: string) => void;
   variant: "blue" | "orange";
+  disabledId?: string | null;
 }) {
   const focusClasses = variant === "blue"
     ? "focus:ring-blue-500/40 focus:border-blue-500"
@@ -85,8 +87,8 @@ function ReportDropdown({
           {loading ? "Loading reports..." : reports.length === 0 ? "No reports yet" : "Select from my reports..."}
         </option>
         {reports.map((r) => (
-          <option key={r.id} value={r.id}>
-            {getReportLabel(r)}
+          <option key={r.id} value={r.id} disabled={r.id === disabledId}>
+            {getReportLabel(r)}{r.id === disabledId ? " (already selected)" : ""}
           </option>
         ))}
       </select>
@@ -228,9 +230,11 @@ export function CompareContent() {
   const [compared, setCompared] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [selectedIdA, setSelectedIdA] = useState<string | null>(null);
+  const [selectedIdB, setSelectedIdB] = useState<string | null>(null);
   const { reports, loading: reportsLoading, isSignedIn } = useMyReports();
 
-  const handleSelectReport = useCallback(async (shareId: string, setter: (v: string) => void) => {
+  const handleSelectReport = useCallback(async (shareId: string, setter: (v: string) => void, setSelectedId: (id: string) => void) => {
     setFetchError(null);
     setFetching(true);
     try {
@@ -239,6 +243,7 @@ export function CompareContent() {
       const data = await res.json();
       if (!data.paste) throw new Error("Report has no team data");
       setter(data.paste);
+      setSelectedId(shareId);
       setCompared(false);
     } catch (e) {
       setFetchError(e instanceof Error ? e.message : "Failed to load report");
@@ -314,6 +319,8 @@ export function CompareContent() {
     setFetchError(null);
     setPasteA("");
     setPasteB("");
+    setSelectedIdA(null);
+    setSelectedIdB(null);
   };
 
   return (
@@ -339,13 +346,14 @@ export function CompareContent() {
                   <ReportDropdown
                     reports={reports}
                     loading={reportsLoading}
-                    onSelect={(id) => handleSelectReport(id, setPasteA)}
+                    onSelect={(id) => handleSelectReport(id, setPasteA, setSelectedIdA)}
                     variant="blue"
+                    disabledId={selectedIdB}
                   />
                 )}
                 <textarea
                   value={pasteA}
-                  onChange={(e) => { setPasteA(e.target.value); setCompared(false); }}
+                  onChange={(e) => { setPasteA(e.target.value); setSelectedIdA(null); setCompared(false); }}
                   placeholder={"Incineroar @ Sitrus Berry\nAbility: Intimidate\nEVs: 252 HP / 4 Atk / 252 Spe\n- Fake Out\n...\n\nOr paste a URL:\nhttps://pokepast.es/abc123"}
                   className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary/40 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 resize-y font-[family-name:var(--font-mono)]"
                   spellCheck={false}
@@ -357,13 +365,14 @@ export function CompareContent() {
                   <ReportDropdown
                     reports={reports}
                     loading={reportsLoading}
-                    onSelect={(id) => handleSelectReport(id, setPasteB)}
+                    onSelect={(id) => handleSelectReport(id, setPasteB, setSelectedIdB)}
                     variant="orange"
+                    disabledId={selectedIdA}
                   />
                 )}
                 <textarea
                   value={pasteB}
-                  onChange={(e) => { setPasteB(e.target.value); setCompared(false); }}
+                  onChange={(e) => { setPasteB(e.target.value); setSelectedIdB(null); setCompared(false); }}
                   placeholder={"Flutter Mane @ Choice Specs\nAbility: Protosynthesis\nEVs: 252 SpA / 252 Spe\n- Moonblast\n...\n\nOr paste a URL:\nhttps://pokepast.es/xyz789"}
                   className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary/40 focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500 resize-y font-[family-name:var(--font-mono)]"
                   spellCheck={false}
