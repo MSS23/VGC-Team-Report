@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { cacheDel, CacheKeys } from "@/lib/cache";
 import { extractSpecies } from "@/lib/utils/extract-species";
+import { apiGuard } from "@/lib/security/api-guard";
 import { NextResponse } from "next/server";
 
 /**
@@ -9,7 +10,10 @@ import { NextResponse } from "next/server";
  * Returns reports where the current user is a collaborator (not owner).
  * Includes both pending and accepted invites with status field.
  */
-export async function GET() {
+export async function GET(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "collaborations-read", max: 30 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
@@ -57,6 +61,9 @@ export async function GET() {
  * Body: { shareId: string, action: 'accept' | 'decline' }
  */
 export async function POST(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "collaborations-write", max: 20 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });

@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
 import { auth } from "@clerk/nextjs/server";
@@ -14,13 +14,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`share-get:${ip}`, 60, 60_000)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        { status: 429 }
-      );
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "share-get", max: 60 } });
+    if (guard) return guard;
 
     const { id: rawId } = await params;
     const idResult = IdSchema.safeParse(rawId);

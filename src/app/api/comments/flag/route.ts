@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -13,10 +13,8 @@ const FlagBody = z.object({
 
 export async function POST(request: Request) {
   try {
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`flag:${ip}`, 10, 60_000)) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "flag", max: 10 } });
+    if (guard) return guard;
 
     const raw = await request.json();
     const parsed = FlagBody.safeParse(raw);

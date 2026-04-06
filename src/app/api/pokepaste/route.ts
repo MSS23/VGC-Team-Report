@@ -1,3 +1,4 @@
+import { apiGuard } from "@/lib/security/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -19,6 +20,9 @@ const PokePasteUrlSchema = z.string().url().refine(
  * GET /api/pokepaste?url=https://pokepast.es/abc123
  */
 export async function GET(request: NextRequest) {
+  const guard = await apiGuard(request, { rateLimit: { key: "pokepaste", max: 20 } });
+  if (guard) return guard;
+
   const url = request.nextUrl.searchParams.get("url");
 
   if (!url) {

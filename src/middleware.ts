@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getCorsHeaders, isAllowedOrigin } from '@/lib/security/cors'
 import { setCsrfCookie, validateCsrf } from '@/lib/security/csrf'
+import { isBlockedBot, isSuspiciousRequest } from '@/lib/security/bot-detection'
 
 const CANONICAL_HOST = 'pokemonvgcteamreport.com';
 
@@ -13,6 +14,27 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
   if (pathname === '/api/discord') {
     return NextResponse.next();
   }
+
+  // ── Bot detection: block known scrapers and suspicious requests ──
+  // Skip for cron/webhook routes (authenticated by secrets, not browsers)
+  const isCronOrWebhook = pathname.startsWith('/api/cron') || pathname.startsWith('/api/webhooks') || pathname === '/api/keep-alive';
+  if (!isCronOrWebhook) {
+    const userAgent = request.headers.get('user-agent') ?? '';
+    if (isBlockedBot(userAgent)) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 },
+      );
+    }
+    // Additional heuristics for API routes
+    if (pathname.startsWith('/api') && isSuspiciousRequest(request)) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 },
+      );
+    }
+  }
+
   const host = request.headers.get('host') ?? '';
   const isApiRoute = pathname.startsWith('/api');
 

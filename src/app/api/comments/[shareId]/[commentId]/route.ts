@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { apiGuard } from "@/lib/security/api-guard";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -11,6 +12,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ shareId: string; commentId: string }> },
 ) {
+  const guard = await apiGuard(request, { rateLimit: { key: "comment-delete", max: 10 } });
+  if (guard) return guard;
+
   try {
     const { shareId, commentId } = await params;
     const raw = await request.json();

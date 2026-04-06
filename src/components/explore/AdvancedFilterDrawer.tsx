@@ -366,7 +366,7 @@ export function AdvancedFilterDrawer({
           role="region"
           aria-label="Advanced filters"
           id="advanced-filter-drawer"
-          className="absolute top-full left-0 right-0 mt-1 bg-background/95 backdrop-blur-lg border border-border rounded-xl shadow-lg z-40"
+          className="absolute top-full left-0 right-0 mt-1 bg-background/95 backdrop-blur-lg border border-border rounded-xl shadow-lg z-50"
           initial={desktopEnter}
           animate={desktopAnimate}
           exit={desktopExit}

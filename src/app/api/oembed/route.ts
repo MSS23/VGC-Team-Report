@@ -1,7 +1,11 @@
 import { getDb } from "@/lib/db";
+import { apiGuard } from "@/lib/security/api-guard";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "oembed", max: 60 } });
+  if (guard) return guard;
+
   const url = new URL(request.url);
   const targetUrl = url.searchParams.get("url");
   if (!targetUrl) {

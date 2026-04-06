@@ -1,11 +1,15 @@
 import { getDb } from "@/lib/db";
+import { apiGuard } from "@/lib/security/api-guard";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { NextResponse } from "next/server";
 
 // Spotlight report ID — set by admin
 const SPOTLIGHT_ID = "TRjVuD8B";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "spotlight", max: 60 } });
+  if (guard) return guard;
+
   try {
     const sql = getDb();
     const rows = await sql`

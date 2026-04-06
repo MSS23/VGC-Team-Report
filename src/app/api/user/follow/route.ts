@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -8,6 +9,9 @@ const FollowBody = z.object({ creatorName: z.string().min(1) });
 
 // GET: list followed creators, or check single creator with ?creator=X
 export async function GET(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "follow-read", max: 60 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -33,6 +37,9 @@ export async function GET(request: Request) {
 
 // POST: follow a creator
 export async function POST(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "follow-write", max: 20 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -57,6 +64,9 @@ export async function POST(request: Request) {
 
 // DELETE: unfollow a creator
 export async function DELETE(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "follow-write", max: 20 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

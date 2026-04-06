@@ -14,6 +14,8 @@ interface WalkthroughOverlayProps {
   onPrev?: () => void;
   onSkip: () => void;
   guidePokemon?: string;
+  /** When true, user cannot skip — must complete all steps */
+  mandatory?: boolean;
 }
 
 interface Rect {
@@ -37,6 +39,7 @@ export function WalkthroughOverlay({
   onPrev,
   onSkip,
   guidePokemon,
+  mandatory = false,
 }: WalkthroughOverlayProps) {
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
@@ -65,13 +68,13 @@ export function WalkthroughOverlay({
       if (!NAV_KEYS.has(e.key)) return;
       e.preventDefault();
       e.stopImmediatePropagation();
-      if (e.key === "Escape") onSkip();
+      if (e.key === "Escape" && !mandatory) onSkip();
       else if (["Enter", " ", "ArrowRight", "ArrowDown"].includes(e.key)) onNext();
       else if (["ArrowLeft", "ArrowUp"].includes(e.key)) onPrev?.();
     };
     window.addEventListener("keydown", handleKey, { capture: true });
     return () => window.removeEventListener("keydown", handleKey, { capture: true });
-  }, [onNext, onSkip, onPrev]);
+  }, [onNext, onSkip, onPrev, mandatory]);
 
   // Measure target and position tooltip — reads DOM directly, no stale state
   const positionTooltip = useCallback(() => {
@@ -222,7 +225,7 @@ export function WalkthroughOverlay({
   return createPortal(
     <>
       {/* Backdrop */}
-      <div style={{ position: "fixed", inset: 0, zIndex: 9998 }} onClick={onSkip} />
+      <div style={{ position: "fixed", inset: 0, zIndex: 9998 }} onClick={mandatory ? undefined : onSkip} />
 
       {/* Spotlight */}
       <div
@@ -259,16 +262,18 @@ export function WalkthroughOverlay({
         className="bg-surface rounded-2xl border border-border shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close */}
-        <button
-          onClick={onSkip}
-          aria-label="Close"
-          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-[0.92] transition-all cursor-pointer z-10"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+        {/* Close — hidden during mandatory first-time tutorial */}
+        {!mandatory && (
+          <button
+            onClick={onSkip}
+            aria-label="Close"
+            className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-[0.92] transition-all cursor-pointer z-10"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
 
         {/* Content */}
         <div className="p-5 pr-10">
@@ -318,7 +323,7 @@ export function WalkthroughOverlay({
             )}
           </div>
           <div className="flex items-center gap-2">
-            {!isLastStep && (
+            {!isLastStep && !mandatory && (
               <button
                 onClick={onSkip}
                 className="text-xs font-medium text-text-tertiary hover:text-text-secondary px-3 py-2 rounded-lg active:scale-[0.95] transition-all cursor-pointer"

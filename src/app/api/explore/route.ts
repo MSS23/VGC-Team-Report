@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
@@ -10,20 +10,16 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`explore:${ip}`, 30, 60_000)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        { status: 429 },
-      );
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "explore", max: 30 } });
+    if (guard) return guard;
 
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const url = new URL(request.url);
     const cursor = url.searchParams.get("cursor");
     const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") ?? "12", 10) || 12, 1), 50);
     const q = url.searchParams.get("q")?.trim() ?? "";
-    const sortParam = url.searchParams.get("sort") ?? "newest";
-    const sort = ["updated", "popular", "views"].includes(sortParam) ? sortParam : "newest";
+    const sortParam = url.searchParams.get("sort") ?? "popular";
+    const sort = ["newest", "updated", "views"].includes(sortParam) ? sortParam : "popular";
     const searchType = url.searchParams.get("searchType") ?? "all";
     const filterRegulation = url.searchParams.get("regulation") ?? "";
     const filterEventType = url.searchParams.get("eventType") ?? "";

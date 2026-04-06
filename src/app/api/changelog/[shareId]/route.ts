@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -15,10 +15,8 @@ export async function GET(
 ) {
   try {
     const { shareId } = await params;
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`changelog:${ip}`, 30, 60_000)) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "changelog", max: 30 } });
+    if (guard) return guard;
 
     const url = new URL(request.url);
     const key = url.searchParams.get("key");

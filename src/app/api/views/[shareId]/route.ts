@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { SeverityNumber } from "@opentelemetry/api-logs";
 import { after } from "next/server";
@@ -19,10 +19,8 @@ export async function POST(
 ) {
   try {
     const { shareId } = await params;
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`views:${ip}`, 60, 60_000)) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "views", max: 60 } });
+    if (guard) return guard;
 
     const raw = await request.json();
     const parsed = ViewBody.safeParse(raw);

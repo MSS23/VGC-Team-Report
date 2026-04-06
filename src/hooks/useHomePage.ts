@@ -245,6 +245,7 @@ export function useHomePage() {
     skip: walkthroughSkip,
     start: startWalkthrough,
     guidePokemon: walkthroughGuidePokemon,
+    isFirstTime: walkthroughIsFirstTime,
   } = useWalkthrough({
     enabled: !!analysis && !presentationMode,
     pokemonNames,
@@ -442,7 +443,7 @@ export function useHomePage() {
     // Walkthrough
     walkthroughActive, walkthroughStep, walkthroughStepIndex,
     walkthroughTotalSteps, walkthroughNext, walkthroughPrev, walkthroughSkip,
-    startWalkthrough, walkthroughGuidePokemon,
+    startWalkthrough, walkthroughGuidePokemon, walkthroughIsFirstTime,
 
     // Undo / redo
     canUndo: undoRedo.canUndo,

@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { createNotification } from "@/lib/notifications";
 import { cacheDel, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
@@ -66,10 +66,8 @@ export async function POST(
 ) {
   try {
     const { id: shareId } = await params;
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`collab-add:${ip}`, 10, 60_000)) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "collab-add", max: 10 } });
+    if (guard) return guard;
 
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });

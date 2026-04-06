@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { notifyFollowers } from "@/lib/notifications";
 import { detectChangedSections } from "@/lib/utils/diff-state";
 import { cacheInvalidatePrefix, cacheDel, CacheKeys } from "@/lib/cache";
@@ -52,23 +52,11 @@ function generateEditToken(): string {
 
 export async function POST(request: Request) {
   try {
-    // Rate limit by IP
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`share:${ip}`, 20, 60_000)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        { status: 429 }
-      );
-    }
+    // Rate limit + body size guard
+    const guard = await apiGuard(request, { rateLimit: { key: "share", max: 20 }, maxBodySize: MAX_BODY_SIZE });
+    if (guard) return guard;
 
-    // Check content length
-    const contentLength = parseInt(request.headers.get("content-length") ?? "0", 10);
-    if (contentLength > MAX_BODY_SIZE) {
-      return NextResponse.json(
-        { error: "Request too large" },
-        { status: 413 }
-      );
-    }
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 
     const raw = await request.json();
     const parsed = ShareBodySchema.safeParse(raw);
@@ -143,6 +131,20 @@ export async function POST(request: Request) {
         }
       }
 
+      // Require tags to publish — reports without tags cannot be made public
+      if (effectiveIsPublic) {
+        const tags = (state.tags ?? {}) as Record<string, unknown>;
+        const hasRegulation = !!tags.regulation;
+        const hasEventType = !!tags.eventType;
+        const hasArchetype = Array.isArray(tags.archetype) && tags.archetype.length > 0;
+        if (!hasRegulation && !hasEventType && !hasArchetype) {
+          return NextResponse.json(
+            { error: "Cannot publish to the public as there are no tags on this report." },
+            { status: 400 }
+          );
+        }
+      }
+
       const rows = await sql`
         UPDATE shares
         SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(),
@@ -207,6 +209,20 @@ export async function POST(request: Request) {
         { error: "Sign in to share your team report" },
         { status: 401 }
       );
+    }
+
+    // Require tags to publish new reports
+    if (isPublic) {
+      const tags = (state.tags ?? {}) as Record<string, unknown>;
+      const hasRegulation = !!tags.regulation;
+      const hasEventType = !!tags.eventType;
+      const hasArchetype = Array.isArray(tags.archetype) && tags.archetype.length > 0;
+      if (!hasRegulation && !hasEventType && !hasArchetype) {
+        return NextResponse.json(
+          { error: "Cannot publish to the public as there are no tags on this report." },
+          { status: 400 }
+        );
+      }
     }
 
     await sql`

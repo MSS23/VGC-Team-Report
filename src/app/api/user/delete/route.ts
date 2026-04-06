@@ -1,9 +1,13 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { apiGuard } from "@/lib/security/api-guard";
 import { cacheInvalidatePrefix } from "@/lib/cache";
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "account-delete", max: 2 } });
+  if (guard) return guard;
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

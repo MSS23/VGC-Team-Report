@@ -121,7 +121,7 @@ export function ExploreFilters({
 
   const hasActiveFilters =
     query !== "" ||
-    sort !== "newest" ||
+    sort !== "popular" ||
     searchCategory !== "all" ||
     regulation !== "" ||
     eventType !== "" ||
@@ -152,7 +152,6 @@ export function ExploreFilters({
     onTournamentModeChange(next);
     if (next) {
       if (!placement) onPlacementChange("Top 8");
-      setDrawerOpen(true);
     } else {
       onPlacementChange("");
       onEventTypeChange("");
@@ -173,7 +172,7 @@ export function ExploreFilters({
   }, [query]);
 
   return (
-    <div className={`sticky top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/80 backdrop-blur-lg border-b border-border/50 mb-6 space-y-3 relative${tournamentMode ? " border-t-2 border-t-amber-500/50" : ""}`}>
+    <div className={`sticky top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/80 backdrop-blur-lg border-b border-border/50 mb-6 space-y-3 relative overflow-visible${tournamentMode ? " border-t-2 border-t-amber-500/50" : ""}`}>
       {/* Search category tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         {CATEGORIES.map((cat) => (

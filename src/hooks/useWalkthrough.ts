@@ -170,6 +170,8 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
   const creatorModeBeforeTour = useRef<boolean | null>(null);
+  /** True when the tour was auto-triggered for the first time (mandatory — no skip) */
+  const [isFirstTime, setIsFirstTime] = useState(false);
 
   // Pick a random pokemon index (stable per session)
   const [randomPokemonIndex] = useState(() =>
@@ -344,6 +346,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
         creatorModeBeforeTour.current = creatorMode ?? false;
         onCreatorModeChange(true);
       }
+      setIsFirstTime(true);
       setIsActive(true);
       setCurrentStepIndex(0);
     }, 400);
@@ -376,6 +379,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
       creatorModeBeforeTour.current = creatorMode ?? false;
       onCreatorModeChange(true);
     }
+    setIsFirstTime(false);
     setIsActive(true);
   }, [isSharedView, onCreatorModeChange, creatorMode]);
 
@@ -389,5 +393,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     skip,
     start,
     guidePokemon: randomPokemonName,
+    /** True when this is the first-time auto-triggered tour (mandatory — no skip allowed) */
+    isFirstTime,
   };
 }

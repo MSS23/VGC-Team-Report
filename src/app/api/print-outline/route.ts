@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { NextResponse } from "next/server";
 
 /**
@@ -9,10 +9,8 @@ import { NextResponse } from "next/server";
  * Structure matches the team's matchup plan layout.
  */
 export async function GET(request: Request) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (isRateLimited(`print:${ip}`, 10, 60_000)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  }
+  const guard = await apiGuard(request, { rateLimit: { key: "print", max: 10 } });
+  if (guard) return guard;
 
   const url = new URL(request.url);
   const shareId = url.searchParams.get("id");

@@ -19,7 +19,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { ReactionBar } from "@/components/social/ReactionBar";
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
-import { SaveButton } from "@/components/social/SaveButton";
 const ClaimButton = dynamic(() => import("@/components/social/ClaimButton").then(m => ({ default: m.ClaimButton })));
 const EditChangelog = dynamic(() => import("@/components/social/EditChangelog").then(m => ({ default: m.EditChangelog })));
 const CollaboratorPanel = dynamic(() => import("@/components/social/CollaboratorPanel").then(m => ({ default: m.CollaboratorPanel })));
@@ -160,6 +159,7 @@ function HomeContent() {
     walkthroughSkip,
     startWalkthrough,
     walkthroughGuidePokemon,
+    walkthroughIsFirstTime,
     canUndo,
     canRedo,
     handleUndo,
@@ -786,7 +786,32 @@ function HomeContent() {
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             {creatorName && <CreatorLink name={creatorName} />}
             <ViewCount count={viewCount} />
-            <SaveButton shareId={activeShareId} />
+            {isOwner && (
+              <button
+                type="button"
+                onClick={() => handleSetPublic(!isPublic)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 transition-all cursor-pointer ${
+                  isPublic
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                    : "bg-surface border-border text-text-tertiary hover:border-amber-500/30 hover:text-amber-500"
+                }`}
+                title={isPublic ? "Listed on Explore — click to make private" : "Private — click to publish on Explore"}
+              >
+                {isPublic ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="2" y1="12" x2="22" y2="12" />
+                    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                )}
+                {isPublic ? "Public" : "Private"}
+              </button>
+            )}
             <button
               type="button"
               onClick={handleForkReport}
@@ -829,6 +854,7 @@ function HomeContent() {
           onPrev={walkthroughPrev}
           onSkip={walkthroughSkip}
           guidePokemon={walkthroughGuidePokemon}
+          mandatory={walkthroughIsFirstTime}
         />
       )}
 
@@ -856,6 +882,7 @@ function HomeContent() {
             handleSetPublic(isPublic); // trigger save to persist allowComments
           }}
           onClose={() => setShowShareModal(false)}
+          tags={tags}
         />
       )}
 

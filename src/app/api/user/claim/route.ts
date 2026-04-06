@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -9,6 +10,9 @@ const ClaimBody = z.object({
 });
 
 export async function POST(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "claim", max: 5 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) {

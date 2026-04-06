@@ -15,6 +15,7 @@ interface ShareModalProps {
   allowComments: boolean;
   onToggleComments: (v: boolean) => void;
   onClose: () => void;
+  tags?: { regulation?: string; eventType?: string; archetype?: string[] };
 }
 
 export function ShareModal({
@@ -29,10 +30,28 @@ export function ShareModal({
   allowComments,
   onToggleComments,
   onClose,
+  tags,
 }: ShareModalProps) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [discordCopied, setDiscordCopied] = useState(false);
   const [publishPromptDismissed, setPublishPromptDismissed] = useState(false);
+  const [tagError, setTagError] = useState(false);
+
+  const hasTags = !!(tags?.regulation || tags?.eventType || (tags?.archetype && tags.archetype.length > 0));
+
+  // Clear error if tags are added while modal is open
+  useEffect(() => {
+    if (hasTags && tagError) setTagError(false);
+  }, [hasTags, tagError]);
+
+  const handleTogglePublic = (v: boolean) => {
+    if (v && !hasTags) {
+      setTagError(true);
+      return;
+    }
+    setTagError(false);
+    onTogglePublic(v);
+  };
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -231,7 +250,7 @@ export function ShareModal({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => onTogglePublic(true)}
+                onClick={() => handleTogglePublic(true)}
                 className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors cursor-pointer"
               >
                 Publish
@@ -251,7 +270,7 @@ export function ShareModal({
         <div className="px-6 py-4 border-t border-border">
           <button
             type="button"
-            onClick={() => isOwner && onTogglePublic(!isPublic)}
+            onClick={() => isOwner && handleTogglePublic(!isPublic)}
             disabled={!isOwner}
             className={`flex items-center gap-3 w-full text-left group ${isOwner ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
           >
@@ -287,6 +306,20 @@ export function ShareModal({
               </span>
             )}
           </button>
+
+          {/* Tag error message */}
+          {tagError && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 flex-shrink-0 mt-0.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <p className="text-xs font-semibold text-red-600 dark:text-red-400">
+                Cannot publish to the public as there are no tags on this report. Add a regulation, event type, or archetype tag first.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Comments toggle */}

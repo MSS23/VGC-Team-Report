@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { isRateLimitedAsync } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/utils/sanitize";
 import { containsBlockedWords } from "@/lib/utils/word-filter";
 import { createLinearIssue } from "@/lib/linear";
@@ -83,8 +83,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Sign in to submit feedback" }, { status: 401 });
     }
 
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`feedback:${userId}`, 3, 60_000)) {
+    if (await isRateLimitedAsync(`feedback:${userId}`, 3, 60_000)) {
       return NextResponse.json({ error: "Too many submissions. Please wait a minute." }, { status: 429 });
     }
 

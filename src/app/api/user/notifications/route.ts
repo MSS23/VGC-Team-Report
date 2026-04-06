@@ -1,11 +1,15 @@
 import { getDb } from "@/lib/db";
+import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 /** GET: Fetch notifications for the signed-in user */
-export async function GET() {
+export async function GET(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "notifications-read", max: 60 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -41,6 +45,9 @@ export async function GET() {
 
 /** PATCH: Mark notifications as read */
 export async function PATCH(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "notifications-write", max: 30 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

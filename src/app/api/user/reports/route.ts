@@ -1,9 +1,13 @@
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
+import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+  const guard = await apiGuard(request, { rateLimit: { key: "user-reports", max: 30 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) {

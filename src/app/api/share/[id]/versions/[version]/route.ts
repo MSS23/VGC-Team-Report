@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -11,9 +12,12 @@ const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
  * Only accessible by the owner or collaborators.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string; version: string }> }
 ) {
+  const guard = await apiGuard(request, { rateLimit: { key: "version-detail", max: 30 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) {

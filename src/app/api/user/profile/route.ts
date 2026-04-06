@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { apiGuard } from "@/lib/security/api-guard";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -20,7 +21,10 @@ const ProfileBody = z.object({
 });
 
 // GET: fetch current user's creator profile
-export async function GET() {
+export async function GET(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "profile-read", max: 30 } });
+  if (guard) return guard;
+
   try {
     const user = await currentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -51,6 +55,9 @@ export async function GET() {
 
 // PUT: update creator profile
 export async function PUT(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "profile-write", max: 10 } });
+  if (guard) return guard;
+
   try {
     const user = await currentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,12 +1,16 @@
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 // GET: list saved reports
-export async function GET() {
+export async function GET(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "saved-read", max: 60 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -48,6 +52,9 @@ const SaveBody = z.object({ shareId: z.string().min(1) });
 
 // POST: save a report
 export async function POST(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "saved-write", max: 20 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -80,6 +87,9 @@ export async function POST(request: Request) {
 
 // DELETE: unsave a report
 export async function DELETE(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "saved-write", max: 20 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) {

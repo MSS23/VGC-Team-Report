@@ -1,4 +1,4 @@
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -8,10 +8,8 @@ import { NextResponse } from "next/server";
  */
 export async function GET(request: Request) {
   try {
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`user-search:${ip}`, 20, 60_000)) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "user-search", max: 20 } });
+    if (guard) return guard;
 
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });

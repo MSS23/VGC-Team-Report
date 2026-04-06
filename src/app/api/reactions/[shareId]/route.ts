@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { createNotification } from "@/lib/notifications";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
@@ -19,10 +19,8 @@ export async function GET(
 ) {
   try {
     const { shareId } = await params;
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`reactions-read:${ip}`, 60, 60_000)) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "reactions-read", max: 60 } });
+    if (guard) return guard;
     const sessionId = new URL(request.url).searchParams.get("sessionId") ?? "";
     const sql = getDb();
 
@@ -54,10 +52,8 @@ export async function POST(
 ) {
   try {
     const { shareId } = await params;
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`reactions:${ip}`, 30, 60_000)) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "reactions", max: 30 } });
+    if (guard) return guard;
 
     const raw = await request.json();
     const parsed = ToggleBody.safeParse(raw);

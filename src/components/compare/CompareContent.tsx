@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { lookupPokemon } from "@/lib/data/pokemon";
 import { calculateAllStats } from "@/lib/analysis/stat-calculator";
@@ -14,6 +15,84 @@ import { PageFooter } from "@/components/layout/PageFooter";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { PokemonType } from "@/lib/types/pokemon";
+
+interface UserReport {
+  id: string;
+  species: string[];
+  tournamentName?: string;
+  creatorName?: string;
+  placement?: string;
+  teamSummary?: string;
+}
+
+function useMyReports() {
+  const { isSignedIn } = useAuth();
+  const [reports, setReports] = useState<UserReport[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isSignedIn) { setReports([]); return; }
+    setLoading(true);
+    fetch("/api/user/reports")
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((d) => setReports(d.reports ?? []))
+      .catch(() => setReports([]))
+      .finally(() => setLoading(false));
+  }, [isSignedIn]);
+
+  return { reports, loading, isSignedIn };
+}
+
+function getReportLabel(r: UserReport): string {
+  const parts: string[] = [];
+  if (r.tournamentName) parts.push(r.tournamentName);
+  if (r.creatorName) parts.push(r.creatorName);
+  if (r.placement) parts.push(r.placement);
+  if (parts.length === 0 && r.species.length > 0) {
+    parts.push(r.species.slice(0, 3).join(" / "));
+  }
+  if (parts.length === 0) parts.push(r.id);
+  return parts.join(" — ");
+}
+
+function ReportDropdown({
+  reports,
+  loading,
+  onSelect,
+  variant,
+}: {
+  reports: UserReport[];
+  loading: boolean;
+  onSelect: (shareId: string) => void;
+  variant: "blue" | "orange";
+}) {
+  const focusClasses = variant === "blue"
+    ? "focus:ring-blue-500/40 focus:border-blue-500"
+    : "focus:ring-orange-500/40 focus:border-orange-500";
+
+  return (
+    <div className="mb-2">
+      <select
+        className={`w-full px-3 py-2 bg-surface border-2 border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 ${focusClasses} cursor-pointer`}
+        defaultValue=""
+        onChange={(e) => {
+          if (e.target.value) onSelect(e.target.value);
+          e.target.value = "";
+        }}
+        disabled={loading || reports.length === 0}
+      >
+        <option value="" disabled>
+          {loading ? "Loading reports..." : reports.length === 0 ? "No reports yet" : "Select from my reports..."}
+        </option>
+        {reports.map((r) => (
+          <option key={r.id} value={r.id}>
+            {getReportLabel(r)}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 const ALL_TYPES: PokemonType[] = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -149,6 +228,24 @@ export function CompareContent() {
   const [compared, setCompared] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const { reports, loading: reportsLoading, isSignedIn } = useMyReports();
+
+  const handleSelectReport = useCallback(async (shareId: string, setter: (v: string) => void) => {
+    setFetchError(null);
+    setFetching(true);
+    try {
+      const res = await fetch(`/api/share/${shareId}`);
+      if (!res.ok) throw new Error("Failed to load report");
+      const data = await res.json();
+      if (!data.paste) throw new Error("Report has no team data");
+      setter(data.paste);
+      setCompared(false);
+    } catch (e) {
+      setFetchError(e instanceof Error ? e.message : "Failed to load report");
+    } finally {
+      setFetching(false);
+    }
+  }, []);
 
   const teamA = useMemo(() => compared ? analyzePaste(pasteA) : null, [pasteA, compared]);
   const teamB = useMemo(() => compared ? analyzePaste(pasteB) : null, [pasteB, compared]);
@@ -238,6 +335,14 @@ export function CompareContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2 block">Team A</label>
+                {isSignedIn && (
+                  <ReportDropdown
+                    reports={reports}
+                    loading={reportsLoading}
+                    onSelect={(id) => handleSelectReport(id, setPasteA)}
+                    variant="blue"
+                  />
+                )}
                 <textarea
                   value={pasteA}
                   onChange={(e) => { setPasteA(e.target.value); setCompared(false); }}
@@ -248,6 +353,14 @@ export function CompareContent() {
               </div>
               <div>
                 <label className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">Team B</label>
+                {isSignedIn && (
+                  <ReportDropdown
+                    reports={reports}
+                    loading={reportsLoading}
+                    onSelect={(id) => handleSelectReport(id, setPasteB)}
+                    variant="orange"
+                  />
+                )}
                 <textarea
                   value={pasteB}
                   onChange={(e) => { setPasteB(e.target.value); setCompared(false); }}

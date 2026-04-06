@@ -33,7 +33,7 @@ export interface ExploreUrlSyncResult extends FilterState {
 
 const DEFAULTS: FilterState = {
   query: "",
-  sort: "newest",
+  sort: "popular",
   searchCategory: "all",
   regulation: "",
   eventType: "",
@@ -75,7 +75,7 @@ export function buildUrlSearch(filters: FilterState): string {
   const params = new URLSearchParams();
 
   if (filters.query) params.set("q", filters.query);
-  if (filters.sort !== DEFAULTS.sort) params.set("sort", filters.sort);
+  if (filters.sort !== "popular") params.set("sort", filters.sort);
   if (filters.searchCategory !== DEFAULTS.searchCategory) params.set("searchType", filters.searchCategory);
   if (filters.regulation) params.set("regulation", filters.regulation);
   if (filters.eventType) params.set("eventType", filters.eventType);

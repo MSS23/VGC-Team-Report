@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { NextResponse } from "next/server";
 
@@ -10,10 +10,8 @@ export async function GET(
   try {
     const { name } = await params;
     const creatorName = decodeURIComponent(name);
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`creator:${ip}`, 30, 60_000)) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "creator", max: 30 } });
+    if (guard) return guard;
 
     const sql = getDb();
 

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
-import { useUser } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
@@ -55,79 +54,6 @@ function CardSprite({ species }: { species: string }) {
       loading="lazy"
       onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
     />
-  );
-}
-
-function CardSaveButton({ shareId }: { shareId: string }) {
-  const { user } = useUser();
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    fetch("/api/user/saved")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.reports?.some((r: { id: string }) => r.id === shareId)) {
-          setSaved(true);
-        }
-      })
-      .catch(() => {});
-  }, [user, shareId]);
-
-  const toggle = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user || loading) return;
-    setLoading(true);
-    try {
-      if (saved) {
-        await fetch("/api/user/saved", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ shareId }),
-        });
-        setSaved(false);
-      } else {
-        await fetch("/api/user/saved", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ shareId }),
-        });
-        setSaved(true);
-      }
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
-  }, [user, loading, saved, shareId]);
-
-  if (!user) return null;
-
-  return (
-    <button
-      type="button"
-      onClick={toggle}
-      disabled={loading}
-      className="inline-flex items-center gap-0.5 text-text-tertiary hover:text-accent transition-colors cursor-pointer"
-      title={saved ? "Unsave report" : "Save report"}
-    >
-      <svg
-        width="11"
-        height="11"
-        viewBox="0 0 24 24"
-        fill={saved ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={saved ? "text-accent" : ""}
-      >
-        <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-      </svg>
-      {saved && <span className="text-[10px] font-bold text-accent">Saved</span>}
-    </button>
   );
 }
 
@@ -272,15 +198,13 @@ export function ReportCard({ report }: { report: ExploreReport }) {
         {/* Social indicators + timestamp */}
         <div className="flex items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-2.5">
-            {/* Likes */}
-            {likeCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[10px]">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="text-red-500">
-                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-                </svg>
-                <span className="font-bold text-text-secondary">{likeCount}</span>
-              </span>
-            )}
+            {/* Upvotes */}
+            <span className="inline-flex items-center gap-1 text-[10px]">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill={likeCount > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={likeCount > 0 ? "text-red-500" : "text-text-tertiary"}>
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+              </svg>
+              <span className={`font-bold ${likeCount > 0 ? "text-text-secondary" : "text-text-tertiary"}`}>{likeCount}</span>
+            </span>
             {/* Comments */}
             {(report.commentCount ?? 0) > 0 && (
               <span className="inline-flex items-center gap-0.5 text-text-tertiary">
@@ -302,8 +226,6 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                 </span>
               </span>
             )}
-            {/* Save */}
-            <CardSaveButton shareId={report.id} />
           </div>
           <span className="text-[10px] text-text-tertiary font-medium uppercase tracking-wider">
             {relativeTime(report.createdAt)}

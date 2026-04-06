@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -14,6 +15,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ shareId: string }> },
 ) {
+  const guard = await apiGuard(request, { rateLimit: { key: "report-update", max: 20 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -68,9 +72,12 @@ export async function PATCH(
 
 // DELETE: soft-delete a report you own (moves to trash, auto-purged after 30 days)
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ shareId: string }> },
 ) {
+  const guard = await apiGuard(request, { rateLimit: { key: "report-delete", max: 10 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) {

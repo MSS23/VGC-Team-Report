@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { isRateLimited } from "@/lib/rate-limit";
+import { apiGuard } from "@/lib/security/api-guard";
 import { containsBlockedWords } from "@/lib/utils/word-filter";
 import { escapeHtml } from "@/lib/utils/sanitize";
 import { createNotification } from "@/lib/notifications";
@@ -21,10 +21,8 @@ export async function GET(
 ) {
   try {
     const { shareId } = await params;
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`comments-read:${ip}`, 60, 60_000)) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "comments-read", max: 60 } });
+    if (guard) return guard;
     const url = new URL(request.url);
     const cursor = url.searchParams.get("cursor");
     const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "20", 10) || 20, 50);
@@ -75,10 +73,8 @@ export async function POST(
 ) {
   try {
     const { shareId } = await params;
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (isRateLimited(`comments:${ip}`, 5, 60_000)) {
-      return NextResponse.json({ error: "Too many comments. Please wait." }, { status: 429 });
-    }
+    const guard = await apiGuard(request, { rateLimit: { key: "comments", max: 5 } });
+    if (guard) return guard;
 
     const raw = await request.json();
     const parsed = CommentBody.safeParse(raw);

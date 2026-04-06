@@ -56,7 +56,7 @@ function ExploreInner() {
       const params = new URLSearchParams();
       if (cursor) params.set("cursor", cursor);
       if (query) params.set("q", query);
-      if (sort !== "newest") params.set("sort", sort);
+      if (sort !== "popular") params.set("sort", sort);
       if (searchCategory !== "all") params.set("searchType", searchCategory);
       if (regulation) params.set("regulation", regulation);
       if (eventType) params.set("eventType", eventType);

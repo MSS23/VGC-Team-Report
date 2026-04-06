@@ -1,12 +1,16 @@
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
+import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const guard = await apiGuard(request, { rateLimit: { key: "collection-detail", max: 60 } });
+  if (guard) return guard;
+
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
