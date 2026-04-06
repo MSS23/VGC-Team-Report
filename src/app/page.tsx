@@ -242,11 +242,29 @@ function HomeContent() {
   // ── PDF Export state ─────────────────────────────────────────
   const [isPdfPrinting, setIsPdfPrinting] = useState(false);
   const [exportMode, setExportMode] = useState<ExportMode>("all-slides");
+  const [exportTheme, setExportTheme] = useState<"light" | "dark">(darkMode ? "dark" : "light");
+  const [showExportThemePicker, setShowExportThemePicker] = useState(false);
+  const [pendingExportMode, setPendingExportMode] = useState<ExportMode | null>(null);
 
   const handleExportPdf = useCallback((mode: ExportMode = "all-slides") => {
+    // Tournament exports get a theme picker; all-slides uses current theme
+    if (mode === "tournament-evs" || mode === "tournament-stats") {
+      setPendingExportMode(mode);
+      setExportTheme(darkMode ? "dark" : "light");
+      setShowExportThemePicker(true);
+      return;
+    }
     setExportMode(mode);
     setIsPdfPrinting(true);
-  }, []);
+  }, [darkMode]);
+
+  const confirmExportTheme = useCallback(() => {
+    if (!pendingExportMode) return;
+    setExportMode(pendingExportMode);
+    setShowExportThemePicker(false);
+    setPendingExportMode(null);
+    setIsPdfPrinting(true);
+  }, [pendingExportMode]);
 
   useEffect(() => {
     if (!isPdfPrinting) return;
@@ -940,9 +958,78 @@ function HomeContent() {
       )}
 
     </main>
+
+    {/* Export theme picker modal for tournament exports */}
+    {showExportThemePicker && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowExportThemePicker(false)}>
+        <div className="bg-surface border border-border rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 space-y-5" onClick={(e) => e.stopPropagation()}>
+          <div className="text-center">
+            <h3 className="text-lg font-extrabold text-text-primary">Export Theme</h3>
+            <p className="text-xs text-text-tertiary mt-1">Choose how your team sheet looks</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {/* Light option */}
+            <button
+              type="button"
+              onClick={() => setExportTheme("light")}
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                exportTheme === "light"
+                  ? "border-accent bg-accent/5 shadow-md"
+                  : "border-border hover:border-accent/30"
+              }`}
+            >
+              <div className="w-14 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              </div>
+              <span className="text-sm font-bold text-text-primary">Light</span>
+            </button>
+
+            {/* Dark option */}
+            <button
+              type="button"
+              onClick={() => setExportTheme("dark")}
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                exportTheme === "dark"
+                  ? "border-accent bg-accent/5 shadow-md"
+                  : "border-border hover:border-accent/30"
+              }`}
+            >
+              <div className="w-14 h-10 rounded-lg bg-[#0B0B1A] border border-[#2A2A52] flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0EDE6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
+              </div>
+              <span className="text-sm font-bold text-text-primary">Dark</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={confirmExportTheme}
+            className="w-full py-2.5 rounded-xl bg-accent text-white font-bold text-sm hover:bg-accent/90 transition-colors cursor-pointer"
+          >
+            Export {pendingExportMode === "tournament-stats" ? "(Stats)" : "(EVs)"}
+          </button>
+        </div>
+      </div>
+    )}
+
     {/* Portal print container to body so CSS selector body > *:not(#print-container) works */}
     {isPdfPrinting && analysis && createPortal(
-      <div id="print-container" className="fixed left-[-9999px] top-0 w-[210mm] print:static print:left-auto print:w-auto" aria-hidden="true">
+      <div
+        id="print-container"
+        className="fixed left-[-9999px] top-0 w-[210mm] print:static print:left-auto print:w-auto"
+        aria-hidden="true"
+        data-export-theme={exportTheme}
+        style={(exportMode === "tournament-evs" || exportMode === "tournament-stats") ? { backgroundColor: exportTheme === "dark" ? "#0B0B1A" : "#FAF9F6", padding: "16px" } : undefined}
+      >
         <PrintableReport
           analysis={analysis}
           notes={notes}
