@@ -377,7 +377,10 @@ export function MatchupPlanSlide({
           </div>
         )}
 
-        {/* Mobile: only render active tab */}
+        {/* Mobile: only render active tab; Desktop: side-by-side columns */}
+        <div className={`flex flex-col gap-4 ${plan.gamePlans.length > 1 ? "sm:grid sm:gap-3" : ""}`}
+          style={plan.gamePlans.length > 1 ? { gridTemplateColumns: `repeat(${plan.gamePlans.length}, minmax(0, 1fr))` } : undefined}
+        >
         {plan.gamePlans.map((gp, gpIndex) => {
           const isCollapsed = collapsedPlans.has(gp.id);
           return (
@@ -410,6 +413,7 @@ export function MatchupPlanSlide({
             </div>
           );
         })}
+        </div>
       </div>
       </div>
     </FieldDiffHighlight>
@@ -565,9 +569,9 @@ function GamePlanSection({
       {/* Content — collapsible */}
       {!isCollapsed && (
         <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-1">
-          <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:gap-5">
             {/* Bring Four — Lead / Back split */}
-            <div className="flex flex-col sm:flex-row lg:flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               {/* Lead */}
               <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 border border-border-subtle">
                 <div className="flex items-center gap-2 mb-2.5">
@@ -671,7 +675,7 @@ function GamePlanSection({
                   {t.notesLabel}
                 </span>
                 {isReadOnly ? (
-                  <div className="w-full min-h-[7rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:tracking-wide">
+                  <div className="w-full min-h-[7rem] sm:min-h-[6rem] p-3 sm:p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary whitespace-pre-wrap leading-relaxed presenting:text-xl presenting:leading-9 presenting:p-8 presenting:tracking-wide presenting:min-h-[10rem]">
                     {gamePlan.notes || t.noNotes}
                   </div>
                 ) : (
@@ -679,7 +683,7 @@ function GamePlanSection({
                     value={gamePlan.notes}
                     onChange={(e) => onNotesChange(e.target.value)}
                     placeholder={t.gamePlanNotesPlaceholder}
-                    className="w-full min-h-[7rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface-alt border border-border-subtle rounded-xl text-sm sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+                    className="w-full min-h-[7rem] sm:min-h-[6rem] p-3 sm:p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
                     spellCheck={false}
                   />
                 )}
