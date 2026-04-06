@@ -10,13 +10,28 @@ async function getJsPDF() {
   return mod.jsPDF;
 }
 
+/** Resolve the actual background color, respecting dark mode */
+function resolveBackground(element: HTMLElement): string {
+  // Try the element's own background first
+  const elBg = getComputedStyle(element).backgroundColor;
+  if (elBg && elBg !== "transparent" && elBg !== "rgba(0, 0, 0, 0)") {
+    return elBg;
+  }
+  // Fall back to the CSS variable --background (set on :root by theme)
+  const cssVar = getComputedStyle(document.documentElement).getPropertyValue("--background").trim();
+  if (cssVar) return cssVar;
+  // Final fallback: detect dark mode from class
+  const isDark = document.documentElement.classList.contains("dark");
+  return isDark ? "#0B0B1A" : "#FAF9F6";
+}
+
 /** Shared options for html2canvas capture */
 function captureOptions(element: HTMLElement) {
   return {
     scale: 2,
     useCORS: true,
     allowTaint: false,
-    backgroundColor: getComputedStyle(element).backgroundColor || "#FAF9F6",
+    backgroundColor: resolveBackground(element),
     logging: false,
     removeContainer: true,
     ignoreElements: (node: Element) => {
