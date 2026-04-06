@@ -328,7 +328,7 @@ export function MatchupPlanSlide({
       )}
 
       {/* Game Plans */}
-      <div ref={gamePlansRef} className="flex flex-col gap-4">
+      <div ref={gamePlansRef} className="flex flex-col gap-4 sm:max-h-[70vh] sm:overflow-y-auto sm:overscroll-contain">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary">
             {t.gamePlans} ({plan.gamePlans.length}/3)
