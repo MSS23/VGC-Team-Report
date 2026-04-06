@@ -587,7 +587,7 @@ export function PokemonDetailSlide({
         {t.notableCalcs}
       </h3>
       {calcs.length > 0 ? (
-        <div className="flex flex-col gap-5 sm:max-h-[calc(100vh-20rem)] sm:overflow-y-auto sm:overscroll-contain sm:pb-14 presenting:flex-row presenting:gap-3 presenting:items-start presenting:max-h-none presenting:overflow-visible presenting:pb-0">
+        <div className="flex flex-col gap-5 presenting:flex-row presenting:gap-3 presenting:items-start">
           {renderCalcGroup(offensiveCalcs, "offensive", calcs)}
           {renderCalcGroup(defensiveCalcs, "defensive", calcs)}
           {renderCalcGroup(speedCalcs, "speed", calcs)}
