@@ -802,11 +802,6 @@ function HomeContent() {
       {/* Social engagement section for public shared reports */}
       {isSharedView && !isEditingUnlocked && !isPresentationStyle && activeShareId && (
         <div className="relative z-40 max-w-5xl mx-auto px-2 sm:px-4 py-6 mb-24 sm:mb-16 space-y-4">
-          {/* Like + Save — primary actions, prominent */}
-          <div className="flex items-center gap-3">
-            <ReactionBar shareId={activeShareId} isOwner={isOwner} />
-            <SaveButton shareId={activeShareId} />
-          </div>
           {/* Creator info + secondary actions */}
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             {creatorName && <CreatorLink name={creatorName} />}
@@ -908,6 +903,16 @@ function HomeContent() {
           onClose={() => setShowShareModal(false)}
           tags={tags}
         />
+      )}
+
+      {/* Floating like/save bar for shared views — always visible at bottom */}
+      {isSharedView && !isEditingUnlocked && !isPresentationStyle && activeShareId && (
+        <div className="fixed bottom-16 sm:bottom-14 left-1/2 -translate-x-1/2 z-50">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-surface/90 backdrop-blur-md border border-border shadow-lg">
+            <ReactionBar shareId={activeShareId} isOwner={isOwner} />
+            <SaveButton shareId={activeShareId} />
+          </div>
+        </div>
       )}
 
       {/* CTA banner for shared views (read-only viewers) */}
