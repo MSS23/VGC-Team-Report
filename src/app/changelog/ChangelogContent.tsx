@@ -11,6 +11,28 @@ import { PageFooter } from "@/components/layout/PageFooter";
 const ENTRIES = [
   {
     date: "April 2026",
+    version: "5.3",
+    title: "Slide Layout Overhaul & Professional Polish",
+    emoji: "\uD83C\uDFA8",
+    highlight: true,
+    items: [
+      { type: "new" as const, text: "Offensive and Defensive coverage split into separate slides \u2014 each chart gets a dedicated full-viewport slide instead of being crammed together." },
+      { type: "new" as const, text: "Notable calcs now stack vertically on desktop \u2014 each category (Offensive/Defensive/Speed Tier) gets full width for readability, with collapsible groups." },
+      { type: "new" as const, text: "Right column scrolls independently \u2014 notes and calcs panel has its own scroll area so the Add Calc input is always reachable." },
+      { type: "new" as const, text: "Compare Teams prevents duplicate selection \u2014 you can no longer pick the same report for both Team A and Team B." },
+      { type: "new" as const, text: "Tag requirement for publishing \u2014 reports must have at least one tag (regulation, event type, or archetype) before they can be listed on Explore." },
+      { type: "improved" as const, text: "Game plans layout \u2014 3 plans stack vertically (no more cramped 33% columns), 2 plans go side-by-side only on large screens." },
+      { type: "improved" as const, text: "Professional visual polish across all slides \u2014 larger tournament headings, accent-bordered summaries, thicker stat bars with shadow, hover micro-interactions on move tiles and calc entries." },
+      { type: "improved" as const, text: "OG share images render at 2x resolution (2400\u00D71260) for crisp Discord and Twitter embeds." },
+      { type: "improved" as const, text: "Slide container fits exactly between top navbar and bottom nav \u2014 no more content hidden behind either bar." },
+      { type: "improved" as const, text: "Guest viewers see all notable calcs expanded by default." },
+      { type: "fixed" as const, text: "Fixed share schema rejecting reports with hidden slides (string keys like \"matchup-sheet\" were rejected by the Zod validator)." },
+      { type: "fixed" as const, text: "Fixed tag schema mismatch \u2014 tags are objects not arrays, which was blocking all saves on reports with tags set." },
+      { type: "fixed" as const, text: "Explore tournament filter no longer force-opens the advanced filter drawer as a confusing overlay." },
+    ],
+  },
+  {
+    date: "April 2026",
     version: "5.2",
     title: "UX Feedback Polish",
     emoji: "\u2728",
