@@ -247,7 +247,7 @@ function CollapsibleCalcGroup({
   const effectiveOpen = isPrint || isReadOnly || isOpen;
 
   return (
-    <div className="presenting:flex-1 presenting:min-w-0">
+    <div className="sm:flex-1 sm:min-w-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 w-full mb-1 group/header cursor-pointer"
@@ -261,7 +261,7 @@ function CollapsibleCalcGroup({
         </span>
         <span className={`flex-1 h-px ${cfg.tagBg}`} />
         <svg
-          className={`w-3.5 h-3.5 ${cfg.tagText} opacity-50 group-hover/header:opacity-100 transition-all duration-200 ${effectiveOpen ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 ${cfg.tagText} opacity-50 group-hover/header:opacity-100 transition-all duration-200 sm:hidden ${effectiveOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -271,14 +271,9 @@ function CollapsibleCalcGroup({
         </svg>
       </button>
       <div
-        className="transition-all duration-200 ease-in-out"
-        style={{
-          display: "grid",
-          gridTemplateRows: effectiveOpen ? "1fr" : "0fr",
-          opacity: effectiveOpen ? 1 : 0,
-        }}
+        className={`grid transition-all duration-200 ease-in-out ${effectiveOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 sm:grid-rows-[1fr] sm:opacity-100"}`}
       >
-        <div className="overflow-hidden">
+        <div className={`overflow-hidden ${effectiveOpen ? "" : "sm:overflow-visible"}`}>
         <div className="flex flex-col gap-2 pt-1">
           {entries.map((entry) => {
             const globalIndex = globalCalcs.indexOf(entry);
@@ -587,7 +582,7 @@ export function PokemonDetailSlide({
         {t.notableCalcs}
       </h3>
       {calcs.length > 0 ? (
-        <div className="flex flex-col gap-5 max-h-60 sm:max-h-72 overflow-y-auto overscroll-contain presenting:flex-row presenting:gap-3 presenting:items-start presenting:max-h-none presenting:overflow-visible">
+        <div className="flex flex-col gap-5 sm:flex-row sm:gap-3 sm:items-start">
           {renderCalcGroup(offensiveCalcs, "offensive", calcs)}
           {renderCalcGroup(defensiveCalcs, "defensive", calcs)}
           {renderCalcGroup(speedCalcs, "speed", calcs)}
