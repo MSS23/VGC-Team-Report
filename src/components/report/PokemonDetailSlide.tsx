@@ -657,7 +657,7 @@ export function PokemonDetailSlide({
         </div>
         </FieldDiffHighlight>
 
-        <div className="flex flex-col gap-6 min-w-0">
+        <div className="flex flex-col gap-6 min-w-0 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin pr-1">
           {renderNotes()}
           {renderCalcs()}
         </div>
