@@ -648,16 +648,16 @@ export function PokemonDetailSlide({
       </div>
 
       {/* ── Desktop: two-column layout (>= 640px) ── */}
-      <div className="hidden sm:grid sm:grid-cols-[45%_55%] gap-6 lg:gap-8 items-start">
+      <div className="hidden sm:grid sm:grid-cols-[9fr_11fr] gap-6 lg:gap-8 items-start">
         <FieldDiffHighlight field={pokemonIndex !== undefined ? [`pokemon:${pokemonIndex}`] : []} label="Set changed">
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 min-w-0">
           {renderHeroHeader()}
           {renderMoves()}
           {renderStats()}
         </div>
         </FieldDiffHighlight>
 
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 min-w-0">
           {renderNotes()}
           {renderCalcs()}
         </div>
