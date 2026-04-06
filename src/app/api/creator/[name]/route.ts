@@ -35,7 +35,7 @@ export async function GET(
     // Check verified status, profile, and follower count
     const [verifiedCheck, profileCheck, followerCheck] = await Promise.all([
       sql`SELECT name FROM verified_creators WHERE LOWER(name) = ${creatorName.toLowerCase()}`,
-      sql`SELECT bio, twitter, discord, youtube, is_public FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`,
+      sql`SELECT bio, twitter, discord, youtube, is_public, avatar_url FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`,
       sql`SELECT COUNT(*)::int as count FROM follows WHERE LOWER(creator_name) = ${creatorName.toLowerCase()}`,
     ]);
     const isVerified = verifiedCheck.length > 0;
@@ -50,6 +50,7 @@ export async function GET(
       twitter: (profileCheck[0].twitter as string) || undefined,
       discord: (profileCheck[0].discord as string) || undefined,
       youtube: (profileCheck[0].youtube as string) || undefined,
+      avatarUrl: (profileCheck[0].avatar_url as string) || undefined,
     } : undefined;
     const followerCount = Number(followerCheck[0]?.count ?? 0);
 

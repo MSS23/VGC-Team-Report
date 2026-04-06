@@ -81,6 +81,7 @@ export async function ensureTable() {
   `);
   await run(sql`ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT TRUE`);
   await run(sql`ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS accent_theme TEXT`);
+  await run(sql`ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT`);
 
   // Feedback / feature requests table
   await run(sql`

@@ -18,6 +18,7 @@ interface Profile {
   youtube: string;
   isPublic: boolean;
   accentTheme: string | null;
+  avatarUrl: string;
 }
 
 export default function ProfilePage() {
@@ -33,7 +34,8 @@ function ProfileInner() {
   useEffect(() => { applyRandomAccent(); }, []);
 
   const [creatorName, setCreatorName] = useState("");
-  const [profile, setProfile] = useState<Profile>({ bio: "", twitter: "", discord: "", youtube: "", isPublic: true, accentTheme: null });
+  const [clerkImageUrl, setClerkImageUrl] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile>({ bio: "", twitter: "", discord: "", youtube: "", isPublic: true, accentTheme: null, avatarUrl: "" });
   const [totalViews, setTotalViews] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -47,6 +49,7 @@ function ProfileInner() {
     ]).then(([profileData, analyticsData]) => {
       if (profileData) {
         setCreatorName(profileData.creatorName);
+        setClerkImageUrl(profileData.clerkImageUrl || null);
         setProfile(profileData.profile);
         // Apply the user's saved theme instead of random
         if (profileData.profile.accentTheme) {
@@ -110,6 +113,61 @@ function ProfileInner() {
                   <div className="px-4 py-3 bg-surface-alt border border-border rounded-xl text-sm text-text-primary">
                     {creatorName}
                     <span className="text-[10px] text-text-tertiary ml-2">(from your account)</span>
+                  </div>
+                </div>
+
+                {/* Profile Picture */}
+                <div>
+                  <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">Profile Picture</label>
+                  <div className="flex items-start gap-4">
+                    {/* Preview */}
+                    <div className="flex-shrink-0">
+                      {(profile.avatarUrl || clerkImageUrl) ? (
+                        <img
+                          src={profile.avatarUrl || clerkImageUrl!}
+                          alt={creatorName}
+                          className="w-16 h-16 rounded-full object-cover border-2 border-accent/20"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-accent-surface flex items-center justify-center">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="text"
+                        value={profile.avatarUrl}
+                        onChange={(e) => setProfile({ ...profile, avatarUrl: e.target.value })}
+                        placeholder="https://example.com/your-photo.jpg"
+                        className="w-full px-4 py-3 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
+                      />
+                      <div className="flex items-center gap-2">
+                        {clerkImageUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setProfile({ ...profile, avatarUrl: clerkImageUrl })}
+                            className="text-[11px] font-bold text-accent hover:underline cursor-pointer"
+                          >
+                            Use account photo
+                          </button>
+                        )}
+                        {profile.avatarUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setProfile({ ...profile, avatarUrl: "" })}
+                            className="text-[11px] font-bold text-text-tertiary hover:text-red-500 cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-text-tertiary">Paste a link to your profile picture (must be HTTPS). Or use your account photo.</p>
+                    </div>
                   </div>
                 </div>
 

@@ -17,6 +17,7 @@ interface CreatorProfile {
   twitter?: string;
   discord?: string;
   youtube?: string;
+  avatarUrl?: string;
 }
 
 interface CreatorData {
@@ -80,12 +81,20 @@ function CreatorProfileInner({ name }: { name: string }) {
             {/* Profile header */}
             <div className="mb-10">
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 rounded-full bg-accent-surface flex items-center justify-center flex-shrink-0">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                </div>
+                {data.profile?.avatarUrl ? (
+                  <img
+                    src={data.profile.avatarUrl}
+                    alt={data.creator}
+                    className="w-14 h-14 rounded-full object-cover flex-shrink-0 border-2 border-accent/20"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-accent-surface flex items-center justify-center flex-shrink-0">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                )}
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight flex items-center gap-2">
                     {data.creator}

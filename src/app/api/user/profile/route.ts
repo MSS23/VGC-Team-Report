@@ -18,6 +18,10 @@ const ProfileBody = z.object({
     (v) => !v || VALID_THEMES.includes(v),
     { message: "Invalid theme" }
   ),
+  avatarUrl: z.string().max(500).optional().refine(
+    (v) => !v || v.startsWith("https://"),
+    { message: "Avatar URL must be HTTPS" }
+  ),
 });
 
 // GET: fetch current user's creator profile
@@ -34,10 +38,11 @@ export async function GET(request: Request) {
       : user.username || "Unknown";
 
     const sql = getDb();
-    const rows = await sql`SELECT bio, twitter, discord, youtube, is_public, accent_theme FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`;
+    const rows = await sql`SELECT bio, twitter, discord, youtube, is_public, accent_theme, avatar_url FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`;
 
     return NextResponse.json({
       creatorName,
+      clerkImageUrl: user.imageUrl || null,
       profile: rows.length > 0 ? {
         bio: rows[0].bio || "",
         twitter: rows[0].twitter || "",
@@ -45,7 +50,8 @@ export async function GET(request: Request) {
         youtube: rows[0].youtube || "",
         isPublic: rows[0].is_public !== false,
         accentTheme: rows[0].accent_theme || null,
-      } : { bio: "", twitter: "", discord: "", youtube: "", isPublic: true, accentTheme: null },
+        avatarUrl: rows[0].avatar_url || "",
+      } : { bio: "", twitter: "", discord: "", youtube: "", isPublic: true, accentTheme: null, avatarUrl: "" },
     });
   } catch (e) {
     console.error("Profile GET error:", e);
@@ -70,13 +76,13 @@ export async function PUT(request: Request) {
     const parsed = ProfileBody.safeParse(raw);
     if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
-    const { bio, twitter, discord, youtube, isPublic, accentTheme } = parsed.data;
+    const { bio, twitter, discord, youtube, isPublic, accentTheme, avatarUrl } = parsed.data;
     const isPublicValue = isPublic !== undefined ? isPublic : true;
     const sql = getDb();
 
     await sql`
-      INSERT INTO creator_profiles (name, bio, twitter, discord, youtube, is_public, accent_theme, updated_at)
-      VALUES (${creatorName}, ${bio ? escapeHtml(bio) : null}, ${twitter || null}, ${discord || null}, ${youtube || null}, ${isPublicValue}, ${accentTheme || null}, NOW())
+      INSERT INTO creator_profiles (name, bio, twitter, discord, youtube, is_public, accent_theme, avatar_url, updated_at)
+      VALUES (${creatorName}, ${bio ? escapeHtml(bio) : null}, ${twitter || null}, ${discord || null}, ${youtube || null}, ${isPublicValue}, ${accentTheme || null}, ${avatarUrl || null}, NOW())
       ON CONFLICT (name) DO UPDATE SET
         bio = ${bio ? escapeHtml(bio) : null},
         twitter = ${twitter || null},
@@ -84,6 +90,7 @@ export async function PUT(request: Request) {
         youtube = ${youtube || null},
         is_public = ${isPublicValue},
         accent_theme = ${accentTheme || null},
+        avatar_url = ${avatarUrl || null},
         updated_at = NOW()
     `;
 
@@ -92,6 +99,7 @@ export async function PUT(request: Request) {
       has_twitter: !!twitter,
       has_discord: !!discord,
       has_youtube: !!youtube,
+      has_avatar: !!avatarUrl,
       is_public: isPublicValue,
       accent_theme: accentTheme || null,
     });

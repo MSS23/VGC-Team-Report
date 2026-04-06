@@ -27,7 +27,11 @@ const ShareBodySchema = z.object({
     spriteSettings: z.unknown().optional(),
     hiddenSlides: z.array(z.number()).optional(),
     allowComments: z.boolean().optional(),
-    tags: z.array(z.string()).optional(),
+    tags: z.object({
+      regulation: z.string().optional(),
+      eventType: z.string().optional(),
+      archetype: z.array(z.string()).optional(),
+    }).optional(),
     templateId: z.string().optional(),
   }).strip(),
   existingId: z.string().optional(),
@@ -131,8 +135,9 @@ export async function POST(request: Request) {
         }
       }
 
-      // Require tags to publish — reports without tags cannot be made public
-      if (effectiveIsPublic) {
+      // Require tags to publish — only block when going from private → public
+      const wasPublic = oldRows.length > 0 && !!oldRows[0].is_public;
+      if (effectiveIsPublic && !wasPublic) {
         const tags = (state.tags ?? {}) as Record<string, unknown>;
         const hasRegulation = !!tags.regulation;
         const hasEventType = !!tags.eventType;
