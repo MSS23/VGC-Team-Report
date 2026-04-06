@@ -44,7 +44,8 @@ export function useSlideSystem(opts: SlideSystemOptions) {
       "overview",
       ...speciesKeys,
       "speed-tiers",
-      "team-coverage",
+      "offensive-coverage",
+      "defensive-coverage",
       ...plans.map((p) => `matchup-${p.id}`),
       "matchup-sheet",
     ];
@@ -52,7 +53,8 @@ export function useSlideSystem(opts: SlideSystemOptions) {
       t.overview,
       ...analysis.pokemon.map((mon) => mon.parsed.species),
       t.teamAnalysisLabel,
-      t.coverageLabel ?? "Coverage",
+      "Offensive",
+      "Defensive",
       ...plans.map((p) => `vs. ${p.opponentLabel}`),
       t.matchupsLabel,
     ];

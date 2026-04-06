@@ -14,7 +14,10 @@ import { useVersionDiff } from "@/lib/contexts/VersionDiffContext";
 const SpeedTierChart = dynamic(() => import("./SpeedTierChart").then(m => ({ default: m.SpeedTierChart })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-96" data-walkthrough="speed-tiers" />,
 });
-const TeamCoverageSlide = dynamic(() => import("./TeamCoverageSlide").then(m => ({ default: m.TeamCoverageSlide })), {
+const OffensiveCoverageChart = dynamic(() => import("./OffensiveCoverageChart").then(m => ({ default: m.OffensiveCoverageChart })), {
+  loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-48" />,
+});
+const DefensiveCoverageChart = dynamic(() => import("./DefensiveCoverageChart").then(m => ({ default: m.DefensiveCoverageChart })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" />,
 });
 const MatchupPlanSlide = dynamic(() => import("./MatchupPlanSlide").then(m => ({ default: m.MatchupPlanSlide })), {
@@ -222,16 +225,27 @@ export function TeamReport({
     );
   }
 
-  // Team coverage slide (after speed tiers, before matchups)
+  // Offensive coverage slide
   if (currentSlide === pokemonCount + 2) {
     return (
-        <TeamCoverageSlide pokemon={analysis.pokemon} />
+        <div className="animate-fade-in">
+          <OffensiveCoverageChart pokemon={analysis.pokemon} />
+        </div>
+    );
+  }
+
+  // Defensive coverage slide
+  if (currentSlide === pokemonCount + 3) {
+    return (
+        <div className="animate-fade-in">
+          <DefensiveCoverageChart pokemon={analysis.pokemon} />
+        </div>
     );
   }
 
   // Per-matchup plan slides (visibility handled by navigation layer)
   if (plans.length > 0) {
-    const matchupSlideIndex = currentSlide - pokemonCount - 3;
+    const matchupSlideIndex = currentSlide - pokemonCount - 4;
 
     if (matchupSlideIndex >= 0 && matchupSlideIndex < plans.length) {
       const plan = plans[matchupSlideIndex];
@@ -254,7 +268,7 @@ export function TeamReport({
   }
 
   // Last slide: Matchup sheet (always available — expandable rows for game plans)
-  const matchupSheetSlide = pokemonCount + 3 + plans.length;
+  const matchupSheetSlide = pokemonCount + 4 + plans.length;
   if (currentSlide === matchupSheetSlide) {
     return (
         <MatchupSheet
