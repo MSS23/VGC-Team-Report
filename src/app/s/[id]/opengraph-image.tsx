@@ -1,8 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getDb } from "@/lib/db";
 import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
-import { POKEMON_DATA } from "@/lib/data/pokemon";
-import type { PokemonType } from "@/lib/types/pokemon";
+import { POKEMON_TYPES_MAP } from "@/lib/data/pokemon-types-map";
 
 export const runtime = "edge";
 export const alt = "VGC Team Report";
@@ -47,10 +46,9 @@ function parseTeamForOG(paste: string): OGPokemon[] {
       }
     }
 
-    // Look up types from pokemon data
+    // Look up types from lightweight map
     const slug = species.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-    const data = POKEMON_DATA[slug];
-    const types: string[] = data ? [...data.types] : [];
+    const types: string[] = POKEMON_TYPES_MAP[slug] ?? [];
 
     if (species) team.push({ species, item, ability, teraType, types });
   }

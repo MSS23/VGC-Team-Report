@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { NextResponse } from "next/server";
 import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
-import { POKEMON_DATA } from "@/lib/data/pokemon";
+import { POKEMON_TYPES_MAP } from "@/lib/data/pokemon-types-map";
 
 export const runtime = "edge";
 
@@ -42,8 +42,7 @@ function parseTeamForGraphic(paste: string): OGPokemon[] {
     }
 
     const slug = species.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-    const data = POKEMON_DATA[slug];
-    const types: string[] = data ? [...data.types] : [];
+    const types: string[] = POKEMON_TYPES_MAP[slug] ?? [];
 
     if (species) team.push({ species, item, ability, teraType, types });
   }
