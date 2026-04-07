@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "motion/react";
+import { useAuth, SignInButton } from "@clerk/nextjs";
+import { useSessionId } from "@/hooks/useSessionId";
 import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
@@ -59,11 +61,52 @@ function CardSprite({ species }: { species: string }) {
 
 export function ReportCard({ report }: { report: ExploreReport }) {
   const { t } = useTranslation();
+  const { isSignedIn } = useAuth();
+  const sessionId = useSessionId();
 
-  // Like count: use dedicated likeCount field, or fall back to summing all reactions
-  const likeCount = report.likeCount ?? (report.reactionCounts
+  // Like state — initialize from server data, then allow interactive toggling
+  const initialLikes = report.likeCount ?? (report.reactionCounts
     ? Object.values(report.reactionCounts).reduce((sum, c) => sum + c, 0)
     : 0);
+  const [likeCount, setLikeCount] = useState(initialLikes);
+  const [liked, setLiked] = useState(false);
+
+  // Check if current user already liked this report
+  useEffect(() => {
+    if (!sessionId || !report.id) return;
+    fetch(`/api/reactions/${report.id}?sessionId=${encodeURIComponent(sessionId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) {
+          const total = Object.values(data.counts ?? {}).reduce(
+            (sum: number, c) => sum + (c as number), 0);
+          setLikeCount(total);
+          setLiked((data.userReactions ?? []).length > 0);
+        }
+      })
+      .catch(() => {});
+  }, [report.id, sessionId]);
+
+  const toggleLike = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!sessionId || !isSignedIn) return;
+
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikeCount((c) => Math.max(0, c + (wasLiked ? -1 : 1)));
+
+    try {
+      await fetch(`/api/reactions/${report.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reactionType: "heart", sessionId }),
+      });
+    } catch {
+      setLiked(wasLiked);
+      setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));
+    }
+  }, [report.id, sessionId, liked, isSignedIn]);
 
   // Archetype badges: show up to 3, then overflow
   const archetypes = report.tags?.archetype ?? [];
@@ -198,13 +241,32 @@ export function ReportCard({ report }: { report: ExploreReport }) {
         {/* Social indicators + timestamp */}
         <div className="flex items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-2.5">
-            {/* Upvotes */}
-            <span className="inline-flex items-center gap-1 text-[10px]">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill={likeCount > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={likeCount > 0 ? "text-red-500" : "text-text-tertiary"}>
-                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-              </svg>
-              <span className={`font-bold ${likeCount > 0 ? "text-text-secondary" : "text-text-tertiary"}`}>{likeCount}</span>
-            </span>
+            {/* Interactive heart / like button */}
+            {isSignedIn ? (
+              <button
+                type="button"
+                onClick={toggleLike}
+                className="inline-flex items-center gap-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={liked ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"}>
+                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                </svg>
+                <span className={`font-bold ${liked || likeCount > 0 ? "text-text-secondary" : "text-text-tertiary"}`}>{likeCount}</span>
+              </button>
+            ) : (
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="inline-flex items-center gap-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill={likeCount > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={likeCount > 0 ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"}>
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                  </svg>
+                  <span className={`font-bold ${likeCount > 0 ? "text-text-secondary" : "text-text-tertiary"}`}>{likeCount}</span>
+                </button>
+              </SignInButton>
+            )}
             {/* Comments */}
             {(report.commentCount ?? 0) > 0 && (
               <span className="inline-flex items-center gap-0.5 text-text-tertiary">
@@ -212,18 +274,6 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 </svg>
                 <span className="text-[10px] font-bold">{report.commentCount}</span>
-              </span>
-            )}
-            {/* Views */}
-            {(report.viewCount ?? 0) > 0 && (
-              <span className="inline-flex items-center gap-0.5 text-text-tertiary">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-                <span className="text-[10px] font-bold">
-                  {(report.viewCount ?? 0) >= 1000 ? `${((report.viewCount ?? 0) / 1000).toFixed(1)}k` : report.viewCount}
-                </span>
               </span>
             )}
           </div>

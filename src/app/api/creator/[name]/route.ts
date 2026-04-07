@@ -104,7 +104,7 @@ export async function GET(
         createdAt: (row.created_at as Date).toISOString(),
         updatedAt: (row.updated_at as Date).toISOString(),
         viewCount: row.view_count as number,
-        reactionCount: reactionMap[row.id as string] ?? 0,
+        likeCount: reactionMap[row.id as string] ?? 0,
         collaborators: collabMap[row.id as string] ?? [],
         role: row.role as string,
       };
