@@ -25,17 +25,26 @@ const META_THREATS = [
 
 type SpeedModifier = "tailwind" | "paralysis" | "icywind";
 
-const MODIFIER_CONFIG: Record<SpeedModifier, { label: string; icon: string; factor: number; description: string }> = {
-  tailwind: { label: "Tailwind", icon: "\u{1F4A8}", factor: 2, description: "\u00D72 speed" },
-  paralysis: { label: "Paralysis", icon: "\u{26A1}", factor: 0.5, description: "\u00D70.5 speed" },
-  icywind: { label: "Icy Wind", icon: "\u{2744}\u{FE0F}", factor: 0.67, description: "-1 stage" },
+const MODIFIER_CONFIG: Record<SpeedModifier, { label: string; icon: string; description: string }> = {
+  tailwind: { label: "Tailwind", icon: "\u{1F4A8}", description: "\u00D72 speed" },
+  paralysis: { label: "Paralysis", icon: "\u{26A1}", description: "\u00D70.5 speed" },
+  icywind: { label: "Icy Wind", icon: "\u{2744}\u{FE0F}", description: "-1 stage" },
 };
 
-function calcSpeed(baseSpe: number, mod: Set<SpeedModifier>): number {
+/**
+ * Calculate speed after battle modifiers using correct Pokemon rounding.
+ * Order matches the game engine:
+ *  1. Stat stage modifiers (Icy Wind -1) — applied to base stat
+ *  2. Ability/item boost (Quark Drive, Choice Scarf) — reapplied after stages
+ *  3. Paralysis (×0.5, Gen 7+)
+ *  4. Tailwind (×2)
+ */
+function calcSpeed(baseSpe: number, boostMultiplier: number, mod: Set<SpeedModifier>): number {
   let speed = baseSpe;
-  if (mod.has("icywind")) speed = Math.floor(speed * 0.67);
+  if (mod.has("icywind")) speed = Math.floor(speed * 2 / 3);
+  if (boostMultiplier !== 1) speed = Math.floor(speed * boostMultiplier);
   if (mod.has("paralysis")) speed = Math.floor(speed * 0.5);
-  if (mod.has("tailwind")) speed = Math.floor(speed * 2);
+  if (mod.has("tailwind")) speed = speed * 2;
   return speed;
 }
 
@@ -66,6 +75,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   const teamEntries = useMemo(() => pokemon.map((mon, i) => {
     const baseSpe = mon.calculatedStats.spe;
     const hasSpeedBoost = mon.itemBoost?.stat === "spe";
+    const boostMultiplier = hasSpeedBoost ? mon.itemBoost!.multiplier : 1;
     const boostedSpe = hasSpeedBoost ? mon.itemBoost!.boostedValue : baseSpe;
 
     let speedBoostLabel = "";
@@ -81,6 +91,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       speciesKey: speciesKeys[i],
       baseSpe,
       boostedSpe,
+      boostMultiplier,
       hasSpeedBoost,
       speedBoostLabel,
       isYours: true as const,
@@ -119,11 +130,11 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     const combined = [
       ...teamEntries.map(e => ({
         ...e,
-        displaySpeed: calcSpeed(e.boostedSpe, activeModifiers),
+        displaySpeed: calcSpeed(e.baseSpe, e.boostMultiplier, activeModifiers),
       })),
       ...metaEntries.map(e => ({
         ...e,
-        displaySpeed: calcSpeed(e.boostedSpe, activeModifiers),
+        displaySpeed: calcSpeed(e.boostedSpe, 1, activeModifiers),
         minSpe: e.minSpe,
       })),
     ];
