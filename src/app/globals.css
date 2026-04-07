@@ -4,6 +4,7 @@
 @custom-variant presenting (&:where([data-presentation-mode] *));
 
 :root {
+  --nav-height: 6rem;
   --background: #FAF9F6;
   --foreground: #1A1A2E;
   --surface: #FFFFFF;
@@ -85,6 +86,11 @@ body {
   /* Prevent overscroll bounce (rubber-band) for native feel */
   html {
     overscroll-behavior: none;
+  }
+
+  /* Account for safe-area in navbar height so slide content doesn't overlap */
+  :root {
+    --nav-height: calc(6rem + env(safe-area-inset-top, 0px));
   }
 
   /* Sticky headers extend behind status bar with safe area padding */
