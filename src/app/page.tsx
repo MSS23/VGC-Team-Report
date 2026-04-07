@@ -571,7 +571,7 @@ function HomeContent() {
   // Show report
   return (
     <>
-    <main className={`bg-background ${isPresentationStyle ? "h-dvh h-screen overflow-y-auto" : "min-h-dvh min-h-screen"}`} style={{ scrollPaddingTop: "4rem" }}>
+    <main className={`bg-background ${isPresentationStyle ? "h-dvh h-screen overflow-y-auto" : "min-h-dvh min-h-screen"}`} style={{ scrollPaddingTop: "var(--nav-height)" }}>
       <Navbar
         isPresentationStyle={isPresentationStyle}
         isSharedView={isSharedView}
