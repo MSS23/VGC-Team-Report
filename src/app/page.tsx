@@ -663,9 +663,7 @@ function HomeContent() {
       <VersionDiffProvider value={versionDiffContextValue}>
       <div
         ref={swipeRef}
-        className={`max-w-5xl mx-auto slide-content safe-bottom overflow-x-hidden sm:h-[calc(100dvh-var(--nav-height))] sm:overflow-y-auto sm:scrollbar-thin ${
-          isSharedView && !isEditingUnlocked && !isPresentationStyle ? "pb-40 sm:pb-14" : "pb-40 sm:pb-14"
-        } ${
+        className={`max-w-5xl mx-auto slide-content safe-bottom overflow-x-hidden sm:h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3rem))] sm:overflow-y-auto sm:scrollbar-thin pb-44 sm:pb-16 ${
           isPresentationStyle
             ? "px-3 sm:px-8 py-2 sm:py-4"
             : "px-2 sm:px-6 lg:px-8 py-2 sm:py-6 creator:px-8 creator:py-6"

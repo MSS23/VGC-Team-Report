@@ -91,6 +91,7 @@ body {
   /* Account for safe-area in navbar height so slide content doesn't overlap */
   :root {
     --nav-height: calc(6rem + env(safe-area-inset-top, 0px));
+    --bottom-nav-height: calc(3rem + env(safe-area-inset-bottom, 0px));
   }
 
   /* Sticky headers extend behind status bar with safe area padding */

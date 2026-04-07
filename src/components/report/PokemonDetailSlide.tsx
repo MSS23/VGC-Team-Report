@@ -638,7 +638,7 @@ export function PokemonDetailSlide({
           {mobileTab === "set" && <div className="flex flex-col gap-3">{renderMoves()}</div>}
           {mobileTab === "stats" && <div className="flex flex-col gap-3">{renderStats()}</div>}
           {mobileTab === "notes" && renderNotes()}
-          {mobileTab === "calcs" && <div className="pb-6">{renderCalcs()}</div>}
+          {mobileTab === "calcs" && <div className="pb-16">{renderCalcs()}</div>}
         </div>
       </div>
 
@@ -652,7 +652,7 @@ export function PokemonDetailSlide({
         </div>
         </FieldDiffHighlight>
 
-        <div className="flex flex-col gap-6 min-w-0 sm:max-h-[calc(100dvh-8rem)] sm:overflow-y-auto sm:scrollbar-thin sm:pr-1">
+        <div className="flex flex-col gap-6 min-w-0 sm:max-h-[calc(100dvh-12rem)] sm:overflow-y-auto sm:scrollbar-thin sm:pr-1">
           {renderNotes()}
           {renderCalcs()}
         </div>
