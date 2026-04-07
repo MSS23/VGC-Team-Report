@@ -76,8 +76,9 @@ interface NavbarProps {
   onClearCompareVersion?: () => void;
   compareLoading?: boolean;
 
-  // PDF Export
+  // Export
   onExportPdf?: (mode?: "all-slides" | "tournament-evs" | "tournament-stats") => void;
+  onExportPokepaste?: () => void;
 
   // Tournament mode
   tournamentMode?: boolean;
@@ -110,7 +111,7 @@ export function Navbar(props: NavbarProps) {
     hasExistingShare, editLinkCopied, onCopyEditLink,
     onUndo, onRedo, canUndo, canRedo,
     comparingVersion, onCompareVersion, onClearCompareVersion, compareLoading,
-    onExportPdf,
+    onExportPdf, onExportPokepaste,
     tournamentMode, onSetTournamentMode,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
     onReset, onExitSharedView, onStartTour,
@@ -121,6 +122,7 @@ export function Navbar(props: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [versionPanelOpen, setVersionPanelOpen] = useState(false);
+  const [pasteCopied, setPasteCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Derive the effective share ID for version history
@@ -554,6 +556,27 @@ export function Navbar(props: NavbarProps) {
                         <polyline points="12 6 12 12 16 14" />
                       </svg>
                       Version History
+                    </button>
+                  </>
+                )}
+
+                {/* Export Pokepaste */}
+                {onExportPokepaste && !isPresentationStyle && (
+                  <>
+                    <div className="border-t border-border/50 mx-3 my-1" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onExportPokepaste();
+                        setPasteCopied(true);
+                        setTimeout(() => setPasteCopied(false), 2000);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                      </svg>
+                      {pasteCopied ? "Copied to Clipboard!" : "Copy Pokepaste"}
                     </button>
                   </>
                 )}

@@ -25,6 +25,7 @@ const EditChangelog = dynamic(() => import("@/components/social/EditChangelog").
 const CollaboratorPanel = dynamic(() => import("@/components/social/CollaboratorPanel").then(m => ({ default: m.CollaboratorPanel })));
 import { getSessionId } from "@/lib/utils/session-id";
 import { clearRandomAccent } from "@/lib/utils/random-accent";
+import { teamToShowdown } from "@/lib/utils/export-paste";
 import { I18nProvider } from "@/lib/i18n";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
@@ -246,6 +247,12 @@ function HomeContent() {
   const [exportTheme, setExportTheme] = useState<"light" | "dark">(darkMode ? "dark" : "light");
   const [showExportThemePicker, setShowExportThemePicker] = useState(false);
   const [pendingExportMode, setPendingExportMode] = useState<ExportMode | null>(null);
+
+  const handleExportTeam = useCallback(() => {
+    if (!analysis) return;
+    const pasteText = teamToShowdown(analysis.pokemon.map((p) => p.parsed));
+    navigator.clipboard.writeText(pasteText);
+  }, [analysis]);
 
   const handleExportPdf = useCallback((mode: ExportMode = "all-slides") => {
     // Tournament exports get a theme picker; all-slides uses current theme
@@ -606,6 +613,7 @@ function HomeContent() {
         onClearCompareVersion={handleClearCompare}
         compareLoading={compareLoading}
         onExportPdf={analysis ? handleExportPdf : undefined}
+        onExportPokepaste={analysis ? handleExportTeam : undefined}
         tournamentMode={tournamentMode}
         onSetTournamentMode={analysis ? setTournamentMode : undefined}
         onShowShortcuts={setShowShortcutHint}

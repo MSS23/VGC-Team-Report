@@ -243,8 +243,8 @@ function CollapsibleCalcGroup({
 }) {
   const isPrint = useIsPrintMode();
   const [isOpen, setIsOpen] = useState(!isPresentationMode);
-  // Force open in print mode or read-only (guest) view so all calcs are visible
-  const effectiveOpen = isPrint || isReadOnly || isOpen;
+  // Force open in print mode so all calcs are visible; guests can still toggle
+  const effectiveOpen = isPrint || isOpen;
 
   return (
     <div>
@@ -652,7 +652,7 @@ export function PokemonDetailSlide({
         </div>
         </FieldDiffHighlight>
 
-        <div className="flex flex-col gap-6 min-w-0 sm:max-h-[calc(100dvh-10rem)] sm:overflow-y-auto sm:scrollbar-thin sm:pr-1">
+        <div className="flex flex-col gap-6 min-w-0 sm:max-h-[calc(100dvh-8rem)] sm:overflow-y-auto sm:scrollbar-thin sm:pr-1">
           {renderNotes()}
           {renderCalcs()}
         </div>
