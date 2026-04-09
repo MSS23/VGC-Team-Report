@@ -363,11 +363,27 @@ export function useHomePage() {
     }
   }, [analysis, share.isSharedView, tags, setTags]);
 
+  // ── Auto-detect Champions regulation when team has Mega/Primal Pokemon ──
+  const regulationDetected = useRef(false);
+  useEffect(() => {
+    if (!analysis || share.isSharedView || regulationDetected.current) return;
+    if (tags?.regulation) return; // user already set regulation
+    const hasMega = analysis.pokemon.some((p) =>
+      p.parsed.species.includes("-Mega") || p.parsed.species.includes("-Primal")
+    );
+    if (hasMega) {
+      regulationDetected.current = true;
+      setTags({ ...tags, regulation: "Reg M-A" });
+    }
+  }, [analysis, share.isSharedView, tags, setTags]);
+
   // ── Actions ──────────────────────────────────────────────────────
   const handleAnalyze = (directPaste?: string) => {
     const teamPaste = directPaste ?? paste;
     setIsSampleTeam(teamPaste.trim() === SAMPLE_PASTE.trim());
     templateApplied.current = false; // reset so template applies on next parse
+    archetypeDetected.current = false;
+    regulationDetected.current = false;
     parseTeam(teamPaste);
     // Track team creation
     const hasMega = teamPaste.includes("-Mega") || teamPaste.includes("-Primal");
