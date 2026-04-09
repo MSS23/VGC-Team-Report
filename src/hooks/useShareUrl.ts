@@ -122,7 +122,7 @@ export function useShareUrl() {
           if (!data) return settle(null);
           const editable = data._editable === true;
           if (data._isPublic !== undefined) setFetchedIsPublic(!!data._isPublic);
-          if (data._isOwner !== undefined) setIsOwner(!!data._isOwner);
+          setIsOwner(!!data._isOwner);
           // The API returns _editToken for authenticated owners/collaborators
           const ownerEditToken = data._editToken as string | undefined;
           // Strip internal flags before treating as ShareableState

@@ -58,6 +58,7 @@ export async function GET(
         _editable: !!rows[0].editable,
         _version: Number(rows[0].version),
         _isPublic: !!rows[0].is_public,
+        _isOwner: false,
       });
     }
 
@@ -137,6 +138,7 @@ export async function GET(
       ...normalizeReportData(rows[0].data as Record<string, unknown>),
       _version: Number(rows[0].version),
       _isPublic: true,
+      _isOwner: false,
       _collaborators: collaboratorNames,
     };
 
