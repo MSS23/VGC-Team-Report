@@ -945,9 +945,9 @@ function HomeContent() {
         />
       )}
 
-      {/* Floating like/save bar for shared views — visible above slide nav */}
+      {/* Floating like/save bar for shared views — above slide nav + CTA */}
       {isSharedView && !isPresentationStyle && activeShareId && (
-        <div className="fixed bottom-14 sm:bottom-12 left-1/2 -translate-x-1/2 z-50 safe-bottom">
+        <div className={`fixed left-1/2 -translate-x-1/2 z-50 safe-bottom ${isEditingUnlocked ? "bottom-14 sm:bottom-12" : "bottom-28 sm:bottom-24"}`}>
           <div className="flex items-center gap-0.5 pl-3 pr-1 py-1 rounded-full bg-surface/90 backdrop-blur-md border border-border shadow-lg">
             <ReactionBar shareId={activeShareId} isOwner={isOwner} />
             {!isOwner && (
