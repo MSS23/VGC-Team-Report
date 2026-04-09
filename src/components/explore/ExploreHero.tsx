@@ -1,73 +1,19 @@
 "use client";
 
-import { motion } from "motion/react";
 import { useTranslation } from "@/lib/i18n";
-
-const SHOWCASE_SPRITES = [
-  "incineroar", "flutter-mane", "rillaboom", "urshifu-rapid-strike",
-  "calyrex-ice", "tornadus-therian", "landorus-therian", "kingambit",
-];
-
-import { resolveSlug } from "@/lib/utils/sprite-slug";
-
-const BASE_URL = "https://play.pokemonshowdown.com/sprites";
-
-function spriteUrl(slug: string) {
-  return `${BASE_URL}/ani/${resolveSlug(slug)}.gif`;
-}
 
 export function ExploreHero() {
   const { t } = useTranslation();
 
   return (
-    <div className="relative pt-4 sm:pt-16 pb-3 sm:pb-10 text-center overflow-hidden">
-      {/* Floating sprites background */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.07] overflow-hidden hidden sm:block" aria-hidden>
-        {SHOWCASE_SPRITES.map((slug, i) => (
-          <motion.img
-            key={slug}
-            src={spriteUrl(slug)}
-            alt=""
-            className="absolute w-16 h-16 sm:w-20 sm:h-20 object-contain"
-            style={{
-              left: `${10 + (i % 4) * 22}%`,
-              top: `${i < 4 ? 10 : 55}%`,
-              imageRendering: "pixelated",
-            }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{
-              opacity: 1,
-              y: [0, -8, 0],
-            }}
-            transition={{
-              opacity: { delay: 0.2 + i * 0.1, duration: 0.5 },
-              y: {
-                delay: 0.5 + i * 0.15,
-                duration: 3 + (i % 3),
-                repeat: Infinity,
-                repeatType: "reverse",
-                ease: "easeInOut",
-              },
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Content */}
-      <motion.div
-        className="relative z-10"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-lg sm:text-3xl font-extrabold tracking-tight">
-          {t.exploreTitle.replace("VGC Teams", "")}{" "}
-          <span className="text-accent">VGC Teams</span>
-        </h1>
-        <p className="mt-1 sm:mt-3 text-text-secondary text-xs sm:text-base max-w-lg mx-auto hidden sm:block">
-          {t.exploreSubtitle}
-        </p>
-      </motion.div>
+    <div className="pt-3 sm:pt-10 pb-2 sm:pb-6 text-center">
+      <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight">
+        {t.exploreTitle.replace("VGC Teams", "")}{" "}
+        <span className="text-accent">VGC Teams</span>
+      </h1>
+      <p className="mt-1 text-text-secondary text-xs sm:text-sm max-w-md mx-auto hidden sm:block">
+        {t.exploreSubtitle}
+      </p>
     </div>
   );
 }
