@@ -17,7 +17,7 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
 
   // ── Bot detection: block known scrapers and suspicious requests ──
   // Skip for cron/webhook routes (authenticated by secrets, not browsers)
-  const isCronOrWebhook = pathname.startsWith('/api/cron') || pathname.startsWith('/api/webhooks') || pathname === '/api/keep-alive';
+  const isCronOrWebhook = pathname.startsWith('/api/cron') || pathname.startsWith('/api/webhooks') || pathname === '/api/keep-alive' || pathname === '/api/setup';
   if (!isCronOrWebhook) {
     const userAgent = request.headers.get('user-agent') ?? '';
     if (isBlockedBot(userAgent)) {
@@ -67,7 +67,7 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
   // ── CORS: Block cross-origin API requests from unknown origins ─
   // Exempt Discord and Linear webhook endpoints (sent from their servers, not browsers)
   // Exempt builder proxy endpoints — authenticated via secret key, called from cloud sandbox
-  if (isApiRoute && !pathname.startsWith('/api/discord') && !pathname.startsWith('/api/webhooks/') && !pathname.startsWith('/api/builder/') && !isAllowedOrigin(request)) {
+  if (isApiRoute && !pathname.startsWith('/api/discord') && !pathname.startsWith('/api/webhooks/') && !pathname.startsWith('/api/builder/') && pathname !== '/api/setup' && !isAllowedOrigin(request)) {
     return NextResponse.json(
       { error: 'Origin not allowed' },
       { status: 403 },
