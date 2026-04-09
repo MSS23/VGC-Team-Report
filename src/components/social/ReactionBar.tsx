@@ -12,7 +12,7 @@ interface ReactionBarProps {
   isOwner?: boolean;
 }
 
-const HeartIcon = ({ size = 16, filled = false }: { size?: number; filled?: boolean }) => (
+const HeartIcon = ({ size = 18, filled = false }: { size?: number; filled?: boolean }) => (
   <svg
     width={size}
     height={size}
@@ -68,11 +68,16 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
     posthog.capture("report_reacted", { share_id: shareId, action: wasLiked ? "removed" : "added" });
 
     try {
-      await fetch(`/api/reactions/${shareId}`, {
+      const res = await fetch(`/api/reactions/${shareId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reactionType: "heart", sessionId }),
       });
+      if (!res.ok) {
+        // API rejected — roll back optimistic update
+        setLiked(wasLiked);
+        setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));
+      }
     } catch {
       setLiked(wasLiked);
       setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));

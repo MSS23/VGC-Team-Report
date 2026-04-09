@@ -946,7 +946,7 @@ function HomeContent() {
       )}
 
       {/* Floating like/save bar for shared views — always visible at bottom */}
-      {isSharedView && !isEditingUnlocked && !isPresentationStyle && activeShareId && (
+      {isSharedView && !isPresentationStyle && activeShareId && (
         <div className="fixed bottom-16 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 safe-bottom">
           <div className="flex items-center gap-0.5 pl-3 pr-1 py-1 rounded-full bg-surface/90 backdrop-blur-md border border-border shadow-lg">
             <ReactionBar shareId={activeShareId} isOwner={isOwner} />
