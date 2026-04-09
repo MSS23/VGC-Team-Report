@@ -789,13 +789,19 @@ function HomeContent() {
             {isOwner && (
               <button
                 type="button"
-                onClick={() => handleSetPublic(!isPublic)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 transition-all cursor-pointer ${
-                  isPublic
-                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                    : "bg-surface border-border text-text-tertiary hover:border-amber-500/30 hover:text-amber-500"
+                onClick={() => {
+                  if (!isPublic && warnings.length > 0) return;
+                  handleSetPublic(!isPublic);
+                }}
+                disabled={!isPublic && warnings.length > 0}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 transition-all ${
+                  !isPublic && warnings.length > 0
+                    ? "cursor-not-allowed opacity-50 bg-surface border-border text-text-tertiary"
+                    : `cursor-pointer ${isPublic
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                      : "bg-surface border-border text-text-tertiary hover:border-amber-500/30 hover:text-amber-500"}`
                 }`}
-                title={isPublic ? "Listed on Explore — click to make private" : "Private — click to publish on Explore"}
+                title={!isPublic && warnings.length > 0 ? "Fix team warnings before publishing" : isPublic ? "Listed on Explore — click to make private" : "Private — click to publish on Explore"}
               >
                 {isPublic ? (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -944,6 +950,7 @@ function HomeContent() {
           }}
           onClose={() => setShowShareModal(false)}
           tags={tags}
+          warnings={warnings}
         />
       )}
 

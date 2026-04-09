@@ -16,6 +16,7 @@ interface ShareModalProps {
   onToggleComments: (v: boolean) => void;
   onClose: () => void;
   tags?: { regulation?: string; eventType?: string; archetype?: string[] };
+  warnings?: string[];
 }
 
 export function ShareModal({
@@ -31,6 +32,7 @@ export function ShareModal({
   onToggleComments,
   onClose,
   tags,
+  warnings = [],
 }: ShareModalProps) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [discordCopied, setDiscordCopied] = useState(false);
@@ -44,7 +46,11 @@ export function ShareModal({
     if (hasTags && tagError) setTagError(false);
   }, [hasTags, tagError]);
 
+  const hasWarnings = warnings.length > 0;
+
   const handleTogglePublic = (v: boolean) => {
+    // Block publishing to Explore when team has warnings/errors
+    if (v && hasWarnings) return;
     if (v && !hasTags) {
       setTagError(true);
       return;
@@ -240,39 +246,52 @@ export function ShareModal({
 
         {/* Publish to community prompt — shown when report is private and not dismissed */}
         {!isPublic && !publishPromptDismissed && isOwner && (
-          <div className="mx-6 mb-4 rounded-xl border border-accent/30 bg-accent-surface/20 p-4">
-            <p className="text-sm font-semibold text-text-primary mb-1">
-              Your report is private
-            </p>
-            <p className="text-xs text-text-secondary mb-3">
-              Publish it to the Explore page so others can discover it?
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleTogglePublic(true)}
-                className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors cursor-pointer"
-              >
-                Publish
-              </button>
-              <button
-                type="button"
-                onClick={() => setPublishPromptDismissed(true)}
-                className="px-3.5 py-1.5 text-xs font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
-              >
-                Keep Private
-              </button>
-            </div>
+          <div className={`mx-6 mb-4 rounded-xl border p-4 ${hasWarnings ? "border-amber-500/30 bg-amber-500/5" : "border-accent/30 bg-accent-surface/20"}`}>
+            {hasWarnings ? (
+              <>
+                <p className="text-sm font-semibold text-text-primary mb-1">
+                  Fix warnings before publishing
+                </p>
+                <p className="text-xs text-text-secondary mb-1">
+                  Your report has {warnings.length} warning{warnings.length > 1 ? "s" : ""}. Resolve them to publish on Explore. You can still share privately and collaborate.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-text-primary mb-1">
+                  Your report is private
+                </p>
+                <p className="text-xs text-text-secondary mb-3">
+                  Publish it to the Explore page so others can discover it?
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleTogglePublic(true)}
+                    className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors cursor-pointer"
+                  >
+                    Publish
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPublishPromptDismissed(true)}
+                    className="px-3.5 py-1.5 text-xs font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
+                  >
+                    Keep Private
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
-        {/* Visibility toggle — only owner can change */}
+        {/* Visibility toggle — only owner can change; blocked when warnings exist */}
         <div className="px-6 py-4 border-t border-border">
           <button
             type="button"
-            onClick={() => isOwner && handleTogglePublic(!isPublic)}
-            disabled={!isOwner}
-            className={`flex items-center gap-3 w-full text-left group ${isOwner ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
+            onClick={() => isOwner && !hasWarnings && handleTogglePublic(!isPublic)}
+            disabled={!isOwner || (hasWarnings && !isPublic)}
+            className={`flex items-center gap-3 w-full text-left group ${isOwner && !(hasWarnings && !isPublic) ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
           >
             <div className={`relative inline-flex h-[24px] w-[42px] items-center rounded-full transition-all duration-300 flex-shrink-0 ${
               isPublic ? "bg-accent shadow-md shadow-accent/30" : "bg-border"
@@ -288,6 +307,8 @@ export function ShareModal({
               <div className="text-xs text-text-tertiary">
                 {!isOwner
                   ? "Only the report owner can change visibility."
+                  : hasWarnings && !isPublic
+                  ? "Fix team warnings before publishing publicly."
                   : isPublic
                   ? "Your team is visible in the public gallery. Toggle off to unlist."
                   : "Currently unlisted. Toggle on to feature in the public gallery."}
