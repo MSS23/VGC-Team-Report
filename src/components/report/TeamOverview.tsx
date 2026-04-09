@@ -219,6 +219,8 @@ interface TeamOverviewProps {
   onPokemonLongPress?: (index: number) => void;
   /** Re-import a team from a new paste/URL — replaces the entire team */
   onUpdatePaste?: (paste: string) => void;
+  megaStates?: Record<number, boolean>;
+  onToggleMega?: (index: number) => void;
 }
 
 export function TeamOverview({
@@ -248,6 +250,8 @@ export function TeamOverview({
   onReorderPokemon,
   onPokemonLongPress,
   onUpdatePaste,
+  megaStates,
+  onToggleMega,
 }: TeamOverviewProps) {
   const { t } = useTranslation();
   const hasTournamentInfo = !!(tournamentName || placement || record);
@@ -579,6 +583,9 @@ export function TeamOverview({
                 onToggleMvp={() => onMvpIndexChange?.(mvpIndex === i ? null : i)}
                 shiny={sc?.shiny}
                 animated={sc?.animated}
+                isMega={megaStates?.[i]}
+                onToggleMega={onToggleMega ? () => onToggleMega(i) : undefined}
+                regulation={tags?.regulation}
               />
               </FieldDiffHighlight>
             </LongPressWrapper>

@@ -69,8 +69,8 @@ export function useHomePage() {
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
-    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId,
-    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull,
+    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates,
+    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega,
   } = useTeamMeta(speciesKeys, shouldPersist);
   const {
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
@@ -419,6 +419,7 @@ export function useHomePage() {
     tournamentName, setTournamentName, placement, setPlacement,
     record, setRecord, mvpIndex, setMvpIndex,
     rentalCode, setRentalCode, creatorName, setCreatorName, tags, setTags, templateId, setTemplateId,
+    megaStates, toggleMega,
 
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
     updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,

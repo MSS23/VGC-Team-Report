@@ -78,6 +78,8 @@ interface TeamReportProps {
   onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
   onPokemonLongPress?: (index: number) => void;
   onUpdatePaste?: (paste: string) => void;
+  megaStates?: Record<number, boolean>;
+  onToggleMega?: (index: number) => void;
 }
 
 /**
@@ -151,6 +153,8 @@ export function TeamReport({
   onReorderPokemon,
   onPokemonLongPress,
   onUpdatePaste,
+  megaStates,
+  onToggleMega,
 }: TeamReportProps) {
   const pokemonCount = analysis.pokemon.length;
 
@@ -184,6 +188,8 @@ export function TeamReport({
           onReorderPokemon={onReorderPokemon}
           onPokemonLongPress={onPokemonLongPress}
           onUpdatePaste={onUpdatePaste}
+          megaStates={megaStates}
+          onToggleMega={onToggleMega}
         />
     );
   }
@@ -221,6 +227,7 @@ export function TeamReport({
           speciesKeys={speciesKeys}
           getSpriteConfig={getSpriteConfig}
           isPresentationMode={isPresentationMode}
+          regulation={tags?.regulation}
         />
     );
   }

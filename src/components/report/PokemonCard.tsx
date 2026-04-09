@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { Card } from "@/components/ui/Card";
 import { PokemonSprite } from "./PokemonSprite";
@@ -9,6 +10,9 @@ import { NATURES } from "@/lib/data/natures";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
+import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
+import { lookupPokemon } from "@/lib/data/pokemon";
+import { calculateAllStats } from "@/lib/analysis/stat-calculator";
 
 interface PokemonCardProps {
   pokemon: AnalyzedPokemon;
@@ -20,6 +24,9 @@ interface PokemonCardProps {
   onToggleMvp?: () => void;
   shiny?: boolean;
   animated?: boolean;
+  isMega?: boolean;
+  onToggleMega?: () => void;
+  regulation?: string;
 }
 
 const STAT_COLORS: Record<string, string> = {
@@ -31,10 +38,41 @@ const STAT_COLORS: Record<string, string> = {
   spe: "var(--stat-spe)",
 };
 
-export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true }: PokemonCardProps) {
+export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation }: PokemonCardProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
-  const types = data?.types ?? [];
+
+  // Mega Evolution detection
+  const megaEntry = useMemo(
+    () => detectMegaFromItem(parsed.item, parsed.species),
+    [parsed.item, parsed.species],
+  );
+  const alreadyMega = isMegaForm(parsed.species);
+  const canMega = !!megaEntry && !alreadyMega;
+  // Auto-detect: if isMega prop is undefined and mega stone detected, default to mega
+  const showMega = alreadyMega || (canMega && (isMega ?? true));
+  // Only show toggle for M-A regulation or unset
+  const showMegaToggle = canMega && (!regulation || regulation === "Reg M-A");
+
+  // Resolve mega overrides for display
+  const megaData = useMemo(() => {
+    if (!showMega || !megaEntry) return null;
+    return lookupPokemon(megaEntry.dataKey);
+  }, [showMega, megaEntry]);
+
+  const megaStats = useMemo(() => {
+    if (!megaData) return null;
+    return calculateAllStats(megaData.baseStats, parsed.ivs, parsed.evs, parsed.level, parsed.nature);
+  }, [megaData, parsed.ivs, parsed.evs, parsed.level, parsed.nature]);
+
+  const displaySpecies = showMega && megaEntry ? megaEntry.displayName : parsed.species;
+  const displayTypes = (showMega && megaData ? megaData.types : data?.types) ?? [];
+  const displayAbility = showMega && megaEntry ? megaEntry.ability : parsed.ability;
+  const displayStats = megaStats ?? calculatedStats;
+  const displayData = megaData ?? data;
+  // Sprite uses data key for mega form (e.g. "kangaskhan-mega")
+  const spriteSpecies = showMega && megaEntry ? megaEntry.dataKey : parsed.species;
+
   const spriteSizeSm = creatorMode ? 64 : 44;
   const spriteSizeLg = creatorMode ? 120 : 104;
   const natureData = NATURES[parsed.nature];
@@ -64,14 +102,14 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
       <div className="flex items-start gap-1.5 sm:gap-3 creator:gap-4">
         <div className="flex-shrink-0">
           <PokemonSprite
-            species={parsed.species}
+            species={spriteSpecies}
             size={spriteSizeSm}
             className="sm:hidden"
             animated={animated}
             shiny={shiny}
           />
           <PokemonSprite
-            species={parsed.species}
+            species={spriteSpecies}
             size={spriteSizeLg}
             className="hidden sm:block"
             animated={animated}
@@ -81,8 +119,30 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
             <h3 className="text-sm sm:text-lg font-extrabold text-text-primary creator:text-xl truncate leading-tight tracking-tight">
-              {parsed.species}
+              {displaySpecies}
             </h3>
+            {/* Mega Evolution toggle */}
+            {showMegaToggle && (
+              <button
+                type="button"
+                onClick={onToggleMega}
+                className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-md text-[10px] sm:text-xs font-extrabold transition-all duration-200 ${
+                  showMega
+                    ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-sm shadow-purple-500/30"
+                    : "bg-surface-alt text-text-tertiary hover:text-purple-500 hover:bg-purple-500/10 border border-border-subtle"
+                }`}
+                title={showMega ? "Show base form" : "Show Mega Evolution"}
+                aria-label={showMega ? "Show base form" : "Show Mega Evolution"}
+              >
+                M
+              </button>
+            )}
+            {/* Mega indicator for already-mega imported Pokemon */}
+            {alreadyMega && (
+              <span className="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-md text-[10px] sm:text-xs font-extrabold bg-gradient-to-br from-pink-500 to-purple-600 text-white">
+                M
+              </span>
+            )}
             {parsed.gender && (
               <span className={`text-sm font-bold ${parsed.gender === "M" ? "text-blue-500" : "text-pink-500"}`}>
                 {parsed.gender === "M" ? "\u2642" : "\u2640"}
@@ -110,7 +170,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
 
           {/* Types */}
           <div className="flex items-center gap-0.5 sm:gap-1 mt-0.5 sm:mt-1.5 flex-wrap">
-            {types.map((type) => (
+            {displayTypes.map((type) => (
               <TypeBadge key={type} type={type} />
             ))}
             {parsed.teraType && (
@@ -126,7 +186,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             {parsed.item && (
               <span className="font-bold text-text-primary">@ {parsed.item}</span>
             )}
-            {parsed.ability && <span className="font-medium">{parsed.ability}</span>}
+            {displayAbility && <span className="font-medium">{displayAbility}</span>}
           </div>
 
           {/* Non-default IVs */}
@@ -186,7 +246,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
       </div>
 
       {/* Stats */}
-      {data && (
+      {displayData && (
         <div>
           <h4 className="text-[9px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-0.5 sm:mb-1.5 creator:mb-2 flex items-center gap-2">
             <span>{t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70 hidden sm:inline">({parsed.nature})</span></span>
@@ -197,9 +257,9 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               return null;
             })()}
           </h4>
-          <div className="space-y-1 sm:space-y-1.5 stagger-stats" role="list" aria-label={`${parsed.species} stats`}>
+          <div className="space-y-1 sm:space-y-1.5 stagger-stats" role="list" aria-label={`${displaySpecies} stats`}>
             {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map((stat) => {
-              const value = calculatedStats[stat];
+              const value = displayStats[stat];
               const ev = parsed.evs[stat];
               const isBoosted = itemBoost?.stat === stat;
               const displayValue = isBoosted ? itemBoost.boostedValue : value;

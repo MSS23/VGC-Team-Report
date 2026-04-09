@@ -12,15 +12,25 @@ interface SpeedTierChartProps {
   speciesKeys: string[];
   getSpriteConfig?: (key: string) => SpriteConfig;
   isPresentationMode?: boolean;
+  regulation?: string;
 }
 
 /** Common meta threats to show alongside your team for speed context */
-const META_THREATS = [
+const META_THREATS_DEFAULT = [
   "flutter-mane", "iron-bundle", "raging-bolt", "calyrex-shadow",
   "urshifu", "urshifu-rapid-strike", "tornadus", "landorus",
   "incineroar", "rillaboom", "amoonguss", "iron-hands",
   "chien-pao", "ogerpon", "kingambit", "archaludon",
   "pelipper", "torkoal", "porygon2", "dusclops",
+] as const;
+
+/** Mega Evolution meta threats for Regulation M-A (Champions format) */
+const META_THREATS_MEGA = [
+  "kangaskhan-mega", "salamence-mega", "metagross-mega",
+  "charizard-mega-y", "gengar-mega", "mawile-mega",
+  "gardevoir-mega", "lucario-mega", "aerodactyl-mega",
+  "alakazam-mega", "lopunny-mega", "tyranitar-mega",
+  "garchomp-mega", "scizor-mega", "venusaur-mega",
 ] as const;
 
 type SpeedModifier = "tailwind" | "paralysis" | "icywind";
@@ -58,7 +68,10 @@ function minSpeed(baseSpe: number): number {
   return Math.floor(((Math.floor(((2 * baseSpe + 0) * 50) / 100) + 5) * 0.9));
 }
 
-export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode }: SpeedTierChartProps) {
+export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode, regulation }: SpeedTierChartProps) {
+  const META_THREATS = regulation === "Reg M-A"
+    ? [...META_THREATS_DEFAULT.filter(k => POKEMON_DATA[k]), ...META_THREATS_MEGA]
+    : META_THREATS_DEFAULT;
   const { t } = useTranslation();
   const [activeModifiers, setActiveModifiers] = useState<Set<SpeedModifier>>(new Set());
   const [showMetaThreats, setShowMetaThreats] = useState(false);

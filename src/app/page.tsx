@@ -128,6 +128,8 @@ function HomeContent() {
     setCreatorName,
     tags,
     setTags,
+    megaStates,
+    toggleMega,
     plans,
     addPlan,
     removePlan,
@@ -748,6 +750,8 @@ function HomeContent() {
           onReorderPokemon={isReadOnly ? undefined : reorderPokemon}
           onPokemonLongPress={handlePokemonLongPress}
           onUpdatePaste={isReadOnly ? undefined : handleUpdatePaste}
+          megaStates={megaStates}
+          onToggleMega={isReadOnly ? undefined : toggleMega}
         />
         </>
         )}
