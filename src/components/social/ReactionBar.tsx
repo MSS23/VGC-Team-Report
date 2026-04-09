@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useAuth, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
 import { track } from "@vercel/analytics";
 import posthog from "posthog-js";
@@ -28,6 +29,7 @@ const HeartIcon = ({ size = 16, filled = false }: { size?: number; filled?: bool
 
 export function ReactionBar({ shareId, compact = false, isOwner = false }: ReactionBarProps) {
   const sessionId = useSessionId();
+  const { isSignedIn } = useAuth();
   const [likeCount, setLikeCount] = useState(0);
   const [liked, setLiked] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -53,7 +55,7 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
   }, [shareId, sessionId]);
 
   const toggleLike = useCallback(async () => {
-    if (!sessionId || compact || isOwner) return;
+    if (!sessionId || compact || !isSignedIn || isOwner) return;
 
     const wasLiked = liked;
     setLiked(!wasLiked);
@@ -75,7 +77,7 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
       setLiked(wasLiked);
       setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));
     }
-  }, [shareId, sessionId, liked, compact, isOwner]);
+  }, [shareId, sessionId, liked, compact, isSignedIn, isOwner]);
 
   if (!loaded) return null;
 
@@ -100,7 +102,23 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
     );
   }
 
-  // Interactive like button — works for everyone via session ID
+  // Guest: heart icon that opens sign-in modal
+  if (!isSignedIn) {
+    return (
+      <SignInButton mode="modal">
+        <button
+          type="button"
+          aria-label="Like report"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold text-text-secondary hover:text-red-500 transition-all cursor-pointer active:scale-95"
+        >
+          <HeartIcon filled={false} />
+          {likeCount > 0 && <span className="opacity-70">{likeCount}</span>}
+        </button>
+      </SignInButton>
+    );
+  }
+
+  // Signed in: interactive like button
   return (
     <button
       type="button"
