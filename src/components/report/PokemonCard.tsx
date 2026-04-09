@@ -12,7 +12,7 @@ import { translateMove } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
 import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
 import { lookupPokemon } from "@/lib/data/pokemon";
-import { calculateAllStats } from "@/lib/analysis/stat-calculator";
+import { calculateAllStats, evsToSp, CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT } from "@/lib/analysis/stat-calculator";
 
 interface PokemonCardProps {
   pokemon: AnalyzedPokemon;
@@ -246,29 +246,75 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
       </div>
 
       {/* Stats */}
-      {displayData && (
+      {displayData && (() => {
+        const isChampions = regulation === "Reg M-A" || !regulation;
+        const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
+        const totalSp = (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + evsToSp(parsed.evs[s]), 0);
+        const hasWastedEvs = isChampions && (["hp", "atk", "def", "spa", "spd", "spe"] as const).some((s) => parsed.evs[s] % 8 !== 0 && parsed.evs[s] > 0);
+        const unusedSp = isChampions ? CHAMPIONS_TOTAL_SP - totalSp : 0;
+        const overSp = isChampions && totalSp > CHAMPIONS_TOTAL_SP;
+
+        return (
         <div>
           <h4 className="text-[9px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-0.5 sm:mb-1.5 creator:mb-2 flex items-center gap-2">
             <span>{t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70 hidden sm:inline">({parsed.nature})</span></span>
-            {(() => {
-              const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
-              if (totalEvs > 510) return <span className="text-[8px] sm:text-[9px] font-bold text-danger normal-case tracking-normal">{totalEvs}/510 EVs</span>;
-              if (totalEvs > 0) return <span className="text-[8px] sm:text-[9px] font-bold text-text-tertiary/50 normal-case tracking-normal hidden sm:inline">{totalEvs}/510</span>;
-              return null;
-            })()}
+            {isChampions ? (
+              <>
+                {overSp ? (
+                  <span className="text-[8px] sm:text-[9px] font-bold text-danger normal-case tracking-normal">{totalSp}/{CHAMPIONS_TOTAL_SP} SP</span>
+                ) : totalSp > 0 ? (
+                  <span className={`text-[8px] sm:text-[9px] font-bold normal-case tracking-normal ${unusedSp > 0 ? "text-amber-500" : "text-text-tertiary/50"}`}>
+                    {totalSp}/{CHAMPIONS_TOTAL_SP} SP
+                  </span>
+                ) : null}
+              </>
+            ) : (
+              <>
+                {totalEvs > 510 ? (
+                  <span className="text-[8px] sm:text-[9px] font-bold text-danger normal-case tracking-normal">{totalEvs}/510 EVs</span>
+                ) : totalEvs > 0 ? (
+                  <span className="text-[8px] sm:text-[9px] font-bold text-text-tertiary/50 normal-case tracking-normal hidden sm:inline">{totalEvs}/510</span>
+                ) : null}
+              </>
+            )}
           </h4>
+
+          {/* Stat warnings */}
+          {isChampions && (unusedSp > 0 || hasWastedEvs || overSp) && totalSp > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-1.5 sm:mb-2">
+              {unusedSp > 0 && !overSp && (
+                <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                  {unusedSp} SP unused
+                </span>
+              )}
+              {overSp && (
+                <span className="text-[9px] sm:text-[10px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded">
+                  Over budget by {totalSp - CHAMPIONS_TOTAL_SP} SP
+                </span>
+              )}
+              {hasWastedEvs && (
+                <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                  Wasted EVs (not divisible by 8)
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="space-y-1 sm:space-y-1.5 stagger-stats" role="list" aria-label={`${displaySpecies} stats`}>
             {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map((stat) => {
               const value = displayStats[stat];
               const ev = parsed.evs[stat];
+              const sp = evsToSp(ev);
               const isBoosted = itemBoost?.stat === stat;
               const displayValue = isBoosted ? itemBoost.boostedValue : value;
               const maxStat = stat === "hp" ? 300 : 250;
               const percentage = Math.min((displayValue / maxStat) * 100, 100);
               const labels = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe };
+              const isWasted = isChampions && ev > 0 && ev % 8 !== 0;
+              const isOverMax = isChampions && sp > CHAMPIONS_MAX_SP_PER_STAT;
 
               return (
-                <div key={stat} className="flex items-center gap-1 sm:gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${ev > 0 ? `, ${ev} EVs` : ""}${isBoosted ? `, boosted by item` : ""}`}>
+                <div key={stat} className="flex items-center gap-1 sm:gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${isChampions && sp > 0 ? `, ${sp} SP` : ev > 0 ? `, ${ev} EVs` : ""}${isBoosted ? `, boosted by item` : ""}`}>
                   <span className="text-[9px] sm:text-xs font-bold w-6 sm:w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-px">
                     {natureData?.plus === stat && <span className="text-[8px] sm:text-[11px]" aria-label="boosted by nature">{"\u25B2"}</span>}
                     {natureData?.minus === stat && <span className="text-[8px] sm:text-[11px]" aria-label="reduced by nature">{"\u25BC"}</span>}
@@ -288,19 +334,30 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                   }`}>
                     {displayValue}{isBoosted && <span className="text-[8px] align-super" aria-label="boosted by item">*</span>}
                   </span>
-                  {ev > 0 ? (
-                    <span className="hidden sm:inline text-xs text-accent font-bold w-9">
-                      +{ev}
-                    </span>
+                  {isChampions ? (
+                    sp > 0 ? (
+                      <span className={`hidden sm:inline text-xs font-bold w-9 ${isWasted || isOverMax ? "text-amber-500" : "text-accent"}`}>
+                        +{sp}{isWasted && <span className="text-[8px] text-amber-500" title={`${ev} EVs — ${ev % 8} wasted`}>!</span>}
+                      </span>
+                    ) : (
+                      <span className="hidden sm:inline w-9" />
+                    )
                   ) : (
-                    <span className="hidden sm:inline w-9" />
+                    ev > 0 ? (
+                      <span className="hidden sm:inline text-xs text-accent font-bold w-9">
+                        +{ev}
+                      </span>
+                    ) : (
+                      <span className="hidden sm:inline w-9" />
+                    )
                   )}
                 </div>
               );
             })}
           </div>
         </div>
-      )}
+        );
+      })()}
     </Card>
   );
 }

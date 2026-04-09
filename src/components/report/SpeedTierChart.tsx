@@ -68,6 +68,16 @@ function minSpeed(baseSpe: number): number {
   return Math.floor(((Math.floor(((2 * baseSpe + 0) * 50) / 100) + 5) * 0.9));
 }
 
+/** Champions max speed: 31 IV always, 32 SP, +nature */
+function championsMaxSpeed(baseSpe: number): number {
+  return Math.floor((Math.floor((2 * baseSpe + 31) * 50 / 100) + 5 + 32) * 1.1);
+}
+
+/** Champions min speed: 31 IV always, 0 SP, -nature */
+function championsMinSpeed(baseSpe: number): number {
+  return Math.floor((Math.floor((2 * baseSpe + 31) * 50 / 100) + 5) * 0.9);
+}
+
 export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode, regulation }: SpeedTierChartProps) {
   const META_THREATS = regulation === "Reg M-A"
     ? [...META_THREATS_DEFAULT.filter(k => POKEMON_DATA[k]), ...META_THREATS_MEGA]
@@ -121,12 +131,13 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         const data = POKEMON_DATA[key];
         if (!data) return null;
         const base = data.baseStats.spe;
+        const isMA = regulation === "Reg M-A";
         return {
           species: data.name,
           speciesKey: key,
-          baseSpe: maxSpeed(base),
-          minSpe: minSpeed(base),
-          boostedSpe: maxSpeed(base),
+          baseSpe: isMA ? championsMaxSpeed(base) : maxSpeed(base),
+          minSpe: isMA ? championsMinSpeed(base) : minSpeed(base),
+          boostedSpe: isMA ? championsMaxSpeed(base) : maxSpeed(base),
           hasSpeedBoost: false,
           speedBoostLabel: "",
           isYours: false as const,
@@ -136,7 +147,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         species: string; speciesKey: string; baseSpe: number; minSpe: number;
         boostedSpe: number; hasSpeedBoost: boolean; speedBoostLabel: string; isYours: false;
       }>;
-  }, [showMetaThreats, pokemon]);
+  }, [showMetaThreats, pokemon, regulation, META_THREATS]);
 
   // Combine and apply modifiers
   const allEntries = useMemo(() => {
