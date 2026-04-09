@@ -297,6 +297,22 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             )}
           </h4>
 
+          {/* Missing SP/EV warning */}
+          {isChampions && !showEvMode && totalSp < CHAMPIONS_TOTAL_SP && totalSp > 0 && (
+            <div className="flex items-center gap-1 mb-1 sm:mb-1.5">
+              <span className="text-[8px] sm:text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                {CHAMPIONS_TOTAL_SP - totalSp} SP unallocated
+              </span>
+            </div>
+          )}
+          {!isChampions && totalEvs < 510 && totalEvs > 0 && (
+            <div className="flex items-center gap-1 mb-1 sm:mb-1.5">
+              <span className="text-[8px] sm:text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                {510 - totalEvs} EVs unallocated
+              </span>
+            </div>
+          )}
+
           {/* Stat warnings for Champions */}
           {isChampions && !showEvMode && totalEvs > 0 && (hasWastedEvs || overSp || needsConversion) && (
             <div className="flex flex-wrap gap-1.5 mb-1.5 sm:mb-2">

@@ -12,6 +12,7 @@ import { NATURES } from "@/lib/data/natures";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
+import { convertToChampionsSp, CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT, isChampionsOptimized, evsToSp } from "@/lib/analysis/stat-calculator";
 import { FieldDiffHighlight } from "./TeamReport";
 import { useIsPrintMode } from "@/components/ui/PdfExport";
 
@@ -31,6 +32,8 @@ interface PokemonDetailSlideProps {
   speciesKey?: string;
   /** Pokemon index for diff highlighting */
   pokemonIndex?: number;
+  /** Current regulation (e.g. "Reg M-A" for Champions) */
+  regulation?: string;
 }
 
 const STAT_COLORS: Record<string, string> = {
@@ -310,12 +313,14 @@ export function PokemonDetailSlide({
   animated = true,
   speciesKey,
   pokemonIndex,
+  regulation,
 }: PokemonDetailSlideProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const types = data?.types ?? [];
   const natureData = NATURES[parsed.nature];
   const relevantStats = getRelevantStats(parsed);
+  const [showEvMode, setShowEvMode] = useState(false);
   const statLabels = {
     hp: t.statHp,
     atk: t.statAtk,
@@ -494,22 +499,77 @@ export function PokemonDetailSlide({
     </div>
   );
 
-  const renderStats = () => data ? (
+  const renderStats = () => {
+    if (!data) return null;
+    const isChampions = regulation === "Reg M-A";
+    const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
+    const spSpread = convertToChampionsSp(parsed.evs);
+    const totalSp = (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + spSpread[s], 0);
+    const missingEvs = 510 - totalEvs;
+    const missingSp = isChampions ? CHAMPIONS_TOTAL_SP - totalSp : 0;
+
+    return (
     <div>
-      <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-2">
-        {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70">({parsed.nature})</span>
+      <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-2 flex items-center gap-2">
+        <span>{t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70">({parsed.nature})</span></span>
+        {isChampions ? (
+          <span className="flex items-center gap-1.5">
+            <span className={`text-[9px] sm:text-[10px] font-bold normal-case tracking-normal ${
+              totalSp > CHAMPIONS_TOTAL_SP ? "text-danger" :
+              totalSp < CHAMPIONS_TOTAL_SP ? "text-amber-500" : "text-text-tertiary/50"
+            }`}>
+              {showEvMode ? `${totalEvs}/510 EVs` : `${totalSp}/${CHAMPIONS_TOTAL_SP} SP`}
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowEvMode(!showEvMode)}
+              className="text-[8px] sm:text-[9px] font-bold normal-case tracking-normal px-1.5 py-0.5 rounded-full border border-border bg-surface-alt text-text-tertiary hover:text-accent hover:border-accent/30 transition-all cursor-pointer"
+            >
+              {showEvMode ? "SP" : "EVs"}
+            </button>
+          </span>
+        ) : totalEvs > 0 ? (
+          <span className={`text-[9px] sm:text-[10px] font-bold normal-case tracking-normal ${
+            totalEvs > 510 ? "text-danger" : "text-text-tertiary/50"
+          }`}>
+            {totalEvs}/510
+          </span>
+        ) : null}
       </h3>
+
+      {/* Missing SP/EV warning */}
+      {isChampions && !showEvMode && missingSp > 0 && totalSp > 0 && (
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className="text-[10px] sm:text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">
+            {missingSp} SP unallocated
+          </span>
+        </div>
+      )}
+      {!isChampions && missingEvs > 0 && missingEvs < 510 && (
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className="text-[10px] sm:text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">
+            {missingEvs} EVs unallocated
+          </span>
+        </div>
+      )}
+
       <div className="space-y-1 sm:space-y-1.5 stagger-stats">
         {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map(
           (stat) => {
             const value = calculatedStats[stat];
             const ev = parsed.evs[stat];
+            const sp = spSpread[stat];
             const iv = parsed.ivs[stat];
             const isBoosted = itemBoost?.stat === stat;
             const displayValue = isBoosted ? itemBoost.boostedValue : value;
             const maxStat = stat === "hp" ? 300 : 250;
             const percentage = Math.min((displayValue / maxStat) * 100, 100);
             const hasNonDefaultIv = iv !== 31;
+
+            const showSp = isChampions && !showEvMode;
+            const investLabel = showSp ? sp : ev;
+            const investUnit = showSp ? "SP" : "";
+            const isOverMax = isChampions && sp > CHAMPIONS_MAX_SP_PER_STAT;
 
             return (
               <div key={stat} className="flex items-center gap-2">
@@ -533,9 +593,9 @@ export function PokemonDetailSlide({
                   {displayValue}
                 </span>
                 <div className="flex items-center gap-1 w-16">
-                  {ev > 0 ? (
-                    <span className="text-xs text-accent font-bold">
-                      +{ev}
+                  {investLabel > 0 ? (
+                    <span className={`text-xs font-bold ${isOverMax && showSp ? "text-amber-500" : "text-accent"}`}>
+                      +{investLabel}{investUnit && <span className="text-[9px] ml-px">{investUnit}</span>}
                     </span>
                   ) : null}
                   {hasNonDefaultIv && (
@@ -550,7 +610,8 @@ export function PokemonDetailSlide({
         )}
       </div>
     </div>
-  ) : null;
+    );
+  };
 
   const renderNotes = () => (
     <FieldDiffHighlight field={speciesKey ? [`notes:${speciesKey}`] : []} label="Notes changed">

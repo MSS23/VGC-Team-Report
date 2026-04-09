@@ -215,6 +215,7 @@ export function TeamReport({
           animated={getSpriteConfig?.(key)?.animated}
           speciesKey={key}
           pokemonIndex={pokemonIndex}
+          regulation={tags?.regulation}
         />
     );
   }
