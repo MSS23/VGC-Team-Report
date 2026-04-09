@@ -778,68 +778,8 @@ function HomeContent() {
         />
         </>
         )}
-      </div>
-      </VersionDiffProvider>
 
-      {/* Slide navigation — hidden in tournament mode */}
-      {!tournamentMode && (
-        <SlideNavControls
-          currentSlide={currentSlide}
-          totalSlides={totalSlides}
-          isFirst={isFirst}
-          isLast={isLast}
-          onPrev={prevSlide}
-          onNext={nextSlide}
-          onGoTo={goToSlide}
-          slideLabels={slideLabels}
-          autoHide={presentationMode}
-          hiddenStates={creatorMode ? slideHiddenStates : undefined}
-          onToggleHide={creatorMode ? handleToggleCurrentSlide : undefined}
-          isCurrentHidden={creatorMode ? isSlideHiddenAt(physicalSlide) : false}
-          onShowShortcuts={() => setShowShortcutHint(true)}
-          canMoveUp={canMoveSlideUp}
-          canMoveDown={canMoveSlideDown}
-          onMoveUp={handleMoveSlideUp}
-          onMoveDown={handleMoveSlideDown}
-          changedSlides={versionDiff?.changedSlides}
-        />
-      )}
-
-      {/* Edit mode FAB for mobile (shared views with edit access) */}
-      <EditFab
-        creatorMode={creatorMode}
-        onToggle={() => setCreatorMode(!creatorMode)}
-        visible={isSharedView && isEditingUnlocked && !isPresentationStyle}
-      />
-
-      {/* Pull-to-refresh for PWA shared views */}
-      <PullToRefresh
-        enabled={isSharedView && !isPresentationStyle}
-        onRefresh={async () => {
-          // Trigger a re-fetch by reloading the page in shared views
-          window.location.reload();
-        }}
-      />
-
-      {/* Swipe hint for mobile (one-time) */}
-      <SwipeHint />
-
-      {/* Claim button for editors who are signed in */}
-      {isSharedView && isEditingUnlocked && activeShareId && editKeyFromUrl && (
-        <div className="max-w-5xl mx-auto px-2 sm:px-4 py-2">
-          <ClaimButton shareId={activeShareId} editToken={editKeyFromUrl} />
-        </div>
-      )}
-
-      {/* Collaborator management (owner only) + Edit changelog (all editors) */}
-      {isSharedView && isEditingUnlocked && activeShareId && (
-        <div className="max-w-5xl mx-auto px-2 sm:px-4">
-          {isOwner && <CollaboratorPanel shareId={activeShareId} />}
-          <EditChangelog shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
-        </div>
-      )}
-
-      {/* Social engagement section for public shared reports */}
+      {/* Social engagement section for public shared reports — inside scroll container so desktop users can reach it */}
       {isSharedView && !isEditingUnlocked && !isPresentationStyle && activeShareId && (
         <div className="relative z-40 max-w-5xl mx-auto px-2 sm:px-4 py-6 mb-24 sm:mb-16 space-y-4">
           {/* Creator info + secondary actions */}
@@ -901,6 +841,67 @@ function HomeContent() {
               <span>Comments are turned off by the creator.</span>
             </div>
           )}
+        </div>
+      )}
+
+      </div>
+      </VersionDiffProvider>
+
+      {/* Slide navigation — hidden in tournament mode */}
+      {!tournamentMode && (
+        <SlideNavControls
+          currentSlide={currentSlide}
+          totalSlides={totalSlides}
+          isFirst={isFirst}
+          isLast={isLast}
+          onPrev={prevSlide}
+          onNext={nextSlide}
+          onGoTo={goToSlide}
+          slideLabels={slideLabels}
+          autoHide={presentationMode}
+          hiddenStates={creatorMode ? slideHiddenStates : undefined}
+          onToggleHide={creatorMode ? handleToggleCurrentSlide : undefined}
+          isCurrentHidden={creatorMode ? isSlideHiddenAt(physicalSlide) : false}
+          onShowShortcuts={() => setShowShortcutHint(true)}
+          canMoveUp={canMoveSlideUp}
+          canMoveDown={canMoveSlideDown}
+          onMoveUp={handleMoveSlideUp}
+          onMoveDown={handleMoveSlideDown}
+          changedSlides={versionDiff?.changedSlides}
+        />
+      )}
+
+      {/* Edit mode FAB for mobile (shared views with edit access) */}
+      <EditFab
+        creatorMode={creatorMode}
+        onToggle={() => setCreatorMode(!creatorMode)}
+        visible={isSharedView && isEditingUnlocked && !isPresentationStyle}
+      />
+
+      {/* Pull-to-refresh for PWA shared views */}
+      <PullToRefresh
+        enabled={isSharedView && !isPresentationStyle}
+        onRefresh={async () => {
+          // Trigger a re-fetch by reloading the page in shared views
+          window.location.reload();
+        }}
+      />
+
+      {/* Swipe hint for mobile (one-time) */}
+      <SwipeHint />
+
+      {/* Claim button for editors who are signed in */}
+      {isSharedView && isEditingUnlocked && activeShareId && editKeyFromUrl && (
+        <div className="max-w-5xl mx-auto px-2 sm:px-4 py-2">
+          <ClaimButton shareId={activeShareId} editToken={editKeyFromUrl} />
+        </div>
+      )}
+
+      {/* Collaborator management (owner only) + Edit changelog (all editors) */}
+      {isSharedView && isEditingUnlocked && activeShareId && (
+        <div className="max-w-5xl mx-auto px-2 sm:px-4">
+          {isOwner && <CollaboratorPanel shareId={activeShareId} />}
+          <EditChangelog shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
         </div>
       )}
 
