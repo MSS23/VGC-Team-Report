@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { Card } from "@/components/ui/Card";
 import { PokemonSprite } from "./PokemonSprite";
@@ -41,6 +41,7 @@ const STAT_COLORS: Record<string, string> = {
 export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation }: PokemonCardProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
+  const [showEvMode, setShowEvMode] = useState(false);
 
   // Mega Evolution detection
   const megaEntry = useMemo(
@@ -258,31 +259,34 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
       {displayData && (() => {
         const isChampions = regulation === "Reg M-A";
         const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
-        const totalSp = (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + evsToSp(parsed.evs[s]), 0);
+        const spSpread = convertToChampionsSp(parsed.evs);
+        const totalSp = (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + spSpread[s], 0);
         const isValidChampionsEv = (ev: number) => ev === 0 || (ev >= 4 && (ev - 4) % 8 === 0);
         const hasWastedEvs = isChampions && (["hp", "atk", "def", "spa", "spd", "spe"] as const).some((s) => !isValidChampionsEv(parsed.evs[s]) && parsed.evs[s] > 0);
-        const unusedSp = isChampions ? CHAMPIONS_TOTAL_SP - totalSp : 0;
         const overSp = isChampions && totalSp > CHAMPIONS_TOTAL_SP;
         const needsConversion = isChampions && totalEvs > 0 && !isChampionsOptimized(parsed.evs);
-        const suggestedSp = needsConversion ? convertToChampionsSp(parsed.evs) : null;
 
         return (
         <div>
           <h4 className="text-[9px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-0.5 sm:mb-1.5 creator:mb-2 flex items-center gap-2">
             <span>{t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70 hidden sm:inline">({parsed.nature})</span></span>
-            {isChampions ? (() => {
-              const displayTotalSp = suggestedSp
-                ? (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + suggestedSp[s], 0)
-                : totalSp;
-              return displayTotalSp > 0 ? (
+            {isChampions ? (
+              <span className="flex items-center gap-1.5">
                 <span className={`text-[8px] sm:text-[9px] font-bold normal-case tracking-normal ${
-                  displayTotalSp > CHAMPIONS_TOTAL_SP ? "text-danger" :
-                  displayTotalSp < CHAMPIONS_TOTAL_SP ? "text-amber-500" : "text-text-tertiary/50"
+                  totalSp > CHAMPIONS_TOTAL_SP ? "text-danger" :
+                  totalSp < CHAMPIONS_TOTAL_SP ? "text-amber-500" : "text-text-tertiary/50"
                 }`}>
-                  {displayTotalSp}/{CHAMPIONS_TOTAL_SP} SP
+                  {showEvMode ? `${totalEvs}/510 EVs` : `${totalSp}/${CHAMPIONS_TOTAL_SP} SP`}
                 </span>
-              ) : null;
-            })() : (
+                <button
+                  type="button"
+                  onClick={() => setShowEvMode(!showEvMode)}
+                  className="text-[7px] sm:text-[8px] font-bold normal-case tracking-normal px-1.5 py-0.5 rounded-full border border-border bg-surface-alt text-text-tertiary hover:text-accent hover:border-accent/30 transition-all cursor-pointer"
+                >
+                  {showEvMode ? "SP" : "EVs"}
+                </button>
+              </span>
+            ) : (
               <>
                 {totalEvs > 510 ? (
                   <span className="text-[8px] sm:text-[9px] font-bold text-danger normal-case tracking-normal">{totalEvs}/510 EVs</span>
@@ -293,37 +297,18 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             )}
           </h4>
 
-          {/* Stat warnings + conversion suggestion */}
-          {isChampions && totalEvs > 0 && (
-            <div className="flex flex-col gap-1.5 mb-1.5 sm:mb-2">
-              {(unusedSp > 0 || hasWastedEvs || overSp) && (
-                <div className="flex flex-wrap gap-1.5">
-                  {unusedSp > 0 && !overSp && (
-                    <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                      {unusedSp} SP unused
-                    </span>
-                  )}
-                  {overSp && (
-                    <span className="text-[9px] sm:text-[10px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded">
-                      Over budget by {totalSp - CHAMPIONS_TOTAL_SP} SP
-                    </span>
-                  )}
-                  {hasWastedEvs && (
-                    <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                      EVs not aligned to SP values
-                    </span>
-                  )}
-                </div>
+          {/* Stat warnings for Champions */}
+          {isChampions && !showEvMode && totalEvs > 0 && (hasWastedEvs || overSp || needsConversion) && (
+            <div className="flex flex-wrap gap-1.5 mb-1.5 sm:mb-2">
+              {overSp && (
+                <span className="text-[9px] sm:text-[10px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded">
+                  Over budget by {totalSp - CHAMPIONS_TOTAL_SP} SP
+                </span>
               )}
-              {needsConversion && suggestedSp && (
-                <div className="text-[9px] sm:text-[10px] font-semibold text-blue-500 bg-blue-500/10 px-2 py-1 rounded flex items-center gap-1.5">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="16" x2="12" y2="12" />
-                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                  </svg>
-                  <span>Champions spread: <span className="font-bold font-[family-name:var(--font-mono)]">{formatSpSpread(suggestedSp)}</span> SP</span>
-                </div>
+              {hasWastedEvs && !overSp && (
+                <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                  Auto-converted from EVs
+                </span>
               )}
             </div>
           )}
@@ -332,17 +317,21 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map((stat) => {
               const value = displayStats[stat];
               const ev = parsed.evs[stat];
-              const sp = suggestedSp ? suggestedSp[stat] : evsToSp(ev);
+              const sp = spSpread[stat];
               const isBoosted = itemBoost?.stat === stat;
               const displayValue = isBoosted ? itemBoost.boostedValue : value;
               const maxStat = stat === "hp" ? 300 : 250;
               const percentage = Math.min((displayValue / maxStat) * 100, 100);
               const labels = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe };
-              const isWasted = isChampions && ev > 0 && !isValidChampionsEv(ev);
               const isOverMax = isChampions && sp > CHAMPIONS_MAX_SP_PER_STAT;
 
+              // Champions default: show SP. Toggle to show EVs.
+              const showSp = isChampions && !showEvMode;
+              const investLabel = showSp ? sp : ev;
+              const investUnit = showSp ? "SP" : "";
+
               return (
-                <div key={stat} className="flex items-center gap-1 sm:gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${isChampions && sp > 0 ? `, ${sp} SP` : ev > 0 ? `, ${ev} EVs` : ""}${isBoosted ? `, boosted by item` : ""}`}>
+                <div key={stat} className="flex items-center gap-1 sm:gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${showSp && sp > 0 ? `, ${sp} SP` : ev > 0 ? `, ${ev} EVs` : ""}${isBoosted ? `, boosted by item` : ""}`}>
                   <span className="text-[9px] sm:text-xs font-bold w-6 sm:w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-px">
                     {natureData?.plus === stat && <span className="text-[8px] sm:text-[11px]" aria-label="boosted by nature">{"\u25B2"}</span>}
                     {natureData?.minus === stat && <span className="text-[8px] sm:text-[11px]" aria-label="reduced by nature">{"\u25BC"}</span>}
@@ -362,22 +351,12 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                   }`}>
                     {displayValue}{isBoosted && <span className="text-[8px] align-super" aria-label="boosted by item">*</span>}
                   </span>
-                  {isChampions ? (
-                    sp > 0 ? (
-                      <span className={`hidden sm:inline text-xs font-bold w-9 ${isWasted || isOverMax ? "text-amber-500" : "text-accent"}`}>
-                        +{sp}{isWasted && <span className="text-[8px] text-amber-500" title={`${ev} EVs — ${ev % 8} wasted`}>!</span>}
-                      </span>
-                    ) : (
-                      <span className="hidden sm:inline w-9" />
-                    )
+                  {investLabel > 0 ? (
+                    <span className={`hidden sm:inline text-xs font-bold w-12 tabular-nums ${isOverMax && showSp ? "text-amber-500" : "text-accent"}`}>
+                      +{investLabel}{investUnit && <span className="text-[9px] ml-px">{investUnit}</span>}
+                    </span>
                   ) : (
-                    ev > 0 ? (
-                      <span className="hidden sm:inline text-xs text-accent font-bold w-9">
-                        +{ev}
-                      </span>
-                    ) : (
-                      <span className="hidden sm:inline w-9" />
-                    )
+                    <span className="hidden sm:inline w-12" />
                   )}
                 </div>
               );
