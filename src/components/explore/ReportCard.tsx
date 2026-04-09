@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { motion } from "motion/react";
-import { useAuth, SignInButton } from "@clerk/nextjs";
+import { useAuth, useUser, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
 import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
@@ -62,6 +62,7 @@ function CardSprite({ species }: { species: string }) {
 export function ReportCard({ report }: { report: ExploreReport }) {
   const { t } = useTranslation();
   const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const sessionId = useSessionId();
 
   // Like state — initialize from server data, then allow interactive toggling
@@ -70,6 +71,17 @@ export function ReportCard({ report }: { report: ExploreReport }) {
     : 0);
   const [likeCount, setLikeCount] = useState(initialLikes);
   const [liked, setLiked] = useState(false);
+
+  // Bookmark state
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+
+  // Hide bookmark on own reports (compare Clerk username/fullName to creatorName)
+  const isOwnReport = !!(user && report.creatorName && (
+    user.username === report.creatorName ||
+    user.fullName === report.creatorName ||
+    `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() === report.creatorName
+  ));
 
   // Check if current user already liked this report
   useEffect(() => {
@@ -86,6 +98,19 @@ export function ReportCard({ report }: { report: ExploreReport }) {
       })
       .catch(() => {});
   }, [report.id, sessionId]);
+
+  // Check if current user already bookmarked this report
+  useEffect(() => {
+    if (!user || !report.id) return;
+    fetch("/api/user/saved")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.reports?.some((r: { id: string }) => r.id === report.id)) {
+          setBookmarked(true);
+        }
+      })
+      .catch(() => {});
+  }, [user, report.id]);
 
   const toggleLike = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -107,6 +132,26 @@ export function ReportCard({ report }: { report: ExploreReport }) {
       setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));
     }
   }, [report.id, sessionId, liked, isSignedIn]);
+
+  const toggleBookmark = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (bookmarkLoading) return;
+    setBookmarkLoading(true);
+    const wasSaved = bookmarked;
+    setBookmarked(!wasSaved);
+    try {
+      await fetch("/api/user/saved", {
+        method: wasSaved ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shareId: report.id }),
+      });
+    } catch {
+      setBookmarked(wasSaved);
+    } finally {
+      setBookmarkLoading(false);
+    }
+  }, [report.id, bookmarked, bookmarkLoading]);
 
   // Archetype badges: show up to 3, then overflow
   const archetypes = report.tags?.archetype ?? [];
@@ -266,6 +311,35 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   <span className={`font-bold ${likeCount > 0 ? "text-text-secondary" : "text-text-tertiary"}`}>{likeCount}</span>
                 </button>
               </SignInButton>
+            )}
+            {/* Bookmark */}
+            {!isOwnReport && (
+              isSignedIn ? (
+                <button
+                  type="button"
+                  onClick={toggleBookmark}
+                  disabled={bookmarkLoading}
+                  className="inline-flex items-center gap-0.5 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                  aria-label={bookmarked ? "Unsave report" : "Save report"}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={bookmarked ? "text-accent" : "text-text-tertiary hover:text-accent transition-colors"}>
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+                  </svg>
+                </button>
+              ) : (
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    className="inline-flex items-center gap-0.5 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                    aria-label="Save report"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary hover:text-accent transition-colors">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+                    </svg>
+                  </button>
+                </SignInButton>
+              )
             )}
             {/* Comments */}
             {(report.commentCount ?? 0) > 0 && (
