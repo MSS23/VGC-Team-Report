@@ -93,22 +93,33 @@ export async function DELETE(
     const { shareId } = await params;
     const sql = getDb();
 
+    // Try owner soft-delete first
     const rows = await sql`
       UPDATE shares SET deleted_at = NOW(), is_public = FALSE
       WHERE id = ${shareId} AND owner_id = ${userId} AND deleted_at IS NULL
       RETURNING id
     `;
-    if (rows.length === 0) {
-      return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
+    if (rows.length > 0) {
+      await Promise.all([
+        cacheDel(CacheKeys.share(shareId)),
+        cacheInvalidatePrefix("explore:"),
+      ]);
+      captureServerEvent(userId, "report_deleted", { report_id: shareId });
+      return NextResponse.json({ deleted: true });
     }
 
-    await Promise.all([
-      cacheDel(CacheKeys.share(shareId)),
-      cacheInvalidatePrefix("explore:"),
-    ]);
-    captureServerEvent(userId, "report_deleted", { report_id: shareId });
+    // If not the owner, try leaving as collaborator
+    const collabRows = await sql`
+      DELETE FROM collaborators
+      WHERE share_id = ${shareId} AND user_id = ${userId}
+      RETURNING share_id
+    `;
+    if (collabRows.length > 0) {
+      captureServerEvent(userId, "collab_left", { report_id: shareId });
+      return NextResponse.json({ deleted: true, left: true });
+    }
 
-    return NextResponse.json({ deleted: true });
+    return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
   } catch (e) {
     console.error("Report delete error:", e);
     return NextResponse.json({ error: "Failed" }, { status: 500 });

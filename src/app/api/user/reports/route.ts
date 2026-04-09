@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
         viewCount: row.view_count as number,
         isPublic: row.is_public as boolean,
         editToken: row.edit_token as string,
+        ...(row.collab_order !== undefined && { isCollab: (row.collab_order as number) === 1 }),
         ...(row.deleted_at ? { deletedAt: (row.deleted_at as Date).toISOString() } : {}),
       };
     });
