@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useSyncExternalStore, useRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { EVENT_TYPES } from "@/lib/data/tags";
+import { ARCHETYPES, EVENT_TYPES, REGULATIONS } from "@/lib/data/tags";
 
 interface AdvancedFilterDrawerProps {
   isOpen: boolean;
@@ -16,6 +16,12 @@ interface AdvancedFilterDrawerProps {
   excludeSpecies: string;
   onExcludeSpeciesChange: (s: string) => void;
   isAuthenticated: boolean;
+  species?: string;
+  onSpeciesChange?: (s: string) => void;
+  regulation?: string;
+  onRegulationChange?: (r: string) => void;
+  archetype?: string;
+  onArchetypeChange?: (a: string) => void;
 }
 
 function useMediaQuery(query: string): boolean {
@@ -42,6 +48,12 @@ export function AdvancedFilterDrawer({
   excludeSpecies,
   onExcludeSpeciesChange,
   isAuthenticated,
+  species,
+  onSpeciesChange,
+  regulation,
+  onRegulationChange,
+  archetype,
+  onArchetypeChange,
 }: AdvancedFilterDrawerProps) {
   const isDesktop = useMediaQuery("(min-width: 640px)");
   const shouldReduceMotion = useReducedMotion();
@@ -117,6 +129,23 @@ export function AdvancedFilterDrawer({
   const filterContent = (
     <div className="p-4 sm:p-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Species filter — mobile only (shown inline on desktop) */}
+        {onSpeciesChange && (
+          <div className="sm:hidden sm:col-span-2">
+            <label htmlFor="drawer-species" className={`text-[11px] font-bold uppercase tracking-wide mb-1 block ${species ? "text-accent" : "text-text-tertiary"}`}>
+              Filter by Pokemon
+            </label>
+            <input
+              id="drawer-species"
+              type="text"
+              value={species ?? ""}
+              onChange={(e) => onSpeciesChange(e.target.value)}
+              placeholder="e.g. Flutter Mane, Incineroar"
+              className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent appearance-none"
+            />
+          </div>
+        )}
+
         {/* Exclude species input */}
         <div className="sm:col-span-2">
           <label
@@ -222,6 +251,61 @@ export function AdvancedFilterDrawer({
             </svg>
           </div>
         </div>
+
+        {/* Regulation — mobile only */}
+        {onRegulationChange && (
+          <div className="sm:hidden">
+            <label htmlFor="drawer-regulation" className={`text-[11px] font-bold uppercase tracking-wide mb-1 block ${regulation ? "text-accent" : "text-text-tertiary"}`}>
+              Regulation
+            </label>
+            <div className="relative">
+              <select
+                id="drawer-regulation"
+                value={regulation ?? ""}
+                onChange={(e) => onRegulationChange(e.target.value)}
+                className="w-full px-3 py-2 pr-8 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent appearance-none cursor-pointer"
+              >
+                <option value="">Any regulation</option>
+                {REGULATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+          </div>
+        )}
+
+        {/* Archetype — mobile only */}
+        {onArchetypeChange && (
+          <div className="sm:hidden sm:col-span-2">
+            <span className={`text-[11px] font-bold uppercase tracking-wide mb-1.5 block ${archetype ? "text-accent" : "text-text-tertiary"}`}>
+              Archetype
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {ARCHETYPES.map((a) => {
+                const active = (archetype ?? "").split(",").filter(Boolean).includes(a);
+                return (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => {
+                      const current = (archetype ?? "").split(",").filter(Boolean);
+                      const next = active ? current.filter((x) => x !== a) : [...current, a];
+                      onArchetypeChange(next.join(","));
+                    }}
+                    className={`text-[10px] font-bold px-2.5 py-1.5 rounded-md border transition-all cursor-pointer min-h-[36px] ${
+                      active
+                        ? "bg-accent text-white border-accent"
+                        : "bg-surface-alt/50 text-text-tertiary border-transparent hover:text-text-secondary"
+                    }`}
+                  >
+                    {active && <span aria-hidden="true" className="mr-0.5">&#10003;</span>}{a}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Following toggle (authenticated only) */}
         {isAuthenticated && (

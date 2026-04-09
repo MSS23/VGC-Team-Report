@@ -145,6 +145,9 @@ export function ExploreFilters({
     followingOnly,
     excludeSpecies !== "",
     tournamentMode,
+    species !== "",
+    regulation !== "",
+    archetype !== "",
   ].filter(Boolean).length;
 
   function handleTournamentToggle() {
@@ -172,7 +175,7 @@ export function ExploreFilters({
   }, [query]);
 
   return (
-    <div className={`sticky top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-background/80 backdrop-blur-lg border-b border-border/50 mb-6 space-y-3 relative overflow-visible${tournamentMode ? " border-t-2 border-t-amber-500/50" : ""}`}>
+    <div className={`sticky top-12 sm:top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 sm:py-3 bg-background/80 backdrop-blur-lg border-b border-border/50 mb-4 sm:mb-6 space-y-2 sm:space-y-3 relative overflow-visible${tournamentMode ? " border-t-2 border-t-amber-500/50" : ""}`}>
       {/* Search category tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         {CATEGORIES.map((cat) => (
@@ -344,8 +347,8 @@ export function ExploreFilters({
         </div>
       </div>
 
-      {/* Species filter */}
-      <div className="relative">
+      {/* Species filter — desktop only, mobile uses More Filters drawer */}
+      <div className="relative hidden sm:block">
         <input
           type="text"
           value={species}
@@ -366,8 +369,8 @@ export function ExploreFilters({
         )}
       </div>
 
-      {/* Exclude species filter */}
-      <div className="relative">
+      {/* Exclude species filter — desktop only */}
+      <div className="relative hidden sm:block">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
             <circle cx="12" cy="12" r="10" />
@@ -395,8 +398,8 @@ export function ExploreFilters({
         )}
       </div>
 
-      {/* Tag filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+      {/* Tag filters — desktop only */}
+      <div className="hidden sm:flex flex-row items-center gap-2">
         <div className="relative">
           <select
             value={regulation}
@@ -435,6 +438,39 @@ export function ExploreFilters({
         </div>
       </div>
 
+      {/* Mobile active filter pills — show what's active so user knows filters are applied */}
+      {(species || excludeSpecies || regulation || archetype) && (
+        <div className="flex flex-wrap gap-1.5 sm:hidden">
+          {regulation && (
+            <button type="button" onClick={() => onRegulationChange("")} className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold bg-accent/15 text-accent rounded-md">
+              {regulation}
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          )}
+          {species && (
+            <button type="button" onClick={() => onSpeciesChange("")} className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold bg-accent/15 text-accent rounded-md truncate max-w-[120px]">
+              {species}
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          )}
+          {excludeSpecies && (
+            <button type="button" onClick={() => onExcludeSpeciesChange("")} className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold bg-red-500/15 text-red-500 rounded-md truncate max-w-[120px]">
+              -{excludeSpecies}
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          )}
+          {archetype.split(",").filter(Boolean).map((a) => (
+            <button key={a} type="button" onClick={() => {
+              const next = archetype.split(",").filter(Boolean).filter(x => x !== a);
+              onArchetypeChange(next.join(","));
+            }} className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold bg-accent/15 text-accent rounded-md">
+              {a}
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Advanced filter drawer */}
       <AdvancedFilterDrawer
         isOpen={drawerOpen}
@@ -448,6 +484,12 @@ export function ExploreFilters({
         excludeSpecies={excludeSpecies}
         onExcludeSpeciesChange={onExcludeSpeciesChange}
         isAuthenticated={!!user}
+        species={species}
+        onSpeciesChange={onSpeciesChange}
+        regulation={regulation}
+        onRegulationChange={onRegulationChange}
+        archetype={archetype}
+        onArchetypeChange={onArchetypeChange}
       />
     </div>
   );

@@ -20,9 +20,9 @@ export function ExploreHero() {
   const { t } = useTranslation();
 
   return (
-    <div className="relative pt-12 sm:pt-16 pb-8 sm:pb-10 text-center overflow-hidden">
+    <div className="relative pt-4 sm:pt-16 pb-3 sm:pb-10 text-center overflow-hidden">
       {/* Floating sprites background */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.07] overflow-hidden" aria-hidden>
+      <div className="absolute inset-0 pointer-events-none opacity-[0.07] overflow-hidden hidden sm:block" aria-hidden>
         {SHOWCASE_SPRITES.map((slug, i) => (
           <motion.img
             key={slug}
@@ -60,11 +60,11 @@ export function ExploreHero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+        <h1 className="text-lg sm:text-3xl font-extrabold tracking-tight">
           {t.exploreTitle.replace("VGC Teams", "")}{" "}
           <span className="text-accent">VGC Teams</span>
         </h1>
-        <p className="mt-3 text-text-secondary text-sm sm:text-base max-w-lg mx-auto">
+        <p className="mt-1 sm:mt-3 text-text-secondary text-xs sm:text-base max-w-lg mx-auto hidden sm:block">
           {t.exploreSubtitle}
         </p>
       </motion.div>
