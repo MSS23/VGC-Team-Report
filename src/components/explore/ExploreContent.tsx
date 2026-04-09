@@ -118,7 +118,7 @@ function ExploreInner() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-text-primary">
+    <div className="min-h-screen bg-background text-text-primary" style={{ scrollPaddingTop: "8rem" }}>
       <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="explore" />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-12 pb-24 sm:pb-12">
