@@ -255,6 +255,11 @@ export async function POST(request: Request) {
       } catch { /* skip */ }
     }
 
+    // Clean up any drafts for this user (fire-and-forget — the real share replaces the draft)
+    if (ownerId) {
+      sql`DELETE FROM shares WHERE owner_id = ${ownerId} AND is_draft = TRUE`.catch(() => {});
+    }
+
     // Invalidate explore cache on new share
     cacheInvalidatePrefix("explore:");
 

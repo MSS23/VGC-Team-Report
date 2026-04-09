@@ -13,6 +13,7 @@ import { useDarkMode } from "@/hooks/useDarkMode";
 import { PageNavbar } from "@/components/layout/PageNavbar";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
+import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { PokemonType } from "@/lib/types/pokemon";
 
@@ -102,25 +103,53 @@ const ALL_TYPES: PokemonType[] = [
   "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
 ];
 
-function analyzePaste(paste: string): AnalyzedPokemon[] | null {
+interface CompareAnalyzedPokemon extends AnalyzedPokemon {
+  /** Resolved display name (mega name if applicable) */
+  displaySpecies: string;
+  /** Resolved types (mega types if applicable) */
+  displayTypes: string[];
+  /** Sprite key (mega data key if applicable) */
+  spriteSpecies: string;
+}
+
+function analyzePaste(paste: string): CompareAnalyzedPokemon[] | null {
   if (!paste.trim()) return null;
   const parsed = parseShowdownPaste(paste);
   if (parsed.pokemon.length === 0) return null;
   return parsed.pokemon.map((p) => {
-    const data = lookupPokemon(p.species);
+    let data = lookupPokemon(p.species);
+    let displaySpecies = p.species;
+    let spriteSpecies = p.species;
+    let displayTypes: string[] = data?.types ?? [];
+
+    // Resolve mega evolution — either already mega or has mega stone
+    const alreadyMega = isMegaForm(p.species);
+    if (!alreadyMega) {
+      const megaEntry = detectMegaFromItem(p.item, p.species);
+      if (megaEntry) {
+        const megaData = lookupPokemon(megaEntry.dataKey);
+        if (megaData) {
+          data = megaData;
+          displaySpecies = megaEntry.displayName;
+          spriteSpecies = megaEntry.dataKey;
+          displayTypes = megaData.types;
+        }
+      }
+    }
+
     const calculatedStats = data
       ? calculateAllStats(data.baseStats, p.ivs, p.evs, p.level, p.nature)
       : { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
     const itemBoost = getItemStatBoost(p.item, p.ability, calculatedStats);
-    return { parsed: p, data, calculatedStats, itemBoost };
+    return { parsed: p, data, calculatedStats, itemBoost, displaySpecies, displayTypes, spriteSpecies };
   });
 }
 
-function getTeamWeaknesses(pokemon: AnalyzedPokemon[]) {
+function getTeamWeaknesses(pokemon: CompareAnalyzedPokemon[]) {
   const weakMap: Record<string, number> = {};
   const resistMap: Record<string, number> = {};
   for (const mon of pokemon) {
-    const types = mon.data?.types ?? [];
+    const types = mon.displayTypes;
     if (types.length === 0) continue;
     const profile = getDefensiveProfile(types as PokemonType[]);
     for (const [t, mult] of Object.entries(profile)) {
@@ -131,18 +160,18 @@ function getTeamWeaknesses(pokemon: AnalyzedPokemon[]) {
   return { weakMap, resistMap };
 }
 
-function PokemonRow({ pokemon, shared }: { pokemon: AnalyzedPokemon[]; shared: Set<string> }) {
+function PokemonRow({ pokemon, shared }: { pokemon: CompareAnalyzedPokemon[]; shared: Set<string> }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
       {pokemon.map((mon, i) => {
         const isShared = shared.has(mon.parsed.species.toLowerCase());
         return (
           <div key={i} className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 ${isShared ? "border-accent bg-accent/5" : "border-border bg-surface"}`}>
-            <PokemonSprite species={mon.parsed.species} size={48} shiny={mon.parsed.shiny} />
-            <span className="text-[10px] font-bold text-text-primary text-center leading-tight max-w-[60px] truncate">{mon.parsed.species}</span>
+            <PokemonSprite species={mon.spriteSpecies} size={48} shiny={mon.parsed.shiny} />
+            <span className="text-[10px] font-bold text-text-primary text-center leading-tight w-full truncate">{mon.displaySpecies}</span>
             <div className="flex gap-0.5">
-              {(mon.data?.types ?? []).map((t) => (
-                <TypeBadge key={t} type={t} />
+              {mon.displayTypes.map((t) => (
+                <TypeBadge key={t} type={t as PokemonType} />
               ))}
             </div>
           </div>
@@ -176,15 +205,15 @@ function TypeWeaknessGrid({ label, weakMap, resistMap, color }: { label: string;
   );
 }
 
-function SpeedComparison({ teamA, teamB }: { teamA: AnalyzedPokemon[]; teamB: AnalyzedPokemon[] }) {
+function SpeedComparison({ teamA, teamB }: { teamA: CompareAnalyzedPokemon[]; teamB: CompareAnalyzedPokemon[] }) {
   const allSpeeds = [
     ...teamA.map((m) => ({
-      species: m.parsed.species,
+      species: m.displaySpecies,
       speed: m.itemBoost?.stat === "spe" ? m.itemBoost.boostedValue : m.calculatedStats.spe,
       team: "A" as const,
     })),
     ...teamB.map((m) => ({
-      species: m.parsed.species,
+      species: m.displaySpecies,
       speed: m.itemBoost?.stat === "spe" ? m.itemBoost.boostedValue : m.calculatedStats.spe,
       team: "B" as const,
     })),
@@ -252,8 +281,8 @@ export function CompareContent() {
     }
   }, []);
 
-  const teamA = useMemo(() => compared ? analyzePaste(pasteA) : null, [pasteA, compared]);
-  const teamB = useMemo(() => compared ? analyzePaste(pasteB) : null, [pasteB, compared]);
+  const teamA = useMemo<CompareAnalyzedPokemon[] | null>(() => compared ? analyzePaste(pasteA) : null, [pasteA, compared]);
+  const teamB = useMemo<CompareAnalyzedPokemon[] | null>(() => compared ? analyzePaste(pasteB) : null, [pasteB, compared]);
 
   const sharedSpecies = useMemo(() => {
     if (!teamA || !teamB) return new Set<string>();

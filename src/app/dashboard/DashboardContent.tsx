@@ -33,7 +33,8 @@ function DashboardInner() {
   const { user, isLoaded } = useUser();
   useEffect(() => { applyRandomAccent(); }, []);
 
-  const [tab, setTab] = useState<"my" | "saved" | "feed" | "collab" | "collections" | "analytics" | "trash">("my");
+  const [tab, setTab] = useState<"drafts" | "my" | "saved" | "feed" | "collab" | "collections" | "analytics" | "trash">("drafts");
+  const [draftReports, setDraftReports] = useState<DashboardReport[]>([]);
   const [myReports, setMyReports] = useState<DashboardReport[]>([]);
   const [savedReports, setSavedReports] = useState<ExploreReport[]>([]);
   const [feedReports, setFeedReports] = useState<ExploreReport[]>([]);
@@ -49,6 +50,15 @@ function DashboardInner() {
   const [claiming, setClaiming] = useState(false);
   const [claimResult, setClaimResult] = useState<string | null>(null);
 
+
+  // Eagerly load draft count on mount so the badge shows on all tabs
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/user/drafts")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.drafts) setDraftReports(data.drafts); })
+      .catch(() => {});
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -73,6 +83,14 @@ function DashboardInner() {
     // Load collections in background for the "add to collection" dropdown
     if (tab === "my") {
       fetch("/api/user/collections").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.collections) setCollections(data.collections); }).catch(() => {});
+    }
+
+    if (tab === "drafts") {
+      fetch("/api/user/drafts")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => { if (data?.drafts) setDraftReports(data.drafts); setLoading(false); })
+        .catch(() => setLoading(false));
+      return;
     }
 
     const endpoint = tab === "my" ? "/api/user/reports" : tab === "trash" ? "/api/user/reports?trash=1" : tab === "feed" ? "/api/user/feed" : tab === "collab" ? "/api/user/collaborations" : "/api/user/saved";
@@ -264,8 +282,8 @@ function DashboardInner() {
             {/* Tabs */}
             <div className="mb-3 sm:mb-6 -mx-3 sm:mx-0">
               <div className="flex items-center gap-1 px-3 sm:px-1 py-1 bg-surface-alt/50 sm:rounded-xl overflow-x-auto scrollbar-none snap-x snap-mandatory">
-                {(["my", "saved", "feed", "collab", "collections", "analytics", "trash"] as const).map((t) => {
-                  const label = t === "my" ? "Reports" : t === "feed" ? "Feed" : t === "collab" ? "Shared" : t === "collections" ? "Collections" : t === "analytics" ? "Analytics" : t === "trash" ? "Trash" : "Saved";
+                {(["drafts", "my", "saved", "feed", "collab", "collections", "analytics", "trash"] as const).map((t) => {
+                  const label = t === "drafts" ? "Drafts" : t === "my" ? "Reports" : t === "feed" ? "Feed" : t === "collab" ? "Shared" : t === "collections" ? "Collections" : t === "analytics" ? "Analytics" : t === "trash" ? "Trash" : "Saved";
                   return (
                     <button
                       key={t}
@@ -276,11 +294,17 @@ function DashboardInner() {
                           ? t === "trash" ? "bg-red-500/10 text-red-500 shadow-sm"
                             : t === "analytics" ? "bg-blue-500/10 text-blue-500 shadow-sm"
                             : t === "collections" ? "bg-purple-500/10 text-purple-500 shadow-sm"
+                            : t === "drafts" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-sm"
                             : "bg-surface text-text-primary shadow-sm"
                           : "text-text-tertiary hover:text-text-primary active:scale-[0.97]"
                       }`}
                     >
                       {label}
+                      {t === "drafts" && draftReports.length > 0 && (
+                        <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[9px] font-bold bg-amber-500 text-white rounded-full">
+                          {draftReports.length}
+                        </span>
+                      )}
                       {t === "collab" && (() => {
                         const pendingCount = collabReports.filter(r => r.collabStatus === "pending").length;
                         return pendingCount > 0 ? (
@@ -427,6 +451,27 @@ function DashboardInner() {
               </div>
             ) : (
               <>
+                {tab === "drafts" && draftReports.length === 0 && (
+                  <div className="text-center py-10 sm:py-16">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-text-secondary mb-1">No drafts yet.</p>
+                    <p className="text-xs text-text-tertiary mb-4">Start building a team report and it will auto-save here.</p>
+                    <a href="/" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                      Create Report
+                    </a>
+                  </div>
+                )}
+                {tab === "drafts" && draftReports.length > 0 && (
+                  <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3 mb-4">
+                    <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                      Drafts are auto-saved while you build. Resume editing or share when ready.
+                    </p>
+                  </div>
+                )}
                 {tab === "my" && myReports.length === 0 && (
                   <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-4">No reports yet. Create a team report or claim an existing one.</p>
@@ -495,7 +540,17 @@ function DashboardInner() {
                   </div>
                 )}
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
-                  {tab === "my"
+                  {tab === "drafts"
+                    ? draftReports.map((draft) => (
+                        <DraftReportCard
+                          key={draft.id}
+                          draft={draft}
+                          onDelete={(id) => {
+                            setDraftReports((prev) => prev.filter((d) => d.id !== id));
+                          }}
+                        />
+                      ))
+                    : tab === "my"
                     ? [...myReports].sort((a, b) => {
                         if (sortBy === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
                         if (sortBy === "views") return (b.viewCount ?? 0) - (a.viewCount ?? 0);
@@ -572,6 +627,91 @@ function DashboardSprite({ species }: { species: string }) {
       onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
     />
   );
+}
+
+/** Draft card with resume and delete actions */
+function DraftReportCard({ draft, onDelete }: { draft: DashboardReport; onDelete: (id: string) => void }) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/user/drafts", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ draftId: draft.id }),
+      });
+      if (res.ok) onDelete(draft.id);
+    } catch { /* silent */ }
+    finally { setDeleting(false); }
+  };
+
+  const timeAgo = getTimeAgo(draft.updatedAt ?? draft.createdAt);
+
+  return (
+    <div className="group relative bg-surface border border-amber-500/20 rounded-xl overflow-hidden hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all">
+      {/* Draft badge */}
+      <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-md border border-amber-500/20">
+        Draft
+      </div>
+
+      {/* Species sprites */}
+      <div className="px-3 pt-3 pb-1">
+        <div className="flex flex-wrap gap-0.5 min-h-[36px]">
+          {(draft.species ?? []).slice(0, 6).map((sp, i) => (
+            <DashboardSprite key={`${sp}-${i}`} species={sp} />
+          ))}
+          {(!draft.species || draft.species.length === 0) && (
+            <span className="text-xs text-text-tertiary italic">No team data</span>
+          )}
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="px-3 pb-2">
+        {draft.tournamentName && (
+          <p className="text-[11px] sm:text-xs font-bold text-text-primary truncate">{draft.tournamentName}</p>
+        )}
+        {draft.teamSummary && (
+          <p className="text-[10px] text-text-tertiary truncate mt-0.5">{draft.teamSummary}</p>
+        )}
+        <p className="text-[10px] text-text-tertiary mt-1">{timeAgo}</p>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1.5 px-3 pb-3">
+        <a
+          href={`/?draft=${draft.id}`}
+          className="flex-1 px-3 py-1.5 text-[11px] font-bold text-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all"
+        >
+          Resume
+        </a>
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={deleting}
+          className="px-2.5 py-1.5 text-[11px] font-bold rounded-lg bg-surface-alt text-text-tertiary border border-border hover:text-danger hover:border-danger/30 transition-all disabled:opacity-40 cursor-pointer"
+        >
+          {deleting ? "..." : "Delete"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function getTimeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = now - then;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
 }
 
 /** Report card with edit/visibility/delete controls for owned reports */

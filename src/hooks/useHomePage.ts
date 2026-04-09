@@ -16,6 +16,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { useShareFlow } from "@/hooks/useShareFlow";
 import { useCollaborativeSync } from "@/hooks/useCollaborativeSync";
 import { useSlideSystem } from "@/hooks/useSlideSystem";
+import { useAutoDraft } from "@/hooks/useAutoDraft";
+import { useAuth } from "@clerk/nextjs";
 import { SAMPLE_PASTE } from "@/components/input/PasteInput";
 import { track } from "@vercel/analytics";
 import posthog from "posthog-js";
@@ -26,6 +28,7 @@ import { detectArchetypes } from "@/lib/analysis/detect-archetype";
 
 export function useHomePage() {
   const { t } = useTranslation();
+  const { isSignedIn } = useAuth();
   const [isSampleTeam, setIsSampleTeam] = useState(false);
   const [pendingTemplateId, setPendingTemplateId] = useState<string>("blank");
 
@@ -163,6 +166,15 @@ export function useHomePage() {
 
   // ── Share flow (extracted) ───────────────────────────────────────
   const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t: t as unknown as Record<string, string> });
+
+  // ── Auto-draft (logged-in users) ─────────────────────────────────
+  const { clearDraft } = useAutoDraft({
+    isSignedIn: !!isSignedIn,
+    analysis,
+    isSampleTeam,
+    isSharedView: share.isSharedView,
+    buildShareState,
+  });
 
   // ── Real-time collaborative sync (SSE) ──────────────────────────
   const handleRemoteUpdate = useCallback((state: import("@/lib/sharing/url-codec").ShareableState) => {
@@ -357,8 +369,9 @@ export function useHomePage() {
   const handleReset = useCallback(() => {
     reset();
     share.clearStoredShare();
+    clearDraft();
     setIsSampleTeam(false);
-  }, [reset, share.clearStoredShare]);
+  }, [reset, share.clearStoredShare, clearDraft]);
 
   const handleDecodeFailed = useCallback(() => {
     reset();
@@ -458,5 +471,8 @@ export function useHomePage() {
     handleAnalyze,
     handleReset,
     handleDecodeFailed,
+
+    // Drafts
+    clearDraft,
   };
 }

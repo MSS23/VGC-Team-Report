@@ -180,6 +180,29 @@ function HomeContent() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [tournamentMode, setTournamentMode] = useState(false);
 
+  // ── Load draft from ?draft=ID ─────────────────────────────────────
+  const draftLoaded = useRef(false);
+  useEffect(() => {
+    if (draftLoaded.current || analysis || isSharePending) return;
+    const params = new URLSearchParams(window.location.search);
+    const draftId = params.get("draft");
+    if (!draftId) return;
+    draftLoaded.current = true;
+    fetch(`/api/user/drafts?id=${draftId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const draft = data?.drafts?.[0];
+        if (draft?.data?.paste) {
+          // Remove ?draft= from URL
+          const url = new URL(window.location.href);
+          url.searchParams.delete("draft");
+          window.history.replaceState({}, "", url.pathname + url.search);
+          handleAnalyze(draft.data.paste);
+        }
+      })
+      .catch(() => {});
+  }, [analysis, isSharePending, handleAnalyze]);
+
   // ── Version comparison state ────────────────────────────────────
   const [versionDiff, setVersionDiff] = useState<VersionDiff | null>(null);
   const [compareLoading, setCompareLoading] = useState(false);

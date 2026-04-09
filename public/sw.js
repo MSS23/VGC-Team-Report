@@ -1,5 +1,5 @@
 // Bump version to push updates to all installed PWA users
-const CACHE_NAME = "vgc-team-report-v18";
+const CACHE_NAME = "vgc-team-report-v19";
 const SHARE_CACHE = "vgc-shares-v5";
 const API_CACHE = "vgc-api-v6";
 
@@ -220,7 +220,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // ── Cacheable API routes — stale-while-revalidate ──
-  if (url.pathname.match(/^\/api\/(explore|spotlight|creator\/|user\/reports|user\/saved|user\/collaborations)/)) {
+  if (url.pathname.match(/^\/api\/(explore|spotlight|creator\/|user\/reports|user\/saved|user\/collaborations|user\/drafts)/)) {
     event.respondWith(
       caches.open(API_CACHE).then((cache) =>
         cache.match(request).then((cached) => {

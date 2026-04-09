@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
           SELECT s.id, s.edit_token, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, s.is_public,
                  CASE WHEN s.owner_id = ${userId} THEN 0 ELSE 1 END as collab_order
           FROM shares s
-          WHERE s.owner_id = ${userId} AND s.deleted_at IS NULL
+          WHERE s.owner_id = ${userId} AND s.deleted_at IS NULL AND (s.is_draft IS NULL OR s.is_draft = FALSE)
           UNION ALL
           SELECT s.id, s.edit_token, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, s.is_public,
                  1 as collab_order

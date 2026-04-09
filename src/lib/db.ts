@@ -206,6 +206,10 @@ export async function ensureTable() {
   // Default existing rows to 'accepted' (they were added before the consent flow)
   await run(sql`UPDATE collaborators SET status = 'accepted' WHERE status IS NULL`);
 
+  // Draft support — auto-saved reports that haven't been shared yet
+  await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS is_draft BOOLEAN DEFAULT FALSE`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_drafts ON shares(owner_id, updated_at DESC) WHERE is_draft = TRUE AND deleted_at IS NULL`);
+
   // Edit changelog for collaborative editing
   await run(sql`
     CREATE TABLE IF NOT EXISTS edit_changelog (
