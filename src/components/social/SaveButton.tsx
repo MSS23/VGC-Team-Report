@@ -9,10 +9,26 @@ interface SaveButtonProps {
   shareId: string;
 }
 
+const BookmarkIcon = ({ filled = false }: { filled?: boolean }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill={filled ? "currentColor" : "none"}
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+  </svg>
+);
+
 export function SaveButton({ shareId }: SaveButtonProps) {
   const { user } = useUser();
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [animating, setAnimating] = useState(false);
 
   // Check if already saved
   useEffect(() => {
@@ -27,27 +43,16 @@ export function SaveButton({ shareId }: SaveButtonProps) {
       .catch(() => {});
   }, [user, shareId]);
 
-  // Guest: show save button with sign-in prompt
+  // Guest: bookmark icon that opens sign-in modal
   if (!user) {
     return (
       <SignInButton mode="modal">
         <button
           type="button"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-surface border-2 border-border text-text-secondary hover:border-accent/30 hover:text-accent transition-all cursor-pointer active:scale-95"
+          aria-label="Save report"
+          className="inline-flex items-center justify-center w-10 h-10 rounded-full text-text-secondary hover:text-accent transition-all cursor-pointer active:scale-90"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-          </svg>
-          Save
+          <BookmarkIcon />
         </button>
       </SignInButton>
     );
@@ -73,6 +78,8 @@ export function SaveButton({ shareId }: SaveButtonProps) {
           body: JSON.stringify({ shareId }),
         });
         setSaved(true);
+        setAnimating(true);
+        setTimeout(() => setAnimating(false), 300);
         track("report_saved", { shareId });
         posthog.capture("report_saved", { share_id: shareId });
       }
@@ -88,25 +95,16 @@ export function SaveButton({ shareId }: SaveButtonProps) {
       type="button"
       onClick={toggle}
       disabled={loading}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 cursor-pointer active:scale-95 ${
+      aria-label={saved ? "Unsave report" : "Save report"}
+      className={`inline-flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 cursor-pointer active:scale-90 ${
         saved
-          ? "bg-accent-surface border-2 border-accent/40 text-accent shadow-sm shadow-accent/10"
-          : "bg-surface border-2 border-border text-text-secondary hover:border-accent/30 hover:text-accent"
+          ? "text-accent"
+          : "text-text-secondary hover:text-accent"
       }`}
     >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill={saved ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-      </svg>
-      <span>{saved ? "Saved" : "Save"}</span>
+      <span className={animating ? "animate-like-pop" : "transition-transform"}>
+        <BookmarkIcon filled={saved} />
+      </span>
     </button>
   );
 }
