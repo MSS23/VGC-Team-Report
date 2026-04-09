@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { cacheDel, cacheInvalidatePrefix, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
@@ -56,6 +57,11 @@ export async function PATCH(
       if (rows.length === 0) {
         return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
       }
+      // Invalidate caches so the change is visible immediately
+      await Promise.all([
+        cacheDel(CacheKeys.share(shareId)),
+        cacheInvalidatePrefix("explore:"),
+      ]);
       captureServerEvent(userId, "report_visibility_changed", {
         report_id: shareId,
         is_public: !!rows[0].is_public,
@@ -96,6 +102,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
     }
 
+    await Promise.all([
+      cacheDel(CacheKeys.share(shareId)),
+      cacheInvalidatePrefix("explore:"),
+    ]);
     captureServerEvent(userId, "report_deleted", { report_id: shareId });
 
     return NextResponse.json({ deleted: true });
