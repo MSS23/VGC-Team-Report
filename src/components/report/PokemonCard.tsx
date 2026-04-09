@@ -259,7 +259,8 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
         const isChampions = regulation === "Reg M-A";
         const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
         const totalSp = (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + evsToSp(parsed.evs[s]), 0);
-        const hasWastedEvs = isChampions && (["hp", "atk", "def", "spa", "spd", "spe"] as const).some((s) => parsed.evs[s] % 8 !== 0 && parsed.evs[s] > 0);
+        const isValidChampionsEv = (ev: number) => ev === 0 || (ev >= 4 && (ev - 4) % 8 === 0);
+        const hasWastedEvs = isChampions && (["hp", "atk", "def", "spa", "spd", "spe"] as const).some((s) => !isValidChampionsEv(parsed.evs[s]) && parsed.evs[s] > 0);
         const unusedSp = isChampions ? CHAMPIONS_TOTAL_SP - totalSp : 0;
         const overSp = isChampions && totalSp > CHAMPIONS_TOTAL_SP;
         const needsConversion = isChampions && totalEvs > 0 && !isChampionsOptimized(parsed.evs);
@@ -309,7 +310,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                   )}
                   {hasWastedEvs && (
                     <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                      Wasted EVs (not multiples of 8)
+                      EVs not aligned to SP values
                     </span>
                   )}
                 </div>
@@ -337,7 +338,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               const maxStat = stat === "hp" ? 300 : 250;
               const percentage = Math.min((displayValue / maxStat) * 100, 100);
               const labels = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe };
-              const isWasted = isChampions && ev > 0 && ev % 8 !== 0;
+              const isWasted = isChampions && ev > 0 && !isValidChampionsEv(ev);
               const isOverMax = isChampions && sp > CHAMPIONS_MAX_SP_PER_STAT;
 
               return (

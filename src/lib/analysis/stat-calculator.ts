@@ -74,9 +74,14 @@ export function calculateAllChampionsStats(
   return result as StatSpread;
 }
 
-/** Convert EVs to Stat Points (1 SP = 8 EVs). */
+/**
+ * Convert EVs to Stat Points using Champions conversion table.
+ * 4 EVs = 1 SP, 12 = 2, 20 = 3, ... 252 = 32.
+ * Formula: ceil(EV / 8) for EV > 0, 0 for EV = 0.
+ */
 export function evsToSp(ev: number): number {
-  return Math.floor(ev / 8);
+  if (ev <= 0) return 0;
+  return Math.ceil(ev / 8);
 }
 
 /** Convert a full EV spread to SP spread. */
@@ -159,13 +164,15 @@ export function convertToChampionsSp(evs: StatSpread): StatSpread {
 
 /**
  * Check if an EV spread is already Champions-optimized.
- * A spread is optimized when all EVs are multiples of 8 and total SP = 66.
+ * Valid Champions EV values: 0, 4, 12, 20, 28, ... 252 (pattern: 8*SP - 4).
+ * Total SP must equal 66.
  */
 export function isChampionsOptimized(evs: StatSpread): boolean {
   const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
-  const allMultOf8 = stats.every((s) => evs[s] % 8 === 0);
+  const validChampionsEv = (ev: number) => ev === 0 || (ev >= 4 && (ev - 4) % 8 === 0);
+  const allValid = stats.every((s) => validChampionsEv(evs[s]));
   const totalSp = stats.reduce((sum, s) => sum + evsToSp(evs[s]), 0);
-  return allMultOf8 && totalSp === CHAMPIONS_TOTAL_SP;
+  return allValid && totalSp === CHAMPIONS_TOTAL_SP;
 }
 
 /** Format a SP spread as a readable string: "32/32/1/1/0/0" */
@@ -173,14 +180,20 @@ export function formatSpSpread(sp: StatSpread): string {
   return `${sp.hp}/${sp.atk}/${sp.def}/${sp.spa}/${sp.spd}/${sp.spe}`;
 }
 
-/** Convert SP spread back to EV values (SP * 8). */
+/** Convert SP to EV value. 1 SP = 4 EVs, 2 SP = 12 EVs, ... N SP = 8N - 4 EVs. */
+export function spToEv(sp: number): number {
+  if (sp <= 0) return 0;
+  return sp * 8 - 4;
+}
+
+/** Convert SP spread back to EV values. */
 export function spToEvSpread(sp: StatSpread): StatSpread {
   return {
-    hp: sp.hp * 8,
-    atk: sp.atk * 8,
-    def: sp.def * 8,
-    spa: sp.spa * 8,
-    spd: sp.spd * 8,
-    spe: sp.spe * 8,
+    hp: spToEv(sp.hp),
+    atk: spToEv(sp.atk),
+    def: spToEv(sp.def),
+    spa: spToEv(sp.spa),
+    spd: spToEv(sp.spd),
+    spe: spToEv(sp.spe),
   };
 }
