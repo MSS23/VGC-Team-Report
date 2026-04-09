@@ -94,3 +94,93 @@ export function evSpreadToSp(evs: StatSpread): StatSpread {
 /** Champions SP budget constants. */
 export const CHAMPIONS_MAX_SP_PER_STAT = 32;
 export const CHAMPIONS_TOTAL_SP = 66;
+
+/**
+ * Convert a traditional EV spread to an optimal Champions SP spread.
+ * Preserves the intent of the original spread:
+ *  - 252 EVs → 32 SP (full investment)
+ *  - 4 EVs → 1 SP (minimum investment)
+ *  - 0 EVs → 0 SP
+ * Then distributes any remaining SP budget proportionally to invested stats.
+ */
+export function convertToChampionsSp(evs: StatSpread): StatSpread {
+  const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
+
+  // Step 1: Direct conversion — ceil for non-zero to preserve intent
+  const sp: StatSpread = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+  for (const stat of stats) {
+    if (evs[stat] === 0) sp[stat] = 0;
+    else if (evs[stat] >= 248) sp[stat] = CHAMPIONS_MAX_SP_PER_STAT; // 248+ → max
+    else sp[stat] = Math.max(1, Math.ceil(evs[stat] / 8)); // At least 1 SP for any investment
+  }
+
+  // Step 2: Cap each stat at 32
+  for (const stat of stats) {
+    sp[stat] = Math.min(sp[stat], CHAMPIONS_MAX_SP_PER_STAT);
+  }
+
+  // Step 3: Distribute remaining SP to invested stats (highest EV first)
+  let totalSp = stats.reduce((sum, s) => sum + sp[s], 0);
+  if (totalSp < CHAMPIONS_TOTAL_SP) {
+    const investedStats = stats
+      .filter((s) => sp[s] > 0 && sp[s] < CHAMPIONS_MAX_SP_PER_STAT)
+      .sort((a, b) => evs[b] - evs[a]);
+
+    // If no invested stats have room, try uninvested stats
+    const candidates = investedStats.length > 0
+      ? investedStats
+      : stats.filter((s) => sp[s] < CHAMPIONS_MAX_SP_PER_STAT).sort((a, b) => evs[b] - evs[a]);
+
+    let remaining = CHAMPIONS_TOTAL_SP - totalSp;
+    for (const stat of candidates) {
+      if (remaining <= 0) break;
+      const canAdd = CHAMPIONS_MAX_SP_PER_STAT - sp[stat];
+      const add = Math.min(canAdd, remaining);
+      sp[stat] += add;
+      remaining -= add;
+    }
+  }
+
+  // Step 4: If over budget, trim from lowest-invested stats
+  totalSp = stats.reduce((sum, s) => sum + sp[s], 0);
+  if (totalSp > CHAMPIONS_TOTAL_SP) {
+    const sortedAsc = stats.filter((s) => sp[s] > 0).sort((a, b) => sp[a] - sp[b]);
+    let excess = totalSp - CHAMPIONS_TOTAL_SP;
+    for (const stat of sortedAsc) {
+      if (excess <= 0) break;
+      const remove = Math.min(sp[stat], excess);
+      sp[stat] -= remove;
+      excess -= remove;
+    }
+  }
+
+  return sp;
+}
+
+/**
+ * Check if an EV spread is already Champions-optimized.
+ * A spread is optimized when all EVs are multiples of 8 and total SP = 66.
+ */
+export function isChampionsOptimized(evs: StatSpread): boolean {
+  const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
+  const allMultOf8 = stats.every((s) => evs[s] % 8 === 0);
+  const totalSp = stats.reduce((sum, s) => sum + evsToSp(evs[s]), 0);
+  return allMultOf8 && totalSp === CHAMPIONS_TOTAL_SP;
+}
+
+/** Format a SP spread as a readable string: "32/32/1/1/0/0" */
+export function formatSpSpread(sp: StatSpread): string {
+  return `${sp.hp}/${sp.atk}/${sp.def}/${sp.spa}/${sp.spd}/${sp.spe}`;
+}
+
+/** Convert SP spread back to EV values (SP * 8). */
+export function spToEvSpread(sp: StatSpread): StatSpread {
+  return {
+    hp: sp.hp * 8,
+    atk: sp.atk * 8,
+    def: sp.def * 8,
+    spa: sp.spa * 8,
+    spd: sp.spd * 8,
+    spe: sp.spe * 8,
+  };
+}

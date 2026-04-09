@@ -12,7 +12,7 @@ import { translateMove } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
 import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
 import { lookupPokemon } from "@/lib/data/pokemon";
-import { calculateAllStats, evsToSp, CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT } from "@/lib/analysis/stat-calculator";
+import { calculateAllStats, calculateAllChampionsStats, evsToSp, CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT, convertToChampionsSp, isChampionsOptimized, formatSpSpread } from "@/lib/analysis/stat-calculator";
 
 interface PokemonCardProps {
   pokemon: AnalyzedPokemon;
@@ -65,10 +65,19 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
     return calculateAllStats(megaData.baseStats, parsed.ivs, parsed.evs, parsed.level, parsed.nature);
   }, [megaData, parsed.ivs, parsed.evs, parsed.level, parsed.nature]);
 
+  // Champions stat recalculation when regulation is M-A
+  const championsStats = useMemo(() => {
+    if (regulation !== "Reg M-A") return null;
+    const baseData = megaData ?? data;
+    if (!baseData) return null;
+    const sp = convertToChampionsSp(parsed.evs);
+    return calculateAllChampionsStats(baseData.baseStats, sp, parsed.nature);
+  }, [regulation, megaData, data, parsed.evs, parsed.nature]);
+
   const displaySpecies = showMega && megaEntry ? megaEntry.displayName : parsed.species;
   const displayTypes = (showMega && megaData ? megaData.types : data?.types) ?? [];
   const displayAbility = showMega && megaEntry ? megaEntry.ability : parsed.ability;
-  const displayStats = megaStats ?? calculatedStats;
+  const displayStats = championsStats ?? megaStats ?? calculatedStats;
   const displayData = megaData ?? data;
   // Sprite uses data key for mega form (e.g. "kangaskhan-mega")
   const spriteSpecies = showMega && megaEntry ? megaEntry.dataKey : parsed.species;
@@ -247,28 +256,32 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
 
       {/* Stats */}
       {displayData && (() => {
-        const isChampions = regulation === "Reg M-A" || !regulation;
+        const isChampions = regulation === "Reg M-A";
         const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
         const totalSp = (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + evsToSp(parsed.evs[s]), 0);
         const hasWastedEvs = isChampions && (["hp", "atk", "def", "spa", "spd", "spe"] as const).some((s) => parsed.evs[s] % 8 !== 0 && parsed.evs[s] > 0);
         const unusedSp = isChampions ? CHAMPIONS_TOTAL_SP - totalSp : 0;
         const overSp = isChampions && totalSp > CHAMPIONS_TOTAL_SP;
+        const needsConversion = isChampions && totalEvs > 0 && !isChampionsOptimized(parsed.evs);
+        const suggestedSp = needsConversion ? convertToChampionsSp(parsed.evs) : null;
 
         return (
         <div>
           <h4 className="text-[9px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-0.5 sm:mb-1.5 creator:mb-2 flex items-center gap-2">
             <span>{t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70 hidden sm:inline">({parsed.nature})</span></span>
-            {isChampions ? (
-              <>
-                {overSp ? (
-                  <span className="text-[8px] sm:text-[9px] font-bold text-danger normal-case tracking-normal">{totalSp}/{CHAMPIONS_TOTAL_SP} SP</span>
-                ) : totalSp > 0 ? (
-                  <span className={`text-[8px] sm:text-[9px] font-bold normal-case tracking-normal ${unusedSp > 0 ? "text-amber-500" : "text-text-tertiary/50"}`}>
-                    {totalSp}/{CHAMPIONS_TOTAL_SP} SP
-                  </span>
-                ) : null}
-              </>
-            ) : (
+            {isChampions ? (() => {
+              const displayTotalSp = suggestedSp
+                ? (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + suggestedSp[s], 0)
+                : totalSp;
+              return displayTotalSp > 0 ? (
+                <span className={`text-[8px] sm:text-[9px] font-bold normal-case tracking-normal ${
+                  displayTotalSp > CHAMPIONS_TOTAL_SP ? "text-danger" :
+                  displayTotalSp < CHAMPIONS_TOTAL_SP ? "text-amber-500" : "text-text-tertiary/50"
+                }`}>
+                  {displayTotalSp}/{CHAMPIONS_TOTAL_SP} SP
+                </span>
+              ) : null;
+            })() : (
               <>
                 {totalEvs > 510 ? (
                   <span className="text-[8px] sm:text-[9px] font-bold text-danger normal-case tracking-normal">{totalEvs}/510 EVs</span>
@@ -279,23 +292,37 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             )}
           </h4>
 
-          {/* Stat warnings */}
-          {isChampions && (unusedSp > 0 || hasWastedEvs || overSp) && totalSp > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-1.5 sm:mb-2">
-              {unusedSp > 0 && !overSp && (
-                <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                  {unusedSp} SP unused
-                </span>
+          {/* Stat warnings + conversion suggestion */}
+          {isChampions && totalEvs > 0 && (
+            <div className="flex flex-col gap-1.5 mb-1.5 sm:mb-2">
+              {(unusedSp > 0 || hasWastedEvs || overSp) && (
+                <div className="flex flex-wrap gap-1.5">
+                  {unusedSp > 0 && !overSp && (
+                    <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                      {unusedSp} SP unused
+                    </span>
+                  )}
+                  {overSp && (
+                    <span className="text-[9px] sm:text-[10px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded">
+                      Over budget by {totalSp - CHAMPIONS_TOTAL_SP} SP
+                    </span>
+                  )}
+                  {hasWastedEvs && (
+                    <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                      Wasted EVs (not multiples of 8)
+                    </span>
+                  )}
+                </div>
               )}
-              {overSp && (
-                <span className="text-[9px] sm:text-[10px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded">
-                  Over budget by {totalSp - CHAMPIONS_TOTAL_SP} SP
-                </span>
-              )}
-              {hasWastedEvs && (
-                <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                  Wasted EVs (not divisible by 8)
-                </span>
+              {needsConversion && suggestedSp && (
+                <div className="text-[9px] sm:text-[10px] font-semibold text-blue-500 bg-blue-500/10 px-2 py-1 rounded flex items-center gap-1.5">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                  <span>Champions spread: <span className="font-bold font-[family-name:var(--font-mono)]">{formatSpSpread(suggestedSp)}</span> SP</span>
+                </div>
               )}
             </div>
           )}
@@ -304,7 +331,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map((stat) => {
               const value = displayStats[stat];
               const ev = parsed.evs[stat];
-              const sp = evsToSp(ev);
+              const sp = suggestedSp ? suggestedSp[stat] : evsToSp(ev);
               const isBoosted = itemBoost?.stat === stat;
               const displayValue = isBoosted ? itemBoost.boostedValue : value;
               const maxStat = stat === "hp" ? 300 : 250;
