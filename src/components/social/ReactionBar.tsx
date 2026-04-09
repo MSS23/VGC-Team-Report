@@ -97,12 +97,12 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
     );
   }
 
-  // Owner: show count only, no interaction
+  // Owner: show count, no interaction
   if (isOwner) {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold text-text-tertiary">
         <span className="text-red-400"><HeartIcon filled={false} /></span>
-        {likeCount > 0 && <span>{likeCount}</span>}
+        <span>{likeCount}</span>
       </span>
     );
   }
@@ -117,7 +117,7 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold text-text-secondary hover:text-red-500 transition-all cursor-pointer active:scale-95"
         >
           <HeartIcon filled={false} />
-          {likeCount > 0 && <span className="opacity-70">{likeCount}</span>}
+          <span className="opacity-70">{likeCount}</span>
         </button>
       </SignInButton>
     );
@@ -137,7 +137,7 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
       <span className={animating ? "animate-like-pop" : "transition-transform"}>
         <HeartIcon filled={liked} />
       </span>
-      {likeCount > 0 && <span className={liked ? "text-red-500" : "opacity-70"}>{likeCount}</span>}
+      <span className={liked ? "text-red-500" : "opacity-70"}>{likeCount}</span>
     </button>
   );
 }
