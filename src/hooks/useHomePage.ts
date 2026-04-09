@@ -34,7 +34,7 @@ export function useHomePage() {
 
   // ── Core team data ───────────────────────────────────────────────
   const {
-    paste, setPaste, analysis, parseTeam, reorderPokemon, reset, warnings,
+    paste, setPaste, analysis, parseTeam, reorderPokemon, reset, warnings: rawWarnings,
   } = useTeamReport(!isSampleTeam);
 
   // ── Mode toggles ─────────────────────────────────────────────────
@@ -80,6 +80,15 @@ export function useHomePage() {
     updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,
     reorderGamePlanBring, updateGamePlanResult, togglePlanSlide, reorderPlans, setPlansFull,
   } = useMatchupPlans(speciesKeys, shouldPersist);
+
+  // Champions uses stat points (66 SP budget) instead of EVs (510 budget),
+  // so the EV total > 510 parser warning is irrelevant.
+  const warnings = useMemo(() => {
+    if (tags?.regulation === "Reg M-A") {
+      return rawWarnings.filter(w => !w.includes("EV total") || !w.includes("exceeds"));
+    }
+    return rawWarnings;
+  }, [rawWarnings, tags?.regulation]);
   const { hiddenSlides, toggleSlide, isHidden, setHiddenFull } = useHiddenSlides(speciesKeys, shouldPersist);
 
   // ── Sprite config ────────────────────────────────────────────────
