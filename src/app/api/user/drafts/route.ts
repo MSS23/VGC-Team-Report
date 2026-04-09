@@ -128,6 +128,12 @@ export async function POST(request: NextRequest) {
     }
 
     const { state, draftId } = parsed.data;
+
+    // Never save sample teams — reject any paste that starts with the sample identifier
+    if (state.paste.trimStart().startsWith("Kangaskhan-Mega @ Kangaskhanite\nAbility: Parental Bond")) {
+      return NextResponse.json({ error: "Sample teams cannot be saved as drafts" }, { status: 400 });
+    }
+
     const sql = getDb();
 
     // Update existing draft

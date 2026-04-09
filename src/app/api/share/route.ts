@@ -72,6 +72,11 @@ export async function POST(request: Request) {
     }
     const { state, existingId, editToken, isPublic, isPublish } = parsed.data;
 
+    // Never save sample teams
+    if (state.paste.trimStart().startsWith("Kangaskhan-Mega @ Kangaskhanite\nAbility: Parental Bond")) {
+      return NextResponse.json({ error: "Sample teams cannot be saved" }, { status: 400 });
+    }
+
     const sql = getDb();
 
     // Build search vector text from state fields
