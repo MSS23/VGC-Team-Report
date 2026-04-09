@@ -887,6 +887,7 @@ function HomeContent() {
               </svg>
               Fork Report
             </button>
+            {!isOwner && <SaveButton shareId={activeShareId} />}
           </div>
           {allowComments ? (
             <CommentSection shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
