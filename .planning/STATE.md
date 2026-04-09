@@ -72,6 +72,10 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 - [Phase 10]: Sequential cascade queries (no transaction) — neon serverless HTTP driver limitation
 - [Phase 10]: Feedback anonymized not deleted — preserves bug report content
 
+### Roadmap Evolution
+
+- Phase 15 added: Mega Evolution support — toggle, auto-detect, Showdown data, M-A regulation threats, Serebii legal list
+
 ### Pending Todos
 
 None yet.

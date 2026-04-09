@@ -279,6 +279,16 @@ Plans:
 **Plans:** TBD
 **UI hint**: yes
 
+### Phase 15: Mega Evolution support: toggle, auto-detect, Showdown data, M-A regulation threats, Serebii legal list
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 14
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 15 to break down)
+
 ---
 
 ## Progress
