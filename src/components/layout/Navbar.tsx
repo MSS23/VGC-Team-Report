@@ -95,6 +95,61 @@ interface NavbarProps {
   onStartTour?: () => void;
 }
 
+function getWarningFix(warning: string): string {
+  if (warning.includes("EV total") && warning.includes("exceeds")) {
+    return "Reduce EVs so the total is 510 or less. Check your PokePaste for typos.";
+  }
+  if (warning.includes("No moves found")) {
+    return "Add moves to this Pokemon in your PokePaste (lines starting with \"- \").";
+  }
+  if (warning.includes("No ability specified")) {
+    return "Add an \"Ability:\" line to this Pokemon in your PokePaste.";
+  }
+  return "Check your PokePaste for formatting issues.";
+}
+
+function WarningPopover({ warnings, label }: { warnings: string[]; label: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div className="relative hidden sm:inline-block" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="text-xs font-bold text-warning hover:text-warning/80 cursor-pointer underline decoration-dotted underline-offset-2 transition-colors"
+      >
+        {label}
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1.5 z-50 w-72 rounded-lg border border-border bg-surface shadow-lg p-3 space-y-2.5">
+          {warnings.map((w, i) => {
+            const fix = getWarningFix(w);
+            return (
+              <div key={i} className="text-xs">
+                <div className="flex items-start gap-1.5">
+                  <span className="text-warning shrink-0 mt-px">&#9888;</span>
+                  <span className="font-semibold text-text-primary">{w}</span>
+                </div>
+                <p className="text-text-tertiary mt-0.5 ml-5">{fix}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Navbar(props: NavbarProps) {
   const {
     isPresentationStyle, isSharedView, isEditingUnlocked, creatorMode,
@@ -175,9 +230,7 @@ export function Navbar(props: NavbarProps) {
                 <span className="sm:hidden">&larr;</span>
               </Button>
               {warnings.length > 0 && (
-                <span className="text-xs font-bold text-warning hidden sm:inline">
-                  {warnings.length} {warnings.length > 1 ? t.warningsPlural : t.warnings}
-                </span>
+                <WarningPopover warnings={warnings} label={`${warnings.length} ${warnings.length > 1 ? t.warningsPlural : t.warnings}`} />
               )}
               <span className={`text-xs font-bold text-emerald-500 hidden sm:inline transition-opacity duration-300 ${saveFlash ? "opacity-100" : "opacity-0"}`}>
                 {t.saved}
