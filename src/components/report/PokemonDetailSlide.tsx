@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { hapticLight } from "@/lib/utils/haptics";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { CalcEntry, CalcCategory } from "@/hooks/useDamageCalcs";
@@ -12,7 +12,15 @@ import { NATURES } from "@/lib/data/natures";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
-import { convertToChampionsSp, CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT } from "@/lib/analysis/stat-calculator";
+import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
+import { lookupPokemon } from "@/lib/data/pokemon";
+import {
+  calculateAllStats,
+  calculateAllChampionsStats,
+  convertToChampionsSp,
+  CHAMPIONS_TOTAL_SP,
+  CHAMPIONS_MAX_SP_PER_STAT,
+} from "@/lib/analysis/stat-calculator";
 import { FieldDiffHighlight } from "./TeamReport";
 import { useIsPrintMode } from "@/components/ui/PdfExport";
 
@@ -34,6 +42,10 @@ interface PokemonDetailSlideProps {
   pokemonIndex?: number;
   /** Current regulation (e.g. "Reg M-A" for Champions) */
   regulation?: string;
+  /** Mega Evolution toggle: undefined auto-detects from mega stone */
+  isMega?: boolean;
+  /** Flip between base and Mega form. When omitted the toggle is hidden. */
+  onToggleMega?: () => void;
 }
 
 const STAT_COLORS: Record<string, string> = {
@@ -318,10 +330,61 @@ export function PokemonDetailSlide({
   speciesKey,
   pokemonIndex,
   regulation,
+  isMega,
+  onToggleMega,
 }: PokemonDetailSlideProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
-  const types = data?.types ?? [];
+
+  // ── Mega Evolution resolution ────────────────────────────────────
+  // Mirrors PokemonCard so the detail slide, team overview and any
+  // future report surface share the exact same base/Mega logic.
+  const megaEntry = useMemo(
+    () => detectMegaFromItem(parsed.item, parsed.species),
+    [parsed.item, parsed.species],
+  );
+  const alreadyMega = isMegaForm(parsed.species);
+  const canMega = !!megaEntry && !alreadyMega;
+  // Default ON when a mega stone is detected — matches PokemonCard behavior.
+  const showMega = alreadyMega || (canMega && (isMega ?? true));
+  const showMegaToggle =
+    canMega && !!onToggleMega && (!regulation || regulation === "Reg M-A");
+
+  const megaData = useMemo(() => {
+    if (!showMega || !megaEntry) return null;
+    return lookupPokemon(megaEntry.dataKey);
+  }, [showMega, megaEntry]);
+
+  const megaStats = useMemo(() => {
+    if (!megaData) return null;
+    return calculateAllStats(
+      megaData.baseStats,
+      parsed.ivs,
+      parsed.evs,
+      parsed.level,
+      parsed.nature,
+    );
+  }, [megaData, parsed.ivs, parsed.evs, parsed.level, parsed.nature]);
+
+  // Champions (Reg M-A) recomputes stats from the SP budget — must run
+  // against the Mega base stats when the user is viewing the Mega form.
+  const championsStats = useMemo(() => {
+    if (regulation !== "Reg M-A") return null;
+    const baseData = megaData ?? data;
+    if (!baseData) return null;
+    const sp = convertToChampionsSp(parsed.evs);
+    return calculateAllChampionsStats(baseData.baseStats, sp, parsed.nature);
+  }, [regulation, megaData, data, parsed.evs, parsed.nature]);
+
+  const displaySpecies = showMega && megaEntry ? megaEntry.displayName : parsed.species;
+  const displayTypes = (showMega && megaData ? megaData.types : data?.types) ?? [];
+  const displayAbility = showMega && megaEntry ? megaEntry.ability : parsed.ability;
+  const displayData = megaData ?? data;
+  const displayStats = championsStats ?? megaStats ?? calculatedStats;
+  // Sprite lookup uses the raw data key so mega forms resolve correctly.
+  const spriteSpecies = showMega && megaEntry ? megaEntry.dataKey : parsed.species;
+
+  const types = displayTypes;
   const natureData = NATURES[parsed.nature];
   const relevantStats = getRelevantStats(parsed);
   const [showEvMode, setShowEvMode] = useState(false);
@@ -414,14 +477,14 @@ export function PokemonDetailSlide({
     <div className="flex items-start gap-3 sm:gap-6">
       <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
         <PokemonSprite
-          species={parsed.species}
+          species={spriteSpecies}
           size={isPresentationMode ? 140 : 80}
           className="sm:hidden"
           animated={animated}
           shiny={shiny}
         />
         <PokemonSprite
-          species={parsed.species}
+          species={spriteSpecies}
           size={isPresentationMode ? 160 : 160}
           className="hidden sm:block"
           animated={animated}
@@ -431,8 +494,29 @@ export function PokemonDetailSlide({
       <div className="flex flex-col gap-1.5 sm:gap-2 pt-0.5 sm:pt-2 min-w-0">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary presenting:text-4xl truncate tracking-tight">
-            {parsed.species}
+            {displaySpecies}
           </h2>
+          {showMegaToggle && (
+            <button
+              type="button"
+              onClick={onToggleMega}
+              className={`inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-md text-xs sm:text-sm font-extrabold transition-all duration-200 ${
+                showMega
+                  ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-sm shadow-purple-500/30"
+                  : "bg-surface-alt text-text-tertiary hover:text-purple-500 hover:bg-purple-500/10 border border-border-subtle"
+              }`}
+              title={showMega ? "Show base form" : "Show Mega Evolution"}
+              aria-label={showMega ? "Show base form" : "Show Mega Evolution"}
+              aria-pressed={showMega}
+            >
+              M
+            </button>
+          )}
+          {alreadyMega && (
+            <span className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-md text-xs sm:text-sm font-extrabold bg-gradient-to-br from-pink-500 to-purple-600 text-white">
+              M
+            </span>
+          )}
           {parsed.gender && (
             <span
               className={`text-lg sm:text-xl font-bold ${
@@ -455,7 +539,7 @@ export function PokemonDetailSlide({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 text-sm sm:text-base text-text-secondary presenting:text-lg">
-          {parsed.ability && <span className="font-medium">{parsed.ability}</span>}
+          {displayAbility && <span className="font-medium">{displayAbility}</span>}
           {parsed.item && (
             <span className="text-text-primary font-bold">
               @ {parsed.item}
@@ -504,7 +588,7 @@ export function PokemonDetailSlide({
   );
 
   const renderStats = () => {
-    if (!data) return null;
+    if (!displayData) return null;
     const isChampions = regulation === "Reg M-A";
     const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
     const spSpread = convertToChampionsSp(parsed.evs);
@@ -588,7 +672,7 @@ export function PokemonDetailSlide({
       <div className="space-y-1 sm:space-y-1.5 stagger-stats">
         {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map(
           (stat) => {
-            const value = calculatedStats[stat];
+            const value = displayStats[stat];
             const ev = parsed.evs[stat];
             const sp = spSpread[stat];
             const iv = parsed.ivs[stat];
