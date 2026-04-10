@@ -231,7 +231,6 @@ export default async function Image({
                 fontSize: 32, fontWeight: 800, color: placementColors.text,
                 background: placementColors.bg, border: `3px solid ${placementColors.border}`,
                 padding: "10px 28px", borderRadius: 16, letterSpacing: "0.02em",
-                boxShadow: `0 0 40px ${placementColors.glow}`,
               }}>
                 {placement}
               </div>
@@ -307,13 +306,15 @@ export default async function Image({
                   display: "flex", flexDirection: "column", alignItems: "center",
                   width: 176, flexShrink: 0,
                 }}>
-                  {/* Card — simplified shadow keeps render cost manageable at 2x */}
+                  {/* Card — no box-shadow: Satori rasterizes each shadow blur
+                      at runtime, and 6 cards × blur at cold start was pushing
+                      the render over the edge timeout. Border + subtle bg
+                      gives enough visual separation. */}
                   <div style={{
                     display: "flex", flexDirection: "column", alignItems: "center",
                     width: 176, borderRadius: 20,
-                    background: "rgba(255,255,255,0.03)",
-                    border: "2px solid rgba(255,255,255,0.08)",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.28)",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "2px solid rgba(255,255,255,0.1)",
                     position: "relative", overflow: "hidden", paddingBottom: 16,
                   }}>
                     {/* Sprite area */}
@@ -418,9 +419,8 @@ export default async function Image({
             {/* Pokeball icon */}
             <div style={{
               width: 36, height: 36, borderRadius: "50%",
-              background: "linear-gradient(145deg, #E11D48, #BE123C)",
+              background: "#E11D48",
               display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 0 20px rgba(225,29,72,0.22)",
             }}>
               <div style={{
                 width: 12, height: 12, borderRadius: "50%",
