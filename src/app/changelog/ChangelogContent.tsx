@@ -11,6 +11,21 @@ import { PageFooter } from "@/components/layout/PageFooter";
 const ENTRIES = [
   {
     date: "April 2026",
+    version: "5.5",
+    title: "Fork Public Reports",
+    emoji: "\uD83C\uDF74", // 🍴
+    highlight: true,
+    items: [
+      { type: "new" as const, text: "Fork Report button — signed-in viewers can now fork any public report into a new editable copy they own, preserving the team, notes, calcs, roles, matchup plans, and tags. Forks start private so you can iterate before publishing." },
+      { type: "new" as const, text: "Fork attribution banner — every forked report shows a prominent banner at the top with a \"View original\" link back to the source, so lineage is always clear. If the original is deleted the banner degrades gracefully." },
+      { type: "improved" as const, text: "Forks clear event-specific fields on creation — creator name, tournament name, placement, record, rental code, and MVP pick are reset so the new owner starts with a clean slate, while all team-building content (paste, EVs, notes, calcs, plans) is preserved." },
+      { type: "improved" as const, text: "Fork is restricted to public reports only — unlisted reports stay the owner's. Link possession grants view, not the right to copy the team into a new report." },
+      { type: "improved" as const, text: "Shared report read path is now fault-tolerant to in-flight migrations — the fork-lineage lookup can't break /s/{id} for end users if the column hasn't been added yet." },
+      { type: "fixed" as const, text: "Fixed shared links briefly returning 500 and falling back to the home page after the fork feature rolled out — the new forked_from_id lookup is now isolated behind a try/catch and no longer breaks main share reads." },
+    ],
+  },
+  {
+    date: "April 2026",
     version: "5.4",
     title: "Mega Evolutions, Champions Stat Points & Social Features",
     emoji: "\uD83D\uDD25",
