@@ -174,6 +174,8 @@ function HomeContent() {
     isSampleTeam,
     handleReset,
     handleDecodeFailed,
+    forkedFrom,
+    forkReport,
   } = useHomePage();
 
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
@@ -459,14 +461,34 @@ function HomeContent() {
     window.location.href = window.location.origin;
   }, [handleReset, exitSharedView]);
 
-  // Fork: keep all report data but start a new local draft
-  const handleForkReport = useCallback(() => {
-    setCreatorName("");
-    exitSharedView();
-    setCreatorMode(true);
-    // Replace URL to remove share context
-    window.history.replaceState(null, "", "/");
-  }, [setCreatorName, exitSharedView, setCreatorMode]);
+  // Fork: server-side copy linked back to the original via forked_from_id
+  const [forkStatus, setForkStatus] = useState<"idle" | "forking" | "error">("idle");
+  const handleForkReport = useCallback(async () => {
+    if (!activeShareId || forkStatus === "forking") return;
+    if (!isSignedIn) {
+      // Route to sign-in flow; Clerk modal will handle the rest.
+      // After sign-in the user can click Fork again.
+      track("fork_attempted_signed_out", { source_id: activeShareId });
+      return;
+    }
+    setForkStatus("forking");
+    track("report_fork_clicked", { source_id: activeShareId });
+    posthog.capture("report_fork_clicked", { source_id: activeShareId });
+    try {
+      const result = await forkReport(activeShareId);
+      if (!result) {
+        setForkStatus("error");
+        setTimeout(() => setForkStatus("idle"), 3000);
+        return;
+      }
+      // Navigate to the new fork with the edit key so the user lands in edit mode.
+      // Use a full navigation so useShareUrl re-runs cleanly against the new id.
+      window.location.href = `/s/${result.id}?key=${result.editToken}`;
+    } catch {
+      setForkStatus("error");
+      setTimeout(() => setForkStatus("idle"), 3000);
+    }
+  }, [activeShareId, forkStatus, isSignedIn, forkReport]);
 
   // Show paste input if no analysis and not loading shared view
   if (!analysis && !sharedState && !isSharePending) {
@@ -736,6 +758,54 @@ function HomeContent() {
           />
         ) : (
         <>
+        {/* Fork attribution banner — shown on any report that was forked from another */}
+        {isSharedView && forkedFrom && (
+          <div className="flex items-center gap-3 px-4 py-3 mb-5 bg-accent/8 border border-accent/25 rounded-2xl animate-fade-in">
+            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center text-accent">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="18" r="3" />
+                <circle cx="6" cy="6" r="3" />
+                <circle cx="18" cy="6" r="3" />
+                <path d="M18 9v1a2 2 0 01-2 2H8a2 2 0 01-2-2V9" />
+                <line x1="12" y1="12" x2="12" y2="15" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-text-primary">
+                Forked from{" "}
+                {forkedFrom.deleted ? (
+                  <span className="text-text-tertiary italic">a deleted report</span>
+                ) : (
+                  <a
+                    href={`/s/${forkedFrom.id}`}
+                    className="text-accent hover:underline font-bold"
+                  >
+                    {forkedFrom.tournamentName
+                      || (forkedFrom.creatorName ? `${forkedFrom.creatorName}'s team` : null)
+                      || (forkedFrom.species.length > 0 ? forkedFrom.species.slice(0, 3).join(" / ") : "the original report")}
+                  </a>
+                )}
+              </p>
+              <p className="text-xs text-text-tertiary mt-0.5 truncate">
+                {forkedFrom.deleted
+                  ? "The original report is no longer available."
+                  : forkedFrom.creatorName
+                    ? `Original team by ${forkedFrom.creatorName}${forkedFrom.species.length > 0 ? ` — ${forkedFrom.species.slice(0, 6).join(", ")}` : ""}`
+                    : forkedFrom.species.length > 0
+                      ? forkedFrom.species.slice(0, 6).join(", ")
+                      : "View the original to compare changes."}
+              </p>
+            </div>
+            {!forkedFrom.deleted && (
+              <a
+                href={`/s/${forkedFrom.id}`}
+                className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-accent/15 text-accent hover:bg-accent/25 transition-colors border border-accent/20"
+              >
+                View original
+              </a>
+            )}
+          </div>
+        )}
         {/* Hidden slide banner for creator */}
         {creatorMode && isSlideHiddenAt(physicalSlide) && (
           <div className="flex items-center gap-3 px-4 py-3 mb-5 bg-amber-500/8 border border-amber-500/25 rounded-2xl animate-fade-in">
@@ -850,21 +920,51 @@ function HomeContent() {
                 {isPublic ? "Public" : "Private"}
               </button>
             )}
-            <button
-              type="button"
-              onClick={handleForkReport}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent transition-all cursor-pointer"
-              title="Fork this report — copy the full team, notes, calcs, and matchup plans into your own editable draft"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="18" r="3" />
-                <circle cx="6" cy="6" r="3" />
-                <circle cx="18" cy="6" r="3" />
-                <path d="M18 9v1a2 2 0 01-2 2H8a2 2 0 01-2-2V9" />
-                <line x1="12" y1="12" x2="12" y2="15" />
-              </svg>
-              Fork Report
-            </button>
+            {isSignedIn ? (
+              <button
+                type="button"
+                onClick={handleForkReport}
+                disabled={forkStatus === "forking"}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border transition-all ${
+                  forkStatus === "forking"
+                    ? "opacity-60 cursor-wait text-text-tertiary"
+                    : forkStatus === "error"
+                      ? "border-rose-500/40 text-rose-500"
+                      : "text-text-secondary hover:border-accent/30 hover:text-accent cursor-pointer"
+                }`}
+                title="Fork this report — copy the team, notes, calcs, and matchup plans into a new report you own. The new report will link back to this one."
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="18" r="3" />
+                  <circle cx="6" cy="6" r="3" />
+                  <circle cx="18" cy="6" r="3" />
+                  <path d="M18 9v1a2 2 0 01-2 2H8a2 2 0 01-2-2V9" />
+                  <line x1="12" y1="12" x2="12" y2="15" />
+                </svg>
+                {forkStatus === "forking"
+                  ? "Forking…"
+                  : forkStatus === "error"
+                    ? "Fork failed"
+                    : "Fork Report"}
+              </button>
+            ) : (
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent transition-all cursor-pointer"
+                  title="Sign in to fork this report into your own editable copy"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="18" r="3" />
+                    <circle cx="6" cy="6" r="3" />
+                    <circle cx="18" cy="6" r="3" />
+                    <path d="M18 9v1a2 2 0 01-2 2H8a2 2 0 01-2-2V9" />
+                    <line x1="12" y1="12" x2="12" y2="15" />
+                  </svg>
+                  Fork Report
+                </button>
+              </SignInButton>
+            )}
             {!isOwner && <SaveButton shareId={activeShareId} />}
           </div>
           {allowComments ? (

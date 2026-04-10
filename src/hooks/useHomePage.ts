@@ -450,6 +450,8 @@ export function useHomePage() {
     allowComments: share.allowComments,
     setAllowComments: share.setAllowComments,
     autoSaveStatus: share.autoSaveStatus,
+    forkedFrom: share.forkedFrom,
+    forkReport: share.forkReport,
 
     // Collaborative sync
     collaborators,

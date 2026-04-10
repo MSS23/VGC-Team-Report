@@ -10,6 +10,14 @@ import {
 
 type ShareStatus = "idle" | "copying" | "copied" | "error";
 
+export interface ForkedFromMeta {
+  id: string;
+  creatorName: string | null;
+  tournamentName: string | null;
+  species: string[];
+  deleted: boolean;
+}
+
 const SHARE_TOKENS_KEY = "vgc-share-tokens";
 
 interface StoredShareInfo {
@@ -67,6 +75,7 @@ export function useShareUrl() {
   const [isEditingUnlocked, setIsEditingUnlocked] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [fetchedIsPublic, setFetchedIsPublic] = useState<boolean | null>(null);
+  const [forkedFrom, setForkedFrom] = useState<ForkedFromMeta | null>(null);
   const [lastShareResult, setLastShareResult] = useState<{
     updated: boolean;
     editUrl?: string;
@@ -100,6 +109,7 @@ export function useShareUrl() {
     setIsEditingUnlocked(false);
     setIsOwner(false);
     setFetchedIsPublic(null);
+    setForkedFrom(null);
   }, [shareId, inlineData]);
 
   // Fetch shared state on mount
@@ -142,11 +152,12 @@ export function useShareUrl() {
           const editable = data._editable === true;
           if (data._isPublic !== undefined) setFetchedIsPublic(!!data._isPublic);
           setIsOwner(!!data._isOwner);
+          setForkedFrom((data._forkedFrom as ForkedFromMeta | null) ?? null);
           // The API returns _editToken for authenticated owners/collaborators
           const ownerEditToken = data._editToken as string | undefined;
           // Strip internal flags before treating as ShareableState
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, ...state } = data;
+          const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, _forkedFrom: _ff, ...state } = data;
           // Set active edit session — only from server-provided token (authenticated)
           if (editable && ownerEditToken) {
             activeEditTokenRef.current = ownerEditToken;
@@ -314,6 +325,29 @@ export function useShareUrl() {
     }
   }, []);
 
+  /**
+   * Fork an existing share: creates a new report owned by the current user
+   * that tracks its lineage back to the source via forked_from_id.
+   * Returns { id, editToken } on success, null on failure.
+   */
+  const forkReport = useCallback(async (
+    sourceId: string
+  ): Promise<{ id: string; editToken: string } | null> => {
+    try {
+      const res = await fetch(`/api/share/${sourceId}/fork`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data?.id || !data?.editToken) return null;
+      storeShareInfo({ shareId: data.id, editToken: data.editToken });
+      return { id: data.id, editToken: data.editToken };
+    } catch {
+      return null;
+    }
+  }, []);
+
   const exitSharedView = useCallback(() => {
     setIsSharedView(false);
     setIsEditingUnlocked(false);
@@ -354,5 +388,7 @@ export function useShareUrl() {
     clearStoredShare,
     fetchedIsPublic,
     autoSaveStatus,
+    forkedFrom,
+    forkReport,
   };
 }

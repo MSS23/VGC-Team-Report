@@ -108,6 +108,10 @@ export async function ensureTable() {
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS owner_id TEXT`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_owner ON shares(owner_id) WHERE owner_id IS NOT NULL`);
 
+  // Fork lineage: points at the original share that this one was forked from
+  await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS forked_from_id TEXT`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_forked_from ON shares(forked_from_id) WHERE forked_from_id IS NOT NULL`);
+
   // Saved/bookmarked reports
   await run(sql`
     CREATE TABLE IF NOT EXISTS saved_reports (
