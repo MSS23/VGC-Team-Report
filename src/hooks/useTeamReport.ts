@@ -9,6 +9,13 @@ import type { ParsedTeam } from "@/lib/types/pokemon";
 import type { AnalyzedPokemon, TeamAnalysis } from "@/lib/types/analysis";
 
 const STORAGE_KEY = "vgc-team-paste";
+// Marker written alongside STORAGE_KEY whenever the paste is persisted from
+// a user-owned editing session. The restore effect in useHomePage refuses to
+// restore any paste that doesn't have a matching marker, so any legacy data
+// written by the pre-fix code (which incorrectly persisted shared reports
+// into the viewer's own localStorage) gets ignored rather than loaded as a
+// "welcome-back" draft. See SECURITY comment in useHomePage.ts.
+const STORAGE_SOURCE_KEY = "vgc-team-paste-source";
 
 export type ViewMode = "simple" | "advanced";
 
@@ -17,13 +24,18 @@ export function useTeamReport(persist = true) {
   const [parsedTeam, setParsedTeam] = useState<ParsedTeam | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("simple");
 
-  // Auto-save paste to localStorage whenever it changes (and analysis exists)
-  // Skipped when persist=false (e.g. sample/demo teams)
+  // Auto-save paste to localStorage whenever it changes (and analysis exists).
+  // Skipped when persist=false. Persist is disabled for sample teams and,
+  // critically, for any shared-report view — see the SECURITY comment in
+  // useHomePage.ts isInShareContext. The STORAGE_SOURCE_KEY marker is
+  // written alongside the paste so the restore path can distinguish a
+  // genuine user-owned draft from legacy leaked data.
   useEffect(() => {
     if (!persist) return;
     try {
       if (parsedTeam && parsedTeam.pokemon.length > 0) {
         localStorage.setItem(STORAGE_KEY, paste);
+        localStorage.setItem(STORAGE_SOURCE_KEY, "user");
       }
     } catch {
       // localStorage quota exceeded — paste works in-memory only
@@ -68,6 +80,7 @@ export function useTeamReport(persist = true) {
     setPaste("");
     try {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_SOURCE_KEY);
     } catch {
       // ignore
     }

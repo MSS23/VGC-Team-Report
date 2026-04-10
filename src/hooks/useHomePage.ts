@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useEffect, useLayoutEffect, useRef, useCallback, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTeamReport } from "@/hooks/useTeamReport";
 import { useCreatorMode } from "@/hooks/useCreatorMode";
 import { usePresentationMode } from "@/hooks/usePresentationMode";
@@ -32,10 +33,29 @@ export function useHomePage() {
   const [isSampleTeam, setIsSampleTeam] = useState(false);
   const [pendingTemplateId, setPendingTemplateId] = useState<string>("blank");
 
+  // ── Share context detection ─────────────────────────────────────
+  // Detect whether the current URL points at a shared report BEFORE any
+  // team-content hook runs. We need this early so we can disable
+  // localStorage persistence for every hook below while the user is
+  // viewing someone else's report.
+  //
+  // SECURITY: Without this gate, viewing /s/{id} would auto-write the
+  // shared team's paste, notes, calcs, and meta into the viewer's own
+  // localStorage (vgc-team-paste, vgc-notes-*, vgc-calcs-*, vgc-team-meta-*).
+  // The viewer could then hard-navigate home via the <a href="/"> brand
+  // link, the restore effect would read the paste back, and for
+  // logged-in users the auto-draft would even persist the stolen team
+  // to the viewer's own /api/user/drafts. That looked like unauthorized
+  // "edit access" to someone else's report.
+  const searchParams = useSearchParams();
+  const hashShareId = typeof window !== "undefined" && window.location.hash.startsWith("#id=");
+  const hashInlineData = typeof window !== "undefined" && window.location.hash.startsWith("#data=");
+  const isInShareContext = !!searchParams.get("s") || hashShareId || hashInlineData;
+
   // ── Core team data ───────────────────────────────────────────────
   const {
     paste, setPaste, analysis, parseTeam, reorderPokemon, reset, warnings: rawWarnings,
-  } = useTeamReport(!isSampleTeam);
+  } = useTeamReport(!isSampleTeam && !isInShareContext);
 
   // ── Mode toggles ─────────────────────────────────────────────────
   const { creatorMode, setCreatorMode } = useCreatorMode();
@@ -68,7 +88,12 @@ export function useHomePage() {
   }, [analysis]);
 
   // ── Team content hooks ───────────────────────────────────────────
-  const shouldPersist = !false && !isSampleTeam; // updated after share flow
+  // Persist to localStorage only when the user is editing their OWN
+  // local draft. Disabled for sample teams and — critically — for any
+  // view of someone else's shared report, to prevent the shared team's
+  // authored content from leaking into the viewer's own storage and
+  // being restored as a "draft" the next time they open the home page.
+  const shouldPersist = !isSampleTeam && !isInShareContext;
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
@@ -202,6 +227,13 @@ export function useHomePage() {
   // ── Restore in-progress team from localStorage on first mount ────
   // Runs once after share state has settled. Skipped when entering a
   // shared view (/s/[id]) since that path hydrates from the server.
+  //
+  // SECURITY: Only restore if the stored paste has the "user" source
+  // marker. Legacy data written by the pre-fix code (which leaked
+  // shared-report content into the viewer's localStorage) has no marker
+  // and must be ignored and evicted, not silently loaded as a
+  // "welcome-back draft". Anything without the marker gets wiped on
+  // sight so it can't surface on a future visit either.
   useEffect(() => {
     if (restoreAttempted.current) return;
     if (analysis) return; // already have a team loaded
@@ -209,10 +241,15 @@ export function useHomePage() {
     restoreAttempted.current = true;
     try {
       const stored = localStorage.getItem("vgc-team-paste");
-      if (stored && stored.trim()) {
+      const source = localStorage.getItem("vgc-team-paste-source");
+      if (stored && stored.trim() && source === "user") {
         setPaste(stored);
         parseTeam(stored);
         setWasRestored(true);
+      } else if (stored) {
+        // Unmarked legacy data — evict to prevent it surfacing later.
+        localStorage.removeItem("vgc-team-paste");
+        localStorage.removeItem("vgc-team-paste-source");
       }
     } catch {
       // localStorage unavailable — nothing to restore
