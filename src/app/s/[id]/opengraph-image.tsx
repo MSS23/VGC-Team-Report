@@ -7,11 +7,16 @@ export const runtime = "edge";
 export const alt = "VGC Team Report";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+// Cache the generated image for 1 hour — OG crawlers (Discord, Twitter, Slack)
+// unfurl repeatedly, and regenerating on every request was causing timeouts.
+export const revalidate = 3600;
 
-// Render at 2x for Retina/HiDPI sharpness (Discord, Twitter, etc.)
-const SCALE = 2;
-const W = 1200 * SCALE;
-const H = 630 * SCALE;
+// Native 1200x630 — Discord and OG crawlers cap preview images around this size
+// and reject/time-out on oversized renders. Rendering 2x was producing 2400x1260
+// (4x the pixels, 4x the render cost, 4x the byte count) which was failing to
+// load in Discord.
+const W = 1200;
+const H = 630;
 
 // ── Inline paste parser (edge-compatible, no heavy deps) ───────
 interface OGPokemon {
@@ -122,6 +127,41 @@ export default async function Image({
 
   const team = parseTeamForOG(paste);
 
+  // Prefetch all sprites in parallel with a tight timeout, then inline as data URIs.
+  // Satori fetches <img src> remotes serially during render, so a single slow sprite
+  // can time the whole OG route out. Doing it up front in parallel is ~6x faster
+  // and bounds the worst case to SPRITE_TIMEOUT_MS.
+  const SPRITE_BASE = "https://play.pokemonshowdown.com/sprites";
+  const SPRITE_TIMEOUT_MS = 2500;
+
+  async function fetchSprite(slug: string): Promise<string | null> {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), SPRITE_TIMEOUT_MS);
+      const res = await fetch(`${SPRITE_BASE}/home/${slug}.png`, {
+        signal: controller.signal,
+        // Route-level `revalidate = 3600` caches the whole ImageResponse,
+        // so this inner fetch only runs on cache miss.
+        cache: "force-cache",
+      });
+      clearTimeout(timer);
+      if (!res.ok) return null;
+      const buf = await res.arrayBuffer();
+      // Base64 encode for data URI — Satori handles data URIs without network.
+      let binary = "";
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+      const b64 = btoa(binary);
+      return `data:image/png;base64,${b64}`;
+    } catch {
+      return null;
+    }
+  }
+
+  const spriteDataUris: (string | null)[] = team.length > 0
+    ? await Promise.all(team.map((mon) => fetchSprite(toSpriteSlug(mon.species))))
+    : [];
+
   if (team.length === 0) {
     return new ImageResponse(
       (
@@ -140,7 +180,6 @@ export default async function Image({
     );
   }
 
-  const SPRITE_BASE = "https://play.pokemonshowdown.com/sprites";
   const placementColors = placement ? getPlacementStyle(placement) : null;
   const hasMetadata = !!record || !!tags.regulation || (tags.archetype && tags.archetype.length > 0) || !!tags.eventType;
 
@@ -270,8 +309,7 @@ export default async function Image({
             display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 20,
           }}>
             {team.map((mon, i) => {
-              const slug = toSpriteSlug(mon.species);
-              const spriteUrl = `${SPRITE_BASE}/home/${slug}.png`;
+              const spriteUrl = spriteDataUris[i];
 
               return (
                 <div key={i} style={{
@@ -298,12 +336,25 @@ export default async function Image({
                         background: "radial-gradient(ellipse, rgba(130,90,230,0.08) 0%, transparent 70%)",
                         display: "flex",
                       }} />
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={spriteUrl} alt={mon.species}
-                        width={200} height={200}
-                        style={{ objectFit: "contain", position: "relative" }}
-                      />
+                      {spriteUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={spriteUrl} alt={mon.species}
+                          width={200} height={200}
+                          style={{ objectFit: "contain", position: "relative" }}
+                        />
+                      ) : (
+                        /* Fallback if sprite fetch failed — keeps layout stable */
+                        <div style={{
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          width: 160, height: 160, borderRadius: "50%",
+                          background: "rgba(255,255,255,0.04)",
+                          border: "2px solid rgba(255,255,255,0.08)",
+                          fontSize: 72, color: "#4A4A6A", position: "relative",
+                        }}>
+                          ?
+                        </div>
+                      )}
                     </div>
 
                     {/* Type badges row */}
