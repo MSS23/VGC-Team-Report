@@ -6,6 +6,7 @@ import { PokemonSprite } from "./PokemonSprite";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
 import { POKEMON_DATA } from "@/lib/data/pokemon";
+import { CHAMPIONS_DEX } from "@/lib/data/champions-dex";
 
 interface SpeedTierChartProps {
   pokemon: AnalyzedPokemon[];
@@ -15,7 +16,7 @@ interface SpeedTierChartProps {
   regulation?: string;
 }
 
-/** Common meta threats to show alongside your team for speed context */
+/** Common meta threats — standard VGC formats (Reg G/H etc.) */
 const META_THREATS_DEFAULT = [
   "flutter-mane", "iron-bundle", "raging-bolt", "calyrex-shadow",
   "urshifu", "urshifu-rapid-strike", "tornadus", "landorus",
@@ -24,13 +25,20 @@ const META_THREATS_DEFAULT = [
   "pelipper", "torkoal", "porygon2", "dusclops",
 ] as const;
 
-/** Mega Evolution meta threats for Regulation M-A (Champions format) */
-const META_THREATS_MEGA = [
+/** Champions meta threats — only Pokemon legal in Reg M-A */
+const META_THREATS_CHAMPIONS = [
+  // Key Megas
   "kangaskhan-mega", "salamence-mega", "metagross-mega",
   "charizard-mega-y", "gengar-mega", "mawile-mega",
   "gardevoir-mega", "lucario-mega", "aerodactyl-mega",
   "alakazam-mega", "lopunny-mega", "tyranitar-mega",
   "garchomp-mega", "scizor-mega", "venusaur-mega",
+  // Top base forms
+  "incineroar", "kingambit", "archaludon", "dragonite",
+  "tyranitar", "garchomp", "excadrill", "whimsicott",
+  "torkoal", "pelipper", "milotic", "conkeldurr",
+  "hydreigon", "volcarona", "snorlax", "clefable",
+  "arcanine", "gyarados", "ninetales-alola", "rotom",
 ] as const;
 
 type SpeedModifier = "tailwind" | "paralysis" | "icywind";
@@ -80,7 +88,7 @@ function championsMinSpeed(baseSpe: number): number {
 
 export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode, regulation }: SpeedTierChartProps) {
   const META_THREATS = regulation === "Reg M-A"
-    ? [...META_THREATS_DEFAULT.filter(k => POKEMON_DATA[k]), ...META_THREATS_MEGA]
+    ? META_THREATS_CHAMPIONS.filter(k => POKEMON_DATA[k] && CHAMPIONS_DEX.has(k))
     : META_THREATS_DEFAULT;
   const { t } = useTranslation();
   const [activeModifiers, setActiveModifiers] = useState<Set<SpeedModifier>>(new Set());
