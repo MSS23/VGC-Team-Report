@@ -12,18 +12,38 @@ const ENTRIES = [
   {
     date: "April 2026",
     version: "5.5",
-    title: "Fork Public Reports",
+    title: "Forking, Sharing & Champions Polish",
     emoji: "\uD83C\uDF74", // 🍴
     highlight: true,
     items: [
+      // ── Fork feature ──
       { type: "new" as const, text: "Fork Report button — signed-in viewers can now fork any public report into a new editable copy they own, preserving the team, notes, calcs, roles, matchup plans, and tags. Forks start private so you can iterate before publishing." },
       { type: "new" as const, text: "Fork attribution banner — every forked report shows a prominent banner at the top with a \"View original\" link back to the source, so lineage is always clear. If the original is deleted the banner degrades gracefully." },
       { type: "improved" as const, text: "Forks clear event-specific fields on creation — creator name, tournament name, placement, record, rental code, and MVP pick are reset so the new owner starts with a clean slate, while all team-building content (paste, EVs, notes, calcs, plans) is preserved." },
       { type: "improved" as const, text: "Fork is restricted to public reports only — unlisted reports stay the owner's. Link possession grants view, not the right to copy the team into a new report." },
+
+      // ── Sharing & publishing ──
+      { type: "new" as const, text: "Thank-you banner when publishing — the first time you make a report public, a celebratory banner appears so you know it's live on Explore." },
+      { type: "improved" as const, text: "Private reports now act as unlisted — anyone with the /s/{id} link can view, but the report stays off Explore. Edit access still requires ownership or the collaborator link." },
+      { type: "improved" as const, text: "Share session state clears when navigating away from /s/{id} — avoids the bug where the next Share click silently overwrote the previous report with the current in-memory state." },
       { type: "improved" as const, text: "Shared report read path is now fault-tolerant to in-flight migrations — the fork-lineage lookup can't break /s/{id} for end users if the column hasn't been added yet." },
+
+      // ── SP/EV system ──
+      { type: "improved" as const, text: "SP/EV toggle redesigned as an iOS-style segmented control with symmetric labels and live status dots — instantly see whether your spread is under, over, or exactly at budget in either mode." },
+      { type: "improved" as const, text: "Champions meta threats now filter to Reg M-A legal Pokemon only, so speed-tier comparisons against the meta aren't polluted by Pokemon you'll never face in the format." },
+
+      // ── Calcs input ──
+      { type: "improved" as const, text: "Bulk paste affordance for notable calcs is now obvious — both Offensive and Defensive calcs show the bulk-paste button with clear hint text so you don't have to guess how to add multiple calcs at once." },
+      { type: "improved" as const, text: "Bulk calc paste now splits on HKO boundaries (OHKO / 2HKO / 3HKO / etc.) so multi-target damage rolls from the calc site are parsed into separate entries. The category switcher is always visible, not hidden behind state." },
+
+      // ── Fixes ──
       { type: "fixed" as const, text: "Fixed shared links briefly returning 500 and falling back to the home page after the fork feature rolled out — the new forked_from_id lookup is now isolated behind a try/catch and no longer breaks main share reads." },
       { type: "fixed" as const, text: "EV cap display corrected to 508/508 for traditional formats (the usable maximum — the last 2 EVs in a 252 slot provide no stat gain, so 252/252/4 is the optimized target)." },
       { type: "fixed" as const, text: "Champions (Reg M-A) EV tab no longer shows a misleading /510 comparison — SP (66) is the real cap in this format, and 66 SP can legitimately produce up to 516 EVs depending on distribution. The EV tab now shows the derived total only and its legality dot mirrors the SP status." },
+      { type: "fixed" as const, text: "Share link OG image now loads correctly in Discord embeds — the preview was silently failing on the first unfurl." },
+      { type: "fixed" as const, text: "Version-compare \"no diffs\" dismiss button is no longer hidden under the navbar — it now sits above it so you can actually click it." },
+      { type: "fixed" as const, text: "Spotlight on the home page now only surfaces public reports — private/unlisted reports no longer leak into the featured carousel." },
+      { type: "fixed" as const, text: "Vercel Toolbar now loads in development and preview deploys — the CSP img-src was blocking vercel.live and vercel.com assets." },
     ],
   },
   {
