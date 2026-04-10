@@ -20,7 +20,6 @@ import { ReactionBar } from "@/components/social/ReactionBar";
 import { SaveButton } from "@/components/social/SaveButton";
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
-const ClaimButton = dynamic(() => import("@/components/social/ClaimButton").then(m => ({ default: m.ClaimButton })));
 const EditChangelog = dynamic(() => import("@/components/social/EditChangelog").then(m => ({ default: m.EditChangelog })));
 const CollaboratorPanel = dynamic(() => import("@/components/social/CollaboratorPanel").then(m => ({ default: m.CollaboratorPanel })));
 import { getSessionId } from "@/lib/utils/session-id";
@@ -1132,13 +1131,6 @@ function HomeContent() {
 
       {/* Swipe hint for mobile (one-time) */}
       <SwipeHint />
-
-      {/* Claim button for editors who are signed in */}
-      {isSharedView && isEditingUnlocked && activeShareId && editKeyFromUrl && (
-        <div className="max-w-5xl mx-auto px-2 sm:px-4 py-2">
-          <ClaimButton shareId={activeShareId} editToken={editKeyFromUrl} />
-        </div>
-      )}
 
       {/* Collaborator management (owner only) + Edit changelog (all editors) */}
       {isSharedView && isEditingUnlocked && activeShareId && (

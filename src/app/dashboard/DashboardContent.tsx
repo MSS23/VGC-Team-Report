@@ -45,11 +45,7 @@ function DashboardInner() {
   const [collections, setCollections] = useState<CollectionData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Claim input
-  const [claimUrl, setClaimUrl] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "views" | "name">("newest");
-  const [claiming, setClaiming] = useState(false);
-  const [claimResult, setClaimResult] = useState<string | null>(null);
 
 
   // Eagerly load draft count on mount so the badge shows on all tabs
@@ -110,135 +106,6 @@ function DashboardInner() {
       .catch(() => setLoading(false));
   }, [user, tab]);
 
-  // Auto-detect unclaimed reports from localStorage
-  const [localTokens, setLocalTokens] = useState<{ shareId: string; editToken: string }[]>([]);
-  useEffect(() => {
-    if (!user) return;
-    try {
-      const stored = localStorage.getItem("vgc-share-tokens");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Handle both legacy single-object and new array format
-        const tokens: { shareId: string; editToken: string }[] = Array.isArray(parsed)
-          ? parsed.filter((t: { shareId?: string; editToken?: string }) => t.shareId && t.editToken)
-          : parsed.shareId && parsed.editToken ? [parsed] : [];
-        // Filter out already-owned reports
-        const unclaimed = tokens.filter((t) => !myReports.some((r) => r.id === t.shareId));
-        setLocalTokens(unclaimed);
-      } else {
-        setLocalTokens([]);
-      }
-    } catch { /* ignore */ }
-  }, [user, myReports]);
-
-  /** Remove a token from localStorage after claiming */
-  const removeLocalToken = (shareId: string) => {
-    try {
-      const stored = localStorage.getItem("vgc-share-tokens");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const tokens: { shareId: string; editToken: string }[] = Array.isArray(parsed) ? parsed : [parsed];
-        const remaining = tokens.filter((t) => t.shareId !== shareId);
-        if (remaining.length > 0) {
-          localStorage.setItem("vgc-share-tokens", JSON.stringify(remaining));
-        } else {
-          localStorage.removeItem("vgc-share-tokens");
-        }
-      }
-    } catch { /* ignore */ }
-  };
-
-  const handleAutoClaimLocal = async (token: { shareId: string; editToken: string }) => {
-    setClaiming(true);
-    try {
-      const res = await fetch("/api/user/claim", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(token),
-      });
-      if (res.ok) {
-        removeLocalToken(token.shareId);
-        setLocalTokens((prev) => prev.filter((t) => t.shareId !== token.shareId));
-        setClaimResult("Report claimed from this browser!");
-        fetch("/api/user/reports")
-          .then((r) => (r.ok ? r.json() : null))
-          .then((data) => { if (data?.reports) setMyReports(data.reports); });
-      }
-    } catch { /* silent */ }
-    finally { setClaiming(false); }
-  };
-
-  const handleClaimAll = async () => {
-    if (localTokens.length === 0 || claiming) return;
-    setClaiming(true);
-    let claimedCount = 0;
-    for (const token of localTokens) {
-      try {
-        const res = await fetch("/api/user/claim", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(token),
-        });
-        if (res.ok) {
-          removeLocalToken(token.shareId);
-          claimedCount++;
-        }
-      } catch { /* continue to next */ }
-    }
-    setLocalTokens([]);
-    if (claimedCount > 0) {
-      setClaimResult(`${claimedCount} report${claimedCount > 1 ? "s" : ""} claimed!`);
-      fetch("/api/user/reports")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => { if (data?.reports) setMyReports(data.reports); });
-    }
-    setClaiming(false);
-  };
-
-  const handleClaim = async () => {
-    if (!claimUrl.trim() || claiming) return;
-    setClaiming(true);
-    setClaimResult(null);
-
-    // Extract shareId and key from various URL formats
-    // Full URL: https://pokemonvgcteamreport.com/s/ABC123?key=xxx
-    // Path: /s/ABC123?key=xxx
-    // Just params: ABC123?key=xxx
-    const input = claimUrl.replace(/\s+/g, "").trim();
-    const match = input.match(/(?:\/s\/)?([A-Za-z0-9]{6,12})\?key=([A-Fa-f0-9]+)/);
-    if (!match) {
-      setClaimResult("Invalid edit link. Paste your edit link — it looks like: .../s/ABC123?key=...");
-      setClaiming(false);
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/user/claim", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shareId: match[1], editToken: match[2] }),
-      });
-      if (res.ok) {
-        setClaimResult("Report claimed! It now appears in My Reports.");
-        setClaimUrl("");
-        // Remove from localStorage if it was there
-        removeLocalToken(match[1]);
-        setLocalTokens((prev) => prev.filter((t) => t.shareId !== match[1]));
-        // Refresh my reports
-        fetch("/api/user/reports")
-          .then((r) => (r.ok ? r.json() : null))
-          .then((data) => { if (data?.reports) setMyReports(data.reports); });
-      } else {
-        const data = await res.json().catch(() => null);
-        setClaimResult(data?.error ?? "Failed to claim report");
-      }
-    } catch {
-      setClaimResult("Network error");
-    } finally {
-      setClaiming(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background text-text-primary">
       <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="dashboard" />
@@ -247,7 +114,7 @@ function DashboardInner() {
         <Show when="signed-out">
           <div className="text-center py-20">
             <h1 className="text-2xl font-extrabold mb-3">Sign in to access your dashboard</h1>
-            <p className="text-sm text-text-secondary mb-6">Manage your team reports, save favorites, and claim existing reports.</p>
+            <p className="text-sm text-text-secondary mb-6">Manage your team reports, save favorites, and track your analytics.</p>
             <SignInButton mode="modal">
               <button className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide cursor-pointer">
                 Sign In
@@ -368,80 +235,6 @@ function DashboardInner() {
               </div>
             )}
 
-            {/* Claim report section */}
-            {tab === "my" && (
-              <>
-              {/* Auto-detected reports from this browser */}
-              {localTokens.length > 0 && (
-                <div className="bg-accent-surface/50 border-2 border-accent/20 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 space-y-2 sm:space-y-3">
-                  <div className="flex items-center justify-between gap-2 sm:gap-3">
-                    <div>
-                      <p className="text-xs sm:text-sm font-bold text-text-primary">
-                        {localTokens.length === 1 ? "Report found in this browser" : `${localTokens.length} reports found`}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-text-secondary mt-0.5">
-                        Claim {localTokens.length === 1 ? "it" : "them"} to link to your account.
-                      </p>
-                    </div>
-                    {localTokens.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={handleClaimAll}
-                        disabled={claiming}
-                        className="px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
-                      >
-                        {claiming ? "Claiming..." : "Claim All"}
-                      </button>
-                    )}
-                  </div>
-                  {localTokens.map((token) => (
-                    <div key={token.shareId} className="flex items-center justify-between gap-3 bg-surface/50 rounded-lg px-3 py-2">
-                      <span className="text-xs text-text-secondary">
-                        Report <span className="font-mono font-bold text-text-primary">{token.shareId}</span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleAutoClaimLocal(token)}
-                        disabled={claiming}
-                        className="px-3 py-1.5 bg-accent text-white text-[11px] font-bold rounded-md hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
-                      >
-                        {claiming ? "..." : "Claim"}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mb-4 sm:mb-6">
-                <p className="text-[10px] sm:text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 sm:mb-2">
-                  Claim an existing report
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={claimUrl}
-                    onChange={(e) => setClaimUrl(e.target.value)}
-                    placeholder="Paste edit link (/s/ID?key=...)"
-                    className="flex-1 min-w-0 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-alt border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleClaim}
-                    disabled={!claimUrl.trim() || claiming}
-                    className="px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed tracking-wide flex-shrink-0"
-                  >
-                    {claiming ? "Claiming..." : "Claim"}
-                  </button>
-                </div>
-                {claimResult && (
-                  <p className={`text-xs font-bold mt-2 ${claimResult.includes("claimed") ? "text-emerald-600 dark:text-emerald-400" : "text-danger"}`}>
-                    {claimResult}
-                  </p>
-                )}
-              </div>
-              </>
-            )}
-
             {/* Content */}
             {loading ? (
               <div className="flex justify-center py-16">
@@ -475,7 +268,7 @@ function DashboardInner() {
                 )}
                 {tab === "my" && myReports.length === 0 && (
                   <div className="text-center py-10 sm:py-16">
-                    <p className="text-sm text-text-secondary mb-4">No reports yet. Create a team report or claim an existing one.</p>
+                    <p className="text-sm text-text-secondary mb-4">No reports yet. Create a team report to get started.</p>
                     <a href="/" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                       Create Report
                     </a>
