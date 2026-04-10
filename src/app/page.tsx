@@ -114,6 +114,8 @@ function HomeContent() {
     setRole,
     summary,
     setSummary,
+    teamName,
+    setTeamName,
     tournamentName,
     setTournamentName,
     placement,
@@ -227,6 +229,7 @@ function HomeContent() {
         calcs,
         roles,
         teamSummary: summary || undefined,
+        teamName: teamName || undefined,
         tournamentName: tournamentName || undefined,
         placement: placement || undefined,
         record: record || undefined,
@@ -262,7 +265,7 @@ function HomeContent() {
     } finally {
       setCompareLoading(false);
     }
-  }, [activeShareId, sessionShareId, paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, tags, analysis, speciesKeys]);
+  }, [activeShareId, sessionShareId, paste, notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, tags, analysis, speciesKeys]);
 
   const handleClearCompare = useCallback(() => {
     setVersionDiff(null);
@@ -844,6 +847,8 @@ function HomeContent() {
           onRoleChange={setRole}
           teamSummary={summary}
           onTeamSummaryChange={setSummary}
+          teamName={teamName}
+          onTeamNameChange={setTeamName}
           tournamentName={tournamentName}
           onTournamentNameChange={setTournamentName}
           placement={placement}

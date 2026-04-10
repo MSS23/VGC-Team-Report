@@ -40,6 +40,7 @@ const ja: TranslationKeys = {
   light: "ライト",
 
   tournamentInfo: "大会情報",
+  teamNamePlaceholder: "チーム名（例：晴れアタッカー、トリックルーム）",
   eventNamePlaceholder: "イベント名（例：EUIC 2025）",
   placementPlaceholder: "順位",
   recordPlaceholder: "戦績",

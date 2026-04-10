@@ -40,6 +40,7 @@ const ko: TranslationKeys = {
   light: "라이트",
 
   tournamentInfo: "대회 정보",
+  teamNamePlaceholder: "팀 이름 (예: 해 어택, 트릭룸)",
   eventNamePlaceholder: "대회명 (예: EUIC 2025)",
   placementPlaceholder: "순위",
   recordPlaceholder: "전적",

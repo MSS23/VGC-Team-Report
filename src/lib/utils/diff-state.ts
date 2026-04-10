@@ -22,6 +22,9 @@ export function detectChangedSections(oldState: AnyState | null, newState: AnySt
   }
 
   // Tournament metadata
+  if ((oldState.teamName ?? "") !== (newState.teamName ?? "")) {
+    sections.push("Team name");
+  }
   if ((oldState.tournamentName ?? "") !== (newState.tournamentName ?? "")) {
     sections.push("Tournament name");
   }

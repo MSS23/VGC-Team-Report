@@ -40,6 +40,7 @@ const fr: TranslationKeys = {
   light: "Clair",
 
   tournamentInfo: "Info du tournoi",
+  teamNamePlaceholder: "Nom de l'equipe (ex. Offensive Soleil, Trick Room)",
   eventNamePlaceholder: "Nom de l'evenement (ex. EUIC 2025)",
   placementPlaceholder: "Classement",
   recordPlaceholder: "Score",

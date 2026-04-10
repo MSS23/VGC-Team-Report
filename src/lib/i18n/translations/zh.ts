@@ -40,6 +40,7 @@ const zh: TranslationKeys = {
   light: "亮色",
 
   tournamentInfo: "赛事信息",
+  teamNamePlaceholder: "队伍名称（如 晴天进攻、极速空间）",
   eventNamePlaceholder: "赛事名称（如 EUIC 2025）",
   placementPlaceholder: "名次",
   recordPlaceholder: "战绩",

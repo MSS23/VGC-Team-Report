@@ -42,6 +42,7 @@ const en = {
 
   // Team Overview
   tournamentInfo: "Tournament Info",
+  teamNamePlaceholder: "Team name (e.g. Sun Offense, Trick Room Bulk)",
   eventNamePlaceholder: "Event name (e.g. EUIC 2025)",
   placementPlaceholder: "Placement",
   recordPlaceholder: "Record",

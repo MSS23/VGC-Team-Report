@@ -56,6 +56,10 @@ export function computeVersionDiff(
     changedFields.add("teamSummary");
     changedSlides.add(0);
   }
+  if ((current.teamName ?? "") !== (old.teamName ?? "")) {
+    changedFields.add("teamName");
+    changedSlides.add(0);
+  }
   if ((current.tournamentName ?? "") !== (old.tournamentName ?? "")) {
     changedFields.add("tournamentName");
     changedSlides.add(0);
@@ -250,6 +254,7 @@ export function getNavigableChanges(
 /** Field key labels for human-readable summaries */
 const FIELD_LABELS: Record<string, string> = {
   teamSummary: "Team summary",
+  teamName: "Team name",
   tournamentName: "Tournament name",
   placement: "Placement",
   record: "Record",

@@ -42,6 +42,8 @@ interface TeamReportProps {
   onRoleChange: (speciesKey: string, text: string) => void;
   teamSummary: string;
   onTeamSummaryChange: (text: string) => void;
+  teamName?: string;
+  onTeamNameChange?: (text: string) => void;
   tournamentName?: string;
   onTournamentNameChange?: (text: string) => void;
   placement?: string;
@@ -122,6 +124,8 @@ export function TeamReport({
   onRoleChange,
   teamSummary,
   onTeamSummaryChange,
+  teamName,
+  onTeamNameChange,
   tournamentName,
   onTournamentNameChange,
   placement,
@@ -169,6 +173,8 @@ export function TeamReport({
           onRoleChange={onRoleChange}
           summary={teamSummary}
           onSummaryChange={onTeamSummaryChange}
+          teamName={teamName}
+          onTeamNameChange={onTeamNameChange}
           tournamentName={tournamentName}
           onTournamentNameChange={onTournamentNameChange}
           placement={placement}
@@ -216,6 +222,8 @@ export function TeamReport({
           speciesKey={key}
           pokemonIndex={pokemonIndex}
           regulation={tags?.regulation}
+          isMega={megaStates?.[pokemonIndex]}
+          onToggleMega={onToggleMega ? () => onToggleMega(pokemonIndex) : undefined}
         />
     );
   }

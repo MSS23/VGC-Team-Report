@@ -72,8 +72,8 @@ export function useHomePage() {
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
-    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates,
-    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega,
+    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates,
+    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega,
   } = useTeamMeta(speciesKeys, shouldPersist);
   const {
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
@@ -151,6 +151,7 @@ export function useHomePage() {
     calcs,
     roles,
     teamSummary: summary,
+    teamName: teamName || undefined,
     tournamentName: tournamentName || undefined,
     placement: placement || undefined,
     record: record || undefined,
@@ -171,7 +172,7 @@ export function useHomePage() {
     hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
     tags: tags && (tags.archetype?.length || tags.regulation || tags.eventType) ? tags : undefined,
     templateId: templateId || undefined,
-  }), [paste, notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId]);
+  }), [paste, notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId]);
 
   // ── Share flow (extracted) ───────────────────────────────────────
   const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t: t as unknown as Record<string, string> });
@@ -194,6 +195,7 @@ export function useHomePage() {
     setMetaFull({
       roles: state.roles ?? {},
       summary: state.teamSummary ?? "",
+      teamName: state.teamName ?? undefined,
       tournamentName: state.tournamentName ?? undefined,
       placement: state.placement ?? undefined,
       record: state.record ?? undefined,
@@ -248,7 +250,7 @@ export function useHomePage() {
     setSaveFlash(true);
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => setSaveFlash(false), 1500);
-  }, [notes, calcs, roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, analysis, share.isSharedView]);
+  }, [notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, analysis, share.isSharedView]);
 
   // ── Walkthrough ──────────────────────────────────────────────────
   const pokemonNames = useMemo(
@@ -318,6 +320,7 @@ export function useHomePage() {
     setMetaFull({
       roles: share.sharedState.roles ?? {},
       summary: share.sharedState.teamSummary ?? "",
+      teamName: share.sharedState.teamName ?? undefined,
       tournamentName: share.sharedState.tournamentName ?? undefined,
       placement: share.sharedState.placement ?? undefined,
       record: share.sharedState.record ?? undefined,
@@ -465,7 +468,7 @@ export function useHomePage() {
     // Team content
     notes, setNote, calcs, addCalc, removeCalc, editCalc,
     roles, setRole, summary, setSummary,
-    tournamentName, setTournamentName, placement, setPlacement,
+    teamName, setTeamName, tournamentName, setTournamentName, placement, setPlacement,
     record, setRecord, mvpIndex, setMvpIndex,
     rentalCode, setRentalCode, creatorName, setCreatorName, tags, setTags, templateId, setTemplateId,
     megaStates, toggleMega,

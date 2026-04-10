@@ -11,6 +11,7 @@ export interface ReportTags {
 interface TeamMeta {
   roles: Record<string, string>;
   summary: string;
+  teamName?: string;
   tournamentName?: string;
   placement?: string;
   record?: string;
@@ -75,6 +76,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
 
   const roles = meta.roles;
   const summary = meta.summary;
+  const teamName = meta.teamName;
   const tournamentName = meta.tournamentName;
   const placement = meta.placement;
   const record = meta.record;
@@ -91,6 +93,10 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
 
   const setSummary = useCallback((text: string) => {
     setMeta((prev) => ({ ...prev, summary: text }));
+  }, []);
+
+  const setTeamName = useCallback((text: string) => {
+    setMeta((prev) => ({ ...prev, teamName: text }));
   }, []);
 
   const setTournamentName = useCallback((text: string) => {
@@ -139,7 +145,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
   }, []);
 
   return {
-    roles, summary, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates,
-    setRole, setSummary, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega,
+    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates,
+    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega,
   };
 }

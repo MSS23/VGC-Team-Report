@@ -25,6 +25,7 @@ export interface ShareableState {
   calcs?: Record<string, CalcEntry[]>;
   roles?: Record<string, string>;
   teamSummary?: string;
+  teamName?: string;
   tournamentName?: string;
   placement?: string;
   record?: string;

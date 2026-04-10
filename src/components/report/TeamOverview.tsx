@@ -198,6 +198,8 @@ interface TeamOverviewProps {
   onRoleChange: (speciesKey: string, text: string) => void;
   summary: string;
   onSummaryChange: (text: string) => void;
+  teamName?: string;
+  onTeamNameChange?: (text: string) => void;
   tournamentName?: string;
   onTournamentNameChange?: (text: string) => void;
   placement?: string;
@@ -231,6 +233,8 @@ export function TeamOverview({
   onRoleChange,
   summary,
   onSummaryChange,
+  teamName,
+  onTeamNameChange,
   tournamentName,
   onTournamentNameChange,
   placement,
@@ -254,7 +258,7 @@ export function TeamOverview({
   onToggleMega,
 }: TeamOverviewProps) {
   const { t } = useTranslation();
-  const hasTournamentInfo = !!(tournamentName || placement || record);
+  const hasTournamentInfo = !!(teamName || tournamentName || placement || record);
   const hasCreatorInfo = !!creatorName;
   const [rentalCopied, setRentalCopied] = useState(false);
   const [summaryExpanded, setSummaryExpanded] = useState(false);
@@ -285,11 +289,16 @@ export function TeamOverview({
       {/* Tournament Context */}
       {isReadOnly ? (
         (hasTournamentInfo || rentalCode || hasCreatorInfo) && (
-          <FieldDiffHighlight field={["tournamentName", "placement", "record", "rentalCode", "creatorName", "tags"]} label="Info changed">
+          <FieldDiffHighlight field={["teamName", "tournamentName", "placement", "record", "rentalCode", "creatorName", "tags"]} label="Info changed">
           <div className="flex flex-col gap-2 px-1">
+            {teamName && (
+              <h1 className="text-2xl sm:text-4xl font-black text-text-primary tracking-tight leading-tight presenting:text-5xl">
+                {teamName}
+              </h1>
+            )}
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               {tournamentName && (
-                <h2 className="text-xl sm:text-3xl font-extrabold text-text-primary tracking-tight leading-tight">
+                <h2 className={`font-extrabold text-text-primary tracking-tight leading-tight ${teamName ? "text-base sm:text-lg text-text-secondary" : "text-xl sm:text-3xl"}`}>
                   {tournamentName}
                 </h2>
               )}
@@ -355,11 +364,21 @@ export function TeamOverview({
           </FieldDiffHighlight>
         )
       ) : (
-        <FieldDiffHighlight field={["tournamentName", "placement", "record", "rentalCode", "creatorName", "tags"]} label="Info changed">
+        <FieldDiffHighlight field={["teamName", "tournamentName", "placement", "record", "rentalCode", "creatorName", "tags"]} label="Info changed">
         <div>
           <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-3" data-walkthrough="tournament-info">
             {t.tournamentInfo}
           </h3>
+          <div className="mb-2">
+            <input
+              type="text"
+              value={teamName ?? ""}
+              onChange={(e) => onTeamNameChange?.(e.target.value)}
+              placeholder={t.teamNamePlaceholder}
+              maxLength={80}
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-surface border-2 border-border rounded-lg text-base sm:text-lg font-extrabold text-text-primary placeholder:text-text-tertiary placeholder:font-medium focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-tight"
+            />
+          </div>
           <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-3">
             <input
               type="text"

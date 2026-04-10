@@ -102,6 +102,7 @@ export function normalizeReportData(data: AnyRecord): AnyRecord {
     calcs: migrateCalcEntries(data.calcs),
     roles: data.roles ?? {},
     teamSummary: data.teamSummary ?? "",
+    teamName: data.teamName ?? undefined,
     tournamentName: data.tournamentName ?? undefined,
     placement: data.placement ?? undefined,
     record: data.record ?? undefined,
