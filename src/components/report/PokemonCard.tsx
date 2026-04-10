@@ -67,12 +67,30 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
     return detectMegaFromItem(parsed.item, parsed.species);
   }, [alreadyMega, parsed.item, parsed.species]);
   const isMegaCapable = !!megaEntry;
+
+  // Base form data — resolved first so the toggle logic below can know
+  // whether we actually have a base side to flip to. For base+stone
+  // pastes the parsed `data` is already the base form, so this memo is
+  // only load-bearing for the alreadyMega branch.
+  const baseFormData = useMemo(() => {
+    if (!alreadyMega || !megaEntry) return null;
+    return lookupPokemon(megaEntry.baseName);
+  }, [alreadyMega, megaEntry]);
+
+  // Can this card actually flip to its base side? Base+stone pastes
+  // always can (data IS the base). alreadyMega pastes need baseFormData
+  // to resolve in the Pokemon DB — if the base species isn't in our data
+  // set, we can't render the base side, so we lock the card to Mega and
+  // hide the toggle rather than letting the user tap into an empty state.
+  const canFlipToBase = isMegaCapable && (!alreadyMega || !!baseFormData);
+
   // Auto-detect: if isMega prop is undefined, default to Mega (matches how
   // the user pasted it — already-Mega imports and base+stone imports both
-  // naturally start in Mega form).
-  const showMega = isMegaCapable && (isMega ?? true);
-  // Only show the flip control in Reg M-A (or when regulation is unset).
-  const showMegaToggle = isMegaCapable && (!regulation || regulation === "Reg M-A");
+  // naturally start in Mega form). When we can't flip, force Mega on.
+  const showMega = isMegaCapable && (canFlipToBase ? (isMega ?? true) : true);
+  // Only show the flip control in Reg M-A (or when regulation is unset),
+  // and only when both forms are actually renderable.
+  const showMegaToggle = canFlipToBase && (!regulation || regulation === "Reg M-A");
 
   // Mega form data — populated when we're rendering the Mega side.
   const megaData = useMemo(() => {
@@ -80,18 +98,12 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
     return lookupPokemon(megaEntry.dataKey);
   }, [showMega, megaEntry]);
 
-  // Base form data — populated when an already-Mega paste is flipped back
-  // to base. For base+stone pastes, `data` (the parsed Pokemon's own data)
-  // is already the base form, so this memo is only load-bearing for the
-  // alreadyMega branch.
-  const baseFormData = useMemo(() => {
-    if (!alreadyMega || !megaEntry) return null;
-    return lookupPokemon(megaEntry.baseName);
-  }, [alreadyMega, megaEntry]);
-
   // Resolve the "base side" data for this card: the alreadyMega branch
   // uses the base form lookup, otherwise the parsed Pokemon's own data.
-  const effectiveBaseData = alreadyMega ? baseFormData : data;
+  // `?? data` is a defensive safety net — canFlipToBase already blocks
+  // the path that would read this when baseFormData is null, but the
+  // fallback guards against future reordering breaking that invariant.
+  const effectiveBaseData = alreadyMega ? (baseFormData ?? data) : data;
 
   // Traditional-format stats recomputed per form.
   const megaStats = useMemo(() => {

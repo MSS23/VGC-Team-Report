@@ -31,11 +31,21 @@ export function detectMegaFromItem(
 }
 
 /**
+ * Normalize a species string to the dataKey format used by MEGA_BY_KEY
+ * (e.g. "Kangaskhan-Mega" → "kangaskhan-mega", "Charizard-Mega-Y" →
+ * "charizard-mega-y"). Shared by isMegaForm and getMegaEntryFromSpecies
+ * so they can never disagree — if one says "this is a mega", the other
+ * will always find the entry.
+ */
+function normalizeMegaKey(species: string): string {
+  return species.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+}
+
+/**
  * Check if a species string is already a mega form.
  */
 export function isMegaForm(species: string): boolean {
-  const key = species.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-  return MEGA_BY_KEY.has(key);
+  return MEGA_BY_KEY.has(normalizeMegaKey(species));
 }
 
 /**
@@ -63,8 +73,10 @@ export function getMegaDataKey(species: string, item: string | null): string | n
  * Used by the per-card Mega/Base toggle to resolve the mega entry for
  * already-Mega imports, so the user can flip back to the base form to
  * compare stats/types/ability. Returns null for non-mega species.
+ *
+ * Shares normalizeMegaKey with isMegaForm — any species isMegaForm
+ * accepts will always resolve to an entry here.
  */
 export function getMegaEntryFromSpecies(species: string): MegaPokemonEntry | null {
-  const key = species.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-  return MEGA_BY_KEY.get(key) ?? null;
+  return MEGA_BY_KEY.get(normalizeMegaKey(species)) ?? null;
 }

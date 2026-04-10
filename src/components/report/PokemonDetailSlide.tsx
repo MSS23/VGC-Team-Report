@@ -354,26 +354,37 @@ export function PokemonDetailSlide({
     return detectMegaFromItem(parsed.item, parsed.species);
   }, [alreadyMega, parsed.item, parsed.species]);
   const isMegaCapable = !!megaEntry;
-  // Default ON when mega-capable — matches PokemonCard behavior.
-  const showMega = isMegaCapable && (isMega ?? true);
+
+  // Base form data — resolved first so the toggle logic below can know
+  // whether we actually have a base side to flip to. For base+stone
+  // pastes the parsed `data` is already the base form.
+  const baseFormData = useMemo(() => {
+    if (!alreadyMega || !megaEntry) return null;
+    return lookupPokemon(megaEntry.baseName);
+  }, [alreadyMega, megaEntry]);
+
+  // Can this slide actually flip to its base side? alreadyMega pastes
+  // require baseFormData to resolve in the Pokemon DB, otherwise the
+  // base view would render empty. If not, lock to Mega and hide toggle.
+  const canFlipToBase = isMegaCapable && (!alreadyMega || !!baseFormData);
+
+  // Default ON when mega-capable — matches PokemonCard behavior. When
+  // we can't flip, force Mega on.
+  const showMega = isMegaCapable && (canFlipToBase ? (isMega ?? true) : true);
   const showMegaToggle =
-    isMegaCapable && !!onToggleMega && (!regulation || regulation === "Reg M-A");
+    canFlipToBase && !!onToggleMega && (!regulation || regulation === "Reg M-A");
 
   const megaData = useMemo(() => {
     if (!showMega || !megaEntry) return null;
     return lookupPokemon(megaEntry.dataKey);
   }, [showMega, megaEntry]);
 
-  // Base form data — populated when an already-Mega paste is flipped back.
-  const baseFormData = useMemo(() => {
-    if (!alreadyMega || !megaEntry) return null;
-    return lookupPokemon(megaEntry.baseName);
-  }, [alreadyMega, megaEntry]);
-
   // Resolve "base side" data for this slide. For base+stone pastes the
   // parsed Pokemon's own data already IS the base; for alreadyMega it
-  // comes from the explicit lookup.
-  const effectiveBaseData = alreadyMega ? baseFormData : data;
+  // comes from the explicit lookup. `?? data` is a defensive safety net
+  // — canFlipToBase blocks the path that reaches this when baseFormData
+  // is null, but it guards against future reordering churn.
+  const effectiveBaseData = alreadyMega ? (baseFormData ?? data) : data;
 
   const megaStats = useMemo(() => {
     if (!megaData) return null;
