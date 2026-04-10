@@ -694,7 +694,7 @@ export function PokemonDetailSlide({
 
             return (
               <div key={stat} className="flex items-center gap-2" aria-label={`${statLabels[stat]}: ${displayValue}${natureUp ? ", boosted by nature" : ""}${natureDown ? ", reduced by nature" : ""}${isBoosted ? ", boosted by item" : ""}`}>
-                <span className="text-xs font-bold w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5">
+                <span className="text-xs font-bold w-11 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5 flex-shrink-0">
                   {natureUp && <span className="text-[12px] text-emerald-500 dark:text-emerald-400 leading-none" aria-label="boosted by nature">{"\u25B2"}</span>}
                   {natureDown && <span className="text-[12px] text-rose-500 dark:text-rose-400 leading-none" aria-label="reduced by nature">{"\u25BC"}</span>}
                   {statLabels[stat]}
@@ -708,23 +708,14 @@ export function PokemonDetailSlide({
                     }}
                   />
                 </div>
-                <span className={`text-xs sm:text-sm font-[family-name:var(--font-mono)] font-bold w-8 text-right tabular-nums inline-flex items-center justify-end gap-px ${
+                {/* Number value — color coded for nature/item modifiers.
+                    The up/down arrows live exclusively on the left next
+                    to the stat label so each affected stat shows exactly
+                    one arrow (not two). */}
+                <span className={`text-xs sm:text-sm font-[family-name:var(--font-mono)] font-bold w-8 text-right tabular-nums ${
                   isBoosted ? "text-amber-500" : hasBuff ? "text-emerald-600 dark:text-emerald-400" : hasNerf ? "text-rose-600 dark:text-rose-400" : "text-text-secondary"
                 }`}>
                   {displayValue}
-                  {hasBuff && (
-                    <span
-                      className={`text-[10px] leading-none ${isBoosted ? "text-amber-500" : "text-emerald-500 dark:text-emerald-400"}`}
-                      aria-hidden
-                    >
-                      {"\u25B2"}
-                    </span>
-                  )}
-                  {hasNerf && (
-                    <span className="text-[10px] leading-none text-rose-500 dark:text-rose-400" aria-hidden>
-                      {"\u25BC"}
-                    </span>
-                  )}
                 </span>
                 <div className="flex items-center gap-1 w-16">
                   {investLabel > 0 ? (
