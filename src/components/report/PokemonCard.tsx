@@ -272,53 +272,59 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70 hidden sm:inline">({parsed.nature})</span>
             </h4>
 
-            {isChampions ? (
-              <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
-                {/* Segmented control */}
-                <div className="inline-flex h-7 sm:h-8 rounded-lg bg-surface-alt border border-border p-0.5 gap-0.5">
+            {isChampions ? (() => {
+              const spCurrent = totalSp;
+              const spMax = CHAMPIONS_TOTAL_SP;
+              const spOver = spCurrent > spMax;
+              const spUnder = spCurrent < spMax && spCurrent > 0;
+              const evCurrent = totalEvs;
+              const evOver = evCurrent > 510;
+              const evUnder = evCurrent < 510 && evCurrent > 0;
+              const spDot = spOver ? "bg-danger" : spUnder ? "bg-amber-500" : "bg-emerald-500";
+              const evDot = evOver ? "bg-danger" : evUnder ? "bg-amber-500" : "bg-emerald-500";
+              return (
+                <div
+                  role="tablist"
+                  aria-label="Investment mode"
+                  className="inline-flex h-7 items-center rounded-md bg-surface-alt border border-border p-0.5 gap-0.5 ml-auto"
+                >
                   <button
                     type="button"
-                    onClick={() => setShowEvMode(false)}
-                    className={`inline-flex items-center justify-center rounded-md px-2 sm:px-2.5 text-[10px] sm:text-[11px] font-bold tracking-wide transition-all duration-200 min-w-[44px] cursor-pointer ${
+                    role="tab"
+                    aria-selected={!showEvMode}
+                    onClick={(e) => { e.stopPropagation(); setShowEvMode(false); }}
+                    className={`inline-flex items-center gap-1 h-full rounded px-2 text-[10px] font-semibold tracking-wide tabular-nums transition-colors duration-150 min-w-[44px] cursor-pointer ${
                       !showEvMode
                         ? "bg-accent text-white shadow-sm"
-                        : "text-text-tertiary hover:text-text-secondary"
+                        : "text-text-secondary hover:text-text-primary"
                     }`}
-                    aria-pressed={!showEvMode}
                   >
-                    Stat Pts
+                    <span className={`h-1 w-1 rounded-full ${spDot}`} aria-hidden />
+                    <span>SP</span>
+                    <span className={!showEvMode ? "text-white/85" : "text-text-tertiary"}>
+                      {spCurrent}/{spMax}
+                    </span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowEvMode(true)}
-                    className={`inline-flex items-center justify-center rounded-md px-2 sm:px-2.5 text-[10px] sm:text-[11px] font-bold tracking-wide transition-all duration-200 min-w-[44px] cursor-pointer ${
+                    role="tab"
+                    aria-selected={showEvMode}
+                    onClick={(e) => { e.stopPropagation(); setShowEvMode(true); }}
+                    className={`inline-flex items-center gap-1 h-full rounded px-2 text-[10px] font-semibold tracking-wide tabular-nums transition-colors duration-150 min-w-[44px] cursor-pointer ${
                       showEvMode
                         ? "bg-accent text-white shadow-sm"
-                        : "text-text-tertiary hover:text-text-secondary"
+                        : "text-text-secondary hover:text-text-primary"
                     }`}
-                    aria-pressed={showEvMode}
                   >
-                    EVs
+                    <span className={`h-1 w-1 rounded-full ${evDot}`} aria-hidden />
+                    <span>EV</span>
+                    <span className={showEvMode ? "text-white/85" : "text-text-tertiary"}>
+                      {evCurrent}/510
+                    </span>
                   </button>
                 </div>
-
-                {/* Budget counter */}
-                {(() => {
-                  const current = showEvMode ? totalEvs : totalSp;
-                  const max = showEvMode ? 510 : CHAMPIONS_TOTAL_SP;
-                  const isOver = current > max;
-                  const isUnder = current < max && current > 0;
-                  const left = max - current;
-                  return (
-                    <span className={`text-[10px] sm:text-xs font-bold tabular-nums ${
-                      isOver ? "text-danger" : isUnder ? "text-amber-500" : "text-text-tertiary/50"
-                    }`}>
-                      {current}/{max}{isUnder && <span className="hidden sm:inline"> · {left} left</span>}
-                    </span>
-                  );
-                })()}
-              </div>
-            ) : (
+              );
+            })() : (
               <>
                 {totalEvs > 510 ? (
                   <span className="text-[10px] sm:text-xs font-bold text-danger ml-auto tabular-nums">{totalEvs}/510</span>

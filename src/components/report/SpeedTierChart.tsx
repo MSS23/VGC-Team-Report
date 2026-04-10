@@ -42,6 +42,7 @@ const META_THREATS_CHAMPIONS = [
 ] as const;
 
 type SpeedModifier = "tailwind" | "paralysis" | "icywind";
+type ModifierSide = "yours" | "opponent";
 
 const MODIFIER_CONFIG: Record<SpeedModifier, { label: string; icon: string; description: string }> = {
   tailwind: { label: "Tailwind", icon: "\u{1F4A8}", description: "\u00D72 speed" },
@@ -86,16 +87,66 @@ function championsMinSpeed(baseSpe: number): number {
   return Math.floor((Math.floor((2 * baseSpe + 31) * 50 / 100) + 5) * 0.9);
 }
 
+/** Modifier toggle pill for a specific side */
+function SideModifierToggle({
+  side,
+  label,
+  color,
+  modifiers,
+  onToggle,
+}: {
+  side: ModifierSide;
+  label: string;
+  color: string;
+  modifiers: Set<SpeedModifier>;
+  onToggle: (side: ModifierSide, mod: SpeedModifier) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1.5">
+        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-tertiary">{label}</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {(Object.entries(MODIFIER_CONFIG) as [SpeedModifier, typeof MODIFIER_CONFIG[SpeedModifier]][]).map(([key, cfg]) => {
+          const active = modifiers.has(key);
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onToggle(side, key)}
+              className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                active
+                  ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
+                  : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
+              }`}
+              title={`${cfg.label} on ${label}: ${cfg.description}`}
+            >
+              <span className="text-xs sm:text-sm">{cfg.icon}</span>
+              <span className="hidden sm:inline">{cfg.label}</span>
+              <span className="sm:hidden">{cfg.label.slice(0, 2)}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode, regulation }: SpeedTierChartProps) {
   const META_THREATS = regulation === "Reg M-A"
     ? META_THREATS_CHAMPIONS.filter(k => POKEMON_DATA[k] && CHAMPIONS_DEX.has(k))
     : META_THREATS_DEFAULT;
   const { t } = useTranslation();
-  const [activeModifiers, setActiveModifiers] = useState<Set<SpeedModifier>>(new Set());
+  const [yourModifiers, setYourModifiers] = useState<Set<SpeedModifier>>(new Set());
+  const [opponentModifiers, setOpponentModifiers] = useState<Set<SpeedModifier>>(new Set());
   const [showMetaThreats, setShowMetaThreats] = useState(false);
 
-  const toggleModifier = (mod: SpeedModifier) => {
-    setActiveModifiers(prev => {
+  const hasAnyModifiers = yourModifiers.size > 0 || opponentModifiers.size > 0;
+
+  const toggleModifier = (side: ModifierSide, mod: SpeedModifier) => {
+    const setter = side === "yours" ? setYourModifiers : setOpponentModifiers;
+    setter(prev => {
       const next = new Set(prev);
       if (next.has(mod)) next.delete(mod); else next.add(mod);
       return next;
@@ -107,7 +158,6 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     const baseSpe = mon.calculatedStats.spe;
     const hasSpeedBoost = mon.itemBoost?.stat === "spe";
     const boostMultiplier = hasSpeedBoost ? mon.itemBoost!.multiplier : 1;
-    const boostedSpe = hasSpeedBoost ? mon.itemBoost!.boostedValue : baseSpe;
 
     let speedBoostLabel = "";
     if (hasSpeedBoost && mon.parsed.item) {
@@ -121,7 +171,6 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       species: mon.parsed.species,
       speciesKey: speciesKeys[i],
       baseSpe,
-      boostedSpe,
       boostMultiplier,
       hasSpeedBoost,
       speedBoostLabel,
@@ -145,7 +194,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           speciesKey: key,
           baseSpe: isMA ? championsMaxSpeed(base) : maxSpeed(base),
           minSpe: isMA ? championsMinSpeed(base) : minSpeed(base),
-          boostedSpe: isMA ? championsMaxSpeed(base) : maxSpeed(base),
+          boostMultiplier: 1,
           hasSpeedBoost: false,
           speedBoostLabel: "",
           isYours: false as const,
@@ -153,27 +202,75 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       })
       .filter(Boolean) as Array<{
         species: string; speciesKey: string; baseSpe: number; minSpe: number;
-        boostedSpe: number; hasSpeedBoost: boolean; speedBoostLabel: string; isYours: false;
+        boostMultiplier: number; hasSpeedBoost: boolean; speedBoostLabel: string; isYours: false;
       }>;
   }, [showMetaThreats, pokemon, regulation, META_THREATS]);
 
-  // Combine and apply modifiers
+  // Combine and apply per-side modifiers
   const allEntries = useMemo(() => {
     const combined = [
-      ...teamEntries.map(e => ({
-        ...e,
-        displaySpeed: calcSpeed(e.baseSpe, e.boostMultiplier, activeModifiers),
-      })),
-      ...metaEntries.map(e => ({
-        ...e,
-        displaySpeed: calcSpeed(e.boostedSpe, 1, activeModifiers),
-        minSpe: e.minSpe,
-      })),
+      ...teamEntries.map(e => {
+        const baseSpeed = calcSpeed(e.baseSpe, e.boostMultiplier, yourModifiers);
+        // Also compute unmodified speed for delta display
+        const unmodifiedSpeed = calcSpeed(e.baseSpe, e.boostMultiplier, new Set());
+        return {
+          ...e,
+          displaySpeed: baseSpeed,
+          unmodifiedSpeed,
+          delta: baseSpeed - unmodifiedSpeed,
+        };
+      }),
+      ...metaEntries.map(e => {
+        const baseSpeed = calcSpeed(e.baseSpe, 1, opponentModifiers);
+        const unmodifiedSpeed = calcSpeed(e.baseSpe, 1, new Set());
+        return {
+          ...e,
+          displaySpeed: baseSpeed,
+          unmodifiedSpeed,
+          delta: baseSpeed - unmodifiedSpeed,
+          minSpe: e.minSpe,
+        };
+      }),
     ];
     return combined.sort((a, b) => b.displaySpeed - a.displaySpeed);
-  }, [teamEntries, metaEntries, activeModifiers]);
+  }, [teamEntries, metaEntries, yourModifiers, opponentModifiers]);
 
   const maxDisplaySpeed = allEntries[0]?.displaySpeed ?? 200;
+
+  // Compute position changes when modifiers are active
+  const positionChanges = useMemo(() => {
+    if (!hasAnyModifiers) return new Map<string, number>();
+
+    // Build unmodified order
+    const unmodified = [
+      ...teamEntries.map(e => ({
+        key: `${e.speciesKey}-yours`,
+        speed: calcSpeed(e.baseSpe, e.boostMultiplier, new Set()),
+      })),
+      ...metaEntries.map(e => ({
+        key: `${e.speciesKey}-opponent`,
+        speed: calcSpeed(e.baseSpe, 1, new Set()),
+      })),
+    ].sort((a, b) => b.speed - a.speed);
+
+    // Build modified order
+    const modified = allEntries.map(e => ({
+      key: `${e.speciesKey}-${e.isYours ? "yours" : "opponent"}`,
+    }));
+
+    const changes = new Map<string, number>();
+    unmodified.forEach((entry, oldIdx) => {
+      const newIdx = modified.findIndex(m => m.key === entry.key);
+      if (newIdx !== -1 && newIdx !== oldIdx) {
+        changes.set(entry.key, oldIdx - newIdx); // positive = moved up, negative = moved down
+      }
+    });
+    return changes;
+  }, [hasAnyModifiers, teamEntries, metaEntries, allEntries]);
+
+  // Build active modifier summary for each side
+  const yourModSummary = Array.from(yourModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
+  const oppModSummary = Array.from(opponentModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
@@ -194,39 +291,52 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           </h3>
         </div>
 
-        {/* Modifier toggles */}
-        <div className="flex flex-wrap items-center gap-2">
-          {(Object.entries(MODIFIER_CONFIG) as [SpeedModifier, typeof MODIFIER_CONFIG[SpeedModifier]][]).map(([key, cfg]) => {
-            const active = activeModifiers.has(key);
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => toggleModifier(key)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
-                  active
-                    ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
-                    : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
-                }`}
-                title={cfg.description}
-              >
-                <span>{cfg.icon}</span>
-                {cfg.label}
-              </button>
-            );
-          })}
-          <button
-            type="button"
-            onClick={() => setShowMetaThreats(!showMetaThreats)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
-              showMetaThreats
-                ? "bg-blue-500/15 text-blue-500 border-blue-500/30"
-                : "bg-surface-alt/50 text-text-secondary border-border hover:border-blue-500/30 hover:text-blue-500"
-            }`}
-          >
-            <span>{"\u{1F30D}"}</span>
-            Meta Threats
-          </button>
+        {/* Per-side modifier controls */}
+        <div className="bg-surface border border-border rounded-xl p-3 sm:p-4 flex flex-col gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <SideModifierToggle
+              side="yours"
+              label="Your team"
+              color="var(--stat-spe)"
+              modifiers={yourModifiers}
+              onToggle={toggleModifier}
+            />
+            {showMetaThreats && (
+              <SideModifierToggle
+                side="opponent"
+                label="Opponent"
+                color="#64748b"
+                modifiers={opponentModifiers}
+                onToggle={toggleModifier}
+              />
+            )}
+          </div>
+
+          {/* Meta threats toggle — always visible */}
+          <div className="flex items-center gap-2 pt-1 border-t border-border-subtle">
+            <button
+              type="button"
+              onClick={() => {
+                setShowMetaThreats(!showMetaThreats);
+                if (showMetaThreats) setOpponentModifiers(new Set());
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                showMetaThreats
+                  ? "bg-blue-500/15 text-blue-500 border-blue-500/30"
+                  : "bg-surface-alt/50 text-text-secondary border-border hover:border-blue-500/30 hover:text-blue-500"
+              }`}
+            >
+              <span>{"\u{1F30D}"}</span>
+              Meta Threats
+            </button>
+            {hasAnyModifiers && (
+              <span className="text-[10px] sm:text-xs text-accent font-medium ml-auto">
+                {yourModSummary && `You: ${yourModSummary}`}
+                {yourModSummary && oppModSummary && " \u00B7 "}
+                {oppModSummary && `Opp: ${oppModSummary}`}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Speed bars */}
@@ -239,8 +349,14 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             const prevSpeed = i > 0 ? allEntries[i - 1].displaySpeed : -1;
             const isTie = entry.displaySpeed === prevSpeed;
 
+            const entryKey = `${entry.speciesKey}-${entry.isYours ? "yours" : "opponent"}`;
+            const posChange = positionChanges.get(entryKey) ?? 0;
+
             return (
-              <div key={`${entry.speciesKey}-${entry.isYours}`} className={`flex items-center gap-1.5 sm:gap-3 ${!entry.isYours ? "opacity-70" : ""}`}>
+              <div
+                key={entryKey}
+                className={`flex items-center gap-1.5 sm:gap-3 transition-all duration-300 ${!entry.isYours ? "opacity-70" : ""}`}
+              >
                 {/* Name column */}
                 <div className="flex items-center gap-1.5 sm:gap-2 w-[6.5rem] sm:w-40 lg:w-48 flex-shrink-0 min-w-0">
                   <PokemonSprite
@@ -287,8 +403,8 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                     )}
                   </div>
 
-                  {/* Speed value */}
-                  <div className="w-14 sm:w-24 lg:w-28 flex-shrink-0 text-right">
+                  {/* Speed value + delta + position change */}
+                  <div className="w-20 sm:w-32 lg:w-36 flex-shrink-0 flex items-center justify-end gap-1 sm:gap-1.5">
                     <span className={`text-xs sm:text-sm lg:text-base font-[family-name:var(--font-mono)] font-extrabold tabular-nums ${
                       entry.isYours
                         ? entry.hasSpeedBoost ? "text-amber-500" : "text-text-primary"
@@ -297,8 +413,29 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                       {entry.displaySpeed}
                     </span>
                     {entry.isYours && entry.hasSpeedBoost && entry.speedBoostLabel && (
-                      <span className="text-[10px] text-amber-500/60 font-semibold ml-0.5 hidden sm:inline">
+                      <span className="text-[10px] text-amber-500/60 font-semibold hidden sm:inline">
                         {entry.speedBoostLabel}
+                      </span>
+                    )}
+                    {/* Delta from modifier */}
+                    {entry.delta !== 0 && (
+                      <span className={`text-[10px] sm:text-xs font-bold tabular-nums ${
+                        entry.delta > 0 ? "text-emerald-500" : "text-red-400"
+                      }`}>
+                        {entry.delta > 0 ? "+" : ""}{entry.delta}
+                      </span>
+                    )}
+                    {/* Position change indicator */}
+                    {posChange !== 0 && (
+                      <span className={`text-[9px] sm:text-[10px] font-bold flex items-center gap-px ${
+                        posChange > 0 ? "text-emerald-500" : "text-red-400"
+                      }`} title={`Moved ${Math.abs(posChange)} position${Math.abs(posChange) > 1 ? "s" : ""} ${posChange > 0 ? "up" : "down"}`}>
+                        {posChange > 0 ? (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15" /></svg>
+                        ) : (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                        )}
+                        <span className="hidden sm:inline">{Math.abs(posChange)}</span>
                       </span>
                     )}
                   </div>
@@ -324,11 +461,6 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             <span className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded bg-slate-500/40" />
               Meta (max speed)
-            </span>
-          )}
-          {activeModifiers.size > 0 && (
-            <span className="ml-auto text-accent font-medium">
-              {Array.from(activeModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ")} applied
             </span>
           )}
         </div>
