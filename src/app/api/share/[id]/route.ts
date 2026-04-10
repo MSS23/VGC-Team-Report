@@ -217,8 +217,10 @@ export async function GET(
     return NextResponse.json(responseData);
   } catch (e) {
     console.error("Share fetch error:", e);
+    // Temporary: surface error detail so we can diagnose /s/{id} 500s in prod
+    const detail = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
     return NextResponse.json(
-      { error: "Failed to load share" },
+      { error: "Failed to load share", detail },
       { status: 500 }
     );
   }
