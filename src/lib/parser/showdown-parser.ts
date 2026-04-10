@@ -129,7 +129,11 @@ function parsePokemonBlock(block: string): { pokemon: ParsedPokemon; warnings: s
     }
   }
 
-  // Validation
+  // Validation — the hard game cap is 510, but only 508 are actually usable
+  // (the last 2 EVs in a 252 allocation provide no stat boost). We warn on
+  // anything over 510 here; the UI treats 508 as the "optimized" target and
+  // Champions (Reg M-A) suppresses the EV-total warning entirely since SP is
+  // the real constraint in that format.
   const evTotal = Object.values(evs).reduce((a, b) => a + b, 0);
   if (evTotal > 510) {
     warnings.push(`${species}: EV total ${evTotal} exceeds maximum of 510`);

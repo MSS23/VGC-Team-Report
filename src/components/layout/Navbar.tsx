@@ -97,7 +97,7 @@ interface NavbarProps {
 
 function getWarningFix(warning: string): string {
   if (warning.includes("EV total") && warning.includes("exceeds")) {
-    return "Reduce EVs so the total is 510 or less. Check your PokePaste for typos.";
+    return "Reduce EVs so the total is 508 or less. Each stat only gains from multiples of 4 EVs, so the usable max is 508 (e.g. 252/252/4).";
   }
   if (warning.includes("No moves found")) {
     return "Add moves to this Pokemon in your PokePaste (lines starting with \"- \").";

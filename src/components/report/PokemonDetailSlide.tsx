@@ -523,10 +523,13 @@ export function PokemonDetailSlide({
           const spOver = spCurrent > spMax;
           const spUnder = spCurrent < spMax && spCurrent > 0;
           const evCurrent = totalEvs;
-          const evOver = evCurrent > 510;
-          const evUnder = evCurrent < 510 && evCurrent > 0;
+          // In Champions format, SP is the real cap. The EV total is a derived
+          // value: 66 SP can legitimately produce 512 (e.g. 4/4/252/252) or even
+          // 516 (e.g. 252/252/12) because the EV-per-SP curve is non-linear.
+          // The EV tab's legality dot mirrors the SP dot so it reflects the
+          // actual legality instead of the obsolete 510 cap.
           const spDot = spOver ? "bg-danger" : spUnder ? "bg-amber-500" : "bg-emerald-500";
-          const evDot = evOver ? "bg-danger" : evUnder ? "bg-amber-500" : "bg-emerald-500";
+          const evDot = spDot;
           return (
             <div
               role="tablist"
@@ -560,20 +563,24 @@ export function PokemonDetailSlide({
                     ? "bg-accent text-white shadow-sm"
                     : "text-text-secondary hover:text-text-primary"
                 }`}
+                title="EV total is derived from SP — the 66 SP budget is the actual cap"
               >
                 <span className={`h-1.5 w-1.5 rounded-full ${evDot}`} aria-hidden />
                 <span>EV</span>
                 <span className={showEvMode ? "text-white/85" : "text-text-tertiary"}>
-                  {evCurrent}/510
+                  {evCurrent}
                 </span>
               </button>
             </div>
           );
         })() : totalEvs > 0 ? (
+          /* Traditional VGC cap: 508 is the usable maximum. The game allows
+             510 total but the last 2 EVs in a 252 slot provide no stat gain,
+             so 508 is the correctly optimized target (e.g. 252/252/4 = 508). */
           <span className={`text-xs sm:text-sm font-bold ml-auto tabular-nums ${
-            totalEvs > 510 ? "text-danger" : totalEvs < 510 ? "text-amber-500" : "text-text-tertiary/50"
+            totalEvs > 508 ? "text-danger" : totalEvs < 508 ? "text-amber-500" : "text-text-tertiary/50"
           }`}>
-            {totalEvs}/510{totalEvs < 510 && ` · ${510 - totalEvs} left`}
+            {totalEvs}/508{totalEvs < 508 && ` · ${508 - totalEvs} left`}
           </span>
         ) : null}
       </div>

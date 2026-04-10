@@ -278,10 +278,13 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               const spOver = spCurrent > spMax;
               const spUnder = spCurrent < spMax && spCurrent > 0;
               const evCurrent = totalEvs;
-              const evOver = evCurrent > 510;
-              const evUnder = evCurrent < 510 && evCurrent > 0;
+              // In Champions format, SP is the real cap. The EV total is a derived
+              // value: 66 SP can legitimately produce 512 (e.g. 4/4/252/252) or even
+              // 516 (e.g. 252/252/12) because the EV-per-SP curve is non-linear.
+              // The EV tab's legality dot mirrors the SP dot so it reflects the
+              // actual legality instead of the obsolete 510 cap.
               const spDot = spOver ? "bg-danger" : spUnder ? "bg-amber-500" : "bg-emerald-500";
-              const evDot = evOver ? "bg-danger" : evUnder ? "bg-amber-500" : "bg-emerald-500";
+              const evDot = spDot;
               return (
                 <div
                   role="tablist"
@@ -315,23 +318,28 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                         ? "bg-accent text-white shadow-sm"
                         : "text-text-secondary hover:text-text-primary"
                     }`}
+                    title="EV total is derived from SP — the 66 SP budget is the actual cap"
                   >
                     <span className={`h-1 w-1 rounded-full ${evDot}`} aria-hidden />
                     <span>EV</span>
                     <span className={showEvMode ? "text-white/85" : "text-text-tertiary"}>
-                      {evCurrent}/510
+                      {evCurrent}
                     </span>
                   </button>
                 </div>
               );
             })() : (
               <>
-                {totalEvs > 510 ? (
-                  <span className="text-[10px] sm:text-xs font-bold text-danger ml-auto tabular-nums">{totalEvs}/510</span>
-                ) : totalEvs > 0 && totalEvs < 510 ? (
-                  <span className="text-[10px] sm:text-xs font-bold text-amber-500 ml-auto tabular-nums">{totalEvs}/510<span className="hidden sm:inline"> · {510 - totalEvs} left</span></span>
+                {/* Traditional VGC cap: 508 is the usable maximum. The game
+                    allows 510 total but the last 2 EVs in a 252 slot provide
+                    no stat gain, so 508 is the correctly optimized target
+                    (e.g. 252/252/4 = 508). */}
+                {totalEvs > 508 ? (
+                  <span className="text-[10px] sm:text-xs font-bold text-danger ml-auto tabular-nums">{totalEvs}/508</span>
+                ) : totalEvs > 0 && totalEvs < 508 ? (
+                  <span className="text-[10px] sm:text-xs font-bold text-amber-500 ml-auto tabular-nums">{totalEvs}/508<span className="hidden sm:inline"> · {508 - totalEvs} left</span></span>
                 ) : totalEvs > 0 ? (
-                  <span className="text-[10px] sm:text-xs font-bold text-text-tertiary/50 ml-auto tabular-nums hidden sm:inline">{totalEvs}/510</span>
+                  <span className="text-[10px] sm:text-xs font-bold text-text-tertiary/50 ml-auto tabular-nums hidden sm:inline">{totalEvs}/508</span>
                 ) : null}
               </>
             )}
