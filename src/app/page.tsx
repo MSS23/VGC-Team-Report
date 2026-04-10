@@ -674,12 +674,44 @@ function HomeContent() {
         />
       )}
       {versionDiff && diffChanges.length === 0 && (
-        <div className="sticky top-14 z-30 bg-background/80 backdrop-blur-lg">
-          <div className="max-w-5xl mx-auto px-2 sm:px-4 py-2">
-            <div className="version-diff-banner flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-500/50 rounded-xl">
-              <p className="text-xs font-medium text-blue-700 dark:text-blue-300 flex-1">No differences found with version {versionDiff.version}</p>
-              <button type="button" onClick={handleClearCompare} className="text-xs font-bold text-blue-500 hover:text-blue-600 cursor-pointer">Dismiss</button>
+        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in px-4 max-w-[calc(100vw-2rem)]">
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-1 bg-blue-600 text-white rounded-2xl shadow-2xl shadow-blue-900/40 px-3 py-1.5"
+          >
+            {/* Info icon */}
+            <span className="w-8 h-8 flex items-center justify-center flex-shrink-0" aria-hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+            </span>
+
+            {/* Label */}
+            <div className="flex items-center gap-2 px-1 sm:px-2 min-w-0">
+              <span className="text-xs font-semibold truncate">No differences with</span>
+              <span className="text-[10px] font-bold opacity-80 whitespace-nowrap tabular-nums">
+                v{versionDiff.version}
+              </span>
             </div>
+
+            {/* Divider */}
+            <span className="w-px h-5 bg-white/25 mx-0.5" aria-hidden />
+
+            {/* Dismiss */}
+            <button
+              type="button"
+              onClick={handleClearCompare}
+              className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer flex-shrink-0"
+              aria-label="Exit version comparison"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
