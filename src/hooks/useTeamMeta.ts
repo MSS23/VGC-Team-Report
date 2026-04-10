@@ -20,7 +20,20 @@ interface TeamMeta {
   creatorName?: string;
   tags?: ReportTags;
   templateId?: string;
+  /**
+   * Per-Pokemon Mega override map. Keyed by team index (0–5).
+   *  - undefined → no explicit choice, fall back to globalMegaDefault
+   *  - true / false → explicit choice for this Pokemon
+   */
   megaStates?: Record<number, boolean>;
+  /**
+   * Team-wide Mega default for cards that don't have an explicit override.
+   *  - undefined / null → "auto" (treat as true: show Mega when stone present)
+   *  - true → all Mega-capable cards default to Mega form
+   *  - false → all Mega-capable cards default to base form
+   * Per-card megaStates entries always win over this.
+   */
+  globalMegaDefault?: boolean | null;
 }
 
 function buildTeamKey(speciesKeys: string[]): string {
@@ -86,6 +99,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
   const tags = meta.tags;
   const templateId = meta.templateId;
   const megaStates = meta.megaStates;
+  const globalMegaDefault = meta.globalMegaDefault ?? null;
 
   const setRole = useCallback((species: string, text: string) => {
     setMeta((prev) => ({ ...prev, roles: { ...prev.roles, [species]: text } }));
@@ -133,11 +147,29 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
 
   const toggleMega = useCallback((index: number) => {
     setMeta((prev) => {
-      const current = prev.megaStates?.[index];
-      // Toggle: undefined (auto=true) → false, false → true, true → false
-      const next = current === undefined ? false : !current;
+      // Effective current = explicit override OR global default OR auto-true.
+      // Toggling computes the effective value and writes its inverse as an
+      // explicit override, so the user always sees the form they expect to
+      // see after the tap.
+      const explicit = prev.megaStates?.[index];
+      const effective = explicit ?? prev.globalMegaDefault ?? true;
+      const next = !effective;
       return { ...prev, megaStates: { ...prev.megaStates, [index]: next } };
     });
+  }, []);
+
+  /**
+   * Set the team-wide Mega default. Does NOT touch existing per-card
+   * overrides — cards the user has explicitly tapped keep their explicit
+   * value. Use `resetMegaOverrides` afterwards to clear those.
+   */
+  const setGlobalMegaDefault = useCallback((value: boolean | null) => {
+    setMeta((prev) => ({ ...prev, globalMegaDefault: value }));
+  }, []);
+
+  /** Wipe all per-card Mega overrides so every card follows the global default. */
+  const resetMegaOverrides = useCallback(() => {
+    setMeta((prev) => ({ ...prev, megaStates: {} }));
   }, []);
 
   const setMetaFull = useCallback((newMeta: TeamMeta) => {
@@ -145,7 +177,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
   }, []);
 
   return {
-    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates,
-    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega,
+    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault,
+    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides,
   };
 }
