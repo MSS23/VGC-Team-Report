@@ -12,7 +12,7 @@ import { NATURES } from "@/lib/data/natures";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
-import { convertToChampionsSp, CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT, isChampionsOptimized, evsToSp } from "@/lib/analysis/stat-calculator";
+import { convertToChampionsSp, CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT } from "@/lib/analysis/stat-calculator";
 import { FieldDiffHighlight } from "./TeamReport";
 import { useIsPrintMode } from "@/components/ui/PdfExport";
 
@@ -505,53 +505,64 @@ export function PokemonDetailSlide({
     const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
     const spSpread = convertToChampionsSp(parsed.evs);
     const totalSp = (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + spSpread[s], 0);
-    const missingEvs = 510 - totalEvs;
-    const missingSp = isChampions ? CHAMPIONS_TOTAL_SP - totalSp : 0;
 
     return (
     <div>
-      <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-2 flex items-center gap-2">
-        <span>{t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70">({parsed.nature})</span></span>
+      <div className="flex items-center gap-2 sm:gap-3 mb-2.5 sm:mb-3 flex-wrap">
+        <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary">
+          {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70">({parsed.nature})</span>
+        </h3>
+
         {isChampions ? (
-          <span className="flex items-center gap-1.5">
-            <span className={`text-[9px] sm:text-[10px] font-bold normal-case tracking-normal ${
-              totalSp > CHAMPIONS_TOTAL_SP ? "text-danger" :
-              totalSp < CHAMPIONS_TOTAL_SP ? "text-amber-500" : "text-text-tertiary/50"
-            }`}>
-              {showEvMode ? `${totalEvs}/510 EVs` : `${totalSp}/${CHAMPIONS_TOTAL_SP} SP`}
-            </span>
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+            {/* Pill toggle */}
             <button
               type="button"
               onClick={() => setShowEvMode(!showEvMode)}
-              className="text-[8px] sm:text-[9px] font-bold normal-case tracking-normal px-1.5 py-0.5 rounded-full border border-border bg-surface-alt text-text-tertiary hover:text-accent hover:border-accent/30 transition-all cursor-pointer"
+              className="relative inline-flex h-8 sm:h-9 rounded-full bg-surface-alt border border-border overflow-hidden cursor-pointer group"
+              role="switch"
+              aria-checked={showEvMode}
+              aria-label="Toggle between Stat Points and EVs"
             >
-              {showEvMode ? "SP" : "EVs"}
+              <span className={`absolute inset-y-0.5 rounded-full bg-accent transition-all duration-200 ease-out ${
+                showEvMode ? "left-[50%] right-0.5" : "left-0.5 right-[50%]"
+              }`} />
+              <span className={`relative z-10 inline-flex items-center justify-center px-3 sm:px-3.5 text-[11px] sm:text-xs font-extrabold tracking-wide transition-colors duration-200 ${
+                !showEvMode ? "text-white" : "text-text-tertiary group-hover:text-text-secondary"
+              }`}>
+                Stat Pts
+              </span>
+              <span className={`relative z-10 inline-flex items-center justify-center px-3 sm:px-3.5 text-[11px] sm:text-xs font-extrabold tracking-wide transition-colors duration-200 ${
+                showEvMode ? "text-white" : "text-text-tertiary group-hover:text-text-secondary"
+              }`}>
+                EVs
+              </span>
             </button>
-          </span>
+
+            {/* Budget counter */}
+            {(() => {
+              const current = showEvMode ? totalEvs : totalSp;
+              const max = showEvMode ? 510 : CHAMPIONS_TOTAL_SP;
+              const isOver = current > max;
+              const isUnder = current < max && current > 0;
+              const left = max - current;
+              return (
+                <span className={`text-xs sm:text-sm font-bold tabular-nums ${
+                  isOver ? "text-danger" : isUnder ? "text-amber-500" : "text-text-tertiary/50"
+                }`}>
+                  {current}/{max}{isUnder && ` · ${left} left`}
+                </span>
+              );
+            })()}
+          </div>
         ) : totalEvs > 0 ? (
-          <span className={`text-[9px] sm:text-[10px] font-bold normal-case tracking-normal ${
-            totalEvs > 510 ? "text-danger" : "text-text-tertiary/50"
+          <span className={`text-xs sm:text-sm font-bold ml-auto tabular-nums ${
+            totalEvs > 510 ? "text-danger" : totalEvs < 510 ? "text-amber-500" : "text-text-tertiary/50"
           }`}>
-            {totalEvs}/510
+            {totalEvs}/510{totalEvs < 510 && ` · ${510 - totalEvs} left`}
           </span>
         ) : null}
-      </h3>
-
-      {/* Missing SP/EV warning */}
-      {isChampions && !showEvMode && missingSp > 0 && totalSp > 0 && (
-        <div className="flex items-center gap-1.5 mb-2">
-          <span className="text-[10px] sm:text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">
-            {missingSp} SP unallocated
-          </span>
-        </div>
-      )}
-      {!isChampions && missingEvs > 0 && missingEvs < 510 && (
-        <div className="flex items-center gap-1.5 mb-2">
-          <span className="text-[10px] sm:text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">
-            {missingEvs} EVs unallocated
-          </span>
-        </div>
-      )}
+      </div>
 
       <div className="space-y-1 sm:space-y-1.5 stagger-stats">
         {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map(
