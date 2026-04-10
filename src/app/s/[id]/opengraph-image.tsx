@@ -11,12 +11,21 @@ export const contentType = "image/png";
 // unfurl repeatedly, and regenerating on every request was causing timeouts.
 export const revalidate = 3600;
 
-// Native 1200x630 — Discord and OG crawlers cap preview images around this size
-// and reject/time-out on oversized renders. Rendering 2x was producing 2400x1260
-// (4x the pixels, 4x the render cost, 4x the byte count) which was failing to
-// load in Discord.
-const W = 1200;
-const H = 630;
+// 2x the OG standard (2400x1260) for crisp rendering on Discord and other
+// hi-DPI displays. Discord accepts images up to 8MB and scales them down; at
+// 1200x630 native, text and sprites looked soft on retina screens.
+//
+// A previous attempt at 2x broke because the render was dominated by expensive
+// background effects (dot grid, multiple radial glows, layered gradients).
+// This version keeps the 2x resolution but strips the render cost — the dot
+// grid is gone, the ambient glow is gone, and the content layout is rendered
+// inside a scale(2) root transform so we keep the existing 1x pixel values
+// without having to multiply every number by 2.
+const SCALE = 2;
+const BASE_W = 1200;
+const BASE_H = 630;
+const W = BASE_W * SCALE;
+const H = BASE_H * SCALE;
 
 // ── Inline paste parser (edge-compatible, no heavy deps) ───────
 interface OGPokemon {
@@ -167,13 +176,20 @@ export default async function Image({
       (
         <div
           style={{
-            width: "100%", height: "100%", display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
+            width: W, height: H, display: "flex",
             background: "#08080F", fontFamily: "system-ui, sans-serif",
           }}
         >
-          <div style={{ fontSize: 96, fontWeight: 800, color: "#F0EDE6" }}>VGC Team Report</div>
-          <div style={{ fontSize: 36, color: "#64648A", marginTop: 28 }}>Team not found</div>
+          <div
+            style={{
+              width: BASE_W, height: BASE_H, display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              transform: `scale(${SCALE})`, transformOrigin: "top left",
+            }}
+          >
+            <div style={{ fontSize: 96, fontWeight: 800, color: "#F0EDE6" }}>VGC Team Report</div>
+            <div style={{ fontSize: 36, color: "#64648A", marginTop: 28 }}>Team not found</div>
+          </div>
         </div>
       ),
       { width: W, height: H },
@@ -187,32 +203,19 @@ export default async function Image({
     (
       <div
         style={{
-          width: "100%", height: "100%", display: "flex", flexDirection: "column",
-          background: "#07070E", fontFamily: "system-ui, sans-serif",
-          position: "relative", overflow: "hidden",
+          width: W, height: H, display: "flex",
+          background: "linear-gradient(165deg, #080812 0%, #0B0B1E 50%, #080810 100%)",
+          fontFamily: "system-ui, sans-serif",
         }}
       >
-        {/* BG: base gradient */}
-        <div style={{
-          position: "absolute", inset: 0, display: "flex",
-          background: "linear-gradient(165deg, #080812 0%, #0B0B1E 30%, #0F0D25 55%, #080810 100%)",
-        }} />
-
-        {/* BG: dot grid */}
-        <div style={{
-          position: "absolute", inset: 0, display: "flex",
-          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.015) 1px, transparent 0)",
-          backgroundSize: "56px 56px",
-        }} />
-
-        {/* BG: center ambient glow */}
-        <div style={{
-          position: "absolute", top: "35%", left: "50%", transform: "translate(-50%, -50%)",
-          width: 2000, height: 1000, borderRadius: "50%",
-          background: "radial-gradient(ellipse, rgba(110,70,200,0.04) 0%, rgba(180,40,80,0.018) 45%, transparent 72%)",
-          display: "flex",
-        }} />
-
+      <div
+        style={{
+          width: BASE_W, height: BASE_H, display: "flex", flexDirection: "column",
+          fontFamily: "system-ui, sans-serif",
+          position: "relative", overflow: "hidden",
+          transform: `scale(${SCALE})`, transformOrigin: "top left",
+        }}
+      >
         {/* Top accent line */}
         <div style={{
           position: "absolute", top: 0, left: 0, right: 0, height: 6, display: "flex",
@@ -315,13 +318,13 @@ export default async function Image({
                 <div key={i} style={{
                   display: "flex", flexDirection: "column", alignItems: "center", width: 352,
                 }}>
-                  {/* Card */}
+                  {/* Card — simplified shadow keeps render cost manageable at 2x */}
                   <div style={{
                     display: "flex", flexDirection: "column", alignItems: "center",
                     width: 336, borderRadius: 32,
-                    background: "linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.012) 100%)",
-                    border: "2px solid rgba(255,255,255,0.06)",
-                    boxShadow: "0 16px 64px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.2), inset 0 2px 0 rgba(255,255,255,0.05)",
+                    background: "rgba(255,255,255,0.03)",
+                    border: "2px solid rgba(255,255,255,0.08)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.28)",
                     position: "relative", overflow: "hidden", paddingBottom: 28,
                   }}>
                     {/* Sprite area */}
@@ -329,18 +332,11 @@ export default async function Image({
                       display: "flex", alignItems: "center", justifyContent: "center",
                       width: "100%", height: 240, position: "relative",
                     }}>
-                      {/* Floor reflection */}
-                      <div style={{
-                        position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)",
-                        width: 120, height: 32, borderRadius: "50%",
-                        background: "radial-gradient(ellipse, rgba(130,90,230,0.08) 0%, transparent 70%)",
-                        display: "flex",
-                      }} />
                       {spriteUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           src={spriteUrl} alt={mon.species}
-                          width={200} height={200}
+                          width={220} height={220}
                           style={{ objectFit: "contain", position: "relative" }}
                         />
                       ) : (
@@ -459,6 +455,7 @@ export default async function Image({
             pokemonvgcteamreport.com
           </span>
         </div>
+      </div>
       </div>
     ),
     { width: W, height: H },
