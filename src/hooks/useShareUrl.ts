@@ -277,6 +277,15 @@ export function useShareUrl() {
     autoSaveResetRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
   }, [getActiveShare]);
 
+  /**
+   * Pre-populate lastShareResult with a known URL so a caller can open the
+   * ShareModal without hitting the server. Used by read-only viewers who
+   * want to share someone else's report via the existing share sheet UI.
+   */
+  const openShareSheetForUrl = useCallback((publicUrl: string) => {
+    setLastShareResult({ updated: false, publicUrl });
+  }, []);
+
   /** Get the edit URL for the active session. */
   const getEditUrl = useCallback((): string | null => {
     const active = getActiveShare();
@@ -383,6 +392,7 @@ export function useShareUrl() {
     isOwner,
     sessionShareId,
     lastShareResult,
+    openShareSheetForUrl,
     getEditUrl,
     hasExistingShare,
     clearStoredShare,

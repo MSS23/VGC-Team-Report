@@ -11,6 +11,14 @@ interface ShareModalProps {
   placement?: string;
   isPublic: boolean;
   isOwner?: boolean;
+  /**
+   * When true, the modal is being opened by a read-only viewer of someone
+   * else's report (guest or logged-in non-owner/non-collaborator). Hides
+   * the visibility toggle, comments toggle, publish prompt, and edit-link
+   * bookmark warning — none of which apply to viewers — and changes the
+   * header copy so it doesn't imply the viewer just saved something.
+   */
+  viewerMode?: boolean;
   onTogglePublic: (v: boolean) => void;
   allowComments: boolean;
   onToggleComments: (v: boolean) => void;
@@ -27,6 +35,7 @@ export function ShareModal({
   placement,
   isPublic,
   isOwner = true,
+  viewerMode = false,
   onTogglePublic,
   allowComments,
   onToggleComments,
@@ -127,7 +136,7 @@ export function ShareModal({
         <div className="px-6 pt-3 sm:pt-6 pb-4">
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-lg font-extrabold text-text-primary tracking-tight">
-              Team shared!
+              {viewerMode ? "Share this report" : "Team shared!"}
             </h3>
             <button
               type="button"
@@ -142,7 +151,9 @@ export function ShareModal({
             </button>
           </div>
           <p className="text-sm text-text-secondary">
-            Link copied to clipboard. Share it everywhere!
+            {viewerMode
+              ? "Copy the link or post it to social."
+              : "Link copied to clipboard. Share it everywhere!"}
           </p>
         </div>
 
@@ -291,7 +302,7 @@ export function ShareModal({
         </div>
 
         {/* Publish to community prompt — shown when report is private and not dismissed */}
-        {!isPublic && !publishPromptDismissed && isOwner && (
+        {!viewerMode && !isPublic && !publishPromptDismissed && isOwner && (
           <div className={`mx-6 mb-4 rounded-xl border p-4 ${hasWarnings ? "border-amber-500/30 bg-amber-500/5" : "border-accent/30 bg-accent-surface/20"}`}>
             {hasWarnings ? (
               <>
@@ -331,7 +342,10 @@ export function ShareModal({
           </div>
         )}
 
-        {/* Visibility toggle — only owner can change; blocked when warnings exist */}
+        {/* Visibility toggle — only owner can change; blocked when warnings exist.
+            Hidden entirely in viewer mode since it's irrelevant to someone
+            who's just sharing someone else's report. */}
+        {!viewerMode && (
         <div className="px-6 py-4 border-t border-border">
           <button
             type="button"
@@ -388,8 +402,11 @@ export function ShareModal({
             </div>
           )}
         </div>
+        )}
 
-        {/* Comments toggle */}
+        {/* Comments toggle — only meaningful for the owner. Viewers can't
+            persist this setting, so the toggle is hidden in viewer mode. */}
+        {!viewerMode && (
         <div className="px-6 py-3 border-t border-border">
           <button
             type="button"
@@ -415,17 +432,23 @@ export function ShareModal({
             </div>
           </button>
         </div>
+        )}
 
         {/* Footer CTA */}
         <div className="px-6 py-4 bg-surface-alt/50 border-t border-border space-y-2.5">
-          <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-            </svg>
-            <p className="text-[11px] text-text-secondary leading-relaxed">
-              <span className="font-bold text-text-primary">Bookmark this link now.</span> If you close the tab without saving it, you&apos;ll lose edit access to this report.
-            </p>
-          </div>
+          {/* The bookmark-edit-link warning only applies to the owner who
+              just created/updated the share. A read-only viewer has no
+              edit link to lose. */}
+          {!viewerMode && (
+            <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
+              <p className="text-[11px] text-text-secondary leading-relaxed">
+                <span className="font-bold text-text-primary">Bookmark this link now.</span> If you close the tab without saving it, you&apos;ll lose edit access to this report.
+              </p>
+            </div>
+          )}
           <p className="text-xs text-text-tertiary text-center">
             The more you share, the more the VGC community grows.
             <br />

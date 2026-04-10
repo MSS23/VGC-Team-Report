@@ -53,6 +53,7 @@ interface NavbarProps {
   lastShareResult?: { updated?: boolean; editUrl?: string } | null;
   onShareClick: () => void;
   onReshare: () => void;
+  onViewerShare?: () => void;
 
   // Ownership
   isOwner: boolean;
@@ -161,7 +162,7 @@ export function Navbar(props: NavbarProps) {
     collaborators, syncStatus,
     isSampleTeam,
     shareStatus, shareButtonText, lastShareResult,
-    onShareClick, onReshare,
+    onShareClick, onReshare, onViewerShare,
     isOwner, activeShareId, sessionShareId,
     hasExistingShare, editLinkCopied, onCopyEditLink,
     onUndo, onRedo, canUndo, canRedo,
@@ -394,6 +395,13 @@ export function Navbar(props: NavbarProps) {
                 </SignInButton>
               )}
             </>
+          )}
+          {/* Read-only viewers (guests + non-owner logged-in users) can open
+              the share sheet for the current report without hitting the DB. */}
+          {isSharedView && !isEditingUnlocked && onViewerShare && (
+            <Button variant="secondary" size="sm" onClick={() => { hapticLight(); onViewerShare(); }}>
+              {t.share}
+            </Button>
           )}
 
           {/* Creator mode toggle — in overflow menu */}
