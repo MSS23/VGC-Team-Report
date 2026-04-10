@@ -192,14 +192,21 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
   if (mode === "paste") {
     return (
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-            {t.pasteCalcs}
-          </span>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+              {t.pasteCalcs}
+            </span>
+            <span className="text-[11px] text-text-secondary leading-snug">
+              Paste <span className="text-red-500 dark:text-red-400 font-semibold">offensive</span> and{" "}
+              <span className="text-emerald-500 dark:text-emerald-400 font-semibold">defensive</span> calcs
+              together — we&apos;ll auto-sort them. Multi-line or all on one line both work.
+            </span>
+          </div>
           <button
             type="button"
             onClick={() => { setMode("single"); setPasteInput(""); setParsedLines([]); }}
-            className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+            className="text-xs text-text-tertiary hover:text-text-secondary transition-colors flex-shrink-0"
           >
             {t.cancel}
           </button>
@@ -209,8 +216,12 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
           ref={textareaRef}
           value={pasteInput}
           onChange={(e) => handlePasteChange(e.target.value)}
-          placeholder={`${t.pasteCalcsPlaceholder}\n\ne.g. 252+ Atk Incineroar Flare Blitz vs. 252 HP / 0 Def Rillaboom: 210-248 (103.4 - 122.1%) -- guaranteed OHKO`}
-          className="w-full min-h-[6rem] p-3 bg-surface border border-border rounded-xl text-sm font-mono text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
+          placeholder={`Paste one or many calcs — offensive and defensive, mixed together.
+
+Examples:
+⚔️  252+ Atk Incineroar Flare Blitz vs. 252 HP / 0 Def Rillaboom: 210-248 (103.4 - 122.1%) -- guaranteed OHKO
+🛡️  252+ SpA Choice Specs Miraidon Electro Drift vs. 252 HP / 4 SpD Amoonguss: 134-158 (62.0 - 73.1%) -- guaranteed 2HKO`}
+          className="w-full min-h-[7rem] p-3 bg-surface border border-border rounded-xl text-sm font-mono text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
           spellCheck={false}
           autoFocus
         />
@@ -324,9 +335,15 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
         <button
           type="button"
           onClick={() => setMode("paste")}
-          className="text-xs text-accent hover:text-accent/80 font-medium transition-colors flex-shrink-0"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/15 text-xs font-semibold transition-colors flex-shrink-0 min-h-[32px] border border-accent/20"
+          title="Paste multiple offensive and defensive calcs at once"
         >
-          {t.paste}
+          <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <rect x="5" y="4" width="10" height="13" rx="2" />
+            <path d="M8 4V3a1 1 0 011-1h2a1 1 0 011 1v1" />
+          </svg>
+          <span>{t.paste}</span>
+          <span className="hidden sm:inline text-accent/70 font-normal">· bulk</span>
         </button>
       </div>
       {/* Input */}
