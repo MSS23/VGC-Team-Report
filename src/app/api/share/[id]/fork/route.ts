@@ -58,15 +58,29 @@ export async function POST(
 
     const sql = getDb();
 
-    // Load source — anyone authenticated with the link can fork (matches GET semantics:
-    // private reports behave as unlisted, so possession of the /s/{id} link grants read).
+    // Load source. Drop forked_from_id from the SELECT so this route works
+    // even before the migration runs — the fork INSERT below is the only
+    // place this route touches that column, and it's guarded by the fork
+    // route itself requiring the column to exist.
     const sourceRows = await sql`
-      SELECT data, owner_id, is_public, forked_from_id
+      SELECT data, owner_id, is_public
       FROM shares
       WHERE id = ${sourceId} AND deleted_at IS NULL
     `;
     if (sourceRows.length === 0) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // Forking is restricted to public reports only. Unlisted/private reports
+    // stay the owner's — link-possession grants view, not the right to copy
+    // the team into a new report. The owner can still duplicate their own
+    // team through the normal editor flow.
+    const sourceIsPublic = !!sourceRows[0].is_public;
+    if (!sourceIsPublic) {
+      return NextResponse.json(
+        { error: "Only public reports can be forked" },
+        { status: 403 }
+      );
     }
 
     const sourceData = sourceRows[0].data as Record<string, unknown>;
@@ -126,7 +140,6 @@ export async function POST(
       report_id: newId,
       source_report_id: sourceId,
       source_owner_id: (sourceRows[0].owner_id as string | null) ?? null,
-      source_was_public: !!sourceRows[0].is_public,
     });
 
     return NextResponse.json({

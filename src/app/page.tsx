@@ -920,39 +920,23 @@ function HomeContent() {
                 {isPublic ? "Public" : "Private"}
               </button>
             )}
-            {isSignedIn ? (
-              <button
-                type="button"
-                onClick={handleForkReport}
-                disabled={forkStatus === "forking"}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border transition-all ${
-                  forkStatus === "forking"
-                    ? "opacity-60 cursor-wait text-text-tertiary"
-                    : forkStatus === "error"
-                      ? "border-rose-500/40 text-rose-500"
-                      : "text-text-secondary hover:border-accent/30 hover:text-accent cursor-pointer"
-                }`}
-                title="Fork this report — copy the team, notes, calcs, and matchup plans into a new report you own. The new report will link back to this one."
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="18" r="3" />
-                  <circle cx="6" cy="6" r="3" />
-                  <circle cx="18" cy="6" r="3" />
-                  <path d="M18 9v1a2 2 0 01-2 2H8a2 2 0 01-2-2V9" />
-                  <line x1="12" y1="12" x2="12" y2="15" />
-                </svg>
-                {forkStatus === "forking"
-                  ? "Forking…"
-                  : forkStatus === "error"
-                    ? "Fork failed"
-                    : "Fork Report"}
-              </button>
-            ) : (
-              <SignInButton mode="modal">
+            {/* Fork button — only on public reports, and only for non-owners.
+                Unlisted reports cannot be forked: possession of the link grants
+                view, not the right to copy the team into a new report. */}
+            {isPublic && !isOwner && (
+              isSignedIn ? (
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent transition-all cursor-pointer"
-                  title="Sign in to fork this report into your own editable copy"
+                  onClick={handleForkReport}
+                  disabled={forkStatus === "forking"}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border transition-all ${
+                    forkStatus === "forking"
+                      ? "opacity-60 cursor-wait text-text-tertiary"
+                      : forkStatus === "error"
+                        ? "border-rose-500/40 text-rose-500"
+                        : "text-text-secondary hover:border-accent/30 hover:text-accent cursor-pointer"
+                  }`}
+                  title="Fork this report — copy the team, notes, calcs, and matchup plans into a new report you own. The new report will link back to this one."
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="18" r="3" />
@@ -961,9 +945,30 @@ function HomeContent() {
                     <path d="M18 9v1a2 2 0 01-2 2H8a2 2 0 01-2-2V9" />
                     <line x1="12" y1="12" x2="12" y2="15" />
                   </svg>
-                  Fork Report
+                  {forkStatus === "forking"
+                    ? "Forking…"
+                    : forkStatus === "error"
+                      ? "Fork failed"
+                      : "Fork Report"}
                 </button>
-              </SignInButton>
+              ) : (
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent transition-all cursor-pointer"
+                    title="Sign in to fork this report into your own editable copy"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="18" r="3" />
+                      <circle cx="6" cy="6" r="3" />
+                      <circle cx="18" cy="6" r="3" />
+                      <path d="M18 9v1a2 2 0 01-2 2H8a2 2 0 01-2-2V9" />
+                      <line x1="12" y1="12" x2="12" y2="15" />
+                    </svg>
+                    Fork Report
+                  </button>
+                </SignInButton>
+              )
             )}
             {!isOwner && <SaveButton shareId={activeShareId} />}
           </div>
