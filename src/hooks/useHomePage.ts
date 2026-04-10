@@ -285,6 +285,15 @@ export function useHomePage() {
   // ── Shared view hydration ────────────────────────────────────────
   const hasHydrated = useRef(false);
 
+  // Reset the hydration guard when leaving a shared view, so re-entering
+  // /s/{id} in the same session re-runs the hydration effect below and
+  // repopulates calcs/notes/meta from the freshly fetched server state.
+  useEffect(() => {
+    if (!share.sharedState) {
+      hasHydrated.current = false;
+    }
+  }, [share.sharedState]);
+
   useEffect(() => {
     if (!share.sharedState) return;
     // Start read-only; creator mode activates once edit access is confirmed

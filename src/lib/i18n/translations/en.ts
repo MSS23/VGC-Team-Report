@@ -29,7 +29,7 @@ const en = {
   copying: "Copying...",
   saving: "Saving...",
   savedBang: "Saved!",
-  reshare: "Re-share",
+  reshare: "Share",
   exportTeam: "Export",
   exportCopied: "Copied!",
   editLink: "Edit Link",

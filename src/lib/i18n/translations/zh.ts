@@ -28,7 +28,7 @@ const zh: TranslationKeys = {
   copying: "复制中...",
   saving: "保存中...",
   savedBang: "已保存！",
-  reshare: "重新分享",
+  reshare: "分享",
   exportTeam: "导出",
   exportCopied: "已复制！",
   editLink: "编辑链接",

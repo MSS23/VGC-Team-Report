@@ -28,7 +28,7 @@ const ja: TranslationKeys = {
   copying: "コピー中...",
   saving: "保存中...",
   savedBang: "保存済み！",
-  reshare: "再共有",
+  reshare: "共有",
   exportTeam: "エクスポート",
   exportCopied: "コピーしました！",
   editLink: "編集リンク",

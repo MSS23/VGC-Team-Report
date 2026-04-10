@@ -83,6 +83,25 @@ export function useShareUrl() {
   // (set after sharing from home page, or when viewing own report at /s/{id})
   const [sessionShareId, setSessionShareId] = useState<string | null>(null);
 
+  // Clear session state when URL no longer points at a share.
+  // Without this, navigating from /s/{id} back to / would leave
+  // activeShareIdRef/activeEditTokenRef pointing at the old share, causing
+  // the next Share click to silently overwrite that report with whatever
+  // is currently in memory. React bails out of setState when the value is
+  // unchanged, so running this unconditionally on every home-page render
+  // is effectively free.
+  useEffect(() => {
+    if (shareId || inlineData) return;
+    activeEditTokenRef.current = null;
+    activeShareIdRef.current = null;
+    setSessionShareId(null);
+    setSharedState(null);
+    setIsSharedView(false);
+    setIsEditingUnlocked(false);
+    setIsOwner(false);
+    setFetchedIsPublic(null);
+  }, [shareId, inlineData]);
+
   // Fetch shared state on mount
   useEffect(() => {
     let settled = false;

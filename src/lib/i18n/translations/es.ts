@@ -28,7 +28,7 @@ const es: TranslationKeys = {
   copying: "Copiando...",
   saving: "Guardando...",
   savedBang: "Guardado!",
-  reshare: "Compartir de nuevo",
+  reshare: "Compartir",
   exportTeam: "Exportar",
   exportCopied: "¡Copiado!",
   editLink: "Enlace de edicion",
