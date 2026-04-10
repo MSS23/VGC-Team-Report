@@ -42,6 +42,18 @@ export async function generateMetadata({
         ? `${authorLabel}: ${species.join(", ")}`
         : `Team: ${species.join(", ")}`);
 
+    // Embed images for shared reports are intentionally suppressed. We
+    // previously generated a Satori-rendered team preview via
+    // opengraph-image.tsx, but the render budget on Vercel's edge runtime
+    // couldn't reliably produce an accurate, timely image — Discord
+    // unfurls were landing on stale, mislabeled, or mid-generation frames.
+    // A clean text-only unfurl (title + description) is strictly better
+    // than a wrong or broken preview image, and it renders instantly.
+    //
+    // `images: []` is load-bearing: without it, Next.js falls back to the
+    // root /opengraph-image.tsx, which would show a generic site-wide
+    // image on every share link. Explicitly empty arrays block that
+    // inheritance for both the Open Graph and Twitter Card sides.
     return {
       title,
       description,
@@ -50,14 +62,16 @@ export async function generateMetadata({
         description,
         type: "website",
         siteName: "VGC Team Report",
+        images: [],
       },
       alternates: {
         canonical: `https://pokemonvgcteamreport.com/s/${id}`,
       },
       twitter: {
-        card: "summary_large_image",
+        card: "summary",
         title,
         description,
+        images: [],
       },
     };
   } catch {
