@@ -38,6 +38,7 @@ export function ShareModal({
   const [discordCopied, setDiscordCopied] = useState(false);
   const [publishPromptDismissed, setPublishPromptDismissed] = useState(false);
   const [tagError, setTagError] = useState(false);
+  const [justPublished, setJustPublished] = useState(false);
 
   const hasTags = !!(tags?.regulation || tags?.eventType || (tags?.archetype && tags.archetype.length > 0));
 
@@ -56,6 +57,12 @@ export function ShareModal({
       return;
     }
     setTagError(false);
+    // Celebrate the transition from private → public
+    if (v && !isPublic) {
+      setJustPublished(true);
+    } else if (!v) {
+      setJustPublished(false);
+    }
     onTogglePublic(v);
   };
 
@@ -138,6 +145,45 @@ export function ShareModal({
             Link copied to clipboard. Share it everywhere!
           </p>
         </div>
+
+        {/* Thank you banner — shown when user just published the team */}
+        {justPublished && (
+          <div className="mx-6 mb-4 rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-accent-surface/20 to-accent/5 p-4 animate-fade-in">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 dark:text-emerald-400">
+                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-extrabold text-text-primary mb-0.5">
+                  Thank you for sharing with the community!
+                </p>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Your report is now live on the Explore page. Every public team helps other players learn, build, and grow the VGC scene.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setJustPublished(false)}
+                  className="mt-2 text-[11px] font-bold text-accent hover:underline cursor-pointer"
+                >
+                  Got it
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setJustPublished(false)}
+                className="w-6 h-6 flex items-center justify-center rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer flex-shrink-0"
+                aria-label="Dismiss thank you message"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* URL display */}
         <div className="px-6 pb-4">
