@@ -104,7 +104,9 @@ export async function GET(
       }
     }
 
-    // Non-owner public access — read-only, no edit info leaked
+    // Non-owner access — read-only, no edit info leaked.
+    // Private reports behave as "unlisted": anyone with the /s/{id} link can view,
+    // but they are not listed on Explore and edit requires the ?key= collab token.
     const rows = await sql`
       SELECT data, COALESCE(version, 1) AS version, is_public FROM shares WHERE id = ${id} AND deleted_at IS NULL
     `;
@@ -112,13 +114,11 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Private reports: only accessible by owner/collaborator (handled above) or with edit key
-    if (!rows[0].is_public) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
+    const isPublic = !!rows[0].is_public;
 
-    // Check cache for public reads (after privacy gate, skip if polling)
-    if (!sinceVersion) {
+    // Check cache for public reads only — unlisted reports skip cache to avoid
+    // leaking stale visibility state on public↔private toggles.
+    if (isPublic && !sinceVersion) {
       const cached = await cacheGet<Record<string, unknown>>(CacheKeys.share(id));
       if (cached) {
         return NextResponse.json(cached);
@@ -137,13 +137,15 @@ export async function GET(
     const responseData = {
       ...normalizeReportData(rows[0].data as Record<string, unknown>),
       _version: Number(rows[0].version),
-      _isPublic: true,
+      _isPublic: isPublic,
       _isOwner: false,
       _collaborators: collaboratorNames,
     };
 
     // Cache public shares for 5 minutes
-    await cacheSet(CacheKeys.share(id), responseData, CacheTTL.SHARE_PUBLIC);
+    if (isPublic) {
+      await cacheSet(CacheKeys.share(id), responseData, CacheTTL.SHARE_PUBLIC);
+    }
 
     return NextResponse.json(responseData);
   } catch (e) {

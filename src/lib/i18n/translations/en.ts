@@ -111,12 +111,12 @@ const en = {
   showSlide: "Show slide",
 
   // Share toast
-  publicLinkCopied: "Public link copied!",
-  saveEditLink: "Save the edit link below to make changes later. Only you have this link.",
-  copyEditLink: "Copy Edit Link",
-  lostEditLink: "Lost your edit link on another device?",
-  generateNewEditLink: "Generate a new edit link",
-  oldEditLinkStops: "(old edit link will stop working).",
+  publicLinkCopied: "View link copied!",
+  saveEditLink: "Anyone with the view link can read this report. Share the collab link below only with people you want to co-edit with.",
+  copyEditLink: "Copy Collab Link",
+  lostEditLink: "Lost your collab link on another device?",
+  generateNewEditLink: "Generate a new collab link",
+  oldEditLinkStops: "(old collab link will stop working).",
 
   // Error / 404
   somethingWentWrong: "Something went wrong",
