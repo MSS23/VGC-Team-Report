@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
-
 interface ShareViewCTAProps {
   onCreateOwn: () => void;
+  /** Dismiss callback — parent owns the dismissed state so sibling
+   *  components (e.g. the floating Display pill) can react to it and
+   *  drop their collision-avoidance offset when the CTA goes away. */
+  onDismiss: () => void;
 }
 
-export function ShareViewCTA({ onCreateOwn }: ShareViewCTAProps) {
-  const [dismissed, setDismissed] = useState(false);
-
-  if (dismissed) return null;
+export function ShareViewCTA({ onCreateOwn, onDismiss }: ShareViewCTAProps) {
 
   return (
     <div className="fixed bottom-14 sm:bottom-12 inset-x-0 z-30 pointer-events-none">
@@ -33,7 +32,7 @@ export function ShareViewCTA({ onCreateOwn }: ShareViewCTAProps) {
             </button>
             <button
               type="button"
-              onClick={() => setDismissed(true)}
+              onClick={onDismiss}
               className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Dismiss"
             >

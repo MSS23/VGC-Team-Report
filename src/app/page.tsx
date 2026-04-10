@@ -193,6 +193,11 @@ function HomeContent() {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const [showShareModal, setShowShareModal] = useState(false);
   const [tournamentMode, setTournamentMode] = useState(false);
+  // Tracks whether the shared-view "Build your own team report" CTA has
+  // been dismissed. Hoisted here (instead of inside ShareViewCTA) so the
+  // floating Display pill can react to it and drop its lift offset the
+  // moment the CTA disappears, rather than staying artificially raised.
+  const [shareCtaDismissed, setShareCtaDismissed] = useState(false);
 
   // ── Global display prefs (Mega all / SP-EV) ─────────────────────
   // Persists SP/EV mode across sessions in localStorage. Mega default
@@ -1176,6 +1181,15 @@ function HomeContent() {
         hasSeenPill={hasSeenPill}
         onMarkSeen={markPillSeen}
         hidden={isPresentationStyle || tournamentMode || isPdfPrinting}
+        // Lift above the read-only viewer CTA so the pill doesn't
+        // cover the "Create yours" button. Must mirror the exact
+        // visibility condition of <ShareViewCTA> above.
+        liftAboveCta={
+          isSharedView &&
+          !isEditingUnlocked &&
+          !isPresentationStyle &&
+          !shareCtaDismissed
+        }
       />
 
       {/* Edit mode FAB for mobile (shared views with edit access) */}
@@ -1265,8 +1279,11 @@ function HomeContent() {
       )}
 
       {/* CTA banner for shared views (read-only viewers) */}
-      {isSharedView && !isEditingUnlocked && !isPresentationStyle && (
-        <ShareViewCTA onCreateOwn={handleCreateOwn} />
+      {isSharedView && !isEditingUnlocked && !isPresentationStyle && !shareCtaDismissed && (
+        <ShareViewCTA
+          onCreateOwn={handleCreateOwn}
+          onDismiss={() => setShareCtaDismissed(true)}
+        />
       )}
 
       {/* Edit URL toast — shown after sharing */}

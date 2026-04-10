@@ -32,6 +32,13 @@ interface DisplayTogglePillProps {
 
   /** Hide entirely in presentation mode and version-compare. */
   hidden?: boolean;
+  /**
+   * Lift the pill above the full-width "Build your own team report" CTA
+   * banner that shows to read-only viewers of a shared report. Without
+   * this, the right-anchored pill sits on top of the CTA's "Create
+   * yours" button and makes it unclickable on PWA.
+   */
+  liftAboveCta?: boolean;
 }
 
 /**
@@ -56,6 +63,7 @@ export function DisplayTogglePill({
   hasSeenPill,
   onMarkSeen,
   hidden = false,
+  liftAboveCta = false,
 }: DisplayTogglePillProps) {
   const [open, setOpen] = useState(false);
   const [pulse, setPulse] = useState(false);
@@ -140,7 +148,14 @@ export function DisplayTogglePill({
       <div
         className="fixed right-3 sm:right-4 z-40 flex flex-col items-end gap-2"
         style={{
-          bottom: "calc(var(--bottom-nav-height, 3rem) + env(safe-area-inset-bottom, 0px) + 12px)",
+          // Base offset: clear the PWA bottom nav + iOS safe-area.
+          // When the "Build your own team report" CTA is showing for
+          // read-only viewers, add ~72px so the pill sits above it
+          // instead of covering the "Create yours" button.
+          bottom: liftAboveCta
+            ? "calc(var(--bottom-nav-height, 3rem) + env(safe-area-inset-bottom, 0px) + 84px)"
+            : "calc(var(--bottom-nav-height, 3rem) + env(safe-area-inset-bottom, 0px) + 12px)",
+          transition: "bottom 200ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
         {/* Popover (renders above the pill, anchored bottom-right) */}
