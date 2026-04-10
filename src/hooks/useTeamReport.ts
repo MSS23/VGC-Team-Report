@@ -8,14 +8,13 @@ import { getItemStatBoost } from "@/lib/analysis/item-boosts";
 import type { ParsedTeam } from "@/lib/types/pokemon";
 import type { AnalyzedPokemon, TeamAnalysis } from "@/lib/types/analysis";
 
-const STORAGE_KEY = "vgc-team-paste";
-// Marker written alongside STORAGE_KEY whenever the paste is persisted from
-// a user-owned editing session. The restore effect in useHomePage refuses to
-// restore any paste that doesn't have a matching marker, so any legacy data
-// written by the pre-fix code (which incorrectly persisted shared reports
-// into the viewer's own localStorage) gets ignored rather than loaded as a
-// "welcome-back" draft. See SECURITY comment in useHomePage.ts.
-const STORAGE_SOURCE_KEY = "vgc-team-paste-source";
+// v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
+// The pre-v2 keys could contain leaked content from someone else's shared
+// report under a "user" marker due to a pre-fix race window. Reading from
+// the v2 keys guarantees we never see any of that legacy state. Old keys
+// are evicted by the legacy-cleanup effect in useHomePage on mount.
+const STORAGE_KEY = "vgc-team-paste-v2";
+const STORAGE_SOURCE_KEY = "vgc-team-paste-source-v2";
 
 export type ViewMode = "simple" | "advanced";
 
@@ -27,11 +26,16 @@ export function useTeamReport(persist = true) {
   // Auto-save paste to localStorage whenever it changes (and analysis exists).
   // Skipped when persist=false. Persist is disabled for sample teams and,
   // critically, for any shared-report view — see the SECURITY comment in
-  // useHomePage.ts isInShareContext. The STORAGE_SOURCE_KEY marker is
-  // written alongside the paste so the restore path can distinguish a
-  // genuine user-owned draft from legacy leaked data.
+  // useHomePage.ts isInShareContext.
+  //
+  // BELT-AND-SUSPENDERS: in addition to the persist param, we also re-check
+  // window.location.pathname directly inside the effect. If we somehow get
+  // here while the URL is /s/{id} (a hook-ordering bug, a stale persist
+  // closure, a router-state desync — anything), this guard blocks the
+  // write at the very last possible moment so the leak can't reopen.
   useEffect(() => {
     if (!persist) return;
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) return;
     try {
       if (parsedTeam && parsedTeam.pokemon.length > 0) {
         localStorage.setItem(STORAGE_KEY, paste);

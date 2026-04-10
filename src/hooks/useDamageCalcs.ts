@@ -9,9 +9,10 @@ export interface CalcEntry {
   category: CalcCategory;
 }
 
+// v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
 function buildCalcsKey(speciesKeys: string[]): string {
   const sorted = [...speciesKeys].sort();
-  return `vgc-calcs-${sorted.join(",")}`;
+  return `vgc-calcs-v2-${sorted.join(",")}`;
 }
 
 /** Per-Pokémon array of notable calc entries. */
@@ -74,9 +75,11 @@ export function useDamageCalcs(speciesKeys: string[], persist = true) {
     }
   }, [teamKey, speciesKeys.length, persist]);
 
-  // Persist to localStorage on change
+  // Persist to localStorage on change.
+  // Belt-and-suspenders: also block writes when the URL is /s/{id}.
   useEffect(() => {
     if (!persist || speciesKeys.length === 0) return;
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) return;
     try {
       localStorage.setItem(teamKey, JSON.stringify(calcs));
     } catch {

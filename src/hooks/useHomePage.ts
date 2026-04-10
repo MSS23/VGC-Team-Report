@@ -252,32 +252,81 @@ export function useHomePage() {
     buildShareState,
   });
 
+  // ── Legacy localStorage eviction (one-time, runs on every mount) ──
+  // After the 2026-04-10 leak incident, every team-content storage key
+  // was version-bumped to a -v2 namespace. The pre-v2 keys could contain
+  // leaked content from someone else's shared report — under a "user"
+  // marker, even — due to a pre-fix race window. We nuke the entire
+  // pre-v2 namespace on mount so legacy state can never resurface.
+  // Runs once per mount but is idempotent: subsequent runs find the keys
+  // already gone and exit fast.
+  const legacyEvicted = useRef(false);
+  useEffect(() => {
+    if (legacyEvicted.current) return;
+    legacyEvicted.current = true;
+    try {
+      const LEGACY_PREFIXES = [
+        "vgc-team-paste",          // exact match: vgc-team-paste, vgc-team-paste-source
+        "vgc-notes-",              // species-keyed notes
+        "vgc-calcs-",              // species-keyed damage calcs
+        "vgc-meta-",               // species-keyed team meta
+        "vgc-matchup-plans-",      // species-keyed matchup plans
+        "vgc-hidden-slides-",      // species-keyed hidden slides
+      ];
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        // Skip the new v2 namespace (starts with the prefix but contains "-v2-").
+        if (key.includes("-v2") || key.includes("-v2-")) continue;
+        for (const prefix of LEGACY_PREFIXES) {
+          // Exact match for the paste key + its source marker
+          if (prefix === "vgc-team-paste") {
+            if (key === "vgc-team-paste" || key === "vgc-team-paste-source") {
+              keysToRemove.push(key);
+              break;
+            }
+            continue;
+          }
+          // Prefix match for species-keyed namespaces
+          if (key.startsWith(prefix)) {
+            keysToRemove.push(key);
+            break;
+          }
+        }
+      }
+      for (const key of keysToRemove) {
+        localStorage.removeItem(key);
+      }
+    } catch {
+      // localStorage unavailable — nothing to evict
+    }
+  }, []);
+
   // ── Restore in-progress team from localStorage on first mount ────
   // Runs once after share state has settled. Skipped when entering a
   // shared view (/s/[id]) since that path hydrates from the server.
   //
-  // SECURITY: Only restore if the stored paste has the "user" source
-  // marker. Legacy data written by the pre-fix code (which leaked
-  // shared-report content into the viewer's localStorage) has no marker
-  // and must be ignored and evicted, not silently loaded as a
-  // "welcome-back draft". Anything without the marker gets wiped on
-  // sight so it can't surface on a future visit either.
+  // SECURITY: Only restore if the stored paste has the v2 "user" source
+  // marker. The v2 namespace did not exist before the 2026-04-10 leak fix,
+  // so anything in vgc-team-paste-v2 was definitively written by post-fix
+  // code with the source check in place — it cannot contain leaked content.
   useEffect(() => {
     if (restoreAttempted.current) return;
     if (analysis) return; // already have a team loaded
     if (share.isSharedView || share.isSharePending || share.sharedState) return;
     restoreAttempted.current = true;
     try {
-      const stored = localStorage.getItem("vgc-team-paste");
-      const source = localStorage.getItem("vgc-team-paste-source");
+      const stored = localStorage.getItem("vgc-team-paste-v2");
+      const source = localStorage.getItem("vgc-team-paste-source-v2");
       if (stored && stored.trim() && source === "user") {
         setPaste(stored);
         parseTeam(stored);
         setWasRestored(true);
       } else if (stored) {
-        // Unmarked legacy data — evict to prevent it surfacing later.
-        localStorage.removeItem("vgc-team-paste");
-        localStorage.removeItem("vgc-team-paste-source");
+        // Defensive eviction in case the marker check fails.
+        localStorage.removeItem("vgc-team-paste-v2");
+        localStorage.removeItem("vgc-team-paste-source-v2");
       }
     } catch {
       // localStorage unavailable — nothing to restore

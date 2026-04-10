@@ -2,9 +2,12 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 
+// v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
+// Reading from the v2 keys guarantees we never see legacy state that could
+// have been written by a pre-fix code path.
 function buildTeamKey(speciesKeys: string[]): string {
   const sorted = [...speciesKeys].sort();
-  return `vgc-notes-${sorted.join(",")}`;
+  return `vgc-notes-v2-${sorted.join(",")}`;
 }
 
 export function usePokemonNotes(speciesKeys: string[], persist = true) {
@@ -41,9 +44,12 @@ export function usePokemonNotes(speciesKeys: string[], persist = true) {
     }
   }, [teamKey, speciesKeys.length, persist]);
 
-  // Persist to localStorage on change
+  // Persist to localStorage on change.
+  // Belt-and-suspenders: also block writes when the URL is /s/{id}, in case
+  // persist somehow flipped true during a shared-report view.
   useEffect(() => {
     if (!persist || speciesKeys.length === 0) return;
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) return;
     try {
       localStorage.setItem(teamKey, JSON.stringify(notes));
     } catch {

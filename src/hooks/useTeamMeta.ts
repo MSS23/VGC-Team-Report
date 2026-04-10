@@ -36,9 +36,10 @@ interface TeamMeta {
   globalMegaDefault?: boolean | null;
 }
 
+// v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
 function buildTeamKey(speciesKeys: string[]): string {
   const sorted = [...speciesKeys].sort();
-  return `vgc-meta-${sorted.join(",")}`;
+  return `vgc-meta-v2-${sorted.join(",")}`;
 }
 
 const EMPTY_META: TeamMeta = { roles: {}, summary: "" };
@@ -77,9 +78,11 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
     }
   }, [teamKey, speciesKeys.length, persist]);
 
-  // Persist to localStorage on change
+  // Persist to localStorage on change.
+  // Belt-and-suspenders: also block writes when the URL is /s/{id}.
   useEffect(() => {
     if (!persist || speciesKeys.length === 0) return;
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) return;
     try {
       localStorage.setItem(teamKey, JSON.stringify(meta));
     } catch {

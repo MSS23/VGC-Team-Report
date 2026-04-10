@@ -92,9 +92,10 @@ function migratePlan(plan: LegacyPlan): MatchupPlan {
 
 export { migratePlan };
 
+// v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
 function buildPlanKey(speciesKeys: string[]): string {
   const sorted = [...speciesKeys].sort();
-  return `vgc-matchup-plans-${sorted.join(",")}`;
+  return `vgc-matchup-plans-v2-${sorted.join(",")}`;
 }
 
 /** Remove duplicate Pokemon within a single game plan's bring-4 */
@@ -160,8 +161,10 @@ export function useMatchupPlans(speciesKeys: string[], persist = true) {
     }
   }, [planKey, speciesKeys.length, persist]);
 
+  // Belt-and-suspenders: also block writes when the URL is /s/{id}.
   useEffect(() => {
     if (!persist || speciesKeys.length === 0) return;
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) return;
     try {
       localStorage.setItem(planKey, JSON.stringify(plans));
     } catch { /* quota exceeded */ }

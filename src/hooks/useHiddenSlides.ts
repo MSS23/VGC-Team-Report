@@ -2,9 +2,10 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 
+// v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
 function buildKey(speciesKeys: string[]): string {
   const sorted = [...speciesKeys].sort();
-  return `vgc-hidden-slides-${sorted.join(",")}`;
+  return `vgc-hidden-slides-v2-${sorted.join(",")}`;
 }
 
 export function useHiddenSlides(speciesKeys: string[], persist = true) {
@@ -37,8 +38,10 @@ export function useHiddenSlides(speciesKeys: string[], persist = true) {
     }
   }, [storageKey, speciesKeys.length, persist]);
 
+  // Belt-and-suspenders: also block writes when the URL is /s/{id}.
   useEffect(() => {
     if (!persist || speciesKeys.length === 0) return;
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) return;
     try {
       localStorage.setItem(storageKey, JSON.stringify([...hidden]));
     } catch {
