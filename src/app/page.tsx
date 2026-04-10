@@ -25,6 +25,7 @@ const EditChangelog = dynamic(() => import("@/components/social/EditChangelog").
 const CollaboratorPanel = dynamic(() => import("@/components/social/CollaboratorPanel").then(m => ({ default: m.CollaboratorPanel })));
 import { getSessionId } from "@/lib/utils/session-id";
 import { clearRandomAccent } from "@/lib/utils/random-accent";
+import { setViewOverrideTheme, reapplyCurrentTheme, type GenTheme } from "@/hooks/useTheme";
 import { teamToShowdown } from "@/lib/utils/export-paste";
 import { I18nProvider } from "@/lib/i18n";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
@@ -81,6 +82,7 @@ function HomeContent() {
     isEditingUnlocked,
     isOwner,
     lastShareResult,
+    openShareSheetForUrl,
     hasExistingShare,
     showEditUrl,
     setShowEditUrl,
@@ -382,10 +384,37 @@ function HomeContent() {
     enabled: !!analysis,
   });
 
-  // Clear random accent when viewing a report (use author's default theme)
+  // Restore the correct accent theme once a team is loaded. The random
+  // landing-page accent and the creator-provided shared theme both get
+  // reconciled here so the viewer sees the report in the appearance the
+  // creator built it in — not whatever random color happened to apply
+  // during the paste screen.
   useEffect(() => {
-    if (analysis) clearRandomAccent();
-  }, [analysis]);
+    if (!analysis) return;
+    // On shared views, pin to the creator's gen theme (if saved into the
+    // share). On own-view, release any prior override so the viewer's own
+    // theme takes over.
+    if (isSharedView && sharedState?.genTheme) {
+      setViewOverrideTheme(sharedState.genTheme as GenTheme);
+    } else {
+      setViewOverrideTheme(null);
+    }
+    // Wipe inline random-accent styles from the landing page, then
+    // re-apply the effective theme (creator's override or viewer's own).
+    // Without this reapply the inline wipe falls through to raw CSS
+    // defaults and ignores the viewer/creator theme entirely.
+    clearRandomAccent();
+    reapplyCurrentTheme();
+  }, [analysis, isSharedView, sharedState?.genTheme]);
+
+  // Release the theme override when the viewer leaves the shared view
+  // so their own stored theme comes back.
+  useEffect(() => {
+    if (!isSharedView) {
+      setViewOverrideTheme(null);
+    }
+    return () => setViewOverrideTheme(null);
+  }, [isSharedView]);
   const [viewCount, setViewCount] = useState(0);
   const viewTracked = useRef(false);
 
@@ -415,6 +444,17 @@ function HomeContent() {
     }
     prevShareStatus.current = shareStatus;
   }, [shareStatus, lastShareResult]);
+
+  // Read-only viewers (guests or logged-in non-owners) can open the share sheet
+  // for someone else's report without hitting the server. The URL comes from
+  // the active share ID — no state is modified on the server.
+  const isViewerOnly = isSharedView && !isEditingUnlocked;
+  const handleViewerShare = useCallback(() => {
+    if (!activeShareId) return;
+    const url = `${window.location.origin}/s/${activeShareId}`;
+    openShareSheetForUrl(url);
+    setShowShareModal(true);
+  }, [activeShareId, openShareSheetForUrl]);
 
   const teamSpecies = analysis?.pokemon.map((p) => p.parsed.species) ?? [];
 
@@ -650,6 +690,7 @@ function HomeContent() {
         lastShareResult={lastShareResult}
         onShareClick={handleShareClick}
         onReshare={handleReshare}
+        onViewerShare={handleViewerShare}
         isOwner={isOwner}
         activeShareId={activeShareId}
         sessionShareId={sessionShareId}
@@ -1138,6 +1179,7 @@ function HomeContent() {
           placement={placement}
           isPublic={isPublic}
           isOwner={isOwner}
+          viewerMode={isViewerOnly}
           onTogglePublic={handleSetPublic}
           allowComments={allowComments}
           onToggleComments={(v) => {

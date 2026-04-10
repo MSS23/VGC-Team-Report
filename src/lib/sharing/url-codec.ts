@@ -38,6 +38,12 @@ export interface ShareableState {
   allowComments?: boolean;
   tags?: { archetype?: string[]; regulation?: string; eventType?: string };
   templateId?: string;
+  /**
+   * Creator's gen theme (accent color palette). When present on a shared view,
+   * viewers are pinned to this theme so the report looks the same as when the
+   * creator built it, regardless of the viewer's own stored preference.
+   */
+  genTheme?: string;
 }
 
 function toBase64Url(bytes: Uint8Array): string {

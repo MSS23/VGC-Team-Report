@@ -182,7 +182,10 @@ export function useHomePage() {
     hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
     tags: tags && (tags.archetype?.length || tags.regulation || tags.eventType) ? tags : undefined,
     templateId: templateId || undefined,
-  }), [paste, notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId]);
+    // Pin viewers to the creator's accent theme so the report appearance
+    // stays consistent across devices / incognito / other users.
+    genTheme: genTheme || undefined,
+  }), [paste, notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId, genTheme]);
 
   // ── Share flow (extracted) ───────────────────────────────────────
   const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t: t as unknown as Record<string, string> });
@@ -498,6 +501,7 @@ export function useHomePage() {
     isOwner: share.isOwner,
     sessionShareId: share.sessionShareId,
     lastShareResult: share.lastShareResult,
+    openShareSheetForUrl: share.openShareSheetForUrl,
     hasExistingShare: share.hasExistingShare,
     showEditUrl: share.showEditUrl,
     setShowEditUrl: share.setShowEditUrl,

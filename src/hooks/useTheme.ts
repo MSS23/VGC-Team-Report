@@ -117,6 +117,12 @@ const listeners = new Set<() => void>();
 
 let currentTheme: GenTheme = "gen9";
 
+// View override: when set (e.g. on a shared report view), this theme is
+// applied to the DOM regardless of the viewer's own `currentTheme`. This
+// lets shared reports pin viewers to the creator's chosen appearance
+// without overwriting the viewer's stored preference. Null on own view.
+let viewOverrideTheme: GenTheme | null = null;
+
 // Load from localStorage on module init (client only)
 if (typeof window !== "undefined") {
   try {
@@ -139,12 +145,35 @@ function getServerSnapshot(): GenTheme {
 }
 
 function applyTheme(themeId: GenTheme) {
-  const preset = GEN_PRESETS[themeId];
+  // View override takes precedence, so shared reports stay on the creator's
+  // theme even when the MutationObserver re-fires on dark-mode toggles.
+  const effective = viewOverrideTheme ?? themeId;
+  const preset = GEN_PRESETS[effective];
   const root = document.documentElement;
   const isDark = root.hasAttribute("data-dark-mode");
   root.style.setProperty("--accent", isDark ? preset.accentDark : preset.accent);
   root.style.setProperty("--accent-light", preset.accentLight);
   root.style.setProperty("--accent-surface", isDark ? preset.accentSurfaceDark : preset.accentSurface);
+}
+
+/**
+ * Pin the DOM to a specific theme for the current view (e.g. a shared
+ * report). Pass null to release the override. Doesn't touch localStorage,
+ * so the viewer's own preference is preserved.
+ */
+export function setViewOverrideTheme(themeId: GenTheme | null) {
+  viewOverrideTheme = themeId && themeId in GEN_PRESETS ? themeId : null;
+  if (typeof document !== "undefined") applyTheme(currentTheme);
+}
+
+/**
+ * Re-apply the current effective theme to the DOM. Used after utilities
+ * like clearRandomAccent() wipe the accent custom properties, so that the
+ * user's (or pinned shared-view) theme is restored instead of falling
+ * through to raw CSS defaults.
+ */
+export function reapplyCurrentTheme() {
+  if (typeof document !== "undefined") applyTheme(currentTheme);
 }
 
 function setTheme(theme: GenTheme) {
