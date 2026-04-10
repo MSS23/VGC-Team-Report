@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const rows = await sql`
       SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count
       FROM shares
-      WHERE id = ${SPOTLIGHT_ID} AND deleted_at IS NULL
+      WHERE id = ${SPOTLIGHT_ID} AND is_public = TRUE AND deleted_at IS NULL
     `;
 
     if (rows.length === 0) {
