@@ -303,50 +303,54 @@ export default async function Image({
           </div>
         </div>
 
-        {/* ── POKEMON GRID ── */}
+        {/* ── POKEMON GRID ──
+            6 cards fit cleanly in the 1200px canvas:
+            padding 32 each side = 1136 available
+            6 × 176 card width + 5 × 16 gap = 1136 ✓                          */}
         <div style={{
           display: "flex", flex: 1, alignItems: "center", justifyContent: "center",
-          padding: "0 72px", position: "relative",
+          padding: "0 32px", position: "relative",
         }}>
           <div style={{
-            display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 20,
+            display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 16,
           }}>
             {team.map((mon, i) => {
               const spriteUrl = spriteDataUris[i];
 
               return (
                 <div key={i} style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", width: 352,
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  width: 176, flexShrink: 0,
                 }}>
                   {/* Card — simplified shadow keeps render cost manageable at 2x */}
                   <div style={{
                     display: "flex", flexDirection: "column", alignItems: "center",
-                    width: 336, borderRadius: 32,
+                    width: 176, borderRadius: 20,
                     background: "rgba(255,255,255,0.03)",
                     border: "2px solid rgba(255,255,255,0.08)",
                     boxShadow: "0 8px 24px rgba(0,0,0,0.28)",
-                    position: "relative", overflow: "hidden", paddingBottom: 28,
+                    position: "relative", overflow: "hidden", paddingBottom: 16,
                   }}>
                     {/* Sprite area */}
                     <div style={{
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      width: "100%", height: 240, position: "relative",
+                      width: "100%", height: 156, position: "relative",
                     }}>
                       {spriteUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           src={spriteUrl} alt={mon.species}
-                          width={220} height={220}
+                          width={148} height={148}
                           style={{ objectFit: "contain", position: "relative" }}
                         />
                       ) : (
                         /* Fallback if sprite fetch failed — keeps layout stable */
                         <div style={{
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          width: 160, height: 160, borderRadius: "50%",
+                          width: 120, height: 120, borderRadius: "50%",
                           background: "rgba(255,255,255,0.04)",
                           border: "2px solid rgba(255,255,255,0.08)",
-                          fontSize: 72, color: "#4A4A6A", position: "relative",
+                          fontSize: 52, color: "#4A4A6A", position: "relative",
                         }}>
                           ?
                         </div>
@@ -355,13 +359,13 @@ export default async function Image({
 
                     {/* Type badges row */}
                     {mon.types.length > 0 && (
-                      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                      <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
                         {mon.types.map((t, ti) => (
                           <div key={ti} style={{
-                            fontSize: 18, fontWeight: 800, letterSpacing: "0.05em",
+                            fontSize: 11, fontWeight: 800, letterSpacing: "0.04em",
                             color: TYPE_TEXT[t] ?? "#FFFFFF",
                             background: TYPE_BG[t] ?? "#666",
-                            padding: "4px 14px", borderRadius: 8,
+                            padding: "3px 8px", borderRadius: 5,
                             textTransform: "uppercase",
                           }}>
                             {t}
@@ -372,33 +376,25 @@ export default async function Image({
 
                     {/* Species name */}
                     <div style={{
-                      fontSize: 26, fontWeight: 700, color: "#D0CEE0",
-                      textAlign: "center", maxWidth: 310,
+                      fontSize: 16, fontWeight: 700, color: "#E0DEF0",
+                      textAlign: "center", maxWidth: 160,
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                      letterSpacing: "0.005em",
+                      padding: "0 8px",
                     }}>
                       {mon.species}
                     </div>
-
-                    {/* Ability */}
-                    {mon.ability && (
-                      <div style={{
-                        fontSize: 20, fontWeight: 600, color: "#7878A0",
-                        textAlign: "center", marginTop: 6,
-                      }}>
-                        {mon.ability}
-                      </div>
-                    )}
 
                     {/* Item badge */}
                     {mon.item && (
                       <div style={{
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        marginTop: 10, padding: "4px 16px", borderRadius: 10,
-                        background: "rgba(255,255,255,0.03)", border: "2px solid rgba(255,255,255,0.05)",
+                        marginTop: 6, padding: "2px 10px", borderRadius: 6,
+                        background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
+                        maxWidth: 160,
                       }}>
                         <span style={{
-                          fontSize: 20, fontWeight: 600, color: "#8886A6", letterSpacing: "0.01em",
+                          fontSize: 12, fontWeight: 600, color: "#9A98BE",
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                         }}>
                           {mon.item}
                         </span>
@@ -408,15 +404,14 @@ export default async function Image({
                     {/* Tera type indicator */}
                     {mon.teraType && (
                       <div style={{
-                        display: "flex", alignItems: "center", gap: 8, marginTop: 8,
+                        display: "flex", alignItems: "center", gap: 5, marginTop: 6,
                       }}>
                         <div style={{
-                          width: 16, height: 16, borderRadius: 4, transform: "rotate(45deg)",
+                          width: 10, height: 10, borderRadius: 2, transform: "rotate(45deg)",
                           background: TYPE_BG[mon.teraType] ?? "#888",
-                          boxShadow: `0 0 12px ${TYPE_BG[mon.teraType] ?? "#888"}44`,
                           display: "flex",
                         }} />
-                        <span style={{ fontSize: 18, fontWeight: 700, color: "#6868A0" }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#7876A0" }}>
                           Tera {mon.teraType}
                         </span>
                       </div>
