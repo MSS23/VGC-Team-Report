@@ -55,3 +55,16 @@ export function getMegaDataKey(species: string, item: string | null): string | n
   const entry = detectMegaFromItem(item, species);
   return entry?.dataKey ?? null;
 }
+
+/**
+ * Given a species string that IS already a mega form (e.g. "Kangaskhan-Mega",
+ * "Charizard-Mega-Y"), return the matching MegaPokemonEntry.
+ *
+ * Used by the per-card Mega/Base toggle to resolve the mega entry for
+ * already-Mega imports, so the user can flip back to the base form to
+ * compare stats/types/ability. Returns null for non-mega species.
+ */
+export function getMegaEntryFromSpecies(species: string): MegaPokemonEntry | null {
+  const key = species.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  return MEGA_BY_KEY.get(key) ?? null;
+}

@@ -219,9 +219,14 @@ function HomeContent() {
   // because they can't be flipped to base form via this control.
   const hasMegaCapable = useMemo(() => {
     if (!analysis) return false;
+    // Two shapes count as "mega-capable" for the floating Display pill:
+    //  1. Base form + mega stone (e.g. Kangaskhan @ Kangaskhanite)
+    //  2. Already-Mega species (e.g. Kangaskhan-Mega @ Kangaskhanite)
+    // Both can now flip between base and Mega form via the per-card
+    // toggle, so both should trigger the global Form segment.
     return analysis.pokemon.some((p) => {
-      const entry = detectMegaFromItem(p.parsed.item, p.parsed.species);
-      return !!entry && !isMegaForm(p.parsed.species);
+      if (isMegaForm(p.parsed.species)) return true;
+      return !!detectMegaFromItem(p.parsed.item, p.parsed.species);
     });
   }, [analysis]);
 

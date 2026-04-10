@@ -12,7 +12,7 @@ import { NATURES } from "@/lib/data/natures";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
-import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
+import { detectMegaFromItem, isMegaForm, getMegaEntryFromSpecies } from "@/lib/utils/mega-detect";
 import { lookupPokemon } from "@/lib/data/pokemon";
 import {
   calculateAllStats,
@@ -344,23 +344,36 @@ export function PokemonDetailSlide({
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
 
   // ── Mega Evolution resolution ────────────────────────────────────
-  // Mirrors PokemonCard so the detail slide, team overview and any
-  // future report surface share the exact same base/Mega logic.
-  const megaEntry = useMemo(
-    () => detectMegaFromItem(parsed.item, parsed.species),
-    [parsed.item, parsed.species],
-  );
+  // Mirrors PokemonCard. Two paste shapes collapse into the same "mega
+  // capable" concept: base+stone (Kangaskhan @ Kangaskhanite) and already
+  // in Mega form (Kangaskhan-Mega @ Kangaskhanite). Both allow flipping
+  // between forms so the user can compare stats, types, and ability.
   const alreadyMega = isMegaForm(parsed.species);
-  const canMega = !!megaEntry && !alreadyMega;
-  // Default ON when a mega stone is detected — matches PokemonCard behavior.
-  const showMega = alreadyMega || (canMega && (isMega ?? true));
+  const megaEntry = useMemo(() => {
+    if (alreadyMega) return getMegaEntryFromSpecies(parsed.species);
+    return detectMegaFromItem(parsed.item, parsed.species);
+  }, [alreadyMega, parsed.item, parsed.species]);
+  const isMegaCapable = !!megaEntry;
+  // Default ON when mega-capable — matches PokemonCard behavior.
+  const showMega = isMegaCapable && (isMega ?? true);
   const showMegaToggle =
-    canMega && !!onToggleMega && (!regulation || regulation === "Reg M-A");
+    isMegaCapable && !!onToggleMega && (!regulation || regulation === "Reg M-A");
 
   const megaData = useMemo(() => {
     if (!showMega || !megaEntry) return null;
     return lookupPokemon(megaEntry.dataKey);
   }, [showMega, megaEntry]);
+
+  // Base form data — populated when an already-Mega paste is flipped back.
+  const baseFormData = useMemo(() => {
+    if (!alreadyMega || !megaEntry) return null;
+    return lookupPokemon(megaEntry.baseName);
+  }, [alreadyMega, megaEntry]);
+
+  // Resolve "base side" data for this slide. For base+stone pastes the
+  // parsed Pokemon's own data already IS the base; for alreadyMega it
+  // comes from the explicit lookup.
+  const effectiveBaseData = alreadyMega ? baseFormData : data;
 
   const megaStats = useMemo(() => {
     if (!megaData) return null;
@@ -373,23 +386,51 @@ export function PokemonDetailSlide({
     );
   }, [megaData, parsed.ivs, parsed.evs, parsed.level, parsed.nature]);
 
+  // Base-form stats when alreadyMega is flipped to base.
+  const baseFormStats = useMemo(() => {
+    if (!alreadyMega || showMega || !baseFormData) return null;
+    return calculateAllStats(
+      baseFormData.baseStats,
+      parsed.ivs,
+      parsed.evs,
+      parsed.level,
+      parsed.nature,
+    );
+  }, [alreadyMega, showMega, baseFormData, parsed.ivs, parsed.evs, parsed.level, parsed.nature]);
+
   // Champions (Reg M-A) recomputes stats from the SP budget — must run
-  // against the Mega base stats when the user is viewing the Mega form.
+  // against whichever side (Mega or base) is currently displayed.
   const championsStats = useMemo(() => {
     if (regulation !== "Reg M-A") return null;
-    const baseData = megaData ?? data;
-    if (!baseData) return null;
+    const sourceData = showMega ? megaData : effectiveBaseData;
+    if (!sourceData) return null;
     const sp = convertToChampionsSp(parsed.evs);
-    return calculateAllChampionsStats(baseData.baseStats, sp, parsed.nature);
-  }, [regulation, megaData, data, parsed.evs, parsed.nature]);
+    return calculateAllChampionsStats(sourceData.baseStats, sp, parsed.nature);
+  }, [regulation, showMega, megaData, effectiveBaseData, parsed.evs, parsed.nature]);
 
-  const displaySpecies = showMega && megaEntry ? megaEntry.displayName : parsed.species;
-  const displayTypes = (showMega && megaData ? megaData.types : data?.types) ?? [];
-  const displayAbility = showMega && megaEntry ? megaEntry.ability : parsed.ability;
-  const displayData = megaData ?? data;
-  const displayStats = championsStats ?? megaStats ?? calculatedStats;
-  // Sprite lookup uses the raw data key so mega forms resolve correctly.
-  const spriteSpecies = showMega && megaEntry ? megaEntry.dataKey : parsed.species;
+  const displaySpecies = showMega && megaEntry
+    ? megaEntry.displayName
+    : (alreadyMega && megaEntry ? megaEntry.baseName : parsed.species);
+  const displayTypes = (
+    showMega && megaData ? megaData.types : effectiveBaseData?.types
+  ) ?? [];
+  // Base-form ability fallback: paste carries the Mega ability, so when
+  // flipping alreadyMega cards to base we show the base Pokemon's primary
+  // ability with an asterisk to flag it's a best guess.
+  const displayAbility = showMega && megaEntry
+    ? megaEntry.ability
+    : (alreadyMega && baseFormData
+        ? `${baseFormData.abilities[0] ?? parsed.ability} *`
+        : parsed.ability);
+  const displayData = showMega ? megaData : effectiveBaseData;
+  const displayStats = championsStats
+    ?? (showMega ? megaStats : baseFormStats)
+    ?? calculatedStats;
+  // Sprite: Mega uses the mega data key; base uses the resolved base name
+  // so already-Mega flips to the real base sprite, not the mega slug.
+  const spriteSpecies = showMega && megaEntry
+    ? megaEntry.dataKey
+    : (alreadyMega && megaEntry ? megaEntry.baseName : parsed.species);
 
   const types = displayTypes;
   const natureData = NATURES[parsed.nature];
@@ -507,11 +548,14 @@ export function PokemonDetailSlide({
           <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary presenting:text-4xl truncate tracking-tight">
             {displaySpecies}
           </h2>
+          {/* Mega toggle — same control covers base+stone AND already-Mega
+              pastes now that the detail slide resolves megaEntry from
+              either the item or the species key. */}
           {showMegaToggle && (
             <button
               type="button"
               onClick={onToggleMega}
-              className={`inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-md text-xs sm:text-sm font-extrabold transition-all duration-200 ${
+              className={`inline-flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-md text-sm font-extrabold transition-all duration-200 ${
                 showMega
                   ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-sm shadow-purple-500/30"
                   : "bg-surface-alt text-text-tertiary hover:text-purple-500 hover:bg-purple-500/10 border border-border-subtle"
@@ -522,11 +566,6 @@ export function PokemonDetailSlide({
             >
               M
             </button>
-          )}
-          {alreadyMega && (
-            <span className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-md text-xs sm:text-sm font-extrabold bg-gradient-to-br from-pink-500 to-purple-600 text-white">
-              M
-            </span>
           )}
           {parsed.gender && (
             <span
