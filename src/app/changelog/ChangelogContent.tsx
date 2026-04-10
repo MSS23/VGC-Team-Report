@@ -22,6 +22,8 @@ const ENTRIES = [
       { type: "improved" as const, text: "Fork is restricted to public reports only — unlisted reports stay the owner's. Link possession grants view, not the right to copy the team into a new report." },
       { type: "improved" as const, text: "Shared report read path is now fault-tolerant to in-flight migrations — the fork-lineage lookup can't break /s/{id} for end users if the column hasn't been added yet." },
       { type: "fixed" as const, text: "Fixed shared links briefly returning 500 and falling back to the home page after the fork feature rolled out — the new forked_from_id lookup is now isolated behind a try/catch and no longer breaks main share reads." },
+      { type: "fixed" as const, text: "EV cap display corrected to 508/508 for traditional formats (the usable maximum — the last 2 EVs in a 252 slot provide no stat gain, so 252/252/4 is the optimized target)." },
+      { type: "fixed" as const, text: "Champions (Reg M-A) EV tab no longer shows a misleading /510 comparison — SP (66) is the real cap in this format, and 66 SP can legitimately produce up to 516 EVs depending on distribution. The EV tab now shows the derived total only and its legality dot mirrors the SP status." },
     ],
   },
   {
