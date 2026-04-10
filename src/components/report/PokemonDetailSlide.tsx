@@ -687,11 +687,16 @@ export function PokemonDetailSlide({
             const investUnit = showSp ? "SP" : "";
             const isOverMax = isChampions && sp > CHAMPIONS_MAX_SP_PER_STAT;
 
+            const natureUp = natureData?.plus === stat;
+            const natureDown = natureData?.minus === stat;
+            const hasBuff = natureUp || isBoosted;
+            const hasNerf = natureDown;
+
             return (
-              <div key={stat} className="flex items-center gap-2">
+              <div key={stat} className="flex items-center gap-2" aria-label={`${statLabels[stat]}: ${displayValue}${natureUp ? ", boosted by nature" : ""}${natureDown ? ", reduced by nature" : ""}${isBoosted ? ", boosted by item" : ""}`}>
                 <span className="text-xs font-bold w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5">
-                  {natureData?.plus === stat && <span className="text-[11px]">{"\u25B2"}</span>}
-                  {natureData?.minus === stat && <span className="text-[11px]">{"\u25BC"}</span>}
+                  {natureUp && <span className="text-[12px] text-emerald-500 dark:text-emerald-400 leading-none" aria-label="boosted by nature">{"\u25B2"}</span>}
+                  {natureDown && <span className="text-[12px] text-rose-500 dark:text-rose-400 leading-none" aria-label="reduced by nature">{"\u25BC"}</span>}
                   {statLabels[stat]}
                 </span>
                 <div className="flex-1 h-3 sm:h-3.5 bg-surface-alt rounded-full overflow-hidden shadow-inner">
@@ -703,10 +708,23 @@ export function PokemonDetailSlide({
                     }}
                   />
                 </div>
-                <span className={`text-xs sm:text-sm font-[family-name:var(--font-mono)] font-bold w-8 text-right tabular-nums ${
-                  isBoosted ? "text-amber-500" : "text-text-secondary"
+                <span className={`text-xs sm:text-sm font-[family-name:var(--font-mono)] font-bold w-8 text-right tabular-nums inline-flex items-center justify-end gap-px ${
+                  isBoosted ? "text-amber-500" : hasBuff ? "text-emerald-600 dark:text-emerald-400" : hasNerf ? "text-rose-600 dark:text-rose-400" : "text-text-secondary"
                 }`}>
                   {displayValue}
+                  {hasBuff && (
+                    <span
+                      className={`text-[10px] leading-none ${isBoosted ? "text-amber-500" : "text-emerald-500 dark:text-emerald-400"}`}
+                      aria-hidden
+                    >
+                      {"\u25B2"}
+                    </span>
+                  )}
+                  {hasNerf && (
+                    <span className="text-[10px] leading-none text-rose-500 dark:text-rose-400" aria-hidden>
+                      {"\u25BC"}
+                    </span>
+                  )}
                 </span>
                 <div className="flex items-center gap-1 w-16">
                   {investLabel > 0 ? (

@@ -378,11 +378,17 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               const investLabel = showSp ? sp : ev;
               const investUnit = showSp ? "SP" : "";
 
+              const natureUp = natureData?.plus === stat;
+              const natureDown = natureData?.minus === stat;
+              // Any modifier that moves this stat off its baseline value.
+              const hasBuff = natureUp || isBoosted;
+              const hasNerf = natureDown;
+
               return (
-                <div key={stat} className="flex items-center gap-1 sm:gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${showSp && sp > 0 ? `, ${sp} SP` : ev > 0 ? `, ${ev} EVs` : ""}${isBoosted ? `, boosted by item` : ""}`}>
+                <div key={stat} className="flex items-center gap-1 sm:gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${natureUp ? ", boosted by nature" : ""}${natureDown ? ", reduced by nature" : ""}${isBoosted ? ", boosted by item" : ""}${showSp && sp > 0 ? `, ${sp} SP` : ev > 0 ? `, ${ev} EVs` : ""}`}>
                   <span className="text-[9px] sm:text-xs font-bold w-6 sm:w-8 text-right uppercase text-text-tertiary flex items-center justify-end gap-px">
-                    {natureData?.plus === stat && <span className="text-[8px] sm:text-[11px]" aria-label="boosted by nature">{"\u25B2"}</span>}
-                    {natureData?.minus === stat && <span className="text-[8px] sm:text-[11px]" aria-label="reduced by nature">{"\u25BC"}</span>}
+                    {natureUp && <span className="text-[9px] sm:text-[12px] text-emerald-500 dark:text-emerald-400 leading-none" aria-label="boosted by nature">{"\u25B2"}</span>}
+                    {natureDown && <span className="text-[9px] sm:text-[12px] text-rose-500 dark:text-rose-400 leading-none" aria-label="reduced by nature">{"\u25BC"}</span>}
                     {labels[stat]}
                   </span>
                   <div className="flex-1 h-2 sm:h-2.5 bg-surface-alt rounded-full overflow-hidden creator:h-3" role="progressbar" aria-valuenow={displayValue} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${labels[stat]} stat bar${isBoosted ? " (item boosted)" : ""}`}>
@@ -394,10 +400,23 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                       }}
                     />
                   </div>
-                  <span className={`text-[11px] sm:text-sm font-[family-name:var(--font-mono)] font-bold w-7 sm:w-8 text-right tabular-nums ${
-                    isBoosted ? "text-amber-500" : "text-text-secondary"
+                  <span className={`text-[11px] sm:text-sm font-[family-name:var(--font-mono)] font-bold w-7 sm:w-8 text-right tabular-nums inline-flex items-center justify-end gap-px ${
+                    isBoosted ? "text-amber-500" : hasBuff ? "text-emerald-600 dark:text-emerald-400" : hasNerf ? "text-rose-600 dark:text-rose-400" : "text-text-secondary"
                   }`}>
-                    {displayValue}{isBoosted && <span className="text-[8px] align-super" aria-label="boosted by item">*</span>}
+                    {displayValue}
+                    {hasBuff && (
+                      <span
+                        className={`text-[8px] sm:text-[10px] leading-none ${isBoosted ? "text-amber-500" : "text-emerald-500 dark:text-emerald-400"}`}
+                        aria-hidden
+                      >
+                        {"\u25B2"}
+                      </span>
+                    )}
+                    {hasNerf && (
+                      <span className="text-[8px] sm:text-[10px] leading-none text-rose-500 dark:text-rose-400" aria-hidden>
+                        {"\u25BC"}
+                      </span>
+                    )}
                   </span>
                   {investLabel > 0 ? (
                     <span className={`hidden sm:inline text-xs font-bold w-12 tabular-nums ${isOverMax && showSp ? "text-amber-500" : "text-accent"}`}>
