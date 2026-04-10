@@ -70,12 +70,53 @@ function autoDetectCategory(line: string, pokemonSpecies: string): CalcCategory 
 }
 
 /**
+ * Split a single line into separate calcs at HKO boundaries.
+ * Each calc in standard Showdown format ends with "OHKO", "2HKO", "3HKO", etc.
+ * When users paste multiple calcs joined into one line, split them at the end of each HKO token.
+ *
+ * Post-HKO qualifiers ("after Leftovers", "if rain", etc.) stay attached to the preceding calc;
+ * anything that looks like the start of a new calc (begins with a digit/spread pattern) becomes a new chunk.
+ */
+function splitByHKO(line: string): string[] {
+  const hkoRegex = /\b(?:\d+|O)HKO\b/gi;
+  const endIndices: number[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = hkoRegex.exec(line)) !== null) {
+    endIndices.push(m.index + m[0].length);
+  }
+  if (endIndices.length <= 1) {
+    return [line.trim()].filter((s) => s.length > 0);
+  }
+
+  const chunks: string[] = [];
+  let start = 0;
+  for (const end of endIndices) {
+    const chunk = line.slice(start, end).trim();
+    if (chunk) chunks.push(chunk);
+    start = end;
+  }
+  const trailing = line.slice(start).trim();
+  if (trailing) {
+    // If it starts with a post-HKO qualifier, attach to the previous chunk
+    if (/^(after|if|with|when|plus|minus|\+|-)\b/i.test(trailing) && chunks.length > 0) {
+      chunks[chunks.length - 1] += " " + trailing;
+    } else if (trailing.length > 0) {
+      // Otherwise treat as its own fragment (may be a new calc without HKO)
+      chunks.push(trailing);
+    }
+  }
+  return chunks;
+}
+
+/**
  * Parse multi-line calc output into individual entries.
- * Handles standard Showdown/Nerd of Now calc format.
+ * Splits by newlines first, then by HKO boundaries within each line
+ * so that bulk-pasted calcs on a single line still come out as separate entries.
  */
 function parseCalcLines(rawText: string, pokemonSpecies: string): ParsedCalcLine[] {
   return rawText
     .split("\n")
+    .flatMap((line) => splitByHKO(line))
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
     .map((text) => ({
@@ -142,14 +183,9 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
     setParsedLines((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const toggleCategory = (index: number) => {
+  const setLineCategory = (index: number, category: CalcCategory) => {
     setParsedLines((prev) =>
-      prev.map((line, i) => {
-        if (i !== index) return line;
-        const categories: CalcCategory[] = ["offensive", "defensive", "speed"];
-        const nextIdx = (categories.indexOf(line.category) + 1) % categories.length;
-        return { ...line, category: categories[nextIdx] };
-      })
+      prev.map((line, i) => (i === index ? { ...line, category } : line))
     );
   };
 
@@ -181,44 +217,68 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
 
         {/* Preview parsed calcs */}
         {parsedLines.length > 0 && (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] text-text-tertiary">
-              {parsedLines.length} {t.calcsDetected}
-            </span>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] text-text-tertiary">
+                {parsedLines.length} {t.calcsDetected}
+              </span>
+              <span className="text-[10px] text-text-tertiary italic">
+                Tap &#9876; &#128737; &#9889; to fix a wrong category
+              </span>
+            </div>
             {parsedLines.map((line, i) => {
               const cfg = CATEGORY_CONFIG[line.category];
               return (
                 <div
                   key={i}
-                  className={`flex items-center gap-2 px-3 py-2 bg-surface-alt border ${cfg.borderClass} rounded-lg`}
+                  className={`flex flex-col sm:flex-row sm:items-center gap-2 px-3 py-2.5 bg-surface-alt border ${cfg.borderClass} border-l-[3px] rounded-lg`}
+                  style={{ borderLeftColor: "currentColor" }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => toggleCategory(i)}
-                    className={`flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${cfg.tagBg} ${cfg.tagText} hover:opacity-80 transition-opacity`}
-                    title={t.changeCategory}
-                    aria-label={t.changeCategory}
-                  >
-                    {cfg.icon} {catLabelMap[cfg.label] ?? cfg.label}
-                  </button>
-                  <span className="flex-1 text-xs text-text-primary truncate">
+                  <span className="flex-1 text-xs text-text-primary leading-snug break-words">
                     {line.text}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => handleAddSingle(i)}
-                    className="text-accent text-xs font-medium hover:text-accent/80 flex-shrink-0"
-                  >
-                    {t.add}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveParsed(i)}
-                    className="text-text-tertiary hover:text-red-400 text-xs flex-shrink-0"
-                    aria-label="Remove calc"
-                  >
-                    ✕
-                  </button>
+                  <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
+                    {/* Segmented category switcher */}
+                    <div className="flex items-center gap-0.5 rounded-lg bg-surface border border-border p-0.5">
+                      {(["offensive", "defensive", "speed"] as const).map((cat) => {
+                        const catCfg = CATEGORY_CONFIG[cat];
+                        const isActive = line.category === cat;
+                        const label = catLabelMap[catCfg.label] ?? catCfg.label;
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => setLineCategory(i, cat)}
+                            aria-label={`${t.changeCategory}: ${label}`}
+                            aria-pressed={isActive}
+                            title={label}
+                            className={`inline-flex items-center justify-center h-8 w-8 rounded-md text-sm transition-all duration-150 ${
+                              isActive
+                                ? `${catCfg.tagBg} ${catCfg.tagText} shadow-sm`
+                                : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
+                            }`}
+                          >
+                            <span aria-hidden>{catCfg.icon}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleAddSingle(i)}
+                      className="text-accent text-xs font-semibold hover:text-accent/80"
+                    >
+                      {t.add}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveParsed(i)}
+                      className="inline-flex items-center justify-center h-7 w-7 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                      aria-label="Remove calc"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
               );
             })}

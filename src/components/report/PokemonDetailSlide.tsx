@@ -109,9 +109,7 @@ function EditableCalcEntry({
   };
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(entry.text);
-  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (editing && inputRef.current) {
@@ -119,17 +117,6 @@ function EditableCalcEntry({
       inputRef.current.selectionStart = inputRef.current.value.length;
     }
   }, [editing]);
-
-  useEffect(() => {
-    if (!showCategoryMenu) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowCategoryMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [showCategoryMenu]);
 
   const commitEdit = () => {
     const trimmed = editText.trim();
@@ -141,7 +128,7 @@ function EditableCalcEntry({
 
   return (
     <div
-      className={`group flex items-start gap-2.5 px-3 py-2.5 sm:px-4 sm:py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-lg transition-all hover:shadow-sm presenting:px-5`}
+      className={`group flex items-start gap-3 px-3 py-2.5 sm:px-4 sm:py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-lg transition-all hover:shadow-sm presenting:px-5`}
     >
       <span className={`${cfg.bulletColor} text-sm mt-px flex-shrink-0 presenting:text-base`}>&#9656;</span>
       {editing && !isReadOnly ? (
@@ -172,48 +159,65 @@ function EditableCalcEntry({
         </span>
       )}
       {!isReadOnly && (
-        <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1 mt-0.5">
-          {/* Category switcher */}
+        <div
+          className="flex items-center gap-1 shrink-0 self-start"
+          role="group"
+          aria-label={t.changeCategory}
+        >
+          {/* Always-visible segmented category switcher */}
           {onEdit && (
-            <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setShowCategoryMenu(!showCategoryMenu)}
-                className="text-text-tertiary hover:text-text-secondary text-xs px-1.5 py-0.5 rounded-md hover:bg-surface-alt transition-colors"
-                aria-label={t.changeCategory}
-                title={t.changeCategory}
-              >
-                {CATEGORY_CONFIG[entry.category].icon}
-              </button>
-              {showCategoryMenu && (
-                <div className="absolute right-0 top-full mt-1 z-20 bg-surface border border-border rounded-lg shadow-lg py-1 min-w-[140px]">
-                  {categories.map((cat) => {
-                    const catCfg = CATEGORY_CONFIG[cat];
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => {
-                          if (cat !== entry.category) onEdit({ category: cat });
-                          setShowCategoryMenu(false);
-                        }}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-surface-alt transition-colors ${
-                          cat === entry.category ? "font-semibold" : ""
-                        }`}
-                      >
-                        <span>{catCfg.icon}</span>
-                        <span className={catCfg.tagText}>{catLabelMap[catCfg.label] ?? catCfg.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+            <div className="flex items-center gap-0.5 rounded-lg bg-surface-alt/60 border border-border p-0.5">
+              {categories.map((cat) => {
+                const catCfg = CATEGORY_CONFIG[cat];
+                const isActive = entry.category === cat;
+                const label = catLabelMap[catCfg.label] ?? catCfg.label;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => {
+                      if (!isActive) onEdit({ category: cat });
+                    }}
+                    aria-label={`${t.changeCategory}: ${label}`}
+                    aria-pressed={isActive}
+                    title={label}
+                    className={`inline-flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-md text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-surface ${
+                      isActive
+                        ? `${catCfg.tagBg} ${catCfg.tagText} border ${catCfg.borderClass} shadow-sm`
+                        : "text-text-tertiary hover:text-text-primary hover:bg-surface active:scale-95"
+                    }`}
+                  >
+                    <span aria-hidden>{catCfg.icon}</span>
+                    {isActive && <span className="sr-only"> (current)</span>}
+                  </button>
+                );
+              })}
             </div>
           )}
+
+          {/* Divider */}
+          <div className="mx-0.5 sm:mx-1 h-6 w-px bg-border" aria-hidden />
+
+          {/* Delete */}
           <button
+            type="button"
             onClick={onRemove}
-            className="text-text-tertiary hover:text-red-400 text-sm transition-colors"
             aria-label={t.removeCalc}
+            title={t.removeCalc}
+            className="inline-flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 active:scale-95 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
           >
-            &#10005;
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M6 6l8 8M14 6l-8 8" />
+            </svg>
           </button>
         </div>
       )}
@@ -665,6 +669,18 @@ export function PokemonDetailSlide({
       </h3>
       {calcs.length > 0 ? (
         <div className="flex flex-col gap-5 sm:gap-4">
+          {!isReadOnly && (
+            <p className="text-[11px] sm:text-xs text-text-tertiary leading-snug flex items-start gap-1.5">
+              <span aria-hidden className="mt-px">&#9432;</span>
+              <span>
+                Auto-detected as offensive / defensive / speed.
+                Tap the <span className="text-red-500 dark:text-red-400">&#9876;</span>{" "}
+                <span className="text-emerald-500 dark:text-emerald-400">&#128737;</span>{" "}
+                <span className="text-amber-500 dark:text-amber-400">&#9889;</span>{" "}
+                icons on any calc to move it to a different group.
+              </span>
+            </p>
+          )}
           {renderCalcGroup(offensiveCalcs, "offensive", calcs)}
           {renderCalcGroup(defensiveCalcs, "defensive", calcs)}
           {renderCalcGroup(speedCalcs, "speed", calcs)}
