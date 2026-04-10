@@ -11,21 +11,20 @@ export const contentType = "image/png";
 // unfurl repeatedly, and regenerating on every request was causing timeouts.
 export const revalidate = 3600;
 
-// 2x the OG standard (2400x1260) for crisp rendering on Discord and other
-// hi-DPI displays. Discord accepts images up to 8MB and scales them down; at
-// 1200x630 native, text and sprites looked soft on retina screens.
+// Native 1200x630 — matches Discord / Twitter / OG crawler expectations.
+// A previous attempt at 2x (2400x1260) consistently timed out the edge
+// function: Satori's rasterization cost is effectively linear in pixel count,
+// and at 4x the pixels the cold-start render exceeded Vercel's edge timeout,
+// leaving Discord unable to fetch the image at all. Staying at 1x is the
+// only reliable way to keep the generator under budget.
 //
-// A previous attempt at 2x broke because the render was dominated by expensive
-// background effects (dot grid, multiple radial glows, layered gradients).
-// This version keeps the 2x resolution but strips the render cost — the dot
-// grid is gone, the ambient glow is gone, and the content layout is rendered
-// inside a scale(2) root transform so we keep the existing 1x pixel values
-// without having to multiply every number by 2.
-const SCALE = 2;
-const BASE_W = 1200;
-const BASE_H = 630;
-const W = BASE_W * SCALE;
-const H = BASE_H * SCALE;
+// The real win for visual quality in this pass was the card-grid layout fix
+// below: the previous layout declared 6 × 352 = 2112 px of cards in a 1200 px
+// canvas and relied on implicit flex-shrink to squash them, which left
+// content overflowing unpredictably. The new layout uses hard sizes that
+// actually fit the canvas.
+const W = 1200;
+const H = 630;
 
 // ── Inline paste parser (edge-compatible, no heavy deps) ───────
 interface OGPokemon {
@@ -176,20 +175,13 @@ export default async function Image({
       (
         <div
           style={{
-            width: W, height: H, display: "flex",
+            width: "100%", height: "100%", display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
             background: "#08080F", fontFamily: "system-ui, sans-serif",
           }}
         >
-          <div
-            style={{
-              width: BASE_W, height: BASE_H, display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center",
-              transform: `scale(${SCALE})`, transformOrigin: "top left",
-            }}
-          >
-            <div style={{ fontSize: 96, fontWeight: 800, color: "#F0EDE6" }}>VGC Team Report</div>
-            <div style={{ fontSize: 36, color: "#64648A", marginTop: 28 }}>Team not found</div>
-          </div>
+          <div style={{ fontSize: 96, fontWeight: 800, color: "#F0EDE6" }}>VGC Team Report</div>
+          <div style={{ fontSize: 36, color: "#64648A", marginTop: 28 }}>Team not found</div>
         </div>
       ),
       { width: W, height: H },
@@ -203,17 +195,10 @@ export default async function Image({
     (
       <div
         style={{
-          width: W, height: H, display: "flex",
+          width: "100%", height: "100%", display: "flex", flexDirection: "column",
           background: "linear-gradient(165deg, #080812 0%, #0B0B1E 50%, #080810 100%)",
           fontFamily: "system-ui, sans-serif",
-        }}
-      >
-      <div
-        style={{
-          width: BASE_W, height: BASE_H, display: "flex", flexDirection: "column",
-          fontFamily: "system-ui, sans-serif",
           position: "relative", overflow: "hidden",
-          transform: `scale(${SCALE})`, transformOrigin: "top left",
         }}
       >
         {/* Top accent line */}
@@ -450,7 +435,6 @@ export default async function Image({
             pokemonvgcteamreport.com
           </span>
         </div>
-      </div>
       </div>
     ),
     { width: W, height: H },
