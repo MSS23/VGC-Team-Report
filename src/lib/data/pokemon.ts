@@ -3283,10 +3283,44 @@ export const POKEMON_DATA: Record<string, PokemonData> = {
   "terapagos-stellar": { name: "Terapagos-Stellar", types: ["Normal"], baseStats: { hp: 160, atk: 105, def: 110, spa: 130, spd: 110, spe: 85 }, abilities: ["Teraform Zero"] },
 };
 
+/**
+ * Cosmetic-only form suffixes — these Pokemon have identical stats, types,
+ * and abilities across every variant, so Showdown names like `Gastrodon-East`
+ * or `Deerling-Winter` should resolve to the base entry.
+ *
+ * ONLY high-confidence suffixes live here. Generic color words (red, blue,
+ * yellow, etc.) are deliberately excluded because they collide with real
+ * species keys (`squawkabilly-blue`, `basculin-blue-striped`, etc.). Anything
+ * that changes stats or typing — Mega, Alola, Galar, Hisui, Paldea, Origin,
+ * Therian, Single-Strike, Crowned, Wormadam forms — MUST NOT be in this set;
+ * those need their own POKEMON_DATA entries.
+ */
+const COSMETIC_FORM_SUFFIXES = new Set<string>([
+  // Shellos, Gastrodon — classic cosmetic split
+  "east", "west",
+  // Deerling, Sawsbuck — seasonal forms are purely visual
+  "spring", "summer", "autumn", "winter",
+]);
+
 export function lookupPokemon(species: string): PokemonData | null {
   const key = species
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
-  return POKEMON_DATA[key] ?? null;
+  const direct = POKEMON_DATA[key];
+  if (direct) return direct;
+
+  // Cosmetic-form fallback: strip a trailing cosmetic suffix and retry.
+  // e.g. `gastrodon-east` → `gastrodon`, `deerling-winter` → `deerling`.
+  const parts = key.split("-");
+  if (parts.length >= 2) {
+    const tail = parts[parts.length - 1];
+    if (COSMETIC_FORM_SUFFIXES.has(tail)) {
+      const base = parts.slice(0, -1).join("-");
+      const collapsed = POKEMON_DATA[base];
+      if (collapsed) return collapsed;
+    }
+  }
+
+  return null;
 }
