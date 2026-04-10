@@ -74,8 +74,11 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.com https://clerk.pokemonvgcteamreport.com",
               // Images: self, Showdown sprites, Clerk, GitHub, data URIs, Vercel Toolbar
               "img-src 'self' data: blob: https://play.pokemonshowdown.com https://*.pokemonshowdown.com https://img.clerk.com https://*.clerk.com https://raw.githubusercontent.com https://vercel.live https://vercel.com",
-              // Fonts: self + Google Fonts + Clerk
-              "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com https://*.clerk.com https://clerk.pokemonvgcteamreport.com",
+              // Fonts: self + Google Fonts + Clerk + Vercel Live toolbar
+              // (vercel.live serves geist.woff2 / geist_mono.woff2 for the
+              //  in-app feedback widget on preview deploys; blocking them
+              //  produced noisy CSP violations in prod consoles.)
+              "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://vercel.live https://*.vercel.live",
               // Connect: self, Clerk (all), Sentry, Vercel, PokePaste, PostHog
               "connect-src 'self' https://play.pokemonshowdown.com https://*.pokemonshowdown.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://clerk-telemetry.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live https://*.vercel.live https://pokepast.es https://eu.i.posthog.com https://*.posthog.com",
               // Frames: Clerk OAuth, Cloudflare, Vercel Live

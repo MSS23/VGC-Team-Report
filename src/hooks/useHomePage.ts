@@ -47,10 +47,21 @@ export function useHomePage() {
   // logged-in users the auto-draft would even persist the stolen team
   // to the viewer's own /api/user/drafts. That looked like unauthorized
   // "edit access" to someone else's report.
+  //
+  // Belt-and-suspenders: check all three possible signals.
+  // 1. ?s= query param (the main path after ShareRedirectClient replaces /s/id → /?s=id)
+  // 2. #id= / #data= hash (fallback for legacy inline-data shares)
+  // 3. window.location.pathname starting with /s/ — catches the case
+  //    where useShareUrl has called history.replaceState back to /s/id
+  //    (which does NOT update the Next.js router state that
+  //    useSearchParams reads from). Without this check, a router-state
+  //    desync could make isInShareContext flip to false while the user
+  //    is still viewing a shared report.
   const searchParams = useSearchParams();
   const hashShareId = typeof window !== "undefined" && window.location.hash.startsWith("#id=");
   const hashInlineData = typeof window !== "undefined" && window.location.hash.startsWith("#data=");
-  const isInShareContext = !!searchParams.get("s") || hashShareId || hashInlineData;
+  const pathIsShare = typeof window !== "undefined" && window.location.pathname.startsWith("/s/");
+  const isInShareContext = !!searchParams.get("s") || hashShareId || hashInlineData || pathIsShare;
 
   // ── Core team data ───────────────────────────────────────────────
   const {
@@ -97,9 +108,26 @@ export function useHomePage() {
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
-    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates,
-    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega,
+    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault,
+    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides,
   } = useTeamMeta(speciesKeys, shouldPersist);
+
+  // Compute the effective Mega-or-base state for a given Pokemon index.
+  // Per-card override (megaStates[i]) wins over the team-wide default
+  // (globalMegaDefault) which falls back to "auto" (true).
+  const effectiveMega = useCallback(
+    (index: number): boolean => {
+      const explicit = megaStates?.[index];
+      if (explicit !== undefined) return explicit;
+      return globalMegaDefault ?? true;
+    },
+    [megaStates, globalMegaDefault],
+  );
+
+  const hasMegaOverrides = useMemo(
+    () => !!megaStates && Object.keys(megaStates).length > 0,
+    [megaStates],
+  );
   const {
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
     updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,
@@ -576,6 +604,8 @@ export function useHomePage() {
     record, setRecord, mvpIndex, setMvpIndex,
     rentalCode, setRentalCode, creatorName, setCreatorName, tags, setTags, templateId, setTemplateId,
     megaStates, toggleMega,
+    globalMegaDefault, setGlobalMegaDefault, resetMegaOverrides,
+    effectiveMega, hasMegaOverrides,
 
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
     updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,
