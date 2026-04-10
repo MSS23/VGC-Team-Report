@@ -515,29 +515,33 @@ export function PokemonDetailSlide({
 
         {isChampions ? (
           <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-            {/* Pill toggle */}
-            <button
-              type="button"
-              onClick={() => setShowEvMode(!showEvMode)}
-              className="relative inline-flex h-8 sm:h-9 rounded-full bg-surface-alt border border-border overflow-hidden cursor-pointer group"
-              role="switch"
-              aria-checked={showEvMode}
-              aria-label="Toggle between Stat Points and EVs"
-            >
-              <span className={`absolute inset-y-0.5 rounded-full bg-accent transition-all duration-200 ease-out ${
-                showEvMode ? "left-[50%] right-0.5" : "left-0.5 right-[50%]"
-              }`} />
-              <span className={`relative z-10 inline-flex items-center justify-center px-3 sm:px-3.5 text-[11px] sm:text-xs font-extrabold tracking-wide transition-colors duration-200 ${
-                !showEvMode ? "text-white" : "text-text-tertiary group-hover:text-text-secondary"
-              }`}>
+            {/* Segmented control */}
+            <div className="inline-flex h-8 sm:h-9 rounded-lg bg-surface-alt border border-border p-0.5 gap-0.5">
+              <button
+                type="button"
+                onClick={() => setShowEvMode(false)}
+                className={`inline-flex items-center justify-center rounded-md px-3 sm:px-3.5 text-[11px] sm:text-xs font-bold tracking-wide transition-all duration-200 min-w-[44px] cursor-pointer ${
+                  !showEvMode
+                    ? "bg-accent text-white shadow-sm"
+                    : "text-text-tertiary hover:text-text-secondary"
+                }`}
+                aria-pressed={!showEvMode}
+              >
                 Stat Pts
-              </span>
-              <span className={`relative z-10 inline-flex items-center justify-center px-3 sm:px-3.5 text-[11px] sm:text-xs font-extrabold tracking-wide transition-colors duration-200 ${
-                showEvMode ? "text-white" : "text-text-tertiary group-hover:text-text-secondary"
-              }`}>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowEvMode(true)}
+                className={`inline-flex items-center justify-center rounded-md px-3 sm:px-3.5 text-[11px] sm:text-xs font-bold tracking-wide transition-all duration-200 min-w-[44px] cursor-pointer ${
+                  showEvMode
+                    ? "bg-accent text-white shadow-sm"
+                    : "text-text-tertiary hover:text-text-secondary"
+                }`}
+                aria-pressed={showEvMode}
+              >
                 EVs
-              </span>
-            </button>
+              </button>
+            </div>
 
             {/* Budget counter */}
             {(() => {
