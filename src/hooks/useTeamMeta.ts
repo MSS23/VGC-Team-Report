@@ -21,11 +21,18 @@ interface TeamMeta {
   tags?: ReportTags;
   templateId?: string;
   /**
-   * Per-Pokemon Mega override map. Keyed by team index (0–5).
+   * Per-Pokemon Mega override map. Keyed by the stable speciesKey (e.g.
+   * "Kangaskhan", or "Charizard-Mega-Y", or "Charizard-2" for dupes) so
+   * toggles follow the Pokemon across reorder / swap operations rather
+   * than sticking to a slot index.
    *  - undefined → no explicit choice, fall back to globalMegaDefault
    *  - true / false → explicit choice for this Pokemon
+   *
+   * Historical note: before 2026-04-10 this map was keyed by team index
+   * (0–5). Legacy numeric keys in localStorage are harmless — they just
+   * never resolve against a real speciesKey and are ignored at read time.
    */
-  megaStates?: Record<number, boolean>;
+  megaStates?: Record<string, boolean>;
   /**
    * Team-wide Mega default for cards that don't have an explicit override.
    *  - undefined / null → "auto" (treat as true: show Mega when stone present)
@@ -149,17 +156,23 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
   }, []);
 
   const toggleMega = useCallback((index: number) => {
+    // Resolve the slot index to a stable speciesKey at toggle time so
+    // the override follows the Pokemon across reorder / swap operations.
+    // If the index is out of range (should never happen at the UI layer)
+    // we no-op rather than write a junk key.
+    const key = speciesKeys[index];
+    if (!key) return;
     setMeta((prev) => {
       // Effective current = explicit override OR global default OR auto-true.
       // Toggling computes the effective value and writes its inverse as an
       // explicit override, so the user always sees the form they expect to
       // see after the tap.
-      const explicit = prev.megaStates?.[index];
+      const explicit = prev.megaStates?.[key];
       const effective = explicit ?? prev.globalMegaDefault ?? true;
       const next = !effective;
-      return { ...prev, megaStates: { ...prev.megaStates, [index]: next } };
+      return { ...prev, megaStates: { ...prev.megaStates, [key]: next } };
     });
-  }, []);
+  }, [speciesKeys]);
 
   /**
    * Set the team-wide Mega default. Does NOT touch existing per-card

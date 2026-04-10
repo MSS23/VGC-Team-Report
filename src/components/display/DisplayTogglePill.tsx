@@ -10,12 +10,17 @@ interface DisplayTogglePillProps {
 
   /** Effective team-wide Mega default. null = auto (treat as true). */
   globalMegaDefault: boolean | null;
-  /** Set the team-wide Mega default. */
+  /**
+   * Set the team-wide Mega default. The caller is expected to also clear
+   * any per-card overrides so a single tap normalizes the team — see
+   * setGlobalMegaDefaultAndReset in useHomePage. The pill surfaces a
+   * "will reset N overrides" caption below the radiogroup so users know
+   * what the tap will do before they tap.
+   */
   onGlobalMegaChange: (value: boolean | null) => void;
-  /** Whether the user has any per-card Mega overrides set. Shows the "Reset" affordance. */
+  /** Whether the user has any per-card Mega overrides set. Drives the
+   *  pre-tap reset caption and the non-default dot indicator. */
   hasMegaOverrides: boolean;
-  /** Wipe all per-card Mega overrides. */
-  onResetMegaOverrides: () => void;
 
   /** Global SP/EV display mode. false = SP, true = EV. */
   evMode: boolean;
@@ -46,7 +51,6 @@ export function DisplayTogglePill({
   globalMegaDefault,
   onGlobalMegaChange,
   hasMegaOverrides,
-  onResetMegaOverrides,
   evMode,
   onEvModeChange,
   hasSeenPill,
@@ -62,8 +66,14 @@ export function DisplayTogglePill({
   // PokemonCard auto-detect behavior).
   const showingMega = globalMegaDefault ?? true;
 
-  // Active state indicator on collapsed pill: any non-default state.
-  const hasNonDefault = (hasMegaCapable && !showingMega) || (isChampions && evMode);
+  // Active state indicator on collapsed pill: any state other than the
+  // baseline (global Mega on, SP mode). Per-card overrides count as
+  // non-default too so the user sees the dot whenever any card is
+  // diverging from the team's global form, even if the pill itself is
+  // still on the default Mega setting.
+  const hasNonDefault =
+    (hasMegaCapable && (!showingMega || hasMegaOverrides)) ||
+    (isChampions && evMode);
 
   // First-run discovery pulse: 1.5s subtle ring fade. Respects reduced motion
   // by skipping the animation entirely.
@@ -198,15 +208,18 @@ export function DisplayTogglePill({
                   </button>
                 </div>
                 {hasMegaOverrides && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onResetMegaOverrides();
-                    }}
-                    className="mt-2 text-[10px] font-semibold text-text-tertiary hover:text-accent underline-offset-2 hover:underline transition-colors cursor-pointer"
+                  // Pre-tap caption: tells the user that tapping Base or
+                  // Mega above will ALSO clear their per-card overrides,
+                  // so they're not surprised when overridden cards snap
+                  // back to the team default. The wiring lives in
+                  // useHomePage.setGlobalMegaDefaultAndReset.
+                  <p
+                    role="note"
+                    className="mt-2 text-[10px] font-semibold text-text-tertiary leading-snug"
                   >
-                    Per-card overrides active &middot; Reset to global
-                  </button>
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent align-middle mr-1.5" aria-hidden />
+                    Per-card overrides active &middot; tapping above resets all
+                  </p>
                 )}
               </div>
             )}

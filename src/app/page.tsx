@@ -139,8 +139,7 @@ function HomeContent() {
     megaStates,
     toggleMega,
     globalMegaDefault,
-    setGlobalMegaDefault,
-    resetMegaOverrides,
+    setGlobalMegaDefaultAndReset,
     effectiveMega,
     hasMegaOverrides,
     plans,
@@ -1168,9 +1167,10 @@ function HomeContent() {
         hasMegaCapable={hasMegaCapable}
         isChampions={isChampionsRegulation}
         globalMegaDefault={globalMegaDefault}
-        onGlobalMegaChange={setGlobalMegaDefault}
+        // Use the combined handler so tapping Base/Mega on the pill
+        // always normalizes the team by clearing per-card overrides.
+        onGlobalMegaChange={setGlobalMegaDefaultAndReset}
         hasMegaOverrides={hasMegaOverrides}
-        onResetMegaOverrides={resetMegaOverrides}
         evMode={evMode}
         onEvModeChange={setEvMode}
         hasSeenPill={hasSeenPill}

@@ -113,20 +113,39 @@ export function useHomePage() {
   } = useTeamMeta(speciesKeys, shouldPersist);
 
   // Compute the effective Mega-or-base state for a given Pokemon index.
-  // Per-card override (megaStates[i]) wins over the team-wide default
+  // Per-card override (keyed by speciesKey, not slot index — so it
+  // survives reorder/swap) wins over the team-wide default
   // (globalMegaDefault) which falls back to "auto" (true).
   const effectiveMega = useCallback(
     (index: number): boolean => {
-      const explicit = megaStates?.[index];
+      const key = speciesKeys[index];
+      const explicit = key ? megaStates?.[key] : undefined;
       if (explicit !== undefined) return explicit;
       return globalMegaDefault ?? true;
     },
-    [megaStates, globalMegaDefault],
+    [megaStates, globalMegaDefault, speciesKeys],
   );
 
+  // Only count overrides that actually apply to the current team. Legacy
+  // numeric-keyed entries or stale species keys from previous teams are
+  // ignored here so the "X per-card overrides" indicator in the pill
+  // never shows a phantom count.
   const hasMegaOverrides = useMemo(
-    () => !!megaStates && Object.keys(megaStates).length > 0,
-    [megaStates],
+    () => !!megaStates && speciesKeys.some((k) => megaStates[k] !== undefined),
+    [megaStates, speciesKeys],
+  );
+
+  // Combined handler for the floating Display pill: tapping Base/Mega on
+  // the team-wide control also clears any per-card overrides, so a single
+  // tap always normalizes the whole team to one form. Without this, the
+  // pill could silently "miss" overridden cards and leave the UI in a
+  // mixed state that didn't match what the user just tapped.
+  const setGlobalMegaDefaultAndReset = useCallback(
+    (value: boolean | null) => {
+      setGlobalMegaDefault(value);
+      resetMegaOverrides();
+    },
+    [setGlobalMegaDefault, resetMegaOverrides],
   );
   const {
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
@@ -654,6 +673,7 @@ export function useHomePage() {
     rentalCode, setRentalCode, creatorName, setCreatorName, tags, setTags, templateId, setTemplateId,
     megaStates, toggleMega,
     globalMegaDefault, setGlobalMegaDefault, resetMegaOverrides,
+    setGlobalMegaDefaultAndReset,
     effectiveMega, hasMegaOverrides,
 
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
