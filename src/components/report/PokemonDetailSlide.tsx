@@ -46,6 +46,11 @@ interface PokemonDetailSlideProps {
   isMega?: boolean;
   /** Flip between base and Mega form. When omitted the toggle is hidden. */
   onToggleMega?: () => void;
+  /** Controlled SP/EV display mode. When provided, the per-card segmented
+   *  control becomes a write-through to the parent's global state so all
+   *  cards switch in sync. When omitted the slide falls back to local state. */
+  showEvMode?: boolean;
+  onShowEvModeChange?: (v: boolean) => void;
 }
 
 const STAT_COLORS: Record<string, string> = {
@@ -332,6 +337,8 @@ export function PokemonDetailSlide({
   regulation,
   isMega,
   onToggleMega,
+  showEvMode: showEvModeProp,
+  onShowEvModeChange,
 }: PokemonDetailSlideProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
@@ -387,7 +394,11 @@ export function PokemonDetailSlide({
   const types = displayTypes;
   const natureData = NATURES[parsed.nature];
   const relevantStats = getRelevantStats(parsed);
-  const [showEvMode, setShowEvMode] = useState(false);
+  // Controlled when parent supplies showEvMode + handler; otherwise local fallback.
+  const [localShowEvMode, setLocalShowEvMode] = useState(false);
+  const isEvModeControlled = showEvModeProp !== undefined && onShowEvModeChange !== undefined;
+  const showEvMode = isEvModeControlled ? showEvModeProp : localShowEvMode;
+  const setShowEvMode = isEvModeControlled ? onShowEvModeChange : setLocalShowEvMode;
   const statLabels = {
     hp: t.statHp,
     atk: t.statAtk,

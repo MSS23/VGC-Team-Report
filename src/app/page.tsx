@@ -42,6 +42,9 @@ const CommentSection = dynamic(() => import("@/components/social/CommentSection"
 });
 const PrintableReport = dynamic(() => import("@/components/ui/PdfExport").then(m => ({ default: m.PrintableReport })));
 import type { ExportMode } from "@/components/ui/PdfExport";
+import { DisplayTogglePill } from "@/components/display/DisplayTogglePill";
+import { useGlobalDisplayPrefs } from "@/lib/hooks/useGlobalDisplayPrefs";
+import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
 
 export default function Home() {
   return (
@@ -135,6 +138,11 @@ function HomeContent() {
     setTags,
     megaStates,
     toggleMega,
+    globalMegaDefault,
+    setGlobalMegaDefault,
+    resetMegaOverrides,
+    effectiveMega,
+    hasMegaOverrides,
     plans,
     addPlan,
     removePlan,
@@ -186,6 +194,38 @@ function HomeContent() {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const [showShareModal, setShowShareModal] = useState(false);
   const [tournamentMode, setTournamentMode] = useState(false);
+
+  // ── Global display prefs (Mega all / SP-EV) ─────────────────────
+  // Persists SP/EV mode across sessions in localStorage. Mega default
+  // lives on the team meta itself so it travels with shared reports.
+  const { evMode, setEvMode, hasSeenPill, markPillSeen } = useGlobalDisplayPrefs();
+
+  // Resolve effective Mega state for every Pokemon index up front so the
+  // existing TeamReport / TeamOverview / PokemonCard chain doesn't need
+  // to know about the new override-vs-default split. Per-card explicit
+  // values still win — that logic lives inside `effectiveMega`.
+  const resolvedMegaStates = useMemo(() => {
+    if (!analysis) return undefined;
+    const out: Record<number, boolean> = {};
+    for (let i = 0; i < analysis.pokemon.length; i++) {
+      out[i] = effectiveMega(i);
+    }
+    return out;
+  }, [analysis, effectiveMega]);
+
+  // Whether the team contains at least one Mega-capable Pokemon, used
+  // to decide if the Form segment of the floating display pill should
+  // appear. Already-Mega imports (Kangaskhan-Mega, etc.) don't count
+  // because they can't be flipped to base form via this control.
+  const hasMegaCapable = useMemo(() => {
+    if (!analysis) return false;
+    return analysis.pokemon.some((p) => {
+      const entry = detectMegaFromItem(p.parsed.item, p.parsed.species);
+      return !!entry && !isMegaForm(p.parsed.species);
+    });
+  }, [analysis]);
+
+  const isChampionsRegulation = tags?.regulation === "Reg M-A";
 
   // ── Load draft from ?draft=ID ─────────────────────────────────────
   const draftLoaded = useRef(false);
@@ -974,8 +1014,10 @@ function HomeContent() {
           onReorderPokemon={isReadOnly ? undefined : reorderPokemon}
           onPokemonLongPress={handlePokemonLongPress}
           onUpdatePaste={isReadOnly ? undefined : handleUpdatePaste}
-          megaStates={megaStates}
+          megaStates={resolvedMegaStates}
           onToggleMega={isReadOnly ? undefined : toggleMega}
+          showEvMode={evMode}
+          onShowEvModeChange={setEvMode}
         />
         </>
         )}
@@ -1112,6 +1154,24 @@ function HomeContent() {
           changedSlides={versionDiff?.changedSlides}
         />
       )}
+
+      {/* Floating display options pill — global Mega / SP-EV toggles.
+          Visibility gates inside the component itself, but we still skip
+          rendering during tournament/print/presentation modes since those
+          have their own focused layouts. */}
+      <DisplayTogglePill
+        hasMegaCapable={hasMegaCapable}
+        isChampions={isChampionsRegulation}
+        globalMegaDefault={globalMegaDefault}
+        onGlobalMegaChange={setGlobalMegaDefault}
+        hasMegaOverrides={hasMegaOverrides}
+        onResetMegaOverrides={resetMegaOverrides}
+        evMode={evMode}
+        onEvModeChange={setEvMode}
+        hasSeenPill={hasSeenPill}
+        onMarkSeen={markPillSeen}
+        hidden={isPresentationStyle || tournamentMode || isPdfPrinting}
+      />
 
       {/* Edit mode FAB for mobile (shared views with edit access) */}
       <EditFab

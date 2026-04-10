@@ -27,6 +27,11 @@ interface PokemonCardProps {
   isMega?: boolean;
   onToggleMega?: () => void;
   regulation?: string;
+  /** Controlled SP/EV display mode. When provided, the per-card segmented
+   *  control becomes a write-through to the parent's global state so all
+   *  cards switch in sync. When omitted the card falls back to local state. */
+  showEvMode?: boolean;
+  onShowEvModeChange?: (v: boolean) => void;
 }
 
 const STAT_COLORS: Record<string, string> = {
@@ -38,10 +43,16 @@ const STAT_COLORS: Record<string, string> = {
   spe: "var(--stat-spe)",
 };
 
-export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation }: PokemonCardProps) {
+export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation, showEvMode: showEvModeProp, onShowEvModeChange }: PokemonCardProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
-  const [showEvMode, setShowEvMode] = useState(false);
+  // Controlled when parent supplies showEvMode + handler; otherwise local fallback.
+  // Local fallback exists so this card stays usable in isolation (e.g. team
+  // overview thumbnails) without forcing every caller to wire global state.
+  const [localShowEvMode, setLocalShowEvMode] = useState(false);
+  const isControlled = showEvModeProp !== undefined && onShowEvModeChange !== undefined;
+  const showEvMode = isControlled ? showEvModeProp : localShowEvMode;
+  const setShowEvMode = isControlled ? onShowEvModeChange : setLocalShowEvMode;
 
   // Mega Evolution detection
   const megaEntry = useMemo(

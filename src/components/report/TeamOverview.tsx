@@ -223,6 +223,9 @@ interface TeamOverviewProps {
   onUpdatePaste?: (paste: string) => void;
   megaStates?: Record<number, boolean>;
   onToggleMega?: (index: number) => void;
+  /** Global SP/EV display mode, controlled by the parent. */
+  showEvMode?: boolean;
+  onShowEvModeChange?: (v: boolean) => void;
 }
 
 export function TeamOverview({
@@ -256,6 +259,8 @@ export function TeamOverview({
   onUpdatePaste,
   megaStates,
   onToggleMega,
+  showEvMode,
+  onShowEvModeChange,
 }: TeamOverviewProps) {
   const { t } = useTranslation();
   const hasTournamentInfo = !!(teamName || tournamentName || placement || record);
@@ -605,6 +610,8 @@ export function TeamOverview({
                 isMega={megaStates?.[i]}
                 onToggleMega={onToggleMega ? () => onToggleMega(i) : undefined}
                 regulation={tags?.regulation}
+                showEvMode={showEvMode}
+                onShowEvModeChange={onShowEvModeChange}
               />
               </FieldDiffHighlight>
             </LongPressWrapper>

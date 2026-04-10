@@ -82,6 +82,9 @@ interface TeamReportProps {
   onUpdatePaste?: (paste: string) => void;
   megaStates?: Record<number, boolean>;
   onToggleMega?: (index: number) => void;
+  /** Global SP/EV display mode, controlled by the parent. */
+  showEvMode?: boolean;
+  onShowEvModeChange?: (v: boolean) => void;
 }
 
 /**
@@ -159,6 +162,8 @@ export function TeamReport({
   onUpdatePaste,
   megaStates,
   onToggleMega,
+  showEvMode,
+  onShowEvModeChange,
 }: TeamReportProps) {
   const pokemonCount = analysis.pokemon.length;
 
@@ -196,6 +201,8 @@ export function TeamReport({
           onUpdatePaste={onUpdatePaste}
           megaStates={megaStates}
           onToggleMega={onToggleMega}
+          showEvMode={showEvMode}
+          onShowEvModeChange={onShowEvModeChange}
         />
     );
   }
@@ -224,6 +231,8 @@ export function TeamReport({
           regulation={tags?.regulation}
           isMega={megaStates?.[pokemonIndex]}
           onToggleMega={onToggleMega ? () => onToggleMega(pokemonIndex) : undefined}
+          showEvMode={showEvMode}
+          onShowEvModeChange={onShowEvModeChange}
         />
     );
   }
