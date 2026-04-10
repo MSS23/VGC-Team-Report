@@ -417,7 +417,15 @@ export function ShareModal({
         </div>
 
         {/* Footer CTA */}
-        <div className="px-6 py-4 bg-surface-alt/50 border-t border-border">
+        <div className="px-6 py-4 bg-surface-alt/50 border-t border-border space-y-2.5">
+          <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+            <p className="text-[11px] text-text-secondary leading-relaxed">
+              <span className="font-bold text-text-primary">Bookmark this link now.</span> If you close the tab without saving it, you&apos;ll lose edit access to this report.
+            </p>
+          </div>
           <p className="text-xs text-text-tertiary text-center">
             The more you share, the more the VGC community grows.
             <br />

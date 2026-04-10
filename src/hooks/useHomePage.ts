@@ -139,6 +139,16 @@ export function useHomePage() {
     undoRedo.doneRestoring();
   }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull]);
 
+  // ── Restore in-progress team from localStorage (guest + signed-in) ──
+  // The auto-save in useTeamReport writes `vgc-team-paste` on every change,
+  // but nothing ever read it back — so guests who closed the tab lost
+  // their work despite it still sitting in their own browser. This effect
+  // restores it on first mount and flags the UI so we can show a
+  // welcome-back banner.
+  const [wasRestored, setWasRestored] = useState(false);
+  const restoreAttempted = useRef(false);
+  const dismissRestoreBanner = useCallback(() => setWasRestored(false), []);
+
   // ── Save flash indicator ─────────────────────────────────────────
   const [saveFlash, setSaveFlash] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -185,6 +195,56 @@ export function useHomePage() {
     isSharedView: share.isSharedView,
     buildShareState,
   });
+
+  // ── Restore in-progress team from localStorage on first mount ────
+  // Runs once after share state has settled. Skipped when entering a
+  // shared view (/s/[id]) since that path hydrates from the server.
+  useEffect(() => {
+    if (restoreAttempted.current) return;
+    if (analysis) return; // already have a team loaded
+    if (share.isSharedView || share.isSharePending || share.sharedState) return;
+    restoreAttempted.current = true;
+    try {
+      const stored = localStorage.getItem("vgc-team-paste");
+      if (stored && stored.trim()) {
+        setPaste(stored);
+        parseTeam(stored);
+        setWasRestored(true);
+      }
+    } catch {
+      // localStorage unavailable — nothing to restore
+    }
+  }, [analysis, share.isSharedView, share.isSharePending, share.sharedState, setPaste, parseTeam]);
+
+  // Dismiss the welcome-back banner once the user grabs a share link.
+  useEffect(() => {
+    if (wasRestored && share.hasExistingShare()) setWasRestored(false);
+  }, [wasRestored, share]);
+
+  // ── beforeunload warning when leaving with unsaved meaningful work ──
+  // Fires only when there's a real team on screen and no share link
+  // exists yet (so closing the tab would lose the only copy of the
+  // link, even though the paste is restored next visit).
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!analysis || isSampleTeam) return;
+      if (share.isSharedView) return;
+      if (share.hasExistingShare()) return;
+      // Only warn if the user has invested meaningful work beyond just pasting
+      const hasContent =
+        !!summary?.trim() ||
+        !!teamName?.trim() ||
+        !!tournamentName?.trim() ||
+        Object.values(notes).some((n) => n?.trim()) ||
+        Object.values(calcs).some((arr) => arr?.length > 0);
+      if (!hasContent) return;
+      e.preventDefault();
+      // Legacy browsers require a returnValue to show the prompt
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [analysis, isSampleTeam, share, summary, teamName, tournamentName, notes, calcs]);
 
   // ── Real-time collaborative sync (SSE) ──────────────────────────
   const handleRemoteUpdate = useCallback((state: import("@/lib/sharing/url-codec").ShareableState) => {
@@ -464,6 +524,9 @@ export function useHomePage() {
     showShortcutHint, setShowShortcutHint,
     isSampleTeam,
     speciesKeys,
+
+    // Welcome-back banner (restored from localStorage on reload)
+    wasRestored, dismissRestoreBanner,
 
     // Team content
     notes, setNote, calcs, addCalc, removeCalc, editCalc,

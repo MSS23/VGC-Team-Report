@@ -104,6 +104,8 @@ function HomeContent() {
     showShortcutHint,
     setShowShortcutHint,
     speciesKeys,
+    wasRestored,
+    dismissRestoreBanner,
     notes,
     setNote,
     calcs,
@@ -673,6 +675,58 @@ function HomeContent() {
         onExitSharedView={exitSharedView}
         onStartTour={!presentationMode ? startWalkthrough : undefined}
       />
+
+      {/* Welcome-back banner — shown when paste was restored from localStorage */}
+      {wasRestored && !isSharedView && analysis && (
+        <div className="max-w-5xl mx-auto px-4 pt-2">
+          <div className="flex items-start gap-3 px-4 py-3 bg-gradient-to-br from-emerald-500/10 via-accent-surface/20 to-accent/5 border border-emerald-500/30 rounded-xl animate-fade-in">
+            <div className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 dark:text-emerald-400">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-extrabold text-text-primary">
+                Welcome back — we restored your team
+              </p>
+              <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">
+                Your in-progress report is still here. <span className="font-bold text-text-primary">Click Share to get a permanent link</span> so you don&apos;t lose it when you close the tab.
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleShareClick();
+                    dismissRestoreBanner();
+                  }}
+                  className="px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-white hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
+                >
+                  Get my link
+                </button>
+                <button
+                  type="button"
+                  onClick={dismissRestoreBanner}
+                  className="px-3 py-1.5 text-[11px] font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={dismissRestoreBanner}
+              className="w-6 h-6 flex items-center justify-center rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer flex-shrink-0"
+              aria-label="Dismiss welcome back banner"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* URL length warning */}
       {urlWarning && (
