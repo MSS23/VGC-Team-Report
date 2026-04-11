@@ -13,6 +13,7 @@ const DraftBodySchema = z.object({
     calcs: z.record(z.string(), z.unknown()).optional(),
     roles: z.record(z.string(), z.unknown()).optional(),
     teamSummary: z.string().optional(),
+    teamName: z.string().optional(),
     tournamentName: z.string().optional(),
     placement: z.string().optional(),
     record: z.string().optional(),
@@ -27,6 +28,7 @@ const DraftBodySchema = z.object({
       archetype: z.array(z.string()).optional(),
     }).optional(),
     templateId: z.string().optional(),
+    genTheme: z.string().optional(),
   }).strip(),
   draftId: z.string().optional(),
 });
