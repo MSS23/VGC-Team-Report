@@ -24,23 +24,63 @@ export async function generateMetadata({
     const tournamentName = (data.tournamentName as string) ?? "";
     const creatorName = (data.creatorName as string) ?? "";
     const teamSummary = (data.teamSummary as string) ?? "";
+    const placement = (data.placement as string) ?? "";
+    const record = (data.record as string) ?? "";
     const species = extractSpecies(paste);
     const collabNames = collabRows.map((r) => r.user_name as string);
 
-    const title = tournamentName
-      ? `${tournamentName} - VGC Team Report`
-      : species.length > 0
-        ? `${species.join(" / ")} - VGC Team Report`
-        : "VGC Team Report";
+    // ── Title: front-load the most compelling signal the user gave us.
+    // Priority is tournament placement → tournament → species core →
+    // fallback. VGC players recognize "/" as the team-core separator, so
+    // keep that convention in titles.
+    const speciesLine = species.length > 0 ? species.join(" / ") : "";
+    let title: string;
+    if (tournamentName && placement) {
+      title = `${tournamentName} — ${placement} | VGC Team Report`;
+    } else if (tournamentName) {
+      title = speciesLine
+        ? `${tournamentName} | ${speciesLine} VGC Team`
+        : `${tournamentName} | VGC Team Report`;
+    } else if (speciesLine && creatorName) {
+      title = `${speciesLine} — VGC Team by ${creatorName}`;
+    } else if (speciesLine) {
+      title = `${speciesLine} — VGC Team Report`;
+    } else {
+      title = "VGC Team Report";
+    }
 
+    // ── Description: the user's teamSummary always wins — it's their
+    // voice. When absent, we auto-compose a description that actually
+    // sells the click: lead with a placement/record hook if they exist,
+    // list the full 6-mon team with bullet separators (better visual
+    // scan than commas), name the author, and close with a concrete
+    // value prop line. Aim for ~220 chars max so Twitter doesn't
+    // truncate mid-sentence.
     const authorLabel = creatorName
-      ? `Team by ${creatorName}${collabNames.length ? ` with ${collabNames.join(", ")}` : ""}`
-      : undefined;
+      ? collabNames.length
+        ? `${creatorName} with ${collabNames.join(", ")}`
+        : creatorName
+      : "";
+    const speciesBullets = species.length > 0 ? species.join(" · ") : "";
 
-    const description = teamSummary
-      || (authorLabel
-        ? `${authorLabel}: ${species.join(", ")}`
-        : `Team: ${species.join(", ")}`);
+    let description: string;
+    if (teamSummary) {
+      description = teamSummary;
+    } else if (speciesBullets) {
+      const hook = placement && tournamentName
+        ? `${placement} at ${tournamentName}: `
+        : placement
+          ? `${placement}: `
+          : record && tournamentName
+            ? `${record} at ${tournamentName}: `
+            : record
+              ? `${record} record: `
+              : "";
+      const byline = authorLabel ? ` VGC team by ${authorLabel}.` : "";
+      description = `${hook}${speciesBullets}.${byline} Full EV spreads, damage calcs, and matchup plans inside.`;
+    } else {
+      description = "Build, share, and present professional VGC team reports with damage calcs, speed tiers, and matchup plans.";
+    }
 
     // Embed images for shared reports are intentionally suppressed. We
     // previously generated a Satori-rendered team preview via
