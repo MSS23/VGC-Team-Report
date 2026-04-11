@@ -24,8 +24,11 @@ export async function generateMetadata({
   const mega = MEGA_BY_SLUG.get(pokemon);
   if (!mega) return {};
 
-  const title = `${mega.displayName} VGC Teams & Stats | Pokemon Champions`;
-  const description = `${mega.description} View competitive team reports, base stats, and strategies for ${mega.displayName} in Pokemon Champions Regulation M-A.`;
+  // Title targets the highest-volume long-tail queries: "{Pokemon} VGC",
+  // "{Pokemon} EV spread", "{Pokemon} moveset". Keeping it under ~60 chars
+  // so Google doesn't truncate in SERPs.
+  const title = `${mega.displayName} VGC Guide — EV Spreads, Movesets & Teams`;
+  const description = `Complete ${mega.displayName} VGC guide for Pokemon Champions Regulation M-A: best EV spreads, movesets, Tera types, damage calcs, and top competitive teams. ${mega.ability} with ${mega.megaStone}.`;
 
   return {
     title,
@@ -48,9 +51,16 @@ export async function generateMetadata({
     keywords: [
       mega.displayName,
       `${mega.displayName} VGC`,
-      `${mega.baseName} Mega Evolution`,
+      `${mega.displayName} EV spread`,
+      `${mega.displayName} moveset`,
+      `${mega.displayName} competitive set`,
+      `${mega.displayName} best set`,
       `${mega.displayName} teams`,
       `${mega.displayName} stats`,
+      `${mega.displayName} Tera Type`,
+      `${mega.baseName} Mega Evolution`,
+      `${mega.baseName} VGC`,
+      `${mega.baseName} EV spread`,
       "Pokemon Champions",
       "Regulation M-A",
       "VGC 2026",
@@ -136,13 +146,51 @@ export default async function MegaPokemonPage({
     .slice(0, 8)
     .map((m) => ({ slug: m.slug, displayName: m.displayName, types: m.types as string[] }));
 
+  const bst = pokemonData.baseStats.hp + pokemonData.baseStats.atk + pokemonData.baseStats.def +
+    pokemonData.baseStats.spa + pokemonData.baseStats.spd + pokemonData.baseStats.spe;
+  const typeLine = mega.types.join(" / ");
+
+  // FAQ schema — Google surfaces these as rich snippets for long-tail
+  // queries. Every answer below is grounded in first-party data (stats,
+  // ability, mega stone, live team count) — NO hallucinated "best spread"
+  // claims that we can't back up. Adding fake answers here would be a
+  // manual-action risk for structured-data spam.
+  const faqItems = [
+    {
+      q: `What ability does ${mega.displayName} have?`,
+      a: `${mega.displayName} has the ability ${mega.ability}. ${mega.description}`,
+    },
+    {
+      q: `What Mega Stone does ${mega.baseName} need to Mega Evolve?`,
+      a: `${mega.baseName} needs to hold ${mega.megaStone} to Mega Evolve into ${mega.displayName} during battle.`,
+    },
+    {
+      q: `What type is ${mega.displayName}?`,
+      a: `${mega.displayName} is a ${typeLine}-type Pokemon in VGC Regulation M-A.`,
+    },
+    {
+      q: `What are ${mega.displayName}'s base stats?`,
+      a: `${mega.displayName} has base stats of ${pokemonData.baseStats.hp} HP / ${pokemonData.baseStats.atk} Atk / ${pokemonData.baseStats.def} Def / ${pokemonData.baseStats.spa} SpA / ${pokemonData.baseStats.spd} SpD / ${pokemonData.baseStats.spe} Spe, for a Base Stat Total of ${bst}.`,
+    },
+    {
+      q: `Is ${mega.displayName} legal in VGC 2026 Regulation M-A?`,
+      a: `Yes — ${mega.displayName} is legal in VGC 2026 Regulation M-A, the Pokemon Champions format that reintroduces Mega Evolution to competitive VGC.`,
+    },
+    ...(teams.length > 0
+      ? [{
+          q: `Where can I find competitive ${mega.displayName} VGC teams?`,
+          a: `VGC Team Report hosts ${teams.length} public competitive team${teams.length === 1 ? "" : "s"} featuring ${mega.displayName}, with full EV spreads, movesets, and matchup notes. Browse them on this page or create your own report by pasting your Showdown team.`,
+        }]
+      : []),
+  ];
+
   return (
     <>
       <JsonLd
         data={{
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: `${mega.displayName} VGC Teams & Stats`,
+          name: `${mega.displayName} VGC Guide — EV Spreads, Movesets & Teams`,
           description: mega.description,
           url: `https://pokemonvgcteamreport.com/champions/${mega.slug}`,
           isPartOf: {
@@ -169,11 +217,26 @@ export default async function MegaPokemonPage({
           },
         }}
       />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqItems.map((item) => ({
+            "@type": "Question",
+            name: item.q,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: item.a,
+            },
+          })),
+        }}
+      />
       <MegaLandingContent
         mega={mega}
         baseStats={pokemonData.baseStats}
         teams={teams}
         relatedMegas={relatedMegas}
+        faqs={faqItems}
       />
     </>
   );

@@ -68,9 +68,10 @@ interface MegaLandingContentProps {
   baseStats: StatSpread;
   teams: ExploreReport[];
   relatedMegas: { slug: string; displayName: string; types: string[] }[];
+  faqs: { q: string; a: string }[];
 }
 
-export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: MegaLandingContentProps) {
+export function MegaLandingContent({ mega, baseStats, teams, relatedMegas, faqs }: MegaLandingContentProps) {
   const { darkMode, setDarkMode } = useDarkMode();
   const bst = Object.values(baseStats).reduce((a, b) => a + b, 0);
 
@@ -148,7 +149,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
         <section className="max-w-5xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-extrabold text-text-primary">
-              Teams with {mega.displayName}
+              {mega.displayName} EV Spreads & Competitive Teams
             </h2>
             <Link
               href={`/explore?species=${encodeURIComponent(mega.baseName)}&regulation=Reg+M-A`}
@@ -208,6 +209,34 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
             </p>
           </div>
         </section>
+
+        {/* FAQ — visible questions matching the FAQPage JSON-LD on the
+            server. Visible FAQs rank dramatically better than hidden ones;
+            Google surfaces them as rich snippets for long-tail queries. */}
+        {faqs.length > 0 && (
+          <section className="max-w-5xl mx-auto px-4 py-8">
+            <h2 className="text-xl font-extrabold text-text-primary mb-4">
+              {mega.displayName} VGC FAQ
+            </h2>
+            <div className="bg-surface rounded-xl border border-border divide-y divide-border">
+              {faqs.map((item, i) => (
+                <details key={i} className="group px-4 sm:px-6 py-4">
+                  <summary className="flex items-start justify-between gap-3 cursor-pointer list-none">
+                    <h3 className="text-sm font-extrabold text-text-primary group-hover:text-accent transition-colors">
+                      {item.q}
+                    </h3>
+                    <span className="flex-shrink-0 text-text-tertiary group-open:rotate-45 transition-transform text-lg leading-none mt-0.5">
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-2 text-sm text-text-secondary leading-relaxed">
+                    {item.a}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Related Megas */}
         {relatedMegas.length > 0 && (
