@@ -77,3 +77,52 @@ export function pokemonToShowdown(mon: ParsedPokemon): string {
 export function teamToShowdown(pokemon: ParsedPokemon[]): string {
   return pokemon.map(pokemonToShowdown).join("\n\n");
 }
+
+/**
+ * Open Team Sheet format — what is visible to your opponent at the start of
+ * a match. Species, item, ability, Tera Type, level (if non-default), and
+ * moves are visible; EVs, IVs, and nature are hidden.
+ */
+export function pokemonToOpenSheet(mon: ParsedPokemon): string {
+  const lines: string[] = [];
+
+  let line1 = "";
+  if (mon.nickname) {
+    line1 = `${mon.nickname} (${mon.species})`;
+  } else {
+    line1 = mon.species;
+  }
+  if (mon.gender) {
+    line1 += ` (${mon.gender})`;
+  }
+  if (mon.item) {
+    line1 += ` @ ${mon.item}`;
+  }
+  lines.push(line1);
+
+  if (mon.ability) {
+    lines.push(`Ability: ${mon.ability}`);
+  }
+
+  if (mon.level !== 50) {
+    lines.push(`Level: ${mon.level}`);
+  }
+
+  if (mon.shiny) {
+    lines.push("Shiny: Yes");
+  }
+
+  if (mon.teraType) {
+    lines.push(`Tera Type: ${mon.teraType}`);
+  }
+
+  for (const move of mon.moves) {
+    lines.push(`- ${move}`);
+  }
+
+  return lines.join("\n");
+}
+
+export function teamToOpenSheet(pokemon: ParsedPokemon[]): string {
+  return pokemon.map(pokemonToOpenSheet).join("\n\n");
+}

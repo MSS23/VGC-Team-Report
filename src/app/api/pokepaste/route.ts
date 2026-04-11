@@ -2,6 +2,13 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+const PokePasteCreateSchema = z.object({
+  paste: z.string().min(1).max(50_000),
+  title: z.string().max(200).optional(),
+  author: z.string().max(200).optional(),
+  notes: z.string().max(5_000).optional(),
+});
+
 const PokePasteUrlSchema = z.string().url().refine(
   (val) => {
     try {
@@ -88,6 +95,82 @@ export async function GET(request: NextRequest) {
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch from PokéPaste" },
+      { status: 502 }
+    );
+  }
+}
+
+/**
+ * Creates a new paste on pokepast.es and returns the resulting URL.
+ *
+ * POST /api/pokepaste
+ * Body: { paste: string, title?: string, author?: string, notes?: string }
+ * Response: { url: string }
+ */
+export async function POST(request: NextRequest) {
+  const guard = await apiGuard(request, { rateLimit: { key: "pokepaste-create", max: 20 } });
+  if (guard) return guard;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const parsed = PokePasteCreateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+      { status: 400 }
+    );
+  }
+
+  const { paste, title, author, notes } = parsed.data;
+  const form = new URLSearchParams();
+  form.set("paste", paste);
+  if (title) form.set("title", title);
+  if (author) form.set("author", author);
+  if (notes) form.set("notes", notes);
+
+  try {
+    const res = await fetch("https://pokepast.es/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "VGC-Team-Report/1.0",
+      },
+      body: form.toString(),
+      redirect: "manual",
+    });
+
+    // pokepast.es responds with 302 Location: /<id> on success
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("location");
+      if (location) {
+        const url = location.startsWith("http")
+          ? location
+          : `https://pokepast.es${location.startsWith("/") ? "" : "/"}${location}`;
+        return NextResponse.json({ url });
+      }
+    }
+
+    // Some variants return HTML on 200 — try to extract the canonical URL
+    if (res.ok) {
+      const html = await res.text();
+      const match = html.match(/https:\/\/pokepast\.es\/[A-Za-z0-9]+/);
+      if (match) {
+        return NextResponse.json({ url: match[0] });
+      }
+    }
+
+    return NextResponse.json(
+      { error: `PokéPaste returned ${res.status}` },
+      { status: 502 }
+    );
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to create PokéPaste" },
       { status: 502 }
     );
   }

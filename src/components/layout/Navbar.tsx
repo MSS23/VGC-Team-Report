@@ -80,6 +80,8 @@ interface NavbarProps {
   // Export
   onExportPdf?: (mode?: "all-slides" | "tournament-evs" | "tournament-stats") => void;
   onExportPokepaste?: () => void;
+  onCreatePokepaste?: (mode: "ots" | "cts") => void;
+  pokepasteCreating?: null | "ots" | "cts";
 
   // Tournament mode
   tournamentMode?: boolean;
@@ -167,7 +169,7 @@ export function Navbar(props: NavbarProps) {
     hasExistingShare, editLinkCopied, onCopyEditLink,
     onUndo, onRedo, canUndo, canRedo,
     comparingVersion, onCompareVersion, onClearCompareVersion, compareLoading,
-    onExportPdf, onExportPokepaste,
+    onExportPdf, onExportPokepaste, onCreatePokepaste, pokepasteCreating,
     tournamentMode, onSetTournamentMode,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
     onReset, onExitSharedView, onStartTour,
@@ -638,6 +640,36 @@ export function Navbar(props: NavbarProps) {
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                       </svg>
                       {pasteCopied ? "Copied to Clipboard!" : "Copy Paste"}
+                    </button>
+                  </>
+                )}
+
+                {/* Create PokéPaste — OTS (Open Team Sheet) & CTS (Closed / full spread) */}
+                {onCreatePokepaste && !isPresentationStyle && (
+                  <>
+                    <button
+                      type="button"
+                      disabled={pokepasteCreating !== null && pokepasteCreating !== undefined}
+                      onClick={() => { setMenuOpen(false); onCreatePokepaste("ots"); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+                      </svg>
+                      {pokepasteCreating === "ots" ? "Uploading…" : "Create PokéPaste (OTS)"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pokepasteCreating !== null && pokepasteCreating !== undefined}
+                      onClick={() => { setMenuOpen(false); onCreatePokepaste("cts"); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+                      </svg>
+                      {pokepasteCreating === "cts" ? "Uploading…" : "Create PokéPaste (CTS)"}
                     </button>
                   </>
                 )}

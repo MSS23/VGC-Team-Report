@@ -25,7 +25,8 @@ const CollaboratorPanel = dynamic(() => import("@/components/social/Collaborator
 import { getSessionId } from "@/lib/utils/session-id";
 import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { setViewOverrideTheme, reapplyCurrentTheme, type GenTheme } from "@/hooks/useTheme";
-import { teamToShowdown } from "@/lib/utils/export-paste";
+import { teamToShowdown, teamToOpenSheet } from "@/lib/utils/export-paste";
+import { createPokePaste } from "@/lib/utils/pokepaste";
 import { I18nProvider } from "@/lib/i18n";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
@@ -336,6 +337,45 @@ function HomeContent() {
     navigator.clipboard.writeText(pasteText);
   }, [analysis]);
 
+  // ── PokéPaste creation: OTS (Open Team Sheet, no EVs/IVs/nature) and
+  //    CTS (Closed Team Sheet, full spread). Both upload to pokepast.es
+  //    via our API proxy and return a shareable URL.
+  const [pokepasteCreating, setPokepasteCreating] = useState<null | "ots" | "cts">(null);
+  const [pokepasteError, setPokepasteError] = useState<string | null>(null);
+
+  const handleCreatePokepaste = useCallback(
+    async (mode: "ots" | "cts") => {
+      if (!analysis || pokepasteCreating) return;
+      setPokepasteCreating(mode);
+      setPokepasteError(null);
+      try {
+        const parsed = analysis.pokemon.map((p) => p.parsed);
+        const pasteText =
+          mode === "ots" ? teamToOpenSheet(parsed) : teamToShowdown(parsed);
+        const baseTitle = tournamentName || teamName || "VGC Team";
+        const title = mode === "ots" ? `${baseTitle} (Open Team Sheet)` : baseTitle;
+        const url = await createPokePaste({
+          paste: pasteText,
+          title,
+          author: creatorName || undefined,
+        });
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch {
+          // Clipboard may be unavailable (iframe, insecure ctx) — still open tab
+        }
+        window.open(url, "_blank", "noopener,noreferrer");
+      } catch (err) {
+        setPokepasteError(
+          err instanceof Error ? err.message : "Failed to create PokéPaste",
+        );
+      } finally {
+        setPokepasteCreating(null);
+      }
+    },
+    [analysis, tournamentName, teamName, creatorName, pokepasteCreating],
+  );
+
   const handleExportPdf = useCallback((mode: ExportMode = "all-slides") => {
     // Tournament exports get a theme picker; all-slides uses current theme
     if (mode === "tournament-evs" || mode === "tournament-stats") {
@@ -358,9 +398,34 @@ function HomeContent() {
 
   useEffect(() => {
     if (!isPdfPrinting) return;
-    // Wait for the print container to actually render with content,
-    // Wait for content to render, then wait for all images to load
+    // Wait for the print container to render, then either trigger the
+    // browser print dialog (all-slides → PDF via window.print) or capture
+    // the container as a PNG (tournament-evs / tournament-stats).
     let cancelled = false;
+
+    const finish = async () => {
+      if (cancelled) return;
+      const container = document.getElementById("print-container");
+      const mode = exportMode;
+      if (mode === "tournament-evs" || mode === "tournament-stats") {
+        try {
+          if (container) {
+            const { exportAsImage } = await import("@/lib/utils/export-report");
+            const stem = tournamentName || teamName || "vgc-team";
+            const suffix = mode === "tournament-stats" ? "team-sheet-stats" : "team-sheet-evs";
+            await exportAsImage(container, `${stem}-${suffix}`);
+          }
+        } catch (err) {
+          console.error("Failed to export tournament sheet as PNG", err);
+        } finally {
+          if (!cancelled) setIsPdfPrinting(false);
+        }
+      } else {
+        window.print();
+        if (!cancelled) setIsPdfPrinting(false);
+      }
+    };
+
     const waitForContent = () => {
       const container = document.getElementById("print-container");
       if (!cancelled && container && container.children.length > 0) {
@@ -373,24 +438,18 @@ function HomeContent() {
           const checkDone = () => {
             loaded++;
             if (!cancelled && loaded >= unloaded.length) {
-              setTimeout(() => {
-                if (!cancelled) { window.print(); setIsPdfPrinting(false); }
-              }, 200);
+              setTimeout(() => { if (!cancelled) finish(); }, 200);
             }
           };
           unloaded.forEach((img) => {
             img.addEventListener("load", checkDone, { once: true });
             img.addEventListener("error", checkDone, { once: true });
           });
-          // Safety timeout — print anyway after 3s even if images fail
-          setTimeout(() => {
-            if (!cancelled) { window.print(); setIsPdfPrinting(false); }
-          }, 3000);
+          // Safety timeout — finish anyway after 3s even if images fail
+          setTimeout(() => { if (!cancelled) finish(); }, 3000);
         } else {
           // All images already loaded
-          setTimeout(() => {
-            if (!cancelled) { window.print(); setIsPdfPrinting(false); }
-          }, 200);
+          setTimeout(() => { if (!cancelled) finish(); }, 200);
         }
       } else if (!cancelled) {
         requestAnimationFrame(waitForContent);
@@ -398,7 +457,7 @@ function HomeContent() {
     };
     requestAnimationFrame(waitForContent);
     return () => { cancelled = true; };
-  }, [isPdfPrinting]);
+  }, [isPdfPrinting, exportMode, tournamentName, teamName]);
 
   const versionDiffContextValue = useMemo(() => ({
     diff: versionDiff,
@@ -755,6 +814,8 @@ function HomeContent() {
         compareLoading={compareLoading}
         onExportPdf={analysis ? handleExportPdf : undefined}
         onExportPokepaste={analysis ? handleExportTeam : undefined}
+        onCreatePokepaste={analysis ? handleCreatePokepaste : undefined}
+        pokepasteCreating={pokepasteCreating}
         tournamentMode={tournamentMode}
         onSetTournamentMode={analysis ? setTournamentMode : undefined}
         onShowShortcuts={setShowShortcutHint}
@@ -1392,9 +1453,23 @@ function HomeContent() {
             onClick={confirmExportTheme}
             className="w-full py-2.5 rounded-xl bg-accent text-white font-bold text-sm hover:bg-accent/90 transition-colors cursor-pointer"
           >
-            Export {pendingExportMode === "tournament-stats" ? "(Stats)" : "(EVs)"}
+            Download PNG {pendingExportMode === "tournament-stats" ? "(Stats)" : "(EVs)"}
           </button>
         </div>
+      </div>
+    )}
+
+    {/* PokéPaste creation error toast */}
+    {pokepasteError && (
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[110] px-4 py-3 rounded-xl bg-danger text-white text-sm font-bold shadow-2xl animate-fade-in max-w-sm">
+        PokéPaste error: {pokepasteError}
+        <button
+          type="button"
+          onClick={() => setPokepasteError(null)}
+          className="ml-3 underline decoration-white/70 decoration-2 underline-offset-2 hover:decoration-white"
+        >
+          Dismiss
+        </button>
       </div>
     )}
 
