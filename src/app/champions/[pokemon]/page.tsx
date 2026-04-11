@@ -28,7 +28,7 @@ export async function generateMetadata({
   // "{Pokemon} EV spread", "{Pokemon} moveset". Keeping it under ~60 chars
   // so Google doesn't truncate in SERPs.
   const title = `${mega.displayName} VGC Guide — EV Spreads, Movesets & Teams`;
-  const description = `Complete ${mega.displayName} VGC guide for Pokemon Champions Regulation M-A: best EV spreads, movesets, Tera types, damage calcs, and top competitive teams. ${mega.ability} with ${mega.megaStone}.`;
+  const description = `Complete ${mega.displayName} VGC guide for Pokemon Champions Regulation M-A: best EV spreads, movesets, damage calcs, and top competitive teams. ${mega.ability} with ${mega.megaStone}.`;
 
   return {
     title,
@@ -57,7 +57,6 @@ export async function generateMetadata({
       `${mega.displayName} best set`,
       `${mega.displayName} teams`,
       `${mega.displayName} stats`,
-      `${mega.displayName} Tera Type`,
       `${mega.baseName} Mega Evolution`,
       `${mega.baseName} VGC`,
       `${mega.baseName} EV spread`,
