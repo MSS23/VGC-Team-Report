@@ -42,8 +42,17 @@ export function PokemonSprite({
     [species, genTheme, effectiveAnimated, shiny],
   );
 
-  const src = urls[Math.min(urlIndex, urls.length - 1)];
-  const isGif = src.endsWith(".gif");
+  const rawSrc = urls[Math.min(urlIndex, urls.length - 1)];
+  // In print/export mode, route the sprite through our same-origin
+  // /api/sprite proxy. html2canvas uses useCORS:true which forces
+  // crossorigin="anonymous" on every image, and Showdown's CDN doesn't
+  // send Access-Control-Allow-Origin — so the direct URLs fail to
+  // decode during capture and the sprites blank out in the PNG export.
+  // The proxy re-serves the bytes from our origin so CORS doesn't
+  // apply. Non-print renders still use the CDN directly so we don't
+  // pay the proxy round-trip during normal browsing.
+  const src = isPrint ? `/api/sprite?u=${encodeURIComponent(rawSrc)}` : rawSrc;
+  const isGif = rawSrc.endsWith(".gif");
   const pixelated = isGenThemePixelated(genTheme) && !isGif;
 
   return (
