@@ -8,8 +8,11 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { MegaLandingContent } from "./MegaLandingContent";
 import type { ExploreReport } from "@/components/explore/ReportCard";
 
-// Revalidate every 10 minutes to keep teams fresh while reducing DB load
-export const revalidate = 600;
+// Revalidate every hour. New public teams for any given mega don't appear
+// fast enough to justify a 10-minute window, and each revalidation runs
+// DB queries + SSR for every mega in MEGA_POKEMON_LIST — roughly 6x
+// cheaper at 3600s vs 600s for users who won't notice the difference.
+export const revalidate = 3600;
 
 export function generateStaticParams() {
   return MEGA_POKEMON_LIST.map((m) => ({ pokemon: m.slug }));

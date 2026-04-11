@@ -585,6 +585,70 @@ export function useHomePage() {
     }
   }, [analysis, share.isSharedView, tags, setTags]);
 
+  // ── Draft hydration (parallel to shared-view hydration above) ────
+  // The /?draft=ID flow used to call only handleAnalyze(paste), which
+  // throws away every other field on the saved draft — so reopening a
+  // draft from /dashboard wiped teamName, tournamentName, summary,
+  // notes, calcs, plans, etc. We mirror the share-hydration pattern:
+  // stash the full draft state in a ref, kick off paste parsing, then
+  // apply the rest of the fields once `analysis` (and the resulting
+  // speciesKeys-keyed hooks) are ready. The order is critical because
+  // useTeamMeta loads its own per-team localStorage on speciesKeys
+  // change — applying the draft fields BEFORE that load would just
+  // get overwritten on the next render.
+  const pendingDraftRef = useRef<import("@/lib/sharing/url-codec").ShareableState | null>(null);
+  const draftHydrated = useRef(false);
+
+  const loadDraft = useCallback((state: import("@/lib/sharing/url-codec").ShareableState) => {
+    pendingDraftRef.current = state;
+    draftHydrated.current = false;
+    // Skip the auto-template / auto-archetype / auto-regulation effects;
+    // a draft already has its own user-authored values for these.
+    templateApplied.current = true;
+    archetypeDetected.current = true;
+    regulationDetected.current = true;
+    setIsSampleTeam(false);
+    setPaste(state.paste);
+    parseTeam(state.paste);
+  }, [setPaste, parseTeam]);
+
+  useEffect(() => {
+    const state = pendingDraftRef.current;
+    if (!state || !analysis || draftHydrated.current) return;
+    draftHydrated.current = true;
+    setNotesFull(state.notes ?? {});
+    setCalcsFull(state.calcs ?? {});
+    setMetaFull({
+      roles: state.roles ?? {},
+      summary: state.teamSummary ?? "",
+      teamName: state.teamName ?? undefined,
+      tournamentName: state.tournamentName ?? undefined,
+      placement: state.placement ?? undefined,
+      record: state.record ?? undefined,
+      mvpIndex: state.mvpIndex ?? null,
+      rentalCode: state.rentalCode ?? undefined,
+      creatorName: state.creatorName ?? undefined,
+      tags: state.tags ?? undefined,
+      templateId: state.templateId ?? undefined,
+    });
+    const rawPlans = Array.isArray(state.matchupPlans) ? state.matchupPlans : [];
+    setPlansFull(
+      rawPlans.map((p) => ({
+        id: crypto.randomUUID(),
+        ...p,
+        gamePlans: (p.gamePlans ?? []).map((gp) => ({
+          ...gp,
+          id: crypto.randomUUID(),
+          bring: gp.bring ?? [null, null, null, null],
+          notes: gp.notes ?? "",
+          replays: gp.replays ?? [],
+        })),
+      })),
+    );
+    if (Array.isArray(state.hiddenSlides)) setHiddenFull(state.hiddenSlides);
+    pendingDraftRef.current = null;
+  }, [analysis, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
+
   // ── Actions ──────────────────────────────────────────────────────
   const handleAnalyze = (directPaste?: string) => {
     const teamPaste = directPaste ?? paste;
@@ -647,6 +711,8 @@ export function useHomePage() {
     isPublic: share.isPublic,
     setIsPublic: share.setIsPublic,
     handleSetPublic: share.handleSetPublic,
+    publishError: share.publishError,
+    clearPublishError: share.clearPublishError,
     allowComments: share.allowComments,
     setAllowComments: share.setAllowComments,
     autoSaveStatus: share.autoSaveStatus,
@@ -716,5 +782,6 @@ export function useHomePage() {
 
     // Drafts
     clearDraft,
+    loadDraft,
   };
 }

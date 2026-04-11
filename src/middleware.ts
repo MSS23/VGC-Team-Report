@@ -15,6 +15,19 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
     return NextResponse.next();
   }
 
+  // Sprite proxy — skip all middleware. This endpoint is hit dozens of
+  // times per page view on /champions and /s, and running Clerk + bot
+  // detection + CORS + CSRF on every sprite was the biggest single
+  // driver of edge function invocations. The route itself has a strict
+  // host+path allowlist so SSRF is already closed, and responses are
+  // edge-cached for a year (immutable) — Vercel's CDN absorbs the cost
+  // after the first hit per sprite. (Body-level early-return only — the
+  // matcher cannot exclude /api/sprite under Next.js 16's URL Pattern
+  // API, which forbids capturing groups and lookaheads.)
+  if (pathname === '/api/sprite') {
+    return NextResponse.next();
+  }
+
   // ── Bot detection: block known scrapers and suspicious requests ──
   // Skip for cron/webhook routes (authenticated by secrets, not browsers)
   const isCronOrWebhook = pathname.startsWith('/api/cron') || pathname.startsWith('/api/webhooks') || pathname === '/api/keep-alive' || pathname === '/api/setup';
@@ -119,7 +132,14 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
 
 export const config = {
   matcher: [
-    '/((?!_next|api/discord|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api(?!/discord)|trpc)(.*)',
+    // Single matcher excluding static assets, /api/discord, and
+    // /api/sprite. Next.js 16's URL pattern parser rejects nested
+    // capturing groups, so we can't add sprite via the old second
+    // `(api(?!/discord)|trpc)(.*)` matcher. Putting the exclusion on
+    // the first (primary) matcher achieves the same thing: the
+    // negative lookahead covers every API route we need to block
+    // middleware on, without needing a second matcher. The `trpc`
+    // route (unused in this project) is dropped in the process.
+    '/((?!_next|api/discord|api/sprite|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
   ],
 }

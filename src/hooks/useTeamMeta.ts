@@ -188,8 +188,18 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
     setMeta((prev) => ({ ...prev, megaStates: {} }));
   }, []);
 
-  const setMetaFull = useCallback((newMeta: TeamMeta) => {
-    setMeta(newMeta);
+  // Merges partial updates into the existing meta. Callers that want to
+  // null out a field must explicitly pass it as undefined.
+  //
+  // Why merge instead of replace: callsites like handleUndo/handleRedo
+  // only restore a subset of fields ({ roles, summary }) because the
+  // undo snapshot doesn't capture every meta field. A full replace
+  // here used to silently wipe teamName, tournamentName, placement,
+  // record, mvpIndex, rentalCode, creatorName, tags, etc. on every
+  // undo press — making the team name appear to "not persist" after
+  // any edit. Merging preserves untouched fields.
+  const setMetaFull = useCallback((newMeta: Partial<TeamMeta>) => {
+    setMeta((prev) => ({ ...prev, ...newMeta }));
   }, []);
 
   return {

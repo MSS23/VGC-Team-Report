@@ -25,6 +25,10 @@ interface ShareModalProps {
   onClose: () => void;
   tags?: { regulation?: string; eventType?: string; archetype?: string[] };
   warnings?: string[];
+  /** Error returned from the server when a visibility toggle fails (e.g. 403 owner mismatch). */
+  publishError?: string | null;
+  /** Called after the user dismisses or the UI consumes a publishError. */
+  onClearPublishError?: () => void;
 }
 
 export function ShareModal({
@@ -42,6 +46,8 @@ export function ShareModal({
   onClose,
   tags,
   warnings = [],
+  publishError = null,
+  onClearPublishError,
 }: ShareModalProps) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [discordCopied, setDiscordCopied] = useState(false);
@@ -399,6 +405,31 @@ export function ShareModal({
               <p className="text-xs font-semibold text-red-600 dark:text-red-400">
                 Cannot publish to the public as there are no tags on this report. Add a regulation, event type, or archetype tag first.
               </p>
+            </div>
+          )}
+
+          {/* Server-side publish error (e.g. 403 owner mismatch, 500, network) */}
+          {publishError && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 flex-shrink-0 mt-0.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-red-600 dark:text-red-400">
+                  {publishError}
+                </p>
+                {onClearPublishError && (
+                  <button
+                    type="button"
+                    onClick={onClearPublishError}
+                    className="mt-1 text-[10px] font-semibold text-red-600/80 dark:text-red-400/80 hover:underline"
+                  >
+                    Dismiss
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>

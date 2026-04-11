@@ -229,6 +229,11 @@ export function useShareUrl() {
         activeShareIdRef.current = id;
         setSessionShareId(id);
         setLastShareResult({ updated, editUrl, publicUrl });
+        // The caller just successfully created or updated a share, so they
+        // own the edit token for this session. Mark them as the owner so
+        // UI gates (like the "List on Explore" toggle in ShareModal) don't
+        // stay disabled after a first-time share.
+        setIsOwner(true);
       } catch {
         setShareStatus("error");
         if (timerRef.current) clearTimeout(timerRef.current);
@@ -253,10 +258,24 @@ export function useShareUrl() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const autoSaveResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /** Silent auto-save: push current state to the server (only when active session exists). */
-  const autoSave = useCallback(async (state: ShareableState, isPublic?: boolean) => {
+  /**
+   * Silent auto-save: push current state to the server.
+   *
+   * Returns a result object so callers (e.g. the visibility toggle) can
+   * react to failures and revert optimistic UI changes. Previously this
+   * returned void and swallowed every non-200 response into a generic
+   * "error" status, which is how a failed "List on Explore" toggle could
+   * look "saved" to the user while the server silently kept the old
+   * visibility.
+   */
+  const autoSave = useCallback(async (
+    state: ShareableState,
+    isPublic?: boolean
+  ): Promise<{ ok: boolean; error?: string; status?: number }> => {
     const active = getActiveShare();
-    if (!active) return;
+    if (!active) {
+      return { ok: false, error: "No active share session to update." };
+    }
     setAutoSaveStatus("saving");
     if (autoSaveResetRef.current) clearTimeout(autoSaveResetRef.current);
     try {
@@ -270,11 +289,25 @@ export function useShareUrl() {
           isPublic,
         }),
       });
-      setAutoSaveStatus(res.ok ? "saved" : "error");
-    } catch {
+      if (res.ok) {
+        setAutoSaveStatus("saved");
+        autoSaveResetRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
+        return { ok: true, status: res.status };
+      }
+      // Parse server error message if provided so the UI can surface it
+      let errorMessage: string | undefined;
+      try {
+        const body = await res.json();
+        if (body && typeof body.error === "string") errorMessage = body.error;
+      } catch { /* non-JSON response */ }
       setAutoSaveStatus("error");
+      autoSaveResetRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
+      return { ok: false, status: res.status, error: errorMessage ?? `Save failed (${res.status})` };
+    } catch (e) {
+      setAutoSaveStatus("error");
+      autoSaveResetRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
+      return { ok: false, error: e instanceof Error ? e.message : "Network error" };
     }
-    autoSaveResetRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
   }, [getActiveShare]);
 
   /**
@@ -319,6 +352,8 @@ export function useShareUrl() {
       activeShareIdRef.current = id;
       setSessionShareId(id);
       setLastShareResult({ updated: false, editUrl, publicUrl });
+      // Caller owns this freshly-minted share — same reasoning as copyShareUrl.
+      setIsOwner(true);
 
       await navigator.clipboard.writeText(publicUrl);
       setShareStatus("copied");

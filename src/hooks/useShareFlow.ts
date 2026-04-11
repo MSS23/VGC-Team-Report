@@ -24,6 +24,9 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
   } = useShareUrl();
 
   const [isPublic, setIsPublic] = useState(false);
+  // Surfaced to ShareModal so a failed visibility toggle shows a real error
+  // instead of a silent "saved" that didn't actually publish anything.
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   // Sync isPublic from server when share data is fetched (e.g. opening a shared view or dashboard toggle)
   useEffect(() => {
@@ -86,10 +89,18 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     };
   }, [analysis, isEditingUnlocked, buildShareState, autoSave, isPublic]);
 
-  const handleSetPublic = useCallback((v: boolean) => {
+  const handleSetPublic = useCallback(async (v: boolean) => {
+    // Optimistic toggle for responsive UI — reverted if the server rejects.
     setIsPublic(v);
-    autoSave(buildShareState(), v);
+    setPublishError(null);
+    const result = await autoSave(buildShareState(), v);
+    if (!result.ok) {
+      setIsPublic(!v);
+      setPublishError(result.error ?? "Could not update visibility.");
+    }
   }, [autoSave, buildShareState]);
+
+  const clearPublishError = useCallback(() => setPublishError(null), []);
 
   const shareButtonText =
     shareStatus === "copying"
@@ -107,6 +118,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     showEditUrl, setShowEditUrl, editLinkCopied, shareButtonText,
     handleShareClick, handleReshare, handleCopyEditLink, handleFreshReshare,
     isPublic, setIsPublic, handleSetPublic,
+    publishError, clearPublishError,
     allowComments, setAllowComments,
     autoSaveStatus,
     forkedFrom, forkReport,

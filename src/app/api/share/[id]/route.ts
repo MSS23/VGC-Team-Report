@@ -209,12 +209,27 @@ export async function GET(
       _forkedFrom: forkedFrom,
     };
 
-    // Cache public shares for 5 minutes
+    // Cache public shares for 5 minutes in Redis (for our own fast-path)
     if (isPublic) {
       await cacheSet(CacheKeys.share(id), responseData, CacheTTL.SHARE_PUBLIC);
     }
 
-    return NextResponse.json(responseData);
+    // Also let Vercel's edge CDN cache public responses — this is the
+    // bigger lever: repeat views of the same public share get served
+    // by the edge without invoking this function at all. The SWR
+    // window lets the edge keep serving while a background refresh
+    // runs. Private/unlisted reads are not cached at the edge so
+    // visibility toggles aren't masked by stale CDN entries.
+    const res = NextResponse.json(responseData);
+    if (isPublic && !sinceVersion) {
+      res.headers.set(
+        "Cache-Control",
+        "public, s-maxage=300, stale-while-revalidate=900",
+      );
+      res.headers.set("CDN-Cache-Control", "public, s-maxage=300");
+      res.headers.set("Vercel-CDN-Cache-Control", "public, s-maxage=300");
+    }
+    return res;
   } catch (e) {
     console.error("Share fetch error:", e);
     return NextResponse.json(

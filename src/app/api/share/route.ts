@@ -136,8 +136,14 @@ export async function POST(request: Request) {
             callerId = uid;
           } catch { /* not authenticated */ }
           if (!callerId || callerId !== oldRows[0].owner_id) {
-            // Not the owner — silently keep existing visibility (don't error, allow the data save)
-            effectiveIsPublic = currentIsPublic;
+            // Not the owner — return an explicit error so the client can surface
+            // it and the user isn't left staring at a "saved" toggle that didn't
+            // actually publish. Previously this silently reverted the value,
+            // which caused "I clicked List on Explore but it didn't appear".
+            return NextResponse.json(
+              { error: "Only the report owner can change visibility." },
+              { status: 403 }
+            );
           }
         }
       }

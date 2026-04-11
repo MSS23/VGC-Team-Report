@@ -97,6 +97,8 @@ function HomeContent() {
     handleFreshReshare,
     isPublic,
     handleSetPublic,
+    publishError,
+    clearPublishError,
     allowComments,
     setAllowComments,
     autoSaveStatus,
@@ -184,6 +186,7 @@ function HomeContent() {
     pendingTemplateId,
     setPendingTemplateId,
     handleAnalyze,
+    loadDraft,
     isSampleTeam,
     handleReset,
     handleDecodeFailed,
@@ -254,11 +257,14 @@ function HomeContent() {
           const url = new URL(window.location.href);
           url.searchParams.delete("draft");
           window.history.replaceState({}, "", url.pathname + url.search);
-          handleAnalyze(draft.data.paste);
+          // loadDraft restores the full draft state (paste + teamName +
+          // tournamentName + summary + notes + calcs + plans + tags + …),
+          // not just the paste like the old handleAnalyze path did.
+          loadDraft(draft.data as import("@/lib/sharing/url-codec").ShareableState);
         }
       })
       .catch(() => {});
-  }, [analysis, isSharePending, handleAnalyze]);
+  }, [analysis, isSharePending, loadDraft]);
 
   // ── Version comparison state ────────────────────────────────────
   const [versionDiff, setVersionDiff] = useState<VersionDiff | null>(null);
@@ -1321,6 +1327,8 @@ function HomeContent() {
           onClose={() => setShowShareModal(false)}
           tags={tags}
           warnings={warnings}
+          publishError={publishError}
+          onClearPublishError={clearPublishError}
         />
       )}
 

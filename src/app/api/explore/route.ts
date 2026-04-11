@@ -37,7 +37,12 @@ export async function GET(request: Request) {
       );
       const cached = await cacheGet<{ reports: unknown[]; nextCursor: string | null }>(cacheKey);
       if (cached) {
-        return NextResponse.json(cached);
+        const res = NextResponse.json(cached);
+        res.headers.set(
+          "Cache-Control",
+          "public, s-maxage=60, stale-while-revalidate=300",
+        );
+        return res;
       }
     }
 
@@ -262,7 +267,19 @@ export async function GET(request: Request) {
       });
     }
 
-    return NextResponse.json(result);
+    // Let Vercel's edge cache non-user-specific listings. The function
+    // still runs on cold cache, but popular filter combos stop billing
+    // invocations for the CDN TTL window.
+    const res = NextResponse.json(result);
+    if (!filterFollowing) {
+      res.headers.set(
+        "Cache-Control",
+        "public, s-maxage=60, stale-while-revalidate=300",
+      );
+      res.headers.set("CDN-Cache-Control", "public, s-maxage=60");
+      res.headers.set("Vercel-CDN-Cache-Control", "public, s-maxage=60");
+    }
+    return res;
   } catch (e) {
     console.error("Explore API error:", e);
     return NextResponse.json({ error: "Failed to load reports" }, { status: 500 });
