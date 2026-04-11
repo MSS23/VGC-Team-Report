@@ -1,15 +1,17 @@
 # VGC Team Report
 
 Next.js 16, React 19, TypeScript, Tailwind CSS v4.
-Deployed on Vercel (auto-deploy from `main`).
+Deployed on Vercel. `main` is connected to production — **every push triggers a full build** and consumes build minutes from the Pro-plan budget. Claude must not push without explicit permission.
 
 ## Automation Pipelines
 
 ```mermaid
 flowchart LR
-  subgraph "Daily Flow (trunk-based)"
+  subgraph "Daily Flow (commit-batched)"
     W[Work on main] --> TC[tsc + build gate]
-    TC --> P[Push to main]
+    TC --> CM0[Commit locally]
+    CM0 --> WAIT[Wait for explicit\npush/deploy request]
+    WAIT --> P[Push to main]
     P --> V[Vercel auto-deploys]
   end
 
@@ -17,10 +19,11 @@ flowchart LR
     L[Linear: In Progress] --> C[Claude implements]
     C --> TC2[tsc + build gate]
     TC2 --> CM[Commit with VGC-XX prefix]
-    CM --> P2[Push to main]
-    P2 --> UL[Update Linear\ncommit link + files]
+    CM --> NEXT[Next ticket or\nwait for push signal]
+    NEXT -.->|on user 'push'/'ship'| P2[Push all commits]
+    P2 --> UL[Update Linear\ncommit links + files]
     UL --> D[Discord #builds]
-    D --> V2[Vercel deploys]
+    D --> V2[Vercel deploys once]
   end
 
   subgraph "Big Changes Only"
@@ -46,14 +49,31 @@ flowchart LR
   end
 ```
 
-## Git Strategy: Trunk-Based Development
+## Git Strategy: Commit Locally, Push Explicitly
 
-This is a high-velocity solo project (50+ pushes/day). Use **trunk-based development**:
+**Every push to `main` triggers a Vercel production build** (Next.js 16 SSG of champion pages + API routes — not cheap in build minutes). To keep spend inside the Vercel Pro plan, we batch work locally and push only when the user asks.
 
-### Default: Push direct to main
-- For routine work, fixes, tweaks, iterative changes — commit and push to `main`
-- Vercel auto-deploys every push
-- Always type-check and build before pushing: `npx tsc --noEmit && npm run build`
+### Default: Commit after every task. DO NOT push.
+- Work on `main` (still trunk-based conceptually — no feature branches for routine work)
+- Type-check and build before committing: `npx tsc --noEmit && npm run build`
+- Commit with a proper message (`VGC-XX: description` for Linear issues)
+- **Stop there.** Do not run `git push`. Commits sit locally on `main` until the user explicitly asks to push/deploy.
+- Multiple tasks can accumulate as multiple local commits — that's the whole point. One push → one build → one deploy for many tickets.
+
+### When to push (explicit user signal required)
+Push only when the user clearly says one of:
+- "push" / "push it" / "push to main" / "push to prod"
+- "deploy" / "ship" / "ship it" / "release" / "go live"
+- Any other unambiguous deploy request
+
+If it's ambiguous ("can you commit the fix?" is NOT a push request), **ask first**. Cost of asking: zero. Cost of a wrong push: ~2 build minutes + possible prod regression + user annoyance.
+
+Treat a push as a production deploy, because it is one.
+
+### What to do when the user does say push
+1. `git push origin main` — one push, regardless of how many commits are queued
+2. For every Linear ticket that had a commit in this push, run the Linear comment + Discord notification flow (see below). Multiple tickets may need updates in one go.
+3. Confirm to the user: "Pushed N commits → Vercel building → Linear updated for tickets X, Y, Z."
 
 ### Feature branches: Only when needed
 Use a branch + PR **only** for:
@@ -62,7 +82,19 @@ Use a branch + PR **only** for:
 - When the user explicitly asks for a PR
 - Work you want a clean revert point for
 
-Branch naming when used: `vgc-XX/brief-description`
+Branch naming when used: `vgc-XX/brief-description`. Same rule applies: push the branch only on explicit request.
+
+## Vercel Cost Guardrails (Pro plan)
+
+The goal is to stay inside the $20/month Pro plan without overages. The biggest cost lever is **build minutes per push**.
+
+- **Batch pushes.** Aim for 1–3 pushes/day, not 50. Multiple tickets → one push.
+- **Avoid doc-only or trivial pushes.** If a change is CLAUDE.md-only, a comment tweak, or a typo in a non-rendered file, defer it and piggyback on the next real push.
+- **No speculative pushes.** Don't push "just to see if the build passes on Vercel" — `npm run build` locally is the gate.
+- **Reverts count as a push.** Factor that into the push decision — if a push introduces a regression, the revert is another full build.
+- **Cron routes are already cost-aware** (daily + weekly, not more frequent). Don't add more cron routes without checking the quota impact.
+
+If the user ever says "check Vercel usage" or similar, point them at vercel.com/dashboard → Usage. Claude cannot query Vercel usage programmatically from the CLI.
 
 ## Linear Helper Script
 
@@ -97,7 +129,7 @@ Work through all In Progress issues sequentially without asking between each:
 1. List them to the user briefly (note any skipped `no-claude` issues)
 2. **Bugs first** — always fix bugs before anything else, regardless of priority number
 3. Then remaining tickets by highest priority
-4. For each: implement -> verify -> commit -> push -> update Linear -> Discord -> next ticket
+4. For each: implement → verify → **commit locally** → next ticket. Push happens once at the end, on explicit user signal.
 5. Continue until all In Progress tickets are done or the user interrupts
 
 ### 4. After implementing a ticket
@@ -106,24 +138,42 @@ Work through all In Progress issues sequentially without asking between each:
 
 ```bash
 npx tsc --noEmit    # Fix any type errors before continuing
-npm run build       # Must pass — never push broken code
+npm run build       # Must pass — never commit broken code
 ```
 
-#### b. Commit and push to main
+#### b. Commit locally (DO NOT push)
 
 ```bash
 git add <changed-files>
 git commit -m "VGC-XX: brief description"
+# NOTE: no git push here. Commits accumulate on main until the user says "push" or "deploy".
+```
+
+#### c. Move to the next ticket
+
+Keep going until In Progress is empty or the user interrupts. Track pending Linear updates in memory: for each ticket you commit, remember its issue UUID and title so you can update Linear after the eventual push.
+
+### 5. When the user says "push" / "deploy" / "ship"
+
+Now — and only now — do the push and all deferred Linear/Discord work:
+
+#### a. Push the accumulated commits
+
+```bash
 git push origin main
 ```
 
-#### c. Update Linear with what changed
+One push. All queued commits deploy in a single Vercel build.
+
+#### b. Update Linear for every pushed ticket
+
+For each ticket whose commit(s) were in this push:
 
 ```bash
 source .claude/scripts/linear.sh
 
-# Post comment with commit link + changed files
-COMMIT_SHORT=$(git_commit_short)
+# Post comment with commit link + changed files (per commit or per ticket)
+COMMIT_SHORT=$(git_commit_short)      # or a specific ticket commit sha
 COMMIT_URL=$(git_commit_url)
 FILE_COUNT=$(git_changed_files_count)
 
@@ -148,16 +198,16 @@ curl -s -X POST 'https://api.linear.app/graphql' \
 linear_move_issue "ISSUE_UUID" "$STATE_IN_REVIEW"
 ```
 
-#### d. Notify Discord #builds
+#### c. Notify Discord #builds for every pushed ticket
 
 ```bash
 source .claude/scripts/linear.sh
 discord_notify_build "VGC-XX" "Issue title"
 ```
 
-#### e. Move to next ticket
+#### d. Confirm to the user
 
-Continue with the next highest-priority In Progress ticket. No need to ask the user between tickets unless something is unclear.
+Tell the user: "Pushed N commits → Vercel deploying → Linear + Discord updated for tickets X, Y, Z."
 
 ### Linear State IDs
 
@@ -168,18 +218,18 @@ Defined in `.claude/scripts/linear.sh`:
 ## Failure Handling
 
 ### Build fails (`tsc` or `npm run build`)
-- Fix the errors and re-run. **Never push broken code.**
+- Fix the errors and re-run. **Never commit broken code** — every commit is a candidate for the next push, and we don't want broken commits sitting in the queue.
 - If you cannot fix it after 2 attempts, stop and ask the user.
 
-### Linear API fails
-- Still commit and push — the code work is the priority
-- Note to the user that the Linear update failed
+### Linear API fails (during a push-triggered update)
+- The code is already pushed — that's the priority
+- Note to the user that the Linear update failed and which ticket(s) need manual updates
 - Do not block the workflow on a Linear outage
 
 ### Something breaks in production
-- `git revert <commit> && git push origin main` to roll back
-- Notify Discord that the change was reverted
-- Move the Linear issue back to In Progress
+- Treat a revert as a real push — it costs another build, so confirm with the user before reverting if the issue is minor
+- For genuine prod breakage: `git revert <commit>` (still don't push automatically — ask, or treat the user's "revert it" as the push signal)
+- After pushing the revert: notify Discord, move the Linear issue back to In Progress
 
 ## Automated Monitoring (Vercel Cron)
 
@@ -226,7 +276,7 @@ Run through the pre-delivery checklist before pushing UI changes.
 
 - Follow existing patterns in the codebase
 - Keep changes focused — no drive-by refactors
-- Type-check and build before pushing
+- Type-check and build before **committing**
 - Commit messages: `VGC-XX: description` for Linear issues
-- Push direct to main (trunk-based development)
+- Commit to `main` locally; **never push without explicit user signal** (see Git Strategy above)
 - Feature branches only for large/risky changes when explicitly needed
