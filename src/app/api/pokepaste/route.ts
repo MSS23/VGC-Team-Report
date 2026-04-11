@@ -127,8 +127,16 @@ export async function POST(request: NextRequest) {
   }
 
   const { paste, title, author, notes } = parsed.data;
+
+  // pokepast.es's parser splits Pokemon blocks on blank CRLF lines —
+  // browsers normalize textarea content to CR+LF before form submit per
+  // the HTML spec, so their server assumes that encoding. With bare LF
+  // line endings the entire paste collapses into a single Pokemon block
+  // and every sprite resolves to 0-0.png (unknown). Normalize to CRLF
+  // here so we match what a browser form submission would send.
+  const crlfPaste = paste.replace(/\r\n?|\n/g, "\r\n");
   const form = new URLSearchParams();
-  form.set("paste", paste);
+  form.set("paste", crlfPaste);
   if (title) form.set("title", title);
   if (author) form.set("author", author);
   if (notes) form.set("notes", notes);
