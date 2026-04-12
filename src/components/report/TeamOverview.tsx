@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 // QRCode loaded dynamically — only needed when rental code is present
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { SpriteConfig } from "@/lib/types/sprites";
@@ -13,6 +13,7 @@ import { FieldDiffHighlight } from "./TeamReport";
 import { hapticMedium, hapticSuccess } from "@/lib/utils/haptics";
 import { detectImportSource } from "@/lib/utils/multi-import";
 import { fetchPokePaste } from "@/lib/utils/pokepaste";
+import { validateChampionsTeam, type LegalityResult, type LegalityIssue } from "@/lib/validation/champions-legality";
 
 /** Wraps a card with tap and long-press gestures. Tap navigates instantly on touch; long-press (500ms hold) also navigates + haptic. */
 function LongPressWrapper({
@@ -190,6 +191,94 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
   );
 }
 
+// ── Legality Badge ──────────────────────────────────────────────────────────
+
+function LegalityBadge({ result }: { result: LegalityResult }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const errors = result.issues.filter((i) => i.severity === "error");
+  const warnings = result.issues.filter((i) => i.severity === "warning");
+  const infos = result.issues.filter((i) => i.severity === "info");
+
+  if (result.legal && errors.length === 0 && warnings.length === 0) {
+    // Legal with only info — show green badge, clickable for details
+    return (
+      <div className="relative" ref={ref}>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition-colors"
+        >
+          &#10003; Legal
+        </button>
+        {open && infos.length > 0 && (
+          <div className="absolute top-full left-0 mt-1.5 z-50 w-72 rounded-lg border border-border bg-surface shadow-lg p-3 space-y-2">
+            {infos.map((issue, i) => (
+              <div key={i} className="text-xs flex items-start gap-1.5">
+                <span className="text-blue-500 shrink-0 mt-px">&#9432;</span>
+                <span className="text-text-secondary">{issue.message}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Has issues
+  const issueCount = errors.length + warnings.length;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`text-[11px] font-bold px-2 py-0.5 rounded-md cursor-pointer transition-colors ${
+          errors.length > 0
+            ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-500/20"
+            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
+        }`}
+      >
+        {errors.length > 0 ? "\u2716" : "\u26A0"} {issueCount} {issueCount === 1 ? "issue" : "issues"}
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1.5 z-50 w-80 rounded-lg border border-border bg-surface shadow-lg p-3 space-y-2 max-h-64 overflow-y-auto">
+          {errors.map((issue, i) => (
+            <LegalityIssueRow key={`e${i}`} issue={issue} />
+          ))}
+          {warnings.map((issue, i) => (
+            <LegalityIssueRow key={`w${i}`} issue={issue} />
+          ))}
+          {infos.map((issue, i) => (
+            <LegalityIssueRow key={`i${i}`} issue={issue} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LegalityIssueRow({ issue }: { issue: LegalityIssue }) {
+  const icon = issue.severity === "error" ? "\u2716" : issue.severity === "warning" ? "\u26A0" : "\u2139";
+  const color = issue.severity === "error" ? "text-red-500" : issue.severity === "warning" ? "text-amber-500" : "text-blue-500";
+  return (
+    <div className="text-xs flex items-start gap-1.5">
+      <span className={`${color} shrink-0 mt-px`}>{icon}</span>
+      <span className="text-text-secondary">{issue.message}</span>
+    </div>
+  );
+}
+
 interface TeamOverviewProps {
   pokemon: AnalyzedPokemon[];
   creatorMode: boolean;
@@ -265,6 +354,12 @@ export function TeamOverview({
   const { t } = useTranslation();
   const hasTournamentInfo = !!(teamName || tournamentName || placement || record);
   const hasCreatorInfo = !!creatorName;
+
+  // Champions legality validation — only runs when regulation is Reg M-A
+  const legality = useMemo(() => {
+    if (tags?.regulation !== "Reg M-A") return null;
+    return validateChampionsTeam(pokemon.map((p) => p.parsed));
+  }, [tags?.regulation, pokemon]);
   const [rentalCopied, setRentalCopied] = useState(false);
   const [summaryExpanded, setSummaryExpanded] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -346,25 +441,26 @@ export function TeamOverview({
                 {t.by} <span className="text-text-primary font-bold">{creatorName}</span>
               </p>
             )}
-            {tags && (tags.archetype?.length || tags.regulation || tags.eventType) && (
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {tags.regulation && (
+            {(tags && (tags.archetype?.length || tags.regulation || tags.eventType)) || legality ? (
+              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                {tags?.regulation && (
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                     {tags.regulation}
                   </span>
                 )}
-                {tags.eventType && (
+                {legality && <LegalityBadge result={legality} />}
+                {tags?.eventType && (
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
                     {tags.eventType}
                   </span>
                 )}
-                {tags.archetype?.map((a) => (
+                {tags?.archetype?.map((a) => (
                   <span key={a} className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20">
                     {a}
                   </span>
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
           </FieldDiffHighlight>
         )
