@@ -175,14 +175,20 @@ export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult 
     }
   }
 
-  // Champions dex check — CHAMPIONS_DEX has regular mons; restricted legends
-  // are allowed (up to 2) even if not explicitly in the dex set.
+  // Champions dex check — CHAMPIONS_DEX has regular mons + mega forms;
+  // restricted legends are allowed (up to 2) even if not explicitly in the set.
+  // Base forms are also legal if their mega form is in the dex (e.g.
+  // "Salamence" is legal because "salamence-mega" is in the dex).
   for (const p of pokemon) {
     const key = normalizeSpecies(p.species);
     const base = getRestrictedBase(p.species);
     const inDex = CHAMPIONS_DEX.has(key);
     const isRestricted = RESTRICTED_BASE_NAMES.has(base);
-    if (!inDex && !isRestricted) {
+    // Check if a mega form of this base Pokemon is in the dex
+    const megaInDex = CHAMPIONS_DEX.has(`${key}-mega`) ||
+      CHAMPIONS_DEX.has(`${key}-mega-x`) ||
+      CHAMPIONS_DEX.has(`${key}-mega-y`);
+    if (!inDex && !isRestricted && !megaInDex) {
       issues.push({
         severity: "error",
         message: `${p.species} is not available in Champions format (Reg M-A)`,
