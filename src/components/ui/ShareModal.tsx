@@ -53,25 +53,35 @@ export function ShareModal({
   const [discordCopied, setDiscordCopied] = useState(false);
   const [publicConfirmDismissed, setPublicConfirmDismissed] = useState(false);
   const [tagError, setTagError] = useState(false);
+  const [creatorError, setCreatorError] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
 
   const hasTags = !!(tags?.regulation || tags?.eventType || (tags?.archetype && tags.archetype.length > 0));
+  const hasCreator = !!creatorName?.trim();
 
-  // Clear error if tags are added while modal is open
+  // Clear errors if requirements are met while modal is open
   useEffect(() => {
     if (hasTags && tagError) setTagError(false);
   }, [hasTags, tagError]);
+  useEffect(() => {
+    if (hasCreator && creatorError) setCreatorError(false);
+  }, [hasCreator, creatorError]);
 
   const hasWarnings = warnings.length > 0;
 
   const handleTogglePublic = (v: boolean) => {
     // Block publishing to Explore when team has warnings/errors
     if (v && hasWarnings) return;
+    if (v && !hasCreator) {
+      setCreatorError(true);
+      return;
+    }
     if (v && !hasTags) {
       setTagError(true);
       return;
     }
     setTagError(false);
+    setCreatorError(false);
     // Celebrate the transition from private → public
     if (v && !isPublic) {
       setJustPublished(true);
@@ -309,7 +319,7 @@ export function ShareModal({
 
         {/* Public confirmation prompt — shown when sharing publicly, asks user to confirm */}
         {!viewerMode && isPublic && !publicConfirmDismissed && isOwner && (
-          <div className={`mx-6 mb-4 rounded-xl border p-4 ${hasWarnings ? "border-amber-500/30 bg-amber-500/5" : "border-accent/30 bg-accent-surface/20"}`}>
+          <div className={`mx-6 mb-4 rounded-xl border p-4 ${hasWarnings || !hasCreator || !hasTags ? "border-amber-500/30 bg-amber-500/5" : "border-accent/30 bg-accent-surface/20"}`}>
             {hasWarnings ? (
               <>
                 <p className="text-sm font-semibold text-text-primary mb-1">
@@ -317,6 +327,15 @@ export function ShareModal({
                 </p>
                 <p className="text-xs text-text-secondary mb-1">
                   Your report has {warnings.length} warning{warnings.length > 1 ? "s" : ""}. Resolve them to publish on Explore. You can still share privately and collaborate.
+                </p>
+              </>
+            ) : !hasCreator || !hasTags ? (
+              <>
+                <p className="text-sm font-semibold text-text-primary mb-1">
+                  Almost ready to publish
+                </p>
+                <p className="text-xs text-text-secondary mb-1">
+                  Public reports need {!hasCreator && !hasTags ? "an author name and at least one tag" : !hasCreator ? "an author name in the \"By\" field" : "at least one tag (regulation, event type, or archetype)"}. Add {!hasCreator && !hasTags ? "them" : "it"} and your team will appear on Explore.
                 </p>
               </>
             ) : (
@@ -396,6 +415,20 @@ export function ShareModal({
               </span>
             )}
           </button>
+
+          {/* Creator name error message */}
+          {creatorError && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 flex-shrink-0 mt-0.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <p className="text-xs font-semibold text-red-600 dark:text-red-400">
+                Add your name in the &quot;By&quot; field before publishing. Public reports need an author so the community knows who made it.
+              </p>
+            </div>
+          )}
 
           {/* Tag error message */}
           {tagError && (

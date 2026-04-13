@@ -148,9 +148,16 @@ export async function POST(request: Request) {
         }
       }
 
-      // Require tags to publish — only block when going from private → public
+      // Require tags + creator name to publish — only block when going from private → public
       const wasPublic = oldRows.length > 0 && !!oldRows[0].is_public;
       if (effectiveIsPublic && !wasPublic) {
+        const creatorName = (state.creatorName as string)?.trim();
+        if (!creatorName) {
+          return NextResponse.json(
+            { error: "Add your name in the \"By\" field before publishing. Public reports need an author." },
+            { status: 400 }
+          );
+        }
         const tags = (state.tags ?? {}) as Record<string, unknown>;
         const hasRegulation = !!tags.regulation;
         const hasEventType = !!tags.eventType;
@@ -214,8 +221,6 @@ export async function POST(request: Request) {
     }
 
     // Create new share — requires authentication
-    const id = generateId();
-    const newEditToken = generateEditToken();
     let ownerId: string | null = null;
     try {
       const { userId } = await auth();
@@ -229,8 +234,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // Require tags to publish new reports
+    // Require tags + creator name to publish new reports
     if (isPublic) {
+      const creatorName = (state.creatorName as string)?.trim();
+      if (!creatorName) {
+        return NextResponse.json(
+          { error: "Add your name in the \"By\" field before publishing. Public reports need an author." },
+          { status: 400 }
+        );
+      }
       const tags = (state.tags ?? {}) as Record<string, unknown>;
       const hasRegulation = !!tags.regulation;
       const hasEventType = !!tags.eventType;
@@ -242,6 +254,52 @@ export async function POST(request: Request) {
         );
       }
     }
+
+    // ── Dedup: check if this owner already has a share with the same paste ──
+    // This prevents duplicate public reports when a user navigates away from
+    // /s/{id} (clearing the client-side session refs) and clicks Share again.
+    const existingDup = await sql`
+      SELECT id, edit_token, COALESCE(version, 1) AS version, is_public
+      FROM shares
+      WHERE owner_id = ${ownerId}
+        AND deleted_at IS NULL
+        AND is_draft = FALSE
+        AND data->>'paste' = ${state.paste}
+      ORDER BY updated_at DESC
+      LIMIT 1
+    `;
+
+    if (existingDup.length > 0) {
+      // Update the existing share instead of creating a duplicate
+      const dup = existingDup[0];
+      const effectiveIsPublic = isPublic ?? !!dup.is_public;
+      await sql`
+        UPDATE shares
+        SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(),
+            version = COALESCE(version, 1) + 1,
+            is_public = ${effectiveIsPublic},
+            search_vector =
+              setweight(to_tsvector('english', ${searchCreator}), 'A') ||
+              setweight(to_tsvector('english', ${searchTournament}), 'A') ||
+              setweight(to_tsvector('english', ${searchPaste}), 'B') ||
+              setweight(to_tsvector('english', ${searchSummary}), 'C')
+        WHERE id = ${dup.id}
+      `;
+      await Promise.all([
+        cacheDel(CacheKeys.share(dup.id)),
+        cacheInvalidatePrefix("explore:"),
+      ]);
+      return NextResponse.json({
+        id: dup.id,
+        editToken: dup.edit_token,
+        updated: true,
+        version: Number(dup.version) + 1,
+        isPublic: effectiveIsPublic,
+      });
+    }
+
+    const id = generateId();
+    const newEditToken = generateEditToken();
 
     await sql`
       INSERT INTO shares (id, edit_token, data, version, is_public, owner_id, search_vector)
