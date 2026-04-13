@@ -9,7 +9,7 @@ interface ConsentGateProps {
 
 /**
  * Renders children ONLY when analytics consent has been granted.
- * Used to gate <Analytics />, <SpeedInsights />, and PostHogProvider.
+ * Used to gate <Analytics /> and other consent-dependent components.
  *
  * On initial mount: reads the cc_cookie to determine prior consent.
  * On consent change: subscribes via onConsentChange and re-renders.
