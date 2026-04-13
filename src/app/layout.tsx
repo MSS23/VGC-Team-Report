@@ -2,11 +2,12 @@ import type { Metadata, Viewport } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
+import { ChunkErrorReloader } from "@/components/ui/ChunkErrorReloader";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import { ConnectivityStatus } from "@/components/ui/ConnectivityStatus";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { ClarityProvider } from "@/components/providers/ClarityProvider";
 import { CookieBanner } from "@/components/providers/CookieBanner";
 import { ConsentGate } from "@/components/providers/ConsentGate";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -113,15 +114,17 @@ export default function RootLayout({
             browserRequirements: "Requires a modern web browser",
           }}
         />
-        <div id="main-content">{children}</div>
+        <PostHogProvider>
+          <div id="main-content">{children}</div>
+        </PostHogProvider>
+        <ClarityProvider />
         <InstallPrompt />
         <ConnectivityStatus />
         <ServiceWorkerRegistration />
-        <PostHogProvider>
-          <ConsentGate>
-            <Analytics /><SpeedInsights />
-          </ConsentGate>
-        </PostHogProvider>
+        <ChunkErrorReloader />
+        <ConsentGate>
+          <Analytics />
+        </ConsentGate>
         </ClerkProvider>
       </body>
     </html>

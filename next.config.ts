@@ -24,6 +24,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Ensure sw.js is never cached by the browser — stale SW scripts cause
+        // "Failed to update a ServiceWorker" TypeErrors on deploy
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+        ],
+      },
+      {
         source: "/(.*)",
         headers: [
           {

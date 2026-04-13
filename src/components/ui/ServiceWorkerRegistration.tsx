@@ -17,7 +17,7 @@ export function ServiceWorkerRegistration() {
       window.location.reload();
     });
 
-    navigator.serviceWorker.register("/sw.js").then((reg) => {
+    navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).then((reg) => {
       // If there's already a waiting worker, show the prompt immediately
       if (reg.waiting) {
         waitingWorkerRef.current = reg.waiting;

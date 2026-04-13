@@ -33,10 +33,15 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
     setCurrentSlide((prev) => Math.min(prev, Math.max(0, totalSlides - 1)));
   }, [totalSlides]);
 
-  // Wrap state updates in View Transitions API when available
+  // Wrap state updates in View Transitions API when available.
+  // Rapid navigation (keyboard/swipe) can abort in-flight transitions —
+  // AbortError and InvalidStateError are harmless and silently swallowed.
   const withTransition = useCallback((update: () => void) => {
     if (typeof document !== "undefined" && "startViewTransition" in document) {
-      (document as unknown as { startViewTransition: (cb: () => void) => void }).startViewTransition(update);
+      const transition = (document as unknown as { startViewTransition: (cb: () => void) => { finished: Promise<void> } }).startViewTransition(update);
+      transition.finished.catch(() => {
+        // Transition was skipped or aborted by a newer one — expected during rapid navigation
+      });
     } else {
       update();
     }
