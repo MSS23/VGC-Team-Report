@@ -25,7 +25,8 @@ async function runHealthCheck() {
     const start = Date.now();
     try {
       const headers: Record<string, string> = { "User-Agent": "VGC-DailyOps/1.0" };
-      if (ep.path.startsWith("/api/") && process.env.CRON_SECRET) {
+      const isApiRoute = ep.path.startsWith("/api/");
+      if (isApiRoute && process.env.CRON_SECRET) {
         headers["Authorization"] = `Bearer ${process.env.CRON_SECRET}`;
       }
       const res = await fetch(`${SITE_URL}${ep.path}`, {
@@ -33,7 +34,12 @@ async function runHealthCheck() {
         headers,
         redirect: "follow",
       });
-      results.push({ name: ep.name, status: res.status, ok: res.status < 400, ms: Date.now() - start });
+      // For API routes without CRON_SECRET, a 401 means the endpoint is alive
+      // (auth is working correctly) — don't flag it as down
+      const isAlive = isApiRoute && !process.env.CRON_SECRET
+        ? res.status === 401 || res.status < 400
+        : res.status < 400;
+      results.push({ name: ep.name, status: res.status, ok: isAlive, ms: Date.now() - start });
     } catch {
       results.push({ name: ep.name, status: 0, ok: false, ms: Date.now() - start });
     }

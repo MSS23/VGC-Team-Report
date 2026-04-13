@@ -44,11 +44,11 @@ interface PostHogErrorResponse {
 }
 
 async function fetchPostHogErrors(): Promise<PostHogErrorGroup[]> {
-  const apiKey = process.env.POSTHOG_PERSONAL_API_KEY;
+  const apiKey = process.env.POSTHOG_PERSONAL_API_KEY || process.env.POSTHOG_API_KEY;
   const projectId = process.env.POSTHOG_PROJECT_ID;
 
   if (!apiKey || !projectId) {
-    throw new Error("POSTHOG_PERSONAL_API_KEY or POSTHOG_PROJECT_ID not configured");
+    throw new Error("POSTHOG_PERSONAL_API_KEY (or POSTHOG_API_KEY) and POSTHOG_PROJECT_ID required");
   }
 
   const host = (process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com")
@@ -197,12 +197,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const apiKey = process.env.POSTHOG_PERSONAL_API_KEY;
+  const apiKey = process.env.POSTHOG_PERSONAL_API_KEY || process.env.POSTHOG_API_KEY;
   const projectId = process.env.POSTHOG_PROJECT_ID;
 
   if (!apiKey || !projectId) {
     return NextResponse.json({
-      error: "POSTHOG_PERSONAL_API_KEY and POSTHOG_PROJECT_ID required",
+      error: "POSTHOG_PERSONAL_API_KEY (or POSTHOG_API_KEY) and POSTHOG_PROJECT_ID required",
     }, { status: 500 });
   }
 
