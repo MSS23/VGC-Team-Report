@@ -90,6 +90,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Blocking script: apply dark mode before first paint to prevent flash */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var d=localStorage.getItem("vgc-dark-mode");if(d==="true"||(d===null&&matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.setAttribute("data-dark-mode","")}catch(e){}})()` }} />
+      </head>
       <body className={`${sora.variable} ${jetbrainsMono.variable} antialiased`}>
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-accent focus:text-white focus:rounded-lg focus:text-sm focus:font-bold">
           Skip to content

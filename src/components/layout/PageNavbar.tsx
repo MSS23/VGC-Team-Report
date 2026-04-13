@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Link from "next/link";
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 
@@ -31,15 +31,15 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
       <header className="sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 bg-surface/80 border-b border-border/60 shadow-[0_1px_8px_rgba(0,0,0,0.03)] sticky-header-standalone">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-12 sm:h-14 flex items-center justify-between">
           {/* Left: logo */}
-          <a href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity">
+          <Link href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity">
             <span className="text-text-primary">VGC Team</span>
             <span className="text-accent">Report</span>
-          </a>
+          </Link>
 
           {/* Center: nav links (desktop) */}
           <nav className="hidden sm:flex items-center gap-1">
             {/* Create Report CTA — always visible */}
-            <a
+            <Link
               href="/"
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 activePage === "home"
@@ -48,10 +48,10 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
               }`}
             >
               + Create
-            </a>
+            </Link>
             <span className="w-px h-4 bg-border mx-0.5" />
             {NAV_LINKS.filter((l) => l.key !== "home").map((link) => (
-              <a
+              <Link
                 key={link.key}
                 href={link.href}
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
@@ -61,7 +61,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
                 }`}
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -76,9 +76,9 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
             )}
             {showUser && (
               <>
-                <a href="/dashboard" className="hidden sm:inline px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent hover:bg-surface-alt rounded-lg transition-all">
+                <Link href="/dashboard" className="hidden sm:inline px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent hover:bg-surface-alt rounded-lg transition-all">
                   Dashboard
-                </a>
+                </Link>
                 <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
               </>
             )}
@@ -110,7 +110,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
           ].map((link) => {
             const isActive = activePage === link.key;
             return (
-              <a
+              <Link
                 key={link.key}
                 href={link.href}
                 className={`relative flex flex-col items-center gap-0 px-2.5 py-1 rounded-xl transition-all duration-200 min-w-[48px] active:scale-[0.90] active:opacity-70 ${
@@ -131,7 +131,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
                   </svg>
                 </span>
                 <span className={`text-[9px] leading-none font-semibold transition-colors duration-200 ${isActive ? "text-accent" : ""}`}>{link.label}</span>
-              </a>
+              </Link>
             );
           })}
         </div>
