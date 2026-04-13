@@ -23,7 +23,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     fetchedIsPublic, autoSaveStatus, forkedFrom, forkReport,
   } = useShareUrl();
 
-  const [isPublic, setIsPublic] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
   // Surfaced to ShareModal so a failed visibility toggle shows a real error
   // instead of a silent "saved" that didn't actually publish anything.
   const [publishError, setPublishError] = useState<string | null>(null);

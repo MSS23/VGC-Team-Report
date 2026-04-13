@@ -51,7 +51,7 @@ export function ShareModal({
 }: ShareModalProps) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [discordCopied, setDiscordCopied] = useState(false);
-  const [publishPromptDismissed, setPublishPromptDismissed] = useState(false);
+  const [publicConfirmDismissed, setPublicConfirmDismissed] = useState(false);
   const [tagError, setTagError] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
 
@@ -307,8 +307,8 @@ export function ShareModal({
           </button>
         </div>
 
-        {/* Publish to community prompt — shown when report is private and not dismissed */}
-        {!viewerMode && !isPublic && !publishPromptDismissed && isOwner && (
+        {/* Public confirmation prompt — shown when sharing publicly, asks user to confirm */}
+        {!viewerMode && isPublic && !publicConfirmDismissed && isOwner && (
           <div className={`mx-6 mb-4 rounded-xl border p-4 ${hasWarnings ? "border-amber-500/30 bg-amber-500/5" : "border-accent/30 bg-accent-surface/20"}`}>
             {hasWarnings ? (
               <>
@@ -322,22 +322,25 @@ export function ShareModal({
             ) : (
               <>
                 <p className="text-sm font-semibold text-text-primary mb-1">
-                  Your report is private
+                  This report will be listed publicly
                 </p>
                 <p className="text-xs text-text-secondary mb-3">
-                  Publish it to the Explore page so others can discover it?
+                  Your team will appear on the Explore page for anyone to discover. Happy to share with the community?
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => handleTogglePublic(true)}
+                    onClick={() => setPublicConfirmDismissed(true)}
                     className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors cursor-pointer"
                   >
-                    Publish
+                    Yes, publish it
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPublishPromptDismissed(true)}
+                    onClick={() => {
+                      handleTogglePublic(false);
+                      setPublicConfirmDismissed(true);
+                    }}
                     className="px-3.5 py-1.5 text-xs font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
                   >
                     Keep Private
