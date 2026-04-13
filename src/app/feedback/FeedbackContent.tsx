@@ -115,8 +115,14 @@ function FeedbackInner() {
       <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="feedback" />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
-        {/* Sign-in required gate */}
-        {isLoaded && !isSignedIn ? (
+        {/* Loading state while auth initializes */}
+        {!isLoaded ? (
+          <div className="text-center py-16 animate-pulse">
+            <div className="w-16 h-16 rounded-2xl bg-surface-alt mx-auto mb-5" />
+            <div className="h-7 w-48 bg-surface-alt rounded-lg mx-auto mb-3" />
+            <div className="h-4 w-64 bg-surface-alt rounded mx-auto" />
+          </div>
+        ) : !isSignedIn ? (
           <motion.div
             className="text-center py-16"
             initial={{ opacity: 0, y: 12 }}

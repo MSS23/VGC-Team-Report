@@ -462,6 +462,10 @@ body {
 }
 
 /* View Transitions API for slide changes — snappy, no translateY to avoid layout work */
+/* Exclude the root from being snapshot so the body background doesn't flash */
+::view-transition-group(root) {
+  animation: none;
+}
 ::view-transition-old(slide) {
   animation: 100ms ease-out both fade-out-slide;
 }
