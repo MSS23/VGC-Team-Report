@@ -79,6 +79,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Sample teams cannot be saved" }, { status: 400 });
     }
 
+    // Creator name is mandatory for all shares
+    const creatorNameValue = (state.creatorName as string)?.trim();
+    if (!creatorNameValue) {
+      return NextResponse.json(
+        { error: "Add your name in the \"By\" field before sharing. Every report needs an author." },
+        { status: 400 }
+      );
+    }
+
     const sql = getDb();
 
     // Build search vector text from state fields
@@ -148,16 +157,9 @@ export async function POST(request: Request) {
         }
       }
 
-      // Require tags + creator name to publish — only block when going from private → public
+      // Require tags to publish — only block when going from private → public
       const wasPublic = oldRows.length > 0 && !!oldRows[0].is_public;
       if (effectiveIsPublic && !wasPublic) {
-        const creatorName = (state.creatorName as string)?.trim();
-        if (!creatorName) {
-          return NextResponse.json(
-            { error: "Add your name in the \"By\" field before publishing. Public reports need an author." },
-            { status: 400 }
-          );
-        }
         const tags = (state.tags ?? {}) as Record<string, unknown>;
         const hasRegulation = !!tags.regulation;
         const hasEventType = !!tags.eventType;
@@ -234,15 +236,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Require tags + creator name to publish new reports
+    // Require tags to publish new reports
     if (isPublic) {
-      const creatorName = (state.creatorName as string)?.trim();
-      if (!creatorName) {
-        return NextResponse.json(
-          { error: "Add your name in the \"By\" field before publishing. Public reports need an author." },
-          { status: 400 }
-        );
-      }
       const tags = (state.tags ?? {}) as Record<string, unknown>;
       const hasRegulation = !!tags.regulation;
       const hasEventType = !!tags.eventType;

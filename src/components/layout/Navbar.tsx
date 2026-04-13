@@ -54,6 +54,7 @@ interface NavbarProps {
   onShareClick: () => void;
   onReshare: () => void;
   onViewerShare?: () => void;
+  creatorRequired?: boolean;
 
   // Ownership
   isOwner: boolean;
@@ -164,7 +165,7 @@ export function Navbar(props: NavbarProps) {
     collaborators, syncStatus,
     isSampleTeam,
     shareStatus, shareButtonText, lastShareResult,
-    onShareClick, onReshare, onViewerShare,
+    onShareClick, onReshare, onViewerShare, creatorRequired,
     isOwner, activeShareId, sessionShareId,
     hasExistingShare, editLinkCopied, onCopyEditLink,
     onUndo, onRedo, canUndo, canRedo,
@@ -369,12 +370,18 @@ export function Navbar(props: NavbarProps) {
                   {shareButtonText}
                 </Button>
               ) : showUser ? (
-                <>
+                <div className="relative">
                   <Button variant="secondary" size="sm" onClick={() => { hapticLight(); onShareClick(); }} disabled={shareStatus === "copying"} data-walkthrough="share-button">
                     {shareButtonText}
                   </Button>
-                  {/* Collab link moved to overflow menu */}
-                </>
+                  {creatorRequired && (
+                    <div className="absolute top-full right-0 mt-2 w-64 z-50 rounded-xl border border-red-500/30 bg-surface shadow-lg px-3 py-2.5 animate-fade-in">
+                      <p className="text-xs font-semibold text-red-600 dark:text-red-400">
+                        Add your name in the &quot;By&quot; field before sharing.
+                      </p>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <SignInButton mode="modal">
                   <Button variant="secondary" size="sm" data-walkthrough="share-button">

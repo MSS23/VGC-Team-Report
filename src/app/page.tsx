@@ -99,6 +99,7 @@ function HomeContent() {
     handleSetPublic,
     publishError,
     clearPublishError,
+    creatorRequired,
     allowComments,
     setAllowComments,
     autoSaveStatus,
@@ -804,6 +805,7 @@ function HomeContent() {
         onShareClick={handleShareClick}
         onReshare={handleReshare}
         onViewerShare={handleViewerShare}
+        creatorRequired={creatorRequired}
         isOwner={isOwner}
         activeShareId={activeShareId}
         sessionShareId={sessionShareId}

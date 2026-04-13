@@ -27,6 +27,8 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
   // Surfaced to ShareModal so a failed visibility toggle shows a real error
   // instead of a silent "saved" that didn't actually publish anything.
   const [publishError, setPublishError] = useState<string | null>(null);
+  // Blocks sharing until the user fills in the "By" field
+  const [creatorRequired, setCreatorRequired] = useState(false);
 
   // Sync isPublic from server when share data is fetched (e.g. opening a shared view or dashboard toggle)
   useEffect(() => {
@@ -41,6 +43,12 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
   const handleShareClick = useCallback(() => {
     if (!analysis || isSampleTeam) return;
     const state = buildShareState();
+    // Block sharing if no creator name
+    if (!state.creatorName?.trim()) {
+      setCreatorRequired(true);
+      return;
+    }
+    setCreatorRequired(false);
     copyShareUrl(state, isPublic);
     setShowEditUrl(true);
     // Track share event
@@ -119,6 +127,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     handleShareClick, handleReshare, handleCopyEditLink, handleFreshReshare,
     isPublic, setIsPublic, handleSetPublic,
     publishError, clearPublishError,
+    creatorRequired,
     allowComments, setAllowComments,
     autoSaveStatus,
     forkedFrom, forkReport,

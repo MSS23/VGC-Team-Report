@@ -713,6 +713,7 @@ export function useHomePage() {
     handleSetPublic: share.handleSetPublic,
     publishError: share.publishError,
     clearPublishError: share.clearPublishError,
+    creatorRequired: share.creatorRequired,
     allowComments: share.allowComments,
     setAllowComments: share.setAllowComments,
     autoSaveStatus: share.autoSaveStatus,
