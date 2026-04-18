@@ -738,7 +738,14 @@ export function PokemonDetailSlide({
             const sp = spSpread[stat];
             const iv = parsed.ivs[stat];
             const isBoosted = itemBoost?.stat === stat;
-            const displayValue = isBoosted ? itemBoost.boostedValue : value;
+            // Recompute from displayStats so Champions SP recalcs and Mega
+            // form swaps feed the multiplier the correct base — itemBoost
+            // carries the multiplier (and picks the boosted stat for
+            // Booster Energy) but its baked-in boostedValue was computed
+            // against the standard-EV calculatedStats and goes stale.
+            const displayValue = isBoosted && itemBoost
+              ? Math.floor(value * itemBoost.multiplier)
+              : value;
             const maxStat = stat === "hp" ? 300 : 250;
             const percentage = Math.min((displayValue / maxStat) * 100, 100);
             const hasNonDefaultIv = iv !== 31;

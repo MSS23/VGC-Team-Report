@@ -4,7 +4,13 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { lookupPokemon } from "@/lib/data/pokemon";
-import { calculateAllStats } from "@/lib/analysis/stat-calculator";
+import {
+  calculateAllStats,
+  calculateChampionsStat,
+  convertToChampionsSp,
+  CHAMPIONS_MAX_SP_PER_STAT,
+  CHAMPIONS_TOTAL_SP,
+} from "@/lib/analysis/stat-calculator";
 import { getItemStatBoost } from "@/lib/analysis/item-boosts";
 import { getDefensiveProfile } from "@/lib/data/type-chart";
 import { PokemonSprite } from "@/components/report/PokemonSprite";
@@ -112,10 +118,32 @@ interface CompareAnalyzedPokemon extends AnalyzedPokemon {
   spriteSpecies: string;
 }
 
+/**
+ * Champions-format detection for a parsed team.
+ *
+ * The Compare page receives raw pastes without regulation metadata, so we
+ * infer the format from the spread shape. Champions (Reg M-A) pastes carry
+ * SP values in the EV line — total ≤ 66, no stat > 32 — which is
+ * unambiguous vs. Reg G (total up to 508). Applied team-wide so every
+ * Pokemon in the same paste is read consistently.
+ */
+function looksLikeChampionsTeam(pokemon: { evs: import("@/lib/types/pokemon").StatSpread }[]): boolean {
+  if (pokemon.length === 0) return false;
+  for (const p of pokemon) {
+    const stats = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
+    const total = stats.reduce((sum, s) => sum + p.evs[s], 0);
+    if (total === 0) continue; // uninvested — inconclusive
+    if (total > CHAMPIONS_TOTAL_SP) return false;
+    if (stats.some((s) => p.evs[s] > CHAMPIONS_MAX_SP_PER_STAT)) return false;
+  }
+  return true;
+}
+
 function analyzePaste(paste: string): CompareAnalyzedPokemon[] | null {
   if (!paste.trim()) return null;
   const parsed = parseShowdownPaste(paste);
   if (parsed.pokemon.length === 0) return null;
+  const isChampions = looksLikeChampionsTeam(parsed.pokemon);
   return parsed.pokemon.map((p) => {
     let data = lookupPokemon(p.species);
     let displaySpecies = p.species;
@@ -137,9 +165,20 @@ function analyzePaste(paste: string): CompareAnalyzedPokemon[] | null {
       }
     }
 
-    const calculatedStats = data
+    let calculatedStats = data
       ? calculateAllStats(data.baseStats, p.ivs, p.evs, p.level, p.nature)
       : { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+    if (isChampions && data) {
+      const sp = convertToChampionsSp(p.evs);
+      calculatedStats = {
+        hp: calculateChampionsStat("hp", data.baseStats.hp, sp.hp, p.nature),
+        atk: calculateChampionsStat("atk", data.baseStats.atk, sp.atk, p.nature),
+        def: calculateChampionsStat("def", data.baseStats.def, sp.def, p.nature),
+        spa: calculateChampionsStat("spa", data.baseStats.spa, sp.spa, p.nature),
+        spd: calculateChampionsStat("spd", data.baseStats.spd, sp.spd, p.nature),
+        spe: calculateChampionsStat("spe", data.baseStats.spe, sp.spe, p.nature),
+      };
+    }
     const itemBoost = getItemStatBoost(p.item, p.ability, calculatedStats);
     return { parsed: p, data, calculatedStats, itemBoost, displaySpecies, displayTypes, spriteSpecies };
   });
@@ -206,17 +245,15 @@ function TypeWeaknessGrid({ label, weakMap, resistMap, color }: { label: string;
 }
 
 function SpeedComparison({ teamA, teamB }: { teamA: CompareAnalyzedPokemon[]; teamB: CompareAnalyzedPokemon[] }) {
+  const effectiveSpeed = (m: CompareAnalyzedPokemon): number => {
+    const base = m.calculatedStats.spe;
+    return m.itemBoost?.stat === "spe"
+      ? Math.floor(base * m.itemBoost.multiplier)
+      : base;
+  };
   const allSpeeds = [
-    ...teamA.map((m) => ({
-      species: m.displaySpecies,
-      speed: m.itemBoost?.stat === "spe" ? m.itemBoost.boostedValue : m.calculatedStats.spe,
-      team: "A" as const,
-    })),
-    ...teamB.map((m) => ({
-      species: m.displaySpecies,
-      speed: m.itemBoost?.stat === "spe" ? m.itemBoost.boostedValue : m.calculatedStats.spe,
-      team: "B" as const,
-    })),
+    ...teamA.map((m) => ({ species: m.displaySpecies, speed: effectiveSpeed(m), team: "A" as const })),
+    ...teamB.map((m) => ({ species: m.displaySpecies, speed: effectiveSpeed(m), team: "B" as const })),
   ].sort((a, b) => b.speed - a.speed);
 
   const maxSpeed = allSpeeds[0]?.speed ?? 1;

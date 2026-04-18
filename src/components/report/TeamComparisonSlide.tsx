@@ -6,7 +6,7 @@ import type { PokemonType } from "@/lib/types/pokemon";
 import type { MatchupPlan } from "@/hooks/useMatchupPlans";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { lookupPokemon } from "@/lib/data/pokemon";
-import { calculateAllStats } from "@/lib/analysis/stat-calculator";
+import { calculateAllStats, calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
 import { getItemStatBoost } from "@/lib/analysis/item-boosts";
 import { getEffectiveness } from "@/lib/data/type-chart";
 import { MOVES } from "@/lib/data/moves";
@@ -16,6 +16,7 @@ import { TypeBadge } from "./TypeBadge";
 interface TeamComparisonSlideProps {
   plan: MatchupPlan;
   yourPokemon: AnalyzedPokemon[];
+  regulation?: string;
 }
 
 interface ComparedPokemon {
@@ -50,10 +51,18 @@ function getThreats(
   return threats;
 }
 
-function parseTeamComparison(pokemon: AnalyzedPokemon[]): ComparedPokemon[] {
+function parseTeamComparison(pokemon: AnalyzedPokemon[], regulation?: string): ComparedPokemon[] {
+  const isChampions = regulation === "Reg M-A";
   return pokemon.map((mon) => {
-    const speed = mon.calculatedStats.spe;
-    const boostedSpeed = mon.itemBoost?.stat === "spe" ? mon.itemBoost.boostedValue : null;
+    // In Champions, recompute from SP so the stat base matches the card display.
+    let speed = mon.calculatedStats.spe;
+    if (isChampions && mon.data) {
+      const sp = convertToChampionsSp(mon.parsed.evs);
+      speed = calculateChampionsStat("spe", mon.data.baseStats.spe, sp.spe, mon.parsed.nature);
+    }
+    const boostedSpeed = mon.itemBoost?.stat === "spe"
+      ? Math.floor(speed * mon.itemBoost.multiplier)
+      : null;
     return {
       species: mon.parsed.species,
       types: mon.data?.types ?? [],
@@ -67,8 +76,9 @@ function parseTeamComparison(pokemon: AnalyzedPokemon[]): ComparedPokemon[] {
   });
 }
 
-function parseOpponentComparison(paste: string): ComparedPokemon[] {
+function parseOpponentComparison(paste: string, regulation?: string): ComparedPokemon[] {
   const parsed = parseShowdownPaste(paste);
+  const isChampions = regulation === "Reg M-A";
   return parsed.pokemon.map((p) => {
     const data = lookupPokemon(p.species);
     const hasEvs = Object.values(p.evs).reduce((a, b) => a + b, 0) > 0;
@@ -78,8 +88,14 @@ function parseOpponentComparison(paste: string): ComparedPokemon[] {
         ? calculateAllStats(data.baseStats, p.ivs, { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, p.level, p.nature)
         : null;
     const itemBoost = stats ? getItemStatBoost(p.item, p.ability, stats) : null;
-    const speed = stats?.spe ?? 0;
-    const boostedSpeed = itemBoost?.stat === "spe" ? itemBoost.boostedValue : null;
+    let speed = stats?.spe ?? 0;
+    if (isChampions && data) {
+      const sp = convertToChampionsSp(p.evs);
+      speed = calculateChampionsStat("spe", data.baseStats.spe, sp.spe, p.nature);
+    }
+    const boostedSpeed = itemBoost?.stat === "spe"
+      ? Math.floor(speed * itemBoost.multiplier)
+      : null;
     return {
       species: p.species,
       types: data?.types ?? [],
@@ -93,9 +109,9 @@ function parseOpponentComparison(paste: string): ComparedPokemon[] {
   });
 }
 
-export function TeamComparisonSlide({ plan, yourPokemon }: TeamComparisonSlideProps) {
-  const yours = useMemo(() => parseTeamComparison(yourPokemon), [yourPokemon]);
-  const theirs = useMemo(() => parseOpponentComparison(plan.opponentPaste), [plan.opponentPaste]);
+export function TeamComparisonSlide({ plan, yourPokemon, regulation }: TeamComparisonSlideProps) {
+  const yours = useMemo(() => parseTeamComparison(yourPokemon, regulation), [yourPokemon, regulation]);
+  const theirs = useMemo(() => parseOpponentComparison(plan.opponentPaste, regulation), [plan.opponentPaste, regulation]);
 
   // Speed comparison: sort all Pokemon by effective speed
   const speedComparison = useMemo(() => {

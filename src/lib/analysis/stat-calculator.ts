@@ -111,6 +111,19 @@ export const CHAMPIONS_TOTAL_SP = 66;
 export function convertToChampionsSp(evs: StatSpread): StatSpread {
   const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
 
+  // Fast path — pastes that are already in SP form. Showdown has no "SP:"
+  // prefix yet, so Champions teams carry SP values inside the EV line
+  // (e.g. "EVs: 22 HP / 11 Def / 24 SpA / 4 SpD / 5 Spe" sums to 66).
+  // If every value fits inside [0, 32] and the total fits inside 66,
+  // the only consistent reading is "these are SP" — treating them as
+  // EVs and running ceil(ev/8) would collapse "5 Spe" to 1 SP and
+  // break downstream stat math (e.g. Choice Scarf on Primarina).
+  const totalInput = stats.reduce((sum, s) => sum + evs[s], 0);
+  const anyOverMax = stats.some((s) => evs[s] > CHAMPIONS_MAX_SP_PER_STAT);
+  if (totalInput > 0 && totalInput <= CHAMPIONS_TOTAL_SP && !anyOverMax) {
+    return { ...evs };
+  }
+
   // Step 1: Direct conversion — ceil for non-zero to preserve intent
   const sp: StatSpread = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
   for (const stat of stats) {

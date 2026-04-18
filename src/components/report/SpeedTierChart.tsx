@@ -7,6 +7,7 @@ import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
 import { POKEMON_DATA } from "@/lib/data/pokemon";
 import { CHAMPIONS_DEX } from "@/lib/data/champions-dex";
+import { calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
 
 interface SpeedTierChartProps {
   pokemon: AnalyzedPokemon[];
@@ -154,8 +155,17 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   };
 
   // Build your team entries
+  const isChampions = regulation === "Reg M-A";
   const teamEntries = useMemo(() => pokemon.map((mon, i) => {
-    const baseSpe = mon.calculatedStats.spe;
+    // In Champions (Reg M-A), recompute Speed from the SP budget so the
+    // tier matches the card display. calculatedStats uses the standard
+    // EV formula and diverges from the SP formula when the paste carries
+    // SP values in the EV line (sum 66, per-stat <=32).
+    let baseSpe = mon.calculatedStats.spe;
+    if (isChampions && mon.data) {
+      const sp = convertToChampionsSp(mon.parsed.evs);
+      baseSpe = calculateChampionsStat("spe", mon.data.baseStats.spe, sp.spe, mon.parsed.nature);
+    }
     const hasSpeedBoost = mon.itemBoost?.stat === "spe";
     const boostMultiplier = hasSpeedBoost ? mon.itemBoost!.multiplier : 1;
 
@@ -176,7 +186,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       speedBoostLabel,
       isYours: true as const,
     };
-  }), [pokemon, speciesKeys]);
+  }), [pokemon, speciesKeys, isChampions]);
 
   // Build meta threat entries (filter out Pokemon already on your team)
   const metaEntries = useMemo(() => {

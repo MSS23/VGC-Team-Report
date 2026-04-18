@@ -439,7 +439,11 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               const ev = parsed.evs[stat];
               const sp = spSpread[stat];
               const isBoosted = itemBoost?.stat === stat;
-              const displayValue = isBoosted ? itemBoost.boostedValue : value;
+              // Recompute from displayStats so Champions SP recalcs and
+              // Mega form swaps feed the multiplier the correct base.
+              const displayValue = isBoosted && itemBoost
+                ? Math.floor(value * itemBoost.multiplier)
+                : value;
               const maxStat = stat === "hp" ? 300 : 250;
               const percentage = Math.min((displayValue / maxStat) * 100, 100);
               const labels = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe };
