@@ -250,7 +250,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
             </span>
             {report.collaborators && report.collaborators.length > 0 && (
               <>
-                <span className="text-text-tertiary">&</span>
+                <span className="text-text-tertiary">collabed with</span>
                 {report.collaborators.slice(0, 2).map((name, i) => (
                   <span key={name}>
                     {i > 0 && <span className="text-text-tertiary">, </span>}
@@ -269,9 +269,6 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   <span className="text-text-tertiary">+{report.collaborators.length - 2}</span>
                 )}
               </>
-            )}
-            {report.placement && !report.isVerified && (
-              <span className="text-[9px] text-text-tertiary italic ml-1">(self-reported)</span>
             )}
           </p>
         )}

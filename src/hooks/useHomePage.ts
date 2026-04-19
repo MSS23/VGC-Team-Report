@@ -26,6 +26,7 @@ import { useTranslation } from "@/lib/i18n";
 import { getTemplate } from "@/lib/templates";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { detectArchetypes } from "@/lib/analysis/detect-archetype";
+import { detectRegulation } from "@/lib/analysis/detect-regulation";
 
 export function useHomePage() {
   const { t } = useTranslation();
@@ -578,17 +579,21 @@ export function useHomePage() {
     }
   }, [analysis, share.isSharedView, tags, setTags]);
 
-  // ── Auto-detect Champions regulation when team has Mega/Primal Pokemon ──
+  // ── Auto-detect regulation from the team composition ─────────────
+  // Uses the authoritative Mega list + item detection (see
+  // lib/analysis/detect-regulation.ts) so both already-Mega species
+  // ("Kangaskhan-Mega") and base + stone pastes ("Kangaskhan @
+  // Kangaskhanite") get picked up, along with Primal Reversion orbs.
+  // Currently only Reg M-A (Champions) is auto-detected; other regs
+  // have overlapping species pools and stay manual.
   const regulationDetected = useRef(false);
   useEffect(() => {
     if (!analysis || share.isSharedView || regulationDetected.current) return;
     if (tags?.regulation) return; // user already set regulation
-    const hasMega = analysis.pokemon.some((p) =>
-      p.parsed.species.includes("-Mega") || p.parsed.species.includes("-Primal")
-    );
-    if (hasMega) {
+    const detected = detectRegulation(analysis.pokemon);
+    if (detected) {
       regulationDetected.current = true;
-      setTags({ ...tags, regulation: "Reg M-A" });
+      setTags({ ...tags, regulation: detected });
     }
   }, [analysis, share.isSharedView, tags, setTags]);
 

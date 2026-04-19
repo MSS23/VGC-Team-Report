@@ -67,6 +67,20 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
                   </svg>
                 </span>
               )}
+              {report.collaborators && report.collaborators.length > 0 && (
+                <span className="text-xs text-text-tertiary flex items-center gap-1 flex-wrap">
+                  <span>collabed with</span>
+                  {report.collaborators.slice(0, 2).map((name, i) => (
+                    <span key={name}>
+                      {i > 0 && <span>, </span>}
+                      <span className="font-semibold text-text-secondary">{name}</span>
+                    </span>
+                  ))}
+                  {report.collaborators.length > 2 && (
+                    <span>+{report.collaborators.length - 2}</span>
+                  )}
+                </span>
+              )}
             </div>
           )}
         </div>
