@@ -4,9 +4,11 @@ import type { AnalyzedPokemon } from "@/lib/types/analysis";
 
 interface TeamStatsProps {
   pokemon: AnalyzedPokemon[];
+  /** Current regulation — Reg M-A (Champions) has no Tera, so the count is hidden. */
+  regulation?: string;
 }
 
-export function TeamStats({ pokemon }: TeamStatsProps) {
+export function TeamStats({ pokemon, regulation }: TeamStatsProps) {
   if (pokemon.length === 0) return null;
 
   // Unique types
@@ -29,8 +31,10 @@ export function TeamStats({ pokemon }: TeamStatsProps) {
     .map((p) => Object.values(p.data!.baseStats).reduce((a, b) => a + b, 0));
   const avgBst = bstValues.length > 0 ? Math.round(bstValues.reduce((a, b) => a + b, 0) / bstValues.length) : 0;
 
-  // Count Pokemon with Tera
-  const teraCount = pokemon.filter((p) => p.parsed.teraType).length;
+  // Count Pokemon with Tera — always 0 in Reg M-A (no Tera mechanic).
+  const teraCount = regulation === "Reg M-A"
+    ? 0
+    : pokemon.filter((p) => p.parsed.teraType).length;
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] sm:text-xs text-text-tertiary">

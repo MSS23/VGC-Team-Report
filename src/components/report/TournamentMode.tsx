@@ -18,6 +18,8 @@ interface TournamentModeProps {
   analysis: TeamAnalysis;
   speciesKeys: string[];
   getSpriteConfig?: (key: string) => SpriteConfig;
+  /** Current regulation — Reg M-A (Champions) has no Tera mechanic. */
+  regulation?: string;
 }
 
 /** Small colored circle for a Pokemon type */
@@ -59,11 +61,13 @@ function CompactCard({
   speciesKey,
   getSpriteConfig,
   statView,
+  hideTera,
 }: {
   pokemon: AnalyzedPokemon;
   speciesKey: string;
   getSpriteConfig?: (key: string) => SpriteConfig;
   statView: StatView;
+  hideTera?: boolean;
 }) {
   const { language } = useTranslation();
   const { parsed, data, calculatedStats } = pokemon;
@@ -71,6 +75,7 @@ function CompactCard({
   const sc = getSpriteConfig?.(speciesKey);
   const natureData = NATURES[parsed.nature];
   const evs = parsed.evs;
+  const showTera = !hideTera && parsed.teraType;
 
   const statKeys = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
   const statLabels = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" };
@@ -101,7 +106,7 @@ function CompactCard({
               {types.map((type) => (
                 <TypeDot key={type} type={type} />
               ))}
-              {parsed.teraType && (
+              {showTera && parsed.teraType && (
                 <>
                   <span className="text-text-tertiary/30 mx-0.5 text-[8px]">{"\u2192"}</span>
                   <span
@@ -148,7 +153,7 @@ function CompactCard({
             {types.map((type) => (
               <TypeDot key={type} type={type} />
             ))}
-            {parsed.teraType && (
+            {showTera && parsed.teraType && (
               <>
                 <span className="text-text-tertiary/30 mx-0.5 text-[10px]">{"\u2192"}</span>
                 <span
@@ -206,9 +211,10 @@ function CompactCard({
   );
 }
 
-export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: TournamentModeProps) {
+export function TournamentMode({ analysis, speciesKeys, getSpriteConfig, regulation }: TournamentModeProps) {
   const [statView, setStatView] = useState<StatView>("evs");
   const pokemon = analysis.pokemon;
+  const hideTera = regulation === "Reg M-A";
 
   // Sort by speed for the speed tier section
   const speedTiers = [...pokemon]
@@ -263,6 +269,7 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig }: Tourn
             speciesKey={speciesKeys[i]}
             getSpriteConfig={getSpriteConfig}
             statView={statView}
+            hideTera={hideTera}
           />
         ))}
       </div>
@@ -314,9 +321,11 @@ export function PrintableTournamentMode({
   analysis,
   speciesKeys,
   getSpriteConfig,
+  regulation,
   statView,
 }: TournamentModeProps & { statView: StatView }) {
   const pokemon = analysis.pokemon;
+  const hideTera = regulation === "Reg M-A";
 
   const speedTiers = [...pokemon]
     .map((mon, i) => ({ mon, key: speciesKeys[i], speed: mon.calculatedStats.spe }))
@@ -349,6 +358,7 @@ export function PrintableTournamentMode({
             speciesKey={speciesKeys[i]}
             getSpriteConfig={getSpriteConfig}
             statView={statView}
+            hideTera={hideTera}
           />
         ))}
       </div>

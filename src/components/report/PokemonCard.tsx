@@ -163,10 +163,15 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const natureData = NATURES[parsed.nature];
   const relevantStats = getRelevantStats(parsed);
 
-  // Non-default IVs (not 31)
-  const nonDefaultIvs = (["hp", "atk", "def", "spa", "spd", "spe"] as const).filter(
-    (stat) => parsed.ivs[stat] !== 31
-  );
+  // Reg M-A (Champions) has no Tera mechanic and forces IVs to 31 — hide both.
+  const isChampions = regulation === "Reg M-A";
+
+  // Non-default IVs (not 31) — hidden entirely in Reg M-A since IVs are locked.
+  const nonDefaultIvs = isChampions
+    ? []
+    : (["hp", "atk", "def", "spa", "spd", "spe"] as const).filter(
+        (stat) => parsed.ivs[stat] !== 31
+      );
   const ivLabels = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe } as const;
 
   return (
@@ -255,7 +260,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             {displayTypes.map((type) => (
               <TypeBadge key={type} type={type} />
             ))}
-            {parsed.teraType && (
+            {parsed.teraType && !isChampions && (
               <span className="flex items-center gap-0.5 ml-0.5 sm:ml-1">
                 <span className="text-[9px] sm:text-xs text-text-tertiary font-semibold">{t.tera}:</span>
                 <TypeBadge type={parsed.teraType} />

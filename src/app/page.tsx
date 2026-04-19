@@ -886,6 +886,49 @@ function HomeContent() {
         </div>
       )}
 
+      {/* Logged-out banner — draft is local-only, signing in is required to publish.
+          Shown whenever there's an analysis but no authenticated user. Distinct
+          from the restore banner so the messaging is explicit about the local
+          nature of the draft and what sign-in unlocks. */}
+      {authLoaded && !isSignedIn && analysis && !isSharedView && (
+        <div className="max-w-5xl mx-auto px-4 pt-2">
+          <div className="flex items-start gap-3 px-4 py-3 bg-gradient-to-br from-accent/10 via-accent-surface/15 to-transparent border border-accent/30 rounded-xl animate-fade-in">
+            <div className="w-8 h-8 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                <path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-extrabold text-text-primary">
+                This draft only lives on this device
+              </p>
+              <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">
+                Sign in to save your team report and share it with others. Without an account, your edits stay in this browser and can&apos;t be published.
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <SignUpButton mode="modal">
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-white hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
+                  >
+                    Sign up to save
+                  </button>
+                </SignUpButton>
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 text-[11px] font-bold rounded-lg text-text-secondary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
+                  >
+                    Sign in
+                  </button>
+                </SignInButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* URL length warning */}
       {urlWarning && (
         <div className="max-w-5xl mx-auto px-4 pt-2">
@@ -970,6 +1013,7 @@ function HomeContent() {
             analysis={analysis!}
             speciesKeys={speciesKeys}
             getSpriteConfig={getSpriteConfig}
+            regulation={tags?.regulation}
           />
         ) : (
         <>

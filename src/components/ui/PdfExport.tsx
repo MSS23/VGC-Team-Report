@@ -102,6 +102,7 @@ export function PrintableReport({
             speciesKeys={speciesKeys}
             getSpriteConfig={getSpriteConfig}
             statView={statView}
+            regulation={tags?.regulation}
           />
         </div>
       </PrintContext.Provider>

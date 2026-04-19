@@ -460,10 +460,15 @@ export function PokemonDetailSlide({
     spe: t.statSpe,
   } as const;
 
-  // Non-default IVs (not 31)
-  const nonDefaultIvs = (["hp", "atk", "def", "spa", "spd", "spe"] as const).filter(
-    (stat) => parsed.ivs[stat] !== 31
-  );
+  // Reg M-A (Champions): no Tera, IVs locked to 31. Gate both displays.
+  const isRegMA = regulation === "Reg M-A";
+
+  // Non-default IVs (not 31) — hidden entirely in Reg M-A since IVs are locked.
+  const nonDefaultIvs = isRegMA
+    ? []
+    : (["hp", "atk", "def", "spa", "spd", "spe"] as const).filter(
+        (stat) => parsed.ivs[stat] !== 31
+      );
 
   const offensiveCalcs = calcs.filter((c) => c.category === "offensive");
   const defensiveCalcs = calcs.filter((c) => c.category === "defensive");
@@ -592,7 +597,7 @@ export function PokemonDetailSlide({
           {types.map((type) => (
             <TypeBadge key={type} type={type} />
           ))}
-          {parsed.teraType && (
+          {parsed.teraType && !isRegMA && (
             <span className="flex items-center gap-1 ml-1 sm:ml-2">
               <span className="text-xs text-text-tertiary font-semibold">{t.tera}:</span>
               <TypeBadge type={parsed.teraType} />

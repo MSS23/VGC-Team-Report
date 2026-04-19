@@ -626,7 +626,7 @@ export function TeamOverview({
 
       {/* Team Stats Summary */}
       <div className="mb-1 sm:mb-4">
-        <TeamStats pokemon={pokemon} />
+        <TeamStats pokemon={pokemon} regulation={tags?.regulation} />
       </div>
 
       {/* Update Team (creator mode only) */}
