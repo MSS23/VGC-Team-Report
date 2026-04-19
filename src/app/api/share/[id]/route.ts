@@ -96,7 +96,17 @@ export async function GET(
     const sinceVersion = url.searchParams.get("since");
 
     if (key) {
-      // Validate edit key — return data + editable flag + version + visibility
+      // Validate edit key — return data + editable flag + version + visibility.
+      // Require an authenticated session: the key alone does not grant edit
+      // access. Anonymous callers (even with a correct token) get read-only
+      // so a logged-out user cannot mutate a published report via a stale
+      // localStorage token or tampered URL.
+      let authedUserId: string | null = null;
+      try {
+        const { userId: uid } = await auth();
+        authedUserId = uid;
+      } catch { /* not authenticated */ }
+
       const rows = await sql`
         SELECT data, (edit_token = ${key}) AS editable, COALESCE(version, 1) AS version, is_public FROM shares WHERE id = ${id} AND deleted_at IS NULL
       `;
@@ -112,9 +122,10 @@ export async function GET(
       const forkedFromId = await loadForkedFromId(sql, id);
       const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
 
+      const editable = !!rows[0].editable && !!authedUserId;
       return NextResponse.json({
         ...normalizeReportData(rows[0].data as Record<string, unknown>),
-        _editable: !!rows[0].editable,
+        _editable: editable,
         _version: Number(rows[0].version),
         _isPublic: !!rows[0].is_public,
         _isOwner: false,

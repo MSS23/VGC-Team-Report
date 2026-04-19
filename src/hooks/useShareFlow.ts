@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useShareUrl } from "@/hooks/useShareUrl";
+import { useAuth } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
 import posthog from "posthog-js";
 import type { ShareableState } from "@/lib/sharing/url-codec";
@@ -15,6 +16,7 @@ interface ShareFlowOptions {
 }
 
 export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: ShareFlowOptions) {
+  const { isSignedIn } = useAuth();
   const {
     isSharedView, isSharePending, sharedState, shareId: activeShareId,
     editKeyFromUrl, copyShareUrl, freshShare, autoSave, shareStatus,
@@ -42,6 +44,12 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
 
   const handleShareClick = useCallback(() => {
     if (!analysis || isSampleTeam) return;
+    // Saving/sharing requires a signed-in account. Anonymous users should be
+    // routed to sign-in rather than hit an obscure 401 from the server.
+    if (!isSignedIn) {
+      setPublishError("Sign in to save and share your team report.");
+      return;
+    }
     const state = buildShareState();
     // Block sharing if no creator name
     if (!state.creatorName?.trim()) {
@@ -84,10 +92,13 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     setShowEditUrl(true);
   }, [analysis, freshShare, buildShareState, isPublic]);
 
-  // Auto-save: debounce pushes to server when editing an unlocked shared view
+  // Auto-save: debounce pushes to server when editing an unlocked shared view.
+  // Gated on isSignedIn — if the user signs out while the tab is open, stop
+  // autosaving instead of hammering the server with 401s and silently losing
+  // their unsaved changes.
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!analysis || !isEditingUnlocked) return;
+    if (!analysis || !isEditingUnlocked || !isSignedIn) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
       autoSave(buildShareState(), isPublic);
@@ -95,7 +106,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [analysis, isEditingUnlocked, buildShareState, autoSave, isPublic]);
+  }, [analysis, isEditingUnlocked, isSignedIn, buildShareState, autoSave, isPublic]);
 
   const handleSetPublic = useCallback(async (v: boolean) => {
     // Optimistic toggle for responsive UI — reverted if the server rejects.

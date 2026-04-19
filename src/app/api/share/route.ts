@@ -74,6 +74,23 @@ export async function POST(request: Request) {
     }
     const { state, existingId, editToken, isPublic, isPublish } = parsed.data;
 
+    // Require authentication for ALL writes — both create and update. An edit
+    // token in localStorage alone must never grant mutation rights to an
+    // anonymous session: a signed-out user on the creator's own device would
+    // otherwise keep silently autosaving into the published report. Saving
+    // and sharing is an authenticated action, full stop.
+    let authedUserId: string | null = null;
+    try {
+      const { userId } = await auth();
+      authedUserId = userId;
+    } catch { /* auth check failed */ }
+    if (!authedUserId) {
+      return NextResponse.json(
+        { error: "Sign in to save or update a team report." },
+        { status: 401 }
+      );
+    }
+
     // Never save sample teams
     if (state.paste.trimStart().startsWith("Kangaskhan-Mega @ Kangaskhanite\nAbility: Parental Bond")) {
       return NextResponse.json({ error: "Sample teams cannot be saved" }, { status: 400 });
@@ -222,19 +239,8 @@ export async function POST(request: Request) {
       // Token mismatch or not found — fall through to create new
     }
 
-    // Create new share — requires authentication
-    let ownerId: string | null = null;
-    try {
-      const { userId } = await auth();
-      ownerId = userId;
-    } catch { /* auth check failed */ }
-
-    if (!ownerId) {
-      return NextResponse.json(
-        { error: "Sign in to share your team report" },
-        { status: 401 }
-      );
-    }
+    // Create new share — auth was already enforced at the top of this handler.
+    const ownerId: string = authedUserId;
 
     // Require tags to publish new reports
     if (isPublic) {

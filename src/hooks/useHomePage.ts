@@ -436,7 +436,14 @@ export function useHomePage() {
     t: t as unknown as Record<string, string>,
   });
 
-  const isReadOnly = (share.isSharedView && !share.isEditingUnlocked) || presentationMode || !creatorMode;
+  // Shared views (/s/{id}) require an authenticated owner/collaborator to edit.
+  // Anonymous visitors cannot mutate a published report even if they hold a
+  // stale localStorage edit token or the URL has been tampered with. The home
+  // page remains fully editable without auth (it's a local draft) — sign-in is
+  // only required to publish/save via the Share flow.
+  const isSharedReadOnly =
+    share.isSharedView && (!share.isEditingUnlocked || !isSignedIn);
+  const isReadOnly = isSharedReadOnly || presentationMode || !creatorMode;
   const isPresentationStyle = presentationMode;
 
   // Flash "Saved" when user data changes
