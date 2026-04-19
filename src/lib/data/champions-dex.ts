@@ -210,4 +210,5 @@ export const CHAMPIONS_DEX = new Set<string>([
   "steelix-mega",
   "salamence-mega",
   "mawile-mega",
+  "manectric-mega",
 ]);

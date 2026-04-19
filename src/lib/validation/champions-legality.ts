@@ -8,7 +8,7 @@
  * - Species Clause (no duplicates)
  * - Item Clause (no duplicate items)
  * - No Z-Crystals or Dynamax-related items
- * - EV totals within bounds (510 total, 252 per stat)
+ * - EV totals within bounds (512 total, 252 per stat)
  * - Team size exactly 6
  */
 
@@ -237,13 +237,15 @@ export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult 
     }
   }
 
-  // Per-Pokemon EV validation
+  // Per-Pokemon EV validation — Reg M-A (Champions) allows up to 512 total
+  // (vs the classic VGC 510 cap), so two stats can be maxed at 252 plus 8
+  // spillover into a third stat.
   for (const p of pokemon) {
     const evTotal = Object.values(p.evs).reduce((a, b) => a + b, 0);
-    if (evTotal > 510) {
+    if (evTotal > 512) {
       issues.push({
         severity: "error",
-        message: `${p.species}: EV total ${evTotal} exceeds maximum of 510`,
+        message: `${p.species}: EV total ${evTotal} exceeds maximum of 512`,
         pokemon: p.species,
       });
     }
