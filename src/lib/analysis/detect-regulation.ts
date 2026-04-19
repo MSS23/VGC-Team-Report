@@ -8,35 +8,33 @@
  *
  * Signal hierarchy (highest priority first):
  *
- *   1. Mega Evolution or Primal Reversion present → "Reg M-A"
- *      Pokémon Champions format (the only regulation where Megas and
- *      Primals can battle). Detected via MEGA_BY_KEY + item map from
- *      lib/utils/mega-detect (authoritative Mega list from Serebii).
+ *   1. Mega / Primal / Champions-exclusive form → "Reg M-A"
+ *      Pokémon Champions format. Catches Mega Stone held, Mega species,
+ *      Primal Orb held, Primal species suffix, and event-only forms
+ *      like Floette-Eternal that only exist in the Champions dex.
  *
  *   2. Restricted Legendary present → "Reg G"
- *      Reg G and Reg I are the only Gen 9 regulations that permit
- *      Restricted Legendaries (Calyrex, Miraidon, etc.). We default to
- *      Reg G because it's the most established "1-restricted-per-team"
- *      reg and the one Showdown still lists as an active competitive
- *      format. Users can manually switch to Reg I if that's their
- *      event's ruleset — the distinction is per-team limit, not
- *      species pool.
+ *      Reg G and Reg I are the only Gen 9 regs that permit Restricted
+ *      Legendaries. We default to Reg G; user overrides to Reg I when
+ *      the event uses the 2-restricted ruleset.
  *
- *   3. All-ordinary team + has DLC/HOME species → "Reg H"
- *      Reg H bans every Legendary, Paradox, Sub-Legendary, and Mythical.
- *      If a team is clean of all four categories but runs at least one
- *      species that's NOT in the original Paldea native dex (e.g.
- *      Ursaluna, Archaludon, Incineroar, any Hisuian form), we can
- *      positively distinguish Reg H from Reg A (Reg A is Paldea-only).
+ *   3. Clean of Paradox / Sub-Legendary / Mythical + has DLC species → "Reg H"
+ *      Reg H bans every Legendary, Paradox, and Mythical. A team clean
+ *      of those banned categories with at least one non-Paldea species
+ *      (Ursaluna, Archaludon, Incineroar, any Hisuian form) positively
+ *      distinguishes Reg H from the Paldea-only Reg A.
  *
- *   4. Paradox without Restricted → no tag (diagnostic only)
- *      Paradox rules out Reg A and Reg H but is legal in C/D/E/F/G/I,
- *      so this is not a unique signal.
+ *   4. Paradox or Sub-Legendary present + no Restricted → "Reg F"
+ *      Reg F is the "everything but Restricted" open format. Paradox
+ *      and Sub-Legendaries are legal, cover legendaries are not. This
+ *      path tags the team Reg F because it's the longest-running active
+ *      non-restricted paradox format; users can downshift manually to
+ *      C/D/E for older metagames.
  *
  *   5. Otherwise → null
  *      A Paldea-only team with no Legendary/Paradox/Mega/DLC signals
  *      could be Reg A or a Reg H team that happens to be all-native.
- *      No positive signal → user picks.
+ *      Falls through — the caller tags it "Custom".
  *
  * Authoritative sources cross-referenced in
  * lib/data/gen9-regulation-signals.ts.
@@ -50,6 +48,7 @@ import {
   SUB_LEGENDARIES,
   DLC_ERA_SPECIES,
   MYTHICAL_POKEMON,
+  CHAMPIONS_EXCLUSIVE_SPECIES,
   getRegulationLookupKey,
 } from "@/lib/data/gen9-regulation-signals";
 
@@ -78,12 +77,14 @@ export function detectRegulationWithSignals(
 
   const signals: string[] = [];
 
-  // ── Signal 1: Mega / Primal ─────────────────────────────────────
-  // Anything on the team holding a Mega Stone, matching a Mega form,
-  // or holding a Primal Orb means we're in the Champions format.
+  // ── Signal 1: Reg M-A (Pokémon Champions) ────────────────────────
+  // Any Mega Stone, Mega form, Primal Orb, Primal species, or
+  // Champions-exclusive event form (e.g. Floette-Eternal) means the
+  // team can only battle in Reg M-A.
   for (const p of pokemon) {
     const species = p.parsed.species;
     const item = p.parsed.item;
+    const rawKey = species.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
     if (isMegaForm(species)) {
       return {
@@ -107,6 +108,12 @@ export function detectRegulationWithSignals(
       return {
         regulation: "Reg M-A",
         signals: [`${species} is a Primal form (Reg M-A only)`],
+      };
+    }
+    if (CHAMPIONS_EXCLUSIVE_SPECIES.has(rawKey)) {
+      return {
+        regulation: "Reg M-A",
+        signals: [`${species} is a Champions-exclusive form (Reg M-A only)`],
       };
     }
   }
@@ -170,17 +177,29 @@ export function detectRegulationWithSignals(
     };
   }
 
-  // ── Signal 4: Paradox / Sub-Legendary diagnostics (no tag) ──────
-  if (paradoxHolders.length > 0) {
-    signals.push(
-      `Paradox Pokémon: ${paradoxHolders.join(", ")} (rules out Reg A and Reg H)`,
-    );
+  // ── Signal 4: Reg F (Paradox / Sub-Legendary, no Restricted) ────
+  // Reg F is the open "everything but Restricted" format — Paradox and
+  // Sub-Legendaries are legal, but the cover legendaries are not. A
+  // team with Paradox or a Sub-Legendary and no Restricted rules out
+  // Reg A (Paldea-only native), Reg G / Reg I (those require Restricted
+  // to be a distinguishing signal but those branches already returned
+  // above), and Reg H (bans Paradox + Sub-Legendaries). That leaves
+  // Reg C / D / E / F, and among those Reg F is the longest-running
+  // active ruleset and the most sensible default tag. Users running
+  // an older reg can manually override.
+  if (paradoxHolders.length > 0 || subLegendaryHolders.length > 0) {
+    const reasons: string[] = [];
+    if (paradoxHolders.length > 0) {
+      reasons.push(`Paradox: ${paradoxHolders.join(", ")}`);
+    }
+    if (subLegendaryHolders.length > 0) {
+      reasons.push(`Sub-Legendary: ${subLegendaryHolders.join(", ")}`);
+    }
+    reasons.push("No Restricted Legendary (rules out Reg G / Reg I)");
+    return { regulation: "Reg F", signals: reasons };
   }
-  if (subLegendaryHolders.length > 0) {
-    signals.push(
-      `Sub-Legendary: ${subLegendaryHolders.join(", ")} (rules out Reg A and Reg H)`,
-    );
-  }
+
+  // ── Signal 5: Mythical diagnostic ───────────────────────────────
   if (mythicalHolders.length > 0) {
     signals.push(
       `Mythical: ${mythicalHolders.join(", ")} (banned in every VGC regulation)`,

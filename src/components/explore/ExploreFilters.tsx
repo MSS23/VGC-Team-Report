@@ -249,9 +249,13 @@ export function ExploreFilters({
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* ROW 2: Search categories + inline quick filters (scrollable)       */}
+      {/* ROW 2: Search categories + inline quick filters                    */}
+      {/* Wraps to multiple lines so every chip (including "Top 8" / "Top    */}
+      {/* 16" at the end) stays clickable on desktop. Previously this row   */}
+      {/* used overflow-x-auto and the right-most chips got cut off behind  */}
+      {/* the container edge on wide screens with no obvious scroll UX.     */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex items-center gap-1.5 mt-2 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
         {/* Search category chips */}
         {CATEGORIES.map((cat) => (
           <button
@@ -310,8 +314,10 @@ export function ExploreFilters({
 
       {/* ------------------------------------------------------------------ */}
       {/* ROW 3: "More filters" toggle + active pills                        */}
+      {/* Also wraps — active-filter pills would otherwise clip when several */}
+      {/* are applied at once.                                               */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex items-center gap-1.5 mt-2 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
         {/* More filters toggle */}
         <button
           type="button"

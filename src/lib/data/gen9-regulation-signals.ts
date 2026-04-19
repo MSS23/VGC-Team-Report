@@ -266,6 +266,24 @@ export const DLC_ERA_SPECIES = new Set<string>([
 ]);
 
 /**
+ * Species that are ONLY legal in Pokémon Champions (Reg M-A) and do not
+ * appear in any Gen 9 SV VGC regulation. Presence is an unambiguous
+ * Reg M-A signal even without a Mega Stone or Primal Orb on the team.
+ *
+ * - Floette-Eternal (AZ's Floette) is an event-only form that has never
+ *   been distributed in Scarlet/Violet — it exists exclusively in the
+ *   Pokémon Champions dex.
+ *   Source: https://www.serebii.net/pokemonchampions/pokemon.shtml
+ *
+ * Keys use the full form suffix because these signals are form-specific
+ * (the base Floette is legal in Reg H / F via HOME — only the Eternal
+ * Flower form is Champions-exclusive). Lookup bypasses form stripping.
+ */
+export const CHAMPIONS_EXCLUSIVE_SPECIES = new Set<string>([
+  "floette-eternal",
+]);
+
+/**
  * Mythical Pokémon — always banned in every VGC regulation. Presence is
  * effectively a bug in the paste (illegal team) rather than a regulation
  * signal. Kept here so the detector can flag them as non-indicators.
