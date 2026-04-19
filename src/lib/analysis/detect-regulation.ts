@@ -22,14 +22,21 @@
  *      event's ruleset — the distinction is per-team limit, not
  *      species pool.
  *
- *   3. Paradox Pokémon present, no Restricted → no tag
- *      Paradox rules out Reg A and Reg H but is legal in C/D/E/F/G/I,
- *      so this is not a unique signal. Kept as a guard against
- *      incorrectly auto-tagging Reg H on a Paradox team.
+ *   3. All-ordinary team + has DLC/HOME species → "Reg H"
+ *      Reg H bans every Legendary, Paradox, Sub-Legendary, and Mythical.
+ *      If a team is clean of all four categories but runs at least one
+ *      species that's NOT in the original Paldea native dex (e.g.
+ *      Ursaluna, Archaludon, Incineroar, any Hisuian form), we can
+ *      positively distinguish Reg H from Reg A (Reg A is Paldea-only).
  *
- *   4. Otherwise → null
- *      A team of ordinary Pokémon is legal in most regulations (A, C,
- *      D, E, F, G, H, I) so we can't confidently pick one. User picks.
+ *   4. Paradox without Restricted → no tag (diagnostic only)
+ *      Paradox rules out Reg A and Reg H but is legal in C/D/E/F/G/I,
+ *      so this is not a unique signal.
+ *
+ *   5. Otherwise → null
+ *      A Paldea-only team with no Legendary/Paradox/Mega/DLC signals
+ *      could be Reg A or a Reg H team that happens to be all-native.
+ *      No positive signal → user picks.
  *
  * Authoritative sources cross-referenced in
  * lib/data/gen9-regulation-signals.ts.
@@ -40,6 +47,9 @@ import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
 import {
   RESTRICTED_LEGENDARIES,
   PARADOX_POKEMON,
+  SUB_LEGENDARIES,
+  DLC_ERA_SPECIES,
+  MYTHICAL_POKEMON,
   getRegulationLookupKey,
 } from "@/lib/data/gen9-regulation-signals";
 
@@ -120,19 +130,60 @@ export function detectRegulationWithSignals(
     return { regulation: "Reg G", signals };
   }
 
-  // ── Signal 3: Paradox (diagnostic only, not a unique signal) ────
-  // Recorded so the caller can show "we didn't pick H because your team
-  // has Paradox" but not enough to tag a specific reg on its own.
+  // ── Collect disqualifying signals for Reg H detection ───────────
+  // Reg H bans Paradox, Sub-Legendary, and Mythical outright. If the
+  // team runs any of those we cannot tag Reg H, regardless of DLC
+  // species presence. (Restricted Legendaries already short-circuited
+  // above into Reg G.)
   const paradoxHolders: string[] = [];
+  const subLegendaryHolders: string[] = [];
+  const mythicalHolders: string[] = [];
+  const dlcEraHolders: string[] = [];
   for (const p of pokemon) {
     const key = getRegulationLookupKey(p.parsed.species);
-    if (PARADOX_POKEMON.has(key)) {
-      paradoxHolders.push(p.parsed.species);
+    if (PARADOX_POKEMON.has(key)) paradoxHolders.push(p.parsed.species);
+    if (SUB_LEGENDARIES.has(key)) subLegendaryHolders.push(p.parsed.species);
+    if (MYTHICAL_POKEMON.has(key)) mythicalHolders.push(p.parsed.species);
+    // DLC lookup intentionally uses the raw normalized key (no form
+    // stripping) because entries like "ursaluna-bloodmoon" and
+    // "urshifu-rapid-strike" are form-specific and legitimate signals.
+    const rawKey = p.parsed.species.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    if (DLC_ERA_SPECIES.has(rawKey) || DLC_ERA_SPECIES.has(key)) {
+      dlcEraHolders.push(p.parsed.species);
     }
   }
+
+  // ── Signal 3: Reg H positive detection ──────────────────────────
+  // Clean of all Reg-H-banned categories + has a DLC/HOME species that
+  // rules out Paldea-only Reg A → confidently Reg H.
+  const regHClean =
+    paradoxHolders.length === 0 &&
+    subLegendaryHolders.length === 0 &&
+    mythicalHolders.length === 0;
+  if (regHClean && dlcEraHolders.length > 0) {
+    return {
+      regulation: "Reg H",
+      signals: [
+        `${dlcEraHolders.join(", ")}: not in Paldea native dex (rules out Reg A)`,
+        "No Legendary / Paradox / Mythical on the team (Reg H compatible)",
+      ],
+    };
+  }
+
+  // ── Signal 4: Paradox / Sub-Legendary diagnostics (no tag) ──────
   if (paradoxHolders.length > 0) {
     signals.push(
       `Paradox Pokémon: ${paradoxHolders.join(", ")} (rules out Reg A and Reg H)`,
+    );
+  }
+  if (subLegendaryHolders.length > 0) {
+    signals.push(
+      `Sub-Legendary: ${subLegendaryHolders.join(", ")} (rules out Reg A and Reg H)`,
+    );
+  }
+  if (mythicalHolders.length > 0) {
+    signals.push(
+      `Mythical: ${mythicalHolders.join(", ")} (banned in every VGC regulation)`,
     );
   }
 

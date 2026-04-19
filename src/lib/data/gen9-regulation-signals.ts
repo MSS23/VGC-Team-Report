@@ -146,6 +146,126 @@ export const SUB_LEGENDARIES = new Set<string>([
 ]);
 
 /**
+ * DLC-era / HOME-import species — Pokémon that are NOT in the original
+ * Paldea native dex (Reg A, Pokédex #001-375 + #388-392) and therefore
+ * could only appear on a team once DLC or HOME transfers opened up.
+ *
+ * Presence of any species here rules out Reg A. Combined with an absence
+ * of Restricted / Paradox / Sub-Legendary / Mythical signals, it is a
+ * strong positive signal for Reg H (the "no legendaries" reg, which
+ * still permits the full SV + Kitakami + Indigo Disk + HOME dex).
+ *
+ * Not exhaustive — this list captures the commonly-seen DLC/HOME
+ * additions in competitive VGC teams. Expand as new meta picks emerge.
+ *
+ * Categories:
+ *   • Hisuian regional forms and evolutions (Legends: Arceus)
+ *   • Indigo Disk exclusives (new species + new evolutions)
+ *   • Kitakami exclusives (Teal Mask DLC)
+ *   • Popular HOME imports from Alola / Galar (starters, Incineroar, etc.)
+ */
+export const DLC_ERA_SPECIES = new Set<string>([
+  // Hisuian evolutions + regional forms
+  "ursaluna",
+  "ursaluna-bloodmoon",
+  "sneasler",
+  "basculegion",
+  "basculegion-f",
+  "overqwil",
+  "wyrdeer",
+  "kleavor",
+  "enamorus",
+  "samurott-hisui",
+  "decidueye-hisui",
+  "typhlosion-hisui",
+  "zoroark-hisui",
+  "zorua-hisui",
+  "lilligant-hisui",
+  "voltorb-hisui",
+  "electrode-hisui",
+  "growlithe-hisui",
+  "arcanine-hisui",
+  "sliggoo-hisui",
+  "goodra-hisui",
+  "avalugg-hisui",
+  "braviary-hisui",
+  "qwilfish-hisui",
+  "sneasel-hisui",
+  "basculin-white-striped",
+  // Indigo Disk exclusives
+  "archaludon",
+  "duraludon",
+  "hydrapple",
+  "dipplin",
+  "sinistcha",
+  "sinistcha-masterpiece",
+  "poltchageist",
+  "poltchageist-artisan",
+  // Popular HOME imports (Alola / Galar starters + staples)
+  "incineroar",
+  "rillaboom",
+  "cinderace",
+  "inteleon",
+  "decidueye",
+  "primarina",
+  "dragapult",
+  "grimmsnarl",
+  "urshifu-rapid-strike",
+  "urshifu-single-strike",
+  "kommo-o",
+  "indeedee",
+  "indeedee-f",
+  "whimsicott",
+  "polteageist",
+  "sinistea",
+  "corviknight",
+  "dragonite",
+  "amoonguss",
+  "porygon2",
+  "porygon-z",
+  // Galarian regional forms (non-legendary — legendaries go in SUB_LEGENDARIES)
+  "weezing-galar",
+  "corsola-galar",
+  "cursola",
+  "farfetchd-galar",
+  "sirfetchd",
+  "darmanitan-galar",
+  "darmanitan-galar-zen",
+  "slowking-galar",
+  "slowbro-galar",
+  "rapidash-galar",
+  "ponyta-galar",
+  "mr-mime-galar",
+  "mr-rime",
+  "obstagoon",
+  "linoone-galar",
+  "zigzagoon-galar",
+  "perrserker",
+  "meowth-galar",
+  "runerigus",
+  "yamask-galar",
+  // Alolan regional forms
+  "raichu-alola",
+  "ninetales-alola",
+  "vulpix-alola",
+  "sandslash-alola",
+  "sandshrew-alola",
+  "persian-alola",
+  "meowth-alola",
+  "dugtrio-alola",
+  "diglett-alola",
+  "raticate-alola",
+  "rattata-alola",
+  "graveler-alola",
+  "golem-alola",
+  "geodude-alola",
+  "muk-alola",
+  "grimer-alola",
+  "marowak-alola",
+  "exeggutor-alola",
+]);
+
+/**
  * Mythical Pokémon — always banned in every VGC regulation. Presence is
  * effectively a bug in the paste (illegal team) rather than a regulation
  * signal. Kept here so the detector can flag them as non-indicators.
