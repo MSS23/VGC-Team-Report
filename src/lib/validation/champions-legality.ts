@@ -248,6 +248,16 @@ export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult 
         message: `${p.species}: EV total ${evTotal} exceeds maximum of 512`,
         pokemon: p.species,
       });
+    } else if (evTotal > 0 && evTotal < 512) {
+      // Reg M-A only: classic VGC muscle memory caps EVs at 508 (252+252+4)
+      // or 510, leaving stat points on the table. Surface an info hint so
+      // builders know they can squeeze a few more EVs in.
+      const remaining = 512 - evTotal;
+      issues.push({
+        severity: "info",
+        message: `${p.species}: ${evTotal} EVs allocated — ${remaining} more available (Reg M-A allows 512 total)`,
+        pokemon: p.species,
+      });
     }
 
     for (const [stat, value] of Object.entries(p.evs)) {
