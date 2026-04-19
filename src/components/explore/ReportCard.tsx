@@ -22,7 +22,7 @@ export interface ExploreReport {
   reactionCounts?: Record<string, number>;
   commentCount?: number;
   isVerified?: boolean;
-  tags?: { archetype?: string[]; regulation?: string; eventType?: string };
+  tags?: { archetype?: string[]; regulation?: string; eventType?: string; regulationAutoDetected?: boolean };
   collaborators?: string[];
 }
 
@@ -170,10 +170,22 @@ export function ReportCard({ report }: { report: ExploreReport }) {
         visible: { opacity: 1, y: 0 },
       }}
     >
-      {/* Regulation tag — always visible in top-right corner */}
+      {/* Regulation tag — always visible in top-right corner. Dashed
+          border + "auto" suffix marks a machine-guessed format so viewers
+          don't mistake it for a creator-claimed one. */}
       {report.tags?.regulation && (
-        <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 z-10">
+        <span
+          className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 z-10 inline-flex items-center gap-1 ${
+            report.tags.regulationAutoDetected ? "border border-dashed border-blue-500/40" : ""
+          }`}
+          title={report.tags.regulationAutoDetected
+            ? "Auto-detected from team composition — not confirmed by the creator"
+            : undefined}
+        >
           {report.tags.regulation}
+          {report.tags.regulationAutoDetected && (
+            <span className="text-[8px] opacity-70 uppercase">auto</span>
+          )}
         </span>
       )}
 

@@ -32,6 +32,7 @@ const ShareBodySchema = z.object({
       regulation: z.string().optional(),
       eventType: z.string().optional(),
       archetype: z.array(z.string()).optional(),
+      regulationAutoDetected: z.boolean().optional(),
     }).optional(),
     templateId: z.string().optional(),
     genTheme: z.string().optional(),

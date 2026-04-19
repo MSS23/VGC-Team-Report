@@ -36,7 +36,7 @@ export interface ShareableState {
   spriteSettings?: Record<string, { shiny?: boolean; animated?: boolean }>;
   hiddenSlides?: string[];
   allowComments?: boolean;
-  tags?: { archetype?: string[]; regulation?: string; eventType?: string };
+  tags?: { archetype?: string[]; regulation?: string; eventType?: string; regulationAutoDetected?: boolean };
   templateId?: string;
   /**
    * Creator's gen theme (accent color palette). When present on a shared view,

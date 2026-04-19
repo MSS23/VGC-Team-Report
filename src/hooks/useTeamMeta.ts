@@ -6,6 +6,12 @@ export interface ReportTags {
   archetype?: string[];
   regulation?: string;
   eventType?: string;
+  /**
+   * True when the regulation tag was set by the auto-detector, false or
+   * omitted when the user picked it manually. Must stay in sync with the
+   * canonical ReportTags in src/lib/data/tags.ts.
+   */
+  regulationAutoDetected?: boolean;
 }
 
 interface TeamMeta {

@@ -580,21 +580,28 @@ export function useHomePage() {
   }, [analysis, share.isSharedView, tags, setTags]);
 
   // ── Auto-detect regulation from the team composition ─────────────
-  // Uses the authoritative Mega list + item detection (see
-  // lib/analysis/detect-regulation.ts) so both already-Mega species
-  // ("Kangaskhan-Mega") and base + stone pastes ("Kangaskhan @
-  // Kangaskhanite") get picked up, along with Primal Reversion orbs.
-  // Currently only Reg M-A (Champions) is auto-detected; other regs
-  // have overlapping species pools and stay manual.
+  // Uses the signal-based detector (lib/analysis/detect-regulation.ts)
+  // which inspects species, items, and form variants against curated
+  // Gen 9 signal sets (Megas, Primals, Restricted, Paradox, Sub-legend,
+  // DLC/HOME era species).
+  //
+  // Every team gets a regulation tag — if no positive signal matches
+  // we fall through to "Custom" so viewers see an explicit "we don't
+  // recognize this format" state instead of a blank. Detection result
+  // is marked regulationAutoDetected:true so the UI can distinguish
+  // an auto-tag from a user-claimed one; any manual pick in the tag
+  // select flips that flag off.
   const regulationDetected = useRef(false);
   useEffect(() => {
     if (!analysis || share.isSharedView || regulationDetected.current) return;
     if (tags?.regulation) return; // user already set regulation
+    regulationDetected.current = true;
     const detected = detectRegulation(analysis.pokemon);
-    if (detected) {
-      regulationDetected.current = true;
-      setTags({ ...tags, regulation: detected });
-    }
+    setTags({
+      ...tags,
+      regulation: detected ?? "Custom",
+      regulationAutoDetected: true,
+    });
   }, [analysis, share.isSharedView, tags, setTags]);
 
   // ── Draft hydration (parallel to shared-view hydration above) ────

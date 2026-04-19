@@ -444,8 +444,26 @@ export function TeamOverview({
             {(tags && (tags.archetype?.length || tags.regulation || tags.eventType)) || legality ? (
               <div className="flex flex-wrap items-center gap-1.5 mt-1">
                 {tags?.regulation && (
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                  <span
+                    className={`text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border inline-flex items-center gap-1 ${
+                      tags.regulationAutoDetected
+                        ? "border-blue-500/20 border-dashed"
+                        : "border-blue-500/20"
+                    }`}
+                    title={tags.regulationAutoDetected
+                      ? "Auto-detected from team composition — not confirmed by the creator"
+                      : undefined}
+                  >
+                    {tags.regulationAutoDetected && (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M9.663 17h4.673M12 3v1M3 12h1M20 12h1M5.636 5.636l.707.707M17.657 17.657l.707.707" />
+                        <circle cx="12" cy="12" r="4" />
+                      </svg>
+                    )}
                     {tags.regulation}
+                    {tags.regulationAutoDetected && (
+                      <span className="text-[9px] font-semibold opacity-70 uppercase tracking-wide">auto</span>
+                    )}
                   </span>
                 )}
                 {legality && <LegalityBadge result={legality} />}
@@ -535,7 +553,13 @@ export function TeamOverview({
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
               <select
                 value={tags?.regulation ?? ""}
-                onChange={(e) => onTagsChange?.({ ...(tags ?? {}), regulation: e.target.value || undefined })}
+                onChange={(e) => onTagsChange?.({
+                  ...(tags ?? {}),
+                  regulation: e.target.value || undefined,
+                  // Manual pick overrides auto-detection — flip the flag off
+                  // so the UI stops calling this a machine guess.
+                  regulationAutoDetected: false,
+                })}
                 className="w-full sm:w-[140px] px-3 py-2 bg-surface border-2 border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
               >
                 <option value="">Regulation</option>
