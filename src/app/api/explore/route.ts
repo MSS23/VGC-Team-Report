@@ -106,8 +106,26 @@ export async function GET(request: Request) {
     const excludeSpeciesCondition = excludeSpeciesList.length > 0
       ? excludeSpeciesList.reduce((acc, sp) => sql`${acc} AND s.data->>'paste' NOT ILIKE ${"%" + sp + "%"}`, sql``)
       : sql``;
-    const placementCondition = filterPlacement
-      ? sql`AND s.data->>'placement' ILIKE ${"%" + filterPlacement + "%"}`
+    // Parse placement filter to a numeric cutoff so "Top 4" matches 1st/2nd/3rd/4th/T4,
+    // "Top 16" matches everything at or better than 16, etc. Raw ILIKE substring matching
+    // would miss "1st" when filtering "Top 4" and would false-match "21st" when filtering "1st".
+    const placementCutoff = (() => {
+      if (!filterPlacement) return 0;
+      if (/^\s*1st\s*$/i.test(filterPlacement)) return 1;
+      const m = /top\s*(\d+)/i.exec(filterPlacement);
+      if (m) return parseInt(m[1], 10);
+      const num = /^\s*(\d+)/.exec(filterPlacement);
+      return num ? parseInt(num[1], 10) : 0;
+    })();
+    const placementCondition = placementCutoff > 0
+      ? sql`AND (
+          CASE
+            WHEN s.data->>'placement' ~* '(champion|winner)' THEN 1
+            WHEN s.data->>'placement' ~* 'runner[ -]?up' THEN 2
+            WHEN s.data->>'placement' ~ '[0-9]' THEN NULLIF(SUBSTRING(s.data->>'placement' FROM '[0-9]+'), '')::int
+            ELSE 9999
+          END
+        ) <= ${placementCutoff}`
       : sql``;
     const tagFilters = sql`
       ${filterRegulation ? sql`AND s.data->'tags'->>'regulation' = ${filterRegulation}` : sql``}
