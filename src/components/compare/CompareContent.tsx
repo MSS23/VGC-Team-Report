@@ -15,8 +15,6 @@ import { getItemStatBoost } from "@/lib/analysis/item-boosts";
 import { getDefensiveProfile } from "@/lib/data/type-chart";
 import { PokemonSprite } from "@/components/report/PokemonSprite";
 import { TypeBadge } from "@/components/report/TypeBadge";
-import { useDarkMode } from "@/hooks/useDarkMode";
-import { PageNavbar } from "@/components/layout/PageNavbar";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
@@ -290,7 +288,6 @@ function isUrl(input: string): boolean {
 }
 
 export function CompareContent() {
-  const { darkMode, setDarkMode } = useDarkMode();
   const [pasteA, setPasteA] = useState("");
   const [pasteB, setPasteB] = useState("");
   const [compared, setCompared] = useState(false);
@@ -391,8 +388,6 @@ export function CompareContent() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="compare" />
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         {/* Hero */}
         <div className="text-center mb-8">
