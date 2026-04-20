@@ -1,5 +1,5 @@
 // Bump version to push updates to all installed PWA users
-const CACHE_NAME = "vgc-team-report-v20";
+const CACHE_NAME = "vgc-team-report-v22";
 const SHARE_CACHE = "vgc-shares-v5";
 const API_CACHE = "vgc-api-v6";
 
@@ -140,19 +140,33 @@ const OFFLINE_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// Install: precache critical assets + offline page
+// Install: precache critical assets + offline page. Every step is best-effort —
+// the SW must complete install even if individual caches fail (otherwise the
+// browser surfaces a TypeError to the page and PostHog records it as a real bug).
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      // Precache in parallel, skip failures for individual URLs
-      await Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)));
-      await cache.put(
-        new Request("/_offline"),
-        new Response(OFFLINE_HTML, {
-          headers: { "Content-Type": "text/html; charset=utf-8" },
-        })
-      );
-    })
+    (async () => {
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        // Precache in parallel, skip failures for individual URLs (404s, redirects,
+        // network blips during deploy churn).
+        await Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)));
+        try {
+          await cache.put(
+            new Request("/_offline"),
+            new Response(OFFLINE_HTML, {
+              headers: { "Content-Type": "text/html; charset=utf-8" },
+            })
+          );
+        } catch {
+          // Offline fallback failed to cache — non-fatal, online navigation
+          // still works. Avoids failing install on a single put error.
+        }
+      } catch {
+        // Even caches.open() can fail in storage-pressure / private-mode scenarios.
+        // Swallow so install completes — SW becomes a no-op rather than an error.
+      }
+    })()
   );
   self.skipWaiting();
 });
