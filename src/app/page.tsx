@@ -659,8 +659,6 @@ function HomeContent() {
           onAnalyze={handleAnalyze}
           selectedTemplate={pendingTemplateId}
           onTemplateSelect={setPendingTemplateId}
-          darkMode={darkMode}
-          onToggleDarkMode={() => setDarkMode(!darkMode)}
         />
       </main>
     );
