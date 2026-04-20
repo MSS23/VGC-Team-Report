@@ -310,6 +310,8 @@ interface TeamOverviewProps {
   onPokemonLongPress?: (index: number) => void;
   /** Re-import a team from a new paste/URL — replaces the entire team */
   onUpdatePaste?: (paste: string) => void;
+  /** Inline replace one Pokemon by index — drives the per-card pencil → search picker */
+  onReplacePokemon?: (index: number, newSpecies: string) => void;
   megaStates?: Record<number, boolean>;
   onToggleMega?: (index: number) => void;
   /** Global SP/EV display mode, controlled by the parent. */
@@ -346,6 +348,7 @@ export function TeamOverview({
   onReorderPokemon,
   onPokemonLongPress,
   onUpdatePaste,
+  onReplacePokemon,
   megaStates,
   onToggleMega,
   showEvMode,
@@ -732,6 +735,7 @@ export function TeamOverview({
                 regulation={tags?.regulation}
                 showEvMode={showEvMode}
                 onShowEvModeChange={onShowEvModeChange}
+                onReplaceSpecies={onReplacePokemon ? (next) => onReplacePokemon(i, next) : undefined}
               />
               </FieldDiffHighlight>
             </LongPressWrapper>

@@ -27,6 +27,7 @@ import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { setViewOverrideTheme, reapplyCurrentTheme, type GenTheme } from "@/hooks/useTheme";
 import { teamToShowdown, teamToOpenSheet } from "@/lib/utils/export-paste";
 import { createPokePaste } from "@/lib/utils/pokepaste";
+import { replacePokemonSpecies } from "@/lib/utils/paste-edit";
 import { I18nProvider } from "@/lib/i18n";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
@@ -491,6 +492,16 @@ function HomeContent() {
     setPaste(newPaste);
     handleAnalyze(newPaste);
   }, [setPaste, handleAnalyze]);
+
+  // Inline replace: swap a single Pokemon's species in-place (preserves
+  // moves / item / EVs / IVs / nature on that block) so users can fix a
+  // typo or change one slot without re-pasting the whole team.
+  const handleReplacePokemon = useCallback((index: number, newSpecies: string) => {
+    const next = replacePokemonSpecies(paste, index, newSpecies);
+    if (next === paste) return;
+    setPaste(next);
+    handleAnalyze(next);
+  }, [paste, setPaste, handleAnalyze]);
 
   // Swipe navigation for mobile
   const swipeRef = useSwipeNavigation({
@@ -1135,6 +1146,7 @@ function HomeContent() {
           onReorderPokemon={isReadOnly ? undefined : reorderPokemon}
           onPokemonLongPress={handlePokemonLongPress}
           onUpdatePaste={isReadOnly ? undefined : handleUpdatePaste}
+          onReplacePokemon={isReadOnly ? undefined : handleReplacePokemon}
           megaStates={resolvedMegaStates}
           onToggleMega={isReadOnly ? undefined : toggleMega}
           showEvMode={evMode}

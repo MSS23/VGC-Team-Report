@@ -80,6 +80,7 @@ interface TeamReportProps {
   onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
   onPokemonLongPress?: (index: number) => void;
   onUpdatePaste?: (paste: string) => void;
+  onReplacePokemon?: (index: number, newSpecies: string) => void;
   megaStates?: Record<number, boolean>;
   onToggleMega?: (index: number) => void;
   /** Global SP/EV display mode, controlled by the parent. */
@@ -160,6 +161,7 @@ export function TeamReport({
   onReorderPokemon,
   onPokemonLongPress,
   onUpdatePaste,
+  onReplacePokemon,
   megaStates,
   onToggleMega,
   showEvMode,
@@ -199,6 +201,7 @@ export function TeamReport({
           onReorderPokemon={onReorderPokemon}
           onPokemonLongPress={onPokemonLongPress}
           onUpdatePaste={onUpdatePaste}
+          onReplacePokemon={onReplacePokemon}
           megaStates={megaStates}
           onToggleMega={onToggleMega}
           showEvMode={showEvMode}

@@ -1,9 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { Card } from "@/components/ui/Card";
 import { PokemonSprite } from "./PokemonSprite";
+
+// Lazy-load the editor — most card renders never need it (read-only views,
+// presentation mode, embeds), so we keep the modal + dex-search bundle out
+// of the initial paint.
+const InlinePokemonEditor = dynamic(
+  () => import("./InlinePokemonEditor").then((m) => ({ default: m.InlinePokemonEditor })),
+  { ssr: false },
+);
 import { TypeBadge } from "./TypeBadge";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { NATURES } from "@/lib/data/natures";
@@ -32,6 +41,9 @@ interface PokemonCardProps {
    *  cards switch in sync. When omitted the card falls back to local state. */
   showEvMode?: boolean;
   onShowEvModeChange?: (v: boolean) => void;
+  /** Inline replace — when provided, a small pencil button on the card
+   *  opens a search picker to swap the species without re-pasting the team. */
+  onReplaceSpecies?: (newSpecies: string) => void;
 }
 
 const STAT_COLORS: Record<string, string> = {
@@ -43,7 +55,7 @@ const STAT_COLORS: Record<string, string> = {
   spe: "var(--stat-spe)",
 };
 
-export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation, showEvMode: showEvModeProp, onShowEvModeChange }: PokemonCardProps) {
+export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation, showEvMode: showEvModeProp, onShowEvModeChange, onReplaceSpecies }: PokemonCardProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   // Controlled when parent supplies showEvMode + handler; otherwise local fallback.
@@ -53,6 +65,10 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const isControlled = showEvModeProp !== undefined && onShowEvModeChange !== undefined;
   const showEvMode = isControlled ? showEvModeProp : localShowEvMode;
   const setShowEvMode = isControlled ? onShowEvModeChange : setLocalShowEvMode;
+
+  // Inline-edit modal — opened via the pencil button when the card is editable.
+  const [editing, setEditing] = useState(false);
+  const canReplace = !isReadOnly && !!onReplaceSpecies;
 
   // ── Mega Evolution resolution ────────────────────────────────────
   // Two paste shapes collapse into the same "mega capable" concept:
@@ -235,12 +251,29 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                 {parsed.gender === "M" ? "\u2642" : "\u2640"}
               </span>
             )}
+            {/* Inline replace — pencil button opens a search picker.
+                Same surface as MVP star but to the LEFT of it so it does
+                not push the star off the row on narrow cards. */}
+            {canReplace && (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="ml-auto p-2 rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200 cursor-pointer"
+                title="Replace this Pokemon"
+                aria-label={`Replace ${displaySpecies}`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </button>
+            )}
             {/* MVP star */}
             {!isReadOnly && onToggleMvp && (
               <button
                 type="button"
                 onClick={onToggleMvp}
-                className={`ml-auto p-2 rounded-lg transition-all duration-200 ${
+                className={`${canReplace ? "" : "ml-auto"} p-2 rounded-lg transition-all duration-200 ${
                   isMvp
                     ? "text-amber-500 bg-amber-500/10"
                     : "text-text-tertiary/40 hover:text-amber-400 hover:bg-amber-400/5"
@@ -507,6 +540,13 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
         </div>
         );
       })()}
+      {editing && onReplaceSpecies && (
+        <InlinePokemonEditor
+          currentSpecies={displaySpecies}
+          onReplace={(next) => { onReplaceSpecies(next); setEditing(false); }}
+          onClose={() => setEditing(false)}
+        />
+      )}
     </Card>
   );
 }
