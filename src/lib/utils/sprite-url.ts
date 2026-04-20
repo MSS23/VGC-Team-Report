@@ -202,6 +202,22 @@ export function getGenThemedSpriteUrls(
     urls.push(`${BASE_URL}/${shiny ? "ani-shiny" : "ani"}/${slug}.gif`);
   }
 
+  // Mega-form fallback: many Pokemon Champions originals (Mega Excadrill,
+  // Mega Golurk, etc.) don't have sprites on Showdown's CDN yet. Append
+  // base-form sprite URLs so the consumer's onError cycling lands on the
+  // base sprite instead of a broken image. The Mega context is still
+  // conveyed by surrounding UI labels.
+  const megaMatch = slug.match(/^(.+?)-mega[xy]?$/);
+  if (megaMatch) {
+    const base = megaMatch[1];
+    if (animated) {
+      urls.push(`${BASE_URL}/${shiny ? "ani-shiny" : "ani"}/${base}.gif`);
+      urls.push(`${BASE_URL}/${shiny ? "gen5ani-shiny" : "gen5ani"}/${base}.gif`);
+    }
+    urls.push(`${BASE_URL}/home/${base}.png`);
+    urls.push(`${BASE_URL}/${shiny ? "gen5-shiny" : "gen5"}/${base}.png`);
+  }
+
   // Ultimate fallback — substitute sprite
   urls.push(`${BASE_URL}/gen5/substitute.png`);
 

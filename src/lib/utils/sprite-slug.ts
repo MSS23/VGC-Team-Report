@@ -42,13 +42,34 @@ export function resolveSlug(species: string): string {
   return SLUG_MAP[slug] ?? slug;
 }
 
-/** Ordered sprite URLs: animated GIF first, then static PNG fallbacks */
+/** Ordered sprite URLs: animated GIF first, then static PNG fallbacks.
+ *
+ * For Mega forms not yet on Showdown's CDN (most Pokemon Champions
+ * originals — Mega Excadrill, Mega Golurk, Mega Glimmora, etc. all
+ * 404 on every variant), we append the base form's sprite URLs as
+ * additional fallbacks. The onError-cycling consumer lands on the
+ * base sprite instead of a broken image. The Mega context is still
+ * conveyed by the surrounding label/badge UI; the sprite is just a
+ * graceful degradation. */
 export function getSpriteUrls(species: string): string[] {
   const slug = resolveSlug(species);
-  return [
+  const urls: string[] = [
     `${BASE}/ani/${slug}.gif`,
     `${BASE}/gen5ani/${slug}.gif`,
     `${BASE}/home/${slug}.png`,
     `${BASE}/gen5/${slug}.png`,
   ];
+  // Mega-form fallback: strip "-mega" / "-megax" / "-megay" to recover
+  // the base species slug, then append its sprite URLs.
+  const megaMatch = slug.match(/^(.+?)-mega[xy]?$/);
+  if (megaMatch) {
+    const base = megaMatch[1];
+    urls.push(
+      `${BASE}/ani/${base}.gif`,
+      `${BASE}/gen5ani/${base}.gif`,
+      `${BASE}/home/${base}.png`,
+      `${BASE}/gen5/${base}.png`,
+    );
+  }
+  return urls;
 }
