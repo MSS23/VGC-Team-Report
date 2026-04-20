@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MEGA_BY_SLUG, getRegMAMegasWithSprites } from "@/lib/data/mega-pokemon";
-import { POKEMON_DATA } from "@/lib/data/pokemon";
+import { lookupPokemon } from "@/lib/data/pokemon";
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -151,7 +151,12 @@ export default async function MegaPokemonPage({
   const mega = MEGA_BY_SLUG.get(pokemon);
   if (!mega) notFound();
 
-  const pokemonData = POKEMON_DATA[mega.dataKey];
+  // Use lookupPokemon so Champions-original Megas that aren't in our
+  // hand-written POKEMON_DATA (Froslass-Mega, Emboar-Mega, Chandelure-Mega,
+  // etc.) fall through to the @pkmn/dex runtime fallback and still render.
+  // Previously did POKEMON_DATA[dataKey] directly which notFound()'d on
+  // everything added after the static catalogue was seeded.
+  const pokemonData = lookupPokemon(mega.dataKey);
   if (!pokemonData) notFound();
 
   // Fetch teams and prepare related megas in parallel. Pass both baseName
