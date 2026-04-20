@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { useDarkMode } from "@/hooks/useDarkMode";
+
 import { applyRandomAccent } from "@/lib/utils/random-accent";
-import { PageNavbar } from "@/components/layout/PageNavbar";
+
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
@@ -72,7 +72,6 @@ interface MegaLandingContentProps {
 }
 
 export function MegaLandingContent({ mega, baseStats, teams, relatedMegas, faqs }: MegaLandingContentProps) {
-  const { darkMode, setDarkMode } = useDarkMode();
   const bst = Object.values(baseStats).reduce((a, b) => a + b, 0);
 
   useEffect(() => {
@@ -81,8 +80,6 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas, faqs 
 
   return (
     <>
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="champions" />
-
       <main className="min-h-screen bg-background pb-24 sm:pb-0">
         {/* Hero */}
         <section className="relative overflow-hidden py-12 sm:py-20 px-4">

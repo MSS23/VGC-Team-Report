@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { detectImportSource } from "@/lib/utils/multi-import";
 import { useTranslation } from "@/lib/i18n";
-import { PageNavbar } from "@/components/layout/PageNavbar";
+
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
@@ -85,8 +85,6 @@ interface PasteInputProps {
   onAnalyze: (directPaste?: string) => void;
   selectedTemplate?: string;
   onTemplateSelect?: (id: string) => void;
-  darkMode: boolean;
-  onToggleDarkMode: () => void;
 }
 
 function looksLikeShowdownPaste(text: string): boolean {
@@ -103,7 +101,7 @@ const POKEMON_SPRITES = [
   "charizard-megay", "groudon-primal", "metagross-mega",
 ];
 
-export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect, darkMode, onToggleDarkMode }: PasteInputProps) {
+export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect }: PasteInputProps) {
   const { t } = useTranslation();
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -201,8 +199,6 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
   return (
     <>
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={onToggleDarkMode} activePage="home" />
-
       <div className="w-full max-w-3xl mx-auto px-4 pt-3 pb-8 sm:pb-4">
 
       {/* Animated sprites with floating effect */}

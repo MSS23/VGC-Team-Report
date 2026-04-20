@@ -5,8 +5,8 @@ import { motion } from "motion/react";
 import { track } from "@vercel/analytics";
 import posthog from "posthog-js";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
-import { useDarkMode } from "@/hooks/useDarkMode";
-import { PageNavbar } from "@/components/layout/PageNavbar";
+
+
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
@@ -41,8 +41,6 @@ export function CreatorProfileWrapper({ name }: { name: string }) {
 
 function CreatorProfileInner({ name }: { name: string }) {
   const { t } = useTranslation();
-  const { darkMode, setDarkMode } = useDarkMode();
-
   useEffect(() => { applyRandomAccent(); track("creator_profile_visited", { creator: name }); posthog.capture("creator_profile_visited", { creator_name: name }); }, [name]);
   const [data, setData] = useState<CreatorData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,8 +58,6 @@ function CreatorProfileInner({ name }: { name: string }) {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="creator" />
-
       <main className="pb-24 sm:pb-12">
         {loading ? (
           /* ── Loading State ── */

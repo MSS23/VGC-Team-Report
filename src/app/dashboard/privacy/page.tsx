@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { I18nProvider } from "@/lib/i18n";
-import { useDarkMode } from "@/hooks/useDarkMode";
+
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { useClerk, Show, SignInButton } from "@clerk/nextjs";
-import { PageNavbar } from "@/components/layout/PageNavbar";
+
 import { PageFooter } from "@/components/layout/PageFooter";
 
 export default function PrivacyDashboardPage() {
@@ -17,7 +17,6 @@ export default function PrivacyDashboardPage() {
 }
 
 function PrivacyDashboardInner() {
-  const { darkMode, setDarkMode } = useDarkMode();
   const { signOut } = useClerk();
   useEffect(() => { applyRandomAccent(); }, []);
 
@@ -78,8 +77,6 @@ function PrivacyDashboardInner() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="dashboard" />
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         <Show when="signed-out">
           <div className="text-center py-20">

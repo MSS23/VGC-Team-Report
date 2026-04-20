@@ -51,18 +51,8 @@ function setDarkModeValue(dark: boolean) {
   listeners.forEach((fn) => fn());
 }
 
-// Apply on first load
-if (typeof window !== "undefined") {
-  const init = () => {
-    requestAnimationFrame(() => applyDarkMode(darkModeValue));
-  };
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init, { once: true });
-  } else {
-    init();
-  }
-}
+// Dark mode is already applied by the blocking script in layout.tsx <head>,
+// so no need for a redundant RAF here — that would cause a flash.
 
 export function useDarkMode() {
   const darkMode = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

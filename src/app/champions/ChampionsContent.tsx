@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useDarkMode } from "@/hooks/useDarkMode";
+
 import { applyRandomAccent } from "@/lib/utils/random-accent";
-import { PageNavbar } from "@/components/layout/PageNavbar";
+
 import { PageFooter } from "@/components/layout/PageFooter";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { useEffect } from "react";
@@ -30,8 +30,6 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export function ChampionsContent() {
-  const { darkMode, setDarkMode } = useDarkMode();
-
   useEffect(() => {
     applyRandomAccent();
     track("champions_page_visited");
@@ -54,8 +52,6 @@ export function ChampionsContent() {
           },
         }}
       />
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="champions" />
-
       <main className="min-h-screen bg-background pb-24 sm:pb-0">
         {/* Hero */}
         <section className="relative overflow-hidden py-16 sm:py-24 px-4">

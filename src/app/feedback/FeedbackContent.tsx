@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { I18nProvider } from "@/lib/i18n";
-import { useDarkMode } from "@/hooks/useDarkMode";
+
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { getSessionId } from "@/lib/utils/session-id";
-import { PageNavbar } from "@/components/layout/PageNavbar";
+
 import { PageFooter } from "@/components/layout/PageFooter";
 import { SignInButton, useAuth } from "@clerk/nextjs";
 
@@ -53,7 +53,6 @@ export function FeedbackContent() {
 }
 
 function FeedbackInner() {
-  const { darkMode, setDarkMode } = useDarkMode();
   const { isLoaded, isSignedIn } = useAuth();
   useEffect(() => { applyRandomAccent(); }, []);
 
@@ -112,8 +111,6 @@ function FeedbackInner() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="feedback" />
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         {/* Loading state while auth initializes */}
         {!isLoaded ? (

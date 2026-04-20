@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { I18nProvider } from "@/lib/i18n";
-import { useDarkMode } from "@/hooks/useDarkMode";
+
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { applyAccentTheme, ACCENT_THEMES } from "@/lib/accent-themes";
 import { UserButton, Show, SignInButton } from "@clerk/nextjs";
-import { PageNavbar } from "@/components/layout/PageNavbar";
+
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 
@@ -159,7 +159,6 @@ function ProfilePreview({
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 function ProfileInner() {
-  const { darkMode, setDarkMode } = useDarkMode();
   useEffect(() => { applyRandomAccent(); }, []);
 
   const [creatorName, setCreatorName] = useState("");
@@ -224,8 +223,6 @@ function ProfileInner() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="dashboard" />
-
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-28">
         <Show when="signed-out">
           <div className="text-center py-20">

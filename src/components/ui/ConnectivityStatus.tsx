@@ -8,7 +8,8 @@ function useIsSharePage() {
   const [hasShareParam, setHasShareParam] = useState(false);
 
   useEffect(() => {
-    setHasShareParam(new URLSearchParams(window.location.search).has("s"));
+    const has = new URLSearchParams(window.location.search).has("s");
+    setHasShareParam((prev) => prev === has ? prev : has);
   }, [pathname]);
 
   return pathname?.startsWith("/s/") || hasShareParam;

@@ -184,21 +184,11 @@ function setTheme(theme: GenTheme) {
   listeners.forEach((fn) => fn());
 }
 
-// Apply theme on first load & watch dark mode changes
-// Use requestAnimationFrame to defer until after React hydration
+// Theme accent colors are already applied by the blocking script in layout.tsx <head>.
+// We only need to watch for dark-mode toggles to re-apply the correct light/dark variant.
 if (typeof window !== "undefined") {
-  const initTheme = () => {
-    requestAnimationFrame(() => applyTheme(currentTheme));
-    // Re-apply when dark mode toggles
-    const observer = new MutationObserver(() => applyTheme(currentTheme));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-dark-mode"] });
-  };
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initTheme, { once: true });
-  } else {
-    initTheme();
-  }
+  const observer = new MutationObserver(() => applyTheme(currentTheme));
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-dark-mode"] });
 }
 
 export function useTheme() {
