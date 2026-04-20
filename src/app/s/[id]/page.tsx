@@ -82,18 +82,26 @@ export async function generateMetadata({
       description = "Build, share, and present professional VGC team reports with damage calcs, speed tiers, and matchup plans.";
     }
 
-    // Embed images for shared reports are intentionally suppressed. We
-    // previously generated a Satori-rendered team preview via
-    // opengraph-image.tsx, but the render budget on Vercel's edge runtime
-    // couldn't reliably produce an accurate, timely image — Discord
-    // unfurls were landing on stale, mislabeled, or mid-generation frames.
-    // A clean text-only unfurl (title + description) is strictly better
-    // than a wrong or broken preview image, and it renders instantly.
+    // VGC-134: Wire the existing /api/team-graphic endpoint into og:image so
+    // every shared report gets a sprite-rich preview card in Discord/Twitter/
+    // iMessage/Slack instead of a plain text unfurl.
     //
-    // `images: []` is load-bearing: without it, Next.js falls back to the
-    // root /opengraph-image.tsx, which would show a generic site-wide
-    // image on every share link. Explicitly empty arrays block that
-    // inheritance for both the Open Graph and Twitter Card sides.
+    // History: a previous opengraph-image.tsx convention file was abandoned
+    // because mid-generation frames leaked to unfurlers. /api/team-graphic
+    // is a separate, battle-tested endpoint (used for creator downloads) and
+    // ships with aggressive Cache-Control so unfurlers receive a stable
+    // response on first hit and cache it for ~24h at the edge.
+    //
+    // Only attach an image when we can actually render a meaningful card —
+    // empty teams fall back to text-only so we never publish a blank PNG.
+    const hasTeam = species.length > 0;
+    const ogImageUrl = hasTeam
+      ? `https://pokemonvgcteamreport.com/api/team-graphic?id=${encodeURIComponent(id)}&style=wide`
+      : null;
+    const ogImages = ogImageUrl
+      ? [{ url: ogImageUrl, width: 1200, height: 400, alt: title }]
+      : [];
+
     return {
       title,
       description,
@@ -102,16 +110,16 @@ export async function generateMetadata({
         description,
         type: "website",
         siteName: "VGC Team Report",
-        images: [],
+        images: ogImages,
       },
       alternates: {
         canonical: `https://pokemonvgcteamreport.com/s/${id}`,
       },
       twitter: {
-        card: "summary",
+        card: hasTeam ? "summary_large_image" : "summary",
         title,
         description,
-        images: [],
+        images: ogImages,
       },
     };
   } catch {

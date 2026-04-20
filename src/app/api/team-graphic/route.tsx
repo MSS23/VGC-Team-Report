@@ -253,6 +253,14 @@ export async function GET(request: Request) {
         </div>
       </div>
     ),
-    { ...sz },
+    {
+      ...sz,
+      // Cache aggressively at the edge — share data is stable, and unfurlers
+      // (Twitter/Discord/Slack/iMessage) cache OG images for hours-to-days
+      // so a stale image never appears once a share is published.
+      headers: {
+        "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+      },
+    },
   );
 }
