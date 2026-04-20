@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MEGA_POKEMON_LIST, MEGA_BY_SLUG } from "@/lib/data/mega-pokemon";
+import { MEGA_BY_SLUG, getRegMAMegas } from "@/lib/data/mega-pokemon";
 import { POKEMON_DATA } from "@/lib/data/pokemon";
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
@@ -15,7 +15,9 @@ import type { ExploreReport } from "@/components/explore/ReportCard";
 export const revalidate = 3600;
 
 export function generateStaticParams() {
-  return MEGA_POKEMON_LIST.map((m) => ({ pokemon: m.slug }));
+  // Only build landing pages for Megas legal in the current Reg M-A format.
+  // Illegal Megas (e.g. Mega Salamence/Metagross/Mawile) won't be generated.
+  return getRegMAMegas().map((m) => ({ pokemon: m.slug }));
 }
 
 export async function generateMetadata({
@@ -142,8 +144,9 @@ export default async function MegaPokemonPage({
   // Fetch teams and prepare related megas in parallel
   const teams = await getTeamsForPokemon(mega.baseName);
 
-  // Pick up to 8 related Megas (excluding current)
-  const relatedMegas = MEGA_POKEMON_LIST
+  // Pick up to 8 related Megas (excluding current). Filter to Reg M-A so we
+  // never link from a legal Mega to an illegal one.
+  const relatedMegas = getRegMAMegas()
     .filter((m) => m.slug !== mega.slug)
     .slice(0, 8)
     .map((m) => ({ slug: m.slug, displayName: m.displayName, types: m.types as string[] }));

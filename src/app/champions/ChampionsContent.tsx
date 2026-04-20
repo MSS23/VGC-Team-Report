@@ -10,16 +10,17 @@ import { useEffect } from "react";
 import { track } from "@vercel/analytics";
 import posthog from "posthog-js";
 
-const MEGA_POKEMON = [
-  { name: "Kangaskhan-Mega", ability: "Parental Bond", types: ["Normal"], slug: "mega-kangaskhan" },
-  { name: "Salamence-Mega", ability: "Aerilate", types: ["Dragon", "Flying"], slug: "mega-salamence" },
-  { name: "Metagross-Mega", ability: "Tough Claws", types: ["Steel", "Psychic"], slug: "mega-metagross" },
-  { name: "Charizard-Mega-Y", ability: "Drought", types: ["Fire", "Flying"], slug: "mega-charizard-y" },
-  { name: "Gengar-Mega", ability: "Shadow Tag", types: ["Ghost", "Poison"], slug: "mega-gengar" },
-  { name: "Mawile-Mega", ability: "Huge Power", types: ["Steel", "Fairy"], slug: "mega-mawile" },
-  { name: "Gardevoir-Mega", ability: "Pixilate", types: ["Psychic", "Fairy"], slug: "mega-gardevoir" },
-  { name: "Lucario-Mega", ability: "Adaptability", types: ["Fighting", "Steel"], slug: "mega-lucario" },
-];
+// Derive the displayed list from the canonical Reg M-A set so this never
+// drifts again. Was previously a hardcoded 8-entry array that included
+// illegal Megas (Salamence, Metagross, Mawile). Now sourced from
+// MEGA_POKEMON_LIST filtered through CHAMPIONS_REG_MA_MEGAS.
+import { getRegMAMegas } from "@/lib/data/mega-pokemon";
+const MEGA_POKEMON = getRegMAMegas().map((m) => ({
+  name: m.displayName.replace(/^Mega /, "") + "-Mega",
+  ability: m.ability,
+  types: m.types,
+  slug: m.slug,
+}));
 
 const TYPE_COLORS: Record<string, string> = {
   Normal: "#A8A878", Fire: "#F08030", Water: "#6890F0", Electric: "#F8D030",
