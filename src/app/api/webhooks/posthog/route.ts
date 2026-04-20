@@ -1,5 +1,111 @@
 import { NextResponse } from "next/server";
 
+// ── Session timeline enrichment ──────────────────────────────────────────────
+// On every webhook, query PostHog for the user's last ~15 events leading up to
+// the exception. The webhook fires once per Linear ticket, so this is a single
+// extra HTTP call — no fan-out cost. With this context embedded in the ticket
+// description, Claude (or a human) can diagnose root cause from text alone
+// and never has to open the replay UI.
+interface TimelineEvent {
+  event: string;
+  timestamp: string;
+  properties: Record<string, unknown>;
+}
+
+async function fetchSessionTimeline(
+  sessionId: string,
+  beforeTimestamp: string,
+): Promise<TimelineEvent[]> {
+  const apiKey = process.env.POSTHOG_PERSONAL_API_KEY;
+  const projectId = process.env.POSTHOG_PROJECT_ID;
+  if (!apiKey || !projectId) return [];
+
+  const host = (process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com")
+    .replace("eu.i.posthog.com", "eu.posthog.com")
+    .replace(/\/$/, "");
+
+  // HogQL: pull every event from this session before the exception, newest first.
+  // 15 rows is enough to see the user's last few clicks + page views without
+  // bloating the Linear comment.
+  const query = `
+    SELECT event, timestamp, properties
+    FROM events
+    WHERE properties.$session_id = '${sessionId.replace(/'/g, "")}'
+      AND timestamp <= '${beforeTimestamp.replace(/'/g, "")}'
+    ORDER BY timestamp DESC
+    LIMIT 15
+  `;
+
+  try {
+    const res = await fetch(`${host}/api/projects/${projectId}/query/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: { kind: "HogQLQuery", query } }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const rows: unknown[][] = data?.results ?? [];
+    return rows.map((r) => ({
+      event: String(r[0] ?? ""),
+      timestamp: String(r[1] ?? ""),
+      properties: typeof r[2] === "string" ? JSON.parse(r[2]) : (r[2] as Record<string, unknown>) ?? {},
+    }));
+  } catch {
+    return [];
+  }
+}
+
+function formatTimelineForLinear(events: TimelineEvent[]): string[] {
+  if (events.length === 0) return [];
+  // Reverse so the oldest event is first — reads as a story leading up to the
+  // exception, not a flipped log.
+  const ordered = [...events].reverse();
+  const lines: string[] = ["", "### User Timeline (last 15 events before exception)", ""];
+  lines.push("| Time | Event | Detail |");
+  lines.push("|------|-------|--------|");
+  for (const e of ordered) {
+    const time = e.timestamp ? new Date(e.timestamp).toISOString().slice(11, 19) : "?";
+    const detail = summariseEvent(e);
+    lines.push(`| \`${time}\` | \`${e.event}\` | ${detail} |`);
+  }
+  return lines;
+}
+
+function summariseEvent(e: TimelineEvent): string {
+  const p = e.properties;
+  const path = (() => {
+    const url = String(p.$current_url ?? "");
+    if (!url) return "";
+    try {
+      return new URL(url).pathname;
+    } catch {
+      return url.slice(0, 60);
+    }
+  })();
+  switch (e.event) {
+    case "$pageview":
+      return path ? `Visited \`${path}\`` : "Page view";
+    case "$pageleave":
+      return path ? `Left \`${path}\`` : "Page leave";
+    case "$autocapture": {
+      const action = String(p.$event_type ?? "interaction");
+      const text = String(p.$el_text ?? "").trim().slice(0, 60);
+      return text ? `${action} on "${text}"` : action;
+    }
+    case "$rageclick": {
+      const text = String(p.$el_text ?? "").trim().slice(0, 60);
+      return text ? `Rage-clicked "${text}"` : "Rage click";
+    }
+    case "$exception":
+      return `\u26A0 ${String(p.$exception_message ?? p.message ?? "Error")}`.slice(0, 100);
+    default:
+      return path ? `at \`${path}\`` : "—";
+  }
+}
+
 /**
  * POST /api/webhooks/posthog
  *
@@ -70,9 +176,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, skipped: true, reason: "duplicate within dedup window" });
     }
 
-    // Build Linear issue
+    // Build Linear issue. Fetch session timeline in parallel with title so the
+    // Linear ticket lands with the user's last 15 events embedded — Claude can
+    // diagnose root cause from the ticket alone, no replay UI needed.
+    const sessionId = properties.$session_id as string | undefined;
+    const timeline = sessionId
+      ? await fetchSessionTimeline(sessionId, timestamp)
+      : [];
+
     const title = `[PostHog] ${formatEventTitle(event, properties)}`;
-    const description = buildDescription(event, personEmail, personId, timestamp, properties);
+    const description = buildDescription(event, personEmail, personId, timestamp, properties, timeline);
     const priority = inferPriority(event, properties);
     const labelIds = inferLabels(event, properties);
 
@@ -182,7 +295,8 @@ function buildDescription(
   email: string,
   distinctId: string,
   timestamp: string,
-  properties: Record<string, unknown>
+  properties: Record<string, unknown>,
+  timeline: TimelineEvent[] = [],
 ): string {
   const url = properties.$current_url ?? properties.url ?? "N/A";
   const browser = properties.$browser ?? "Unknown";
@@ -219,6 +333,11 @@ function buildDescription(
     }
     lines.push("```");
   }
+
+  // Embed the last 15 events leading up to the exception. Without this, every
+  // ticket required opening the replay UI to understand context. With it, the
+  // ticket is fully debuggable from text alone.
+  lines.push(...formatTimelineForLinear(timeline));
 
   // Rage click context
   if (event === "$rageclick" || event === "rageclick") {
