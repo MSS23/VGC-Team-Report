@@ -34,15 +34,19 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
   }, [totalSlides]);
 
   // Wrap state updates in View Transitions API when available.
-  // Rapid navigation (keyboard/swipe) can abort in-flight transitions —
-  // AbortError and InvalidStateError are harmless and silently swallowed.
+  // Rapid navigation can abort transitions (.ready and .finished both reject), and
+  // calling startViewTransition() while the document is hidden throws synchronously.
+  // Both are harmless — fall back to a plain update so the UI stays responsive.
   const withTransition = useCallback((update: () => void) => {
-    if (typeof document !== "undefined" && "startViewTransition" in document) {
-      const transition = (document as unknown as { startViewTransition: (cb: () => void) => { finished: Promise<void> } }).startViewTransition(update);
-      transition.finished.catch(() => {
-        // Transition was skipped or aborted by a newer one — expected during rapid navigation
-      });
-    } else {
+    if (typeof document === "undefined" || !("startViewTransition" in document) || document.visibilityState === "hidden") {
+      update();
+      return;
+    }
+    try {
+      const transition = (document as unknown as { startViewTransition: (cb: () => void) => { ready: Promise<void>; finished: Promise<void> } }).startViewTransition(update);
+      transition.ready.catch(() => { /* superseded by newer transition */ });
+      transition.finished.catch(() => { /* superseded by newer transition */ });
+    } catch {
       update();
     }
   }, []);

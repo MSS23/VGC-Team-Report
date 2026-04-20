@@ -38,8 +38,11 @@ export function ServiceWorkerRegistration() {
         });
       });
 
-      // Check for updates periodically (every 30 min)
-      setInterval(() => reg.update(), 30 * 60 * 1000);
+      // Check for updates periodically. reg.update() rejects if the registration
+      // was unregistered or the SW script became unreachable — both safe to ignore.
+      setInterval(() => {
+        reg.update().catch(() => {});
+      }, 30 * 60 * 1000);
     }).catch(() => {
       // Silent fail — SW is a progressive enhancement
     });
@@ -47,12 +50,18 @@ export function ServiceWorkerRegistration() {
 
   const handleUpdate = useCallback(() => {
     setUpdateAvailable(false);
-    // Tell the waiting SW to activate — controllerchange listener will reload
-    if (waitingWorkerRef.current) {
-      waitingWorkerRef.current.postMessage({ type: "SKIP_WAITING" });
-    } else {
-      window.location.reload();
+    const worker = waitingWorkerRef.current;
+    // Worker may have transitioned to 'redundant' between updatefound and click —
+    // postMessage on a redundant worker throws InvalidStateError. Fall back to reload.
+    if (worker && worker.state !== "redundant") {
+      try {
+        worker.postMessage({ type: "SKIP_WAITING" });
+        return;
+      } catch {
+        // Fall through to reload
+      }
     }
+    window.location.reload();
   }, []);
 
   if (!updateAvailable) return null;

@@ -47,6 +47,32 @@ function PostHogIdentify() {
   return null;
 }
 
+// Benign-error patterns we never want flooding Linear via the PostHog → Linear sync.
+// These come from rapid navigation, stale tabs after deploy, browser quirks, or
+// extension noise — they are recovered automatically and don't represent real bugs.
+const IGNORED_EXCEPTION_PATTERNS = [
+  // VGC-117: View Transition API aborts on rapid navigation
+  /AbortError.*Transition/i,
+  /transition was skipped/i,
+  /InvalidStateError.*startViewTransition/i,
+  // VGC-118: Service worker state churn
+  /InvalidStateError.*Worker/i,
+  /redundant/i,
+  // VGC-119: Stale chunks after deploy (auto-reloaded by ChunkErrorReloader)
+  /Loading chunk \d+ failed/i,
+  /Loading CSS chunk/i,
+  /ChunkLoadError/i,
+  /Failed to fetch dynamically imported module/i,
+  // Browser/extension noise
+  /ResizeObserver loop/i,
+  /Non-Error promise rejection captured/i,
+  /Script error\.?$/i,
+];
+
+function shouldIgnoreException(message: string): boolean {
+  return IGNORED_EXCEPTION_PATTERNS.some((re) => re.test(message));
+}
+
 /** Always init in cookieless mode — safe without consent */
 function initPostHogAnonymous() {
   if (typeof window === "undefined" || !process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) return;
@@ -64,6 +90,22 @@ function initPostHogAnonymous() {
     persistence: "memory",
     // No session replay until consent
     disable_session_recording: true,
+    // Drop benign exceptions before they reach PostHog (and the Linear sync).
+    before_send: (event) => {
+      if (event?.event === "$exception") {
+        const props = (event.properties ?? {}) as Record<string, unknown>;
+        const list = (props.$exception_list as Array<Record<string, unknown>> | undefined) ?? [];
+        const candidates = [
+          props.$exception_message,
+          props.$exception_type,
+          ...list.map((e) => e?.value),
+          ...list.map((e) => e?.type),
+        ]
+          .filter((v): v is string => typeof v === "string");
+        if (candidates.some(shouldIgnoreException)) return null;
+      }
+      return event;
+    },
     loaded: (ph) => {
       if (process.env.NODE_ENV === "development") ph.debug();
     },
