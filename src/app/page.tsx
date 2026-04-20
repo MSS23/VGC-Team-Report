@@ -1341,7 +1341,7 @@ function HomeContent() {
           onPrev={walkthroughPrev}
           onSkip={walkthroughSkip}
           guidePokemon={walkthroughGuidePokemon}
-          mandatory={walkthroughIsFirstTime}
+          mandatory={false}
         />
       )}
 

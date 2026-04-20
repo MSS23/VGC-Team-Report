@@ -491,11 +491,11 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                     {displayValue}
                   </span>
                   {investLabel > 0 ? (
-                    <span className={`hidden sm:inline text-xs font-bold w-12 tabular-nums ${isOverMax && showSp ? "text-amber-500" : "text-accent"}`}>
-                      +{investLabel}{investUnit && <span className="text-[9px] ml-px">{investUnit}</span>}
+                    <span className={`text-[10px] sm:text-xs font-bold w-9 sm:w-12 text-right tabular-nums flex-shrink-0 ${isOverMax && showSp ? "text-amber-500" : "text-accent"}`}>
+                      +{investLabel}{investUnit && <span className="text-[8px] sm:text-[9px] ml-px">{investUnit}</span>}
                     </span>
                   ) : (
-                    <span className="hidden sm:inline w-12" />
+                    <span className="w-9 sm:w-12 flex-shrink-0" />
                   )}
                 </div>
               );
