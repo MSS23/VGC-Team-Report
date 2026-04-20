@@ -102,13 +102,17 @@ export function ChampionsContent() {
             <p>
               Pokemon Champions is the new competitive Pokemon battle game and the official platform
               for the 2026 Play! Pokemon Championship Series. It replaces Pokemon Scarlet &amp; Violet
-              as the VGC format, featuring the return of <strong className="text-text-primary">Mega Evolution</strong> and{" "}
-              <strong className="text-text-primary">Primal Reversion</strong> in ranked battles.
+              as the VGC format, with <strong className="text-text-primary">Mega Evolution</strong> returning
+              as the headline mechanic.
             </p>
             <p>
               The first official format is <strong className="text-text-primary">Regulation M-A</strong>,
               which will be used for the Global Challenge (May 1-4), Indianapolis Regionals (May 29-31),
-              and the 2026 World Championships in San Francisco (August 28-30).
+              and the 2026 World Championships in San Francisco (August 28-30). Reg M-A bans all
+              Legendary and Restricted Pokemon — no Groudon, Kyogre, Calyrex, Miraidon, Koraidon, or
+              other restricted picks. Players may Mega Evolve once per battle from a pool of 59 legal
+              Mega forms (Mega Salamence, Mega Metagross, and Mega Mawile are explicitly NOT in the
+              format).
             </p>
           </div>
         </section>
