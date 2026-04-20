@@ -14,13 +14,11 @@ export async function register() {
     const { validateMegaCoverage } = await import("./lib/data/__validate-mega-coverage");
     const result = validateMegaCoverage();
     if (!result.ok) {
-      console.error("[mega-coverage] Data integrity check failed:");
-      for (const err of result.errors) console.error("  - " + err);
-      // Throw in production builds (fails Vercel build) but only warn in dev
-      // so iteration isn't blocked while data is being added.
-      if (process.env.NODE_ENV === "production") {
-        throw new Error(`Mega coverage validation failed with ${result.errors.length} errors. See log above.`);
-      }
+      // Soft warning only — the @pkmn/dex runtime fallback (pkmn-dex-fallback.ts)
+      // ensures EV/SP spreads always render even when our static catalogue lags.
+      // These warnings just flag SEO landing pages we haven't built yet.
+      console.warn("[mega-coverage] Static catalogue gaps (UI still works via @pkmn/dex fallback):");
+      for (const err of result.errors) console.warn("  - " + err);
     }
 
     await import("../sentry.server.config");

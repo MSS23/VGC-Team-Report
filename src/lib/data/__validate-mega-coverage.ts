@@ -18,13 +18,16 @@ import { POKEMON_DATA } from "./pokemon";
 export function validateMegaCoverage(): { ok: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  // 1. Every "*-mega" species in Champions dex must have mega metadata
+  // 1. Every "*-mega" species in Champions dex should have a static MEGA_POKEMON_LIST
+  // entry for SEO landing pages and rich descriptions. The runtime fallback to
+  // @pkmn/dex (pkmn-dex-fallback.ts) means missing entries no longer break the
+  // EV spread display, so this is a soft warning rather than a build-breaker.
   for (const species of CHAMPIONS_DEX) {
     if (!species.includes("-mega")) continue;
     if (!MEGA_BY_KEY.has(species)) {
       errors.push(
         `CHAMPIONS_DEX lists "${species}" but mega-pokemon.ts has no MEGA_POKEMON_LIST entry. ` +
-        `Add one or the EV spread will not render for this species.`,
+        `Spread display still works via @pkmn/dex fallback, but SEO landing page is missing.`,
       );
     }
   }

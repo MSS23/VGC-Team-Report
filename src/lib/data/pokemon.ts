@@ -1,4 +1,5 @@
 import type { PokemonData } from "@/lib/types/pokemon";
+import { lookupPokemonFromDex } from "./pkmn-dex-fallback";
 
 export const POKEMON_DATA: Record<string, PokemonData> = {
   // ── Restricted / Legendary ──────────────────────────────────────────────────
@@ -3322,5 +3323,8 @@ export function lookupPokemon(species: string): PokemonData | null {
     }
   }
 
-  return null;
+  // Dynamic fallback — anything not in our hand-maintained map (new Champions
+  // forms, obscure regional variants, future patches) resolves against the
+  // canonical @pkmn/dex dataset so the UI never silently loses a spread.
+  return lookupPokemonFromDex(species);
 }

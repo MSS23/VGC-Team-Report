@@ -1,5 +1,9 @@
 import { MEGA_POKEMON_LIST, MEGA_BY_KEY } from "@/lib/data/mega-pokemon";
 import type { MegaPokemonEntry } from "@/lib/data/mega-pokemon";
+import {
+  detectMegaFromItemDex,
+  getMegaEntryFromDex,
+} from "@/lib/data/pkmn-dex-fallback";
 
 /**
  * Lookup mega stone name → MegaPokemonEntry.
@@ -19,15 +23,15 @@ export function detectMegaFromItem(
 ): MegaPokemonEntry | null {
   if (!item) return null;
   const entry = MEGA_STONE_MAP.get(item.toLowerCase());
-  if (!entry) return null;
-
-  // For dual-mega Pokemon (Charizard X/Y), verify the stone matches the base form
-  const baseSpecies = species
-    .replace(/-Mega(-[XY])?$/i, "")
-    .replace(/-mega(-[xy])?$/i, "");
-  if (entry.baseName.toLowerCase() !== baseSpecies.toLowerCase()) return null;
-
-  return entry;
+  if (entry) {
+    // For dual-mega Pokemon (Charizard X/Y), verify the stone matches the base form
+    const baseSpecies = species
+      .replace(/-Mega(-[XY])?$/i, "")
+      .replace(/-mega(-[xy])?$/i, "");
+    if (entry.baseName.toLowerCase() === baseSpecies.toLowerCase()) return entry;
+  }
+  // Dynamic fallback — covers mega stones not yet in our static list.
+  return detectMegaFromItemDex(item, species);
 }
 
 /**
@@ -45,7 +49,9 @@ function normalizeMegaKey(species: string): string {
  * Check if a species string is already a mega form.
  */
 export function isMegaForm(species: string): boolean {
-  return MEGA_BY_KEY.has(normalizeMegaKey(species));
+  if (MEGA_BY_KEY.has(normalizeMegaKey(species))) return true;
+  // Dynamic fallback — Pokemon-Mega names not in our static list.
+  return getMegaEntryFromDex(species) !== null;
 }
 
 /**
@@ -78,5 +84,5 @@ export function getMegaDataKey(species: string, item: string | null): string | n
  * accepts will always resolve to an entry here.
  */
 export function getMegaEntryFromSpecies(species: string): MegaPokemonEntry | null {
-  return MEGA_BY_KEY.get(normalizeMegaKey(species)) ?? null;
+  return MEGA_BY_KEY.get(normalizeMegaKey(species)) ?? getMegaEntryFromDex(species);
 }
