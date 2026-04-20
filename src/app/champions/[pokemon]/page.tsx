@@ -77,17 +77,27 @@ export async function generateMetadata({
   };
 }
 
-async function getTeamsForPokemon(baseName: string): Promise<ExploreReport[]> {
+async function getTeamsForPokemon(baseName: string, megaStone: string): Promise<ExploreReport[]> {
   try {
     const sql = getDb();
-    // Search for teams containing this Pokemon in the paste (case-insensitive)
-    const searchPattern = `%${baseName}%`;
+    // Two valid pieces of evidence that this team uses the Pokemon AS its Mega:
+    //   1. The paste contains the Mega Stone (e.g. "Scizorite") — base+stone form
+    //   2. The paste contains "{baseName}-Mega" — already-Mega species form
+    //      (catches "Charizard-Mega-X" / "Charizard-Mega-Y" via prefix too)
+    // Searching only on baseName ("Scizor") was wrong — it matched any team
+    // containing a regular Scizor (no stone, no Mega slot), which was the
+    // user-reported bug.
+    const stonePattern = `%${megaStone}%`;
+    const megaSpeciesPattern = `%${baseName}-Mega%`;
     const rows = await sql`
       SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
       FROM shares s
       WHERE s.is_public = TRUE
         AND s.deleted_at IS NULL
-        AND s.data->>'paste' ILIKE ${searchPattern}
+        AND (
+          s.data->>'paste' ILIKE ${stonePattern}
+          OR s.data->>'paste' ILIKE ${megaSpeciesPattern}
+        )
       ORDER BY s.updated_at DESC
       LIMIT 9
     `;
@@ -144,8 +154,10 @@ export default async function MegaPokemonPage({
   const pokemonData = POKEMON_DATA[mega.dataKey];
   if (!pokemonData) notFound();
 
-  // Fetch teams and prepare related megas in parallel
-  const teams = await getTeamsForPokemon(mega.baseName);
+  // Fetch teams and prepare related megas in parallel. Pass both baseName
+  // AND megaStone so the query can require the team is actually using
+  // the Mega form, not just any team containing the base species.
+  const teams = await getTeamsForPokemon(mega.baseName, mega.megaStone);
 
   // Pick up to 8 related Megas (excluding current). Filter to "legal AND
   // sprited" so we never link to a broken-image page.
@@ -244,7 +256,6 @@ export default async function MegaPokemonPage({
         baseStats={pokemonData.baseStats}
         teams={teams}
         relatedMegas={relatedMegas}
-        faqs={faqItems}
       />
     </>
   );

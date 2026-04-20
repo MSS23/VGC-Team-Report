@@ -68,10 +68,10 @@ interface MegaLandingContentProps {
   baseStats: StatSpread;
   teams: ExploreReport[];
   relatedMegas: { slug: string; displayName: string; types: string[] }[];
-  faqs: { q: string; a: string }[];
+  // faqs removed from the visible UI — JSON-LD still generated server-side.
 }
 
-export function MegaLandingContent({ mega, baseStats, teams, relatedMegas, faqs }: MegaLandingContentProps) {
+export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: MegaLandingContentProps) {
   const bst = Object.values(baseStats).reduce((a, b) => a + b, 0);
 
   useEffect(() => {
@@ -182,58 +182,13 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas, faqs 
           )}
         </section>
 
-        {/* VGC Tips */}
-        <section className="max-w-5xl mx-auto px-4 py-8">
-          <h2 className="text-xl font-extrabold text-text-primary mb-4">
-            Using {mega.displayName} in VGC
-          </h2>
-          <div className="bg-surface rounded-xl border border-border p-4 sm:p-6 space-y-3 text-sm text-text-secondary leading-relaxed">
-            <p>
-              <strong className="text-text-primary">{mega.displayName}</strong> is a {mega.types.join("/")} type
-              Mega Evolution available in the Pokemon Champions Regulation M-A format.
-              Its ability <strong className="text-text-primary">{mega.ability}</strong> makes it
-              a strong pick for competitive VGC teams.
-            </p>
-            <p>
-              To use {mega.displayName}, equip <strong className="text-text-primary">{mega.megaStone}</strong> on {mega.baseName}.
-              Remember that only one Pokemon on your team can Mega Evolve per battle, so
-              choose your Mega wisely based on the matchup.
-            </p>
-            <p>
-              With a base stat total of <strong className="text-text-primary">{bst}</strong>,
-              {mega.displayName} brings significant power to Champions format doubles battles.
-              Check out the team reports above for proven strategies and EV spreads.
-            </p>
-          </div>
-        </section>
-
-        {/* FAQ — visible questions matching the FAQPage JSON-LD on the
-            server. Visible FAQs rank dramatically better than hidden ones;
-            Google surfaces them as rich snippets for long-tail queries. */}
-        {faqs.length > 0 && (
-          <section className="max-w-5xl mx-auto px-4 py-8">
-            <h2 className="text-xl font-extrabold text-text-primary mb-4">
-              {mega.displayName} VGC FAQ
-            </h2>
-            <div className="bg-surface rounded-xl border border-border divide-y divide-border">
-              {faqs.map((item, i) => (
-                <details key={i} className="group px-4 sm:px-6 py-4">
-                  <summary className="flex items-start justify-between gap-3 cursor-pointer list-none">
-                    <h3 className="text-sm font-extrabold text-text-primary group-hover:text-accent transition-colors">
-                      {item.q}
-                    </h3>
-                    <span className="flex-shrink-0 text-text-tertiary group-open:rotate-45 transition-transform text-lg leading-none mt-0.5">
-                      +
-                    </span>
-                  </summary>
-                  <p className="mt-2 text-sm text-text-secondary leading-relaxed">
-                    {item.a}
-                  </p>
-                </details>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* "Using X in VGC" and visible FAQ sections were removed — generic
+            filler that duplicated hero info (types, ability, stone, BST)
+            and pushed the actually useful Featured Teams section down.
+            Google deprecated FAQ rich snippets for non-authoritative sites
+            in Aug 2023, so the SEO justification is gone. The FAQPage
+            JSON-LD in <head> is still emitted for AI scrapers and other
+            structured-data consumers — it just isn't rendered visibly. */}
 
         {/* Related Megas */}
         {relatedMegas.length > 0 && (
