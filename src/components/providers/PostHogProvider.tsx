@@ -34,6 +34,16 @@ function PostHogIdentify() {
   useEffect(() => {
     if (!posthog || !hasAnalyticsConsent()) return;
 
+    // Internal user kill switch (logged-in path): if this Clerk user ID is in
+    // NEXT_PUBLIC_INTERNAL_USER_IDS, opt out of all capture and persist the
+    // localStorage flag so future logged-out sessions on this device stay
+    // filtered too.
+    if (userId && INTERNAL_USER_IDS.has(userId)) {
+      try { window.localStorage.setItem(INTERNAL_FLAG_KEY, "1"); } catch {}
+      posthog.opt_out_capturing();
+      return;
+    }
+
     if (userId) {
       posthog.identify(userId, {
         email: user?.primaryEmailAddress?.emailAddress,
@@ -105,10 +115,59 @@ function shouldIgnoreSource(source: string): boolean {
   return IGNORED_EXCEPTION_SOURCES.some((re) => re.test(source));
 }
 
+// Internal-user kill switch. Set via either:
+//   1. Visit /?internal=1 once per device → flag stored in localStorage
+//   2. Be signed in as a known internal Clerk user ID (see PostHogIdentify)
+// Either path opts the user out of capturing entirely so testing your own app
+// doesn't pollute funnels, replays, or error tickets.
+const INTERNAL_FLAG_KEY = "vgc-internal-user";
+
+function isFlaggedInternal(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(INTERNAL_FLAG_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function maybeSetInternalFlagFromQuery() {
+  if (typeof window === "undefined") return;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const flag = params.get("internal");
+    if (flag === "1") {
+      window.localStorage.setItem(INTERNAL_FLAG_KEY, "1");
+    } else if (flag === "0") {
+      // Escape hatch: ?internal=0 clears the flag (re-enable capture for this device)
+      window.localStorage.removeItem(INTERNAL_FLAG_KEY);
+    }
+  } catch {
+    // localStorage blocked / private mode — capture stays enabled, no harm
+  }
+}
+
+/**
+ * Comma-separated list of Clerk user IDs to always treat as internal.
+ * Set NEXT_PUBLIC_INTERNAL_USER_IDS in Vercel env vars (e.g.
+ * "user_2abc...,user_2xyz..."). Combined with the localStorage flag so
+ * you're filtered whether logged in or out.
+ */
+const INTERNAL_USER_IDS = new Set(
+  (process.env.NEXT_PUBLIC_INTERNAL_USER_IDS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
+);
+
 /** Always init in cookieless mode — safe without consent */
 function initPostHogAnonymous() {
   if (typeof window === "undefined" || !process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) return;
   if (posthog.__loaded) return;
+
+  // Honour the kill switch BEFORE init — once flagged, never capture on this device.
+  maybeSetInternalFlagFromQuery();
+  if (isFlaggedInternal()) return;
 
   posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN, {
     api_host: "/ingest",

@@ -344,6 +344,16 @@ export const MEGA_POKEMON_LIST: MegaPokemonEntry[] = [
     megaStone: "Beedrillite",
     description: "Mega Beedrill becomes a glass cannon with 150 Attack, 145 Speed, and Adaptability doubling STAB damage.",
   },
+  {
+    slug: "mega-manectric",
+    dataKey: "manectric-mega",
+    displayName: "Mega Manectric",
+    baseName: "Manectric",
+    types: ["Electric"],
+    ability: "Intimidate",
+    megaStone: "Manectite",
+    description: "Mega Manectric pairs blistering 135 Speed with Intimidate, making it the premier Electric-type pivot in Champions.",
+  },
 ];
 
 /** Lookup by URL slug */

@@ -8,6 +8,21 @@ let _provider: LoggerProvider | null = null;
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
+    // Build-time data integrity check — fail loudly if a Champions-legal Mega
+    // is missing from mega-pokemon.ts or pokemon.ts. Catches the Golurk-Mega
+    // class of bug (silently invisible spreads) before users see it.
+    const { validateMegaCoverage } = await import("./lib/data/__validate-mega-coverage");
+    const result = validateMegaCoverage();
+    if (!result.ok) {
+      console.error("[mega-coverage] Data integrity check failed:");
+      for (const err of result.errors) console.error("  - " + err);
+      // Throw in production builds (fails Vercel build) but only warn in dev
+      // so iteration isn't blocked while data is being added.
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(`Mega coverage validation failed with ${result.errors.length} errors. See log above.`);
+      }
+    }
+
     await import("../sentry.server.config");
 
     const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
