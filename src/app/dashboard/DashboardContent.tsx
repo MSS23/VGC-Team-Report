@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { I18nProvider } from "@/lib/i18n";
-import { useDarkMode } from "@/hooks/useDarkMode";
+
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { UserButton, Show, SignInButton, useUser } from "@clerk/nextjs";
-import { PageNavbar } from "@/components/layout/PageNavbar";
+
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
@@ -30,7 +30,6 @@ export function DashboardContent() {
 }
 
 function DashboardInner() {
-  const { darkMode, setDarkMode } = useDarkMode();
   const { user, isLoaded } = useUser();
   useEffect(() => { applyRandomAccent(); }, []);
 
@@ -108,8 +107,6 @@ function DashboardInner() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="dashboard" />
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         <Show when="signed-out">
           <div className="text-center py-20">
@@ -235,9 +232,10 @@ function DashboardInner() {
               </div>
             )}
 
-            {/* Content */}
+            {/* Content — reserve viewport height during loading so the
+                final content arriving doesn't reflow the page (CLS fix). */}
             {loading ? (
-              <div className="flex justify-center py-16">
+              <div className="flex justify-center items-start pt-16 min-h-[60vh]">
                 <div className="flex items-center gap-3 text-text-secondary">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                   <span className="text-sm font-medium">Loading...</span>

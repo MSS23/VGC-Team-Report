@@ -5,8 +5,8 @@ import { motion } from "motion/react";
 import { track } from "@vercel/analytics";
 import posthog from "posthog-js";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
-import { useDarkMode } from "@/hooks/useDarkMode";
-import { PageNavbar } from "@/components/layout/PageNavbar";
+
+
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ExploreHero } from "./ExploreHero";
 import { ExploreFilters, type SearchCategory } from "./ExploreFilters";
@@ -26,8 +26,6 @@ export function ExploreContent() {
 
 function ExploreInner() {
   const { t } = useTranslation();
-  const { darkMode, setDarkMode } = useDarkMode();
-
   // Random accent color on explore page
   useEffect(() => { applyRandomAccent(); track("explore_visited"); posthog.capture("explore_visited"); }, []);
 
@@ -119,8 +117,6 @@ function ExploreInner() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary" style={{ scrollPaddingTop: "8rem" }}>
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="explore" />
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-12 pb-24 sm:pb-12">
         <ExploreHero />
 
@@ -157,7 +153,9 @@ function ExploreInner() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-surface rounded-xl border border-border overflow-hidden animate-pulse">
+              // min-h reserves vertical space matching a typical ReportCard so
+              // the layout doesn't shift when real cards replace skeletons.
+              <div key={i} className="bg-surface rounded-xl border border-border overflow-hidden animate-pulse min-h-[260px]">
                 <div className="px-4 pt-4 pb-2 flex justify-center gap-1">
                   {Array.from({ length: 6 }).map((_, j) => (
                     <div key={j} className="w-10 h-10 rounded-full bg-surface-alt" />
