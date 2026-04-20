@@ -3,12 +3,41 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { I18nProvider } from "@/lib/i18n";
-import { useDarkMode } from "@/hooks/useDarkMode";
+
 import { applyRandomAccent } from "@/lib/utils/random-accent";
-import { PageNavbar } from "@/components/layout/PageNavbar";
+
 import { PageFooter } from "@/components/layout/PageFooter";
 
 const ENTRIES = [
+  {
+    date: "April 2026",
+    version: "5.6",
+    title: "Universal Pokemon Coverage, Sharing Reborn & Quieter Errors",
+    emoji: "\uD83D\uDCE1", // 📡
+    highlight: true,
+    items: [
+      // ── Universal Pokemon coverage ──
+      { type: "new" as const, text: "Every Pokemon, every form, every Mega now resolves automatically — including Champions-exclusive forms like Mega Manectric and Mega Golurk that previously rendered with no spread. Backed by the canonical Pokemon Showdown dataset (@pkmn/dex), so future game patches just work without us shipping data updates." },
+      { type: "fixed" as const, text: "Pokemon spread (EVs / Stat Points) is now always visible even when the species isn't in our static dex — the entire stat block was previously hidden when data was missing, swallowing your own EV investment numbers." },
+      { type: "improved" as const, text: "Mobile spread view now shows the per-stat investment column (+252 EVs / +252 SP) inline. Previously hidden behind a desktop-only breakpoint, so mobile users only saw final calculated stats." },
+
+      // ── Shared report unfurls ──
+      { type: "new" as const, text: "Shared report links now render rich Open Graph cards with the 6-mon team sprites, tournament tag, placement and creator name in Discord, Twitter, iMessage and Slack — every shared link is dramatically more clickable. Cached for 24h at the edge so unfurlers see a stable preview." },
+      { type: "new" as const, text: "Persistent ShareDock on every shared report — X/Twitter, Reddit, Discord copy and Copy Link are one tap away in a top-anchored pill, no longer buried in the navbar. Auto-hides on scroll-down so it never obscures slide content." },
+
+      // ── Tour / first run ──
+      { type: "improved" as const, text: "First-run walkthrough is now skippable from any step — close X, ESC, backdrop tap, and Skip All all work on the very first session. Previously trapped first-time users." },
+
+      // ── Performance ──
+      { type: "improved" as const, text: "Cumulative Layout Shift reduced on /dashboard and /explore — loading states now reserve the eventual content height so the page doesn't reflow when fetches resolve." },
+
+      // ── Reliability / silent fixes ──
+      { type: "fixed" as const, text: "View Transition aborts during rapid navigation no longer surface as errors. The visual transition is the same; the noise is gone." },
+      { type: "fixed" as const, text: "ServiceWorker install hardened — single failed cache.put for the offline page no longer fails the entire install." },
+      { type: "fixed" as const, text: "ChunkLoadError after a deploy is now suppressed before being captured — the page already auto-reloads, so the error never needed to surface." },
+      { type: "fixed" as const, text: "Third-party SDK loading failures (Clerk CDN blips) are filtered from error tracking — they're not bugs in the app and were polluting the dashboard." },
+    ],
+  },
   {
     date: "April 2026",
     version: "5.5",
@@ -460,7 +489,7 @@ export function ChangelogContent() {
 }
 
 function ChangelogInner() {
-  const { darkMode, setDarkMode } = useDarkMode();
+
   useEffect(() => { applyRandomAccent(); }, []);
 
   // Count totals
@@ -481,8 +510,6 @@ function ChangelogInner() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
-      <PageNavbar darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} activePage="changelog" />
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         {/* Hero */}
         <motion.div
