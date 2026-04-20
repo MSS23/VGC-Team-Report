@@ -11,15 +11,16 @@ import { track } from "@vercel/analytics";
 import posthog from "posthog-js";
 
 // Derive the displayed list from the canonical Reg M-A set so this never
-// drifts again. Was previously a hardcoded 8-entry array that included
-// illegal Megas (Salamence, Metagross, Mawile). Now sourced from
-// MEGA_POKEMON_LIST filtered through CHAMPIONS_REG_MA_MEGAS.
-import { getRegMAMegas } from "@/lib/data/mega-pokemon";
+// drifts again. Each card carries a `hasSprite` flag — Megas without a
+// confirmed Showdown sprite render as non-clickable "Coming Soon" cards
+// instead of leading users to a broken-image landing page.
+import { getRegMAMegas, hasMegaSprite } from "@/lib/data/mega-pokemon";
 const MEGA_POKEMON = getRegMAMegas().map((m) => ({
   name: m.displayName.replace(/^Mega /, "") + "-Mega",
   ability: m.ability,
   types: m.types,
   slug: m.slug,
+  hasSprite: hasMegaSprite(m.dataKey),
 }));
 
 const TYPE_COLORS: Record<string, string> = {
@@ -123,27 +124,62 @@ export function ChampionsContent() {
             Featured Mega Evolutions
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {MEGA_POKEMON.map((mon) => (
-              <Link
-                key={mon.name}
-                href={`/champions/${mon.slug}`}
-                className="rounded-xl border border-border bg-surface p-4 hover:border-accent/30 transition-colors group"
-              >
-                <h3 className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">{mon.name}</h3>
-                <p className="text-xs text-text-tertiary mt-0.5">{mon.ability}</p>
-                <div className="flex gap-1.5 mt-2">
-                  {mon.types.map((t) => (
-                    <span
-                      key={t}
-                      className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </Link>
-            ))}
+            {MEGA_POKEMON.map((mon) => {
+              if (!mon.hasSprite) {
+                // Coming Soon — non-clickable. Honest UX over a broken-image
+                // landing page. When Showdown ships the sprite, just add the
+                // dataKey to MEGAS_WITH_SPRITES in mega-pokemon.ts and the
+                // card flips to a real link automatically.
+                return (
+                  <div
+                    key={mon.name}
+                    className="rounded-xl border border-border bg-surface/60 p-4 opacity-60 cursor-not-allowed"
+                    aria-disabled="true"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-sm font-bold text-text-tertiary">{mon.name}</h3>
+                      <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
+                        Coming Soon
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-tertiary/70 mt-0.5">{mon.ability}</p>
+                    <div className="flex gap-1.5 mt-2">
+                      {mon.types.map((t) => (
+                        <span
+                          key={t}
+                          className="text-[10px] font-bold text-white/70 px-2 py-0.5 rounded-full"
+                          style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-text-tertiary/60 mt-2 italic">Sprite unavailable</p>
+                  </div>
+                );
+              }
+              return (
+                <Link
+                  key={mon.name}
+                  href={`/champions/${mon.slug}`}
+                  className="rounded-xl border border-border bg-surface p-4 hover:border-accent/30 transition-colors group"
+                >
+                  <h3 className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">{mon.name}</h3>
+                  <p className="text-xs text-text-tertiary mt-0.5">{mon.ability}</p>
+                  <div className="flex gap-1.5 mt-2">
+                    {mon.types.map((t) => (
+                      <span
+                        key={t}
+                        className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
 

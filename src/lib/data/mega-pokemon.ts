@@ -653,6 +653,48 @@ export function getRegMAMegas(): MegaPokemonEntry[] {
   return MEGA_POKEMON_LIST.filter((m) => CHAMPIONS_REG_MA_MEGAS.has(m.dataKey));
 }
 
+/**
+ * Megas with confirmed sprites on Pokemon Showdown's CDN as of 2026-04-20
+ * (probed by curl-ing both /sprites/home/{slug}.png and /sprites/ani/{slug}.gif —
+ * "has sprite" = at least one returned 200). The 14 absentees are mostly
+ * Pokemon Champions originals (Mega Excadrill, Mega Golurk, Mega Glimmora,
+ * etc.) whose sprites Showdown hasn't rolled out yet.
+ *
+ * Used to gate which Megas get clickable detail pages on /champions —
+ * sprite-less Megas render as "Coming Soon · Sprites Unavailable" cards
+ * instead of leading users to a broken-image landing page.
+ *
+ * Re-probe periodically (every couple of weeks) and add new dataKeys as
+ * Showdown ships sprites. Removing this gate is a one-line change once
+ * coverage is complete.
+ */
+export const MEGAS_WITH_SPRITES = new Set<string>([
+  // Canon Gen 6 Megas — full coverage
+  "venusaur-mega", "charizard-mega-x", "charizard-mega-y", "blastoise-mega",
+  "beedrill-mega", "pidgeot-mega", "alakazam-mega", "slowbro-mega",
+  "gengar-mega", "kangaskhan-mega", "pinsir-mega", "gyarados-mega",
+  "aerodactyl-mega", "ampharos-mega", "steelix-mega", "scizor-mega",
+  "heracross-mega", "houndoom-mega", "tyranitar-mega", "gardevoir-mega",
+  "sableye-mega", "aggron-mega", "medicham-mega", "manectric-mega",
+  "sharpedo-mega", "camerupt-mega", "altaria-mega", "banette-mega",
+  "absol-mega", "glalie-mega", "lopunny-mega", "garchomp-mega",
+  "lucario-mega", "abomasnow-mega", "gallade-mega", "audino-mega",
+  // Pokemon Champions originals that have shipped to Showdown so far
+  "clefable-mega", "victreebel-mega", "starmie-mega", "dragonite-mega",
+  "meganium-mega", "feraligatr-mega", "skarmory-mega", "froslass-mega",
+  "emboar-mega",
+]);
+
+/** Reg M-A Megas that have sprites on Showdown — the only ones we link to. */
+export function getRegMAMegasWithSprites(): MegaPokemonEntry[] {
+  return getRegMAMegas().filter((m) => MEGAS_WITH_SPRITES.has(m.dataKey));
+}
+
+/** Whether a Mega entry currently has a usable sprite on Showdown. */
+export function hasMegaSprite(dataKey: string): boolean {
+  return MEGAS_WITH_SPRITES.has(dataKey);
+}
+
 /** Lookup by URL slug */
 export const MEGA_BY_SLUG = new Map(
   MEGA_POKEMON_LIST.map((m) => [m.slug, m]),
