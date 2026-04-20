@@ -332,8 +332,11 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
         </div>
       </div>
 
-      {/* Stats */}
-      {displayData && (() => {
+      {/* Stats — render whenever the user has entered EVs/IVs, even if the
+          species isn't in our dex (e.g. a newly-released Mega that hasn't
+          shipped to mega-pokemon.ts yet). Without this fallback the entire
+          spread + EV column disappeared for any unknown species. */}
+      {(() => {
         const isChampions = regulation === "Reg M-A";
         const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
         const spSpread = convertToChampionsSp(parsed.evs);
