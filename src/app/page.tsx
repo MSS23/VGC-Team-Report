@@ -38,6 +38,7 @@ import posthog from "posthog-js";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
 const ShareModal = dynamic(() => import("@/components/ui/ShareModal").then(m => ({ default: m.ShareModal })));
+const ShareDock = dynamic(() => import("@/components/ui/ShareDock").then(m => ({ default: m.ShareDock })), { ssr: false });
 const CommentSection = dynamic(() => import("@/components/social/CommentSection").then(m => ({ default: m.CommentSection })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-32" />,
 });
@@ -1350,6 +1351,19 @@ function HomeContent() {
         onDismiss={() => setShowShortcutHint(false)}
         isPresentationMode={isPresentationStyle}
       />
+
+      {/* Persistent share dock — visible on every shared report view so the
+          4 share targets (X / Reddit / Discord / Copy) are one tap away,
+          not buried in the navbar. Hidden during presentation mode. */}
+      {isSharedView && !isPresentationStyle && activeShareId && (
+        <ShareDock
+          publicUrl={`${typeof window !== "undefined" ? window.location.origin : "https://pokemonvgcteamreport.com"}/s/${activeShareId}`}
+          teamSpecies={teamSpecies}
+          tournamentName={tournamentName}
+          creatorName={creatorName}
+          placement={placement}
+        />
+      )}
 
       {/* Share modal — social share options */}
       {showShareModal && lastShareResult?.publicUrl && (
