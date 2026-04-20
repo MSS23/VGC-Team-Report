@@ -654,22 +654,27 @@ export function getRegMAMegas(): MegaPokemonEntry[] {
 }
 
 /**
- * Megas with confirmed sprites on Pokemon Showdown's CDN as of 2026-04-20
- * (probed by curl-ing both /sprites/home/{slug}.png and /sprites/ani/{slug}.gif —
- * "has sprite" = at least one returned 200). The 14 absentees are mostly
- * Pokemon Champions originals (Mega Excadrill, Mega Golurk, Mega Glimmora,
- * etc.) whose sprites Showdown hasn't rolled out yet.
+ * Megas with at least one usable sprite on Pokemon Showdown's CDN
+ * (probed across all 4 sprite paths: ani.gif, gen5ani.gif, home.png,
+ * gen5.png — "has sprite" = at least one returns 200). Probed
+ * 2026-04-20.
+ *
+ * The earlier probe checked only home.png and ani.gif — too strict.
+ * Showdown ships static gen5 PNGs faster than animated frames, so 13
+ * Megas previously gated as "Coming Soon" actually had usable PNGs
+ * the whole time.
+ *
+ * Current coverage: 58/59 Reg M-A legal Megas. Only Meowstic-Mega is
+ * genuinely 404 across every sprite path.
  *
  * Used to gate which Megas get clickable detail pages on /champions —
- * sprite-less Megas render as "Coming Soon · Sprites Unavailable" cards
- * instead of leading users to a broken-image landing page.
+ * the one truly sprite-less Mega renders as "Coming Soon" instead of
+ * leading users to a substitute-sprite landing page.
  *
- * Re-probe periodically (every couple of weeks) and add new dataKeys as
- * Showdown ships sprites. Removing this gate is a one-line change once
- * coverage is complete.
+ * Re-probe periodically. When new sprites ship, add the dataKey here.
  */
 export const MEGAS_WITH_SPRITES = new Set<string>([
-  // Canon Gen 6 Megas — full coverage
+  // Canon Gen 6 Megas — full animated + static coverage
   "venusaur-mega", "charizard-mega-x", "charizard-mega-y", "blastoise-mega",
   "beedrill-mega", "pidgeot-mega", "alakazam-mega", "slowbro-mega",
   "gengar-mega", "kangaskhan-mega", "pinsir-mega", "gyarados-mega",
@@ -679,10 +684,18 @@ export const MEGAS_WITH_SPRITES = new Set<string>([
   "sharpedo-mega", "camerupt-mega", "altaria-mega", "banette-mega",
   "absol-mega", "glalie-mega", "lopunny-mega", "garchomp-mega",
   "lucario-mega", "abomasnow-mega", "gallade-mega", "audino-mega",
-  // Pokemon Champions originals that have shipped to Showdown so far
+  // Pokemon Champions originals with full animated coverage
   "clefable-mega", "victreebel-mega", "starmie-mega", "dragonite-mega",
   "meganium-mega", "feraligatr-mega", "skarmory-mega", "froslass-mega",
   "emboar-mega",
+  // Pokemon Champions originals — static gen5 PNG only (no animation
+  // yet, but the page renders correctly because the sprite chain tries
+  // gen5.png as its final fallback URL).
+  "chimecho-mega", "excadrill-mega", "chandelure-mega", "golurk-mega",
+  "chesnaught-mega", "delphox-mega", "greninja-mega", "floette-mega",
+  "hawlucha-mega", "crabominable-mega", "drampa-mega", "scovillain-mega",
+  "glimmora-mega",
+  // Genuinely 404 across all paths: meowstic-mega (only one)
 ]);
 
 /** Reg M-A Megas that have sprites on Showdown — the only ones we link to. */
