@@ -22,7 +22,6 @@ const ENTRIES = [
       { type: "improved" as const, text: "Mobile spread view now shows the per-stat investment column (+252 EVs / +252 SP) inline. Previously hidden behind a desktop-only breakpoint, so mobile users only saw final calculated stats." },
 
       // ── Shared report unfurls ──
-      { type: "new" as const, text: "Shared report links now render rich Open Graph cards with the 6-mon team sprites, tournament tag, placement and creator name in Discord, Twitter, iMessage and Slack — every shared link is dramatically more clickable. Cached for 24h at the edge so unfurlers see a stable preview." },
       { type: "new" as const, text: "Persistent ShareDock on every shared report — X/Twitter, Reddit, Discord copy and Copy Link are one tap away in a top-anchored pill, no longer buried in the navbar. Auto-hides on scroll-down so it never obscures slide content." },
 
       // ── Tour / first run ──

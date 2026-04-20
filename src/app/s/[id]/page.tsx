@@ -82,26 +82,18 @@ export async function generateMetadata({
       description = "Build, share, and present professional VGC team reports with damage calcs, speed tiers, and matchup plans.";
     }
 
-    // VGC-134: Wire the existing /api/team-graphic endpoint into og:image so
-    // every shared report gets a sprite-rich preview card in Discord/Twitter/
-    // iMessage/Slack instead of a plain text unfurl.
+    // Embed images for shared reports are intentionally suppressed. We have
+    // tried this twice now (an opengraph-image.tsx convention file, then
+    // wiring /api/team-graphic into og:image) — both produced "image failed
+    // to load" unfurls in Discord and elsewhere. The edge runtime + sprite
+    // CDN dependency + unfurler-side timeout combine to make a reliably-
+    // rendering OG card unrealistic for now. A clean text-only unfurl
+    // (title + description) is strictly better than a broken preview.
     //
-    // History: a previous opengraph-image.tsx convention file was abandoned
-    // because mid-generation frames leaked to unfurlers. /api/team-graphic
-    // is a separate, battle-tested endpoint (used for creator downloads) and
-    // ships with aggressive Cache-Control so unfurlers receive a stable
-    // response on first hit and cache it for ~24h at the edge.
-    //
-    // Only attach an image when we can actually render a meaningful card —
-    // empty teams fall back to text-only so we never publish a blank PNG.
-    const hasTeam = species.length > 0;
-    const ogImageUrl = hasTeam
-      ? `https://pokemonvgcteamreport.com/api/team-graphic?id=${encodeURIComponent(id)}&style=wide`
-      : null;
-    const ogImages = ogImageUrl
-      ? [{ url: ogImageUrl, width: 1200, height: 400, alt: title }]
-      : [];
-
+    // `images: []` is load-bearing: without it, Next.js falls back to the
+    // root /opengraph-image.tsx, which would show a generic site-wide
+    // image on every share link. Explicitly empty arrays block that
+    // inheritance for both the Open Graph and Twitter Card sides.
     return {
       title,
       description,
@@ -110,16 +102,16 @@ export async function generateMetadata({
         description,
         type: "website",
         siteName: "VGC Team Report",
-        images: ogImages,
+        images: [],
       },
       alternates: {
         canonical: `https://pokemonvgcteamreport.com/s/${id}`,
       },
       twitter: {
-        card: hasTeam ? "summary_large_image" : "summary",
+        card: "summary",
         title,
         description,
-        images: ogImages,
+        images: [],
       },
     };
   } catch {
