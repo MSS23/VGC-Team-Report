@@ -188,12 +188,18 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     };
   }), [pokemon, speciesKeys, isChampions]);
 
-  // Build meta threat entries (filter out Pokemon already on your team)
+  // Build meta threat entries. We intentionally do NOT filter out Pokemon
+  // already on the user's team — a player running a bulky/mid-speed variant
+  // wants to compare it against the standard max-speed meta build of the
+  // same species. Duplicates are visually disambiguated by a "META" badge
+  // on the meta entry (see render below).
+  const teamSpeciesSet = useMemo(
+    () => new Set(pokemon.map(p => p.parsed.species.toLowerCase().replace(/\s+/g, "-"))),
+    [pokemon],
+  );
   const metaEntries = useMemo(() => {
     if (!showMetaThreats) return [];
-    const teamSpecies = new Set(pokemon.map(p => p.parsed.species.toLowerCase().replace(/\s+/g, "-")));
     return META_THREATS
-      .filter(key => !teamSpecies.has(key))
       .map(key => {
         const data = POKEMON_DATA[key];
         if (!data) return null;
@@ -208,13 +214,15 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           hasSpeedBoost: false,
           speedBoostLabel: "",
           isYours: false as const,
+          isDuplicateOfTeam: teamSpeciesSet.has(key),
         };
       })
       .filter(Boolean) as Array<{
         species: string; speciesKey: string; baseSpe: number; minSpe: number;
-        boostMultiplier: number; hasSpeedBoost: boolean; speedBoostLabel: string; isYours: false;
+        boostMultiplier: number; hasSpeedBoost: boolean; speedBoostLabel: string;
+        isYours: false; isDuplicateOfTeam: boolean;
       }>;
-  }, [showMetaThreats, pokemon, regulation, META_THREATS]);
+  }, [showMetaThreats, regulation, META_THREATS, teamSpeciesSet]);
 
   // Combine and apply per-side modifiers
   const allEntries = useMemo(() => {
@@ -388,6 +396,17 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                   }`}>
                     {entry.species}
                   </span>
+                  {/* Disambiguates a meta entry that shares species with one
+                      of the user's Pokemon — e.g. their bulky Garchomp next
+                      to the meta max-speed Garchomp. */}
+                  {!entry.isYours && entry.isDuplicateOfTeam && (
+                    <span
+                      className="text-[8px] sm:text-[9px] font-extrabold text-slate-500 bg-slate-500/10 border border-slate-500/20 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
+                      title="Standard meta variant (max speed)"
+                    >
+                      Meta
+                    </span>
+                  )}
                 </div>
 
                 {/* Bar column */}

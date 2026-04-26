@@ -183,7 +183,24 @@ export function SlideNavControls({
       }`}
     >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-1 sm:py-1.5 flex items-center gap-2 sm:gap-3">
-        {/* === LEFT: Prev === */}
+        {/* === LEFT: Home + Prev === */}
+        {currentSlide > 0 && (
+          <button
+            onClick={() => {
+              hapticLight();
+              onGoTo(0);
+            }}
+            aria-label="Back to team overview"
+            title="Back to team overview"
+            className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-text-secondary hover:text-accent hover:bg-accent/5 active:scale-95 transition-all"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1 sm:w-3.5 sm:h-3.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span className="hidden sm:inline">Home</span>
+          </button>
+        )}
         <button
           onClick={onPrev}
           disabled={isFirst}
