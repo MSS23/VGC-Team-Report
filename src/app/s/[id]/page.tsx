@@ -137,7 +137,7 @@ export default async function SharePage({
   try {
     const sql = getDb();
     const [shareRows, jsonLdCollabRows] = await Promise.all([
-      sql`SELECT data, created_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
+      sql`SELECT data, created_at, updated_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
       sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
     ]);
     if (shareRows.length > 0) {
@@ -147,10 +147,10 @@ export default async function SharePage({
       const tournamentName = (data.tournamentName as string) || undefined;
       const ldCollabNames = jsonLdCollabRows.map((r) => r.user_name as string);
 
-      const authors = [
-        ...(ldCreatorName ? [{ "@type": "Person", name: ldCreatorName }] : []),
-        ...ldCollabNames.map((name) => ({ "@type": "Person", name })),
-      ];
+      const primaryAuthor = ldCreatorName
+        ? { "@type": "Person", name: ldCreatorName }
+        : null;
+      const contributors = ldCollabNames.map((name) => ({ "@type": "Person", name }));
 
       jsonLd = {
         "@context": "https://schema.org",
@@ -165,8 +165,10 @@ export default async function SharePage({
           (data.teamSummary as string) ||
           `VGC team: ${species.join(", ")}`,
         datePublished: (shareRows[0].created_at as Date).toISOString(),
-        ...(authors.length > 0 && {
-          author: authors.length === 1 ? authors[0] : authors,
+        dateModified: (shareRows[0].updated_at as Date).toISOString(),
+        ...(primaryAuthor && { author: primaryAuthor }),
+        ...(contributors.length > 0 && {
+          contributor: contributors.length === 1 ? contributors[0] : contributors,
         }),
         isPartOf: {
           "@type": "WebApplication",
