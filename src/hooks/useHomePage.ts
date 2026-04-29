@@ -736,6 +736,7 @@ export function useHomePage() {
     allowComments: share.allowComments,
     setAllowComments: share.setAllowComments,
     autoSaveStatus: share.autoSaveStatus,
+    collaboratorNames: share.fetchedCollaborators,
     forkedFrom: share.forkedFrom,
     forkReport: share.forkReport,
 
