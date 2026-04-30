@@ -105,6 +105,7 @@ function HomeContent() {
     allowComments,
     setAllowComments,
     autoSaveStatus,
+    collaboratorNames,
     collaborators,
     syncStatus,
     activeShareId,
@@ -1160,7 +1161,27 @@ function HomeContent() {
         <div className="relative z-40 max-w-5xl mx-auto px-2 sm:px-4 py-6 mb-24 sm:mb-16 space-y-4">
           {/* Creator info + secondary actions */}
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-            {creatorName && <CreatorLink name={creatorName} />}
+            {creatorName && (
+              <div className="flex items-center gap-1 flex-wrap">
+                <CreatorLink name={creatorName} />
+                {collaboratorNames && collaboratorNames.length > 0 && (
+                  <>
+                    <span className="text-xs text-text-tertiary">&amp;</span>
+                    {collaboratorNames.map((name, i) => (
+                      <span key={name} className="flex items-center gap-1">
+                        {i > 0 && <span className="text-xs text-text-tertiary">,</span>}
+                        <a
+                          href={`/creator/${encodeURIComponent(name)}`}
+                          className="text-xs font-semibold text-text-secondary hover:text-accent transition-colors"
+                        >
+                          {name}
+                        </a>
+                      </span>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
             <ViewCount count={viewCount} />
             {isOwner && (
               <button

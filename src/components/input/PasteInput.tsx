@@ -10,7 +10,7 @@ import { useTranslation } from "@/lib/i18n";
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
-import { resolveSlug } from "@/lib/utils/sprite-slug";
+import { resolveSlug, getSpriteUrls } from "@/lib/utils/sprite-slug";
 
 const WhatsNewModal = dynamic(
   () => import("@/components/ui/WhatsNewModal").then(m => ({ default: m.WhatsNewModal })),
@@ -101,6 +101,22 @@ const POKEMON_SPRITES = [
   "charizard-megay", "groudon-primal", "metagross-mega",
 ];
 
+function PopularCardSprite({ species }: { species: string }) {
+  const urls = getSpriteUrls(species);
+  const [idx, setIdx] = useState(0);
+  return (
+    <img
+      src={urls[Math.min(idx, urls.length - 1)]}
+      alt={species}
+      width={28}
+      height={28}
+      className="w-7 h-7 object-contain"
+      loading="lazy"
+      onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
+    />
+  );
+}
+
 export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect }: PasteInputProps) {
   const { t } = useTranslation();
   const [isFetching, setIsFetching] = useState(false);
@@ -133,6 +149,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
   };
 
   const [spotlight, setSpotlight] = useState<ExploreReport | null>(null);
+  const [popularReports, setPopularReports] = useState<ExploreReport[]>([]);
 
   // Fetch spotlight report once per session (delayed to avoid blocking render)
   useEffect(() => {
@@ -154,6 +171,28 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         })
         .catch(() => {});
     }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Fetch popular reports once per session (delayed further to not compete with spotlight)
+  useEffect(() => {
+    const cached = sessionStorage.getItem("vgc-popular-reports");
+    if (cached) {
+      try { setPopularReports(JSON.parse(cached)); } catch { /* ignore */ }
+      return;
+    }
+    const timer = setTimeout(() => {
+      fetch("/api/explore?limit=6&sort=popular")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          const reports = Array.isArray(data?.reports) ? data.reports as ExploreReport[] : [];
+          if (reports.length > 0) {
+            setPopularReports(reports);
+            sessionStorage.setItem("vgc-popular-reports", JSON.stringify(reports));
+          }
+        })
+        .catch(() => {});
+    }, 800);
     return () => clearTimeout(timer);
   }, []);
 
@@ -466,6 +505,53 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Featured Team Report</span>
           </div>
           <SpotlightCard report={spotlight} />
+        </motion.div>
+      )}
+
+      {/* Popular reports rail */}
+      {popularReports.length > 0 && (
+        <motion.div
+          className="mt-6 sm:mt-8"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Popular Reports</span>
+            </div>
+            <a href="/explore" className="text-[10px] font-bold text-text-tertiary hover:text-accent transition-colors">
+              View all →
+            </a>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-none -mx-1 px-1">
+            {popularReports.map((report) => (
+              <a
+                key={report.id}
+                href={`/s/${report.id}`}
+                className="flex-shrink-0 snap-start w-40 sm:w-44 rounded-xl bg-surface border border-border hover:border-accent/40 hover:bg-surface-alt/60 transition-all p-3 group"
+              >
+                <div className="flex flex-wrap gap-0.5 mb-2">
+                  {report.species.slice(0, 6).map((s) => (
+                    <PopularCardSprite key={s} species={s} />
+                  ))}
+                </div>
+                {(report.tournamentName || report.placement) && (
+                  <p className="text-[10px] font-bold text-accent truncate leading-tight mb-0.5">
+                    {report.placement ? `${report.placement} ` : ""}{report.tournamentName ?? ""}
+                  </p>
+                )}
+                {report.creatorName && (
+                  <p className="text-[10px] text-text-tertiary truncate">
+                    by {report.creatorName}
+                  </p>
+                )}
+              </a>
+            ))}
+          </div>
         </motion.div>
       )}
 
