@@ -73,13 +73,22 @@ describe("validateChampionsTeam", () => {
     expect(result.issues.some((i) => i.severity === "info" && i.message.includes("Restricted Pokemon (2/2)"))).toBe(true);
   });
 
-  it("flags multiple Mega Stones", () => {
+  it("allows multiple Mega Stones on one team (only one can Mega Evolve per battle)", () => {
     const team = makeTeam();
     team[0] = makePokemon({ species: "Kangaskhan", item: "Kangaskhanite" });
-    team[1] = makePokemon({ species: "Salamence", item: "Salamencite" });
+    // team[2] is Garchomp by default; swap its item to Garchompite
+    team[2] = makePokemon({ species: "Garchomp", item: "Garchompite" });
     const result = validateChampionsTeam(team);
-    expect(result.legal).toBe(false);
-    expect(result.issues.some((i) => i.message.includes("Only 1 Mega Evolution"))).toBe(true);
+    expect(result.issues.some((i) => i.message.includes("Only 1 Mega Evolution"))).toBe(false);
+    expect(
+      result.issues.some(
+        (i) =>
+          i.severity === "info" &&
+          i.message.includes("Kangaskhan") &&
+          i.message.includes("Garchomp") &&
+          i.message.includes("only one"),
+      ),
+    ).toBe(true);
   });
 
   it("allows exactly 1 Mega Stone", () => {
@@ -114,12 +123,59 @@ describe("validateChampionsTeam", () => {
     expect(result.issues.some((i) => i.message.includes("EV total") && i.message.includes("exceeds"))).toBe(true);
   });
 
+  it("reads SP-style spreads (total ≤ 66, stats ≤ 32) as SP and does not emit the /512 warning", () => {
+    const team = makeTeam();
+    // SP values pasted into the EVs line — 22+11+24+4+5 = 66 SP
+    team[0] = makePokemon({ evs: { hp: 22, atk: 0, def: 11, spa: 24, spd: 4, spe: 5 } });
+    const result = validateChampionsTeam(team);
+    expect(result.legal).toBe(true);
+    expect(result.issues.some((i) => i.message.includes("446 more available"))).toBe(false);
+    expect(result.issues.some((i) => i.message.includes("66 EVs allocated"))).toBe(false);
+  });
+
+  it("flags SP under-allocation with SP terminology", () => {
+    const team = makeTeam();
+    team[0] = makePokemon({ evs: { hp: 20, atk: 0, def: 10, spa: 20, spd: 0, spe: 0 } }); // 50 SP
+    const result = validateChampionsTeam(team);
+    expect(
+      result.issues.some(
+        (i) =>
+          i.severity === "info" &&
+          i.message.includes("50/66 SP allocated") &&
+          i.message.includes("16 more available"),
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps traditional EV spreads on the EV path (any stat over 32 disambiguates)", () => {
+    const team = makeTeam();
+    // Classic 252/252/4 spread — unambiguously EVs because 252 > 32.
+    team[0] = makePokemon({ evs: { hp: 252, atk: 0, def: 4, spa: 0, spd: 252, spe: 0 } });
+    const result = validateChampionsTeam(team);
+    expect(result.legal).toBe(true);
+    expect(
+      result.issues.some((i) => i.severity === "info" && i.message.includes("508 EVs allocated")),
+    ).toBe(true);
+  });
+
   it("treats Mega forms as same species for Species Clause", () => {
     const team = makeTeam();
     team[0] = makePokemon({ species: "Kangaskhan", item: "Kangaskhanite" });
     team[5] = makePokemon({ species: "Kangaskhan-Mega", item: "Leftovers" });
     const result = validateChampionsTeam(team);
     expect(result.issues.some((i) => i.message.includes("Species Clause"))).toBe(true);
+  });
+
+  it("accepts Rotom appliance forms (Wash/Heat/Mow/Fan/Frost)", () => {
+    for (const form of ["Rotom-Wash", "Rotom-Heat", "Rotom-Mow", "Rotom-Fan", "Rotom-Frost"]) {
+      const team = makeTeam();
+      team[0] = makePokemon({ species: form, item: "Sitrus Berry" });
+      const result = validateChampionsTeam(team);
+      const dexErrors = result.issues.filter(
+        (i) => i.severity === "error" && i.message.includes("not available in Champions"),
+      );
+      expect(dexErrors, `${form} should be legal`).toHaveLength(0);
+    }
   });
 
   it("treats restricted forms as the same restricted slot", () => {

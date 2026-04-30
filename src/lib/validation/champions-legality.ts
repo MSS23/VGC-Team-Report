@@ -4,17 +4,25 @@
  * Validates a parsed team against Reg M-A rules:
  * - Species must be in the Champions dex
  * - Max 2 restricted Pokemon
- * - Max 1 Mega Stone on the team
+ * - Any number of Mega Stones allowed on the team (only one Pokemon can
+ *   actually Mega Evolve per battle — that's an in-battle constraint, not
+ *   a team-construction one)
  * - Species Clause (no duplicates)
  * - Item Clause (no duplicate items)
  * - No Z-Crystals or Dynamax-related items
- * - EV totals within bounds (512 total, 252 per stat)
+ * - Stat investment within bounds. Reg M-A uses Stat Points (66 total, 32
+ *   per stat). Pastes that already contain SP in the EVs line are validated
+ *   as SP; traditional EV spreads are validated against 512/252.
  * - Team size exactly 6
  */
 
 import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { CHAMPIONS_DEX } from "@/lib/data/champions-dex";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
+import {
+  CHAMPIONS_TOTAL_SP,
+  CHAMPIONS_MAX_SP_PER_STAT,
+} from "@/lib/analysis/stat-calculator";
 
 // ── Severity levels ─────────────────────────────────────────────────────────
 
@@ -212,18 +220,15 @@ export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult 
     });
   }
 
-  // Mega Stone limit (max 1)
+  // Mega Stone holders — informational only.
+  // Teams can pack any number of Mega Stones; only one Pokemon can actually
+  // Mega Evolve per battle, which is an in-battle choice, not a
+  // team-construction rule.
   const megaStoneHolders: string[] = [];
   for (const p of pokemon) {
     if (p.item && MEGA_STONES.has(p.item.toLowerCase())) {
       megaStoneHolders.push(p.species);
     }
-  }
-  if (megaStoneHolders.length > 1) {
-    issues.push({
-      severity: "error",
-      message: `Only 1 Mega Evolution allowed: ${megaStoneHolders.join(", ")} all hold Mega Stones`,
-    });
   }
 
   // Z-Crystal ban
@@ -237,36 +242,55 @@ export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult 
     }
   }
 
-  // Per-Pokemon EV validation — Reg M-A (Champions) allows up to 512 total
-  // (vs the classic VGC 510 cap), so two stats can be maxed at 252 plus 8
-  // spillover into a third stat.
+  // Per-Pokemon stat investment validation.
+  //
+  // Reg M-A is natively an SP (Stat Points) format: 66 total, 32 per stat.
+  // Showdown has no "SPs:" line yet, so Champions pastes ship SP values
+  // inside the EVs line — a spread whose total ≤ 66 and whose per-stat
+  // values are ≤ 32 can only coherently be SP (same detection used by
+  // convertToChampionsSp). Validate those as SP.
+  //
+  // Traditional EV spreads (512 total, 252 per stat) are still accepted
+  // because the rest of the app converts them to SP on display, but are
+  // validated against the EV budget so obvious typos (e.g. 300 in a stat)
+  // still surface.
   for (const p of pokemon) {
-    const evTotal = Object.values(p.evs).reduce((a, b) => a + b, 0);
-    if (evTotal > 512) {
-      issues.push({
-        severity: "error",
-        message: `${p.species}: EV total ${evTotal} exceeds maximum of 512`,
-        pokemon: p.species,
-      });
-    } else if (evTotal > 0 && evTotal < 512) {
-      // Reg M-A only: classic VGC muscle memory caps EVs at 508 (252+252+4)
-      // or 510, leaving stat points on the table. Surface an info hint so
-      // builders know they can squeeze a few more EVs in.
-      const remaining = 512 - evTotal;
-      issues.push({
-        severity: "info",
-        message: `${p.species}: ${evTotal} EVs allocated — ${remaining} more available (Reg M-A allows 512 total)`,
-        pokemon: p.species,
-      });
-    }
+    const total = Object.values(p.evs).reduce((a, b) => a + b, 0);
+    const maxPerStat = Math.max(...Object.values(p.evs));
+    const looksLikeSp = total > 0 && total <= CHAMPIONS_TOTAL_SP && maxPerStat <= CHAMPIONS_MAX_SP_PER_STAT;
 
-    for (const [stat, value] of Object.entries(p.evs)) {
-      if (value > 252) {
+    if (looksLikeSp) {
+      // looksLikeSp guarantees every stat ≤ 32, so per-stat cap is already
+      // satisfied — only the total-budget hint is worth surfacing.
+      if (total < CHAMPIONS_TOTAL_SP) {
         issues.push({
-          severity: "error",
-          message: `${p.species}: ${stat.toUpperCase()} EVs (${value}) exceed maximum of 252`,
+          severity: "info",
+          message: `${p.species}: ${total}/${CHAMPIONS_TOTAL_SP} SP allocated — ${CHAMPIONS_TOTAL_SP - total} more available`,
           pokemon: p.species,
         });
+      }
+    } else {
+      if (total > 512) {
+        issues.push({
+          severity: "error",
+          message: `${p.species}: EV total ${total} exceeds maximum of 512`,
+          pokemon: p.species,
+        });
+      } else if (total > 0 && total < 512) {
+        issues.push({
+          severity: "info",
+          message: `${p.species}: ${total} EVs allocated — ${512 - total} more available (Reg M-A allows 512 total)`,
+          pokemon: p.species,
+        });
+      }
+      for (const [stat, value] of Object.entries(p.evs)) {
+        if (value > 252) {
+          issues.push({
+            severity: "error",
+            message: `${p.species}: ${stat.toUpperCase()} EVs (${value}) exceed maximum of 252`,
+            pokemon: p.species,
+          });
+        }
       }
     }
   }
@@ -284,6 +308,11 @@ export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult 
     issues.push({
       severity: "info",
       message: `Mega Evolution: ${megaStoneHolders[0]}`,
+    });
+  } else if (megaStoneHolders.length > 1) {
+    issues.push({
+      severity: "info",
+      message: `Mega Stones held by ${megaStoneHolders.join(", ")} — only one can Mega Evolve per battle`,
     });
   }
 

@@ -82,6 +82,11 @@ export const CHAMPIONS_DEX = new Set<string>([
   "gallade",
   "froslass",
   "rotom",
+  "rotom-heat",
+  "rotom-wash",
+  "rotom-frost",
+  "rotom-fan",
+  "rotom-mow",
 
   // Gen 5
   "serperior",
