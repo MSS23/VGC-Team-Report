@@ -75,6 +75,7 @@ export function useShareUrl() {
   const [isEditingUnlocked, setIsEditingUnlocked] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [fetchedIsPublic, setFetchedIsPublic] = useState<boolean | null>(null);
+  const [fetchedCollaborators, setFetchedCollaborators] = useState<string[]>([]);
   const [forkedFrom, setForkedFrom] = useState<ForkedFromMeta | null>(null);
   const [lastShareResult, setLastShareResult] = useState<{
     updated: boolean;
@@ -109,6 +110,7 @@ export function useShareUrl() {
     setIsEditingUnlocked(false);
     setIsOwner(false);
     setFetchedIsPublic(null);
+    setFetchedCollaborators([]);
     setForkedFrom(null);
   }, [shareId, inlineData]);
 
@@ -158,6 +160,7 @@ export function useShareUrl() {
           // Strip internal flags before treating as ShareableState
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, _forkedFrom: _ff, ...state } = data;
+          if (Array.isArray(_c)) setFetchedCollaborators(_c as string[]);
           // Set active edit session — only from server-provided token (authenticated)
           if (editable && ownerEditToken) {
             activeEditTokenRef.current = ownerEditToken;
@@ -432,6 +435,7 @@ export function useShareUrl() {
     hasExistingShare,
     clearStoredShare,
     fetchedIsPublic,
+    fetchedCollaborators,
     autoSaveStatus,
     forkedFrom,
     forkReport,
