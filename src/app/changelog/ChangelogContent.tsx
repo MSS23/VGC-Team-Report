@@ -11,6 +11,48 @@ import { PageFooter } from "@/components/layout/PageFooter";
 const ENTRIES = [
   {
     date: "April 2026",
+    version: "5.7",
+    title: "Champions Reg M-A Honest Cleanup, In-Line Editing & Persistent Navbar",
+    emoji: "🧹", // 🧹
+    highlight: true,
+    items: [
+      // ── New features ──
+      { type: "new" as const, text: "In-line Pokemon replace — every PokemonCard on the team overview now has a pencil button (visible when the report is editable) that opens a searchable picker to swap a single slot. Backed by @pkmn/dex so every species, every form, every Mega is searchable, with sprite + types + BST shown for each result. Surgically rewrites only the species token in the paste, preserving nickname, item, ability, moves, EVs, IVs, nature, and Tera so all downstream analysis (stats, calcs, threat coverage) stays consistent. No more re-pasting the entire team to fix one slot." },
+      { type: "new" as const, text: "Popular reports rail on the homepage — a horizontal scroll strip of 6 trending public reports below the spotlight section, each showing team sprites, tournament/placement info, and creator name. Session-cached so it doesn't refetch on every visit." },
+      { type: "new" as const, text: "Collaborator credit on shared reports — co-creator names now appear beside the primary creator on the public read-only view, finally giving collaborators visible credit on the page itself (not just on Explore cards)." },
+      { type: "new" as const, text: "Speed tier chart now shows the meta max-speed variant of a Pokemon even when that species is on your team — useful for comparing a bulky/mid-speed build against the standard meta build of the same mon (e.g. your bulky Garchomp vs. the meta Jolly max-speed Garchomp). The duplicate is tagged with a META badge so it's never confused with your build." },
+      { type: "new" as const, text: "Home button in the slide nav bar — visible on every slide except the team overview itself. One tap returns to the main team page from any subpage (Pokemon detail, speed tiers, coverage, matchup plans)." },
+
+      // ── Champions Reg M-A cleanup ──
+      { type: "fixed" as const, text: "Champions page no longer shows illegal Megas — Mega Salamence, Mega Metagross, and Mega Mawile have been removed (verified against Bulbapedia, Serebii, and Victory Road on 2026-04-20). Their /champions/{slug} landing pages now return 404, which is the correct behaviour for non-format Pokemon." },
+      { type: "new" as const, text: "29 missing Reg M-A legal Megas added to the Champions index — Pidgeot, Clefable, Victreebel, Starmie, Dragonite, Meganium, Feraligatr, Skarmory, Medicham, Sharpedo, Camerupt, Banette, Chimecho, Glalie, Froslass, Emboar, Excadrill, Chandelure, Golurk, Chesnaught, Delphox, Greninja, Floette, Meowstic, Hawlucha, Crabominable, Drampa, Scovillain, Glimmora. Stats and abilities pulled from @pkmn/dex." },
+      { type: "improved" as const, text: "13 Megas un-gated from “Coming Soon” — earlier sprite probe was too strict (only checked animated frames). Re-probed all four Showdown sprite paths and found these 13 ship static gen5 PNGs: Mega Chimecho, Excadrill, Chandelure, Golurk, Chesnaught, Delphox, Greninja, Floette, Hawlucha, Crabominable, Drampa, Scovillain, Glimmora. Champions index now shows 58 clickable Mega cards (only Mega Meowstic remains genuinely sprite-less)." },
+      { type: "fixed" as const, text: "Mega landing pages no longer 404 for species missing from the static dex — pages now resolve through the @pkmn/dex fallback so every Champions-original Mega builds correctly with real stats, types, and abilities (previously hit a hard notFound() on stub entries)." },
+      { type: "improved" as const, text: "Mega abilities corrected to match Pokemon Champions canon for Reg M-A — several ability fields disagreed with the in-game data and have been re-sourced." },
+      { type: "improved" as const, text: "Champions hero copy refreshed — removed all Primal Reversion mentions (Primal forms are not in Reg M-A) and added the explicit Reg M-A team-construction restrictions so the format rules are clear up-front." },
+      { type: "fixed" as const, text: "Featured Teams on Mega landing pages now only show teams that actually run the Mega — previously matched any team whose paste contained the base species name, so plain Scizor with Choice Band would leak into Mega Scizor's Featured Teams. Now requires either the Mega Stone item OR a {baseName}-Mega species token to qualify." },
+      { type: "improved" as const, text: "Removed two filler sections from Mega landing pages — the templated “Using {Mega} in VGC” paragraphs and the visible FAQ accordion (both duplicated hero info with zero competitive insight). The FAQPage JSON-LD is still emitted server-side for AI scrapers (ChatGPT, Perplexity, Bing)." },
+
+      // ── Legality validator (Reg M-A) ──
+      { type: "fixed" as const, text: "Rotom appliance forms (Wash, Heat, Mow, Fan, Frost) no longer flagged as illegal in Champions — only the base “rotom” key was in the Champions dex, but the parser produces “rotom-wash” etc. All five form keys now match." },
+      { type: "fixed" as const, text: "Removed the bogus “max 1 Mega Stone per team” error — Reg M-A teams can pack any number of Mega Stones; only one Pokemon can actually Mega Evolve per battle, which is an in-battle choice, not a team-construction rule. Demoted to an info note listing the stone holders." },
+      { type: "improved" as const, text: "Stat-investment validation is now SP-aware — spreads that fit the 66 SP / 32-per-stat envelope validate via the Champions SP path, while the classic 512/252 EV path remains as fallback for traditional formats." },
+
+      // ── SEO / structured data ──
+      { type: "improved" as const, text: "JSON-LD on shared reports now separates author from contributor — primary creator is the sole schema.org author, collaborators are listed under contributor, and dateModified is emitted from the report's last-updated timestamp alongside the existing datePublished. Helps Google and AI scrapers attribute work correctly to all credited people." },
+
+      // ── Architecture / polish ──
+      { type: "improved" as const, text: "Persistent navbar across all pages — the page-level navbar now mounts once in the root layout instead of remounting on every route, so it no longer flashes or re-renders between client-side navigations. Single source of truth for active-page detection." },
+      { type: "fixed" as const, text: "No more accent-color flash on page load — the inline blocking head script now applies BOTH dark mode AND your gen theme accent (--accent / --accent-light / --accent-surface) before first paint. Previously only dark mode was set early; the accent briefly showed default red before switching to your chosen theme." },
+      { type: "fixed" as const, text: "Favicon now loads — favicon.ico is back in /public and registered in metadata.icons (was 404ing because the manifest only listed favicon.svg / icon-192.png)." },
+      { type: "fixed" as const, text: "/compare page no longer shows a duplicate navbar — a stale inline PageNavbar was rendering on top of the persistent one." },
+
+      // ── Sharing / unfurls ──
+      { type: "fixed" as const, text: "Shared report unfurls reverted to text-only after the OG sprite card produced “image failed to load” errors in Discord, Twitter, and Slack — the Showdown sprite CDN dependency under the edge-runtime fetch-timeout budget made a reliably-rendering OG image unrealistic. Title, description, and creator name still appear in the link card; the broken image slot is gone. /api/team-graphic stays in place for in-app downloads, which work fine — the failure mode was specifically third-party unfurlers fetching it under their own timeout." },
+    ],
+  },
+  {
+    date: "April 2026",
     version: "5.6",
     title: "Universal Pokemon Coverage, Sharing Reborn & Quieter Errors",
     emoji: "\uD83D\uDCE1", // 📡
