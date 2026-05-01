@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import posthog from "posthog-js";
+import { track } from "@vercel/analytics";
 
 interface ShareModalProps {
   publicUrl: string;
@@ -127,12 +129,16 @@ export function ShareModal({
     await navigator.clipboard.writeText(publicUrl);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
+    track("share_link_copied");
+    posthog.capture("share_link_copied", { is_short_url: isShortUrl });
   };
 
   const handleCopyDiscord = async () => {
     await navigator.clipboard.writeText(discordText);
     setDiscordCopied(true);
     setTimeout(() => setDiscordCopied(false), 2000);
+    track("share_discord_copied");
+    posthog.capture("share_discord_copied", { has_tournament: !!tournamentName });
   };
 
   return createPortal(
@@ -244,6 +250,10 @@ export function ShareModal({
             href={twitterUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              track("share_twitter_clicked");
+              posthog.capture("share_twitter_clicked", { has_tournament: !!tournamentName, has_placement: !!placement });
+            }}
             className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group"
           >
             <div className="w-9 h-9 rounded-lg bg-[#000] flex items-center justify-center flex-shrink-0">
@@ -270,6 +280,10 @@ export function ShareModal({
             href={redditUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              track("share_reddit_clicked");
+              posthog.capture("share_reddit_clicked", { has_tournament: !!tournamentName });
+            }}
             className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group"
           >
             <div className="w-9 h-9 rounded-lg bg-[#FF4500] flex items-center justify-center flex-shrink-0">
