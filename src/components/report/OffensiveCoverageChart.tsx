@@ -14,20 +14,69 @@ const ALL_TYPES: PokemonType[] = [
   "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
 ];
 
+/** Abilities that change Normal-type moves to another type (-ate family). */
+const ATE_ABILITIES: Record<string, PokemonType> = {
+  "pixilate": "Fairy",
+  "aerilate": "Flying",
+  "refrigerate": "Ice",
+  "galvanize": "Electric",
+};
+
+/** Liquid Voice: sound-based moves become Water-type. */
+const SOUND_MOVE_SLUGS = new Set([
+  "hyper-voice", "boomburst", "disarming-voice", "sparkling-aria",
+  "overdrive", "round", "bug-buzz", "clangorous-soul", "echoed-voice", "uproar",
+  "noble-roar", "snore", "chatter",
+]);
+
 interface OffensiveCoverageChartProps {
   pokemon: AnalyzedPokemon[];
 }
 
-/** For a single Pokemon, get its best offensive multiplier against each defender type */
-function getOffensiveProfile(mon: AnalyzedPokemon): Record<PokemonType, { mult: number; move: string | null }> {
-  const profile = {} as Record<PokemonType, { mult: number; move: string | null }>;
+interface MoveCoverageResult {
+  mult: number;
+  move: string | null;
+  /** Non-null when an ability changed the effective move type; e.g. "Normal→Fairy via Pixilate" */
+  typeConversion: string | null;
+}
 
-  // Get the Pokemon's move types (only damaging moves)
-  const moveTypes: { type: PokemonType; name: string }[] = [];
+/**
+ * Apply type-changing abilities to a single damaging move.
+ * Returns the effective type and a description of the conversion (if any).
+ */
+function applyTypeChangingAbility(
+  moveSlug: string,
+  printedType: PokemonType,
+  abilityKey: string,
+): { effectiveType: PokemonType; conversion: string | null } {
+  // Normalize ability: ability
+  if (abilityKey === "normalize" && printedType !== "Normal") {
+    return { effectiveType: "Normal", conversion: `${printedType}→Normal via Normalize` };
+  }
+  if (abilityKey === "liquid-voice" && SOUND_MOVE_SLUGS.has(moveSlug)) {
+    return { effectiveType: "Water", conversion: `${printedType}→Water via Liquid Voice` };
+  }
+  const ateTarget = ATE_ABILITIES[abilityKey];
+  if (ateTarget && printedType === "Normal") {
+    const abilityName = abilityKey.charAt(0).toUpperCase() + abilityKey.slice(1);
+    return { effectiveType: ateTarget, conversion: `Normal→${ateTarget} via ${abilityName}` };
+  }
+  return { effectiveType: printedType, conversion: null };
+}
+
+/** For a single Pokemon, get its best offensive multiplier against each defender type. */
+function getOffensiveProfile(mon: AnalyzedPokemon): Record<PokemonType, MoveCoverageResult> {
+  const profile = {} as Record<PokemonType, MoveCoverageResult>;
+  const abilityKey = (mon.parsed.ability ?? "").toLowerCase().replace(/[\s-]+/g, "-");
+
+  // Get the Pokemon's damaging moves with effective types applied
+  const moveTypes: { effectiveType: PokemonType; name: string; slug: string; conversion: string | null }[] = [];
   for (const moveName of mon.parsed.moves) {
+    const slug = moveName.toLowerCase().replace(/\s+/g, "-");
     const moveData = lookupMove(moveName);
     if (moveData && moveData.category !== "Status" && moveData.power && moveData.power > 0) {
-      moveTypes.push({ type: moveData.type, name: moveData.name });
+      const { effectiveType, conversion } = applyTypeChangingAbility(slug, moveData.type, abilityKey);
+      moveTypes.push({ effectiveType, name: moveData.name, slug, conversion });
     }
   }
 
@@ -37,13 +86,14 @@ function getOffensiveProfile(mon: AnalyzedPokemon): Record<PokemonType, { mult: 
   for (const defType of ALL_TYPES) {
     let bestMult = 0;
     let bestMove: string | null = null;
+    let bestConversion: string | null = null;
 
-    // Check each damaging move against the single defender type
-    for (const { type: moveType, name } of moveTypes) {
-      const mult = getEffectiveness(moveType, [defType]);
+    for (const { effectiveType, name, conversion } of moveTypes) {
+      const mult = getEffectiveness(effectiveType, [defType]);
       if (mult > bestMult) {
         bestMult = mult;
         bestMove = name;
+        bestConversion = conversion;
       }
     }
 
@@ -54,11 +104,12 @@ function getOffensiveProfile(mon: AnalyzedPokemon): Record<PokemonType, { mult: 
         if (mult > bestMult) {
           bestMult = mult;
           bestMove = null;
+          bestConversion = null;
         }
       }
     }
 
-    profile[defType] = { mult: bestMult, move: bestMove };
+    profile[defType] = { mult: bestMult, move: bestMove, typeConversion: bestConversion };
   }
 
   return profile;
@@ -89,6 +140,11 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
   const profiles = pokemon.map((mon) => ({
     species: mon.parsed.species,
     profile: getOffensiveProfile(mon),
+    hasTypeChangingAbility: !!(mon.parsed.ability && (
+      ATE_ABILITIES[(mon.parsed.ability.toLowerCase().replace(/[\s-]+/g, "-"))] ||
+      mon.parsed.ability.toLowerCase() === "normalize" ||
+      mon.parsed.ability.toLowerCase() === "liquid voice"
+    )),
   }));
 
   // Team-wide coverage summary: how many Pokemon hit each type SE
@@ -194,11 +250,16 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
                   {p.species}
                 </td>
                 {ALL_TYPES.map((defType) => {
-                  const { mult, move } = p.profile[defType];
+                  const { mult, move, typeConversion } = p.profile[defType];
                   const label = offensiveLabel(mult);
                   const cell = offensiveCell(mult);
                   const isHighlighted = highlightedType === defType;
                   const isDimmed = highlightedType !== null && !isHighlighted;
+                  const tooltipMove = move
+                    ? typeConversion
+                      ? `${move} (${typeConversion}) → ${defType}: ${mult}x`
+                      : `${move} → ${defType}: ${mult}x`
+                    : `vs ${defType}: ${mult}x`;
                   return (
                     <td key={defType} className={`px-0.5 py-1 transition-opacity ${isDimmed ? "opacity-50" : ""}`}>
                       <span
@@ -206,7 +267,7 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
                           mult >= 4 ? "font-black text-[13px] sm:text-sm" : mult >= 2 ? "font-extrabold" : "font-bold"
                         } ${isHighlighted ? "ring-2 ring-accent/40" : ""}`}
                         style={cell.style}
-                        title={move ? `${move} → ${defType}: ${mult}x` : `vs ${defType}: ${mult}x`}
+                        title={tooltipMove}
                       >
                         {label}
                       </span>
