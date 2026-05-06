@@ -45,6 +45,7 @@ const CommentSection = dynamic(() => import("@/components/social/CommentSection"
 });
 const PrintableReport = dynamic(() => import("@/components/ui/PdfExport").then(m => ({ default: m.PrintableReport })));
 import type { ExportMode } from "@/components/ui/PdfExport";
+const OTSSheetModal = dynamic(() => import("@/components/ui/OTSSheetModal").then(m => ({ default: m.OTSSheetModal })), { ssr: false });
 import { DisplayTogglePill } from "@/components/display/DisplayTogglePill";
 import { useGlobalDisplayPrefs } from "@/lib/hooks/useGlobalDisplayPrefs";
 import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
@@ -200,6 +201,7 @@ function HomeContent() {
 
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showOTSSheet, setShowOTSSheet] = useState(false);
   const [tournamentMode, setTournamentMode] = useState(false);
   // Tracks whether the shared-view "Build your own team report" CTA has
   // been dismissed. Hoisted here (instead of inside ShareViewCTA) so the
@@ -835,6 +837,7 @@ function HomeContent() {
         onExportPokepaste={analysis ? handleExportTeam : undefined}
         onCreatePokepaste={analysis ? handleCreatePokepaste : undefined}
         pokepasteCreating={pokepasteCreating}
+        onOpenOTSSheet={analysis ? () => setShowOTSSheet(true) : undefined}
         tournamentMode={tournamentMode}
         onSetTournamentMode={analysis ? setTournamentMode : undefined}
         onShowShortcuts={setShowShortcutHint}
@@ -1419,6 +1422,17 @@ function HomeContent() {
           warnings={warnings}
           publishError={publishError}
           onClearPublishError={clearPublishError}
+        />
+      )}
+
+      {/* Visual OTS Sheet modal */}
+      {showOTSSheet && analysis && (
+        <OTSSheetModal
+          pokemon={analysis.pokemon.map((p) => p.parsed)}
+          shareUrl={activeShareId ? `${typeof window !== "undefined" ? window.location.origin : "https://pokemonvgcteamreport.com"}/s/${activeShareId}` : undefined}
+          tournamentName={tournamentName}
+          teamName={teamName}
+          onClose={() => setShowOTSSheet(false)}
         />
       )}
 

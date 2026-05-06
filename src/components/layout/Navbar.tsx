@@ -83,6 +83,7 @@ interface NavbarProps {
   onExportPokepaste?: () => void;
   onCreatePokepaste?: (mode: "ots" | "cts") => void;
   pokepasteCreating?: null | "ots" | "cts";
+  onOpenOTSSheet?: () => void;
 
   // Tournament mode
   tournamentMode?: boolean;
@@ -170,7 +171,7 @@ export function Navbar(props: NavbarProps) {
     hasExistingShare, editLinkCopied, onCopyEditLink,
     onUndo, onRedo, canUndo, canRedo,
     comparingVersion, onCompareVersion, onClearCompareVersion, compareLoading,
-    onExportPdf, onExportPokepaste, onCreatePokepaste, pokepasteCreating,
+    onExportPdf, onExportPokepaste, onCreatePokepaste, pokepasteCreating, onOpenOTSSheet,
     tournamentMode, onSetTournamentMode,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
     onReset, onExitSharedView, onStartTour,
@@ -649,6 +650,20 @@ export function Navbar(props: NavbarProps) {
                       {pasteCopied ? "Copied to Clipboard!" : "Copy Paste"}
                     </button>
                   </>
+                )}
+
+                {/* Visual OTS Sheet — sprites + QR code, downloadable as PNG */}
+                {onOpenOTSSheet && !isPresentationStyle && (
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); onOpenOTSSheet(); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                    Visual OTS Sheet
+                  </button>
                 )}
 
                 {/* Create PokéPaste — OTS (Open Team Sheet) & CTS (Closed / full spread) */}
