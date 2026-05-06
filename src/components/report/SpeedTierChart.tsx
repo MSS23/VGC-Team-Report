@@ -348,6 +348,22 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     return changes;
   }, [hasAnyModifiers, teamEntries, teamMegaEntries, metaEntries, allEntries]);
 
+  // Group entries by their final displayed speed so we can mark every
+  // member of a tie group, not just the second-and-later rows. The
+  // previous "compare with prevSpeed" approach only flagged the bottom
+  // half of a tie pair — making the user think the unmarked top row
+  // wasn't tied with anything, then misreading the marked row as
+  // "tied with whatever's directly above me" (which it usually wasn't).
+  const speedTieGroups = useMemo(() => {
+    const groups = new Map<number, string[]>();
+    for (const e of allEntries) {
+      const list = groups.get(e.displaySpeed);
+      if (list) list.push(e.species);
+      else groups.set(e.displaySpeed, [e.species]);
+    }
+    return groups;
+  }, [allEntries]);
+
   // Build active modifier summary for each side
   const yourModSummary = Array.from(yourModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
   const oppModSummary = Array.from(opponentModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
@@ -437,9 +453,14 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             const sc = entry.isYours ? getSpriteConfig?.(entry.speciesKey) : undefined;
             const percent = Math.max(Math.min((entry.displaySpeed / maxDisplaySpeed) * 100, 100), 6);
 
-            // Check for speed tie with adjacent entry
-            const prevSpeed = i > 0 ? allEntries[i - 1].displaySpeed : -1;
-            const isTie = entry.displaySpeed === prevSpeed;
+            // Speed tie: this entry shares its exact final displaySpeed
+            // with at least one other entry in the chart. Both halves of
+            // the tie get the marker (not just the lower row), and the
+            // partner species are surfaced in the tooltip so the user
+            // can see who they actually tie with.
+            const tieGroup = speedTieGroups.get(entry.displaySpeed) ?? [];
+            const isTie = tieGroup.length >= 2;
+            const tiePartners = isTie ? tieGroup.filter(s => s !== entry.species) : [];
 
             const entryKey = `${entry.speciesKey}-${entry.isYours ? "yours" : "opponent"}`;
             const posChange = positionChanges.get(entryKey) ?? 0;
@@ -509,9 +530,14 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                         opacity: entry.isMega ? 0.6 : entry.isYours ? (entry.hasSpeedBoost ? 0.8 : 0.7) : 0.4,
                       }}
                     />
-                    {/* Speed tie indicator */}
+                    {/* Speed tie indicator — shows on every entry that shares
+                        its exact final speed with at least one other entry. */}
                     {isTie && (
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                      <div
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded cursor-help"
+                        title={tiePartners.length > 0 ? `Speed tie at ${entry.displaySpeed} with ${tiePartners.join(", ")}` : `Speed tie at ${entry.displaySpeed}`}
+                        aria-label={tiePartners.length > 0 ? `Speed tie at ${entry.displaySpeed} with ${tiePartners.join(", ")}` : `Speed tie at ${entry.displaySpeed}`}
+                      >
                         TIE
                       </div>
                     )}
