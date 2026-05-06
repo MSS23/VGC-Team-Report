@@ -402,6 +402,25 @@ export function PokemonDetailSlide({
     );
   }, [alreadyMega, showMega, baseFormData, parsed.ivs, parsed.evs, parsed.level, parsed.nature]);
 
+  // Base-form stats used for the Mega delta comparison strip (shown when mega is active).
+  // For base+stone pastes, effectiveBaseData IS the base form already.
+  // For already-Mega pastes, effectiveBaseData resolves to baseFormData.
+  // Champions format uses SP-based calculation to match the displayStats source.
+  const baseStatsForComparison = useMemo(() => {
+    if (!showMega || !megaData || !effectiveBaseData) return null;
+    if (regulation === "Reg M-A") {
+      const sp = convertToChampionsSp(parsed.evs);
+      return calculateAllChampionsStats(effectiveBaseData.baseStats, sp, parsed.nature);
+    }
+    return calculateAllStats(
+      effectiveBaseData.baseStats,
+      parsed.ivs,
+      parsed.evs,
+      parsed.level,
+      parsed.nature,
+    );
+  }, [showMega, megaData, effectiveBaseData, regulation, parsed.ivs, parsed.evs, parsed.level, parsed.nature]);
+
   // Champions (Reg M-A) recomputes stats from the SP budget — must run
   // against whichever side (Mega or base) is currently displayed.
   const championsStats = useMemo(() => {
@@ -760,6 +779,55 @@ export function PokemonDetailSlide({
           }
         )}
       </div>
+
+      {/* Mega stat delta strip — shows base → mega changes when Mega is active.
+          Uses championsStats in Reg M-A (SP-based) and megaStats otherwise so
+          the delta always matches what the stat bars above actually display. */}
+      {showMega && baseStatsForComparison && (() => {
+        const megaForDelta = championsStats ?? megaStats;
+        if (!megaForDelta) return null;
+        const STAT_ORDER = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
+        const changed = STAT_ORDER.filter(
+          (stat) => megaForDelta[stat] !== baseStatsForComparison[stat]
+        );
+        if (changed.length === 0) return null;
+        return (
+          <div className="mt-3 pt-3 border-t border-border-subtle" aria-label="Mega stat changes">
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-purple-400/70 mb-2 presenting:text-xs">
+              Mega boosts
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {changed.map((stat) => {
+                const delta = megaForDelta[stat] - baseStatsForComparison[stat];
+                const positive = delta > 0;
+                return (
+                  <span
+                    key={stat}
+                    className={`inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold px-2 py-1 rounded-md presenting:text-sm ${
+                      positive
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                    }`}
+                    aria-label={`${statLabels[stat as keyof typeof statLabels]}: ${baseStatsForComparison[stat]} to ${megaForDelta[stat]}, ${positive ? "+" : ""}${delta}`}
+                  >
+                    <span className="uppercase text-text-tertiary font-extrabold tracking-widest text-[9px] sm:text-[10px]">
+                      {statLabels[stat as keyof typeof statLabels]}
+                    </span>
+                    <span className="font-[family-name:var(--font-mono)] tabular-nums">
+                      {baseStatsForComparison[stat]}
+                    </span>
+                    <span className="text-text-tertiary opacity-60">{"→"}</span>
+                    <span className="font-[family-name:var(--font-mono)] tabular-nums">
+                      {megaForDelta[stat]}
+                    </span>
+                    <span className="opacity-80">({positive ? "+" : ""}{delta})</span>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </div>
     );
   };

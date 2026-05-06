@@ -7,7 +7,16 @@ import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
 import { POKEMON_DATA } from "@/lib/data/pokemon";
 import { CHAMPIONS_DEX } from "@/lib/data/champions-dex";
-import { calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
+import { calculateStat, calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
+import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
+
+/** Map from normalised base-form key (e.g. "kangaskhan") → Mega dataKeys */
+const BASE_KEY_TO_MEGA_KEYS = new Map<string, string[]>();
+for (const entry of MEGA_POKEMON_LIST) {
+  const baseKey = entry.baseName.toLowerCase().replace(/\s+/g, "-");
+  if (!BASE_KEY_TO_MEGA_KEYS.has(baseKey)) BASE_KEY_TO_MEGA_KEYS.set(baseKey, []);
+  BASE_KEY_TO_MEGA_KEYS.get(baseKey)!.push(entry.dataKey);
+}
 
 interface SpeedTierChartProps {
   pokemon: AnalyzedPokemon[];
@@ -142,6 +151,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   const [yourModifiers, setYourModifiers] = useState<Set<SpeedModifier>>(new Set());
   const [opponentModifiers, setOpponentModifiers] = useState<Set<SpeedModifier>>(new Set());
   const [showMetaThreats, setShowMetaThreats] = useState(false);
+  const [showMegaTiers, setShowMegaTiers] = useState(() => regulation === "Reg M-A");
 
   const hasAnyModifiers = yourModifiers.size > 0 || opponentModifiers.size > 0;
 
@@ -188,6 +198,39 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     };
   }), [pokemon, speciesKeys, isChampions]);
 
+  // Mega-form speed entries for team Pokemon that have a Mega Evolution.
+  // EVs/SPs carry over to the Mega form, so Speed is recomputed using the
+  // Mega's base stat with the same spread the player specified.
+  const teamMegaEntries = useMemo(() => {
+    if (!showMegaTiers) return [];
+    return pokemon.flatMap((mon, i) => {
+      const baseKey = speciesKeys[i];
+      const megaKeys = BASE_KEY_TO_MEGA_KEYS.get(baseKey) ?? [];
+      return megaKeys.flatMap((megaKey) => {
+        const megaData = POKEMON_DATA[megaKey];
+        if (!megaData) return [];
+        let megaBaseSpe: number;
+        if (isChampions && mon.data) {
+          const sp = convertToChampionsSp(mon.parsed.evs);
+          megaBaseSpe = calculateChampionsStat("spe", megaData.baseStats.spe, sp.spe, mon.parsed.nature);
+        } else {
+          megaBaseSpe = calculateStat("spe", megaData.baseStats.spe, mon.parsed.ivs.spe, mon.parsed.evs.spe, 50, mon.parsed.nature);
+        }
+        return [{
+          species: megaData.name,
+          speciesKey: megaKey,
+          baseSpe: megaBaseSpe,
+          boostMultiplier: 1 as number,
+          hasSpeedBoost: false,
+          speedBoostLabel: "",
+          isYours: true as const,
+          isMega: true as const,
+          baseSpeciesKey: baseKey,
+        }];
+      });
+    });
+  }, [showMegaTiers, pokemon, speciesKeys, isChampions]);
+
   // Build meta threat entries. We intentionally do NOT filter out Pokemon
   // already on the user's team — a player running a bulky/mid-speed variant
   // wants to compare it against the standard max-speed meta build of the
@@ -233,9 +276,22 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         const unmodifiedSpeed = calcSpeed(e.baseSpe, e.boostMultiplier, new Set());
         return {
           ...e,
+          isMega: false as const,
+          baseSpeciesKey: undefined as string | undefined,
           displaySpeed: baseSpeed,
           unmodifiedSpeed,
           delta: baseSpeed - unmodifiedSpeed,
+        };
+      }),
+      ...teamMegaEntries.map(e => {
+        const baseSpeed = calcSpeed(e.baseSpe, 1, yourModifiers);
+        const unmodifiedSpeed = calcSpeed(e.baseSpe, 1, new Set());
+        return {
+          ...e,
+          displaySpeed: baseSpeed,
+          unmodifiedSpeed,
+          delta: baseSpeed - unmodifiedSpeed,
+          minSpe: undefined as number | undefined,
         };
       }),
       ...metaEntries.map(e => {
@@ -243,6 +299,8 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         const unmodifiedSpeed = calcSpeed(e.baseSpe, 1, new Set());
         return {
           ...e,
+          isMega: false as const,
+          baseSpeciesKey: undefined as string | undefined,
           displaySpeed: baseSpeed,
           unmodifiedSpeed,
           delta: baseSpeed - unmodifiedSpeed,
@@ -251,7 +309,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       }),
     ];
     return combined.sort((a, b) => b.displaySpeed - a.displaySpeed);
-  }, [teamEntries, metaEntries, yourModifiers, opponentModifiers]);
+  }, [teamEntries, teamMegaEntries, metaEntries, yourModifiers, opponentModifiers]);
 
   const maxDisplaySpeed = allEntries[0]?.displaySpeed ?? 200;
 
@@ -264,6 +322,10 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       ...teamEntries.map(e => ({
         key: `${e.speciesKey}-yours`,
         speed: calcSpeed(e.baseSpe, e.boostMultiplier, new Set()),
+      })),
+      ...teamMegaEntries.map(e => ({
+        key: `${e.speciesKey}-yours`,
+        speed: calcSpeed(e.baseSpe, 1, new Set()),
       })),
       ...metaEntries.map(e => ({
         key: `${e.speciesKey}-opponent`,
@@ -284,7 +346,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       }
     });
     return changes;
-  }, [hasAnyModifiers, teamEntries, metaEntries, allEntries]);
+  }, [hasAnyModifiers, teamEntries, teamMegaEntries, metaEntries, allEntries]);
 
   // Build active modifier summary for each side
   const yourModSummary = Array.from(yourModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
@@ -330,8 +392,20 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             )}
           </div>
 
-          {/* Meta threats toggle — always visible */}
-          <div className="flex items-center gap-2 pt-1 border-t border-border-subtle">
+          {/* Overlay toggles — Mega tiers and Meta Threats */}
+          <div className="flex items-center gap-2 pt-1 border-t border-border-subtle flex-wrap">
+            <button
+              type="button"
+              onClick={() => setShowMegaTiers(!showMegaTiers)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                showMegaTiers
+                  ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
+                  : "bg-surface-alt/50 text-text-secondary border-border hover:border-purple-500/30 hover:text-purple-400"
+              }`}
+            >
+              <span>⬆</span>
+              Mega Forms
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -392,10 +466,19 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                     shiny={sc?.shiny}
                   />
                   <span className={`text-xs sm:text-sm lg:text-base font-bold truncate ${
-                    entry.isYours ? "text-text-primary" : "text-text-tertiary"
+                    entry.isMega ? "text-purple-400" : entry.isYours ? "text-text-primary" : "text-text-tertiary"
                   }`}>
                     {entry.species}
                   </span>
+                  {/* Mega-evolved speed entry for one of the user's team Pokemon. */}
+                  {entry.isMega && (
+                    <span
+                      className="text-[8px] sm:text-[9px] font-extrabold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
+                      title="Mega-evolved speed (same EV/SP spread as base form)"
+                    >
+                      Mega
+                    </span>
+                  )}
                   {/* Disambiguates a meta entry that shares species with one
                       of the user's Pokemon — e.g. their bulky Garchomp next
                       to the meta max-speed Garchomp. */}
@@ -418,10 +501,12 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                       }`}
                       style={{
                         width: `${percent}%`,
-                        backgroundColor: entry.isYours
-                          ? entry.hasSpeedBoost ? "#f59e0b" : "var(--stat-spe)"
-                          : "#64748b",
-                        opacity: entry.isYours ? (entry.hasSpeedBoost ? 0.8 : 0.7) : 0.4,
+                        backgroundColor: entry.isMega
+                          ? "#a855f7"
+                          : entry.isYours
+                            ? entry.hasSpeedBoost ? "#f59e0b" : "var(--stat-spe)"
+                            : "#64748b",
+                        opacity: entry.isMega ? 0.6 : entry.isYours ? (entry.hasSpeedBoost ? 0.8 : 0.7) : 0.4,
                       }}
                     />
                     {/* Speed tie indicator */}
@@ -435,13 +520,15 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                   {/* Speed value + delta + position change */}
                   <div className="w-20 sm:w-32 lg:w-36 flex-shrink-0 flex items-center justify-end gap-1 sm:gap-1.5">
                     <span className={`text-xs sm:text-sm lg:text-base font-[family-name:var(--font-mono)] font-extrabold tabular-nums ${
-                      entry.isYours
-                        ? entry.hasSpeedBoost ? "text-amber-500" : "text-text-primary"
-                        : "text-text-tertiary"
+                      entry.isMega
+                        ? "text-purple-400"
+                        : entry.isYours
+                          ? entry.hasSpeedBoost ? "text-amber-500" : "text-text-primary"
+                          : "text-text-tertiary"
                     }`}>
                       {entry.displaySpeed}
                     </span>
-                    {entry.isYours && entry.hasSpeedBoost && entry.speedBoostLabel && (
+                    {entry.isYours && !entry.isMega && entry.hasSpeedBoost && entry.speedBoostLabel && (
                       <span className="text-[10px] text-amber-500/60 font-semibold hidden sm:inline">
                         {entry.speedBoostLabel}
                       </span>
@@ -480,6 +567,12 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             <span className="w-3 h-3 rounded" style={{ backgroundColor: "var(--stat-spe)", opacity: 0.7 }} />
             Your team
           </span>
+          {showMegaTiers && teamMegaEntries.length > 0 && (
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded" style={{ backgroundColor: "#a855f7", opacity: 0.6 }} />
+              Mega-evolved speed
+            </span>
+          )}
           {teamEntries.some(e => e.hasSpeedBoost) && (
             <span className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded bg-amber-500/70 bar-speed-boosted" />
