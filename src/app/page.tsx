@@ -207,10 +207,10 @@ function HomeContent() {
   // moment the CTA disappears, rather than staying artificially raised.
   const [shareCtaDismissed, setShareCtaDismissed] = useState(false);
 
-  // ── Global display prefs (Mega all / SP-EV) ─────────────────────
-  // Persists SP/EV mode across sessions in localStorage. Mega default
+  // ── Global display prefs ─────────────────────────────────────────
+  // First-run discovery pulse for the floating Display pill. Mega default
   // lives on the team meta itself so it travels with shared reports.
-  const { evMode, setEvMode, hasSeenPill, markPillSeen } = useGlobalDisplayPrefs();
+  const { hasSeenPill, markPillSeen } = useGlobalDisplayPrefs();
 
   // Resolve effective Mega state for every Pokemon index up front so the
   // existing TeamReport / TeamOverview / PokemonCard chain doesn't need
@@ -241,8 +241,6 @@ function HomeContent() {
       return !!detectMegaFromItem(p.parsed.item, p.parsed.species);
     });
   }, [analysis]);
-
-  const isChampionsRegulation = tags?.regulation === "Reg M-A";
 
   // ── Load draft from ?draft=ID ─────────────────────────────────────
   const draftLoaded = useRef(false);
@@ -1150,8 +1148,6 @@ function HomeContent() {
           onReplacePokemon={isReadOnly ? undefined : handleReplacePokemon}
           megaStates={resolvedMegaStates}
           onToggleMega={isReadOnly ? undefined : toggleMega}
-          showEvMode={evMode}
-          onShowEvModeChange={setEvMode}
         />
         </>
         )}
@@ -1309,20 +1305,17 @@ function HomeContent() {
         />
       )}
 
-      {/* Floating display options pill — global Mega / SP-EV toggles.
+      {/* Floating display options pill — global Mega toggle.
           Visibility gates inside the component itself, but we still skip
           rendering during tournament/print/presentation modes since those
           have their own focused layouts. */}
       <DisplayTogglePill
         hasMegaCapable={hasMegaCapable}
-        isChampions={isChampionsRegulation}
         globalMegaDefault={globalMegaDefault}
         // Use the combined handler so tapping Base/Mega on the pill
         // always normalizes the team by clearing per-card overrides.
         onGlobalMegaChange={setGlobalMegaDefaultAndReset}
         hasMegaOverrides={hasMegaOverrides}
-        evMode={evMode}
-        onEvModeChange={setEvMode}
         hasSeenPill={hasSeenPill}
         onMarkSeen={markPillSeen}
         hidden={isPresentationStyle || tournamentMode || isPdfPrinting}

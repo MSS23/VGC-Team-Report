@@ -5,8 +5,6 @@ import { useEffect, useRef, useState } from "react";
 interface DisplayTogglePillProps {
   /** Whether at least one Pokemon on the team is Mega-capable. Drives Form-segment visibility. */
   hasMegaCapable: boolean;
-  /** Whether the current regulation is Reg M-A (Champions). Drives Investment-segment visibility. */
-  isChampions: boolean;
 
   /** Effective team-wide Mega default. null = auto (treat as true). */
   globalMegaDefault: boolean | null;
@@ -21,10 +19,6 @@ interface DisplayTogglePillProps {
   /** Whether the user has any per-card Mega overrides set. Drives the
    *  pre-tap reset caption and the non-default dot indicator. */
   hasMegaOverrides: boolean;
-
-  /** Global SP/EV display mode. false = SP, true = EV. */
-  evMode: boolean;
-  onEvModeChange: (value: boolean) => void;
 
   /** First-run discovery pulse — fires once and then onMarkSeen is called. */
   hasSeenPill: boolean;
@@ -43,10 +37,9 @@ interface DisplayTogglePillProps {
 
 /**
  * Floating "Display" pill anchored bottom-right of the viewport.
- * Tap to expand into a popover with segmented controls for Form (Base / Mega)
- * and Investment (SP / EV).
+ * Tap to expand into a popover with the Form (Base / Mega) segmented control.
  *
- * Visibility rules: hidden when neither Mega nor Champions is in scope.
+ * Visibility rules: hidden when no Pokemon on the team is Mega-capable.
  * Read-only viewers still see it — display preferences aren't edits.
  *
  * The pill respects PWA safe-area insets via the existing
@@ -54,12 +47,9 @@ interface DisplayTogglePillProps {
  */
 export function DisplayTogglePill({
   hasMegaCapable,
-  isChampions,
   globalMegaDefault,
   onGlobalMegaChange,
   hasMegaOverrides,
-  evMode,
-  onEvModeChange,
   hasSeenPill,
   onMarkSeen,
   hidden = false,
@@ -75,13 +65,12 @@ export function DisplayTogglePill({
   const showingMega = globalMegaDefault ?? true;
 
   // Active state indicator on collapsed pill: any state other than the
-  // baseline (global Mega on, SP mode). Per-card overrides count as
-  // non-default too so the user sees the dot whenever any card is
-  // diverging from the team's global form, even if the pill itself is
-  // still on the default Mega setting.
+  // baseline (global Mega on). Per-card overrides count as non-default too
+  // so the user sees the dot whenever any card is diverging from the
+  // team's global form, even if the pill itself is still on the default
+  // Mega setting.
   const hasNonDefault =
-    (hasMegaCapable && (!showingMega || hasMegaOverrides)) ||
-    (isChampions && evMode);
+    hasMegaCapable && (!showingMega || hasMegaOverrides);
 
   // First-run discovery pulse: 1.5s subtle ring fade. Respects reduced motion
   // by skipping the animation entirely.
@@ -127,12 +116,10 @@ export function DisplayTogglePill({
     };
   }, [open]);
 
-  // Visibility rule: hide unless at least one toggle is in scope.
-  if (hidden || (!hasMegaCapable && !isChampions)) return null;
+  // Visibility rule: hide when no Mega capability on the team.
+  if (hidden || !hasMegaCapable) return null;
 
-  // Compact label reflects what's in scope.
-  const compactLabel =
-    hasMegaCapable && isChampions ? "Display" : hasMegaCapable ? "Form" : "Invest";
+  const compactLabel = "Form";
 
   return (
     <>
@@ -239,46 +226,6 @@ export function DisplayTogglePill({
               </div>
             )}
 
-            {/* Investment (SP / EV) */}
-            {isChampions && (
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary mb-1.5">
-                  Investment
-                </div>
-                <div
-                  role="radiogroup"
-                  aria-label="Investment display"
-                  className="inline-flex w-full h-11 items-center rounded-lg bg-surface-alt border border-border p-0.5 gap-0.5"
-                >
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={!evMode}
-                    onClick={() => onEvModeChange(false)}
-                    className={`flex-1 h-full rounded-md text-xs font-semibold transition-colors duration-150 cursor-pointer ${
-                      !evMode
-                        ? "bg-accent text-white shadow-sm"
-                        : "text-text-secondary hover:text-text-primary"
-                    }`}
-                  >
-                    SP
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={evMode}
-                    onClick={() => onEvModeChange(true)}
-                    className={`flex-1 h-full rounded-md text-xs font-semibold transition-colors duration-150 cursor-pointer ${
-                      evMode
-                        ? "bg-accent text-white shadow-sm"
-                        : "text-text-secondary hover:text-text-primary"
-                    }`}
-                  >
-                    EV
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         )}
 

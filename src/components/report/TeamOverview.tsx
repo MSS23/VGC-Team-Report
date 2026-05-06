@@ -314,9 +314,6 @@ interface TeamOverviewProps {
   onReplacePokemon?: (index: number, newSpecies: string) => void;
   megaStates?: Record<number, boolean>;
   onToggleMega?: (index: number) => void;
-  /** Global SP/EV display mode, controlled by the parent. */
-  showEvMode?: boolean;
-  onShowEvModeChange?: (v: boolean) => void;
 }
 
 export function TeamOverview({
@@ -351,8 +348,6 @@ export function TeamOverview({
   onReplacePokemon,
   megaStates,
   onToggleMega,
-  showEvMode,
-  onShowEvModeChange,
 }: TeamOverviewProps) {
   const { t } = useTranslation();
   const hasTournamentInfo = !!(teamName || tournamentName || placement || record);
@@ -733,8 +728,6 @@ export function TeamOverview({
                 isMega={megaStates?.[i]}
                 onToggleMega={onToggleMega ? () => onToggleMega(i) : undefined}
                 regulation={tags?.regulation}
-                showEvMode={showEvMode}
-                onShowEvModeChange={onShowEvModeChange}
                 onReplaceSpecies={onReplacePokemon ? (next) => onReplacePokemon(i, next) : undefined}
               />
               </FieldDiffHighlight>

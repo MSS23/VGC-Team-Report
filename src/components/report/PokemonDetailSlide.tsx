@@ -46,11 +46,6 @@ interface PokemonDetailSlideProps {
   isMega?: boolean;
   /** Flip between base and Mega form. When omitted the toggle is hidden. */
   onToggleMega?: () => void;
-  /** Controlled SP/EV display mode. When provided, the per-card segmented
-   *  control becomes a write-through to the parent's global state so all
-   *  cards switch in sync. When omitted the slide falls back to local state. */
-  showEvMode?: boolean;
-  onShowEvModeChange?: (v: boolean) => void;
 }
 
 const STAT_COLORS: Record<string, string> = {
@@ -337,8 +332,6 @@ export function PokemonDetailSlide({
   regulation,
   isMega,
   onToggleMega,
-  showEvMode: showEvModeProp,
-  onShowEvModeChange,
 }: PokemonDetailSlideProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
@@ -446,11 +439,6 @@ export function PokemonDetailSlide({
   const types = displayTypes;
   const natureData = NATURES[parsed.nature];
   const relevantStats = getRelevantStats(parsed);
-  // Controlled when parent supplies showEvMode + handler; otherwise local fallback.
-  const [localShowEvMode, setLocalShowEvMode] = useState(false);
-  const isEvModeControlled = showEvModeProp !== undefined && onShowEvModeChange !== undefined;
-  const showEvMode = isEvModeControlled ? showEvModeProp : localShowEvMode;
-  const setShowEvMode = isEvModeControlled ? onShowEvModeChange : setLocalShowEvMode;
   const statLabels = {
     hp: t.statHp,
     atk: t.statAtk,
@@ -668,59 +656,23 @@ export function PokemonDetailSlide({
         </h3>
 
         {isChampions ? (() => {
-          const spCurrent = totalSp;
-          const spMax = CHAMPIONS_TOTAL_SP;
-          const spOver = spCurrent > spMax;
-          const spUnder = spCurrent < spMax && spCurrent > 0;
-          const evCurrent = totalEvs;
-          // In Champions format, SP is the real cap. The EV total is a derived
-          // value: 66 SP can legitimately produce 512 (e.g. 4/4/252/252) or even
-          // 516 (e.g. 252/252/12) because the EV-per-SP curve is non-linear.
-          // The EV tab's legality dot mirrors the SP dot so it reflects the
-          // actual legality instead of the obsolete 510 cap.
+          // Reg M-A is an SP-only format. EV totals are misleading here
+          // (66 SP ≠ 66 EVs — the conversion curve is non-linear), so the
+          // budget badge stays SP-native instead of offering an EV toggle
+          // that would mix two unit systems.
+          const spOver = totalSp > CHAMPIONS_TOTAL_SP;
+          const spUnder = totalSp < CHAMPIONS_TOTAL_SP && totalSp > 0;
           const spDot = spOver ? "bg-danger" : spUnder ? "bg-amber-500" : "bg-emerald-500";
-          const evDot = spDot;
           return (
             <div
-              role="tablist"
-              aria-label="Investment mode"
-              className="inline-flex h-8 sm:h-9 items-center rounded-lg bg-surface-alt border border-border p-0.5 gap-0.5 ml-auto"
+              className="inline-flex h-8 sm:h-9 items-center rounded-lg bg-surface-alt border border-border px-2.5 sm:px-3 gap-1.5 ml-auto"
+              aria-label={`Stat Points: ${totalSp} of ${CHAMPIONS_TOTAL_SP}`}
             >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={!showEvMode}
-                onClick={() => setShowEvMode(false)}
-                className={`inline-flex items-center gap-1.5 h-full rounded-md px-2.5 sm:px-3 text-[11px] sm:text-xs font-semibold tracking-wide tabular-nums transition-colors duration-150 min-w-[44px] cursor-pointer ${
-                  !showEvMode
-                    ? "bg-accent text-white shadow-sm"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${spDot}`} aria-hidden />
-                <span>SP</span>
-                <span className={!showEvMode ? "text-white/85" : "text-text-tertiary"}>
-                  {spCurrent}/{spMax}
-                </span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={showEvMode}
-                onClick={() => setShowEvMode(true)}
-                className={`inline-flex items-center gap-1.5 h-full rounded-md px-2.5 sm:px-3 text-[11px] sm:text-xs font-semibold tracking-wide tabular-nums transition-colors duration-150 min-w-[44px] cursor-pointer ${
-                  showEvMode
-                    ? "bg-accent text-white shadow-sm"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
-                title="EV total is derived from SP — the 66 SP budget is the actual cap"
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${evDot}`} aria-hidden />
-                <span>EV</span>
-                <span className={showEvMode ? "text-white/85" : "text-text-tertiary"}>
-                  {evCurrent}
-                </span>
-              </button>
+              <span className={`h-1.5 w-1.5 rounded-full ${spDot}`} aria-hidden />
+              <span className="text-[11px] sm:text-xs font-semibold tracking-wide tabular-nums text-text-secondary">SP</span>
+              <span className="text-[11px] sm:text-xs font-semibold tabular-nums text-text-tertiary">
+                {totalSp}/{CHAMPIONS_TOTAL_SP}
+              </span>
             </div>
           );
         })() : totalEvs > 0 ? (
@@ -755,7 +707,8 @@ export function PokemonDetailSlide({
             const percentage = Math.min((displayValue / maxStat) * 100, 100);
             const hasNonDefaultIv = iv !== 31;
 
-            const showSp = isChampions && !showEvMode;
+            // Reg M-A: SP only. Other regs: EVs.
+            const showSp = isChampions;
             const investLabel = showSp ? sp : ev;
             const investUnit = showSp ? "SP" : "";
             const isOverMax = isChampions && sp > CHAMPIONS_MAX_SP_PER_STAT;

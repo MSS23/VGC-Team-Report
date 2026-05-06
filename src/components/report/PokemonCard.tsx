@@ -36,11 +36,6 @@ interface PokemonCardProps {
   isMega?: boolean;
   onToggleMega?: () => void;
   regulation?: string;
-  /** Controlled SP/EV display mode. When provided, the per-card segmented
-   *  control becomes a write-through to the parent's global state so all
-   *  cards switch in sync. When omitted the card falls back to local state. */
-  showEvMode?: boolean;
-  onShowEvModeChange?: (v: boolean) => void;
   /** Inline replace — when provided, a small pencil button on the card
    *  opens a search picker to swap the species without re-pasting the team. */
   onReplaceSpecies?: (newSpecies: string) => void;
@@ -55,16 +50,9 @@ const STAT_COLORS: Record<string, string> = {
   spe: "var(--stat-spe)",
 };
 
-export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation, showEvMode: showEvModeProp, onShowEvModeChange, onReplaceSpecies }: PokemonCardProps) {
+export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation, onReplaceSpecies }: PokemonCardProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
-  // Controlled when parent supplies showEvMode + handler; otherwise local fallback.
-  // Local fallback exists so this card stays usable in isolation (e.g. team
-  // overview thumbnails) without forcing every caller to wire global state.
-  const [localShowEvMode, setLocalShowEvMode] = useState(false);
-  const isControlled = showEvModeProp !== undefined && onShowEvModeChange !== undefined;
-  const showEvMode = isControlled ? showEvModeProp : localShowEvMode;
-  const setShowEvMode = isControlled ? onShowEvModeChange : setLocalShowEvMode;
 
   // Inline-edit modal — opened via the pencil button when the card is editable.
   const [editing, setEditing] = useState(false);
@@ -386,59 +374,23 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             </h4>
 
             {isChampions ? (() => {
-              const spCurrent = totalSp;
-              const spMax = CHAMPIONS_TOTAL_SP;
-              const spOver = spCurrent > spMax;
-              const spUnder = spCurrent < spMax && spCurrent > 0;
-              const evCurrent = totalEvs;
-              // In Champions format, SP is the real cap. The EV total is a derived
-              // value: 66 SP can legitimately produce 512 (e.g. 4/4/252/252) or even
-              // 516 (e.g. 252/252/12) because the EV-per-SP curve is non-linear.
-              // The EV tab's legality dot mirrors the SP dot so it reflects the
-              // actual legality instead of the obsolete 510 cap.
+              // Reg M-A is an SP-only format. EV totals are misleading here
+              // (66 SP ≠ 66 EVs — the conversion curve is non-linear), so
+              // the budget badge stays SP-native instead of offering an EV
+              // toggle that would mix two unit systems.
+              const spOver = totalSp > CHAMPIONS_TOTAL_SP;
+              const spUnder = totalSp < CHAMPIONS_TOTAL_SP && totalSp > 0;
               const spDot = spOver ? "bg-danger" : spUnder ? "bg-amber-500" : "bg-emerald-500";
-              const evDot = spDot;
               return (
                 <div
-                  role="tablist"
-                  aria-label="Investment mode"
-                  className="inline-flex h-7 items-center rounded-md bg-surface-alt border border-border p-0.5 gap-0.5 ml-auto"
+                  className="inline-flex h-7 items-center rounded-md bg-surface-alt border border-border px-2 gap-1 ml-auto"
+                  aria-label={`Stat Points: ${totalSp} of ${CHAMPIONS_TOTAL_SP}`}
                 >
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={!showEvMode}
-                    onClick={(e) => { e.stopPropagation(); setShowEvMode(false); }}
-                    className={`inline-flex items-center gap-1 h-full rounded px-2 text-[10px] font-semibold tracking-wide tabular-nums transition-colors duration-150 min-w-[44px] cursor-pointer ${
-                      !showEvMode
-                        ? "bg-accent text-white shadow-sm"
-                        : "text-text-secondary hover:text-text-primary"
-                    }`}
-                  >
-                    <span className={`h-1 w-1 rounded-full ${spDot}`} aria-hidden />
-                    <span>SP</span>
-                    <span className={!showEvMode ? "text-white/85" : "text-text-tertiary"}>
-                      {spCurrent}/{spMax}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={showEvMode}
-                    onClick={(e) => { e.stopPropagation(); setShowEvMode(true); }}
-                    className={`inline-flex items-center gap-1 h-full rounded px-2 text-[10px] font-semibold tracking-wide tabular-nums transition-colors duration-150 min-w-[44px] cursor-pointer ${
-                      showEvMode
-                        ? "bg-accent text-white shadow-sm"
-                        : "text-text-secondary hover:text-text-primary"
-                    }`}
-                    title="EV total is derived from SP — the 66 SP budget is the actual cap"
-                  >
-                    <span className={`h-1 w-1 rounded-full ${evDot}`} aria-hidden />
-                    <span>EV</span>
-                    <span className={showEvMode ? "text-white/85" : "text-text-tertiary"}>
-                      {evCurrent}
-                    </span>
-                  </button>
+                  <span className={`h-1 w-1 rounded-full ${spDot}`} aria-hidden />
+                  <span className="text-[10px] font-semibold tracking-wide tabular-nums text-text-secondary">SP</span>
+                  <span className="text-[10px] font-semibold tabular-nums text-text-tertiary">
+                    {totalSp}/{CHAMPIONS_TOTAL_SP}
+                  </span>
                 </div>
               );
             })() : (
@@ -459,7 +411,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
           </div>
 
           {/* Critical warnings only: over budget or auto-converted */}
-          {isChampions && !showEvMode && totalEvs > 0 && (overSp || (hasWastedEvs && !overSp)) && (
+          {isChampions && totalEvs > 0 && (overSp || (hasWastedEvs && !overSp)) && (
             <div className="flex flex-wrap gap-1.5 mb-1.5 sm:mb-2">
               {overSp && (
                 <span className="text-[9px] sm:text-[10px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded">
@@ -490,8 +442,8 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               const labels = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe };
               const isOverMax = isChampions && sp > CHAMPIONS_MAX_SP_PER_STAT;
 
-              // Champions default: show SP. Toggle to show EVs.
-              const showSp = isChampions && !showEvMode;
+              // Reg M-A: SP only. Other regs: EVs.
+              const showSp = isChampions;
               const investLabel = showSp ? sp : ev;
               const investUnit = showSp ? "SP" : "";
 
