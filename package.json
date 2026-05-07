@@ -15,7 +15,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.0.6",
+    "@clerk/nextjs": "^7.3.2",
     "@microsoft/clarity": "^1.0.2",
     "@neondatabase/serverless": "^1.0.2",
     "@opentelemetry/api-logs": "^0.214.0",
@@ -27,6 +27,7 @@
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
     "@vercel/analytics": "^1.6.1",
+    "axios": "^1.16.0",
     "html2canvas-pro": "^2.0.2",
     "jspdf": "^4.2.1",
     "motion": "^12.35.2",

@@ -157,20 +157,26 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ type: CHANNEL_MESSAGE, data: { content: "Provide an issue ID (e.g., VGC-10)" } });
       }
 
-      const result = await linearQuery(`{
-        issue(id: "${issueId}") { identifier title description priority state { name } labels { nodes { name } } project { name } url }
-      }`);
+      const result = await linearQuery(
+        `query($issueId: String!) {
+          issue(id: $issueId) { identifier title description priority state { name } labels { nodes { name } } project { name } url }
+        }`,
+        { issueId },
+      );
 
       // Try by identifier if direct ID fails
       let issue = result.data?.issue;
       if (!issue) {
-        const searchResult = await linearQuery(`{
-          team(id: "${getTeamId()}") {
-            issues(filter: { number: { eq: ${parseInt(issueId.replace(/\D/g, "")) || 0} } }, first: 1) {
-              nodes { identifier title description priority state { name } labels { nodes { name } } project { name } url }
+        const searchResult = await linearQuery(
+          `query($teamId: String!, $issueNum: Float!) {
+            team(id: $teamId) {
+              issues(filter: { number: { eq: $issueNum } }, first: 1) {
+                nodes { identifier title description priority state { name } labels { nodes { name } } project { name } url }
+              }
             }
-          }
-        }`);
+          }`,
+          { teamId: getTeamId(), issueNum: parseInt(issueId.replace(/\D/g, "")) || 0 },
+        );
         issue = searchResult.data?.team?.issues?.nodes?.[0];
       }
 
@@ -208,14 +214,17 @@ export async function POST(request: NextRequest) {
       }
 
       // Get Todo state ID and find the issue
-      const teamData = await linearQuery(`{
-        team(id: "${getTeamId()}") {
-          states { nodes { id name type } }
-          issues(filter: { number: { eq: ${parseInt(issueId.replace(/\D/g, "")) || 0} } }, first: 1) {
-            nodes { id identifier title state { name } }
+      const teamData = await linearQuery(
+        `query($teamId: String!, $issueNum: Float!) {
+          team(id: $teamId) {
+            states { nodes { id name type } }
+            issues(filter: { number: { eq: $issueNum } }, first: 1) {
+              nodes { id identifier title state { name } }
+            }
           }
-        }
-      }`);
+        }`,
+        { teamId: getTeamId(), issueNum: parseInt(issueId.replace(/\D/g, "")) || 0 },
+      );
 
       const todoState = teamData.data?.team?.states?.nodes?.find((s: { type: string }) => s.type === "unstarted");
       const issue = teamData.data?.team?.issues?.nodes?.[0];
@@ -227,7 +236,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ type: CHANNEL_MESSAGE, data: { content: "Could not find Todo state." } });
       }
 
-      await linearQuery(`mutation { issueUpdate(id: "${issue.id}", input: { stateId: "${todoState.id}" }) { issue { identifier state { name } } } }`);
+      await linearQuery(
+        `mutation($issueId: String!, $stateId: String!) { issueUpdate(id: $issueId, input: { stateId: $stateId }) { issue { identifier state { name } } } }`,
+        { issueId: issue.id, stateId: todoState.id },
+      );
 
       return NextResponse.json({
         type: CHANNEL_MESSAGE,
@@ -248,14 +260,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ type: CHANNEL_MESSAGE, data: { content: "Provide an issue ID (e.g., VGC-10)" } });
       }
 
-      const teamData = await linearQuery(`{
-        team(id: "${getTeamId()}") {
-          states { nodes { id name type } }
-          issues(filter: { number: { eq: ${parseInt(issueId.replace(/\D/g, "")) || 0} } }, first: 1) {
-            nodes { id identifier title }
+      const teamData = await linearQuery(
+        `query($teamId: String!, $issueNum: Float!) {
+          team(id: $teamId) {
+            states { nodes { id name type } }
+            issues(filter: { number: { eq: $issueNum } }, first: 1) {
+              nodes { id identifier title }
+            }
           }
-        }
-      }`);
+        }`,
+        { teamId: getTeamId(), issueNum: parseInt(issueId.replace(/\D/g, "")) || 0 },
+      );
 
       const wontDoState = teamData.data?.team?.states?.nodes?.find((s: { name: string }) => s.name === "Won't Do");
       const issue = teamData.data?.team?.issues?.nodes?.[0];
@@ -264,10 +279,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ type: CHANNEL_MESSAGE, data: { content: `Issue ${issueId} not found or missing state.` } });
       }
 
-      await linearQuery(`mutation { issueUpdate(id: "${issue.id}", input: { stateId: "${wontDoState.id}" }) { issue { identifier } } }`);
       await linearQuery(
-        `mutation($body: String!) { commentCreate(input: { issueId: "${issue.id}", body: $body }) { comment { id } } }`,
-        { body: `Rejected via Discord: ${reason}` },
+        `mutation($issueId: String!, $stateId: String!) { issueUpdate(id: $issueId, input: { stateId: $stateId }) { issue { identifier } } }`,
+        { issueId: issue.id, stateId: wontDoState.id },
+      );
+      await linearQuery(
+        `mutation($issueId: String!, $body: String!) { commentCreate(input: { issueId: $issueId, body: $body }) { comment { id } } }`,
+        { issueId: issue.id, body: `Rejected via Discord: ${reason}` },
       );
 
       return NextResponse.json({

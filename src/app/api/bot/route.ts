@@ -28,15 +28,14 @@ async function sendDiscordMessage(channelId: string, content: string, embeds?: u
 /**
  * GET /api/bot?action=summary|popular|bugs|weekly-email
  * Called by scheduled triggers or manually.
- * Protected by a simple secret check.
+ * Protected by Authorization: Bearer <CRON_SECRET> header.
  */
 export async function GET(request: NextRequest) {
   const action = request.nextUrl.searchParams.get("action");
-  const secret = request.nextUrl.searchParams.get("secret");
 
-  // Require CRON_SECRET for bot endpoint auth
+  // Require CRON_SECRET via Authorization header (never in URL query params)
   const expectedSecret = process.env.CRON_SECRET;
-  if (secret !== expectedSecret) {
+  if (request.headers.get("authorization") !== `Bearer ${expectedSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

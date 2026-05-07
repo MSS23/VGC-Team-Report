@@ -3,7 +3,7 @@ const en = {
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "Build, share, and discover competitive Pokemon team reports",
-  appInputHint: "Paste a Showdown export or PokePaste URL to get started",
+  appInputHint: "Import any PokéPaste URL, rental code, or Showdown export to get started",
 
   // Input screen
   loadSample: "Load sample",
