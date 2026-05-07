@@ -108,22 +108,6 @@ function resolveSlug(species: string): string {
   return SLUG_OVERRIDES[slug] ?? slug;
 }
 
-// ─── Legacy exports (kept for any remaining callers) ────────────────
-
-export type SpriteVariant = "gen5ani" | "ani" | "gen5";
-
-export function getSpriteUrl(species: string, variant: SpriteVariant = "gen5ani", shiny = false): string {
-  const resolved = resolveSlug(species);
-  const ext = variant === "gen5" ? "png" : "gif";
-  const folder = shiny ? `${variant}-shiny` : variant;
-  return `${BASE_URL}/${folder}/${resolved}.${ext}`;
-}
-
-export function getSpriteFallbackUrl(variant: SpriteVariant = "gen5"): string {
-  const ext = variant === "gen5" ? "png" : "gif";
-  return `${BASE_URL}/${variant}/substitute.${ext}`;
-}
-
 // ─── Gen-themed sprite support ──────────────────────────────────────
 
 interface GenSpriteStyle {
