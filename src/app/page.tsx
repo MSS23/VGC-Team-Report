@@ -35,7 +35,7 @@ import { computeVersionDiff, summarizeChangedFields, getNavigableChanges, type V
 const DiffNavigator = dynamic(() => import("@/components/ui/DiffNavigator").then(m => ({ default: m.DiffNavigator })));
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import { track } from "@vercel/analytics";
-import posthog from "posthog-js";
+import { usePostHog } from "posthog-js/react";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
 const ShareModal = dynamic(() => import("@/components/ui/ShareModal").then(m => ({ default: m.ShareModal })));
@@ -60,6 +60,7 @@ export default function Home() {
 }
 
 function HomeContent() {
+  const posthog = usePostHog();
   const {
     t,
     paste,
@@ -550,7 +551,7 @@ function HomeContent() {
     if (!isSharedView || !activeShareId || viewTracked.current) return;
     viewTracked.current = true;
     track("report_viewed", { shareId: activeShareId });
-    posthog.capture("report_viewed", { share_id: activeShareId });
+    posthog?.capture("report_viewed", { share_id: activeShareId });
     const sessionId = getSessionId();
     if (!sessionId) return;
     fetch(`/api/views/${activeShareId}`, {
@@ -645,7 +646,7 @@ function HomeContent() {
     }
     setForkStatus("forking");
     track("report_fork_clicked", { source_id: activeShareId });
-    posthog.capture("report_fork_clicked", { source_id: activeShareId });
+    posthog?.capture("report_fork_clicked", { source_id: activeShareId });
     try {
       const result = await forkReport(activeShareId);
       if (!result) {

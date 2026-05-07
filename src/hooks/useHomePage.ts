@@ -21,7 +21,7 @@ import { useAutoDraft } from "@/hooks/useAutoDraft";
 import { useAuth } from "@clerk/nextjs";
 import { SAMPLE_PASTE } from "@/components/input/PasteInput";
 import { track } from "@vercel/analytics";
-import posthog from "posthog-js";
+import { usePostHog } from "posthog-js/react";
 import { useTranslation } from "@/lib/i18n";
 import { getTemplate } from "@/lib/templates";
 import type { SpriteConfig } from "@/lib/types/sprites";
@@ -31,6 +31,7 @@ import { detectRegulation } from "@/lib/analysis/detect-regulation";
 export function useHomePage() {
   const { t } = useTranslation();
   const { isSignedIn } = useAuth();
+  const posthog = usePostHog();
   const [isSampleTeam, setIsSampleTeam] = useState(false);
   const [pendingTemplateId, setPendingTemplateId] = useState<string>("blank");
 
@@ -679,7 +680,7 @@ export function useHomePage() {
     // Track team creation
     const hasMega = teamPaste.includes("-Mega") || teamPaste.includes("-Primal");
     track("team_created", { hasMega: hasMega ? "yes" : "no" });
-    posthog.capture("team_created", { has_mega: hasMega, pokemon_count: teamPaste.split(/\n\n+/).filter(Boolean).length });
+    posthog?.capture("team_created", { has_mega: hasMega, pokemon_count: teamPaste.split(/\n\n+/).filter(Boolean).length });
   };
 
   const handleReset = useCallback(() => {
