@@ -49,7 +49,7 @@ import type { ExportMode } from "@/components/ui/PdfExport";
 const OTSSheetModal = dynamic(() => import("@/components/ui/OTSSheetModal").then(m => ({ default: m.OTSSheetModal })), { ssr: false });
 import { DisplayTogglePill } from "@/components/display/DisplayTogglePill";
 import { useGlobalDisplayPrefs } from "@/lib/hooks/useGlobalDisplayPrefs";
-import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
+import { detectMegaFromItem } from "@/lib/utils/mega-detect";
 
 export default function Home() {
   return (
@@ -244,15 +244,13 @@ function HomeContent() {
     // entirely. Undefined regulation falls through to the content check
     // so legacy reports without a regulation tag don't lose Mega support.
     if (tags?.regulation && tags.regulation !== "Reg M-A") return false;
-    // Two shapes count as "mega-capable" for the floating Display pill:
-    //  1. Base form + mega stone (e.g. Kangaskhan @ Kangaskhanite)
-    //  2. Already-Mega species (e.g. Kangaskhan-Mega @ Kangaskhanite)
-    // Both can now flip between base and Mega form via the per-card
-    // toggle, so both should trigger the global Form segment.
-    return analysis.pokemon.some((p) => {
-      if (isMegaForm(p.parsed.species)) return true;
-      return !!detectMegaFromItem(p.parsed.item, p.parsed.species);
-    });
+    // The pill drives the per-card Mega flip — which itself requires an
+    // actual Mega Stone equipped. An already-Mega species name without
+    // its Stone (e.g. `Kangaskhan-Mega @ Sitrus Berry`) can't flip in
+    // battle, so we don't surface the toggle for it here either.
+    return analysis.pokemon.some((p) =>
+      !!detectMegaFromItem(p.parsed.item, p.parsed.species),
+    );
   }, [analysis, tags?.regulation]);
 
   // ── Load draft from ?draft=ID ─────────────────────────────────────

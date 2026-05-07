@@ -88,24 +88,28 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   // hide the toggle rather than letting the user tap into an empty state.
   const canFlipToBase = isMegaCapable && (!alreadyMega || !!baseFormData);
 
-  // Mega forms only exist in the Champions format (Reg M-A). For any other
-  // explicit regulation, default base+stone pastes to base form so the team
-  // analysis reflects the species that's actually legal in that format.
-  // Already-Mega pastes are still rendered as their Mega form (it's literally
-  // what the user pasted) regardless of regulation — invalid input we don't
-  // silently rewrite. Undefined regulation falls through to the legacy
-  // "default to Mega" behaviour.
+  // The Mega flip toggle has two strict gates the user has set:
+  //   1. Regulation must be Reg M-A (or unset for legacy reports). Reg F,
+  //      G, H, I and any other explicit non-M-A regulation never shows
+  //      the toggle, even on already-Mega pastes — the format simply
+  //      doesn't allow Mega Evolution.
+  //   2. The Pokemon must actually carry a Mega Stone matching its
+  //      species. Without the stone Mega Evolution can't trigger in
+  //      battle, so the toggle would only mislead.
   const isExplicitlyNonMA = !!regulation && regulation !== "Reg M-A";
-  const defaultShowMega = !isExplicitlyNonMA;
-  // Auto-detect: if isMega prop is undefined, fall back to the regulation-aware
-  // default. When we can't flip, force Mega on (alreadyMega pastes).
+  const hasMegaStone = useMemo(
+    () => !!detectMegaFromItem(parsed.item, parsed.species),
+    [parsed.item, parsed.species],
+  );
+  // Default form: respect regulation + stone presence. Without a stone
+  // we never auto-render Mega even on alreadyMega pastes (they fall to
+  // base form when baseFormData resolves). When canFlipToBase is false
+  // the existing fallback locks to Mega — that branch is only reached
+  // when alreadyMega has no resolvable base data, which shouldn't ever
+  // happen for currently legal mons.
+  const defaultShowMega = !isExplicitlyNonMA && hasMegaStone;
   const showMega = isMegaCapable && (canFlipToBase ? (isMega ?? defaultShowMega) : true);
-  // The flip control is available whenever both forms can be rendered,
-  // regardless of regulation. In non-M-A formats this lets viewers compare
-  // base vs Mega stats side-by-side even though the Mega isn't legal — the
-  // Pokemon's underlying base/Mega data is still useful reference, and the
-  // user explicitly asked for the toggle to be available here.
-  const showMegaToggle = canFlipToBase;
+  const showMegaToggle = canFlipToBase && hasMegaStone && !isExplicitlyNonMA;
 
   // Mega form data — populated when we're rendering the Mega side.
   const megaData = useMemo(() => {

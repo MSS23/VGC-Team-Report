@@ -9,6 +9,7 @@ import { POKEMON_DATA } from "@/lib/data/pokemon";
 import { CHAMPIONS_DEX } from "@/lib/data/champions-dex";
 import { calculateStat, calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
+import { detectMegaFromItem } from "@/lib/utils/mega-detect";
 
 /** Map from normalised base-form key (e.g. "kangaskhan") → Mega dataKeys */
 const BASE_KEY_TO_MEGA_KEYS = new Map<string, string[]>();
@@ -210,6 +211,11 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     return pokemon.flatMap((mon, i) => {
       const baseKey = speciesKeys[i];
       const megaKeys = BASE_KEY_TO_MEGA_KEYS.get(baseKey) ?? [];
+      if (megaKeys.length === 0) return [];
+      // Require an actual Mega Stone matching the species — without one,
+      // Mega Evolution can't trigger and the Mega speed tier isn't reachable.
+      const hasMegaStone = !!detectMegaFromItem(mon.parsed.item, mon.parsed.species);
+      if (!hasMegaStone) return [];
       return megaKeys.flatMap((megaKey) => {
         const megaData = POKEMON_DATA[megaKey];
         if (!megaData) return [];
