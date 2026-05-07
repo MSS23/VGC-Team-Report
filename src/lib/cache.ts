@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import type { ZodType } from "zod";
 
 /**
  * Upstash Redis cache layer.
@@ -18,12 +19,23 @@ function getRedis(): Redis | null {
 
 /**
  * Get a cached value. Returns null on miss or if Redis is unavailable.
+ *
+ * Pass a Zod schema to validate the cached payload at runtime — stale
+ * entries that no longer match the current shape will be returned as null
+ * (cache miss) rather than silently propagating the wrong type. Without
+ * a schema, the value is returned as-is and the generic is just an
+ * unchecked cast (VGC-146).
  */
-export async function cacheGet<T>(key: string): Promise<T | null> {
+export async function cacheGet<T>(key: string, schema?: ZodType<T>): Promise<T | null> {
   try {
     const r = getRedis();
     if (!r) return null;
-    return await r.get<T>(key);
+    const raw = await r.get<unknown>(key);
+    if (raw === null || raw === undefined) return null;
+    if (!schema) return raw as T;
+    const parsed = schema.safeParse(raw);
+    if (!parsed.success) return null;
+    return parsed.data;
   } catch {
     return null;
   }
