@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 
-const STORAGE_KEY = "vgc-whats-new-v8";
+const STORAGE_KEY = "vgc-whats-new-v9";
 const RETURNING_KEY = "vgc-has-visited";
 
 const WELCOME_FEATURES = [
@@ -30,26 +30,27 @@ const WELCOME_FEATURES = [
   },
 ];
 
-const WHATS_NEW_FEATURES = [
+
+const WHATS_NEW_FEATURES_V9 = [
   {
-    icon: "M6 3h12l4 6-10 13L2 9z",
-    title: "Tournament Day Mode",
-    desc: "Tap the trophy icon to see your team as compact battle-ready cards with moves, items, and speed tiers at a glance.",
+    icon: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3",
+    title: "Downloadable Team Cards",
+    desc: "End of every shared report now has a Download Card button that exports a Spotify-Wrapped style 1080x1920 PNG, built for Twitter, Instagram, and Discord.",
   },
   {
-    icon: "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z",
-    title: "Earnable Color Themes",
-    desc: "Your reports now earn color themes as they get views — check your profile page to pick from Ocean Blue, Emerald, Amber, and more.",
+    icon: "M9 12l2 2 4-4M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z",
+    title: "One-Tap Duplicate",
+    desc: "Like a team you found? The new Duplicate button on shared reports forks it into your account in one click \u2014 no copy/paste required.",
   },
   {
-    icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
-    title: "Mega Evolution Hub",
-    desc: "Every Mega Evolution now has its own page with stats, community teams, and related picks to explore.",
+    icon: "M3 11h18M7 7V5a5 5 0 0110 0v2M5 11v8a2 2 0 002 2h10a2 2 0 002-2v-8",
+    title: "Hide Spreads from Public Viewers",
+    desc: "Creators can now mark EVs, IVs, nature, or held items as private from the team overview. Public viewers see the Pokemon and moves; spreads stay yours.",
   },
   {
-    icon: "M5 12h14M12 5l7 7-7 7",
-    title: "Offline at Tournaments",
-    desc: "Previously viewed reports now load from your device when you\u2019re offline. An amber banner lets you know you\u2019re viewing a cached version.",
+    icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
+    title: "Filter Explore by Rental Code",
+    desc: "New Rental code pill on /explore narrows the feed to teams that include a code, so you can find ready-to-import builds at a glance.",
   },
 ];
 
@@ -77,7 +78,7 @@ export function WhatsNewModal() {
 
   if (!show) return null;
 
-  const features = isNewUser ? WELCOME_FEATURES : WHATS_NEW_FEATURES;
+  const features = isNewUser ? WELCOME_FEATURES : WHATS_NEW_FEATURES_V9;
   const heading = isNewUser
     ? <>Build your <span className="text-accent">team report</span></>
     : <>Ready for <span className="text-accent">tournament day</span></>;

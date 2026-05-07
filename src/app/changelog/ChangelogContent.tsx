@@ -10,6 +10,30 @@ import { PageFooter } from "@/components/layout/PageFooter";
 
 const ENTRIES = [
   {
+    date: "May 2026",
+    version: "5.8",
+    title: "Zero-Friction Sharing, Tiered Publishing & Wrapped Team Cards",
+    emoji: "📤", // 📤
+    highlight: true,
+    items: [
+      // ── Sharing / virality ──
+      { type: "new" as const, text: "Public shared reports are now zero-friction. The bottom CTA on /s/[id] has been rewritten Notion-style — \"Like this team? Duplicate it to your account\" with a single Duplicate button. Anonymous viewers get a sign-in modal on click; signed-in viewers fork directly into an editable copy. The vague \"Create yours from scratch\" path is gone. Tracks share_view_duplicate_anonymous in PostHog so the anonymous-view → signup funnel is measurable." },
+      { type: "new" as const, text: "Spotify-Wrapped style downloadable team card. End of every shared report now has a \"Download card\" button that generates a 1080×1920 vertical PNG built for Twitter / Instagram / Discord — loud gradient background, 3×2 sprite grid with type badges, big placement headline if the report is tagged with a tournament result, creator handle in the footer. Backed by /api/team-graphic?style=wrapped using the existing edge ImageResponse infrastructure (no new dependencies)." },
+      { type: "new" as const, text: "Tiered publishing: hide spreads from public viewers. Creators can now mark EV/SP spreads, IVs, nature, and held items as private from the team overview's new \"Hide fields from public viewers\" panel. Server-side enforcement — bytes never leave the API for non-owners. Public viewers see the 6 Pokemon + moves (the \"public shell\") plus an amber banner explaining what's hidden. Owners and accepted collaborators always see the full data." },
+      { type: "new" as const, text: "Rental code filter on /explore. Hunting a ready-to-import team? Toggle the new emerald \"Rental code\" pill in the filter row to only see reports that include a rental code. Cards with codes also surface a small \"Rental\" badge so you can spot them at a glance." },
+
+      // ── Champions Reg M-A correctness ──
+      { type: "fixed" as const, text: "Champions Reg M-A dex now matches Serebii's canonical list exactly. Cross-referenced 2026-05-07 against the official regulationm-a.shtml page: removed Metagross, Pawmot, Dondozo, Tatsugiri, and Ursaluna (none of which are actually Reg M-A legal — Metagross had been incorrectly marked legal despite its Mega being correctly excluded). Added 47 missing legal species spanning every generation, including high-impact mons like Skeledirge, Chandelure, Goodra (regular + Hisuian), Avalugg (regular + Hisuian), Manectric (the base form was missing while Mega Manectric was already present!), Camerupt, Sharpedo, Banette, and Floette including its Eternal Flower form. Legality validation will now correctly flag teams using the removed mons; teams using the newly-added mons will stop being flagged." },
+      { type: "fixed" as const, text: "CHAMPIONS_DEX and CHAMPIONS_REG_MA_MEGAS are now a single source of truth. The two sets had been hand-maintained in parallel with a comment that literally said \"should be mirrored here\" — and were drifting on every Mega rotation. The dex now derives its Mega entries from the canonical CHAMPIONS_REG_MA_MEGAS set in mega-pokemon.ts, so divergence is impossible by construction." },
+
+      // ── Security / robustness ──
+      { type: "fixed" as const, text: "Shared-report URLs are now schema-validated. The URL codec previously trusted decoded JSON blindly via an unchecked TypeScript cast — a malformed or maliciously-crafted share URL could put unexpected shapes into the report viewer. Decoder now runs Zod safeParse and fails closed (returns null) on shape mismatch. The Redis cache layer's cacheGet generic also now accepts an optional schema for runtime-validated reads." },
+
+      // ── Cleanup ──
+      { type: "improved" as const, text: "Deleted 464+ lines of dead code: 4 components nothing imports (OpponentPokemonCard, TeamComparisonSlide, TeamCoverageSlide, TypeCoverageMatrix), 3 dead lib files (passcode utils + hand-rolled abilities/items lookups), 2 orphaned hooks (useExportActions, useIsMobile), the unused /api/print-outline route, and 2 dead exports from sprite-url.ts. Each was verified with a global import search before removal." },
+    ],
+  },
+  {
     date: "April 2026",
     version: "5.7",
     title: "Champions Reg M-A Honest Cleanup, In-Line Editing & Persistent Navbar",
