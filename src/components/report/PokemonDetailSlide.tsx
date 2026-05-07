@@ -368,8 +368,10 @@ export function PokemonDetailSlide({
   const isExplicitlyNonMA = !!regulation && regulation !== "Reg M-A";
   const defaultShowMega = !isExplicitlyNonMA;
   const showMega = isMegaCapable && (canFlipToBase ? (isMega ?? defaultShowMega) : true);
-  const showMegaToggle =
-    canFlipToBase && !!onToggleMega && (!regulation || regulation === "Reg M-A");
+  // The flip control is always available when both forms render, regardless
+  // of regulation, so viewers can compare base vs Mega stats on non-M-A
+  // teams too (the Mega isn't legal but the comparison is still useful).
+  const showMegaToggle = canFlipToBase && !!onToggleMega;
 
   const megaData = useMemo(() => {
     if (!showMega || !megaEntry) return null;

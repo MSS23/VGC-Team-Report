@@ -100,9 +100,12 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   // Auto-detect: if isMega prop is undefined, fall back to the regulation-aware
   // default. When we can't flip, force Mega on (alreadyMega pastes).
   const showMega = isMegaCapable && (canFlipToBase ? (isMega ?? defaultShowMega) : true);
-  // Only show the flip control in Reg M-A (or when regulation is unset),
-  // and only when both forms are actually renderable.
-  const showMegaToggle = canFlipToBase && (!regulation || regulation === "Reg M-A");
+  // The flip control is available whenever both forms can be rendered,
+  // regardless of regulation. In non-M-A formats this lets viewers compare
+  // base vs Mega stats side-by-side even though the Mega isn't legal — the
+  // Pokemon's underlying base/Mega data is still useful reference, and the
+  // user explicitly asked for the toggle to be available here.
+  const showMegaToggle = canFlipToBase;
 
   // Mega form data — populated when we're rendering the Mega side.
   const megaData = useMemo(() => {
