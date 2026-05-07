@@ -10,7 +10,7 @@ import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ClarityProvider } from "@/components/providers/ClarityProvider";
 import { CookieBanner } from "@/components/providers/CookieBanner";
 import { ConsentGate } from "@/components/providers/ConsentGate";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { JsonLd, OrganizationJsonLd, FAQPageJsonLd } from "@/components/seo/JsonLd";
 import { PersistentNavbar } from "@/components/layout/PersistentNavbar";
 import "./globals.css";
 
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     default: "VGC Team Report",
     template: "%s | VGC Team Report",
   },
-  description: "The home for competitive Pokemon VGC team reports — now supporting Pokemon Champions and Mega Evolution. Build detailed team breakdowns with notes, matchup plans, and damage calcs — then share them with the community or present at tournaments.",
+  description: "The home for competitive Pokemon VGC team reports. Build breakdowns with matchup plans, damage calcs, and speed tiers — then share with the community.",
   metadataBase: new URL("https://pokemonvgcteamreport.com"),
   openGraph: {
     title: "VGC Team Report — Build, Share & Discover Pokemon Teams",
@@ -120,6 +120,8 @@ export default function RootLayout({
             browserRequirements: "Requires a modern web browser",
           }}
         />
+        <OrganizationJsonLd />
+        <FAQPageJsonLd />
         <PostHogProvider>
           <PersistentNavbar />
           <div id="main-content">{children}</div>

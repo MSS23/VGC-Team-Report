@@ -10,7 +10,7 @@ export async function generateMetadata({
   const { name } = await params;
   const creator = decodeURIComponent(name);
   return {
-    title: `${creator}'s Teams`,
+    title: `${creator}'s VGC Teams | VGC Team Report`,
     description: `View all public VGC team reports by ${creator}.`,
     alternates: {
       canonical: `https://pokemonvgcteamreport.com/creator/${encodeURIComponent(creator)}`,
