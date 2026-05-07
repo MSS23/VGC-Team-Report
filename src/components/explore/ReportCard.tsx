@@ -27,6 +27,9 @@ export interface ExploreReport {
   /** Whether the report's owner provided a rental code. Powers the "Rental code" filter
    *  on /explore and a small badge on the card so viewers can spot ready-to-import teams. */
   hasRental?: boolean;
+  /** Original creator's display name when this report was forked from another. Renders
+   *  a "Duplicated from @X" credit line so the original builder gets visible attribution. */
+  forkedFromCreator?: string;
 }
 
 function getPlacementStyle(placement: string): string {
@@ -285,6 +288,28 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                 )}
               </>
             )}
+          </p>
+        )}
+
+        {/* Fork credit — when this report was duplicated from another, show
+            the original creator visibly so the source builder gets attribution. */}
+        {report.forkedFromCreator && (
+          <p className="text-[10px] text-text-tertiary inline-flex items-center gap-1">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+              <circle cx="12" cy="18" r="3" />
+              <circle cx="6" cy="6" r="3" />
+              <circle cx="18" cy="6" r="3" />
+              <path d="M18 9v1a2 2 0 01-2 2H8a2 2 0 01-2-2V9" />
+              <line x1="12" y1="12" x2="12" y2="15" />
+            </svg>
+            <span>Duplicated from</span>
+            <a
+              href={`/creator/${encodeURIComponent(report.forkedFromCreator)}`}
+              className="font-semibold text-text-secondary hover:text-accent transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {report.forkedFromCreator}
+            </a>
           </p>
         )}
 

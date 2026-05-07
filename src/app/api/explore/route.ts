@@ -143,8 +143,28 @@ export async function GET(request: Request) {
       ${rentalCondition}
     `;
 
+    // Composite cursors for popular / views: the sort key has heavy ties
+    // (most teams have 0 likes / 0 views), so a single-column `<` cursor
+    // skips the entire tied tail. Encode both the metric value AND
+    // created_at, then paginate via tuple comparison so ties are walked
+    // by created_at DESC just like the ORDER BY does.
+    const parseCompositeCursor = (raw: string | null): { value: number; createdAt: string } | null => {
+      if (!raw) return null;
+      const sep = raw.indexOf(":");
+      if (sep < 0) {
+        // Legacy single-int cursor — treat as value-only with no created_at tiebreak
+        const v = parseInt(raw, 10);
+        return Number.isFinite(v) ? { value: v, createdAt: new Date(0).toISOString() } : null;
+      }
+      const value = parseInt(raw.slice(0, sep), 10);
+      const createdAt = raw.slice(sep + 1);
+      if (!Number.isFinite(value) || !createdAt) return null;
+      return { value, createdAt };
+    };
+
     if (sort === "popular") {
-      // Sort by total reaction (like) count
+      const c = parseCompositeCursor(cursor);
+      // Sort by total reaction (like) count, with created_at as deterministic tiebreaker.
       rows = await sql`
         SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count,
                COALESCE(rc.like_count, 0) as like_count
@@ -158,12 +178,13 @@ export async function GET(request: Request) {
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${cursor ? sql`AND COALESCE(rc.like_count, 0) < ${parseInt(cursor, 10)}` : sql``}
+          ${c ? sql`AND (COALESCE(rc.like_count, 0), s.created_at) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
         ORDER BY COALESCE(rc.like_count, 0) DESC, s.created_at DESC
         LIMIT ${limit + 1}
       `;
     } else if (sort === "views") {
-      // Sort by view count
+      const c = parseCompositeCursor(cursor);
+      // Sort by view count, with created_at tiebreaker for tied counts (e.g. 0 views).
       rows = await sql`
         SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
         FROM shares s
@@ -171,7 +192,7 @@ export async function GET(request: Request) {
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${cursor ? sql`AND COALESCE(s.view_count, 0) < ${parseInt(cursor, 10)}` : sql``}
+          ${c ? sql`AND (COALESCE(s.view_count, 0), s.created_at) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
         ORDER BY COALESCE(s.view_count, 0) DESC, s.created_at DESC
         LIMIT ${limit + 1}
       `;
@@ -204,6 +225,10 @@ export async function GET(request: Request) {
     let verifiedSet = new Set<string>();
 
     const collabMap: Record<string, string[]> = {};
+    // Fork lineage: maps a forked share id -> the original creator's name.
+    // Lets the explore card credit the original team builder when a duplicate
+    // appears in the feed. Best-effort — column may not exist on older envs.
+    const forkedFromCreatorMap: Record<string, string> = {};
     if (shareIds.length > 0) {
       const queries: Promise<unknown>[] = [
         sql`SELECT share_id, COUNT(*)::int as count FROM reactions WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
@@ -236,6 +261,26 @@ export async function GET(request: Request) {
       if (verifiedRows) {
         verifiedSet = new Set(verifiedRows.map((r) => (r.name as string).toLowerCase()));
       }
+
+      // Fork lineage join — single self-join over forked_from_id so the
+      // explore card can credit the original creator on duplicated teams.
+      // Wrapped in try because forked_from_id is a recent column and may
+      // be absent on older env clones; the rest of the payload still works.
+      try {
+        const forkRows = await sql`
+          SELECT s.id AS fork_id, src.data->>'creatorName' AS source_creator
+          FROM shares s
+          JOIN shares src ON src.id = s.forked_from_id
+          WHERE s.id = ANY(${shareIds})
+            AND src.deleted_at IS NULL
+            AND COALESCE(src.data->>'creatorName', '') <> ''
+        ` as Array<Record<string, unknown>>;
+        for (const r of forkRows) {
+          forkedFromCreatorMap[r.fork_id as string] = r.source_creator as string;
+        }
+      } catch {
+        // forked_from_id column missing — feature degrades silently
+      }
     }
 
     const reports = items.map((row) => {
@@ -260,16 +305,18 @@ export async function GET(request: Request) {
         tags: (data.tags as Record<string, unknown>) || undefined,
         collaborators: collabMap[sid] ?? [],
         hasRental: rentalCodeStr.trim().length > 0,
+        forkedFromCreator: forkedFromCreatorMap[sid],
       };
     });
 
     let nextCursor: string | null = null;
     if (hasMore) {
       const last = items[items.length - 1];
-      if (sort === "popular") nextCursor = String(last.like_count ?? 0);
-      else if (sort === "views") nextCursor = String(last.view_count ?? 0);
+      const lastCreatedAt = (last.created_at as Date).toISOString();
+      if (sort === "popular") nextCursor = `${last.like_count ?? 0}:${lastCreatedAt}`;
+      else if (sort === "views") nextCursor = `${last.view_count ?? 0}:${lastCreatedAt}`;
       else if (sort === "updated") nextCursor = (last.updated_at as Date).toISOString();
-      else nextCursor = (last.created_at as Date).toISOString();
+      else nextCursor = lastCreatedAt;
     }
 
     const result = { reports, nextCursor };
