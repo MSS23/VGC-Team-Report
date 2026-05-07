@@ -11,6 +11,22 @@ import { PageFooter } from "@/components/layout/PageFooter";
 const ENTRIES = [
   {
     date: "May 2026",
+    version: "5.9",
+    title: "Full Explore Feed, Format-Aware Mega Forms & Fork Credits",
+    emoji: "🔁", // 🔁
+    highlight: true,
+    items: [
+      // ── Explore feed correctness ──
+      { type: "fixed" as const, text: "Popular and Views tabs on /explore now show the entire library, not just a subset. The pagination cursor was a single integer with strict less-than semantics, so once the feed reached the tied tail of teams sharing a like count or view count (most teams have 0 of either), the next-page query asked for \"likes < 0\" and returned nothing. Replaced with a composite cursor (metric, created_at) walked via Postgres tuple comparison so ties are paginated by created_at exactly as the ORDER BY intends. Same fix applied to the Views sort." },
+      { type: "new" as const, text: "Fork credit on Explore cards. When a team is duplicated via the new Notion-style \"Duplicate this team\" CTA, the explore card now surfaces \"Duplicated from @{originalCreator}\" below the byline, linking to the original creator's profile. Server-side join over shares.forked_from_id so the credit always reflects ground truth. Pairs with the existing \"Forked from\" banner on the /s/{id} view itself, so attribution shows up at both the discovery surface and the report surface." },
+
+      // ── Mega forms — format-aware ──
+      { type: "fixed" as const, text: "Mega forms now suppress themselves when the regulation isn't Reg M-A. Reg F, G, H, I and every other Scarlet/Violet regulation can't actually use Mega Evolution, so showing Mega-form analysis on those teams was misleading — viewers saw boosted Mega stats and the Mega ability when the team can never trigger Mega Evo in actual play. The floating Display pill, the \"Mega Forms\" overlay on the Speed Tier Chart, and the per-card default form all now reflect the regulation. Reg M-A reports keep the full Mega UX. Undefined-regulation legacy reports keep the legacy default-Mega behaviour." },
+      { type: "fixed" as const, text: "The Mega flip toggle now requires both a Reg M-A regulation AND an actual Mega Stone equipped on the species. Without the Stone, Mega Evolution can't trigger in battle, so surfacing a flip control was misleading. Already-Mega pastes without a matching Stone (e.g. Kangaskhan-Mega @ Sitrus Berry) no longer render a toggle and now default to base form — that combination can't reach Mega in any format. Same gate applied to the team-Mega rows on the Speed Tier Chart and the floating global Display pill." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.8",
     title: "Zero-Friction Sharing, Tiered Publishing & Wrapped Team Cards",
     emoji: "📤", // 📤
