@@ -1,10 +1,16 @@
+import { CHAMPIONS_REG_MA_MEGAS } from "./mega-pokemon";
+
 /**
- * Pokemon available in the Champions format (Regulation M-A).
+ * Base-form Pokemon available in the Champions format (Regulation M-A).
  * Source: https://www.serebii.net/pokemonchampions/pokemon.shtml
  *
  * Keys are lowercase-hyphenated species names matching POKEMON_DATA keys.
+ *
+ * NOTE: This list intentionally excludes Mega forms — they are merged in
+ * below from CHAMPIONS_REG_MA_MEGAS so we have one source of truth for
+ * Mega legality (see VGC-144). Edit Mega entries in mega-pokemon.ts only.
  */
-export const CHAMPIONS_DEX = new Set<string>([
+const CHAMPIONS_BASE_DEX = new Set<string>([
   // Gen 1
   "venusaur",
   "charizard",
@@ -185,24 +191,17 @@ export const CHAMPIONS_DEX = new Set<string>([
   "sinistcha",
   "archaludon",
   "hydrapple",
+]);
 
-  // Mega Evolutions — the 59 Megas legal in Reg M-A. Sourced from the
-  // canonical CHAMPIONS_REG_MA_MEGAS set in mega-pokemon.ts; updates there
-  // should be mirrored here. Notable absences: Salamence, Metagross, Mawile
-  // — all have Megas, none are Reg M-A legal.
-  "venusaur-mega", "charizard-mega-x", "charizard-mega-y", "blastoise-mega",
-  "beedrill-mega", "pidgeot-mega", "clefable-mega", "alakazam-mega",
-  "victreebel-mega", "slowbro-mega", "gengar-mega", "kangaskhan-mega",
-  "starmie-mega", "pinsir-mega", "gyarados-mega", "aerodactyl-mega",
-  "dragonite-mega", "meganium-mega", "feraligatr-mega", "ampharos-mega",
-  "steelix-mega", "scizor-mega", "heracross-mega", "skarmory-mega",
-  "houndoom-mega", "tyranitar-mega", "gardevoir-mega", "sableye-mega",
-  "aggron-mega", "medicham-mega", "manectric-mega", "sharpedo-mega",
-  "camerupt-mega", "altaria-mega", "banette-mega", "chimecho-mega",
-  "absol-mega", "glalie-mega", "lopunny-mega", "garchomp-mega",
-  "lucario-mega", "abomasnow-mega", "gallade-mega", "froslass-mega",
-  "emboar-mega", "excadrill-mega", "audino-mega", "chandelure-mega",
-  "golurk-mega", "chesnaught-mega", "delphox-mega", "greninja-mega",
-  "floette-mega", "meowstic-mega", "hawlucha-mega", "crabominable-mega",
-  "drampa-mega", "scovillain-mega", "glimmora-mega",
+/**
+ * Full Champions Regulation M-A dex: base forms + all Reg M-A legal Megas.
+ *
+ * Megas are merged in from CHAMPIONS_REG_MA_MEGAS (mega-pokemon.ts) so the
+ * Mega list lives in exactly one place. Add new base forms above; add new
+ * Mega entries to MEGA_POKEMON_LIST + CHAMPIONS_REG_MA_MEGAS in
+ * mega-pokemon.ts.
+ */
+export const CHAMPIONS_DEX = new Set<string>([
+  ...CHAMPIONS_BASE_DEX,
+  ...CHAMPIONS_REG_MA_MEGAS,
 ]);
