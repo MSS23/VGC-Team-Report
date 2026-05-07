@@ -19,11 +19,11 @@ function getTeamId() {
   return process.env.LINEAR_TEAM_ID ?? "";
 }
 
-async function linearQuery(query: string) {
+async function linearQuery(query: string, variables?: Record<string, unknown>) {
   const res = await fetch(LINEAR_API, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: getLinearAuth() },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, ...(variables ? { variables } : {}) }),
   });
   return res.json();
 }
@@ -265,7 +265,10 @@ export async function POST(request: NextRequest) {
       }
 
       await linearQuery(`mutation { issueUpdate(id: "${issue.id}", input: { stateId: "${wontDoState.id}" }) { issue { identifier } } }`);
-      await linearQuery(`mutation { commentCreate(input: { issueId: "${issue.id}", body: "Rejected via Discord: ${reason.replace(/"/g, '\\"')}" }) { comment { id } } }`);
+      await linearQuery(
+        `mutation($body: String!) { commentCreate(input: { issueId: "${issue.id}", body: $body }) { comment { id } } }`,
+        { body: `Rejected via Discord: ${reason}` },
+      );
 
       return NextResponse.json({
         type: CHANNEL_MESSAGE,
