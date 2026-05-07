@@ -166,10 +166,13 @@ This is the most sophisticated monetization model found in this competitive swee
 - **Clean analytics UX:** Win rate by matchup archetype is directly translatable to VGC matchup tracking
 - **Freemium model works:** Free tools drive traffic; premium tools capture value from the most engaged players
 
+### Mobile Experience
+Good. Battle Journal+ was explicitly designed for mobile-first, tournament-pace data entry — under 30 seconds per match between rounds. The sync across devices (phone at tournament, desktop for analysis) is a deliberate UX choice proving this category thinks mobile-first.
+
 ### Weaknesses (from a VGC Team Report perspective)
-- **Not VGC at all:** Trainer Hill has zero VGC content as of May 2026. The brand operates exclusively in TCG.
-- **No team building or sharing:** Analytics only; no content creation or team report features
-- **TCG mechanics differ:** TCG matchup stats (deck vs deck) are cleaner than VGC matchup stats (6-mon team vs many teams), making direct feature porting non-trivial
+- **Not VGC at all:** Trainer Hill has zero VGC content as of May 2026. The brand operates exclusively in TCG and TCG Pocket.
+- **No team building or sharing:** Analytics only; no content creation or team report features.
+- **TCG mechanics differ:** TCG matchup stats (deck vs deck) are cleaner than VGC matchup stats (6-mon team vs infinitely variable opponent teams), making direct feature porting non-trivial.
 
 ### Threat Level to VGC Team Report
 **Low directly, High as inspiration.** Trainer Hill does not compete in VGC. However, its Battle Journal+ model is a direct blueprint for a VGC match tracker premium offering. If VGC Team Report builds match tracking + win rate analytics as a paid feature at $3-5/month, it follows an already-validated monetization path in the adjacent competitive Pokémon audience.
@@ -242,4 +245,19 @@ The gap in community referral links vs competitors is the largest growth lever a
 
 ---
 
-*Sources: X/@VGCPastes tweets, limitlessvgc.com metadata, standings.limitlessvgc.com, plus.trainerhill.com, trainerhill.com/about, Smogon VGC forums, Victory Road resources page, VGCpedia resources, DevonCorp VGC resources, reportworm.com feature descriptions, metagamevgc.com team reports section, Sandshrew Bot Discord App Directory listing.*
+## Emerging Competitor to Watch: VGenC (vgenc.net)
+
+Not one of the three primary targets but surfaced during research as a direct threat to VGCpastes' niche:
+
+- **1,438 top tournament teams** for Pokémon Champions Regulation M-A as of April 24, 2026
+- **Filter by rank tier** (Champions, Runner Up, Top cuts), player, and Pokémon
+- **AI-assisted EV filling:** Paste a partial team in Showdown format → AI fills EVs, Natures, keeping items/moves/abilities intact
+- **Sortable:** Most recent, oldest, best placement
+- Appears newer and more technically sophisticated than VGCpastes spreadsheet approach
+- **Free; no monetization visible**
+
+This is the tool most likely to displace VGCpastes' "raw volume + search" position if it maintains update velocity. It does not do team reports or narrative, so it is not a direct competitor to VGC Team Report — but it is relevant context for the broader landscape.
+
+---
+
+*Sources: X/@VGCPastes tweet archive, limitlessvgc.com metadata, standings.limitlessvgc.com structural references, Bulbapedia/Limitless tournament pages, plus.trainerhill.com feature descriptions, Trainer Hill Patreon page metadata, Smogon VGC forums, Victory Road resources page, VGCpedia resources, DevonCorp VGC resources, Sandshrew Bot Discord App Directory listing, VGenC.net WebSearch results, Limitless Docs (docs.limitlesstcg.com), Limitless Labs (labs.limitlesstcg.com).*
