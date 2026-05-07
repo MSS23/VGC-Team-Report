@@ -185,6 +185,33 @@ Based on patterns observed in successful community sharing moments:
 
 ---
 
+---
+
+## 8. 2026 Update: Pokemon Champions & New Ecosystem Signals
+
+*Added 2026-05-07 via fresh search sweep*
+
+### Pokemon Champions Expands the Landscape
+The game has transitioned to **Pokemon Champions** (the standalone competitive title), and the tool ecosystem is adapting:
+- **Pikalytics** now serves Pokemon Champions VGC 2026 data (Regulation I metagame: Incineroar, Calyrex-Shadow, Calyrex-Ice, Miraidon, Urshifu dominate A-tier)
+- **Game8 Team Sharing Board** has emerged as a new player — general audience, not VGC-specialist
+- **Champions Lab** (championslab.xyz) is a new entry combining team builder, battle simulator, and Pokémon data — signals increased competition in 2026
+- **VGCPastes Regulation I**: only 63 teams in repository at launch (vs. 1,150+ for Regulation H) — early format, community still building
+
+### 2026 Open Team List Format
+The official VGC 2026 rules mandate an **open team list format** — players must provide a legible, accurate team list before tournament deadlines. This increases the structural importance of team-sharing tools: players now *must* document and share team info for official play, creating a natural hook for a tool like VGC Team Report.
+
+### VGCPastes Submission Friction Still Evident
+VGCPastes' submission process (as of 2025/2026) still requires tagging or DMing them on Twitter/Discord — no self-service submission. Their Regulation J repository launched with 17 teams. Community-contributed repositories are bottlenecked by manual curation.
+
+### crob.at: The Fastest-Growing Pokepaste Alternative
+crob.at is now the most prominently surfaced visual alternative to pokepast.es. Its value prop: paste any team export (or pokepaste URL) → get a clean shareable link with sprites, movesets, items, abilities, EVs displayed visually. It does not address the report/context gap — it's purely a prettier paste viewer.
+
+### VGC-Bench Research Paper (May 2026)
+An academic paper "VGC-Bench: A Benchmark for Generalizing Across Diverse Team Strategies in Competitive Pokémon" (arxiv.org, 2026) signals growing academic/AI interest in VGC team data — the community's team data is becoming a research asset. Tools that structure team reports become more valuable as AI training datasets, not just player resources.
+
+---
+
 ## Sources
 
 - [PokePaste GitHub Issues](https://github.com/felixphew/pokepaste/issues)

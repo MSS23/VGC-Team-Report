@@ -1,7 +1,7 @@
 # Competitive Intelligence: Pikalytics & PokePaste Teardown
 
 **Researched:** 2026-05-07  
-**Analyst:** Claude Code (r1 swarm agent)  
+**Analyst:** Claude Code (r1 swarm agent) — verified and updated 2026-05-07  
 **Scope:** pikalytics.com and pokepast.es — full feature, UX, monetization, and gap analysis vs VGC Team Report
 
 ---
@@ -110,7 +110,7 @@ PokePaste is a purpose-built pastebin for competitive Pokémon. It accepts Poké
 - **Falinks Teambuilder** (`falinks-teambuilder.com/pastes/vgc/`): VGC paste repository with curated community teams by regulation.
 - **Victory Road** (`victoryroad.pro`): Editorial team reports by players after strong tournament finishes. High quality but gatekept (only invited players submit).
 - **MunchStats**: Created explicitly because Pikalytics updates too slowly. Faster data refresh cycle.
-- **Porygon Labs**: Team builder with Champions format support, pulling real usage percentages.
+- **Porygon Labs** (`porygonlabs.com`): Damage calculator + team builder for Champions/VGC. Uses a 50/50 weighted average of Pikalytics Champions Preview data and Champions First Tour (2026-04-09, ~1,021 entrants) for sample usage percentages. Mega Evolution support. Growing competitor to both Pikalytics calc and VGC Team Report's team-building layer.
 - **VGC Pastes (@VGCPastes on X)**: Twitter-based curation account with 37K+ followers. Regulation-tagged team repositories in spreadsheets and Discord bots. 1150+ Reg H teams catalogued.
 
 ---
