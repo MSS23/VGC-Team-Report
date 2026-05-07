@@ -361,9 +361,13 @@ export function PokemonDetailSlide({
   // base view would render empty. If not, lock to Mega and hide toggle.
   const canFlipToBase = isMegaCapable && (!alreadyMega || !!baseFormData);
 
-  // Default ON when mega-capable — matches PokemonCard behavior. When
-  // we can't flip, force Mega on.
-  const showMega = isMegaCapable && (canFlipToBase ? (isMega ?? true) : true);
+  // Default ON when mega-capable — but only in Reg M-A (or when regulation
+  // is unset). For Reg F/G/H/I etc. base+stone pastes default to base form
+  // so the analysis reflects the format-legal species. Already-Mega pastes
+  // (canFlipToBase=false) keep displaying as Mega regardless.
+  const isExplicitlyNonMA = !!regulation && regulation !== "Reg M-A";
+  const defaultShowMega = !isExplicitlyNonMA;
+  const showMega = isMegaCapable && (canFlipToBase ? (isMega ?? defaultShowMega) : true);
   const showMegaToggle =
     canFlipToBase && !!onToggleMega && (!regulation || regulation === "Reg M-A");
 

@@ -238,6 +238,12 @@ function HomeContent() {
   // because they can't be flipped to base form via this control.
   const hasMegaCapable = useMemo(() => {
     if (!analysis) return false;
+    // Mega Evolutions only exist in the Champions format (Reg M-A). When
+    // an explicit non-M-A regulation is set (Reg F/G/H/I etc.) Megas can't
+    // be used, so we hide the global Display pill and any Mega controls
+    // entirely. Undefined regulation falls through to the content check
+    // so legacy reports without a regulation tag don't lose Mega support.
+    if (tags?.regulation && tags.regulation !== "Reg M-A") return false;
     // Two shapes count as "mega-capable" for the floating Display pill:
     //  1. Base form + mega stone (e.g. Kangaskhan @ Kangaskhanite)
     //  2. Already-Mega species (e.g. Kangaskhan-Mega @ Kangaskhanite)
@@ -247,7 +253,7 @@ function HomeContent() {
       if (isMegaForm(p.parsed.species)) return true;
       return !!detectMegaFromItem(p.parsed.item, p.parsed.species);
     });
-  }, [analysis]);
+  }, [analysis, tags?.regulation]);
 
   // ── Load draft from ?draft=ID ─────────────────────────────────────
   const draftLoaded = useRef(false);

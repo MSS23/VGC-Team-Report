@@ -88,10 +88,18 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   // hide the toggle rather than letting the user tap into an empty state.
   const canFlipToBase = isMegaCapable && (!alreadyMega || !!baseFormData);
 
-  // Auto-detect: if isMega prop is undefined, default to Mega (matches how
-  // the user pasted it — already-Mega imports and base+stone imports both
-  // naturally start in Mega form). When we can't flip, force Mega on.
-  const showMega = isMegaCapable && (canFlipToBase ? (isMega ?? true) : true);
+  // Mega forms only exist in the Champions format (Reg M-A). For any other
+  // explicit regulation, default base+stone pastes to base form so the team
+  // analysis reflects the species that's actually legal in that format.
+  // Already-Mega pastes are still rendered as their Mega form (it's literally
+  // what the user pasted) regardless of regulation — invalid input we don't
+  // silently rewrite. Undefined regulation falls through to the legacy
+  // "default to Mega" behaviour.
+  const isExplicitlyNonMA = !!regulation && regulation !== "Reg M-A";
+  const defaultShowMega = !isExplicitlyNonMA;
+  // Auto-detect: if isMega prop is undefined, fall back to the regulation-aware
+  // default. When we can't flip, force Mega on (alreadyMega pastes).
+  const showMega = isMegaCapable && (canFlipToBase ? (isMega ?? defaultShowMega) : true);
   // Only show the flip control in Reg M-A (or when regulation is unset),
   // and only when both forms are actually renderable.
   const showMegaToggle = canFlipToBase && (!regulation || regulation === "Reg M-A");

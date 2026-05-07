@@ -202,7 +202,11 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   // EVs/SPs carry over to the Mega form, so Speed is recomputed using the
   // Mega's base stat with the same spread the player specified.
   const teamMegaEntries = useMemo(() => {
+    // Mega forms are only legal in Reg M-A. For any explicit non-M-A
+    // regulation, never include Mega tier entries even if a stale toggle
+    // state lingered from a prior regulation switch.
     if (!showMegaTiers) return [];
+    if (regulation && regulation !== "Reg M-A") return [];
     return pokemon.flatMap((mon, i) => {
       const baseKey = speciesKeys[i];
       const megaKeys = BASE_KEY_TO_MEGA_KEYS.get(baseKey) ?? [];
@@ -229,7 +233,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         }];
       });
     });
-  }, [showMegaTiers, pokemon, speciesKeys, isChampions]);
+  }, [showMegaTiers, pokemon, speciesKeys, isChampions, regulation]);
 
   // Build meta threat entries. We intentionally do NOT filter out Pokemon
   // already on the user's team — a player running a bulky/mid-speed variant
@@ -410,18 +414,23 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
 
           {/* Overlay toggles — Mega tiers and Meta Threats */}
           <div className="flex items-center gap-2 pt-1 border-t border-border-subtle flex-wrap">
-            <button
-              type="button"
-              onClick={() => setShowMegaTiers(!showMegaTiers)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
-                showMegaTiers
-                  ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
-                  : "bg-surface-alt/50 text-text-secondary border-border hover:border-purple-500/30 hover:text-purple-400"
-              }`}
-            >
-              <span>⬆</span>
-              Mega Forms
-            </button>
+            {/* Mega tiers toggle — only meaningful in the Champions format
+                (Reg M-A) since other regulations don't allow Mega Evolution.
+                Hidden entirely for any explicit non-M-A regulation. */}
+            {(!regulation || regulation === "Reg M-A") && (
+              <button
+                type="button"
+                onClick={() => setShowMegaTiers(!showMegaTiers)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                  showMegaTiers
+                    ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
+                    : "bg-surface-alt/50 text-text-secondary border-border hover:border-purple-500/30 hover:text-purple-400"
+                }`}
+              >
+                <span>⬆</span>
+                Mega Forms
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
