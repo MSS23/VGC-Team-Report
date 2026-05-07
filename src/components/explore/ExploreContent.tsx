@@ -47,6 +47,7 @@ function ExploreInner() {
     placement, setPlacement,
     followingOnly, setFollowingOnly,
     tournamentMode, setTournamentMode,
+    hasRental, setHasRental,
   } = useExploreUrlSync();
 
   const fetchReports = useCallback(
@@ -64,6 +65,7 @@ function ExploreInner() {
       if (placement) params.set("placement", placement);
       if (followingOnly) params.set("following", "1");
       if (tournamentMode) params.set("tournament", "1");
+      if (hasRental) params.set("hasRental", "1");
 
       const res = await fetch(`/api/explore?${params}`);
       if (!res.ok) throw new Error("Failed to fetch");
@@ -72,7 +74,7 @@ function ExploreInner() {
         nextCursor: string | null;
       }>;
     },
-    [query, sort, searchCategory, regulation, eventType, archetype, species, excludeSpecies, placement, followingOnly, tournamentMode],
+    [query, sort, searchCategory, regulation, eventType, archetype, species, excludeSpecies, placement, followingOnly, tournamentMode, hasRental],
   );
 
   // Initial + filter/sort change fetch
@@ -147,6 +149,8 @@ function ExploreInner() {
           onFollowingOnlyChange={setFollowingOnly}
           tournamentMode={tournamentMode}
           onTournamentModeChange={setTournamentMode}
+          hasRental={hasRental}
+          onHasRentalChange={setHasRental}
         />
 
         {/* Results */}

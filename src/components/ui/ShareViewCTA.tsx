@@ -1,14 +1,32 @@
 "use client";
 
+import { SignInButton } from "@clerk/nextjs";
+
 interface ShareViewCTAProps {
-  onCreateOwn: () => void;
+  /** Signed-in viewers fork directly. Signed-out viewers see a SignIn modal first. */
+  isSignedIn: boolean;
+  /** Fork this team into the viewer's account. Only invoked for signed-in users. */
+  onDuplicate: () => void;
+  /** Fired when a signed-out viewer clicks Duplicate, before the sign-in modal opens.
+   *  Used to track the anonymous-view → signup funnel (VGC-140). */
+  onAnonymousIntent?: () => void;
   /** Dismiss callback — parent owns the dismissed state so sibling
    *  components (e.g. the floating Display pill) can react to it and
    *  drop their collision-avoidance offset when the CTA goes away. */
   onDismiss: () => void;
+  /** Disable while a fork is in flight. */
+  busy?: boolean;
 }
 
-export function ShareViewCTA({ onCreateOwn, onDismiss }: ShareViewCTAProps) {
+export function ShareViewCTA({
+  isSignedIn,
+  onDuplicate,
+  onAnonymousIntent,
+  onDismiss,
+  busy,
+}: ShareViewCTAProps) {
+  const buttonClasses =
+    "px-3.5 py-2 sm:px-5 sm:py-2.5 bg-accent text-white text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer disabled:opacity-60 disabled:cursor-wait";
 
   return (
     <div className="fixed bottom-14 sm:bottom-12 inset-x-0 z-30 pointer-events-none">
@@ -16,20 +34,33 @@ export function ShareViewCTA({ onCreateOwn, onDismiss }: ShareViewCTAProps) {
         <div className="pointer-events-auto bg-surface/95 backdrop-blur-xl border border-border rounded-xl sm:rounded-2xl shadow-2xl px-3 py-2.5 sm:px-5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-3 animate-fade-in">
           <div className="min-w-0">
             <p className="text-xs sm:text-sm font-bold text-text-primary tracking-tight">
-              Build your own team report
+              Like this team? Duplicate it to your account
             </p>
             <p className="text-xs text-text-tertiary mt-0.5 hidden sm:block">
-              Add notes, matchup plans, damage calcs — then share it with the community or present it at your next tournament.
+              You&apos;ll get an editable copy — change spreads, add notes, share your version with the community.
             </p>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-            <button
-              type="button"
-              onClick={onCreateOwn}
-              className="px-3.5 py-2 sm:px-5 sm:py-2.5 bg-accent text-white text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer"
-            >
-              Create yours
-            </button>
+            {isSignedIn ? (
+              <button
+                type="button"
+                onClick={onDuplicate}
+                disabled={busy}
+                className={buttonClasses}
+              >
+                {busy ? "Duplicating…" : "Duplicate"}
+              </button>
+            ) : (
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  onClick={onAnonymousIntent}
+                  className={buttonClasses}
+                >
+                  Duplicate
+                </button>
+              </SignInButton>
+            )}
             <button
               type="button"
               onClick={onDismiss}

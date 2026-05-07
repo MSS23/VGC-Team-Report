@@ -15,6 +15,7 @@ export interface FilterState {
   placement: string;
   followingOnly: boolean;
   tournamentMode: boolean;
+  hasRental: boolean;
 }
 
 export interface ExploreUrlSyncResult extends FilterState {
@@ -29,6 +30,7 @@ export interface ExploreUrlSyncResult extends FilterState {
   setPlacement: (v: string) => void;
   setFollowingOnly: (v: boolean) => void;
   setTournamentMode: (v: boolean) => void;
+  setHasRental: (v: boolean) => void;
 }
 
 const DEFAULTS: FilterState = {
@@ -43,6 +45,7 @@ const DEFAULTS: FilterState = {
   placement: "",
   followingOnly: false,
   tournamentMode: false,
+  hasRental: false,
 };
 
 /** Pure function — parses URLSearchParams string into FilterState */
@@ -67,6 +70,7 @@ export function parseFiltersFromUrl(searchString: string): FilterState {
     placement: params.get("placement") ?? DEFAULTS.placement,
     followingOnly: params.get("following") === "1",
     tournamentMode: params.get("tournament") === "1",
+    hasRental: params.get("hasRental") === "1",
   };
 }
 
@@ -85,6 +89,7 @@ export function buildUrlSearch(filters: FilterState): string {
   if (filters.placement) params.set("placement", filters.placement);
   if (filters.followingOnly) params.set("following", "1");
   if (filters.tournamentMode) params.set("tournament", "1");
+  if (filters.hasRental) params.set("hasRental", "1");
 
   return params.toString();
 }
@@ -120,6 +125,7 @@ export function useExploreUrlSync(): ExploreUrlSyncResult {
   const setPlacement = (v: string) => setFilters((f) => ({ ...f, placement: v }));
   const setFollowingOnly = (v: boolean) => setFilters((f) => ({ ...f, followingOnly: v }));
   const setTournamentMode = (v: boolean) => setFilters((f) => ({ ...f, tournamentMode: v }));
+  const setHasRental = (v: boolean) => setFilters((f) => ({ ...f, hasRental: v }));
 
   return {
     ...filters,
@@ -134,5 +140,6 @@ export function useExploreUrlSync(): ExploreUrlSyncResult {
     setPlacement,
     setFollowingOnly,
     setTournamentMode,
+    setHasRental,
   };
 }

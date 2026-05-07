@@ -24,6 +24,9 @@ export interface ExploreReport {
   isVerified?: boolean;
   tags?: { archetype?: string[]; regulation?: string; eventType?: string; regulationAutoDetected?: boolean };
   collaborators?: string[];
+  /** Whether the report's owner provided a rental code. Powers the "Rental code" filter
+   *  on /explore and a small badge on the card so viewers can spot ready-to-import teams. */
+  hasRental?: boolean;
 }
 
 function getPlacementStyle(placement: string): string {
@@ -285,10 +288,24 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           </p>
         )}
 
-        {/* Tags — eventType only (regulation in corner, archetypes above title) */}
-        {hasTagsSection && (
+        {/* Tags — eventType + rental availability */}
+        {(hasTagsSection || report.hasRental) && (
           <div className="flex flex-wrap gap-1">
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">{report.tags!.eventType}</span>
+            {hasTagsSection && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">{report.tags!.eventType}</span>
+            )}
+            {report.hasRental && (
+              <span
+                className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-0.5"
+                title="Rental code available"
+              >
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+                Rental
+              </span>
+            )}
           </div>
         )}
 

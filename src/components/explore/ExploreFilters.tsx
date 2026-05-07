@@ -31,6 +31,8 @@ interface ExploreFiltersProps {
   onFollowingOnlyChange: (v: boolean) => void;
   tournamentMode: boolean;
   onTournamentModeChange: (v: boolean) => void;
+  hasRental: boolean;
+  onHasRentalChange: (v: boolean) => void;
 }
 
 const CATEGORIES: { value: SearchCategory; label: string; icon: React.ReactNode }[] = [
@@ -109,6 +111,8 @@ export function ExploreFilters({
   onFollowingOnlyChange,
   tournamentMode,
   onTournamentModeChange,
+  hasRental,
+  onHasRentalChange,
 }: ExploreFiltersProps) {
   const { t } = useTranslation();
   const { user } = useUser();
@@ -124,6 +128,7 @@ export function ExploreFilters({
     archetype !== "",
     followingOnly,
     tournamentMode,
+    hasRental,
   ].filter(Boolean).length;
 
   useEffect(() => {
@@ -148,6 +153,7 @@ export function ExploreFilters({
     onPlacementChange("");
     onFollowingOnlyChange(false);
     onTournamentModeChange(false);
+    onHasRentalChange(false);
     setLocalQuery("");
     onQueryChange("");
   };
@@ -178,6 +184,7 @@ export function ExploreFilters({
     });
   }
   if (followingOnly) pills.push({ label: "Following", onClear: () => onFollowingOnlyChange(false) });
+  if (hasRental) pills.push({ label: "Rental available", onClear: () => onHasRentalChange(false) });
 
   return (
     <div className="sticky top-12 sm:top-14 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 bg-background/80 backdrop-blur-lg border-b border-border/40 mb-4 sm:mb-6">
@@ -493,6 +500,25 @@ export function ExploreFilters({
                     <path d="M12 12v4" /><path d="M8 20h8" /><path d="M9 16h6" />
                   </svg>
                   Tournament results
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onHasRentalChange(!hasRental)}
+                  aria-pressed={hasRental}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
+                    hasRental
+                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30"
+                      : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
+                  }`}
+                  title="Only show teams with a rental code"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                    <circle cx="12" cy="16" r="1.5" />
+                  </svg>
+                  Rental code
                 </button>
 
                 {!!user && (

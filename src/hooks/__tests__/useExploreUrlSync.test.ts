@@ -60,6 +60,7 @@ describe("buildUrlSearch", () => {
       placement: "",
       followingOnly: false,
       tournamentMode: false,
+      hasRental: false,
     });
     expect(result).toBe("");
   });
@@ -77,6 +78,7 @@ describe("buildUrlSearch", () => {
       placement: "",
       followingOnly: false,
       tournamentMode: false,
+      hasRental: false,
     });
     const params = new URLSearchParams(result);
     expect(params.get("q")).toBe("test");
@@ -101,6 +103,7 @@ describe("buildUrlSearch", () => {
       placement: "",
       followingOnly: true,
       tournamentMode: false,
+      hasRental: false,
     });
     const params = new URLSearchParams(result);
     expect(params.get("following")).toBe("1");
@@ -119,6 +122,7 @@ describe("buildUrlSearch", () => {
       placement: "",
       followingOnly: false,
       tournamentMode: false,
+      hasRental: false,
     });
     const params = new URLSearchParams(result);
     expect(params.get("excludeSpecies")).toBe("Flutter Mane,Urshifu");
@@ -137,6 +141,7 @@ describe("buildUrlSearch", () => {
       placement: "",
       followingOnly: false,
       tournamentMode: true,
+      hasRental: false,
     });
     const params = new URLSearchParams(result);
     expect(params.get("tournament")).toBe("1");
@@ -155,6 +160,7 @@ describe("buildUrlSearch", () => {
       placement: "",
       followingOnly: false,
       tournamentMode: false,
+      hasRental: false,
     });
     const params = new URLSearchParams(result);
     expect(params.has("tournament")).toBe(false);
@@ -173,6 +179,7 @@ describe("buildUrlSearch", () => {
       placement: "winner",
       followingOnly: true,
       tournamentMode: false,
+      hasRental: false,
     };
     const search = buildUrlSearch(original);
     const parsed = parseFiltersFromUrl("?" + search);
@@ -192,6 +199,7 @@ describe("buildUrlSearch", () => {
       placement: "Top 8",
       followingOnly: false,
       tournamentMode: true,
+      hasRental: false,
     };
     const search = buildUrlSearch(original);
     const parsed = parseFiltersFromUrl("?" + search);

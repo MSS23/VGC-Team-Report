@@ -28,12 +28,13 @@ export async function GET(request: Request) {
     const filterExcludeSpecies = url.searchParams.get("excludeSpecies") ?? ""; // comma-separated Pokemon names to exclude
     const filterPlacement = url.searchParams.get("placement") ?? ""; // e.g. "1st", "Top 4", "Top 8"
     const filterFollowing = url.searchParams.get("following") === "1";
+    const filterHasRental = url.searchParams.get("hasRental") === "1";
 
     // ── Cache check (skip for user-specific following queries) ───────
     let cacheKey: string | null = null;
     if (!filterFollowing) {
       cacheKey = CacheKeys.explore(
-        `${sort}:${q}:${searchType}:${cursor ?? ""}:${limit}:${filterRegulation}:${filterEventType}:${filterArchetype}:${filterSpecies}:${filterExcludeSpecies}:${filterPlacement}`
+        `${sort}:${q}:${searchType}:${cursor ?? ""}:${limit}:${filterRegulation}:${filterEventType}:${filterArchetype}:${filterSpecies}:${filterExcludeSpecies}:${filterPlacement}:rental=${filterHasRental ? 1 : 0}`
       );
       const cached = await cacheGet<{ reports: unknown[]; nextCursor: string | null }>(cacheKey);
       if (cached) {
@@ -127,6 +128,11 @@ export async function GET(request: Request) {
           END
         ) <= ${placementCutoff}`
       : sql``;
+    // hasRental filter — match shares whose rentalCode is a non-empty string.
+    // The rentalCode lives in the JSONB blob, so we string-cast and trim.
+    const rentalCondition = filterHasRental
+      ? sql`AND COALESCE(NULLIF(BTRIM(s.data->>'rentalCode'), ''), NULL) IS NOT NULL`
+      : sql``;
     const tagFilters = sql`
       ${filterRegulation ? sql`AND s.data->'tags'->>'regulation' = ${filterRegulation}` : sql``}
       ${filterEventType ? sql`AND s.data->'tags'->>'eventType' = ${filterEventType}` : sql``}
@@ -134,6 +140,7 @@ export async function GET(request: Request) {
       ${speciesCondition}
       ${excludeSpeciesCondition}
       ${placementCondition}
+      ${rentalCondition}
     `;
 
     if (sort === "popular") {
@@ -236,6 +243,7 @@ export async function GET(request: Request) {
       const paste = (data.paste as string) ?? "";
       const sid = row.id as string;
       const creatorNameStr = (data.creatorName as string) || undefined;
+      const rentalCodeStr = (data.rentalCode as string) ?? "";
       return {
         id: sid,
         species: extractSpecies(paste),
@@ -251,6 +259,7 @@ export async function GET(request: Request) {
         isVerified: creatorNameStr ? verifiedSet.has(creatorNameStr.toLowerCase()) : false,
         tags: (data.tags as Record<string, unknown>) || undefined,
         collaborators: collabMap[sid] ?? [],
+        hasRental: rentalCodeStr.trim().length > 0,
       };
     });
 
