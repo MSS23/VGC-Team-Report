@@ -263,7 +263,7 @@ Examples:
                             aria-label={`${t.changeCategory}: ${label}`}
                             aria-pressed={isActive}
                             title={label}
-                            className={`inline-flex items-center justify-center h-8 w-8 rounded-md text-sm transition-all duration-150 ${
+                            className={`inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-sm transition-all duration-150 ${
                               isActive
                                 ? `${catCfg.tagBg} ${catCfg.tagText} shadow-sm`
                                 : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
@@ -284,7 +284,7 @@ Examples:
                     <button
                       type="button"
                       onClick={() => handleRemoveParsed(i)}
-                      className="inline-flex items-center justify-center h-7 w-7 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                      className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors"
                       aria-label="Remove calc"
                     >
                       ✕
