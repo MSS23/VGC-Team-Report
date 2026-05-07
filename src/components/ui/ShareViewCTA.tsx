@@ -33,7 +33,7 @@ export function ShareViewCTA({ onCreateOwn, onDismiss }: ShareViewCTAProps) {
             <button
               type="button"
               onClick={onDismiss}
-              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Dismiss"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

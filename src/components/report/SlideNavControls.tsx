@@ -27,7 +27,7 @@ function NavHelpTooltip() {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-xs font-bold text-text-tertiary hover:text-accent hover:bg-accent/5 transition-all"
+        className="flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-xs font-bold text-text-tertiary hover:text-accent hover:bg-accent/5 transition-all"
         aria-label="Navigation help"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -314,7 +314,7 @@ export function SlideNavControls({
                 type="button"
                 onClick={onMoveUp}
                 disabled={!canMoveUp}
-                className="flex items-center justify-center w-7 h-7 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors disabled:opacity-20 disabled:pointer-events-none"
+                className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors disabled:opacity-20 disabled:pointer-events-none"
                 title="Move slide earlier"
                 aria-label="Move slide earlier"
               >
@@ -324,7 +324,7 @@ export function SlideNavControls({
                 type="button"
                 onClick={onMoveDown}
                 disabled={!canMoveDown}
-                className="flex items-center justify-center w-7 h-7 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors disabled:opacity-20 disabled:pointer-events-none"
+                className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors disabled:opacity-20 disabled:pointer-events-none"
                 title="Move slide later"
                 aria-label="Move slide later"
               >
@@ -374,7 +374,7 @@ export function SlideNavControls({
             <button
               type="button"
               onClick={onShowShortcuts}
-              className="hidden sm:flex items-center justify-center w-7 h-7 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent/5 transition-colors"
+              className="hidden sm:flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-text-tertiary hover:text-accent hover:bg-accent/5 transition-colors"
               aria-label="Keyboard shortcuts"
               title="Keyboard shortcuts (?)"
             >

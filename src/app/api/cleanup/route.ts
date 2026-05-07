@@ -1,3 +1,4 @@
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -7,27 +8,10 @@ const TRASH_TTL_DAYS = 30;
 const MAX_DELETE_PER_RUN = 500;
 
 /**
- * DELETE /api/cleanup?days=90
- *
- * 1. Permanently deletes soft-deleted shares older than 30 days (trash purge).
- * 2. Deletes shares that haven't been updated in the given number of days.
- * Protected by a secret token in the Authorization header.
- *
- * Can be called by a Vercel Cron Job or external scheduler:
- *   Authorization: Bearer <CLEANUP_SECRET>
+ * Shared cleanup logic: purges soft-deleted shares and stale shares.
+ * Returns a NextResponse with the cleanup results.
  */
-export async function DELETE(request: NextRequest) {
-  // Verify authorization
-  const authHeader = request.headers.get("authorization");
-  if (!CLEANUP_SECRET || authHeader !== `Bearer ${CLEANUP_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const days = parseInt(
-    request.nextUrl.searchParams.get("days") ?? String(DEFAULT_TTL_DAYS),
-    10
-  );
-
+async function runCleanup(days: number): Promise<NextResponse> {
   if (isNaN(days) || days < 1) {
     return NextResponse.json({ error: "Invalid days parameter" }, { status: 400 });
   }
@@ -35,7 +19,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const sql = getDb();
 
-    // 1. Purge soft-deleted reports older than 30 days
+    // 1. Purge soft-deleted reports older than TRASH_TTL_DAYS
     const trashIds = await sql`
       SELECT id FROM shares
       WHERE deleted_at IS NOT NULL
@@ -75,9 +59,52 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (e) {
     console.error("Cleanup error:", e);
-    return NextResponse.json(
-      { error: "Cleanup failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Cleanup failed" }, { status: 500 });
   }
+}
+
+/**
+ * GET /api/cleanup
+ *
+ * Invoked automatically by Vercel Cron (daily at 3 AM UTC via vercel.json).
+ * Vercel cron sends a Bearer <CRON_SECRET> Authorization header — validated
+ * by isCronAuthorized() exactly as every other cron route does.
+ *
+ * Uses the default TTL of 90 days for stale shares.
+ */
+export async function GET(request: NextRequest) {
+  if (!isCronAuthorized(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const days = parseInt(
+    request.nextUrl.searchParams.get("days") ?? String(DEFAULT_TTL_DAYS),
+    10
+  );
+
+  return runCleanup(days);
+}
+
+/**
+ * DELETE /api/cleanup?days=90
+ *
+ * Manual invocation for one-off cleanup runs (e.g. from a script or curl).
+ * Protected by a separate CLEANUP_SECRET bearer token so it can be called
+ * independently of the Vercel cron secret.
+ *
+ *   Authorization: Bearer <CLEANUP_SECRET>
+ */
+export async function DELETE(request: NextRequest) {
+  // Verify authorization
+  const authHeader = request.headers.get("authorization");
+  if (!CLEANUP_SECRET || authHeader !== `Bearer ${CLEANUP_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const days = parseInt(
+    request.nextUrl.searchParams.get("days") ?? String(DEFAULT_TTL_DAYS),
+    10
+  );
+
+  return runCleanup(days);
 }

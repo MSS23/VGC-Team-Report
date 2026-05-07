@@ -162,7 +162,7 @@ export function DisplayTogglePill({
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close display options"
-                className="w-8 h-8 -mr-1 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+                className="min-w-[44px] min-h-[44px] -mr-1 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" />

@@ -65,7 +65,7 @@ export function DiffNavigator({ changes, onNavigate, onDismiss, version, editorN
         {/* Prev */}
         <button
           onClick={handlePrev}
-          className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer"
           aria-label="Previous change"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -86,7 +86,7 @@ export function DiffNavigator({ changes, onNavigate, onDismiss, version, editorN
         {/* Next */}
         <button
           onClick={handleNext}
-          className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer"
           aria-label="Next change"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -105,7 +105,7 @@ export function DiffNavigator({ changes, onNavigate, onDismiss, version, editorN
         {/* Dismiss */}
         <button
           onClick={onDismiss}
-          className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer"
           aria-label="Dismiss comparison"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

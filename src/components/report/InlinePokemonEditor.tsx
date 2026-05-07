@@ -55,9 +55,13 @@ function searchSpecies(query: string, currentName: string): SpeciesSuggestion[] 
   const contains: SpeciesSuggestion[] = [];
   for (const s of index) {
     const lower = s.name.toLowerCase();
-    if (lower.startsWith(q)) prefix.push(s);
-    else if (lower.includes(q)) contains.push(s);
-    if (prefix.length >= 16) break;
+    if (lower.startsWith(q)) {
+      prefix.push(s);
+    } else if (lower.includes(q)) {
+      contains.push(s);
+    }
+    // Stop only once we have enough of both buckets to fill the display limit
+    if (prefix.length >= 8 && contains.length >= 8) break;
   }
   return [...prefix, ...contains].slice(0, 8);
 }
@@ -131,7 +135,7 @@ export function InlinePokemonEditor({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Close"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

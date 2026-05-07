@@ -6,7 +6,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#0a0f1a",
   "theme_color": "#E11D48",
   "orientation": "any",
@@ -84,14 +84,28 @@
       "sizes": "512x512",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "VGC Team Report — Build and share competitive Pokemon teams"
+      "label": "VGC Team Report — Build and analyze competitive Pokemon team reports with EV spreads and damage calcs"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
+      "form_factor": "wide",
+      "label": "Explore community team reports and World Championship winning teams"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "form_factor": "narrow",
-      "label": "VGC Team Report on mobile"
+      "label": "VGC Team Report — Build and share competitive Pokemon teams on mobile"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Browse and compare VGC team reports on the go"
     }
   ],
   "share_target": {

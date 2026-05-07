@@ -3,7 +3,7 @@ import { ExploreContent } from "@/components/explore/ExploreContent";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
-  title: "Explore VGC Teams",
+  title: "Explore VGC Team Reports",
   alternates: { canonical: "https://pokemonvgcteamreport.com/explore" },
   description:
     "Browse Pokemon VGC team reports shared by competitive players from tournaments around the world. Search by Pokemon, tournament, or creator.",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Explore VGC Teams",
+    title: "Explore VGC Team Reports",
     description: "Discover team reports shared by the VGC community.",
   },
 };

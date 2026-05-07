@@ -246,7 +246,7 @@ export function Navbar(props: NavbarProps) {
                     type="button"
                     onClick={onUndo}
                     disabled={canUndo ? !canUndo() : true}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
                     title="Undo (Ctrl+Z)"
                     aria-label="Undo (Ctrl+Z)"
                   >
@@ -258,7 +258,7 @@ export function Navbar(props: NavbarProps) {
                     type="button"
                     onClick={onRedo}
                     disabled={canRedo ? !canRedo() : true}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
                     title="Redo (Ctrl+Shift+Z)"
                     aria-label="Redo (Ctrl+Shift+Z)"
                   >
@@ -421,7 +421,7 @@ export function Navbar(props: NavbarProps) {
             <>
               <button
                 onClick={() => onShowShortcuts(true)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer"
                 title="Keyboard shortcuts (?)"
                 aria-label="Keyboard shortcuts"
               >
@@ -527,7 +527,7 @@ export function Navbar(props: NavbarProps) {
                               key={theme.id}
                               type="button"
                               onClick={() => { onGenThemeChange(theme.id); }}
-                              className={`relative flex items-center justify-center w-8 h-8 rounded-lg transition-all cursor-pointer ${
+                              className={`relative flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-all cursor-pointer ${
                                 isActive ? "bg-surface-alt scale-105" : "hover:bg-surface-alt/60 opacity-50 hover:opacity-90"
                               }`}
                               style={isActive ? { boxShadow: `0 0 0 2px ${theme.badge}60` } : undefined}
