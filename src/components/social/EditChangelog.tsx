@@ -66,13 +66,14 @@ export function EditChangelog({ shareId, editToken }: EditChangelogProps) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
         className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl border-2 transition-all cursor-pointer ${
           open
             ? "bg-accent/10 border-accent/30 text-accent"
             : "bg-surface border-border text-text-primary hover:border-accent/30 hover:text-accent"
         }`}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         Version History
