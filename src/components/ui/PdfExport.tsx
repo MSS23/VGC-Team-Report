@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useCallback, useEffect, createContext, useContext } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 import type { MatchupPlan } from "@/hooks/useMatchupPlans";
 import type { CalcEntry } from "@/hooks/useDamageCalcs";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import type { ReportTags } from "@/lib/data/tags";
+// Re-export the lightweight context so existing imports from this file continue to work.
+export { PrintContext, useIsPrintMode } from "@/components/ui/print-context";
+import { PrintContext } from "@/components/ui/print-context";
 import { TeamOverview } from "@/components/report/TeamOverview";
 import { PokemonDetailSlide } from "@/components/report/PokemonDetailSlide";
 import { SpeedTierChart } from "@/components/report/SpeedTierChart";
@@ -14,10 +17,6 @@ import { MatchupPlanSlide } from "@/components/report/MatchupPlanSlide";
 import { MatchupSheet } from "@/components/report/MatchupSheet";
 import { PrintableTournamentMode } from "@/components/report/TournamentMode";
 import type { StatView } from "@/components/report/TournamentMode";
-
-/** Context to signal components they're rendering for print (use PNGs, not GIFs) */
-export const PrintContext = createContext(false);
-export function useIsPrintMode() { return useContext(PrintContext); }
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
