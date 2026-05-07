@@ -7,6 +7,7 @@ import { useHomePage } from "@/hooks/useHomePage";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { PasteInput } from "@/components/input/PasteInput";
 import { TeamReport } from "@/components/report/TeamReport";
+import { TeamCardCTA } from "@/components/report/TeamCardCTA";
 import { TournamentMode } from "@/components/report/TournamentMode";
 import { SlideNavControls } from "@/components/report/SlideNavControls";
 import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
@@ -88,6 +89,7 @@ function HomeContent() {
     exitSharedView,
     isEditingUnlocked,
     isOwner,
+    sharedRedactedFields,
     lastShareResult,
     openShareSheetForUrl,
     hasExistingShare,
@@ -145,6 +147,8 @@ function HomeContent() {
     setCreatorName,
     tags,
     setTags,
+    privateFields,
+    setPrivateFields,
     megaStates,
     toggleMega,
     globalMegaDefault,
@@ -627,12 +631,6 @@ function HomeContent() {
     if (walkthroughActive) return;
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [physicalSlide, walkthroughActive]);
-
-  const handleCreateOwn = useCallback(() => {
-    handleReset();
-    exitSharedView();
-    window.location.href = window.location.origin;
-  }, [handleReset, exitSharedView]);
 
   // Fork: server-side copy linked back to the original via forked_from_id
   const [forkStatus, setForkStatus] = useState<"idle" | "forking" | "error">("idle");
@@ -1152,6 +1150,9 @@ function HomeContent() {
           onReplacePokemon={isReadOnly ? undefined : handleReplacePokemon}
           megaStates={resolvedMegaStates}
           onToggleMega={isReadOnly ? undefined : toggleMega}
+          privateFields={privateFields}
+          onPrivateFieldsChange={isReadOnly ? undefined : setPrivateFields}
+          redactedFields={isSharedView && !isOwner ? sharedRedactedFields : undefined}
         />
         </>
         )}
@@ -1279,6 +1280,11 @@ function HomeContent() {
               <span>Comments are turned off by the creator.</span>
             </div>
           )}
+
+          {/* End-of-report: downloadable Spotify-Wrapped style team card.
+              Placed at the emotional peak (after the team has been seen)
+              rather than mid-scroll. (VGC-141) */}
+          <TeamCardCTA shareId={activeShareId} hasTournament={!!(placement || tournamentName)} />
         </div>
       )}
 
@@ -1445,11 +1451,21 @@ function HomeContent() {
         </div>
       )}
 
-      {/* CTA banner for shared views (read-only viewers) */}
-      {isSharedView && !isEditingUnlocked && !isPresentationStyle && !shareCtaDismissed && (
+      {/* CTA banner for shared views (read-only viewers) — Notion-style
+          "Duplicate this team" prompt. Anonymous viewers see a sign-in
+          modal; signed-in viewers fork directly. (VGC-140) */}
+      {isSharedView && !isEditingUnlocked && !isPresentationStyle && !shareCtaDismissed && !isOwner && (
         <ShareViewCTA
-          onCreateOwn={handleCreateOwn}
+          isSignedIn={!!isSignedIn}
+          onDuplicate={handleForkReport}
+          onAnonymousIntent={() => {
+            if (activeShareId) {
+              track("share_view_duplicate_anonymous", { source_id: activeShareId });
+              posthog.capture("share_view_duplicate_anonymous", { source_id: activeShareId });
+            }
+          }}
           onDismiss={() => setShareCtaDismissed(true)}
+          busy={forkStatus === "forking"}
         />
       )}
 

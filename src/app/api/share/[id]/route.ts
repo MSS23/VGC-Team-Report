@@ -3,9 +3,31 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
 import { extractSpecies } from "@/lib/utils/extract-species";
+import { normalizePrivateFields, redactPasteFields } from "@/lib/sharing/redact-paste";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+
+/**
+ * Apply tiered-publishing redaction (VGC-142) for non-owner viewers.
+ * If the share data declares `privateFields`, strip those fields from the
+ * paste so anonymous/public callers never see hidden spreads or items.
+ * Returns the (possibly mutated) data plus the list of fields that were
+ * redacted, so the client can show a "Some fields hidden by creator" banner.
+ */
+function applyPrivateFieldRedaction(data: Record<string, unknown>): {
+  data: Record<string, unknown>;
+  redactedFields: string[];
+} {
+  const fields = normalizePrivateFields(data.privateFields as string[] | undefined);
+  if (fields.length === 0) return { data, redactedFields: [] };
+  const paste = (data.paste as string) ?? "";
+  const redacted = redactPasteFields(paste, fields);
+  return {
+    data: { ...data, paste: redacted },
+    redactedFields: fields,
+  };
+}
 
 const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
 const KeySchema = z.string().regex(/^[0-9a-f]{64}$/, "Invalid edit key");
@@ -123,13 +145,19 @@ export async function GET(
       const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
 
       const editable = !!rows[0].editable && !!authedUserId;
+      const normalized = normalizeReportData(rows[0].data as Record<string, unknown>);
+      // Editors with a valid key see full data; bare-link viewers get redacted (VGC-142)
+      const { data: viewable, redactedFields } = editable
+        ? { data: normalized, redactedFields: [] as string[] }
+        : applyPrivateFieldRedaction(normalized);
       return NextResponse.json({
-        ...normalizeReportData(rows[0].data as Record<string, unknown>),
+        ...viewable,
         _editable: editable,
         _version: Number(rows[0].version),
         _isPublic: !!rows[0].is_public,
         _isOwner: false,
         _forkedFrom: forkedFrom,
+        _redactedFields: redactedFields,
       });
     }
 
@@ -211,13 +239,17 @@ export async function GET(
     const forkedFromId = await loadForkedFromId(sql, id);
     const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
 
+    const normalized = normalizeReportData(rows[0].data as Record<string, unknown>);
+    const { data: viewable, redactedFields } = applyPrivateFieldRedaction(normalized);
+
     const responseData = {
-      ...normalizeReportData(rows[0].data as Record<string, unknown>),
+      ...viewable,
       _version: Number(rows[0].version),
       _isPublic: isPublic,
       _isOwner: false,
       _collaborators: collaboratorNames,
       _forkedFrom: forkedFrom,
+      _redactedFields: redactedFields,
     };
 
     // Cache public shares for 5 minutes in Redis (for our own fast-path)

@@ -22,7 +22,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     editKeyFromUrl, copyShareUrl, freshShare, autoSave, shareStatus,
     urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, isOwner,
     sessionShareId, lastShareResult, openShareSheetForUrl, getEditUrl, hasExistingShare, clearStoredShare,
-    fetchedIsPublic, fetchedCollaborators, autoSaveStatus, forkedFrom, forkReport,
+    fetchedIsPublic, fetchedCollaborators, autoSaveStatus, forkedFrom, forkReport, redactedFields,
   } = useShareUrl();
 
   const [isPublic, setIsPublic] = useState(true);
@@ -143,5 +143,6 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     autoSaveStatus,
     fetchedCollaborators,
     forkedFrom, forkReport,
+    redactedFields,
   };
 }

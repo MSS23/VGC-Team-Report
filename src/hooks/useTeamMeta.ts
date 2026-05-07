@@ -47,6 +47,13 @@ interface TeamMeta {
    * Per-card megaStates entries always win over this.
    */
   globalMegaDefault?: boolean | null;
+  /**
+   * Tiered publishing (VGC-142). Field names the creator wants hidden from
+   * non-owner viewers. Server strips these from the paste before returning
+   * shared reports to anyone who isn't the owner or an accepted collaborator.
+   * Valid values: "evs" | "ivs" | "nature" | "item".
+   */
+  privateFields?: string[];
 }
 
 // v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
@@ -116,6 +123,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
   const templateId = meta.templateId;
   const megaStates = meta.megaStates;
   const globalMegaDefault = meta.globalMegaDefault ?? null;
+  const privateFields = meta.privateFields ?? [];
 
   const setRole = useCallback((species: string, text: string) => {
     setMeta((prev) => ({ ...prev, roles: { ...prev.roles, [species]: text } }));
@@ -194,6 +202,10 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
     setMeta((prev) => ({ ...prev, megaStates: {} }));
   }, []);
 
+  const setPrivateFields = useCallback((fields: string[]) => {
+    setMeta((prev) => ({ ...prev, privateFields: fields }));
+  }, []);
+
   // Merges partial updates into the existing meta. Callers that want to
   // null out a field must explicitly pass it as undefined.
   //
@@ -209,7 +221,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
   }, []);
 
   return {
-    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault,
-    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides,
+    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault, privateFields,
+    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
   };
 }

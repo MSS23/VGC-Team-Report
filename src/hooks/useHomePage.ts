@@ -110,8 +110,8 @@ export function useHomePage() {
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
-    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault,
-    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides,
+    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault, privateFields,
+    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
   } = useTeamMeta(speciesKeys, shouldPersist);
 
   // Compute the effective Mega-or-base state for a given Pokemon index.
@@ -256,10 +256,11 @@ export function useHomePage() {
     hiddenSlides: hiddenSlides.size > 0 ? [...hiddenSlides] : undefined,
     tags: tags && (tags.archetype?.length || tags.regulation || tags.eventType) ? tags : undefined,
     templateId: templateId || undefined,
+    privateFields: privateFields.length > 0 ? privateFields : undefined,
     // Pin viewers to the creator's accent theme so the report appearance
     // stays consistent across devices / incognito / other users.
     genTheme: genTheme || undefined,
-  }), [paste, notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId, genTheme]);
+  }), [paste, notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId, privateFields, genTheme]);
 
   // ── Share flow (extracted) ───────────────────────────────────────
   const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t: t as unknown as Record<string, string> });
@@ -402,6 +403,7 @@ export function useHomePage() {
       creatorName: state.creatorName ?? undefined,
       tags: state.tags ?? undefined,
       templateId: state.templateId ?? undefined,
+      privateFields: state.privateFields ?? undefined,
     });
     const rawPlans = Array.isArray(state.matchupPlans) ? state.matchupPlans : [];
     setPlansFull(
@@ -534,6 +536,7 @@ export function useHomePage() {
       creatorName: share.sharedState.creatorName ?? undefined,
       tags: share.sharedState.tags ?? undefined,
       templateId: share.sharedState.templateId ?? undefined,
+      privateFields: share.sharedState.privateFields ?? undefined,
     });
     const rawPlans = Array.isArray(share.sharedState.matchupPlans) ? share.sharedState.matchupPlans : [];
     setPlansFull(
@@ -650,6 +653,7 @@ export function useHomePage() {
       creatorName: state.creatorName ?? undefined,
       tags: state.tags ?? undefined,
       templateId: state.templateId ?? undefined,
+      privateFields: state.privateFields ?? undefined,
     });
     const rawPlans = Array.isArray(state.matchupPlans) ? state.matchupPlans : [];
     setPlansFull(
@@ -716,6 +720,7 @@ export function useHomePage() {
     exitSharedView: share.exitSharedView,
     isEditingUnlocked: share.isEditingUnlocked,
     isOwner: share.isOwner,
+    sharedRedactedFields: share.redactedFields,
     sessionShareId: share.sessionShareId,
     lastShareResult: share.lastShareResult,
     openShareSheetForUrl: share.openShareSheetForUrl,
@@ -759,6 +764,7 @@ export function useHomePage() {
     teamName, setTeamName, tournamentName, setTournamentName, placement, setPlacement,
     record, setRecord, mvpIndex, setMvpIndex,
     rentalCode, setRentalCode, creatorName, setCreatorName, tags, setTags, templateId, setTemplateId,
+    privateFields, setPrivateFields,
     megaStates, toggleMega,
     globalMegaDefault, setGlobalMegaDefault, resetMegaOverrides,
     setGlobalMegaDefaultAndReset,

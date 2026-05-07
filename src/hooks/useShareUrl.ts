@@ -77,6 +77,7 @@ export function useShareUrl() {
   const [fetchedIsPublic, setFetchedIsPublic] = useState<boolean | null>(null);
   const [fetchedCollaborators, setFetchedCollaborators] = useState<string[]>([]);
   const [forkedFrom, setForkedFrom] = useState<ForkedFromMeta | null>(null);
+  const [redactedFields, setRedactedFields] = useState<string[]>([]);
   const [lastShareResult, setLastShareResult] = useState<{
     updated: boolean;
     editUrl?: string;
@@ -112,6 +113,7 @@ export function useShareUrl() {
     setFetchedIsPublic(null);
     setFetchedCollaborators([]);
     setForkedFrom(null);
+    setRedactedFields([]);
   }, [shareId, inlineData]);
 
   // Fetch shared state on mount
@@ -155,11 +157,12 @@ export function useShareUrl() {
           if (data._isPublic !== undefined) setFetchedIsPublic(!!data._isPublic);
           setIsOwner(!!data._isOwner);
           setForkedFrom((data._forkedFrom as ForkedFromMeta | null) ?? null);
+          setRedactedFields(Array.isArray(data._redactedFields) ? (data._redactedFields as string[]) : []);
           // The API returns _editToken for authenticated owners/collaborators
           const ownerEditToken = data._editToken as string | undefined;
           // Strip internal flags before treating as ShareableState
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, _forkedFrom: _ff, ...state } = data;
+          const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, _forkedFrom: _ff, _redactedFields: _rf, ...state } = data;
           if (Array.isArray(_c)) setFetchedCollaborators(_c as string[]);
           // Set active edit session — only from server-provided token (authenticated)
           if (editable && ownerEditToken) {
@@ -439,5 +442,6 @@ export function useShareUrl() {
     autoSaveStatus,
     forkedFrom,
     forkReport,
+    redactedFields,
   };
 }

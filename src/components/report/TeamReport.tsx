@@ -83,6 +83,13 @@ interface TeamReportProps {
   onReplacePokemon?: (index: number, newSpecies: string) => void;
   megaStates?: Record<number, boolean>;
   onToggleMega?: (index: number) => void;
+  /** Tiered publishing (VGC-142) — owner-only privacy toggles. */
+  privateFields?: string[];
+  onPrivateFieldsChange?: (fields: string[]) => void;
+  /** Server-redacted fields for non-owner viewers — drives the "some
+   *  fields hidden" banner. Empty when the viewer is the owner or no
+   *  fields were marked private. */
+  redactedFields?: string[];
 }
 
 /**
@@ -161,12 +168,36 @@ export function TeamReport({
   onReplacePokemon,
   megaStates,
   onToggleMega,
+  privateFields,
+  onPrivateFieldsChange,
+  redactedFields,
 }: TeamReportProps) {
   const pokemonCount = analysis.pokemon.length;
+
+  const redactedNotice = (redactedFields && redactedFields.length > 0) ? (
+    <div className="max-w-5xl mx-auto px-2 sm:px-4 mb-3">
+      <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0110 0v4" />
+        </svg>
+        <p className="text-xs leading-relaxed">
+          <span className="font-bold">Some fields hidden by the creator.</span>{" "}
+          {redactedFields.includes("evs") && "EV/SP spreads, "}
+          {redactedFields.includes("ivs") && "IVs, "}
+          {redactedFields.includes("nature") && "nature, "}
+          {redactedFields.includes("item") && "held items, "}
+          are not shown on this public view.
+        </p>
+      </div>
+    </div>
+  ) : null;
 
   // Slide 0: Team Overview
   if (currentSlide === 0) {
     return (
+      <>
+        {redactedNotice}
         <TeamOverview
           pokemon={analysis.pokemon}
           creatorMode={creatorMode}
@@ -199,7 +230,10 @@ export function TeamReport({
           onReplacePokemon={onReplacePokemon}
           megaStates={megaStates}
           onToggleMega={onToggleMega}
+          privateFields={privateFields}
+          onPrivateFieldsChange={onPrivateFieldsChange}
         />
+      </>
     );
   }
 

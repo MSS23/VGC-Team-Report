@@ -107,10 +107,270 @@ export async function GET(request: Request) {
   const tags = (data.tags as { archetype?: string[]; regulation?: string; eventType?: string }) ?? {};
   const team = parseTeamForGraphic(paste);
 
+  const isWrapped = style === "wrapped";
   const isWide = style === "wide";
-  const sz = isWide ? { width: 1200, height: 400 } : { width: 800, height: 600 };
+  const sz = isWrapped
+    ? { width: 1080, height: 1920 }
+    : isWide
+      ? { width: 1200, height: 400 }
+      : { width: 800, height: 600 };
   const SPRITE_BASE = "https://play.pokemonshowdown.com/sprites";
   const placementColors = placement ? getPlacementStyle(placement) : null;
+
+  // ── Wrapped (Spotify-Wrapped style) layout ───────────────────────
+  // Vertical 9:16 poster optimised for Twitter / Instagram / Discord
+  // sharing. Loud gradient, big sprites, oversized title — designed to
+  // stop the scroll. (VGC-141)
+  if (isWrapped) {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background:
+              "radial-gradient(circle at 25% 15%, rgba(225,29,72,0.55) 0%, transparent 45%), radial-gradient(circle at 80% 85%, rgba(99,102,241,0.55) 0%, transparent 45%), linear-gradient(165deg, #0A0820 0%, #160A35 50%, #08051A 100%)",
+            fontFamily: "system-ui, sans-serif",
+            padding: "80px 60px",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          {/* Top: regulation badge */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 32 }}>
+            {tags.regulation && (
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 24,
+                  fontWeight: 900,
+                  color: "#F0EEF8",
+                  background: "rgba(255,255,255,0.08)",
+                  border: "2px solid rgba(255,255,255,0.18)",
+                  padding: "10px 24px",
+                  borderRadius: 999,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {tags.regulation}
+              </div>
+            )}
+
+            {/* Headline */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 12,
+                textAlign: "center",
+              }}
+            >
+              {placement && placementColors ? (
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: 96,
+                    fontWeight: 900,
+                    color: placementColors.text,
+                    letterSpacing: "-0.04em",
+                    lineHeight: 1,
+                    textShadow: "0 4px 32px rgba(0,0,0,0.5)",
+                  }}
+                >
+                  {placement}
+                </div>
+              ) : tournamentName ? (
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: 64,
+                    fontWeight: 900,
+                    color: "#F0EEF8",
+                    letterSpacing: "-0.03em",
+                    lineHeight: 1.05,
+                    textAlign: "center",
+                    maxWidth: 900,
+                  }}
+                >
+                  My VGC Team
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: 72,
+                    fontWeight: 900,
+                    color: "#F0EEF8",
+                    letterSpacing: "-0.03em",
+                    lineHeight: 1,
+                  }}
+                >
+                  My VGC Team
+                </div>
+              )}
+              {tournamentName && (
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: 36,
+                    fontWeight: 700,
+                    color: "#C4C2D8",
+                    letterSpacing: "-0.01em",
+                    textAlign: "center",
+                    maxWidth: 900,
+                  }}
+                >
+                  at {tournamentName}
+                </div>
+              )}
+              {record && (
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: 28,
+                    fontWeight: 700,
+                    color: "#9898BE",
+                    marginTop: 4,
+                  }}
+                >
+                  {record}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 3x2 sprite grid */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              alignContent: "center",
+              gap: 24,
+              maxWidth: 960,
+              padding: "0 24px",
+            }}
+          >
+            {team.map((mon, i) => {
+              const spriteUrl = `${SPRITE_BASE}/home/${toSpriteSlug(mon.species)}.png`;
+              return (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 8,
+                    width: 280,
+                    padding: "20px 12px",
+                    borderRadius: 24,
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+                    border: "1.5px solid rgba(255,255,255,0.08)",
+                    boxShadow:
+                      "0 12px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={spriteUrl}
+                    alt={mon.species}
+                    width={180}
+                    height={180}
+                    style={{ objectFit: "contain" }}
+                  />
+                  {mon.types.length > 0 && (
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {mon.types.map((t, ti) => (
+                        <div
+                          key={ti}
+                          style={{
+                            fontSize: 14,
+                            fontWeight: 800,
+                            color: TYPE_TEXT[t] ?? "#FFF",
+                            background: TYPE_BG[t] ?? "#666",
+                            padding: "3px 12px",
+                            borderRadius: 6,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          {t}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      display: "flex",
+                      fontSize: 22,
+                      fontWeight: 800,
+                      color: "#F0EEF8",
+                      textAlign: "center",
+                      maxWidth: 250,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {mon.species}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Footer: creator + branding */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            {creatorName && (
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 32,
+                  fontWeight: 800,
+                  color: "#F0EEF8",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                @{creatorName}
+              </div>
+            )}
+            <div
+              style={{
+                display: "flex",
+                fontSize: 18,
+                fontWeight: 700,
+                color: "#6A6A88",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+              }}
+            >
+              pokemonvgcteamreport.com
+            </div>
+          </div>
+        </div>
+      ),
+      {
+        ...sz,
+        headers: {
+          "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+        },
+      },
+    );
+  }
 
   return new ImageResponse(
     (

@@ -314,6 +314,9 @@ interface TeamOverviewProps {
   onReplacePokemon?: (index: number, newSpecies: string) => void;
   megaStates?: Record<number, boolean>;
   onToggleMega?: (index: number) => void;
+  /** Tiered publishing (VGC-142) — owner-only privacy toggles. */
+  privateFields?: string[];
+  onPrivateFieldsChange?: (fields: string[]) => void;
 }
 
 export function TeamOverview({
@@ -348,6 +351,8 @@ export function TeamOverview({
   onReplacePokemon,
   megaStates,
   onToggleMega,
+  privateFields,
+  onPrivateFieldsChange,
 }: TeamOverviewProps) {
   const { t } = useTranslation();
   const hasTournamentInfo = !!(teamName || tournamentName || placement || record);
@@ -656,6 +661,16 @@ export function TeamOverview({
         <UpdateTeamPanel onUpdatePaste={onUpdatePaste} />
       )}
 
+      {/* Visibility controls — owner only. Lets the creator hide spread
+          internals from public viewers (VGC-142). Server enforces the
+          redaction; this UI just persists the flags onto the share state. */}
+      {!isReadOnly && onPrivateFieldsChange && (
+        <PrivateFieldsPanel
+          value={privateFields ?? []}
+          onChange={onPrivateFieldsChange}
+        />
+      )}
+
       {/* Pokemon Grid */}
       <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-2.5 sm:gap-5 creator:gap-6 ${
         creatorMode
@@ -752,5 +767,77 @@ export function TeamOverview({
       </div>
 
     </div>
+  );
+}
+
+const PRIVATE_FIELD_OPTIONS: { value: string; label: string }[] = [
+  { value: "evs", label: "EV / SP spreads" },
+  { value: "ivs", label: "IVs" },
+  { value: "nature", label: "Nature" },
+  { value: "item", label: "Held items" },
+];
+
+function PrivateFieldsPanel({
+  value,
+  onChange,
+}: {
+  value: string[];
+  onChange: (fields: string[]) => void;
+}) {
+  const set = new Set(value);
+  const anyOn = value.length > 0;
+
+  const toggle = (field: string) => {
+    const next = new Set(set);
+    if (next.has(field)) next.delete(field);
+    else next.add(field);
+    onChange([...next]);
+  };
+
+  return (
+    <details className="group rounded-xl border border-border bg-surface px-4 py-3" open={anyOn}>
+      <summary className="cursor-pointer flex items-center gap-2 text-sm font-bold text-text-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary">
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0110 0v4" />
+        </svg>
+        <span>Hide fields from public viewers</span>
+        {anyOn && (
+          <span className="ml-auto text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">
+            {value.length} hidden
+          </span>
+        )}
+      </summary>
+      <div className="mt-3 space-y-2">
+        <p className="text-xs text-text-secondary leading-relaxed">
+          Anyone you haven&apos;t added as a collaborator will see the public shell — your 6 Pokemon and their moves. Selected fields are stripped server-side before the report is sent.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {PRIVATE_FIELD_OPTIONS.map((opt) => {
+            const on = set.has(opt.value);
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => toggle(opt.value)}
+                aria-pressed={on}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
+                  on
+                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30"
+                    : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                {on && (
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                  </svg>
+                )}
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </details>
   );
 }
