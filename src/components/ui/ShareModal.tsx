@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import posthog from "posthog-js";
 import { track } from "@vercel/analytics";
@@ -58,6 +58,9 @@ export function ShareModal({
   const [creatorError, setCreatorError] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
 
+  const modalRef = useRef<HTMLDivElement>(null);
+  const titleId = "share-modal-title";
+
   const hasTags = !!(tags?.regulation || tags?.eventType || (tags?.archetype && tags.archetype.length > 0));
   const hasCreator = !!creatorName?.trim();
 
@@ -93,10 +96,44 @@ export function ShareModal({
     onTogglePublic(v);
   };
 
+  // Focus trap + Escape handler
   useEffect(() => {
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    const focusableSelectors =
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    // Focus first focusable element on mount
+    const firstFocusable = modal.querySelector<HTMLElement>(focusableSelectors);
+    firstFocusable?.focus();
+
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      const focusable = Array.from(modal.querySelectorAll<HTMLElement>(focusableSelectors));
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
+
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
@@ -148,7 +185,13 @@ export function ShareModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-surface border border-border rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full sm:mx-4 animate-[sheet-up_0.3s_ease-out] sm:animate-fade-in overflow-hidden max-h-[90vh] overflow-y-auto">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-surface border border-border rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full sm:mx-4 animate-[sheet-up_0.3s_ease-out] sm:animate-fade-in overflow-hidden max-h-[90vh] overflow-y-auto"
+      >
         {/* Drag handle (mobile only) */}
         <div className="sm:hidden flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-border" />
@@ -157,13 +200,13 @@ export function ShareModal({
         {/* Header */}
         <div className="px-6 pt-3 sm:pt-6 pb-4">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-lg font-extrabold text-text-primary tracking-tight">
+            <h3 id={titleId} className="text-lg font-extrabold text-text-primary tracking-tight">
               {viewerMode ? "Share this report" : "Team shared!"}
             </h3>
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Close"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -206,7 +249,7 @@ export function ShareModal({
               <button
                 type="button"
                 onClick={() => setJustPublished(false)}
-                className="w-6 h-6 flex items-center justify-center rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer flex-shrink-0"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer flex-shrink-0"
                 aria-label="Dismiss thank you message"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -391,6 +434,8 @@ export function ShareModal({
         <div className="px-6 py-4 border-t border-border">
           <button
             type="button"
+            role="switch"
+            aria-checked={isPublic}
             onClick={() => isOwner && !hasWarnings && handleTogglePublic(!isPublic)}
             disabled={!isOwner || (hasWarnings && !isPublic)}
             className={`flex items-center gap-3 w-full text-left group ${isOwner && !(hasWarnings && !isPublic) ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
@@ -491,6 +536,8 @@ export function ShareModal({
         <div className="px-6 py-3 border-t border-border">
           <button
             type="button"
+            role="switch"
+            aria-checked={allowComments}
             onClick={() => onToggleComments(!allowComments)}
             className="flex items-center gap-3 w-full text-left group cursor-pointer"
           >
