@@ -48,14 +48,65 @@ import type { ExportMode } from "@/components/ui/PdfExport";
 import { DisplayTogglePill } from "@/components/display/DisplayTogglePill";
 import { useGlobalDisplayPrefs } from "@/lib/hooks/useGlobalDisplayPrefs";
 import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
+import { FAQPageSchema, HowToSchema } from "@/components/seo/JsonLd";
+
+const VGC_FAQ_ITEMS = [
+  {
+    question: "How do I share a VGC team?",
+    answer:
+      "Paste your Showdown format team into VGC Team Report, fill in your tournament details and matchup plans, then click Share to get a permanent link you can share anywhere.",
+  },
+  {
+    question: "What is Pokemon Champions format?",
+    answer:
+      "Pokemon Champions is the official 2026 VGC format featuring Mega Evolutions and a 159-Pokemon roster. VGC Team Report fully supports Champions regulation (Reg M-A) teams.",
+  },
+  {
+    question: "Is VGC Team Report free?",
+    answer:
+      "Yes, VGC Team Report is completely free to use. Import your team via Showdown paste, build a full team report with notes and matchup plans, and share the link — no payment required.",
+  },
+  {
+    question: "Can I import a team from Showdown?",
+    answer:
+      "Yes. Copy your team in Showdown export format and paste it directly into VGC Team Report. The tool automatically parses species, items, abilities, EVs, and moves.",
+  },
+];
+
+const VGC_HOW_TO_STEPS = [
+  {
+    name: "Paste your Showdown team",
+    text: "Copy your team from Pokemon Showdown in export format and paste it into the VGC Team Report input field.",
+  },
+  {
+    name: "Add team metadata",
+    text: "Enter your tournament name, placement, record, and creator name so viewers understand the context of the report.",
+  },
+  {
+    name: "Write notes and matchup plans",
+    text: "Use the per-Pokemon notes field to explain each team member's role. Add matchup plans for key opponents to walk viewers through your decision-making.",
+  },
+  {
+    name: "Add damage calcs (optional)",
+    text: "Paste damage calculation results to support your EV spreads and move choices.",
+  },
+  {
+    name: "Share your report",
+    text: "Click Share to generate a permanent public link. Share it on social media, Discord, or at tournaments.",
+  },
+];
 
 export default function Home() {
   return (
-    <I18nProvider>
-      <Suspense>
-        <HomeContent />
-      </Suspense>
-    </I18nProvider>
+    <>
+      <FAQPageSchema items={VGC_FAQ_ITEMS} />
+      <HowToSchema steps={VGC_HOW_TO_STEPS} />
+      <I18nProvider>
+        <Suspense>
+          <HomeContent />
+        </Suspense>
+      </I18nProvider>
+    </>
   );
 }
 

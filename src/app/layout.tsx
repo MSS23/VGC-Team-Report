@@ -1,18 +1,24 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
+import dynamic from "next/dynamic";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
 import { ChunkErrorReloader } from "@/components/ui/ChunkErrorReloader";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import { ConnectivityStatus } from "@/components/ui/ConnectivityStatus";
-import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ClarityProvider } from "@/components/providers/ClarityProvider";
 import { CookieBanner } from "@/components/providers/CookieBanner";
 import { ConsentGate } from "@/components/providers/ConsentGate";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { JsonLd, WebSiteSchema, OrganizationSchema } from "@/components/seo/JsonLd";
 import { PersistentNavbar } from "@/components/layout/PersistentNavbar";
 import "./globals.css";
+
+// Defer the ~55KB PostHog SDK from the initial bundle — loaded client-side only
+const PostHogProvider = dynamic(
+  () => import("@/components/providers/PostHogProvider").then((m) => ({ default: m.PostHogProvider })),
+  { ssr: false }
+);
 
 const sora = Sora({
   variable: "--font-sora",
@@ -41,7 +47,7 @@ export const metadata: Metadata = {
     default: "VGC Team Report",
     template: "%s | VGC Team Report",
   },
-  description: "The home for competitive Pokemon VGC team reports — now supporting Pokemon Champions and Mega Evolution. Build detailed team breakdowns with notes, matchup plans, and damage calcs — then share them with the community or present at tournaments.",
+  description: "Free VGC team builder and report tool — import via Showdown paste, add matchup plans and damage calcs, and share with the community. Supports Pokemon Champions format with Mega Evolution. Build, share, and explore competitive Pokemon team reports.",
   metadataBase: new URL("https://pokemonvgcteamreport.com"),
   openGraph: {
     title: "VGC Team Report — Build, Share & Discover Pokemon Teams",
@@ -120,6 +126,8 @@ export default function RootLayout({
             browserRequirements: "Requires a modern web browser",
           }}
         />
+        <WebSiteSchema />
+        <OrganizationSchema />
         <PostHogProvider>
           <PersistentNavbar />
           <div id="main-content">{children}</div>
