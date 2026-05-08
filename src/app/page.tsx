@@ -979,7 +979,7 @@ function HomeContent() {
         />
       )}
       {versionDiff && diffChanges.length === 0 && (
-        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in px-4 max-w-[calc(100vw-2rem)]">
+        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in px-4 w-full max-w-[min(calc(100vw-1rem),28rem)]">
           <div
             role="status"
             aria-live="polite"
