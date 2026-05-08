@@ -17,6 +17,16 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const cursor = url.searchParams.get("cursor");
     const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") ?? "12", 10) || 12, 1), 50);
+
+    // Validate numeric cursor early for sorts that use parseInt — prevents NaN → 500
+    const sortParamRaw = url.searchParams.get("sort") ?? "popular";
+    const sortForCursorCheck = ["newest", "updated", "views"].includes(sortParamRaw) ? sortParamRaw : "popular";
+    if (cursor !== null && (sortForCursorCheck === "popular" || sortForCursorCheck === "views")) {
+      const parsedCursor = parseInt(cursor, 10);
+      if (isNaN(parsedCursor)) {
+        return NextResponse.json({ error: "Invalid cursor" }, { status: 400 });
+      }
+    }
     const q = url.searchParams.get("q")?.trim() ?? "";
     const sortParam = url.searchParams.get("sort") ?? "popular";
     const sort = ["newest", "updated", "views"].includes(sortParam) ? sortParam : "popular";
