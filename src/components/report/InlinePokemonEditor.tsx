@@ -57,9 +57,8 @@ function searchSpecies(query: string, currentName: string): SpeciesSuggestion[] 
     const lower = s.name.toLowerCase();
     if (lower.startsWith(q)) prefix.push(s);
     else if (lower.includes(q)) contains.push(s);
-    if (prefix.length >= 16) break;
   }
-  return [...prefix, ...contains].slice(0, 8);
+  return [...prefix, ...contains].slice(0, 20);
 }
 
 const TYPE_BG: Record<string, string> = {

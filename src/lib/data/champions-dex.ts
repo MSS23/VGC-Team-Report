@@ -1,8 +1,14 @@
+import { CHAMPIONS_REG_MA_MEGAS } from "@/lib/data/mega-pokemon";
+
 /**
  * Pokemon available in the Champions format (Regulation M-A).
  * Source: https://www.serebii.net/pokemonchampions/pokemon.shtml
  *
  * Keys are lowercase-hyphenated species names matching POKEMON_DATA keys.
+ *
+ * The Mega section is derived from CHAMPIONS_REG_MA_MEGAS (mega-pokemon.ts)
+ * rather than maintained as a manual mirror — this ensures the two sources
+ * can never drift out of sync.
  */
 export const CHAMPIONS_DEX = new Set<string>([
   // Gen 1
@@ -182,23 +188,10 @@ export const CHAMPIONS_DEX = new Set<string>([
   "archaludon",
   "hydrapple",
 
-  // Mega Evolutions — the 59 Megas legal in Reg M-A. Sourced from the
-  // canonical CHAMPIONS_REG_MA_MEGAS set in mega-pokemon.ts; updates there
-  // should be mirrored here. Notable absences: Salamence, Metagross, Mawile
-  // — all have Megas, none are Reg M-A legal.
-  "venusaur-mega", "charizard-mega-x", "charizard-mega-y", "blastoise-mega",
-  "beedrill-mega", "pidgeot-mega", "clefable-mega", "alakazam-mega",
-  "victreebel-mega", "slowbro-mega", "gengar-mega", "kangaskhan-mega",
-  "starmie-mega", "pinsir-mega", "gyarados-mega", "aerodactyl-mega",
-  "dragonite-mega", "meganium-mega", "feraligatr-mega", "ampharos-mega",
-  "steelix-mega", "scizor-mega", "heracross-mega", "skarmory-mega",
-  "houndoom-mega", "tyranitar-mega", "gardevoir-mega", "sableye-mega",
-  "aggron-mega", "medicham-mega", "manectric-mega", "sharpedo-mega",
-  "camerupt-mega", "altaria-mega", "banette-mega", "chimecho-mega",
-  "absol-mega", "glalie-mega", "lopunny-mega", "garchomp-mega",
-  "lucario-mega", "abomasnow-mega", "gallade-mega", "froslass-mega",
-  "emboar-mega", "excadrill-mega", "audino-mega", "chandelure-mega",
-  "golurk-mega", "chesnaught-mega", "delphox-mega", "greninja-mega",
-  "floette-mega", "meowstic-mega", "hawlucha-mega", "crabominable-mega",
-  "drampa-mega", "scovillain-mega", "glimmora-mega",
+  // Mega Evolutions — derived from CHAMPIONS_REG_MA_MEGAS (mega-pokemon.ts)
+  // so this set never drifts from the canonical legality source.
+  // Notable absences: Salamence, Metagross, Mawile — all have Megas but
+  // none are Reg M-A legal, and they are correctly absent from
+  // CHAMPIONS_REG_MA_MEGAS.
+  ...CHAMPIONS_REG_MA_MEGAS,
 ]);
