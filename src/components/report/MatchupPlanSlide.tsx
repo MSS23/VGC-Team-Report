@@ -13,7 +13,7 @@ import { ItemIcon } from "./ItemIcon";
 import { PokemonDropdown } from "./PokemonDropdown";
 import { Button } from "@/components/ui/Button";
 import { FieldDiffHighlight } from "./TeamReport";
-import { useIsPrintMode } from "@/components/ui/PdfExport";
+import { useIsPrintMode } from "@/components/ui/print-context";
 import { GAME_COLORS, getReplayInfo, ReplayIcon } from "@/lib/utils/game-plan-helpers";
 import { useTranslation } from "@/lib/i18n";
 import { hapticLight } from "@/lib/utils/haptics";

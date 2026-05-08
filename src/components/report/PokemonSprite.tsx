@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { getGenThemedSpriteUrls, isGenThemePixelated } from "@/lib/utils/sprite-url";
 import { useTheme } from "@/hooks/useTheme";
-import { useIsPrintMode } from "@/components/ui/PdfExport";
+import { useIsPrintMode } from "@/components/ui/print-context";
 
 interface PokemonSpriteProps {
   species: string;

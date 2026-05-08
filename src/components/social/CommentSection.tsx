@@ -164,10 +164,22 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-alt/50 transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-text-secondary"
+            aria-hidden="true"
+          >
             <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
           </svg>
           <span className="text-sm font-bold text-text-primary">Comments</span>
@@ -187,6 +199,7 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
           strokeLinecap="round"
           strokeLinejoin="round"
           className={`text-text-tertiary transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+          aria-hidden="true"
         >
           <polyline points="6 9 12 15 18 9" />
         </svg>
@@ -197,7 +210,12 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
           {/* Input form */}
           <div className="px-5 py-4 space-y-3 bg-surface-alt/30">
             <div className="flex gap-2">
+              {/* Label visually hidden but available to screen readers */}
+              <label htmlFor="comment-display-name" className="sr-only">
+                Display name (optional)
+              </label>
               <input
+                id="comment-display-name"
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -207,7 +225,11 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
               />
             </div>
             <div className="relative">
+              <label htmlFor="comment-body" className="sr-only">
+                Comment
+              </label>
               <textarea
+                id="comment-body"
                 value={body}
                 onChange={(e) => setBody(e.target.value.slice(0, 500))}
                 placeholder="Share your thoughts on this team..."
@@ -228,17 +250,30 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
               {submitting ? "Posting..." : "Post Comment"}
             </button>
             {postSuccess && (
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-fade-in">Comment posted!</span>
+              <span
+                role="status"
+                aria-live="polite"
+                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-fade-in"
+              >
+                Comment posted!
+              </span>
             )}
             {postError && (
-              <span className="text-xs font-bold text-danger animate-fade-in">{postError}</span>
+              <span
+                role="alert"
+                className="text-xs font-bold text-danger animate-fade-in"
+              >
+                {postError}
+              </span>
             )}
           </div>
 
           {/* Comment list */}
           <div className="divide-y divide-border">
             {loading ? (
-              <div className="px-5 py-6 text-center text-xs text-text-tertiary">Loading...</div>
+              <div className="px-5 py-6 text-center text-xs text-text-tertiary">
+                Loading...
+              </div>
             ) : comments.length === 0 ? (
               <div className="px-5 py-6 text-center text-xs text-text-tertiary">
                 No comments yet. Be the first!
@@ -248,14 +283,25 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
                 <div key={comment.id} className="px-5 py-3 group">
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-text-primary">{comment.displayName}</span>
-                      <span className="text-[10px] text-text-tertiary">{relativeTime(comment.createdAt)}</span>
+                      <span className="text-xs font-bold text-text-primary">
+                        {comment.displayName}
+                      </span>
+                      <span className="text-[10px] text-text-tertiary">
+                        {relativeTime(comment.createdAt)}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    {/* Action buttons are visually hidden until hover; excluded from
+                        tab order and AT tree while hidden to avoid confusing navigation */}
+                    <div
+                      className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all"
+                      aria-hidden="true"
+                    >
                       {canDelete(comment) && (
                         <button
                           type="button"
                           onClick={() => handleDelete(comment.id)}
+                          tabIndex={-1}
+                          aria-label={`Delete comment by ${comment.displayName}`}
                           className="text-[10px] text-text-tertiary hover:text-danger cursor-pointer"
                         >
                           Delete
@@ -265,15 +311,19 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
                         <button
                           type="button"
                           onClick={() => handleFlag(comment.id)}
-                          className="text-[10px] text-text-tertiary hover:text-warning cursor-pointer"
+                          tabIndex={-1}
+                          aria-label={`Report comment by ${comment.displayName}`}
                           title="Report this comment"
+                          className="text-[10px] text-text-tertiary hover:text-warning cursor-pointer"
                         >
                           Flag
                         </button>
                       )}
                     </div>
                   </div>
-                  <p className="text-sm text-text-secondary leading-relaxed">{comment.body}</p>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    {comment.body}
+                  </p>
                 </div>
               ))
             )}

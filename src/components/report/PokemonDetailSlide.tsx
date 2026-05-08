@@ -22,7 +22,7 @@ import {
   CHAMPIONS_MAX_SP_PER_STAT,
 } from "@/lib/analysis/stat-calculator";
 import { FieldDiffHighlight } from "./TeamReport";
-import { useIsPrintMode } from "@/components/ui/PdfExport";
+import { useIsPrintMode } from "@/components/ui/print-context";
 
 interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;

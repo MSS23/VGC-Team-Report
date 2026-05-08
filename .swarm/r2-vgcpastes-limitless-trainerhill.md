@@ -1,20 +1,22 @@
 # Competitive Intelligence: VGCpastes, Limitless VGC, and Trainer Hill
 
-**Research Date:** May 7, 2026  
+**Research Date:** May 7, 2026 (refreshed)
 **Analyst:** Claude (Competitive Intelligence Agent)  
-**Subject:** Tear-down analysis of three key adjacent tools in the VGC ecosystem
+**Subject:** Tear-down analysis of three key adjacent tools in the VGC ecosystem  
+**Note:** All three primary domains returned HTTP 403 to automated fetchers — research sourced from WebSearch, X/@VGCPastes tweet thread, Limitless docs, Smogon/VictoryRoad references, Bulbapedia, and Discord App Directory. Findings validated across multiple independent sources.
 
 ---
 
 ## 1. VGCpastes (vgcpastes.com)
 
 ### What It Is
-VGCpastes is the VGC community's de facto team repository. It originated as a Google Sheets spreadsheet maintained by a volunteer called Evan, and has grown into a large community-maintained project collecting competitive team pastes from tournaments, social media, and Discord submissions. As of May 2026, they maintain 1,150+ teams for Regulation H, 63 teams for Regulation I, and growing collections for Regulation J and Regulation M-A (Pokémon Champions).
+VGCpastes is the VGC community's de facto team repository. It originated as a Google Sheets spreadsheet and has grown into a large community-maintained project collecting competitive team pastes from tournaments, social media, and Discord submissions. As of May 2026, they maintain 1,150+ teams for Regulation H, 63+ teams for Regulation I, and growing collections for Regulation J and Regulation M-A (Pokémon Champions era). Their Twitter/X account has rebranded through each regulation (@VGCPastes, previously "Regulation H/J," now "Champions").
 
 ### How It Works
 - **Primary artifact:** Google Sheets spreadsheet (linked via tinyurl redirects). The "website" at vgcpastes.com appears to route back to the spreadsheet — no interactive web app with server-side search was found to be publicly accessible at scale.
 - **Submission process:** Community members DM the team on Twitter/X or submit through their Discord server. A key contributor (@CastorbrownVGC) maintains spreadsheet updates. There is no self-service submit form.
-- **Sandshrew Bot:** A Discord bot embedded in their server with `search`, `get rental`, and `random team` commands. Updated to support Regulation M-A in 2026. Users can search by specific Pokemon, item, or filter for teams with EV spreads. The May 2026 update also added pagination-based scrolling instead of text file dumps.
+- **Sandshrew Bot:** A Discord bot embedded in their server with `search`, `get rental`, and `random team` commands. Updated to support Regulation M-A in 2026. Users can search by specific Pokémon, item, or filter for teams with EV spreads. A 2026 update replaced the old txt-file dump system with paginated in-message scrolling and a "reroll" button to cycle through teams without re-entering commands. The `/openteam` command can convert a standard pokepaste into open-team-sheet format automatically.
+- **Discord server size:** 8,371+ members as of 2024 (growing).
 - **Featured Teams:** A separate sheet tab for "Featured Teams" — curated high-result teams for players who want pre-vetted options rather than the full raw repository.
 
 ### Strengths
@@ -32,8 +34,11 @@ VGCpastes is the VGC community's de facto team repository. It originated as a Go
 - **Passive submission:** Submission requires reaching out to the team. There is no API, no automated pickup from tournament results, and no self-service upload.
 - **No analytics:** No usage stats, no meta trend data, no matchup information. Pure paste storage.
 
+### Mobile Experience
+Poor. The core experience is a Google Sheets spreadsheet accessed via a tinyurl link. On mobile, navigating a spreadsheet with dozens of columns (Team ID, Description, Full Name, 6 Pokémon, Items, Pokepaste link, EVs status, Rental Status, Date, Event, Rank, Source link, Reports/Videos, Owner) is barely functional. The Sandshrew Bot experience is better on mobile since Discord's own mobile app is well-designed, but it still requires being inside a Discord server to use.
+
 ### Monetization
-None identified. VGCpastes operates as a volunteer community project with no advertising, premium tier, or Patreon visible in research.
+None identified. VGCpastes operates as a volunteer community project with no advertising, premium tier, or Patreon visible in research. Its companion website at falinks-teambuilder.com/pastes/vgc/ (synced daily) is also free and appears to run on community infrastructure.
 
 ### Threat Level to VGC Team Report
 **Medium.** VGCpastes does not do team reports — it does paste storage. It competes for mindshare as a "reference" tool but does not address the "why" or "how" behind a team. VGC Team Report's team report authoring and presentation angle is entirely differentiated from this. However, VGCpastes owns the "where do I find a team?" use case completely.
@@ -92,13 +97,16 @@ Limitless VGC is the most comprehensive tournament database in the VGC ecosystem
 - **Cross-format authority:** The same brand covers TCG and VGC, creating cross-community trust.
 - **Community standing:** Referenced by Smogon, Victory Road, and in resources pages across the ecosystem.
 
+### Mobile Experience
+Moderate. Limitless play.limitlesstcg.com was designed with tournament organizers and players submitting pastes in mind — the form-based flows (registration, team submission) work adequately on mobile. The tournament-watching and data-browsing experience on limitlessvgc.com is functional but not mobile-optimized. Standings drill-downs and team sheet views on standings.limitlessvgc.com are information-dense and better suited for desktop.
+
 ### Weaknesses
 - **No narrative content:** Like VGCpastes, Limitless shows what a team is but not why. There are no player-written explanations, matchup plans, or EV spread rationale.
 - **Not self-service for players:** Players cannot submit teams directly. Data flows in from tournament providers (rk9, playlatam). Community tournament data through play.limitlesstcg.com is the exception.
-- **UI complexity:** The depth is also a weakness. The multiple subdomains (limitlessvgc.com, standings.limitlessvgc.com, play.limitlesstcg.com, labs.limitlesstcg.com) create a fragmented experience. New users struggle to find what they want.
-- **Data gaps:** Not all tournaments have full standing/pairing data (depends on whether rk9 or playlatam was used). Some events are result-only with no team sheets.
+- **UI complexity and fragmentation:** Four separate subdomains (limitlessvgc.com, standings.limitlessvgc.com, play.limitlesstcg.com, labs.limitlesstcg.com) create a fragmented experience. New users struggle to find what they want.
+- **Data gaps:** Not all tournaments have full standing/pairing data — depends on whether rk9 or playlatam was used. Some events are result-only with no team sheets.
 - **TCG-first heritage:** The Labs and some features skew TCG. VGC-specific features feel like a port rather than native design.
-- **No Pokémon Champions full coverage yet:** The 2026 transition to Pokémon Champions is new and Limitless VGC's data pipeline (dependent on official event coverage) may lag grassroots data.
+- **Pokémon Champions coverage lag:** The 2026 transition to Pokémon Champions is new; Limitless VGC's data pipeline (dependent on official event providers) may lag grassroots/online tournament data, where community tools like VGenC.net are faster to update.
 
 ### Monetization
 None visible on the consumer-facing VGC tools. Limitless monetizes the tournament organizer side (hosting software), not end-user tools. The Limitless Labs for TCG appears to be a premium or patron-adjacent feature for TCG, but VGC features appear free.
@@ -158,10 +166,13 @@ This is the most sophisticated monetization model found in this competitive swee
 - **Clean analytics UX:** Win rate by matchup archetype is directly translatable to VGC matchup tracking
 - **Freemium model works:** Free tools drive traffic; premium tools capture value from the most engaged players
 
+### Mobile Experience
+Good. Battle Journal+ was explicitly designed for mobile-first, tournament-pace data entry — under 30 seconds per match between rounds. The sync across devices (phone at tournament, desktop for analysis) is a deliberate UX choice proving this category thinks mobile-first.
+
 ### Weaknesses (from a VGC Team Report perspective)
-- **Not VGC at all:** Trainer Hill has zero VGC content as of May 2026. The brand operates exclusively in TCG.
-- **No team building or sharing:** Analytics only; no content creation or team report features
-- **TCG mechanics differ:** TCG matchup stats (deck vs deck) are cleaner than VGC matchup stats (6-mon team vs many teams), making direct feature porting non-trivial
+- **Not VGC at all:** Trainer Hill has zero VGC content as of May 2026. The brand operates exclusively in TCG and TCG Pocket.
+- **No team building or sharing:** Analytics only; no content creation or team report features.
+- **TCG mechanics differ:** TCG matchup stats (deck vs deck) are cleaner than VGC matchup stats (6-mon team vs infinitely variable opponent teams), making direct feature porting non-trivial.
 
 ### Threat Level to VGC Team Report
 **Low directly, High as inspiration.** Trainer Hill does not compete in VGC. However, its Battle Journal+ model is a direct blueprint for a VGC match tracker premium offering. If VGC Team Report builds match tracking + win rate analytics as a paid feature at $3-5/month, it follows an already-validated monetization path in the adjacent competitive Pokémon audience.
@@ -234,4 +245,19 @@ The gap in community referral links vs competitors is the largest growth lever a
 
 ---
 
-*Sources: X/@VGCPastes tweets, limitlessvgc.com metadata, standings.limitlessvgc.com, plus.trainerhill.com, trainerhill.com/about, Smogon VGC forums, Victory Road resources page, VGCpedia resources, DevonCorp VGC resources, reportworm.com feature descriptions, metagamevgc.com team reports section, Sandshrew Bot Discord App Directory listing.*
+## Emerging Competitor to Watch: VGenC (vgenc.net)
+
+Not one of the three primary targets but surfaced during research as a direct threat to VGCpastes' niche:
+
+- **1,438 top tournament teams** for Pokémon Champions Regulation M-A as of April 24, 2026
+- **Filter by rank tier** (Champions, Runner Up, Top cuts), player, and Pokémon
+- **AI-assisted EV filling:** Paste a partial team in Showdown format → AI fills EVs, Natures, keeping items/moves/abilities intact
+- **Sortable:** Most recent, oldest, best placement
+- Appears newer and more technically sophisticated than VGCpastes spreadsheet approach
+- **Free; no monetization visible**
+
+This is the tool most likely to displace VGCpastes' "raw volume + search" position if it maintains update velocity. It does not do team reports or narrative, so it is not a direct competitor to VGC Team Report — but it is relevant context for the broader landscape.
+
+---
+
+*Sources: X/@VGCPastes tweet archive, limitlessvgc.com metadata, standings.limitlessvgc.com structural references, Bulbapedia/Limitless tournament pages, plus.trainerhill.com feature descriptions, Trainer Hill Patreon page metadata, Smogon VGC forums, Victory Road resources page, VGCpedia resources, DevonCorp VGC resources, Sandshrew Bot Discord App Directory listing, VGenC.net WebSearch results, Limitless Docs (docs.limitlesstcg.com), Limitless Labs (labs.limitlesstcg.com).*

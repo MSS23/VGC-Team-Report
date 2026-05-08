@@ -9,6 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: BASE, changeFrequency: "weekly", priority: 1.0 },
     { url: `${BASE}/explore`, changeFrequency: "daily", priority: 0.9 },
     { url: `${BASE}/champions`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${BASE}/faq`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1 },
     ...MEGA_POKEMON_LIST.map((m) => ({

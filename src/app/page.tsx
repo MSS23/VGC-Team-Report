@@ -889,10 +889,20 @@ function HomeContent() {
             <button
               type="button"
               onClick={dismissRestoreBanner}
-              className="w-6 h-6 flex items-center justify-center rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer flex-shrink-0"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer flex-shrink-0"
               aria-label="Dismiss welcome back banner"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -1485,10 +1495,22 @@ function HomeContent() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setShowEditUrl(false)}
-                className="text-text-tertiary hover:text-text-primary transition-colors flex-shrink-0 cursor-pointer"
+                aria-label="Dismiss edit link toast"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-tertiary hover:text-text-primary transition-colors flex-shrink-0 cursor-pointer"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -1525,11 +1547,31 @@ function HomeContent() {
 
     {/* Export theme picker modal for tournament exports */}
     {showExportThemePicker && (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowExportThemePicker(false)}>
-        <div className="bg-surface border border-border rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 space-y-5" onClick={(e) => e.stopPropagation()}>
+      /* eslint-disable-next-line jsx-a11y/no-static-element-interactions */
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        onClick={() => setShowExportThemePicker(false)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setShowExportThemePicker(false);
+        }}
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="export-theme-modal-title"
+          className="bg-surface border border-border rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 space-y-5"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="text-center">
-            <h3 className="text-lg font-extrabold text-text-primary">Export Theme</h3>
-            <p className="text-xs text-text-tertiary mt-1">Choose how your team sheet looks</p>
+            <h3
+              id="export-theme-modal-title"
+              className="text-lg font-extrabold text-text-primary"
+            >
+              Export Theme
+            </h3>
+            <p className="text-xs text-text-tertiary mt-1">
+              Choose how your team sheet looks
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -1587,7 +1629,10 @@ function HomeContent() {
 
     {/* PokéPaste creation error toast */}
     {pokepasteError && (
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[110] px-4 py-3 rounded-xl bg-danger text-white text-sm font-bold shadow-2xl animate-fade-in max-w-sm">
+      <div
+        role="alert"
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[110] px-4 py-3 rounded-xl bg-danger text-white text-sm font-bold shadow-2xl animate-fade-in max-w-sm"
+      >
         PokéPaste error: {pokepasteError}
         <button
           type="button"

@@ -1,159 +1,139 @@
 # Code Review — Last 20 Commits (main)
 
 **Date:** 2026-05-07  
-**Range:** `main~20..main` (8ab0ce9 → 1cde01a)  
+**Range:** `main~20..main` (c247fc1 → e5b4bfa)  
 **Reviewer:** Claude (automated audit)
 
 ---
 
 ## Commit Overview
 
-| SHA | Message | Rating |
-|-----|---------|--------|
-| 1cde01a | docs: changelog v5.7 | Clean |
-| 8391625 | Claude dev PR (#7) — VGC-100/106/111/135 | Clean |
-| 5cab66b | fix(legality): Rotom forms + multi Mega Stones | Clean |
-| 0f8dea5 | feat: meta variant duplicates in speed tiers | Clean |
-| 873fc41 | feat: collaborators + popular reports rail (#5) | Clean |
-| c44ff25 | fix: 13 Megas un-gated from Coming Soon | Good (follow-up probe needed) |
-| ef1d7fb | fix: Mega landing 404 via lookupPokemon | Good |
-| 2b21c39 | fix: Featured Teams query bug + filler removal | Good |
-| 221eb9a | fix: honest UX for sprite-less Megas | Good |
-| 5c44626 | fix: graceful sprite fallback to base form | Has issues (see below) |
-| c758c64 | fix: correct Mega abilities (18 wrong) | Concerning — 18 bad abilities shipped |
-| d396dcb | fix: Champions hero copy | Clean |
-| 03eba0b | fix: Champions page shows only Reg M-A Megas | Good refactor |
-| 221da19 | revert: remove OG sprite card from unfurls | Documented dead-end |
-| 560c206 | feat: in-line Pokemon replace via search picker | Good; minor bugs noted |
-| f317d89 | fix: remove duplicate PageNavbar from /compare | Hot-fix for refactor miss |
-| ce5b44e | chore: drop darkMode props on PasteInput | Cleanup |
-| f8617f1 | refactor: consolidate PageNavbar → PersistentNavbar | Good architecture |
-| a13b91a | fix: restore darkMode props on PasteInput | Revert of broken intermediate state |
-| 8ab0ce9 | docs: changelog v5.6 | Clean |
+| SHA | Message | Files Changed | Rating |
+|-----|---------|--------------|--------|
+| e5b4bfa | docs(changelog): v5.9 entry | 1 | Clean |
+| ecf9e00 | fix(mega): toggle requires Reg M-A AND Mega Stone | 1 | Clean |
+| 3ec0e3d | fix(pokemon-card): always show flip toggle | 1 | Clean |
+| e514a8e | fix(analysis): suppress Megas outside Reg M-A | 1 | Clean |
+| a2a8cc2 | fix(explore): popular/views feed pagination + fork credits | 3 | Clean |
+| 50f3426 | docs(changelog): v5.8 entry | 1 | Clean |
+| f701a5c | fix(champions-dex): align base species with Serebii | 1 | Clean |
+| 46662e0 | VGC-140/141/142: share viewing + duplicate + team card + publishing | 11 | Large, reviewed |
+| 7dd30b4 | VGC-143: rental code filter + Rental badge | 3 | Clean |
+| cd8984d | VGC-146: Zod schema validation on share/cache reads | 2 | Good |
+| fa2663b | VGC-144: derive CHAMPIONS_DEX megas from canonical list | 1 | Clean |
+| 4bb854b | VGC-145: delete dead components/lib/exports | 9 | Clean |
+| 506d79b | swarm: nightly improvements 07-05-26 (#14) | 41 | Large, see below |
+| ac12688 | Merge: integrate VGC-69/-75/-95/-100/-106/-111/-135/-138/-139 | 9 | Merge |
+| ddaca39 | feat(report): SP-only display in Reg M-A | ~10 | Clean |
+| 6b8176a | VGC-37: OTS sheet + QR code + PNG download (#9) | 3 | Reviewed |
+| bdc6637 | VGC-75: Mega vs base stat delta strip (#10) | ~5 | Clean |
+| bdc6637 | VGC-69: one-click try — sample report on landing (#8) | ~5 | Clean |
+| c247fc1 | VGC-95: Cypress E2E tests for explore + champions (#11) | 2 | Good |
 
 ---
 
 ## Findings
 
-### 1. Churn Hotspot: Champions/Mega Data Layer (HIGH SEVERITY)
+### 1. Known Failing Tests Never Fixed — Acknowledged Tech Debt (HIGH)
 
-**Files:** `src/lib/data/mega-pokemon.ts`, `src/lib/data/champions-dex.ts`, `src/lib/validation/champions-legality.ts`, `src/app/champions/`
+**Commit:** `46662e0` (VGC-140/141/142)  
+**File:** `src/hooks/__tests__/useExploreUrlSync.test.ts`
 
-**9 of 20 commits** touched this cluster. The root cause is a bootstrapping anti-pattern:
+The commit message explicitly notes:
+> "Existing 3 useExploreUrlSync test failures are pre-existing (default sort changed to 'popular' in fc8b08d era; tests were never updated) and reproduce on origin/main."
 
-1. `03eba0b` — Hardcoded 8-entry list discovered to contain 3 illegal Megas (Salamence, Metagross, Mawile). Replaced with derived list from `getRegMAMegas()`. Good fix, but should have been data-driven from day one.
-2. `c758c64` — **18 of 29 newly-added Mega abilities were wrong** because the bulk-seeding in `03eba0b` pulled abilities from `@pkmn/dex` base-form fallbacks instead of the actual Pokemon Champions canon. Wrong abilities shipped and were visible on live landing pages until this commit corrected them.
-3. `ef1d7fb` — 404s on 45 landing pages because `POKEMON_DATA[dataKey]` was used directly instead of `lookupPokemon()`. The `@pkmn/dex` fallback path built elsewhere was not wired in here.
-4. `c44ff25` — Sprite probe logic was initially too strict (checked only 2 of 4 CDN paths), silently gating 13 Megas as "Coming Soon" when they had valid sprites.
+Confirmed: `DEFAULTS.sort` in `useExploreUrlSync.ts` is `"popular"` (line 38), but the test at line 8 asserts `toBe("newest")`. Across 6 test cases, all "default sort" assertions are stale. Beyond the sort mismatch, running any tests with the project's Jest configuration fails entirely because test files use `vitest` imports (`import { describe, it, expect } from "vitest"`) while the runner invoked by most tooling is Jest — `vitest` is not installed in `node_modules` (only listed as a devDependency). This means `npm test` silently reports 14 failed suites with zero tests run — all green status checks are vacuous.
 
-**Pattern:** Each commit in this cluster is a fire-drill fix for the previous commit's oversight. The underlying problem is that `CHAMPIONS_DEX` (a `Set<string>` in `champions-dex.ts`) must be kept manually in sync with `CHAMPIONS_REG_MA_MEGAS` (a second `Set<string>` in `mega-pokemon.ts`). A comment at line 187 of `champions-dex.ts` says "should be mirrored here" — a manual sync requirement. If these drift, the speed-tier meta comparisons will show different Pokemon than the Champions index.
+**Impact:** CI test gate is broken across the entire test suite. Any commit that breaks runtime behaviour would not be caught.
 
-**Recommended ticket:** Derive `CHAMPIONS_DEX` Mega entries programmatically from `getRegMAMegas()` at module init time so they cannot diverge. Eliminate the manual mirror comment.
-
----
-
-### 2. Reverted OG Card — Documented Dead-End but No Alternative Path (MEDIUM)
-
-**Commit:** `221da19`
-
-The OG image card for `/s/{id}` was attempted twice (via `opengraph-image.tsx` convention, then via `/api/team-graphic` wiring) and reverted both times. The comment block in `src/app/s/[id]/page.tsx` lines 85–94 now documents "this is the SECOND time we have tried" and explains the constraint: edge runtime + Showdown sprite CDN dependency + unfurler timeout.
-
-**State:** `images: []` is load-bearing — without it Next.js falls back to the root OG image. This is correctly in place.
-
-**Missing:** No ticket exists for the viable alternative — a pre-rendered server-side OG image that avoids external sprite fetches (e.g., server-side Canvas/Satori with bundled sprite assets, or a self-hosted sprite worker). The comment acknowledges this is possible but defers it with no tracking.
-
-**Recommended ticket:** OG image for shared reports using Satori + bundled sprite subset, avoiding CDN dependency during build/render.
+**Recommended ticket:** Fix `useExploreUrlSync` test defaults to match `"popular"`, install `vitest` properly, and verify `npm test` produces green output before the next push.
 
 ---
 
-### 3. Broken Intermediate State Introduced by Refactor (MEDIUM)
+### 2. `opengraph-image.tsx` Duplicates `sprite-slug.ts` Logic — Documented But Untracked (MEDIUM)
 
-**Commits:** `f8617f1` → `a13b91a` → `ce5b44e` → `f317d89`
+**Commit:** `506d79b` (swarm nightly)  
+**File:** `src/app/s/[id]/opengraph-image.tsx` lines 8–45
 
-The `PersistentNavbar` refactor (consolidating per-page `PageNavbar` into a root layout mount) produced two hot-fixes in rapid succession:
+A ~40-entry `SLUG_MAP` constant and `resolveSlug` function are copied verbatim from `src/lib/utils/sprite-slug.ts` with an inline comment:
+> "Mirrors the slug logic from src/lib/utils/sprite-slug.ts — duplicated here because edge runtime cannot import from @/lib."
 
-- `a13b91a`: Reverted a call-site change in `page.tsx` that was made assuming WIP had already landed. The WIP hadn't shipped — darkMode props were temporarily re-added.
-- `f317d89`: `CompareContent` was missed entirely in the refactor — it still mounted its own `<PageNavbar>`, causing a doubled navbar in production.
+The rationale is valid (edge runtime cannot pull in Node.js-linked modules), but the consequence is that any new Pokemon added to `sprite-slug.ts` must also be added here manually or OG images will silently generate broken sprite URLs. This already caused the `opengraph-image.tsx` to be reverted once in the previous commit window (per the prior review finding on `221da19`).
 
-This suggests the refactor was not tested across all routes before committing. The `/compare` route is reachable in the app but was presumably not checked during the refactor session.
+`src/app/api/team-graphic/route.tsx` correctly imports `resolveSlug` from `@/lib/utils/sprite-slug` because it is a regular Node.js API route — the divergence shows the edge runtime constraint is specific to the OG image file.
 
-**Recommended ticket:** Add a route smoke-test list to the pre-push checklist, or add a Playwright test that visits `/`, `/compare`, `/champions`, and a `/s/{id}` link to assert exactly one navbar is present.
+**Recommended ticket:** Extract the SLUG_MAP into a separate file with no Node imports (`src/lib/data/sprite-slug-map.ts`), importable from both the edge OG handler and the regular route, eliminating the manual mirror.
 
 ---
 
-### 4. `InlinePokemonEditor`: Search Logic Bug and Missing Tests (MEDIUM)
+### 3. `VGC-140/141/142` Bundles Three Tickets in One Commit (MEDIUM)
 
-**Commit:** `560c206` — `src/components/report/InlinePokemonEditor.tsx`
+**Commit:** `46662e0` — 11 files, 633 insertions / 19 deletions
 
-**Bug — early break on prefix array size only:**
+The commit combines three independent features (Duplicate CTA, Spotify-Wrapped PNG card, tiered EV/IV/Nature publishing) in one commit. The commit message acknowledges this:
+> "These three changes all reshape the public-share experience and share the same plumbing."
+
+Concerns:
+- **No rollback granularity.** If the `redact-paste.ts` tiered publishing logic introduces a regression, reverting `46662e0` also removes the team card download feature and the duplicate CTA — two unrelated features go with it.
+- **`redact-paste.ts` has no tests.** The module performs line-by-line Showdown paste surgery (stripping EVs, IVs, Nature, Item on a per-field basis). This is exactly the kind of string-manipulation logic that benefits from unit tests covering edge cases (multi-form Pokemon, nickname `(F)` gender markers, species with `@` in the name). No test file exists.
+- **`team-graphic/route.tsx` reaches 526 lines.** The new `isWrapped` branch adds ~280 lines of inline JSX to an already large route file. This is a good candidate for extraction into a dedicated `WrappedCard.tsx` Satori component.
+
+**Recommended ticket:** Add `redact-paste.test.ts` covering all four Showdown line formats; extract the wrapped-card JSX from `route.tsx`.
+
+---
+
+### 4. `swarm` Commit Mixes Research Docs with Production Code Changes (MEDIUM)
+
+**Commit:** `506d79b` — 41 files, 4588 insertions / 72 deletions
+
+The swarm nightly commit bundles:
+- 7 `.swarm/` research markdown files (not part of the app)
+- Production code changes: `src/app/s/[id]/opengraph-image.tsx` (505 lines, new), `src/components/seo/JsonLd.tsx` (71 lines, new), `src/app/api/cleanup/route.ts`, `src/app/api/discord/route.ts`, `public/manifest.json`, and 9 other app files
+
+Mixing research artifacts with production changes makes it impossible to bisect if the OG image or JSON-LD output introduces a regression. The `.swarm/` directory is read-only research output — it should be committed separately or excluded from production change commits.
+
+**No immediate action needed**, but the pattern should be avoided going forward. Swarm research output and app code changes belong in separate commits.
+
+---
+
+### 5. `PokemonDetailSlide.tsx` at 962 Lines — Compound Component Creep (LOW-MEDIUM)
+
+**File:** `src/components/report/PokemonDetailSlide.tsx` (962 lines after `ac12688` + `bdc6637` additions)
+
+This file has grown across multiple tickets (VGC-75 added the stat delta strip, the mega fixes added the Mega toggle path, the SP-only regulation work added additional conditional branches). At 962 lines it is the largest component in the codebase and handles:
+- Stat bar rendering
+- Mega vs base toggle with regulation gating
+- Speed tier comparison callout
+- Stat delta strip (new in VGC-75)
+- Move detail panel
+- Type badge rendering
+
+There are no `TODO` or `FIXME` comments left behind, and there are no `console.log` statements — the file is clean. However the complexity is high enough that future changes have a meaningful chance of introducing regressions.
+
+**Recommended ticket:** Split `PokemonDetailSlide` into sub-components: `StatBarsPanel`, `MegaToggleHeader`, `MovesPanel`. Reduces per-component line count and makes individual sections independently testable.
+
+---
+
+### 6. `useExploreUrlSync` Test Default Mismatch Is Also a Semantic Bug (LOW)
+
+**File:** `src/hooks/useExploreUrlSync.ts` line 82
 
 ```typescript
-for (const s of index) {
-  const lower = s.name.toLowerCase();
-  if (lower.startsWith(q)) prefix.push(s);
-  else if (lower.includes(q)) contains.push(s);
-  if (prefix.length >= 16) break;   // ← breaks when prefix hits 16
-}
-return [...prefix, ...contains].slice(0, 8);
+if (filters.sort !== "popular") params.set("sort", filters.sort);
 ```
 
-The loop breaks when `prefix.length >= 16`, but at that point `contains` may still be empty because the iteration stopped. If a query like "iron" produces 16+ prefix matches, no contains matches are collected. The break was meant as an early-exit optimization but is placed inside the same loop as the `contains` check, so contains results are silently truncated to whatever was collected before the break. For the actual use-case (short queries, non-English Pokemon names), this is unlikely to be visible in practice, but it is a logic bug.
-
-**Module-level mutable singleton:**
-
-```typescript
-let SPECIES_INDEX: SpeciesSuggestion[] | null = null;
-```
-
-Module-level mutable state in a client component file is fine in a browser context (one module per page load), but in a Next.js app with server-side rendering this can leak between requests if the module is accidentally evaluated on the server. The component is `"use client"` and loaded via `next/dynamic({ ssr: false })` which mitigates this, but the pattern is fragile. If the `ssr: false` guard is ever removed, requests will bleed into each other.
-
-**No unit tests for `paste-edit.ts`:**  
-The commit message says "verified by smoke tests" but `src/lib/utils/__tests__/` has no `paste-edit.test.ts`. The round-trip logic for all four Showdown first-line formats (`"Species @ Item"`, `"Species (M) @ Item"`, `"Nickname (Species)"`, `"Nickname (Species) (F) @ Item"`) is complex enough to warrant its own test file. `export function replaceSpeciesInBlock` is exported and testable without mocks.
-
-**Missing sprite-slug fallback test:**  
-`src/lib/utils/__tests__/sprite-slug.test.ts` tests `getSpriteUrls` only for `Garchomp` (4 URLs, non-mega). The Mega fallback path added in `5c44626` — appending base-form URLs for `-mega`/`-megax`/`-megay` slugs — has no test. Specifically: `getSpriteUrls("Mega Excadrill")` should return 8 URLs (4 Mega + 4 base), and `getSpriteUrls("Charizard-Mega-X")` should return 8 (4 megax + 4 charizard).
+This means `sort=popular` is never written to the URL (treated as the canonical default). But the sort default was changed to `"popular"` at some point — previously `"newest"` was the default. If a user bookmarks a URL with no `sort` param, they expect "popular" results, and that is what they get. However, any external link with an explicit `?sort=popular` query string will also work identically. The asymmetry is harmless but the test file's `"newest"` assertions are a reliable signal that the URL serialization contract changed without a corresponding doc update or test fix.
 
 ---
 
-### 5. 29 Placeholder Descriptions on Live SEO Pages (LOW-MEDIUM)
+## No Console Statements or Commented-Out Code Found
 
-**File:** `src/lib/data/mega-pokemon.ts`
+A full grep across `src/app/`, `src/components/`, `src/hooks/`, and `src/lib/` found:
+- **No `console.log` or `console.warn` statements** (only `console.error` in API catch blocks — appropriate)
+- **No `TODO` or `FIXME` comments** in source files
+- **No commented-out code blocks** in recently modified files
 
-Every one of the 29 bulk-added Megas has the same SEO stub description:
-
-```
-"Mega X is a legal Mega Evolution in Pokemon Champions Regulation M-A."
-```
-
-These descriptions flow directly into:
-- `<meta name="description">` on `/champions/[slug]` landing pages (visible to Google)
-- JSON-LD `description` field (visible to AI scrapers)
-- `<title>` page metadata generation
-
-29 out of 59 landing pages have identical near-duplicate descriptions. This will suppress search ranking for those pages relative to pages with unique content. The commit comment acknowledges these as "SEO stubs to be expanded iteratively" but there is no tracking ticket.
-
-**Recommended ticket:** Write competitive descriptions for the top 10–15 most-played Reg M-A Megas (Kangaskhan, Lucario, Tyranitar, Garchomp, Gengar + newly-added meta picks). Lower-tier Megas can remain as stubs.
-
----
-
-### 6. Featured Teams Query — No Index on Pattern ILIKE (LOW)
-
-**File:** `src/app/champions/[pokemon]/page.tsx` lines 92–103
-
-```sql
-WHERE s.is_public = TRUE
-  AND s.deleted_at IS NULL
-  AND (
-    s.data->>'paste' ILIKE '%Scizorite%'
-    OR s.data->>'paste' ILIKE '%Scizor-Mega%'
-  )
-ORDER BY s.updated_at DESC
-LIMIT 9
-```
-
-The fix in `2b21c39` corrected the query logic (requiring Mega Stone OR mega species) but both clauses are `ILIKE` pattern matches on a `jsonb` column extracted via `->>`. These cannot use a standard B-tree index. With low share volume this is fine, but as the dataset grows this will table-scan on every Champions landing page load. The page has `revalidate = 3600` (1-hour ISR) which limits the damage, but it is worth tracking for scale.
-
-**Recommended ticket:** Add a GIN index on `(data->>'paste')` or denormalize Mega Stone / species into a separate indexed column, and assess query plan with `EXPLAIN ANALYZE` once share volume exceeds ~10k rows.
+Error handling is consistent across API routes: every route wraps handlers in try/catch and returns structured `NextResponse.json({ error: "..." }, { status: 500 })`. The pattern is uniform.
 
 ---
 
@@ -161,12 +141,10 @@ The fix in `2b21c39` corrected the query logic (requiring Mega Stone OR mega spe
 
 | File cluster | Commits touching it |
 |---|---|
-| `mega-pokemon.ts` / `champions-dex.ts` / Champions pages | 9 |
-| `page.tsx` (home) | 4 |
-| `PasteInput` / layout / navbar hooks | 4 |
-| Sharing / OG / `s/[id]/page.tsx` | 2 |
-
-`mega-pokemon.ts` is the clear churn hotspot — 719 lines, 4+ distinct passes in this window — driven by the Champions format data being bootstrapped piecemeal rather than seeded correctly from a single authoritative source.
+| `PokemonCard.tsx` / Mega toggle logic | 4 (ecf9e00, 3ec0e3d, e514a8e, ac12688) |
+| `champions-dex.ts` / Mega data | 3 (f701a5c, fa2663b, 506d79b) |
+| Share/OG pipeline | 3 (46662e0, cd8984d, 506d79b) |
+| Explore filters | 2 (a2a8cc2, 7dd30b4) |
 
 ---
 
@@ -174,11 +152,9 @@ The fix in `2b21c39` corrected the query logic (requiring Mega Stone OR mega spe
 
 | Priority | Title |
 |---|---|
-| P1 | Derive CHAMPIONS_DEX Mega list from getRegMAMegas() — eliminate manual mirror |
-| P1 | Add paste-edit.test.ts with all four Showdown first-line format round-trips |
-| P2 | Fix InlinePokemonEditor search loop: break only after both prefix+contains collected |
-| P2 | Add sprite-slug test: getSpriteUrls returns 8 URLs for Mega forms with fallback |
-| P2 | Add Playwright smoke test: exactly 1 navbar on /, /compare, /champions, /s/{id} |
-| P3 | Write unique descriptions for top 15 Reg M-A Megas (SEO) |
-| P3 | OG image for shared reports: Satori + bundled sprites, no CDN dependency |
-| P4 | Assess ILIKE paste query plan; add GIN index when share volume scales |
+| P1 | Fix vitest installation + update useExploreUrlSync test defaults to "popular" |
+| P1 | Add `redact-paste.test.ts` covering all four Showdown paste line formats |
+| P2 | Extract `SLUG_MAP` into `src/lib/data/sprite-slug-map.ts` — eliminate OG image duplication |
+| P2 | Split `PokemonDetailSlide.tsx` (962 lines) into StatBarsPanel + MegaToggleHeader + MovesPanel |
+| P3 | Extract wrapped-card JSX from `team-graphic/route.tsx` into a `WrappedCard.tsx` Satori component |
+| P3 | Separate swarm research commits from production app code commits going forward |

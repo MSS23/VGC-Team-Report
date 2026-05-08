@@ -50,6 +50,7 @@ function searchSpecies(query: string, currentName: string): SpeciesSuggestion[] 
     const current = getSpeciesIndex().find((s) => s.name.toLowerCase() === currentName.toLowerCase());
     return current ? [current] : [];
   }
+  const DISPLAY_LIMIT = 8;
   const index = getSpeciesIndex();
   const prefix: SpeciesSuggestion[] = [];
   const contains: SpeciesSuggestion[] = [];
@@ -61,9 +62,14 @@ function searchSpecies(query: string, currentName: string): SpeciesSuggestion[] 
       contains.push(s);
     }
     // Stop only once we have enough of both buckets to fill the display limit
-    if (prefix.length >= 8 && contains.length >= 8) break;
+    if (prefix.length >= DISPLAY_LIMIT && contains.length >= DISPLAY_LIMIT) break;
   }
-  return [...prefix, ...contains].slice(0, 8);
+  // Prefer prefix matches; fill remaining slots with contains matches so that
+  // partial-word results (e.g. "nite" -> Nidoking) always appear when prefix
+  // results don't fill the display limit.
+  const prefixSlice = prefix.slice(0, DISPLAY_LIMIT);
+  const remaining = DISPLAY_LIMIT - prefixSlice.length;
+  return remaining > 0 ? [...prefixSlice, ...contains.slice(0, remaining)] : prefixSlice;
 }
 
 const TYPE_BG: Record<string, string> = {
