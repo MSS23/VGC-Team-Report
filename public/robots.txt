@@ -2,4 +2,24 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
+# Explicitly allow major search engine bots
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Explicitly allow AI crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
 Sitemap: https://pokemonvgcteamreport.com/sitemap.xml

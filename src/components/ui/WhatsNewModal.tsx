@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -57,6 +57,7 @@ const WHATS_NEW_FEATURES_V9 = [
 export function WhatsNewModal() {
   const [show, setShow] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const seen = localStorage.getItem(STORAGE_KEY);
@@ -71,10 +72,39 @@ export function WhatsNewModal() {
     localStorage.setItem(RETURNING_KEY, "1");
   }, []);
 
-  const dismiss = () => {
+  const dismiss = useCallback(() => {
     setShow(false);
     localStorage.setItem(STORAGE_KEY, "1");
-  };
+  }, []);
+
+  const handleFocusTrap = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === "Escape") {
+        dismiss();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    },
+    [dismiss]
+  );
 
   if (!show) return null;
 
@@ -96,6 +126,12 @@ export function WhatsNewModal() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={(e) => { if (e.target === e.currentTarget) dismiss(); }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="whats-new-title"
+        onKeyDown={handleFocusTrap}
+        ref={dialogRef}
+        tabIndex={-1}
       >
         <motion.div
           className="relative bg-surface border border-border rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden"
@@ -124,7 +160,7 @@ export function WhatsNewModal() {
               </svg>
               <span className="text-xs font-extrabold text-accent uppercase tracking-widest">{badgeLabel}</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
+            <h2 id="whats-new-title" className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
               {heading}
             </h2>
             <p className="text-sm text-text-secondary mt-2 max-w-sm mx-auto">

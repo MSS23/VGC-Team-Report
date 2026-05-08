@@ -10,7 +10,7 @@ import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ClarityProvider } from "@/components/providers/ClarityProvider";
 import { CookieBanner } from "@/components/providers/CookieBanner";
 import { ConsentGate } from "@/components/providers/ConsentGate";
-import { JsonLd, OrganizationJsonLd, FAQPageJsonLd } from "@/components/seo/JsonLd";
+import { JsonLd, OrganizationJsonLd, FAQPageJsonLd, WebSiteSchema } from "@/components/seo/JsonLd";
 import { PersistentNavbar } from "@/components/layout/PersistentNavbar";
 import "./globals.css";
 
@@ -123,6 +123,7 @@ export default function RootLayout({
             browserRequirements: "Requires a modern web browser",
           }}
         />
+        <WebSiteSchema />
         <OrganizationJsonLd />
         <FAQPageJsonLd />
         <PostHogProvider>

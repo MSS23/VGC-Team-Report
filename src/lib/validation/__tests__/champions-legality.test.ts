@@ -21,7 +21,7 @@ function makePokemon(overrides: Partial<ParsedPokemon> = {}): ParsedPokemon {
 }
 
 function makeTeam(count = 6): ParsedPokemon[] {
-  const species = ["Incineroar", "Whimsicott", "Garchomp", "Kingambit", "Metagross", "Tsareena"];
+  const species = ["Incineroar", "Whimsicott", "Garchomp", "Kingambit", "Arcanine", "Tsareena"];
   const items = ["Sitrus Berry", "Focus Sash", "Life Orb", "Assault Vest", "Clear Amulet", "Miracle Seed"];
   return species.slice(0, count).map((s, i) => makePokemon({ species: s, item: items[i] }));
 }

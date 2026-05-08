@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const ALLOWED_TYPES = ["fire", "heart", "brain", "battle", "clap"] as const;
+const SHARE_ID_RE = /^[a-zA-Z0-9_-]{6,16}$/;
 
 const ToggleBody = z.object({
   reactionType: z.enum(ALLOWED_TYPES),
@@ -19,6 +20,9 @@ export async function GET(
 ) {
   try {
     const { shareId } = await params;
+    if (!SHARE_ID_RE.test(shareId)) {
+      return NextResponse.json({ error: "Invalid share ID" }, { status: 400 });
+    }
     const guard = await apiGuard(request, { rateLimit: { key: "reactions-read", max: 60 } });
     if (guard) return guard;
     const sessionId = new URL(request.url).searchParams.get("sessionId") ?? "";
@@ -52,6 +56,9 @@ export async function POST(
 ) {
   try {
     const { shareId } = await params;
+    if (!SHARE_ID_RE.test(shareId)) {
+      return NextResponse.json({ error: "Invalid share ID" }, { status: 400 });
+    }
     const guard = await apiGuard(request, { rateLimit: { key: "reactions", max: 30 } });
     if (guard) return guard;
 
