@@ -57,6 +57,12 @@ export function ShareModal({
   const [tagError, setTagError] = useState(false);
   const [creatorError, setCreatorError] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
+  const [canNativeShare, setCanNativeShare] = useState(false);
+
+  // Detect Web Share API support client-side only (SSR-safe)
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== "undefined" && "share" in navigator);
+  }, []);
 
   const modalRef = useRef<HTMLDivElement>(null);
   const titleId = "share-modal-title";
@@ -176,6 +182,19 @@ export function ShareModal({
     setTimeout(() => setDiscordCopied(false), 2000);
     track("share_discord_copied");
     posthog.capture("share_discord_copied", { has_tournament: !!tournamentName });
+  };
+
+  const handleNativeShare = async () => {
+    const title = tournamentName
+      ? `${tournamentName}${placement ? ` (${placement})` : ""} VGC Team Report`
+      : "VGC Team Report";
+    try {
+      await navigator.share({ title, url: publicUrl });
+      track("share_native_used");
+      posthog.capture("share_native_used", { has_tournament: !!tournamentName });
+    } catch {
+      // User cancelled or share failed — silently no-op
+    }
   };
 
   return createPortal(
@@ -372,6 +391,37 @@ export function ShareModal({
               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
             </svg>
           </button>
+
+          {/* Native share — shown only when the OS supports Web Share API (mobile/desktop with share support) */}
+          {canNativeShare && (
+            <button
+              type="button"
+              onClick={handleNativeShare}
+              className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group cursor-pointer text-left w-full"
+            >
+              <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
+                  Share via…
+                </div>
+                <div className="text-xs text-text-tertiary truncate">
+                  Discord DM, WhatsApp, Messages &amp; more
+                </div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
+                <line x1="7" y1="17" x2="17" y2="7" />
+                <polyline points="7 7 17 7 17 17" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Public confirmation prompt — shown when sharing publicly, asks user to confirm */}

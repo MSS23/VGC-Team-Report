@@ -7,6 +7,52 @@ export function JsonLd({ data }: { data: Record<string, unknown> }) {
   );
 }
 
+/** WebSite schema with SearchAction for Google Sitelinks Searchbox */
+export function WebSiteSchema() {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "VGC Team Report",
+        url: "https://pokemonvgcteamreport.com",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: {
+            "@type": "EntryPoint",
+            urlTemplate: "https://pokemonvgcteamreport.com/explore?q={search_term_string}",
+          },
+          "query-input": "required name=search_term_string",
+        },
+      }}
+    />
+  );
+}
+
+export interface HowToStep {
+  name: string;
+  text: string;
+}
+
+export function HowToSchema({ steps }: { steps: HowToStep[] }) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        name: "How to Create a VGC Team Report",
+        description: "Step-by-step guide to building and sharing a competitive Pokemon VGC team report.",
+        step: steps.map((step, i) => ({
+          "@type": "HowToStep",
+          position: i + 1,
+          name: step.name,
+          text: step.text,
+        })),
+      }}
+    />
+  );
+}
+
 export function OrganizationJsonLd() {
   return (
     <JsonLd

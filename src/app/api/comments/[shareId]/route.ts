@@ -9,6 +9,8 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+const SHARE_ID_RE = /^[a-zA-Z0-9_-]{6,16}$/;
+
 const CommentBody = z.object({
   displayName: z.string().max(50).optional(),
   body: z.string().min(1).max(500),
@@ -21,6 +23,9 @@ export async function GET(
 ) {
   try {
     const { shareId } = await params;
+    if (!SHARE_ID_RE.test(shareId)) {
+      return NextResponse.json({ error: "Invalid share ID" }, { status: 400 });
+    }
     const guard = await apiGuard(request, { rateLimit: { key: "comments-read", max: 60 } });
     if (guard) return guard;
     const url = new URL(request.url);
@@ -73,6 +78,9 @@ export async function POST(
 ) {
   try {
     const { shareId } = await params;
+    if (!SHARE_ID_RE.test(shareId)) {
+      return NextResponse.json({ error: "Invalid share ID" }, { status: 400 });
+    }
     const guard = await apiGuard(request, { rateLimit: { key: "comments", max: 5 } });
     if (guard) return guard;
 
