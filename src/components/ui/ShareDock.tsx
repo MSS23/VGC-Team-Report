@@ -30,6 +30,12 @@ export function ShareDock({
   const [linkCopied, setLinkCopied] = useState(false);
   const [discordCopied, setDiscordCopied] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [canNativeShare, setCanNativeShare] = useState(false);
+
+  // Detect Web Share API support client-side only (SSR-safe)
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== "undefined" && "share" in navigator);
+  }, []);
 
   // Auto-hide on scroll-down, show on scroll-up. Reduces obstruction during
   // slide presentation and demos.
@@ -91,6 +97,17 @@ export function ShareDock({
     }
   };
 
+  const handleNativeShare = async () => {
+    const title = tournamentName
+      ? `${tournamentName}${placement ? ` (${placement})` : ""} VGC Team Report`
+      : "VGC Team Report";
+    try {
+      await navigator.share({ title, url: publicUrl });
+    } catch {
+      // User cancelled or share failed — silently no-op
+    }
+  };
+
   return (
     <div
       className={`fixed left-1/2 -translate-x-1/2 z-40 top-[calc(env(safe-area-inset-top,0px)+64px)] sm:top-[72px] transition-transform duration-300 ${
@@ -147,6 +164,24 @@ export function ShareDock({
             </svg>
           )}
         </button>
+
+        {canNativeShare && (
+          <button
+            type="button"
+            onClick={handleNativeShare}
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-alt active:scale-95 transition-all cursor-pointer"
+            aria-label="Share via…"
+            title="Share via…"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-primary">
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+          </button>
+        )}
 
         <button
           type="button"
