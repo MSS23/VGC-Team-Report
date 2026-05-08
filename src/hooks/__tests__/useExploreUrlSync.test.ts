@@ -5,7 +5,7 @@ describe("parseFiltersFromUrl", () => {
   it("returns default values when URL has no search params", () => {
     const result = parseFiltersFromUrl("");
     expect(result.query).toBe("");
-    expect(result.sort).toBe("newest");
+    expect(result.sort).toBe("popular");
     expect(result.searchCategory).toBe("all");
     expect(result.regulation).toBe("");
     expect(result.eventType).toBe("");
@@ -50,7 +50,7 @@ describe("buildUrlSearch", () => {
   it("returns empty string when all values are defaults", () => {
     const result = buildUrlSearch({
       query: "",
-      sort: "newest",
+      sort: "popular",
       searchCategory: "all",
       regulation: "",
       eventType: "",
@@ -67,7 +67,7 @@ describe("buildUrlSearch", () => {
   it("includes only non-default values in the URL", () => {
     const result = buildUrlSearch({
       query: "test",
-      sort: "popular",
+      sort: "newest",
       searchCategory: "pokemon",
       regulation: "Reg H",
       eventType: "",
@@ -80,7 +80,7 @@ describe("buildUrlSearch", () => {
     });
     const params = new URLSearchParams(result);
     expect(params.get("q")).toBe("test");
-    expect(params.get("sort")).toBe("popular");
+    expect(params.get("sort")).toBe("newest");
     expect(params.get("searchType")).toBe("pokemon");
     expect(params.get("regulation")).toBe("Reg H");
     expect(params.has("eventType")).toBe(false);
