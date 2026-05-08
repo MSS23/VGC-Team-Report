@@ -37,7 +37,7 @@ export function PageFooter({ hideFeedback = false }: PageFooterProps) {
         </a>
       )}
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-4 min-w-0">
         <div className="flex items-center gap-1.5 text-xs text-text-secondary">
           <span>Built by</span>
           <a
@@ -49,12 +49,12 @@ export function PageFooter({ hideFeedback = false }: PageFooterProps) {
             Manraj Sidhu
           </a>
         </div>
-        <nav className="flex items-center gap-1">
+        <nav className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1 max-w-full">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="px-2.5 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all"
+              className="px-2.5 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all whitespace-nowrap"
             >
               {link.label}
             </a>
@@ -62,7 +62,7 @@ export function PageFooter({ hideFeedback = false }: PageFooterProps) {
           <button
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("open-cookie-settings"))}
-            className="px-2.5 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all cursor-pointer"
+            className="px-2.5 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all cursor-pointer whitespace-nowrap"
           >
             Cookie Settings
           </button>
