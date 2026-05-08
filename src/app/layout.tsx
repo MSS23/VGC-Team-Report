@@ -1,24 +1,18 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
-import dynamic from "next/dynamic";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
 import { ChunkErrorReloader } from "@/components/ui/ChunkErrorReloader";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import { ConnectivityStatus } from "@/components/ui/ConnectivityStatus";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ClarityProvider } from "@/components/providers/ClarityProvider";
 import { CookieBanner } from "@/components/providers/CookieBanner";
 import { ConsentGate } from "@/components/providers/ConsentGate";
 import { JsonLd, WebSiteSchema, OrganizationSchema } from "@/components/seo/JsonLd";
 import { PersistentNavbar } from "@/components/layout/PersistentNavbar";
 import "./globals.css";
-
-// Defer the ~55KB PostHog SDK from the initial bundle — loaded client-side only
-const PostHogProvider = dynamic(
-  () => import("@/components/providers/PostHogProvider").then((m) => ({ default: m.PostHogProvider })),
-  { ssr: false }
-);
 
 const sora = Sora({
   variable: "--font-sora",
