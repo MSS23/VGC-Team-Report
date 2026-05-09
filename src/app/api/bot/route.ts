@@ -28,14 +28,15 @@ async function sendDiscordMessage(channelId: string, content: string, embeds?: u
 /**
  * GET /api/bot?action=summary|popular|bugs|weekly-email
  * Called by scheduled triggers or manually.
- * Protected by Authorization: Bearer <CRON_SECRET> header.
+ * Protected by a simple secret check.
  */
 export async function GET(request: NextRequest) {
   const action = request.nextUrl.searchParams.get("action");
 
-  // Require CRON_SECRET via Authorization header (never in URL query params)
+  // Require CRON_SECRET via Authorization: Bearer header to avoid logging secrets in access logs
+  const authHeader = request.headers.get("authorization");
   const expectedSecret = process.env.CRON_SECRET;
-  if (request.headers.get("authorization") !== `Bearer ${expectedSecret}`) {
+  if (authHeader !== `Bearer ${expectedSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -144,17 +145,17 @@ export async function GET(request: NextRequest) {
 
       // Discord summary
       const embed = {
-        title: "\uD83D\uDCCA Weekly Feedback Summary",
+        title: "📊 Weekly Feedback Summary",
         description: `**${weekLabel}**`,
         color: 0xe11d48,
         fields: [
           { name: "Total New", value: `**${total}**`, inline: true },
-          { name: "\uD83D\uDC1B Bugs", value: `**${bugs}**`, inline: true },
-          { name: "\uD83D\uDCA1 Features", value: `**${features}**`, inline: true },
-          { name: "\u26A1 Improvements", value: `**${improvements}**`, inline: true },
-          { name: "\uD83D\uDC1B Open Bugs", value: `**${Number(openBugs[0].count)}**`, inline: true },
+          { name: "🐛 Bugs", value: `**${bugs}**`, inline: true },
+          { name: "💡 Features", value: `**${features}**`, inline: true },
+          { name: "⚡ Improvements", value: `**${improvements}**`, inline: true },
+          { name: "🐛 Open Bugs", value: `**${Number(openBugs[0].count)}**`, inline: true },
           ...(trending.length > 0 ? [{
-            name: "\uD83D\uDD25 Trending",
+            name: "🔥 Trending",
             value: trending.map((t, i) => `${i + 1}. **${t.title}** (${t.count}x)`).join("\n"),
             inline: false,
           }] : []),
@@ -182,7 +183,7 @@ export async function GET(request: NextRequest) {
       ).join("\n");
 
       const embed = {
-        title: "\uD83D\uDD25 Most Requested Features",
+        title: "🔥 Most Requested Features",
         description: lines || "No feature requests yet.",
         color: 0x10b981,
         footer: { text: "Last 90 days" },
@@ -203,12 +204,12 @@ export async function GET(request: NextRequest) {
 
       const lines = bugs.map((r) => {
         const date = new Date(r.created_at as string).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-        return `\uD83D\uDC1B **${r.title}** — ${r.submitter_name ?? "Unknown"} (${date})`;
+        return `🐛 **${r.title}** — ${r.submitter_name ?? "Unknown"} (${date})`;
       }).join("\n");
 
       const embed = {
-        title: "\uD83D\uDC1B Open Bugs",
-        description: lines || "No open bugs! \uD83C\uDF89",
+        title: "🐛 Open Bugs",
+        description: lines || "No open bugs! 🎉",
         color: 0xef4444,
         footer: { text: `${bugs.length} open bug${bugs.length !== 1 ? "s" : ""}` },
       };

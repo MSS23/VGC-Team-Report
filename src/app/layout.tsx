@@ -10,7 +10,7 @@ import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ClarityProvider } from "@/components/providers/ClarityProvider";
 import { CookieBanner } from "@/components/providers/CookieBanner";
 import { ConsentGate } from "@/components/providers/ConsentGate";
-import { JsonLd, OrganizationJsonLd, FAQPageJsonLd, WebSiteSchema } from "@/components/seo/JsonLd";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { PersistentNavbar } from "@/components/layout/PersistentNavbar";
 import "./globals.css";
 
@@ -38,25 +38,24 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "VGC Team Report — Build & Share Pokémon VGC Teams",
+    default: "VGC Team Report — Build, Share & Discover Pokemon VGC Teams",
     template: "%s | VGC Team Report",
   },
-  description:
-    "Build detailed Pokémon VGC team reports with EV spreads, matchup notes and damage calcs. Share in one link. The richer alternative to PokéPaste.",
+  description: "The home for competitive Pokemon VGC team reports — now supporting Pokemon Champions and Mega Evolution. Build detailed team breakdowns with notes, matchup plans, and damage calcs — then share them with the community or present at tournaments.",
   metadataBase: new URL("https://pokemonvgcteamreport.com"),
   openGraph: {
-    title: "VGC Team Report — Build & Share Pokémon VGC Teams",
-    description:
-      "Build detailed Pokémon VGC team reports with EV spreads, matchup notes and damage calcs. Share in one link. The richer alternative to PokéPaste.",
+    title: "VGC Team Report — Build, Share & Discover Pokemon Teams",
+    description: "The home for competitive Pokemon VGC team reports. Build, share, and explore team breakdowns from players around the world.",
     type: "website",
     siteName: "VGC Team Report",
     url: "https://pokemonvgcteamreport.com",
+    images: [{ url: "https://pokemonvgcteamreport.com/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "VGC Team Report — Build & Share Pokémon VGC Teams",
-    description:
-      "Build detailed Pokémon VGC team reports with EV spreads, matchup notes and damage calcs. Share in one link. The richer alternative to PokéPaste.",
+    title: "VGC Team Report — Build, Share & Discover Pokemon Teams",
+    description: "The home for competitive Pokemon VGC team reports. Build, share, and explore team breakdowns from players around the world.",
+    images: [{ url: "https://pokemonvgcteamreport.com/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
   },
   icons: {
     icon: [
@@ -108,13 +107,21 @@ export default function RootLayout({
         <JsonLd
           data={{
             "@context": "https://schema.org",
-            "@type": "WebApplication",
+            "@type": ["WebApplication", "SoftwareApplication"],
             name: "VGC Team Report",
             url: "https://pokemonvgcteamreport.com",
             description:
               "Build detailed competitive Pokemon VGC team breakdowns with notes, matchup plans, and damage calcs — then share them with the community or present at tournaments.",
             applicationCategory: "GameApplication",
             operatingSystem: "Any",
+            featureList: [
+              "PokePaste Import",
+              "VGC Speed Tiers",
+              "EV Spread Builder",
+              "Matchup Plans",
+              "Team Sharing",
+              "Champions Format Support",
+            ],
             offers: {
               "@type": "Offer",
               price: "0",
@@ -123,9 +130,6 @@ export default function RootLayout({
             browserRequirements: "Requires a modern web browser",
           }}
         />
-        <WebSiteSchema />
-        <OrganizationJsonLd />
-        <FAQPageJsonLd />
         <PostHogProvider>
           <PersistentNavbar />
           <div id="main-content">{children}</div>
