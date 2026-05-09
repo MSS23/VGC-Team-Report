@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePostHog } from "posthog-js/react";
 
 interface ShareDockProps {
   publicUrl: string;
@@ -12,7 +13,7 @@ interface ShareDockProps {
 
 /**
  * Persistent, low-profile share rail anchored bottom-center on shared
- * report views. The full ShareModal is still one tap away (Navbar →
+ * report views. The full ShareModal is still one tap away (Navbar ->
  * Share), but this dock removes the discovery cost: every viewer sees
  * the 4 share targets inline, no menu hunt, no modal.
  *
@@ -31,11 +32,7 @@ export function ShareDock({
   const [discordCopied, setDiscordCopied] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [canNativeShare, setCanNativeShare] = useState(false);
-
-  // Detect Web Share API support client-side only (SSR-safe)
-  useEffect(() => {
-    setCanNativeShare(typeof navigator !== "undefined" && "share" in navigator);
-  }, []);
+  const posthog = usePostHog();
 
   // Auto-hide on scroll-down, show on scroll-up. Reduces obstruction during
   // slide presentation and demos.
@@ -60,7 +57,23 @@ export function ShareDock({
     };
   }, []);
 
+  // Detect Web Share API support on the client side (after hydration)
+  useEffect(() => {
+    const nav = navigator as Navigator & { share?: unknown; canShare?: (data?: ShareData) => boolean };
+    if (
+      typeof navigator !== "undefined" &&
+      typeof nav.share === "function" &&
+      nav.canShare?.({ url: publicUrl })
+    ) {
+      setCanNativeShare(true);
+    }
+  }, [publicUrl]);
+
   const speciesText = teamSpecies.join(" / ");
+
+  const teamTitle = tournamentName
+    ? `${tournamentName}${placement ? ` (${placement})` : ""} VGC Team Report`
+    : "VGC Team Report";
 
   const twitterText = tournamentName
     ? `Check out this ${tournamentName}${placement ? ` (${placement})` : ""} VGC team report: ${speciesText}\n\n${publicUrl}\n\n#PokemonChampions #VGC2026\nMade with @VGCTeamReport`
@@ -77,13 +90,24 @@ export function ShareDock({
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}`;
   const redditUrl = `https://www.reddit.com/r/VGC/submit?type=link&title=${encodeURIComponent(redditTitle)}&url=${encodeURIComponent(publicUrl)}`;
 
+  const handleNativeShare = async () => {
+    try {
+      await navigator.share({ title: teamTitle, url: publicUrl });
+      posthog?.capture("share_dock_action", { action: "native_share" });
+    } catch {
+      // User cancelled or share failed - fall back to copy-link silently
+      handleCopyLink();
+    }
+  };
+
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(publicUrl);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 1800);
+      posthog?.capture("share_dock_action", { action: "copy_link" });
     } catch {
-      // Clipboard may be blocked — silently no-op so we don't surface a benign error
+      // Clipboard may be blocked - silently no-op so we don't surface a benign error
     }
   };
 
@@ -92,19 +116,9 @@ export function ShareDock({
       await navigator.clipboard.writeText(discordText);
       setDiscordCopied(true);
       setTimeout(() => setDiscordCopied(false), 1800);
+      posthog?.capture("share_dock_action", { action: "discord_copy" });
     } catch {
-      // Same — clipboard permissions vary by browser
-    }
-  };
-
-  const handleNativeShare = async () => {
-    const title = tournamentName
-      ? `${tournamentName}${placement ? ` (${placement})` : ""} VGC Team Report`
-      : "VGC Team Report";
-    try {
-      await navigator.share({ title, url: publicUrl });
-    } catch {
-      // User cancelled or share failed — silently no-op
+      // Same - clipboard permissions vary by browser
     }
   };
 
@@ -121,11 +135,40 @@ export function ShareDock({
           Share
         </span>
 
+        {/* Native share button - only shown on mobile devices that support the Web Share API */}
+        {canNativeShare && (
+          <button
+            type="button"
+            onClick={handleNativeShare}
+            className="h-11 inline-flex items-center gap-1.5 px-3 rounded-full bg-accent text-white text-xs font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-sm shadow-accent/30 sm:hidden"
+            aria-label="Share via device"
+            title="Share via device"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+            Share
+          </button>
+        )}
+
         <a
           href={twitterUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-alt active:scale-95 transition-all"
+          className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-alt active:scale-95 transition-all"
           aria-label="Share on X / Twitter"
           title="Share on X / Twitter"
         >
@@ -138,7 +181,7 @@ export function ShareDock({
           href={redditUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-alt active:scale-95 transition-all"
+          className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-alt active:scale-95 transition-all"
           aria-label="Share on Reddit"
           title="Share to r/VGC"
         >
@@ -150,7 +193,7 @@ export function ShareDock({
         <button
           type="button"
           onClick={handleCopyDiscord}
-          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-alt active:scale-95 transition-all cursor-pointer relative"
+          className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-alt active:scale-95 transition-all cursor-pointer relative"
           aria-label={discordCopied ? "Discord message copied" : "Copy Discord message"}
           title={discordCopied ? "Copied!" : "Copy formatted Discord message"}
         >
@@ -164,24 +207,6 @@ export function ShareDock({
             </svg>
           )}
         </button>
-
-        {canNativeShare && (
-          <button
-            type="button"
-            onClick={handleNativeShare}
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-alt active:scale-95 transition-all cursor-pointer"
-            aria-label="Share via…"
-            title="Share via…"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-primary">
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
-          </button>
-        )}
 
         <button
           type="button"
