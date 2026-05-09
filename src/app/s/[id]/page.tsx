@@ -14,12 +14,13 @@ export async function generateMetadata({
   try {
     const sql = getDb();
     const [rows, collabRows] = await Promise.all([
-      sql`SELECT data FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
+      sql`SELECT data, is_public FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
       sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
     ]);
     if (rows.length === 0) return { title: "VGC Team Report" };
 
     const data = rows[0].data as Record<string, unknown>;
+    const isPublic = (rows[0] as Record<string, unknown>).is_public !== false;
     const paste = (data.paste as string) ?? "";
     const tournamentName = (data.tournamentName as string) ?? "";
     const creatorName = (data.creatorName as string) ?? "";
@@ -82,6 +83,12 @@ export async function generateMetadata({
       description = "Build, share, and present professional VGC team reports with damage calcs, speed tiers, and matchup plans.";
     }
 
+    // Private / unlisted shares must not be indexed — thin content with no
+    // discovery value. Noindex/nofollow prevents search engines from crawling.
+    const robotsMeta = isPublic
+      ? undefined
+      : { index: false as const, follow: false as const };
+
     // Embed images for shared reports are intentionally suppressed. We have
     // tried this twice now (an opengraph-image.tsx convention file, then
     // wiring /api/team-graphic into og:image) — both produced "image failed
@@ -97,6 +104,7 @@ export async function generateMetadata({
     return {
       title,
       description,
+      ...(robotsMeta && { robots: robotsMeta }),
       openGraph: {
         title,
         description,
