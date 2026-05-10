@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useShareUrl } from "@/hooks/useShareUrl";
 import { useAuth } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
-import posthog from "posthog-js";
+import { usePostHog } from "posthog-js/react";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 
@@ -17,6 +17,7 @@ interface ShareFlowOptions {
 
 export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: ShareFlowOptions) {
   const { isSignedIn } = useAuth();
+  const posthog = usePostHog();
   const {
     isSharedView, isSharePending, sharedState, shareId: activeShareId,
     editKeyFromUrl, copyShareUrl, freshShare, autoSave, shareStatus,
@@ -65,13 +66,13 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
       regulation: (state.tags as Record<string, unknown>)?.regulation as string ?? "unknown",
       hasMega: hasMega ? "yes" : "no",
     });
-    posthog.capture("report_shared", {
+    posthog?.capture("report_shared", {
       regulation: (state.tags as Record<string, unknown>)?.regulation as string ?? "unknown",
       has_mega: hasMega,
       is_public: isPublic,
       pokemon_count: analysis.pokemon.length,
     });
-  }, [analysis, isSampleTeam, copyShareUrl, buildShareState, isPublic]);
+  }, [analysis, isSampleTeam, copyShareUrl, buildShareState, isPublic, posthog]);
 
   const handleReshare = useCallback(() => {
     if (!analysis) return;

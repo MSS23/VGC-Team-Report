@@ -8,7 +8,8 @@ import { PageFooter } from "@/components/layout/PageFooter";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { useEffect } from "react";
 import { track } from "@vercel/analytics";
-import posthog from "posthog-js";
+import { usePostHog } from "posthog-js/react";
+import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 
 // Derive the displayed list from the canonical Reg M-A set so this never
 // drifts again. Each card carries a `hasSprite` flag — Megas without a
@@ -32,11 +33,12 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export function ChampionsContent() {
+  const posthog = usePostHog();
   useEffect(() => {
     applyRandomAccent();
     track("champions_page_visited");
-    posthog.capture("champions_page_visited");
-  }, []);
+    posthog?.capture("champions_page_visited");
+  }, [posthog]);
 
   return (
     <>
@@ -180,6 +182,48 @@ export function ChampionsContent() {
                 </Link>
               );
             })}
+          </div>
+        </section>
+
+        {/* Sample Teams */}
+        <section className="max-w-5xl mx-auto px-4 py-12">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-2">
+            Sample Teams to Get You Started
+          </h2>
+          <p className="text-sm text-text-secondary mb-6">
+            New to Champions format? Try one of these classic archetypes and build your first report in seconds.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {CHAMPIONS_SAMPLE_TEAMS.map((team) => (
+              <div
+                key={team.id}
+                className="rounded-xl border border-border bg-surface p-5 flex flex-col gap-3"
+              >
+                <div>
+                  <h3 className="text-sm font-extrabold text-text-primary">{team.name}</h3>
+                  <p className="text-xs text-text-secondary mt-1 leading-relaxed">{team.description}</p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {team.pokemon.map((species) => (
+                    <span
+                      key={species}
+                      className="text-[10px] font-bold text-text-secondary bg-surface-alt border border-border px-2 py-0.5 rounded-full capitalize"
+                    >
+                      {species.replace(/-/g, " ")}
+                    </span>
+                  ))}
+                </div>
+                <Link
+                  href={`/?sample=${team.id}`}
+                  className="mt-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-accent-surface text-accent text-xs font-bold rounded-lg hover:bg-accent hover:text-white transition-colors"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                  Try this team
+                </Link>
+              </div>
+            ))}
           </div>
         </section>
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { track } from "@vercel/analytics";
-import posthog from "posthog-js";
+import { usePostHog } from "posthog-js/react";
 
 /**
  * End-of-report CTA: download a Spotify-Wrapped style PNG of the team
@@ -17,13 +17,14 @@ export function TeamCardCTA({
   /** Surface a placement-aware nudge ("Show off your X-Y record!") when set. */
   hasTournament: boolean;
 }) {
+  const posthog = usePostHog();
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = async () => {
     if (downloading) return;
     setDownloading(true);
     track("team_card_download_clicked", { share_id: shareId });
-    posthog.capture("team_card_download_clicked", { share_id: shareId });
+    posthog?.capture("team_card_download_clicked", { share_id: shareId });
     try {
       const url = `/api/team-graphic?id=${encodeURIComponent(shareId)}&style=wrapped`;
       const res = await fetch(url);
