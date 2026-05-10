@@ -349,6 +349,19 @@ function HomeContent() {
   const [exportTheme, setExportTheme] = useState<"light" | "dark">(darkMode ? "dark" : "light");
   const [showExportThemePicker, setShowExportThemePicker] = useState(false);
   const [pendingExportMode, setPendingExportMode] = useState<ExportMode | null>(null);
+  const exportThemeDialogRef = useRef<HTMLDivElement>(null);
+
+  // Move focus into the export theme modal when it opens so keyboard users
+  // and screen readers start inside the dialog (WCAG 2.1 AA — focus management).
+  useEffect(() => {
+    if (!showExportThemePicker) return;
+    const dialog = exportThemeDialogRef.current;
+    if (!dialog) return;
+    const firstFocusable = dialog.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    firstFocusable?.focus();
+  }, [showExportThemePicker]);
 
   const handleExportTeam = useCallback(() => {
     if (!analysis) return;
@@ -1556,6 +1569,7 @@ function HomeContent() {
         }}
       >
         <div
+          ref={exportThemeDialogRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="export-theme-modal-title"
