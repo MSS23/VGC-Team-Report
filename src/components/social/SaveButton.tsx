@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useUser, SignInButton } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
-import posthog from "posthog-js";
+import { usePostHog } from "posthog-js/react";
 
 interface SaveButtonProps {
   shareId: string;
@@ -26,6 +26,7 @@ const BookmarkIcon = ({ filled = false }: { filled?: boolean }) => (
 
 export function SaveButton({ shareId }: SaveButtonProps) {
   const { user } = useUser();
+  const posthog = usePostHog();
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [animating, setAnimating] = useState(false);
@@ -70,7 +71,7 @@ export function SaveButton({ shareId }: SaveButtonProps) {
         });
         setSaved(false);
         track("report_unsaved", { shareId });
-        posthog.capture("report_unsaved", { share_id: shareId });
+        posthog?.capture("report_unsaved", { share_id: shareId });
       } else {
         await fetch("/api/user/saved", {
           method: "POST",
@@ -81,7 +82,7 @@ export function SaveButton({ shareId }: SaveButtonProps) {
         setAnimating(true);
         setTimeout(() => setAnimating(false), 300);
         track("report_saved", { shareId });
-        posthog.capture("report_saved", { share_id: shareId });
+        posthog?.capture("report_saved", { share_id: shareId });
       }
     } catch {
       // silent

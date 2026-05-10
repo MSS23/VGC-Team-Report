@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
 import { track } from "@vercel/analytics";
-import posthog from "posthog-js";
+import { usePostHog } from "posthog-js/react";
 
 interface ReactionBarProps {
   shareId: string;
@@ -30,6 +30,7 @@ const HeartIcon = ({ size = 18, filled = false }: { size?: number; filled?: bool
 export function ReactionBar({ shareId, compact = false, isOwner = false }: ReactionBarProps) {
   const sessionId = useSessionId();
   const { isSignedIn } = useAuth();
+  const posthog = usePostHog();
   const [likeCount, setLikeCount] = useState(0);
   const [liked, setLiked] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -65,7 +66,7 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
       setTimeout(() => setAnimating(false), 300);
     }
     track("report_reacted", { shareId, action: wasLiked ? "removed" : "added" });
-    posthog.capture("report_reacted", { share_id: shareId, action: wasLiked ? "removed" : "added" });
+    posthog?.capture("report_reacted", { share_id: shareId, action: wasLiked ? "removed" : "added" });
 
     try {
       const res = await fetch(`/api/reactions/${shareId}`, {
@@ -82,7 +83,7 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
       setLiked(wasLiked);
       setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));
     }
-  }, [shareId, sessionId, liked, compact, isSignedIn, isOwner]);
+  }, [shareId, sessionId, liked, compact, isSignedIn, isOwner, posthog]);
 
   if (!loaded) return null;
 
