@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "motion/react";
 import { track } from "@vercel/analytics";
-import posthog from "posthog-js";
+import { usePostHog } from "posthog-js/react";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 
 
@@ -26,8 +26,9 @@ export function ExploreContent() {
 
 function ExploreInner() {
   const { t } = useTranslation();
+  const posthog = usePostHog();
   // Random accent color on explore page
-  useEffect(() => { applyRandomAccent(); track("explore_visited"); posthog.capture("explore_visited"); }, []);
+  useEffect(() => { applyRandomAccent(); track("explore_visited"); posthog?.capture("explore_visited"); }, [posthog]);
 
   const [reports, setReports] = useState<ExploreReport[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);

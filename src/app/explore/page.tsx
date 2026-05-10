@@ -3,7 +3,7 @@ import { ExploreContent } from "@/components/explore/ExploreContent";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
-  title: "Explore VGC Team Reports",
+  title: "Explore VGC & Pokemon Champions Team Reports 2026",
   alternates: { canonical: "https://pokemonvgcteamreport.com/explore" },
   description:
     "Browse Pokemon VGC team reports shared by competitive players from tournaments around the world. Search by Pokemon, tournament, or creator.",

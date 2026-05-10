@@ -1,5 +1,5 @@
 # Reddit Sentiment Research: VGC Team Tools & Sharing
-**Research Date:** 2026-05-07
+**Research Date:** 2026-05-07 (updated 2026-05-10)
 **Topics Covered:** team builder, team report, sharing teams, pokepaste alternative, vgc tools
 **Sources:** Reddit (r/VGC, r/stunfisk), GitHub Issues, Smogon Forums, community tool sites
 
@@ -209,6 +209,54 @@ crob.at is now the most prominently surfaced visual alternative to pokepast.es. 
 
 ### VGC-Bench Research Paper (May 2026)
 An academic paper "VGC-Bench: A Benchmark for Generalizing Across Diverse Team Strategies in Competitive Pokémon" (arxiv.org, 2026) signals growing academic/AI interest in VGC team data — the community's team data is becoming a research asset. Tools that structure team reports become more valuable as AI training datasets, not just player resources.
+
+---
+
+## 9. May 2026 Refresh — Additional Signals
+
+*Research session: 2026-05-10*
+
+### Tool Landscape Additions Found
+
+- **crob.at** has emerged as the fastest-growing visual pokepaste alternative. Key differentiator: accepts any pokepaste URL or raw Showdown export and immediately renders a clean visual card with sprites, items, moves, EVs. No login. No context layer. Signals the market wants aesthetics + accessibility but does not address the report/narrative gap.
+
+- **VRPastes (vrpastes.com)**: Another paste-sharing entrant with both public Open Team Lists and password-protected pastes. Adds basic access control (private pastes), which pokepast.es lacks. Still text-only, no report structure.
+
+- **MetaGame VGC (metagamevgc.com/team-reports)**: A newer site explicitly publishing structured team reports. Confirmed competitor in the "team report as content" space alongside pokemonvgcteamreport.com. Warrants further competitive monitoring.
+
+- **LabMaus (labmaus.net)**: Surfaced in multiple research queries but limited public information. Appears to be a European-based VGC tool/community hub.
+
+- **Porygon Labs (porygonlabs.com)**: Mobile-first damage calculator and team builder for Pokemon Champions. Signals ongoing fragmentation — yet another tool solving a slice of the problem, not the whole thing.
+
+- **VGC Team Helper (vgcteamhelper.com)**: Grades teams by importing a pokepaste. Automated analysis, no human narrative. Signals demand for instant feedback, but not a substitute for structured reports.
+
+### Community Workaround Patterns (Confirmed Again)
+
+The pattern of Discord-based ephemeral team sharing continues to be confirmed across multiple search results. Tournament teams posted in Discord servers days after events are effectively unreachable within weeks. The VGC community acknowledges this as a structural problem ("determining what to read, where to learn and who can be trusted is a hard task" — VGC guide, quoted in multiple resource compilations).
+
+### Pokemon Champions Format Accelerates the Need
+
+The 2026 format transition to Pokemon Champions (the standalone title) is creating a reset moment. Community tooling is rebuilding from scratch:
+- VGCPastes has only 63 Regulation I teams (vs. 1,150+ for Regulation H at the same point)
+- New players entering via the standalone title have no established resource habits
+- This is the highest-leverage window to establish VGC Team Report as the canonical report destination
+
+### Smogon PokePaste Feature Requests (Confirmed from Forums)
+
+Direct forum evidence of user feature requests to pokepaste maintainer:
+- **"Tickable setting to put true stats in pokepaste upload"** — rejected by maintainer, but signaled demand for richer data display
+- **Format field requests** — users want to manually tag what format a paste is for; currently requires Showdown export
+- **HOME sprites migration** — ongoing request; community built a Chrome extension just to patch this
+- Maintainer confirmed receiving feedback from "Smogon VGC Discord and /r/stunfisk" indicating the r/stunfisk subreddit is an active feedback channel for pokepaste
+
+### VGC Team Report (pokemonvgcteamreport.com) — Current Positioning
+
+The tool was found indexed and visible across multiple competitive Pokemon resource sites. Its URL appeared in:
+- VGCpedia resources list
+- DevonCorp's up-to-date VGC resources
+- Multiple web search result pages for "VGC team report tool"
+
+No Reddit or Discord user-generated mentions were found in indexed search results — the tool appears in curated resource lists but has not yet generated organic community discussion threads. This represents the primary discoverability gap: known to resource curators, not yet known to everyday players.
 
 ---
 

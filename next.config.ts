@@ -78,7 +78,7 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               // Scripts: self, Clerk (all domains), Vercel, Sentry, Cloudflare, PostHog
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://va.vercel-scripts.com https://vercel.live https://*.vercel.live https://*.sentry.io https://challenges.cloudflare.com https://eu-assets.i.posthog.com",
+              "script-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://va.vercel-scripts.com https://vercel.live https://*.vercel.live https://*.sentry.io https://challenges.cloudflare.com https://eu-assets.i.posthog.com",
               // Styles: self + inline + Google Fonts + Clerk
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.com https://clerk.pokemonvgcteamreport.com",
               // Images: self, Showdown sprites, Clerk, GitHub, data URIs, Vercel Toolbar
