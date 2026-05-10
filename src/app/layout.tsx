@@ -38,25 +38,34 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "VGC Team Report — Build & Share Pokémon VGC Teams",
+    default: "VGC Team Report — Build & Share Pokémon VGC & Champions Teams (2026)",
     template: "%s | VGC Team Report",
   },
   description:
     "Build detailed Pokémon VGC team reports with EV spreads, matchup notes and damage calcs. Share in one link. The richer alternative to PokéPaste.",
   metadataBase: new URL("https://pokemonvgcteamreport.com"),
   openGraph: {
-    title: "VGC Team Report — Build & Share Pokémon VGC Teams",
+    title: "VGC Team Report — Build & Share Pokémon VGC & Champions Teams (2026)",
     description:
       "Build detailed Pokémon VGC team reports with EV spreads, matchup notes and damage calcs. Share in one link. The richer alternative to PokéPaste.",
     type: "website",
     siteName: "VGC Team Report",
     url: "https://pokemonvgcteamreport.com",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "VGC Team Report — Build & Share Pokémon VGC Teams",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "VGC Team Report — Build & Share Pokémon VGC Teams",
+    title: "VGC Team Report — Build & Share Pokémon VGC & Champions Teams (2026)",
     description:
       "Build detailed Pokémon VGC team reports with EV spreads, matchup notes and damage calcs. Share in one link. The richer alternative to PokéPaste.",
+    images: ["/opengraph-image"],
   },
   icons: {
     icon: [
