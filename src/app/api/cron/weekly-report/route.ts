@@ -15,12 +15,19 @@ async function runLinearDigest() {
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   async function query(q: string) {
-    const res = await fetch(LINEAR_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: apiKey! },
-      body: JSON.stringify({ query: q }),
-    });
-    return (await res.json()).data;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    try {
+      const res = await fetch(LINEAR_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: apiKey! },
+        body: JSON.stringify({ query: q }),
+        signal: controller.signal,
+      });
+      return (await res.json()).data;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   try {
@@ -99,7 +106,10 @@ async function runDependencyCheck() {
     for (const name of keyDeps) {
       if (!allDeps[name]) continue;
       try {
-        const res = await fetch(`https://registry.npmjs.org/${name}/latest`);
+        const npmCtrl = new AbortController();
+        const npmTimer = setTimeout(() => npmCtrl.abort(), 5000);
+        const res = await fetch(`https://registry.npmjs.org/${name}/latest`, { signal: npmCtrl.signal });
+        clearTimeout(npmTimer);
         if (!res.ok) continue;
         const data = await res.json();
         const current = allDeps[name].replace(/^[\^~]/, "");

@@ -37,14 +37,22 @@ async function fetchSessionTimeline(
   `;
 
   try {
-    const res = await fetch(`${host}/api/projects/${projectId}/query/`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query: { kind: "HogQLQuery", query } }),
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    let res: Response;
+    try {
+      res = await fetch(`${host}/api/projects/${projectId}/query/`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: { kind: "HogQLQuery", query } }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
     if (!res.ok) return [];
     const data = await res.json();
     const rows: unknown[][] = data?.results ?? [];
@@ -198,30 +206,41 @@ export async function POST(request: Request) {
     }
 
     // Create Linear issue with Bug label
-    const result = await fetch("https://api.linear.app/graphql", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: linearApiKey,
-      },
-      body: JSON.stringify({
-        query: `mutation($title: String!, $description: String!, $teamId: String!, $priority: Int!, $labelIds: [String!]) {
-          issueCreate(input: {
-            teamId: $teamId,
-            title: $title,
-            description: $description,
-            priority: $priority,
-            labelIds: $labelIds
-          }) {
-            success
-            issue { identifier url }
-          }
-        }`,
-        variables: { title, description, teamId, priority, labelIds },
-      }),
-    });
-
-    const linearRes = await result.json();
+    const linearCtrl = new AbortController();
+    const linearTimer = setTimeout(() => linearCtrl.abort(), 5000);
+    let linearRes: Awaited<ReturnType<typeof Response.prototype.json>>;
+    try {
+      const result = await fetch("https://api.linear.app/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: linearApiKey,
+        },
+        body: JSON.stringify({
+          query: `mutation($title: String!, $description: String!, $teamId: String!, $priority: Int!, $labelIds: [String!]) {
+            issueCreate(input: {
+              teamId: $teamId,
+              title: $title,
+              description: $description,
+              priority: $priority,
+              labelIds: $labelIds
+            }) {
+              success
+              issue { identifier url }
+            }
+          }`,
+          variables: { title, description, teamId, priority, labelIds },
+        }),
+        signal: linearCtrl.signal,
+      });
+      linearRes = await result.json();
+    } catch (e) {
+      clearTimeout(linearTimer);
+      console.error("PostHog webhook: Linear fetch failed", e);
+      return NextResponse.json({ error: "Linear fetch failed" }, { status: 503 });
+    } finally {
+      clearTimeout(linearTimer);
+    }
 
     if (!linearRes.data?.issueCreate?.success) {
       console.error("PostHog webhook: Linear issue creation failed", linearRes);
@@ -234,21 +253,30 @@ export async function POST(request: Request) {
     const discordWebhook = process.env.DISCORD_BUILDS_WEBHOOK;
     if (discordWebhook) {
       const severityEmoji = priority <= 2 ? "🔴" : "🟡";
-      await fetch(discordWebhook, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          embeds: [
-            {
-              title: `${severityEmoji} PostHog Alert → ${issue.identifier}`,
-              description: `**${title}**\n\n[View in Linear](${issue.url})\n\n**Event:** \`${event}\`\n**User:** ${personEmail}\n**Page:** ${properties.$current_url ?? "N/A"}`,
-              color: priority <= 2 ? 0xef4444 : 0xf9a825,
-              footer: { text: "PostHog → Linear auto-triage" },
-              timestamp: new Date().toISOString(),
-            },
-          ],
-        }),
-      });
+      const discordCtrl = new AbortController();
+      const discordTimer = setTimeout(() => discordCtrl.abort(), 5000);
+      try {
+        await fetch(discordWebhook, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            embeds: [
+              {
+                title: `${severityEmoji} PostHog Alert → ${issue.identifier}`,
+                description: `**${title}**\n\n[View in Linear](${issue.url})\n\n**Event:** \`${event}\`\n**User:** ${personEmail}\n**Page:** ${properties.$current_url ?? "N/A"}`,
+                color: priority <= 2 ? 0xef4444 : 0xf9a825,
+                footer: { text: "PostHog → Linear auto-triage" },
+                timestamp: new Date().toISOString(),
+              },
+            ],
+          }),
+          signal: discordCtrl.signal,
+        });
+      } catch (e) {
+        console.error("PostHog webhook: Discord notify failed", e);
+      } finally {
+        clearTimeout(discordTimer);
+      }
     }
 
     return NextResponse.json({

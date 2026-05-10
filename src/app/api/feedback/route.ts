@@ -60,19 +60,28 @@ async function sendDiscordNotification(data: z.infer<typeof FeedbackBody>, submi
     fields.push({ name: "Linear", value: `[View issue](${linearUrl})`, inline: true });
   }
 
-  await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      embeds: [{
-        title: `${TYPE_EMOJI[data.type] ?? ""} ${data.type.charAt(0).toUpperCase() + data.type.slice(1)}: ${data.title}`,
-        color: TYPE_COLOR[data.type] ?? 0x6366f1,
-        fields,
-        footer: { text: "VGC Team Report Feedback" },
-        timestamp: new Date().toISOString(),
-      }],
-    }),
-  }).catch((e) => console.error("Discord webhook error:", e));
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        embeds: [{
+          title: `${TYPE_EMOJI[data.type] ?? ""} ${data.type.charAt(0).toUpperCase() + data.type.slice(1)}: ${data.title}`,
+          color: TYPE_COLOR[data.type] ?? 0x6366f1,
+          fields,
+          footer: { text: "VGC Team Report Feedback" },
+          timestamp: new Date().toISOString(),
+        }],
+      }),
+      signal: controller.signal,
+    });
+  } catch (e) {
+    console.error("Discord webhook error:", e);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function POST(request: Request) {

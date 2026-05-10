@@ -29,11 +29,15 @@ async function runHealthCheck() {
       if (isApiRoute && process.env.CRON_SECRET) {
         headers["Authorization"] = `Bearer ${process.env.CRON_SECRET}`;
       }
+      const hc = new AbortController();
+      const hcTimer = setTimeout(() => hc.abort(), 5000);
       const res = await fetch(`${SITE_URL}${ep.path}`, {
         method: "GET",
         headers,
         redirect: "follow",
+        signal: hc.signal,
       });
+      clearTimeout(hcTimer);
       // For API routes without CRON_SECRET, a 401 means the endpoint is alive
       // (auth is working correctly) — don't flag it as down
       const isAlive = isApiRoute && !process.env.CRON_SECRET
@@ -72,13 +76,17 @@ async function runStaleTicketCheck() {
   if (!apiKey || !teamId) return { stale: 0, summary: "Linear not configured" };
 
   try {
+    const staleCtrl = new AbortController();
+    const staleTimer = setTimeout(() => staleCtrl.abort(), 5000);
     const res = await fetch(LINEAR_API, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: apiKey },
       body: JSON.stringify({
         query: `{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title updatedAt } } } }`,
       }),
+      signal: staleCtrl.signal,
     });
+    clearTimeout(staleTimer);
     const data = await res.json();
     const now = Date.now();
     const threshold = STALE_DAYS * 24 * 60 * 60 * 1000;
@@ -106,7 +114,10 @@ async function runSeoCheck() {
 
   for (const path of pages) {
     try {
-      const res = await fetch(`${SITE_URL}${path}`, { headers: { "User-Agent": "VGC-SEO/1.0" } });
+      const seoCtrl = new AbortController();
+      const seoTimer = setTimeout(() => seoCtrl.abort(), 5000);
+      const res = await fetch(`${SITE_URL}${path}`, { headers: { "User-Agent": "VGC-SEO/1.0" }, signal: seoCtrl.signal });
+      clearTimeout(seoTimer);
       if (!res.ok) { issues.push(`${path}: HTTP ${res.status}`); continue; }
       const html = await res.text();
       const missing: string[] = [];
@@ -142,12 +153,19 @@ async function linearGql(query: string, variables?: Record<string, unknown>) {
   const apiKey = process.env.LINEAR_API_KEY;
   if (!apiKey) return null;
 
-  const res = await fetch(LINEAR_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: apiKey },
-    body: JSON.stringify({ query, variables }),
-  });
-  return res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(LINEAR_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: apiKey },
+      body: JSON.stringify({ query, variables }),
+      signal: controller.signal,
+    });
+    return res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function getOrCreateOpsLabel(): Promise<string | null> {

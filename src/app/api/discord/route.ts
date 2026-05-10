@@ -20,12 +20,19 @@ function getTeamId() {
 }
 
 async function linearQuery(query: string, variables?: Record<string, unknown>) {
-  const res = await fetch(LINEAR_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: getLinearAuth() },
-    body: JSON.stringify({ query, ...(variables ? { variables } : {}) }),
-  });
-  return res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(LINEAR_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: getLinearAuth() },
+      body: JSON.stringify({ query, ...(variables ? { variables } : {}) }),
+      signal: controller.signal,
+    });
+    return res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**

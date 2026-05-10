@@ -64,12 +64,23 @@ async function fetchPostHogErrors(): Promise<PostHogErrorGroup[]> {
   url.searchParams.set("date_from", sevenDaysAgo);
   url.searchParams.set("limit", "20");
 
-  const res = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  let res: Response;
+  try {
+    res = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+    });
+  } catch (e) {
+    clearTimeout(timer);
+    throw new Error(`PostHog API fetch failed: ${e instanceof Error ? e.message : String(e)}`);
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!res.ok) {
     const text = await res.text();
@@ -86,12 +97,19 @@ async function linearGql(query: string, variables?: Record<string, unknown>) {
   const apiKey = process.env.LINEAR_API_KEY;
   if (!apiKey) return null;
 
-  const res = await fetch(LINEAR_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: apiKey },
-    body: JSON.stringify({ query, variables }),
-  });
-  return res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(LINEAR_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: apiKey },
+      body: JSON.stringify({ query, variables }),
+      signal: controller.signal,
+    });
+    return res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function getExistingPostHogTickets(): Promise<Set<string>> {
