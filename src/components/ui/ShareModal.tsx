@@ -53,6 +53,7 @@ export function ShareModal({
 }: ShareModalProps) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [discordCopied, setDiscordCopied] = useState(false);
+  const [embedCopied, setEmbedCopied] = useState(false);
   const [publicConfirmDismissed, setPublicConfirmDismissed] = useState(false);
   const [tagError, setTagError] = useState(false);
   const [creatorError, setCreatorError] = useState(false);
@@ -107,6 +108,9 @@ export function ShareModal({
     const modal = modalRef.current;
     if (!modal) return;
 
+    // Remember the element that had focus before the modal opened so we can restore it on close
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
     const focusableSelectors =
       'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -141,8 +145,29 @@ export function ShareModal({
     };
 
     window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      // Restore focus to the element that triggered the modal
+      previouslyFocused?.focus();
+    };
   }, [onClose]);
+
+  // Extract share ID for embed snippet (only available for short /s/ URLs)
+  const shareIdMatch = publicUrl.match(/\/s\/([^/?#]+)/);
+  const shareId = shareIdMatch ? shareIdMatch[1] : null;
+  const embedUrl = shareId ? `https://pokemonvgcteamreport.com/embed/${shareId}` : null;
+  const embedSnippet = embedUrl
+    ? `<iframe src="${embedUrl}" width="100%" height="500" style="border:none;border-radius:8px;" title="VGC Team Report" loading="lazy"></iframe>`
+    : null;
+
+  const handleCopyEmbed = async () => {
+    if (!embedSnippet) return;
+    await navigator.clipboard.writeText(embedSnippet);
+    setEmbedCopied(true);
+    setTimeout(() => setEmbedCopied(false), 2000);
+    track("share_embed_copied");
+    posthog.capture("share_embed_copied", { has_tournament: !!tournamentName });
+  };
 
   // Detect if this is a short DB-backed URL or the long fallback
   const isShortUrl = publicUrl.includes("/s/") && !publicUrl.includes("#data=");
@@ -423,6 +448,33 @@ export function ShareModal({
             </button>
           )}
         </div>
+
+        {/* Embed snippet — only shown when a short /s/ URL is available */}
+        {embedSnippet && (
+          <div className="px-6 pb-6 border-t border-border pt-4">
+            <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-2">
+              Embed on your blog or forum
+            </p>
+            <div
+              className="flex items-start gap-2 bg-surface-alt border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-accent/40 transition-colors group"
+              onClick={handleCopyEmbed}
+              role="button"
+              tabIndex={0}
+              aria-label="Copy embed code"
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCopyEmbed(); } }}
+            >
+              <code className="text-[11px] text-text-secondary font-[family-name:var(--font-mono)] break-all flex-1 leading-relaxed select-all">
+                {embedSnippet}
+              </code>
+              <span className="text-xs font-bold text-accent flex-shrink-0 group-hover:text-accent/80 transition-colors mt-0.5">
+                {embedCopied ? "Copied!" : "Copy"}
+              </span>
+            </div>
+            <p className="text-[11px] text-text-tertiary mt-2 leading-relaxed">
+              Paste into any blog post, forum thread, or YouTube description. Includes a &ldquo;Powered by VGC Team Report&rdquo; link.
+            </p>
+          </div>
+        )}
 
         {/* Public confirmation prompt — shown when sharing publicly, asks user to confirm */}
         {!viewerMode && isPublic && !publicConfirmDismissed && isOwner && (
