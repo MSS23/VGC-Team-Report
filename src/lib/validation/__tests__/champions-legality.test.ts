@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { Dex } from "@pkmn/dex";
 import { validateChampionsTeam } from "../champions-legality";
+import { CHAMPIONS_DEX } from "@/lib/data/champions-dex";
+import { CHAMPIONS_REG_MA_MEGAS } from "@/lib/data/mega-pokemon";
 import type { ParsedPokemon } from "@/lib/types/pokemon";
 
 function makePokemon(overrides: Partial<ParsedPokemon> = {}): ParsedPokemon {
@@ -186,5 +189,60 @@ describe("validateChampionsTeam", () => {
     // 2 restricted is legal
     expect(result.issues.filter((i) => i.severity === "error")).toHaveLength(0);
     expect(result.issues.some((i) => i.message.includes("Restricted Pokemon (2/2)"))).toBe(true);
+  });
+});
+
+// ── Champions Dex Drift CI Guard ─────────────────────────────────────────────
+// These tests prevent reactive fix cycles by catching data drift before users.
+// They run in CI on every push — a failure means champions-dex.ts or
+// mega-pokemon.ts has an entry that no longer matches canonical @pkmn/dex data.
+
+describe("CHAMPIONS_DEX data integrity", () => {
+  it("contains at least 100 species (sanity guard against accidental truncation)", () => {
+    expect(CHAMPIONS_DEX.size).toBeGreaterThan(100);
+  });
+
+  it("all entries in CHAMPIONS_DEX are valid @pkmn/dex species", () => {
+    const invalid: string[] = [];
+    for (const species of CHAMPIONS_DEX) {
+      const s = Dex.species.get(species);
+      if (!s.exists) invalid.push(species);
+    }
+    expect(invalid, `Invalid species in CHAMPIONS_DEX: ${invalid.join(", ")}`).toHaveLength(0);
+  });
+});
+
+describe("CHAMPIONS_REG_MA_MEGAS data integrity", () => {
+  it("all Mega entries in CHAMPIONS_REG_MA_MEGAS are valid @pkmn/dex species", () => {
+    const invalid: string[] = [];
+    for (const megaKey of CHAMPIONS_REG_MA_MEGAS) {
+      const s = Dex.species.get(megaKey);
+      if (!s.exists) invalid.push(megaKey);
+    }
+    expect(invalid, `Invalid Mega species: ${invalid.join(", ")}`).toHaveLength(0);
+  });
+
+  it("every Mega in CHAMPIONS_REG_MA_MEGAS has its base form in CHAMPIONS_DEX", () => {
+    const missing: string[] = [];
+    for (const megaKey of CHAMPIONS_REG_MA_MEGAS) {
+      // Derive base form: strip "-mega" suffix and any trailing "-x"/"-y" variants
+      const base = megaKey.replace(/-mega(-[xy])?$/, "");
+      if (!CHAMPIONS_DEX.has(base)) missing.push(`${megaKey} (expected base: ${base})`);
+    }
+    expect(
+      missing,
+      `Mega entries missing base form in CHAMPIONS_DEX:\n${missing.join("\n")}`,
+    ).toHaveLength(0);
+  });
+
+  it("CHAMPIONS_REG_MA_MEGAS entries are all present in CHAMPIONS_DEX", () => {
+    const missing: string[] = [];
+    for (const megaKey of CHAMPIONS_REG_MA_MEGAS) {
+      if (!CHAMPIONS_DEX.has(megaKey)) missing.push(megaKey);
+    }
+    expect(
+      missing,
+      `Mega keys in CHAMPIONS_REG_MA_MEGAS not found in CHAMPIONS_DEX: ${missing.join(", ")}`,
+    ).toHaveLength(0);
   });
 });
