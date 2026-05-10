@@ -1,7 +1,7 @@
 # Competitive Intelligence: Pikalytics & PokePaste Teardown
 
 **Researched:** 2026-05-07  
-**Analyst:** Claude Code (r1 swarm agent) — verified and updated 2026-05-07  
+**Analyst:** Claude Code (r1 swarm agent) — verified and updated 2026-05-10  
 **Scope:** pikalytics.com and pokepast.es — full feature, UX, monetization, and gap analysis vs VGC Team Report
 
 ---
@@ -106,12 +106,15 @@ PokePaste is a purpose-built pastebin for competitive Pokémon. It accepts Poké
 
 ### Other Key Players Observed
 - **Limitless VGC** (`limitlessvgc.com/teams`): Tournament database, top-placing teams by event, season, regulation. Strong data authority. Links between Pikalytics and Limitless are tight.
-- **VGC.tools**: Community team library with public paste browsing, Showdown integration. More social/discovery-oriented than pokepaste.
-- **Falinks Teambuilder** (`falinks-teambuilder.com/pastes/vgc/`): VGC paste repository with curated community teams by regulation.
-- **Victory Road** (`victoryroad.pro`): Editorial team reports by players after strong tournament finishes. High quality but gatekept (only invited players submit).
+- **VGC.tools**: Community team library with public paste browsing, Showdown integration. Team builder with types, moves, items, and Showdown export. Browse/filter public teams by team name, Pokémon, ability, or move. More social/discovery-oriented than pokepaste.
+- **Falinks Teambuilder** (`falinks-teambuilder.com/pastes/vgc/`): VGC paste repository with curated community teams by regulation. Notable for collaborative team building feature.
+- **Victory Road** (`victoryroad.pro`): Editorial team reports by players after strong tournament finishes. High quality but gatekept (only invited players submit). Reports are deep narrative with tournament warstory format.
 - **MunchStats**: Created explicitly because Pikalytics updates too slowly. Faster data refresh cycle.
 - **Porygon Labs** (`porygonlabs.com`): Damage calculator + team builder for Champions/VGC. Uses a 50/50 weighted average of Pikalytics Champions Preview data and Champions First Tour (2026-04-09, ~1,021 entrants) for sample usage percentages. Mega Evolution support. Growing competitor to both Pikalytics calc and VGC Team Report's team-building layer.
+- **MetaVGC** (`metavgc.com`): Combines team discovery with individual Pokémon pages, team builder, and damage calculator. Targets players who want to find pastes, adapt EVs and moves, and verify important matchups in one flow.
+- **ChoiceSpecs** (`choicespecs.net`): Usage statistics, speed tiers, teambuilder, battle simulation and matchup analysis. Niche competitor to Pikalytics focused on VGC doubles.
 - **VGC Pastes (@VGCPastes on X)**: Twitter-based curation account. Regulation-tagged team repositories in spreadsheets and Discord bots. 1150+ Reg H teams, 173+ Reg F teams, and 63 Reg I teams catalogued as of early 2026. Competitor teams require extraction from Limitless manually — this is a slow, volunteer-dependent workflow that VGC Team Report could disrupt with direct submission flows.
+- **Reportworm** (`reportworm.com`): Auto-generates team analysis reports from a PokePaste URL + Showdown replay links. Can add more replays over time to update the report. Closes the gap between static pokepaste and analytical team reports, but is fully automated (no player-authored narrative).
 
 ---
 
@@ -174,13 +177,42 @@ PokePaste is a purpose-built pastebin for competitive Pokémon. It accepts Poké
 
 ---
 
+## 7. Feature Comparison Table
+
+| Feature | Pikalytics | PokePaste | VGC Team Report |
+|---|---|---|---|
+| Usage stats (meta data) | Yes (monthly) | No | No |
+| Damage calculator | Yes (advanced) | No | No (external link) |
+| Team builder | Yes | No | Yes (import) |
+| Sprite display | Yes | Yes (broken for many) | TBD |
+| Tournament top teams | Yes (auto-aggregated) | No | Yes (champion pages) |
+| Player-authored narrative | No | No (notes only) | Yes (core product) |
+| Matchup plans / gameplan | No | No | Yes |
+| EV spread rationale | No | No | Yes |
+| Team discovery / browsing | No | No | Yes (public feed) |
+| User accounts | No | No | Yes |
+| Social features (likes/follow) | No | No | Partial |
+| Mobile app | Dead (Android unpublished) | No app | No app |
+| Mobile web | Poor | Adequate | Responsive |
+| Multi-language | Yes (8 languages) | No | No |
+| Speed tiers | No | No | Yes |
+| Monetization | Ko-fi donations | None | TBD |
+| Open source | Calc only | Yes | No |
+| Privacy / pre-tournament | No (public teams) | Yes (URL-only) | Public by default |
+| Import from Showdown paste | Yes | N/A (IS the paste) | Yes |
+| Educational content | Yes (articles) | No | No |
+
+---
+
 ## Sources Referenced
 - https://www.pikalytics.com/
 - https://www.pikalytics.com/champions
 - https://www.pikalytics.com/team
 - https://www.pikalytics.com/topteams
 - https://www.pikalytics.com/calc
+- https://www.pikalytics.com/calc-quiz
 - https://www.pikalytics.com/articles
+- https://www.pikalytics.com/results
 - https://github.com/pikalytics/pikalytics-calc
 - https://ko-fi.com/pikalytics
 - https://pokepast.es/
@@ -188,11 +220,19 @@ PokePaste is a purpose-built pastebin for competitive Pokémon. It accepts Poké
 - https://github.com/felixphew/pokepaste/issues
 - https://chromewebstore.google.com/detail/pokepastefix/ekceaboabpgkgbpigacngnjagcdhdkmn
 - https://www.smogon.com/forums/threads/pokepaste-a-pokemon-pastebin.3601073/
+- https://www.smogon.com/forums/threads/pokepaste-image-fix.3733096/
 - https://www.appbrain.com/app/pikalytics-battle-strategy/com.pikalytics
 - https://limitlessvgc.com/teams
 - https://vgc.tools/
+- https://vgc.tools/teams
 - https://www.falinks-teambuilder.com/pastes/vgc/
 - https://victoryroad.pro/resources/
+- https://victoryroad.pro/sv-reports/
 - https://munchstats.com/
 - https://pokemonvgcteamreport.com/
+- https://metavgc.com/
+- https://choicespecs.net/
+- https://reportworm.com/
+- https://porygonlabs.com/
 - https://x.com/VGCPastes
+- https://x.com/Pikalytics
