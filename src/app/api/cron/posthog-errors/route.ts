@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 /**
  * GET /api/cron/posthog-errors
  *
- * Weekly cron that queries PostHog Error Tracking for new/active error groups
+ * Daily cron that queries PostHog Error Tracking for new/active error groups
  * and creates Linear tickets for any that don't already have one.
  *
  * Required env vars:
@@ -13,6 +13,9 @@ import { NextResponse } from "next/server";
  *   - POSTHOG_PROJECT_ID        — numeric project ID from PostHog URL
  *   - LINEAR_API_KEY
  *   - LINEAR_TEAM_ID
+ *
+ * If POSTHOG_PERSONAL_API_KEY (or the fallback POSTHOG_API_KEY) is not set,
+ * the route exits gracefully with a 200 warning rather than erroring.
  */
 
 const LINEAR_API = "https://api.linear.app/graphql";
@@ -43,12 +46,18 @@ interface PostHogErrorResponse {
   results: PostHogErrorGroup[];
 }
 
-async function fetchPostHogErrors(): Promise<PostHogErrorGroup[]> {
+async function fetchPostHogErrors(): Promise<PostHogErrorGroup[] | null> {
   const apiKey = process.env.POSTHOG_PERSONAL_API_KEY || process.env.POSTHOG_API_KEY;
   const projectId = process.env.POSTHOG_PROJECT_ID;
 
-  if (!apiKey || !projectId) {
-    throw new Error("POSTHOG_PERSONAL_API_KEY (or POSTHOG_API_KEY) and POSTHOG_PROJECT_ID required");
+  if (!apiKey) {
+    console.warn("[posthog-errors] POSTHOG_PERSONAL_API_KEY is not set — skipping PostHog query");
+    return null;
+  }
+
+  if (!projectId) {
+    console.warn("[posthog-errors] POSTHOG_PROJECT_ID is not set — skipping PostHog query");
+    return null;
   }
 
   const host = (process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com")
@@ -157,7 +166,7 @@ async function createLinearTicket(
     `> [View in PostHog](${host}/project/${projectId}/error_tracking/${encodeURIComponent(errorGroup.fingerprint)})`,
     "",
     "---",
-    "*Auto-created by PostHog Error Tracking → Linear weekly sync.*",
+    "*Auto-created by PostHog Error Tracking → Linear daily sync.*",
   ].join("\n");
 
   // Higher priority for more occurrences/users
@@ -201,17 +210,28 @@ export async function GET(request: Request) {
   const projectId = process.env.POSTHOG_PROJECT_ID;
 
   if (!apiKey || !projectId) {
+    const missing = !apiKey ? "POSTHOG_PERSONAL_API_KEY" : "POSTHOG_PROJECT_ID";
+    console.warn(`[posthog-errors] ${missing} is not configured — skipping run`);
     return NextResponse.json({
-      error: "POSTHOG_PERSONAL_API_KEY (or POSTHOG_API_KEY) and POSTHOG_PROJECT_ID required",
-    }, { status: 500 });
+      ok: true,
+      skipped: true,
+      reason: `${missing} is not configured`,
+    });
   }
 
   try {
     // Fetch PostHog error groups and existing Linear tickets in parallel
-    const [errorGroups, existingTickets] = await Promise.all([
+    const [errorGroupsOrNull, existingTickets] = await Promise.all([
       fetchPostHogErrors(),
       getExistingPostHogTickets(),
     ]);
+
+    // Guard: if PostHog query was skipped (missing env vars), exit gracefully
+    if (errorGroupsOrNull === null) {
+      return NextResponse.json({ ok: true, skipped: true, reason: "PostHog credentials not configured" });
+    }
+
+    const errorGroups = errorGroupsOrNull;
 
     const created: { identifier: string; url: string; description: string; occurrences: number }[] = [];
     const skipped: string[] = [];
@@ -261,7 +281,7 @@ export async function GET(request: Request) {
 
     // Post to Discord
     await postToBuildsChannel({
-      title: "PostHog Error Digest — Weekly Sync",
+      title: "PostHog Error Digest — Daily Sync",
       description: lines.join("\n"),
       color: created.length > 0 ? COLORS.warning : COLORS.success,
       footer: { text: "PostHog → Linear Error Sync" },

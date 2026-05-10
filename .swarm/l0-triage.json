@@ -1,0 +1,165 @@
+[
+  {
+    "identifier": "VGC-150",
+    "id": "64f4b6ee-c1e8-44c9-9d5c-7b8b1e9a2f3c",
+    "title": "Remove auth wall from public shared team views",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-150/remove-auth-wall-from-public-shared-team-views",
+    "priority": 1,
+    "status": "Backlog",
+    "labels": ["auto-research", "Web App", "Feature"],
+    "scope_estimate": "2hr",
+    "rationale": "Middleware and /s/[id] page use Clerk but no hard auth block on viewing found. Ticket says 'may be' behind auth — work is: audit actual Clerk protection on /s/[id], ensure anonymous access is fully unblocked, add guest 'Fork this team' bottom banner (show to unauthenticated users). Note: ticket itself says 'product decision needed before implementation' — should confirm with owner before starting.",
+    "files_likely_to_change": [
+      "src/middleware.ts",
+      "src/app/s/[id]/page.tsx",
+      "src/components/report/TeamReport.tsx",
+      "src/components/ui/ShareDock.tsx"
+    ]
+  },
+  {
+    "identifier": "VGC-152",
+    "id": "c3a1f8e2-7d4b-4f9a-b6c5-2e8d1a3f7b9e",
+    "title": "Downloadable \"team card\" image — Spotify Wrapped-style shareable artifact",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-152/downloadable-team-card-image-spotify-wrapped-style-shareable-artifact",
+    "priority": 2,
+    "status": "Backlog",
+    "labels": ["auto-research", "Web App", "Feature"],
+    "scope_estimate": "2hr",
+    "rationale": "/api/team-graphic route (266 lines, next/og ImageResponse) already renders a team card PNG server-side. html2canvas-pro is in package.json. Work is: wire a 'Save as image' button in ShareDock that calls /api/team-graphic?id=X&style=wide and triggers a download, plus optionally a Story (1080x1920) variant in the existing route.",
+    "files_likely_to_change": [
+      "src/app/api/team-graphic/route.tsx",
+      "src/components/ui/ShareDock.tsx",
+      "src/app/s/[id]/page.tsx"
+    ]
+  },
+  {
+    "identifier": "VGC-112",
+    "id": "5a9e2c4f-1b7d-4e8a-9c3f-6d2b8e1a4f7c",
+    "title": "Growth: Embeddable team report widget for forums and blogs",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-112/growth-embeddable-team-report-widget-for-forums-and-blogs",
+    "priority": 2,
+    "status": "Backlog",
+    "labels": [],
+    "scope_estimate": "2hr",
+    "rationale": "/embed/[id]/page.tsx (94 lines) already exists. /api/oembed/route.ts (46 lines) already exists. Work is: expose a copy-able embed snippet (iframe HTML) in ShareDock, add oEmbed meta tag to /s/[id] head, and optionally style the embed page for minimal chrome. Infrastructure is already in place.",
+    "files_likely_to_change": [
+      "src/app/embed/[id]/page.tsx",
+      "src/app/api/oembed/route.ts",
+      "src/components/ui/ShareDock.tsx",
+      "src/app/s/[id]/page.tsx"
+    ]
+  },
+  {
+    "identifier": "VGC-154",
+    "id": "b2e7f9a3-4c1d-4b8e-a5f2-9d3c7e1b6a4f",
+    "title": "VGC match tracker — log results vs archetypes, win-rate dashboard",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-154/vgc-match-tracker-log-results-vs-archetypes-win-rate-dashboard",
+    "priority": 2,
+    "status": "Backlog",
+    "labels": ["auto-research", "Analytics", "Feature"],
+    "scope_estimate": "4hr",
+    "rationale": "No match_logs table in DB yet — needs schema migration + API route + dashboard UI. Feasible in 4hr for an MVP: DB table, POST /api/match-log route, simple dashboard component with win-rate aggregation. No external dependencies.",
+    "files_likely_to_change": [
+      "src/lib/db.ts",
+      "src/app/api/match-log/route.ts",
+      "src/app/dashboard/DashboardContent.tsx",
+      "src/components/match-tracker/MatchTracker.tsx"
+    ]
+  },
+  {
+    "identifier": "VGC-77",
+    "id": "e1c4a7f2-8b3d-4e9a-b6c1-3f7d2a5e8b9c",
+    "title": "Pre-built Champions sample teams (3-5 archetypes)",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-77/pre-built-champions-sample-teams-3-5-archetypes",
+    "priority": 1,
+    "status": "Backlog",
+    "labels": [],
+    "scope_estimate": "2hr",
+    "rationale": "Champions page and Pokedex exist. Work is: author 3-5 Showdown paste strings for canonical archetypes (Mega Kangaskhan goodstuffs, Primal Groudon sun, Primal Kyogre rain, Mega Salamence, Mega Metagross), seed them as hardcoded sample data in ChampionsContent.tsx with a 'Try this team' CTA that pre-fills the builder. No external API needed.",
+    "files_likely_to_change": [
+      "src/app/champions/ChampionsContent.tsx",
+      "src/app/champions/page.tsx",
+      "src/lib/data/champions-dex.ts"
+    ]
+  },
+  {
+    "identifier": "VGC-76",
+    "id": "f3b8e1c5-2d7a-4f9b-c4e1-5a8d3f2b7e9c",
+    "title": "Champions meta snapshot page",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-76/champions-meta-snapshot-page",
+    "priority": 2,
+    "status": "Backlog",
+    "labels": [],
+    "scope_estimate": "4hr",
+    "rationale": "Explore page + Champions page already exist. Work is: add a DB query aggregating most-used Pokemon/Megas/items/archetypes from published Champions-format reports, create /champions/meta page with usage chart component. Relies on existing is_public + format fields in DB. No external deps.",
+    "files_likely_to_change": [
+      "src/app/champions/ChampionsContent.tsx",
+      "src/app/api/explore/route.ts",
+      "src/app/champions/page.tsx",
+      "src/components/champions/MetaSnapshot.tsx"
+    ]
+  },
+  {
+    "identifier": "VGC-114",
+    "id": "a4d9f2e6-3c8b-4a7f-d5e2-6b1c9f4a8d3e",
+    "title": "SEO: Target high-volume VGC search terms with landing pages",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-114/seo-target-high-volume-vgc-search-terms-with-landing-pages",
+    "priority": 2,
+    "status": "Backlog",
+    "labels": [],
+    "scope_estimate": "2hr",
+    "rationale": "Static Next.js pages are cheap to add. Work is: create 3-5 targeted landing pages (e.g. /vgc-team-builder, /vgc-speed-tiers, /champions-vgc-teams) with targeted H1/meta/content and internal links to the main tool. R6 SEO audit already identified the key terms. No external deps.",
+    "files_likely_to_change": [
+      "src/app/vgc-team-builder/page.tsx",
+      "src/app/vgc-speed-tiers/page.tsx",
+      "src/app/sitemap.ts"
+    ]
+  },
+  {
+    "identifier": "VGC-129",
+    "id": "c5e1b3f7-4d2a-4c8e-e6f3-7c2d1b5e9a4f",
+    "title": "Retention: Browser push notifications via service worker",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-129/retention-browser-push-notifications-via-service-worker",
+    "priority": 3,
+    "status": "Backlog",
+    "labels": ["Retention", "Feature", "Web App"],
+    "scope_estimate": "4hr",
+    "rationale": "Notifications table already exists in DB. notifications.ts lib exists. Work is: add web-push subscription endpoint, store push subscriptions in DB, trigger push from existing notification creation flow, add 'Enable notifications' opt-in UI. Requires web-push npm package (free). VGC-127 (real-time in-app notifications) is higher priority and should be done first if both are tackled.",
+    "files_likely_to_change": [
+      "src/lib/notifications.ts",
+      "src/lib/db.ts",
+      "src/app/api/user/notifications/route.ts",
+      "public/sw.js"
+    ]
+  },
+  {
+    "identifier": "VGC-115",
+    "id": "d6f2c4e8-5b3a-4d9f-f7e4-8d3c2f6b1a5e",
+    "title": "Ops: Add POSTHOG_PERSONAL_API_KEY for error tracking cron",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-115/ops-add-posthog_personal_api_key-for-error-tracking-cron",
+    "priority": 1,
+    "status": "Backlog",
+    "labels": [],
+    "scope_estimate": "30min",
+    "rationale": "Code already supports POSTHOG_PERSONAL_API_KEY (falls back to POSTHOG_API_KEY). The cron route at /api/cron/posthog-errors and /api/webhooks/posthog both reference it. Work is only: generate key in PostHog dashboard, add to .env.local and Vercel env vars. No code changes needed — purely an ops/config task. Blocked on human action (PostHog UI access).",
+    "files_likely_to_change": [
+      ".env.local"
+    ]
+  },
+  {
+    "identifier": "VGC-79",
+    "id": "e7a3d5f9-6c4b-4e1a-a8f5-9e4d3a7c2b6f",
+    "title": "Inline damage calculator on Pokemon detail slides",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-79/inline-damage-calculator-on-pokemon-detail-slides",
+    "priority": 2,
+    "status": "Backlog",
+    "labels": [],
+    "scope_estimate": "4hr",
+    "rationale": "@smogon/calc is NOT installed (not in node_modules or package.json). Requires npm install @smogon/calc (~1.5MB), then build a PokemonCalcPanel component wired into the detail slide. The @smogon/calc library is open-source (MIT) and free. This is a borderline 4hr task given the new dependency integration, but achievable in a focused session.",
+    "files_likely_to_change": [
+      "package.json",
+      "src/components/report/PokemonCalcPanel.tsx",
+      "src/components/report/TeamReport.tsx"
+    ]
+  }
+]

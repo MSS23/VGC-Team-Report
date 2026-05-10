@@ -1,4 +1,4 @@
-import { clerkMiddleware } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getCorsHeaders, isAllowedOrigin } from '@/lib/security/cors'
@@ -6,6 +6,38 @@ import { setCsrfCookie, validateCsrf } from '@/lib/security/csrf'
 import { isBlockedBot, isSuspiciousRequest } from '@/lib/security/bot-detection'
 
 const CANONICAL_HOST = 'pokemonvgcteamreport.com';
+
+// Routes that are always public — no authentication required to view.
+// /s/:path* covers all public shared team report URLs (VGC-150).
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/s/:path*',
+  '/embed/:path*',
+  '/explore',
+  '/champions(.*)',
+  '/creator/:path*',
+  '/compare',
+  '/changelog',
+  '/feedback',
+  '/privacy',
+  '/terms',
+  '/api/share/:path*',
+  '/api/explore',
+  '/api/spotlight',
+  '/api/views/:path*',
+  '/api/reactions/:path*',
+  '/api/comments/:path*',
+  '/api/oembed',
+  '/api/sprite',
+  '/api/bot',
+  '/api/webhooks/:path*',
+  '/api/cron/:path*',
+  '/api/creator/:path*',
+  '/api/pokepaste',
+  '/api/feedback',
+  '/api/keep-alive',
+  '/api/setup',
+]);
 
 export default clerkMiddleware(async (_auth, request: NextRequest) => {
   const { pathname, search } = request.nextUrl;
@@ -51,7 +83,7 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
   const host = request.headers.get('host') ?? '';
   const isApiRoute = pathname.startsWith('/api');
 
-  // ── Canonical redirect: vercel.app → custom domain ─────────────
+  // ── Canonical redirect: vercel.app → custom domain ─────────────────
   // Redirects all non-custom-domain traffic to the canonical URL.
   // Preserves path and query string. Skips in development.
   // Allows Vercel preview deploys (unique hash URLs) to work without redirect.
@@ -77,7 +109,7 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
     });
   }
 
-  // ── CORS: Block cross-origin API requests from unknown origins ─
+  // ── CORS: Block cross-origin API requests from unknown origins ────
   // Exempt Discord and Linear webhook endpoints (sent from their servers, not browsers)
   // Exempt builder proxy endpoints — authenticated via secret key, called from cloud sandbox
   if (isApiRoute && !pathname.startsWith('/api/discord') && !pathname.startsWith('/api/webhooks/') && !pathname.startsWith('/api/builder/') && pathname !== '/api/setup' && !isAllowedOrigin(request)) {
@@ -108,7 +140,7 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
     }
   }
 
-  // ── Set CORS headers on API responses ──────────────────────────
+  // ── Set CORS headers on API responses ──────────────────────
   const response = NextResponse.next();
 
   if (isApiRoute) {
@@ -118,7 +150,7 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
     }
   }
 
-  // ── Set CSRF cookie on page loads (non-API) ────────────────────
+  // ── Set CSRF cookie on page loads (non-API) ─────────────────
   if (!isApiRoute && request.method === 'GET') {
     // Check if csrf cookie already exists
     const existingCsrf = request.cookies.get('csrf_token');

@@ -96,7 +96,8 @@ Key title patterns observed in SERPs:
 
 **Not a direct competitor** — different value prop. Potential backlink partner (link from their tournament team pages to creator's VGC Team Report).
 
----
+#### "PokePaste alternative"
+**NOT ranking** — top results: VR Pastes, crob.at/pokepaste, Pikalytics. Despite VGC Team Report explicitly integrating PokePaste import/export, this intent is uncaptured.
 
 ### New Entrants (Observed May 2026)
 Several new tools now rank for "VGC team builder 2026" — increasing competition:
@@ -116,7 +117,8 @@ Several new tools now rank for "VGC team builder 2026" — increasing competitio
 - VGCPastes runs as an X (Twitter) account (@VGCPastes), not a competing site.
 - **crob.at** now explicitly markets as "PokePaste alternative" and ranks for "pokepaste alternative pokemon team sharing" — relevant since VGC Team Report's meta description uses "richer alternative to PokéPaste."
 
----
+**QW-2: Explicit OG image URL in root layout**
+Add `images: [{url: "https://pokemonvgcteamreport.com/opengraph-image", width: 1200, height: 630, alt: "…"}]` to both `openGraph` and `twitter` blocks. Ensures consistent social unfurls.
 
 ## 4. Keyword Gap Analysis (Top 10)
 
@@ -133,9 +135,10 @@ Several new tools now rank for "VGC team builder 2026" — increasing competitio
 | 9 | `VGC [player name] team report` | Long-tail, high CTR | Victory Road (editorial) | `/creator/[name]` pages are thin — description only "View all public VGC team reports by ${creator}." |
 | 10 | `VGC speed tier` / `VGC matchup plan` | High utility | Turnadus, Pikalytics, Victory Road | Feature exists in reports but no keyword-targeting content page or H1 for these terms |
 
----
+**QW-6: Add `lastModified: new Date()` to static sitemap entries**
+Enables Google freshness signals on homepage, /explore, /champions.
 
-## 5. Technical SEO Issues
+### Priority 2 — Structured Data (half-day fixes)
 
 ### Critical
 1. **No default OG image** — `summary_large_image` Twitter card with no image renders as a plain link. Homepage social shares have zero visual preview.
@@ -153,7 +156,8 @@ Several new tools now rank for "VGC team builder 2026" — increasing competitio
 9. **No `Article` or `HowTo` schema on guide content** — the FAQ JSON-LD is strong; extending with `HowTo` on how to build a team report could earn rich snippets.
 10. **Inconsistent `keywords` meta tag** — present on `/champions` only; either apply consistently or drop it (Google ignores it for ranking, but it's noise in the audit trail).
 
----
+**QW-10: /creator pages — enrich title + description**
+`"${creator}'s Teams"` → `"${creator} — Pokemon VGC Team Reports"`. Description should list features available on profile.
 
 ## 6. Competitor Keyword Coverage Matrix
 
@@ -173,7 +177,8 @@ Several new tools now rank for "VGC team builder 2026" — increasing competitio
 | Regulation M-A | Y | Y | N | Y | Y (champions page) |
 | VGC tournament results | Y | Y | Y | N | N |
 
----
+**QW-11: Dedicated `/speed-tiers` page (HIGHEST ROI)**
+"VGC speed tiers" is a high-volume, low-competition query. Pikalytics owns it now. A static/SSG page listing Reg M-A speed benchmarks would capture this traffic and provide internal linking to `/champions/[pokemon]` pages. This is the single most valuable SEO opportunity currently uncaptured.
 
 ## 7. Top 3 Quick SEO Wins
 
@@ -192,7 +197,7 @@ Both pages are already in the sitemap; improving titles is a direct ranking sign
 
 ---
 
-## 8. Schema / Structured Data Summary
+## 8. Technical SEO Notes
 
 | Page | Schema Type | Assessment |
 |---|---|---|

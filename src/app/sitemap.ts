@@ -5,13 +5,14 @@ import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 const BASE = "https://pokemonvgcteamreport.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const now = new Date().toISOString();
   const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE, changeFrequency: "weekly", priority: 1.0 },
-    { url: `${BASE}/explore`, changeFrequency: "daily", priority: 0.9 },
-    { url: `${BASE}/champions`, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${BASE}/faq`, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3 },
-    { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1 },
+    { url: BASE, changeFrequency: "weekly", priority: 1.0, lastModified: now },
+    { url: `${BASE}/explore`, changeFrequency: "daily", priority: 0.9, lastModified: now },
+    { url: `${BASE}/champions`, changeFrequency: "weekly", priority: 0.9, lastModified: now },
+    { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3, lastModified: now },
+    { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
+    { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
     ...MEGA_POKEMON_LIST.map((m) => ({
       url: `${BASE}/champions/${m.slug}`,
       changeFrequency: "weekly" as const,
