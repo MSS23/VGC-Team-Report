@@ -24,17 +24,17 @@ async function fetchSessionTimeline(
     .replace("eu.i.posthog.com", "eu.posthog.com")
     .replace(/\/$/, "");
 
+  // Validate sessionId is a safe UUID before using it in any query context
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(sessionId)) return [];
+
   // HogQL: pull every event from this session before the exception, newest first.
   // 15 rows is enough to see the user's last few clicks + page views without
   // bloating the Linear comment.
-  const query = `
-    SELECT event, timestamp, properties
-    FROM events
-    WHERE properties.$session_id = '${sessionId.replace(/'/g, "")}'
-      AND timestamp <= '${beforeTimestamp.replace(/'/g, "")}'
-    ORDER BY timestamp DESC
-    LIMIT 15
-  `;
+  // Use parameterized `values` to avoid any HogQL injection — variables are bound
+  // server-side by PostHog and never interpolated into the query string.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
   try {
     const res = await fetch(`${host}/api/projects/${projectId}/query/`, {
@@ -43,8 +43,17 @@ async function fetchSessionTimeline(
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ query: { kind: "HogQLQuery", query } }),
+      body: JSON.stringify({
+        query: {
+          kind: "HogQLQuery",
+          query:
+            "SELECT event, timestamp, properties FROM events WHERE properties.$session_id = {session_id} AND timestamp <= {before_ts} ORDER BY timestamp DESC LIMIT 15",
+          values: { session_id: sessionId, before_ts: beforeTimestamp },
+        },
+      }),
+      signal: controller.signal,
     });
+
     if (!res.ok) return [];
     const data = await res.json();
     const rows: unknown[][] = data?.results ?? [];
@@ -55,6 +64,8 @@ async function fetchSessionTimeline(
     }));
   } catch {
     return [];
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
