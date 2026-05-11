@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { I18nProvider } from "@/lib/i18n";
 
@@ -8,7 +8,38 @@ import { applyRandomAccent } from "@/lib/utils/random-accent";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 
-const ENTRIES = [
+type EntryType = "new" | "improved" | "fixed";
+
+interface ChangelogItem {
+  type: EntryType;
+  text: string;
+}
+
+interface ChangelogEntry {
+  date: string;
+  version: string;
+  title: string;
+  emoji: string;
+  highlight?: boolean;
+  items: ChangelogItem[];
+}
+
+const ENTRIES: ChangelogEntry[] = [
+  {
+    date: "May 2026",
+    version: "5.11",
+    title: "Vercel Cost Optimizations & Bill Resilience",
+    emoji: "💸",
+    highlight: true,
+    items: [
+      { type: "improved", text: "PostHog error-tracking cron moved from every 4 hours to weekly. Five fewer scheduled function invocations every day with no loss of signal — error groups don't change minute-to-minute and the weekly cadence still posts a Discord digest." },
+      { type: "improved", text: "Embed iframe pages (/embed/[id]) moved from force-dynamic to ISR with a 10-minute revalidate window. Public-data embeds no longer SSR per view — the second viewer of any embedded team in a 10-minute window is served from cache." },
+      { type: "fixed", text: "Removed a module-scope setInterval from the /api/views endpoint that was keeping Lambdas warm and defeating Vercel's scale-to-zero. The in-memory dedup Set it cleared was also unreliable (per-instance, so cold-instance hits double-counted views anyway). Replaced with atomic cross-Lambda dedup via Upstash SET NX EX." },
+      { type: "new", text: "cacheSetIfAbsent helper in src/lib/cache.ts. Atomic set-if-absent primitive built on Upstash for any future cross-Lambda dedup needs (view counts, idempotency keys, throttle gates) without keeping functions warm." },
+      { type: "improved", text: "Stripped @vercel/analytics from the project. Every track() call was already paired with a PostHog capture of the same event — the Vercel-side stream was pure duplicate cost. Twelve files cleaned up and the dependency uninstalled. PostHog dashboards retain the canonical property names; zero analytics loss." },
+      { type: "improved", text: "next.config.ts now ships an explicit images block with empty remotePatterns and a 30-day minimumCacheTTL. Showdown sprites flow through the existing /api/sprite edge proxy, so the Image Optimizer is now correctly fenced off from accidental remote-origin optimization (the #2 driver of surprise Vercel bills)." },
+    ],
+  },
   {
     date: "May 2026",
     version: "5.10",
@@ -16,16 +47,16 @@ const ENTRIES = [
     emoji: "🤖",
     highlight: true,
     items: [
-      { type: "new" as const, text: "Social share preview cards restored. Shared team report links on Twitter/Discord now display a visual card with all 6 Pokémon sprites, tournament name, and placement. Each sprite fetch has a 2.5-second timeout with Pokéball fallback so the card always renders — the previous timeout issue that caused the suppression is fixed." },
-      { type: "new" as const, text: "FAQPage, Organization, WebSite, and HowTo JSON-LD schemas are now active on the homepage. These components were fully built but never imported — activating them is the top fix for AI assistant citation (ChatGPT, Perplexity, Claude) and Google rich results. Includes a HowTo schema for creating a team report." },
-      { type: "new" as const, text: "3 pre-built Champions sample teams added — Mega Kangaskhan Goodstuffs, Primal Groudon Sun, and Primal Kyogre Rain — accessible from the Champions page with a one-click Try button that loads the full Showdown paste into the report editor." },
-      { type: "improved" as const, text: "posthog-js (~150 KB) is now deferred until browser idle time using requestIdleCallback. It was previously parsed on every page at layout level. All 10 consumer components updated to use a usePostHog shim that resolves after the dynamic import, with no change to the existing null-guard patterns." },
-      { type: "fixed" as const, text: "Tournament page 'View top teams' CTA links were silently broken — they passed ?tournament={id} which the explore filter ignores. Links now pass ?q={name}&searchType=tournament which the explore page actually handles." },
-      { type: "fixed" as const, text: "ShareModal clipboard handlers (Copy Link, Copy Discord, Copy Embed) now have try/catch around navigator.clipboard.writeText(). The API throws on non-HTTPS or permission-denied, causing a silent unhandled rejection. Also migrated from bare posthog-js import to the project-standard usePostHog hook." },
-      { type: "fixed" as const, text: "oEmbed endpoint now wraps shareId with encodeURIComponent() before HTML interpolation. The regex guard prevented exploitation but direct string interpolation into HTML was structurally unsafe." },
-      { type: "fixed" as const, text: "3 critical WCAG 2.1 AA accessibility issues resolved: keyboard access added to the URL-copy div in ShareModal; creator/collaborator navigation spans in ReportCard converted to proper anchor elements; comment moderation buttons (delete/flag) had aria-hidden=true removed. Also fixed like button aria-label/aria-pressed and added aria-hidden to decorative SVGs." },
-      { type: "improved" as const, text: "/faq and /tournaments added to XML sitemap. /compare page now has full metadata (title, description, OpenGraph, canonical). Root homepage title and description updated with VGC keyword targeting. /explore, /creator/[name] pages get expanded keyword metadata including OTS." },
-      { type: "fixed" as const, text: "Removed orphaned BringSelector component (bring-selection logic had been re-implemented inline in MatchupPlanSlide). Also removed unused hidePageNavbar/showPageNavbar exports from PersistentNavbar." },
+      { type: "new", text: "Social share preview cards restored. Shared team report links on Twitter/Discord now display a visual card with all 6 Pokémon sprites, tournament name, and placement. Each sprite fetch has a 2.5-second timeout with Pokéball fallback so the card always renders — the previous timeout issue that caused the suppression is fixed." },
+      { type: "new", text: "FAQPage, Organization, WebSite, and HowTo JSON-LD schemas are now active on the homepage. These components were fully built but never imported — activating them is the top fix for AI assistant citation (ChatGPT, Perplexity, Claude) and Google rich results. Includes a HowTo schema for creating a team report." },
+      { type: "new", text: "3 pre-built Champions sample teams added — Mega Kangaskhan Goodstuffs, Primal Groudon Sun, and Primal Kyogre Rain — accessible from the Champions page with a one-click Try button that loads the full Showdown paste into the report editor." },
+      { type: "improved", text: "posthog-js (~150 KB) is now deferred until browser idle time using requestIdleCallback. It was previously parsed on every page at layout level. All 10 consumer components updated to use a usePostHog shim that resolves after the dynamic import, with no change to the existing null-guard patterns." },
+      { type: "fixed", text: "Tournament page 'View top teams' CTA links were silently broken — they passed ?tournament={id} which the explore filter ignored. Links now pass ?q={name}&searchType=tournament which the explore page actually handles." },
+      { type: "fixed", text: "ShareModal clipboard handlers (Copy Link, Copy Discord, Copy Embed) now have try/catch around navigator.clipboard.writeText(). The API throws on non-HTTPS or permission-denied, causing a silent unhandled rejection. Also migrated from bare posthog-js import to the project-standard usePostHog hook." },
+      { type: "fixed", text: "oEmbed endpoint now wraps shareId with encodeURIComponent() before HTML interpolation. The regex guard prevented exploitation but direct string interpolation into HTML was structurally unsafe." },
+      { type: "fixed", text: "3 critical WCAG 2.1 AA accessibility issues resolved: keyboard access added to the URL-copy div in ShareModal; creator/collaborator navigation spans in ReportCard converted to proper anchor elements; comment moderation buttons (delete/flag) had aria-hidden=true removed. Also fixed like button aria-label/aria-pressed and added aria-hidden to decorative SVGs." },
+      { type: "improved", text: "/faq and /tournaments added to XML sitemap. /compare page now has full metadata (title, description, OpenGraph, canonical). Root homepage title and description updated with VGC keyword targeting. /explore, /creator/[name] pages get expanded keyword metadata including OTS." },
+      { type: "fixed", text: "Removed orphaned BringSelector component (bring-selection logic had been re-implemented inline in MatchupPlanSlide). Also removed unused hidePageNavbar/showPageNavbar exports from PersistentNavbar." },
     ],
   },
   {
@@ -35,86 +66,917 @@ const ENTRIES = [
     emoji: "🔁",
     highlight: true,
     items: [
-      { type: "fixed" as const, text: "Popular and Views tabs on /explore now show the entire library, not just a subset. The pagination cursor was a single integer with strict less-than semantics, so once the feed reached the tied tail of teams sharing a like count or view count (most teams have 0 of either), the next-page query asked for \"likes < 0\" and returned nothing. Replaced with a composite cursor (metric, created_at) walked via Postgres tuple comparison so ties are paginated by created_at exactly as the ORDER BY intends. Same fix applied to the Views sort." },
-      { type: "new" as const, text: "Fork credit on Explore cards. When a team is duplicated via the new Notion-style \"Duplicate this team\" CTA, the explore card now surfaces \"Duplicated from @{originalCreator}\" below the byline, linking to the original creator's profile. Server-side join over shares.forked_from_id so the credit always reflects ground truth. Pairs with the existing \"Forked from\" banner on the /s/{id} view itself, so attribution shows up at both the discovery surface and the report surface." },
-      { type: "fixed" as const, text: "Mega forms now suppress themselves when the regulation isn't Reg M-A. Reg F, G, H, I and every other Scarlet/Violet regulation can't actually use Mega Evolution, so showing Mega-form analysis on those teams was misleading — viewers saw boosted Mega stats and the Mega ability when the team can never trigger Mega Evo in actual play." },
-      { type: "fixed" as const, text: "The Mega flip toggle now requires both a Reg M-A regulation AND an actual Mega Stone equipped on the species. Without the Stone, Mega Evolution can't trigger in battle, so surfacing a flip control was misleading." },
+      { type: "fixed", text: "Popular and Views tabs on /explore now show the entire library, not just a subset. The pagination cursor was a single integer with strict less-than semantics, so once the feed reached the tied tail of teams sharing a like count or view count (most teams have 0 of either), the next-page query asked for \"likes < 0\" and returned nothing. Replaced with a composite cursor (metric, created_at) walked via Postgres tuple comparison so ties are paginated by created_at exactly as the ORDER BY intends. Same fix applied to the Views sort." },
+      { type: "new", text: "Fork credit on Explore cards. When a team is duplicated via the new Notion-style \"Duplicate this team\" CTA, the explore card now surfaces \"Duplicated from @{originalCreator}\" below the byline, linking to the original creator's profile. Server-side join over shares.forked_from_id so the credit always reflects ground truth. Pairs with the existing \"Forked from\" banner on the /s/{id} view itself, so attribution shows up at both the discovery surface and the report surface." },
+      { type: "fixed", text: "Mega forms now suppress themselves when the regulation isn't Reg M-A. Reg F, G, H, I and every other Scarlet/Violet regulation can't actually use Mega Evolution, so showing Mega-form analysis on those teams was misleading — viewers saw boosted Mega stats and the Mega ability when the team can never trigger Mega Evo in actual play." },
+      { type: "fixed", text: "The Mega flip toggle now requires both a Reg M-A regulation AND an actual Mega Stone equipped on the species. Without the Stone, Mega Evolution can't trigger in battle, so surfacing a flip control was misleading." },
+    ],
+  },
+  {
+    date: "May 2026",
+    version: "5.8",
+    title: "Zero-Friction Sharing, Tiered Publishing & Wrapped Team Cards",
+    emoji: "📤",
+    highlight: true,
+    items: [
+      { type: "new", text: "Public shared reports are now zero-friction. The bottom CTA on /s/[id] has been rewritten Notion-style — \"Like this team? Duplicate it to your account\" with a single Duplicate button. Anonymous viewers get a sign-in modal on click; signed-in viewers fork directly into an editable copy. The vague \"Create yours from scratch\" path is gone. Tracks share_view_duplicate_anonymous in PostHog so the anonymous-view → signup funnel is measurable." },
+      { type: "new", text: "Spotify-Wrapped style downloadable team card. End of every shared report now has a \"Download card\" button that generates a 1080×1920 vertical PNG built for Twitter / Instagram / Discord — loud gradient background, 3×2 sprite grid with type badges, big placement headline if the report is tagged with a tournament result, creator handle in the footer. Backed by /api/team-graphic?style=wrapped using the existing edge ImageResponse infrastructure (no new dependencies)." },
+      { type: "new", text: "Tiered publishing: hide spreads from public viewers. Creators can now mark EV/SP spreads, IVs, nature, and held items as private from the team overview's new \"Hide fields from public viewers\" panel. Server-side enforcement — bytes never leave the API for non-owners. Public viewers see the 6 Pokemon + moves (the \"public shell\") plus an amber banner explaining what's hidden. Owners and accepted collaborators always see the full data." },
+      { type: "new", text: "Rental code filter on /explore. Hunting a ready-to-import team? Toggle the new emerald \"Rental code\" pill in the filter row to only see reports that include a rental code. Cards with codes also surface a small \"Rental\" badge so you can spot them at a glance." },
+      { type: "fixed", text: "Champions Reg M-A dex now matches Serebii's canonical list exactly. Removed Metagross, Pawmot, Dondozo, Tatsugiri, and Ursaluna (none are Reg M-A legal). Added 47 missing legal species spanning every generation, including high-impact mons like Skeledirge, Chandelure, Goodra (regular + Hisuian), Avalugg (regular + Hisuian), Manectric, Camerupt, Sharpedo, Banette, and Floette including its Eternal Flower form. Legality validation will now correctly flag illegal teams and stop falsely flagging legal ones." },
+      { type: "fixed", text: "CHAMPIONS_DEX and CHAMPIONS_REG_MA_MEGAS are now a single source of truth. The two sets had been hand-maintained in parallel — and were drifting on every Mega rotation. The dex now derives its Mega entries from the canonical CHAMPIONS_REG_MA_MEGAS set in mega-pokemon.ts, so divergence is impossible by construction." },
+      { type: "fixed", text: "Shared-report URLs are now schema-validated. The URL codec previously trusted decoded JSON blindly via an unchecked TypeScript cast — a malformed or maliciously-crafted share URL could put unexpected shapes into the report viewer. Decoder now runs Zod safeParse and fails closed (returns null) on shape mismatch. The Redis cache layer's cacheGet generic also now accepts an optional schema for runtime-validated reads." },
+      { type: "improved", text: "Deleted 464+ lines of dead code: 4 components nothing imports (OpponentPokemonCard, TeamComparisonSlide, TeamCoverageSlide, TypeCoverageMatrix), 3 dead lib files (passcode utils + hand-rolled abilities/items lookups), 2 orphaned hooks (useExportActions, useIsMobile), the unused /api/print-outline route, and 2 dead exports from sprite-url.ts. Each was verified with a global import search before removal." },
+    ],
+  },
+  {
+    date: "April 2026",
+    version: "5.7",
+    title: "Champions Reg M-A Honest Cleanup, In-Line Editing & Persistent Navbar",
+    emoji: "🧹",
+    highlight: true,
+    items: [
+      { type: "new", text: "In-line Pokemon replace — every PokemonCard on the team overview now has a pencil button (visible when the report is editable) that opens a searchable picker to swap a single slot. Backed by @pkmn/dex so every species, every form, every Mega is searchable, with sprite + types + BST shown for each result. Surgically rewrites only the species token in the paste, preserving nickname, item, ability, moves, EVs, IVs, nature, and Tera so all downstream analysis (stats, calcs, threat coverage) stays consistent." },
+      { type: "new", text: "Popular reports rail on the homepage — a horizontal scroll strip of 6 trending public reports below the spotlight section, each showing team sprites, tournament/placement info, and creator name. Session-cached so it doesn't refetch on every visit." },
+      { type: "new", text: "Collaborator credit on shared reports — co-creator names now appear beside the primary creator on the public read-only view, finally giving collaborators visible credit on the page itself (not just on Explore cards)." },
+      { type: "new", text: "Speed tier chart now shows the meta max-speed variant of a Pokemon even when that species is on your team — useful for comparing a bulky/mid-speed build against the standard meta build of the same mon. The duplicate is tagged with a META badge so it's never confused with your build." },
+      { type: "new", text: "Home button in the slide nav bar — visible on every slide except the team overview itself. One tap returns to the main team page from any subpage." },
+      { type: "fixed", text: "Champions page no longer shows illegal Megas — Mega Salamence, Mega Metagross, and Mega Mawile have been removed (verified against Bulbapedia, Serebii, and Victory Road). Their /champions/{slug} landing pages now return 404." },
+      { type: "new", text: "29 missing Reg M-A legal Megas added to the Champions index — Pidgeot, Clefable, Victreebel, Starmie, Dragonite, Meganium, Feraligatr, Skarmory, Medicham, Sharpedo, Camerupt, Banette, Chimecho, Glalie, Froslass, Emboar, Excadrill, Chandelure, Golurk, Chesnaught, Delphox, Greninja, Floette, Meowstic, Hawlucha, Crabominable, Drampa, Scovillain, Glimmora. Stats and abilities pulled from @pkmn/dex." },
+      { type: "improved", text: "13 Megas un-gated from \"Coming Soon\" — earlier sprite probe was too strict (only checked animated frames). Re-probed all four Showdown sprite paths and found these 13 ship static gen5 PNGs. Champions index now shows 58 clickable Mega cards (only Mega Meowstic remains genuinely sprite-less)." },
+      { type: "fixed", text: "Mega landing pages no longer 404 for species missing from the static dex — pages now resolve through the @pkmn/dex fallback so every Champions-original Mega builds correctly with real stats, types, and abilities." },
+      { type: "improved", text: "Mega abilities corrected to match Pokemon Champions canon for Reg M-A — several ability fields disagreed with the in-game data and have been re-sourced." },
+      { type: "improved", text: "Champions hero copy refreshed — removed all Primal Reversion mentions (Primal forms are not in Reg M-A) and added the explicit Reg M-A team-construction restrictions." },
+      { type: "fixed", text: "Featured Teams on Mega landing pages now only show teams that actually run the Mega — previously matched any team whose paste contained the base species name. Now requires either the Mega Stone item OR a {baseName}-Mega species token to qualify." },
+      { type: "improved", text: "Removed two filler sections from Mega landing pages — the templated \"Using {Mega} in VGC\" paragraphs and the visible FAQ accordion. The FAQPage JSON-LD is still emitted server-side for AI scrapers." },
+      { type: "fixed", text: "Rotom appliance forms (Wash, Heat, Mow, Fan, Frost) no longer flagged as illegal in Champions — only the base \"rotom\" key was in the Champions dex, but the parser produces \"rotom-wash\" etc. All five form keys now match." },
+      { type: "fixed", text: "Removed the bogus \"max 1 Mega Stone per team\" error — Reg M-A teams can pack any number of Mega Stones; only one Pokemon can actually Mega Evolve per battle, which is an in-battle choice, not a team-construction rule." },
+      { type: "improved", text: "Stat-investment validation is now SP-aware — spreads that fit the 66 SP / 32-per-stat envelope validate via the Champions SP path, while the classic 512/252 EV path remains as fallback for traditional formats." },
+      { type: "improved", text: "JSON-LD on shared reports now separates author from contributor — primary creator is the sole schema.org author, collaborators are listed under contributor, and dateModified is emitted from the report's last-updated timestamp alongside the existing datePublished." },
+      { type: "improved", text: "Persistent navbar across all pages — the page-level navbar now mounts once in the root layout instead of remounting on every route, so it no longer flashes or re-renders between client-side navigations." },
+      { type: "fixed", text: "No more accent-color flash on page load — the inline blocking head script now applies BOTH dark mode AND your gen theme accent before first paint." },
+      { type: "fixed", text: "Favicon now loads — favicon.ico is back in /public and registered in metadata.icons." },
+      { type: "fixed", text: "/compare page no longer shows a duplicate navbar — a stale inline PageNavbar was rendering on top of the persistent one." },
+      { type: "fixed", text: "Shared report unfurls reverted to text-only after the OG sprite card produced \"image failed to load\" errors in Discord, Twitter, and Slack — the Showdown sprite CDN dependency under the edge-runtime fetch-timeout budget made a reliably-rendering OG image unrealistic." },
+    ],
+  },
+  {
+    date: "April 2026",
+    version: "5.6",
+    title: "Universal Pokemon Coverage, Sharing Reborn & Quieter Errors",
+    emoji: "📡",
+    highlight: true,
+    items: [
+      { type: "new", text: "Every Pokemon, every form, every Mega now resolves automatically — including Champions-exclusive forms like Mega Manectric and Mega Golurk that previously rendered with no spread. Backed by the canonical Pokemon Showdown dataset (@pkmn/dex), so future game patches just work without us shipping data updates." },
+      { type: "fixed", text: "Pokemon spread (EVs / Stat Points) is now always visible even when the species isn't in our static dex — the entire stat block was previously hidden when data was missing, swallowing your own EV investment numbers." },
+      { type: "improved", text: "Mobile spread view now shows the per-stat investment column (+252 EVs / +252 SP) inline. Previously hidden behind a desktop-only breakpoint, so mobile users only saw final calculated stats." },
+      { type: "new", text: "Persistent ShareDock on every shared report — X/Twitter, Reddit, Discord copy and Copy Link are one tap away in a top-anchored pill, no longer buried in the navbar. Auto-hides on scroll-down so it never obscures slide content." },
+      { type: "improved", text: "First-run walkthrough is now skippable from any step — close X, ESC, backdrop tap, and Skip All all work on the very first session. Previously trapped first-time users." },
+      { type: "improved", text: "Cumulative Layout Shift reduced on /dashboard and /explore — loading states now reserve the eventual content height so the page doesn't reflow when fetches resolve." },
+      { type: "fixed", text: "View Transition aborts during rapid navigation no longer surface as errors. The visual transition is the same; the noise is gone." },
+      { type: "fixed", text: "ServiceWorker install hardened — single failed cache.put for the offline page no longer fails the entire install." },
+      { type: "fixed", text: "ChunkLoadError after a deploy is now suppressed before being captured — the page already auto-reloads, so the error never needed to surface." },
+      { type: "fixed", text: "Third-party SDK loading failures (Clerk CDN blips) are filtered from error tracking — they're not bugs in the app and were polluting the dashboard." },
+    ],
+  },
+  {
+    date: "April 2026",
+    version: "5.5",
+    title: "Forking, Sharing & Champions Polish",
+    emoji: "🍴",
+    highlight: true,
+    items: [
+      { type: "new", text: "Fork Report button — signed-in viewers can now fork any public report into a new editable copy they own, preserving the team, notes, calcs, roles, matchup plans, and tags. Forks start private so you can iterate before publishing." },
+      { type: "new", text: "Fork attribution banner — every forked report shows a prominent banner at the top with a \"View original\" link back to the source, so lineage is always clear. If the original is deleted the banner degrades gracefully." },
+      { type: "improved", text: "Forks clear event-specific fields on creation — creator name, tournament name, placement, record, rental code, and MVP pick are reset so the new owner starts with a clean slate, while all team-building content (paste, EVs, notes, calcs, plans) is preserved." },
+      { type: "improved", text: "Fork is restricted to public reports only — unlisted reports stay the owner's. Link possession grants view, not the right to copy the team into a new report." },
+      { type: "new", text: "Thank-you banner when publishing — the first time you make a report public, a celebratory banner appears so you know it's live on Explore." },
+      { type: "improved", text: "Private reports now act as unlisted — anyone with the /s/{id} link can view, but the report stays off Explore. Edit access still requires ownership or the collaborator link." },
+      { type: "improved", text: "Share session state clears when navigating away from /s/{id} — avoids the bug where the next Share click silently overwrote the previous report with the current in-memory state." },
+      { type: "improved", text: "Shared report read path is now fault-tolerant to in-flight migrations — the fork-lineage lookup can't break /s/{id} for end users if the column hasn't been added yet." },
+      { type: "improved", text: "SP/EV toggle redesigned as an iOS-style segmented control with symmetric labels and live status dots — instantly see whether your spread is under, over, or exactly at budget in either mode." },
+      { type: "improved", text: "Champions meta threats now filter to Reg M-A legal Pokemon only, so speed-tier comparisons against the meta aren't polluted by Pokemon you'll never face in the format." },
+      { type: "improved", text: "Bulk paste affordance for notable calcs is now obvious — both Offensive and Defensive calcs show the bulk-paste button with clear hint text so you don't have to guess how to add multiple calcs at once." },
+      { type: "improved", text: "Bulk calc paste now splits on HKO boundaries (OHKO / 2HKO / 3HKO / etc.) so multi-target damage rolls from the calc site are parsed into separate entries." },
+      { type: "fixed", text: "Fixed shared links briefly returning 500 and falling back to the home page after the fork feature rolled out — the new forked_from_id lookup is now isolated behind a try/catch." },
+      { type: "fixed", text: "EV cap display corrected to 508/508 for traditional formats (the usable maximum — the last 2 EVs in a 252 slot provide no stat gain)." },
+      { type: "fixed", text: "Champions (Reg M-A) EV tab no longer shows a misleading /510 comparison — SP (66) is the real cap in this format. The EV tab now shows the derived total only." },
+      { type: "improved", text: "Shared report links now use clean text-only unfurls in Discord / Twitter / Slack — the Satori-rendered OG preview image was removed because it kept rendering stale, mismatched, or mid-generation frames under Vercel's edge runtime budget." },
+      { type: "fixed", text: "Version-compare \"no diffs\" dismiss button is no longer hidden under the navbar — it now sits above it so you can actually click it." },
+      { type: "fixed", text: "Spotlight on the home page now only surfaces public reports — private/unlisted reports no longer leak into the featured carousel." },
+      { type: "fixed", text: "Vercel Toolbar now loads in development and preview deploys — the CSP img-src was blocking vercel.live and vercel.com assets." },
+    ],
+  },
+  {
+    date: "April 2026",
+    version: "5.4",
+    title: "Mega Evolutions, Champions Stat Points & Social Features",
+    emoji: "🔥",
+    highlight: true,
+    items: [
+      { type: "new", text: "Mega Evolution support — toggle Mega forms on any capable Pokemon, auto-detect from PokePaste imports, M-A threat coverage, and full Champions DEX integration." },
+      { type: "new", text: "Champions Stat Point system — EVs are displayed as stat points matching the Champions format, with unused and wasted stat warnings to help optimize spreads." },
+      { type: "new", text: "Auto-convert EV spreads to Champions SP format — traditional 0-252 EV spreads are automatically translated to the Champions stat point display." },
+      { type: "new", text: "Interactive hearts on report cards — like reports directly from Explore. Redesigned profile pages with updated layout." },
+      { type: "new", text: "Bookmark button for shared reports — non-owner viewers can now bookmark reports they find useful. Compact bookmark icon in the social section." },
+      { type: "improved", text: "Explore page filters simplified to a minimal single-row layout — removed the bulky AdvancedFilterDrawer overlay." },
+      { type: "improved", text: "Explore page mobile UX — teams are visible without scrolling, sticky header with proper scroll padding." },
+      { type: "improved", text: "Compare page now supports Mega Evolutions with correct types and equal grid layout." },
+      { type: "improved", text: "M-A Pokemon default to Champions SP display with an EV toggle for switching between formats." },
+      { type: "improved", text: "Like button requires sign-in — guests see a sign-in modal instead of a broken state." },
+      { type: "fixed", text: "Fixed like persistence and like counts always showing (even when 0) on shared reports." },
+      { type: "fixed", text: "Fixed EV-to-SP conversion to match the official Champions table values." },
+      { type: "fixed", text: "Fixed speed tier rounding to match the Pokemon game engine calculation." },
+      { type: "fixed", text: "Fixed PWA layout issues — navbar no longer covers content, speed tier slide fully visible." },
+      { type: "fixed", text: "Blocked sample teams from being saved as drafts or shares." },
+      { type: "fixed", text: "Exempted /api/setup from bot detection and CORS checks." },
+    ],
+  },
+  {
+    date: "April 2026",
+    version: "5.3",
+    title: "Slide Layout Overhaul & Professional Polish",
+    emoji: "🎨",
+    highlight: true,
+    items: [
+      { type: "new", text: "Offensive and Defensive coverage split into separate slides — each chart gets a dedicated full-viewport slide instead of being crammed together." },
+      { type: "new", text: "Notable calcs now stack vertically on desktop — each category (Offensive/Defensive/Speed Tier) gets full width for readability, with collapsible groups." },
+      { type: "new", text: "Right column scrolls independently — notes and calcs panel has its own scroll area so the Add Calc input is always reachable." },
+      { type: "new", text: "Compare Teams prevents duplicate selection — you can no longer pick the same report for both Team A and Team B." },
+      { type: "new", text: "Tag requirement for publishing — reports must have at least one tag (regulation, event type, or archetype) before they can be listed on Explore." },
+      { type: "improved", text: "Game plans layout — 3 plans stack vertically (no more cramped 33% columns), 2 plans go side-by-side only on large screens." },
+      { type: "improved", text: "Professional visual polish across all slides — larger tournament headings, accent-bordered summaries, thicker stat bars with shadow, hover micro-interactions on move tiles and calc entries." },
+      { type: "improved", text: "OG share images render at 2x resolution (2400×1260) for crisp Discord and Twitter embeds." },
+      { type: "improved", text: "Slide container fits exactly between top navbar and bottom nav — no more content hidden behind either bar." },
+      { type: "improved", text: "Guest viewers see all notable calcs expanded by default." },
+      { type: "fixed", text: "Fixed share schema rejecting reports with hidden slides (string keys like \"matchup-sheet\" were rejected by the Zod validator)." },
+      { type: "fixed", text: "Fixed tag schema mismatch — tags are objects not arrays, which was blocking all saves on reports with tags set." },
+      { type: "fixed", text: "Explore tournament filter no longer force-opens the advanced filter drawer as a confusing overlay." },
+    ],
+  },
+  {
+    date: "April 2026",
+    version: "5.2",
+    title: "UX Feedback Polish",
+    emoji: "✨",
+    items: [
+      { type: "new", text: "Tour auto-shows on first visit — new visitors (including those arriving via shared Discord links) now see the guided tour automatically without needing to discover it." },
+      { type: "new", text: "\"Take a Tour\" in settings menu — the tour can now be re-triggered anytime from the overflow/settings menu, making it easy to find." },
+      { type: "new", text: "Tap to navigate on mobile — tapping a Pokemon tile on mobile now navigates directly to its detail slide. Long-press still works too." },
+      { type: "improved", text: "Progress bar help tooltip — the ? icon on the navigation bar now explains the bar itself instead of launching the full site tour." },
+      { type: "improved", text: "Slide label replaces M/N counter — the navigation bar now shows the current slide name instead of a numeric \"3/14\" counter that felt like progress tracking." },
+      { type: "fixed", text: "Mobile layout shift fixed — useIsMobile and useMediaQuery now use useSyncExternalStore, eliminating the flash where mobile pages briefly rendered as desktop." },
+      { type: "fixed", text: "Cookie consent no longer blocks the page — the entire site was hidden until cookies were accepted. Analytics are now gated independently while the page always renders." },
+    ],
+  },
+  {
+    date: "April 2026",
+    version: "4.11",
+    title: "Security Hardening & Notes Consolidation",
+    emoji: "🔒",
+    items: [
+      { type: "improved", text: "EV Rationale merged into Notes — the separate \"EV Rationale\" section has been removed. All per-Pokemon notes are now in a single Notes field. Existing EV rationale content has been migrated into notes." },
+      { type: "fixed", text: "API security hardening — protected the setup endpoint with bearer token auth, removed spoofable User-Agent cron authentication, and fixed a credential scope issue in the bot route." },
+      { type: "fixed", text: "Fixed 6 npm dependency vulnerabilities including a high-severity SSRF in @clerk/backend. Next.js updated to 16.2.2." },
+      { type: "improved", text: "Removed dangerouslySetInnerHTML usage — translation strings now render as plain text instead of raw HTML." },
+      { type: "improved", text: "Share route input validation — the Zod schema now explicitly defines all accepted fields and strips unknown data instead of passing it through." },
+      { type: "improved", text: "Deduplicated report normalization — the share and migrate routes now use a single shared normalizer instead of maintaining two copies." },
+      { type: "fixed", text: "Rate limiter no longer uses setInterval on serverless — replaced with lazy cleanup to avoid cold start issues on Vercel." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "4.10",
+    title: "Level 50 Enforcement",
+    emoji: "⚖️",
+    items: [
+      { type: "fixed", text: "All Pokemon are now forced to level 50 — pasting a level 100 team (or any non-50 level) no longer carries that level through to stat calculations. Stats are always computed at the VGC-standard level 50." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "4.9",
+    title: "Mobile UX Overhaul & Responsive Redesign",
+    emoji: "📱",
+    highlight: true,
+    items: [
+      { type: "new", text: "Card-based Pokemon detail on mobile — hero header with tabbed cards (Set, Stats, Notes, Calcs) so each section gets full screen width instead of a cramped single column." },
+      { type: "new", text: "Draggable progress bar — replaces dot indicators on mobile for slide navigation. Tap or drag to scrub through slides with haptic feedback and a floating label tooltip." },
+      { type: "new", text: "Team Coverage slide — offensive and defensive coverage charts are now their own dedicated slide with tabs on mobile, stacked on desktop." },
+      { type: "new", text: "Game plan tabs (G1/G2/G3) — on mobile, matchup game plans display as swappable tabs instead of a long stacked list." },
+      { type: "new", text: "Update Team re-import — \"Update Team\" button on the overview slide lets you paste a new PokePaste URL, Pikalytics URL, or Showdown export to replace the team without starting over." },
+      { type: "new", text: "Edit mode FAB — floating action button (bottom-right) for toggling edit/view mode. Pencil = editing, eye = viewing. Works on both mobile and desktop." },
+      { type: "new", text: "Pull-to-refresh — custom pull-down gesture for shared reports in PWA standalone mode (where native pull-to-refresh is disabled)." },
+      { type: "new", text: "Long-press gesture — long-press a Pokemon card in the team overview to jump directly to its detail slide." },
+      { type: "new", text: "Haptic feedback — light vibration on tab switches, edit mode toggle, share actions, and progress bar scrubbing for a native app feel." },
+      { type: "improved", text: "Opponent team horizontal scroll — matchup plan opponents display as a swipeable horizontal strip on mobile instead of a cramped 3-column grid." },
+      { type: "improved", text: "Coverage chart touch targets — type effectiveness cells are now 36px on mobile (up from 28px). Tap a type column header to highlight it across all Pokemon." },
+      { type: "improved", text: "Tournament mode cards redesigned — compact layout on mobile with sprite + info row and 2×2 move grid. 3-column grid on large screens." },
+      { type: "improved", text: "Navbar decluttered — moved Tournament mode, PDF export, Version history, Collab link, and Present mode into the settings overflow menu. Navbar now shows only Share/Save + settings gear." },
+      { type: "improved", text: "Own reports auto-enter edit mode — authenticated owners and ?key= edit links go straight to editing. Other viewers see read-only with the FAB to toggle." },
+      { type: "improved", text: "Bottom padding increased on mobile PWA — all slide content now clears the fixed nav bar + safe area inset so calcs, notes, and game plans are fully scrollable." },
+      { type: "fixed", text: "Fixed swipe conflict on coverage charts — horizontal scrolling inside coverage tables no longer triggers slide navigation." },
+      { type: "fixed", text: "Fixed duplicate swipe handlers — removed the window-level touch handler that was fighting with the container-scoped one." },
+      { type: "fixed", text: "Fixed hydration flash — mobile/desktop layouts now use CSS media queries instead of JS detection, eliminating the brief layout shift on page load." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "4.8",
+    title: "PDF Export Overhaul",
+    emoji: "📎",
+    items: [
+      { type: "fixed", text: "PDF export now works reliably — print container uses a React portal to render as a direct child of <body>, fixing the blank page issue." },
+      { type: "fixed", text: "PDF always uses light-mode colors — all CSS variables are forced to light-mode values inside the print container, so exports are readable regardless of dark mode." },
+      { type: "improved", text: "All collapsed sections expand automatically in PDF — damage calc groups (Offensive, Defensive, Speed) and game plan details are forced open during export." },
+      { type: "improved", text: "Print styles force readable text, backgrounds, and borders — surface, text, and border colors are explicitly overridden for white paper." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "4.7",
+    title: "Tournament Mode, Themes, Champions SEO & 17 Fixes",
+    emoji: "🏆",
+    highlight: true,
+    items: [
+      { type: "new", text: "Tournament Day mode — compact battle assistant activated via the trophy icon in the navbar. Shows condensed Pokemon cards (moves, item, ability, Tera type) and a speed tier quick reference. Works fully offline." },
+      { type: "new", text: "Referral reward themes — unlock accent color themes (Ocean Blue, Emerald, Amber, Violet, Sunset) based on your total report views. Selectable on your profile page with live preview." },
+      { type: "new", text: "Champions SEO pages — 32 individual landing pages for every Mega Evolution at /champions/[pokemon] with full stats, teams from explore, related Megas, and JSON-LD structured data." },
+      { type: "new", text: "Account privacy controls — toggle your creator profile between public and private from the profile settings page." },
+      { type: "new", text: "Publish to Community prompt — when sharing a private report, a banner asks if you want to publish it to the Explore page." },
+      { type: "new", text: "Email notifications for comments — report owners receive a branded email via Resend when someone comments on their report." },
+      { type: "new", text: "Offline cached reports — previously viewed reports load from cache at tournaments. An amber banner shows when viewing a cached version offline." },
+      { type: "new", text: "Pending invite badge — the Shared tab shows a purple count badge when you have collab invites waiting." },
+      { type: "improved", text: "Social share cards — richer OG images with gradient backgrounds, context-aware placement badges (gold/silver/bronze), adaptive sprite sizing, and a branded bottom bar." },
+      { type: "improved", text: "Dynamic sitemap — all public reports now included in the sitemap for better search engine indexing." },
+      { type: "improved", text: "Collab notifications now include a deep link to /dashboard?tab=collab so users can accept invites directly." },
+      { type: "improved", text: "Daily ops deduplication — the cron no longer creates duplicate Linear tickets for the same recurring issue." },
+      { type: "improved", text: "WCAG 2.1 AA accessibility — improved text contrast, viewport zoom enabled, skip-nav target, form labels, and aria-labels on icon buttons." },
+      { type: "improved", text: "Performance — lazy-loaded html2canvas, jsPDF, qrcode, and social components. Removed unused @smogon/calc dependency (~500KB saved)." },
+      { type: "fixed", text: "Fixed share page not loading — internal API fields were leaking into report state." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "4.6",
+    title: "Co-Publishing, Collab Consent & Dashboard Polish",
+    emoji: "🤝",
+    items: [
+      { type: "new", text: "YouTube-style co-publishing — collab reports now appear on ALL collaborators' creator pages, not just the owner's. Co-creator names shown on explore cards, share pages, and SEO metadata." },
+      { type: "new", text: "Collaborator consent flow — invites start as \"pending\". Collaborators must explicitly accept before getting edit access or public credit. Prevents fake attribution." },
+      { type: "new", text: "Accept/Decline UI in dashboard — pending collab invites appear in the Shared tab with clear Accept and Decline buttons." },
+      { type: "new", text: "Auto-create Linear tickets from daily ops — when the health check detects issues (site down, DB failure, SEO problems), it auto-creates tagged Linear tickets." },
+      { type: "improved", text: "Dashboard PWA polish — tabs scroll horizontally on mobile, 2-column report grid, compact header, smaller sprites, tighter spacing throughout." },
+      { type: "improved", text: "Bottom nav bar compacted — smaller icons/text, gesture bar padding in standalone PWA mode." },
+      { type: "improved", text: "ReportCard responsive — sprites scale down on mobile (32px vs 40px desktop), titles allow 2-line clamp for readability." },
+      { type: "improved", text: "Navbar height reduced to 48px on mobile with sticky-header-standalone class for PWA status bar." },
+      { type: "improved", text: "CollaboratorPanel shows \"Pending\" badge for unaccepted invites so owners know who hasn't responded." },
+      { type: "improved", text: "Share cache invalidated when collaborators are added or removed — changes appear immediately." },
+      { type: "fixed", text: "Fixed share page not loading — internal API fields (_version, _collaborators) were leaking into report state and breaking the paste parser." },
+      { type: "fixed", text: "Canonical domain redirect — vgc-team-report.vercel.app now redirects to pokemonvgcteamreport.com." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "4.5",
+    title: "PDF Export, Replay Import & Keyboard Shortcuts",
+    emoji: "📥",
+    highlight: true,
+    items: [
+      { type: "new", text: "PDF export — download icon in the navbar renders all slides (overview, Pokemon details, speed tiers, coverage charts, matchup plans) with page breaks via the browser print dialog." },
+      { type: "new", text: "Showdown replay import — paste a replay.pokemonshowdown.com URL, pick which player's team to analyze. Extracts species, moves used, abilities, items, and Tera types from the battle log." },
+      { type: "new", text: "Keyboard shortcuts for editing — press 1-9 to jump to slides, 0 for last slide, E to toggle edit mode, H to hide/show current slide, [ and ] to reorder slides." },
+      { type: "improved", text: "Version history only records real changes — auto-save no longer creates version entries when no data actually changed." },
+      { type: "improved", text: "Version diff highlights use high-contrast blue borders with \"Changed\" labels, readable in both light and dark mode." },
+      { type: "improved", text: "Slide nav dots show blue indicators for slides with changes during version comparison." },
+      { type: "improved", text: "Shortcut hint overlay (press ?) updated with all new shortcuts." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "4.4",
+    title: "Granular Version Diffs, Tour Visibility & Navbar Updates",
+    emoji: "🔍",
+    items: [
+      { type: "new", text: "Per-field version diff highlighting — comparing versions now highlights only the specific sections that changed (e.g. just Notes or Calcs) instead of the entire slide." },
+      { type: "new", text: "Descriptive diff banner — version comparison now lists exactly what changed (e.g. \"Team summary, Notes (Pikachu), Calcs (Urshifu)\") instead of vague slide counts." },
+      { type: "new", text: "Feedback link added to desktop navbar — now visible next to Updates for easy access from any page." },
+      { type: "improved", text: "Walkthrough tour spotlight visibility — accent-colored ring in light mode, white glow ring in dark mode so highlighted areas are always clear." },
+      { type: "improved", text: "Diff labels are contextual — each highlighted section shows what changed: \"Set changed\", \"Notes changed\", \"Calcs changed\", \"Summary changed\", etc." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "4.3",
+    title: "PWA Mobile Polish & Version History Panel",
+    emoji: "✨",
+    items: [
+      { type: "new", text: "Version History side panel — Google Docs-style slide-out panel with timeline UI, version diffs, and one-click restore to any previous version." },
+      { type: "new", text: "Version history for your own reports — no longer limited to shared views. See and restore past versions from the home page after sharing." },
+      { type: "new", text: "Clock icon in the report navbar — quick-access button to open version history without digging through menus." },
+      { type: "new", text: "Clickable \"Saved\" status — tap the auto-save badge while editing to open version history instantly." },
+      { type: "new", text: "PWA standalone mode styles — installed app disables rubber-band bounce, adds status bar inset, and feels native." },
+      { type: "new", text: "Install prompt redesigned as bottom sheet — full-width with scrim overlay, handle bar, and large touch targets." },
+      { type: "new", text: "Dynamic theme-color — status bar matches your light/dark mode instead of static red." },
+      { type: "improved", text: "Bottom tab bar upgraded — active pill indicator, icon bubbles, smoother press feedback, and Dashboard tab for signed-in users." },
+      { type: "improved", text: "Frosted glass headers — both navbars now use backdrop-blur-2xl with saturation boost for a polished glass effect." },
+      { type: "improved", text: "100dvh viewport — uses dynamic viewport height so mobile browser chrome doesn't cause layout jumps." },
+      { type: "improved", text: "Safe area coverage — added safe-top and safe-x utilities for full edge-to-edge support on all devices." },
+      { type: "improved", text: "SW update toast — centered and full-width on mobile with smoother entrance animation." },
+      { type: "improved", text: "Revert button always visible on mobile — no more hover-only reveal on touch devices." },
+      { type: "improved", text: "Manifest enhanced — launch_handler reuses existing window, handle_links opens in PWA, added Create shortcut." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "4.2",
+    title: "Collaboration, Version History & Polish",
+    emoji: "👥",
+    items: [
+      { type: "new", text: "Version History — every edit is snapshotted. Browse past versions and revert to any point with one click." },
+      { type: "new", text: "Manage Access panel — Google Docs-style access control. See who has access, add/remove collaborators, revoke collab links." },
+      { type: "new", text: "Collab sign-in gate — collab links now require sign-in. Unauthenticated users see a sign-up prompt." },
+      { type: "new", text: "Revoke collab link — owners can regenerate the edit token to invalidate all existing collab links." },
+      { type: "new", text: "Co-ownership — collaborators are promoted to co-owners with full Collab button access and dashboard visibility." },
+      { type: "new", text: "Champions banner on landing page — dismissible announcement for the new Mega Evolution format." },
+      { type: "new", text: "+ Create button in navbar — clear entry point to build a new team report from any page." },
+      { type: "new", text: "PWA update detection — shows toast when a new version is available with one-click refresh." },
+      { type: "improved", text: "Defensive profile heatmap — 4× weaknesses now bold white-on-red with ring outline for visibility." },
+      { type: "improved", text: "Navbar cleaned up — auth, theme, language, and settings moved into single overflow menu." },
+      { type: "improved", text: "Sign-in button visible immediately on page load (no flash while Clerk loads)." },
+      { type: "improved", text: "Language selector added to all page navbars." },
+      { type: "improved", text: "All sprite slug resolution consolidated to single source of truth — fixes broken sprites in OG images, embeds, and team graphics." },
+      { type: "improved", text: "48 Mega Evolutions now in the database with full stats, types, and abilities." },
+      { type: "improved", text: "Mega Offense and Primal Weather archetypes auto-detected." },
+      { type: "fixed", text: "Fixed walkthrough tour breaking after first step (timing race in tooltip positioning)." },
+      { type: "fixed", text: "Fixed share URL fallback creating 11KB+ URLs that browsers truncate." },
+      { type: "fixed", text: "Fixed service worker intercepting cross-origin sprite requests and returning broken responses." },
+      { type: "fixed", text: "Fixed inconsistent navbar width across Feedback, Privacy, and Dashboard pages." },
+    ],
+  },
+  {
+    date: "April 2026",
+    version: "4.1",
+    title: "Collaborators & Share vs Collab",
+    emoji: "👥",
+    items: [
+      { type: "new", text: "Collaborator system — invite signed-in users to co-edit your team reports." },
+      { type: "new", text: "Share vs Collab separation: share links are read-only, collaborators get full edit access." },
+      { type: "new", text: "Collaborator management panel — search users by name, add or remove collaborators (owner only)." },
+      { type: "new", text: "\"Shared with me\" dashboard tab showing reports you've been invited to collaborate on." },
+      { type: "new", text: "Edit History changelog — see who changed which sections with timestamps and version numbers." },
+      { type: "new", text: "Version snapshots — every edit saves a full snapshot of the previous state for revert capability." },
+      { type: "new", text: "Collab invite notifications — collaborators are notified when invited." },
+      { type: "improved", text: "Likes now require sign-in — anonymous users see the count with a \"Sign in to like\" prompt." },
+      { type: "improved", text: "Owners can edit reports without the edit key URL — auto-detected via authentication." },
+      { type: "improved", text: "Creator mode auto-enables when edit access is granted." },
+      { type: "fixed", text: "Fixed CSRF middleware blocking same-origin POST requests (share, comments, reactions)." },
+      { type: "fixed", text: "Fixed CSP blocking Clerk sign-in modal, fonts, and Pokemon Showdown sprites." },
+      { type: "fixed", text: "Fixed old reports without tags crashing when setting tags." },
+    ],
+  },
+  {
+    date: "April 2026",
+    version: "4.0",
+    title: "Pokemon Champions",
+    emoji: "🏆",
+    highlight: true,
+    items: [
+      { type: "new", text: "Pokemon Champions support — Mega Evolution and Primal Reversion parsing, display, and team building." },
+      { type: "new", text: "Regulation M-A tag for the official Pokemon Champions competitive format." },
+      { type: "new", text: "35+ Mega Evolution and Primal Pokemon added with accurate stats and abilities." },
+      { type: "new", text: "Champions landing page with format details, tournament calendar, and SEO optimization." },
+      { type: "new", text: "Real-time collaborative editing via Server-Sent Events with live presence indicators." },
+      { type: "new", text: "Redis caching layer (Upstash) for faster Explore and Share page loads." },
+      { type: "new", text: "Database migration endpoint for batch-updating old reports to latest format." },
+      { type: "improved", text: "Lazy-loaded heavy components (SpeedTierChart, MatchupSheet, ShareModal) for faster initial page load." },
+      { type: "improved", text: "Consistent PageFooter across all pages (Explore, Dashboard, Privacy, Compare, Creator Profile)." },
+      { type: "improved", text: "Backward-compatible data migration for old calc entries and matchup plan formats." },
+      { type: "improved", text: "Sample team updated to Champions format featuring Kangaskhan-Mega and Salamence-Mega." },
+      { type: "improved", text: "Share text now includes #PokemonChampions #VGC2026 hashtags for organic reach." },
+      { type: "improved", text: "Vercel deployment URLs redirect to canonical custom domain." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "3.5",
+    title: "Compare, Tags & Notifications",
+    emoji: "🔍",
+    highlight: true,
+    items: [
+      { type: "new", text: "Team Comparison page — paste two teams side-by-side to compare type coverage, speed tiers, and shared Pokemon." },
+      { type: "new", text: "Tags & Categories — tag reports with archetype (Rain, Trick Room, etc.), regulation, and event type." },
+      { type: "new", text: "Explore filters — filter community reports by regulation, event type, and archetype tags." },
+      { type: "new", text: "Notifications — get notified when someone comments, reacts, or a creator you follow posts a new report." },
+      { type: "new", text: "Notification bell in navbar with unread count badge and dropdown panel." },
+      { type: "new", text: "Report Templates — choose Quick Share, Tournament Report, Team Guide, or Blank when creating a report." },
+      { type: "new", text: "Rental Code QR — scan QR codes for rental team codes directly from reports." },
+      { type: "improved", text: "Tag pills shown on Explore report cards for quick identification." },
+      { type: "improved", text: "Tag selector with pill-style archetype multi-select and regulation/event dropdowns in creator mode." },
+      { type: "improved", text: "Dark/light mode now persists across sessions via localStorage." },
+      { type: "improved", text: "System dark mode preference respected on first visit." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "3.0",
+    title: "Authentication & Dashboard",
+    emoji: "🔐",
+    items: [
+      { type: "new", text: "Sign in with Discord, Google, or Twitch via Clerk." },
+      { type: "new", text: "Dashboard — manage all your team reports in one place." },
+      { type: "new", text: "Claim reports — link existing reports to your account via edit token." },
+      { type: "new", text: "Auto-detect unclaimed reports from your browser localStorage." },
+      { type: "new", text: "Save/bookmark reports from other creators." },
+      { type: "new", text: "Creator profile editor — set bio, Twitter, Discord, YouTube." },
+      { type: "new", text: "Fork Team button — copy any public team and build your own version." },
+      { type: "new", text: "Report management — edit, toggle public/private, delete from dashboard." },
+      { type: "new", text: "Bulk actions — toggle all reports public or private at once." },
+      { type: "new", text: "Dashboard sorting — newest, oldest, most views, by name." },
+      { type: "new", text: "Feedback page with Discord webhook notifications." },
+      { type: "new", text: "Changelog page with full version history." },
+      { type: "improved", text: "Sign-in nudge when editing shared reports without an account." },
+      { type: "improved", text: "Dashboard link on all pages when signed in." },
+      { type: "improved", text: "Comments disabled indicator — shows message when creator turned off comments." },
+      { type: "improved", text: "PWA shortcuts for Explore, Dashboard, and Feedback." },
+      { type: "fixed", text: "XSS protection — HTML entities escaped in comments and display names." },
+      { type: "fixed", text: "Claim input strips whitespace from pasted edit tokens." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "2.5",
+    title: "Technical Upgrade",
+    emoji: "⚡",
+    items: [
+      { type: "improved", text: "Refactored useHomePage into 3 focused hooks (useShareFlow, useSlideSystem, useExportActions)." },
+      { type: "improved", text: "Mobile: IV badges visible, larger move text, wider stat bars, better grids." },
+      { type: "improved", text: "Mobile navbar overflow menu for secondary controls." },
+      { type: "improved", text: "Touch-friendly swap button for lead/back in matchup game plans." },
+      { type: "improved", text: "EV total shown on Pokemon cards (warns if >510)." },
+      { type: "improved", text: "Comment success/error notifications." },
+      { type: "improved", text: "Spotlight API cached in sessionStorage to reduce lag." },
+      { type: "fixed", text: "Reduced-motion support for all animations." },
+      { type: "fixed", text: "Keyboard focus rings for accessibility." },
+      { type: "fixed", text: "Dot grid background disabled on mobile for performance." },
+      { type: "fixed", text: "Dead CSS removed (unused keyframes)." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "2.0",
+    title: "Community Update",
+    emoji: "🌍",
+    highlight: true,
+    items: [
+      { type: "new", text: "Explore gallery — browse public team reports from the community." },
+      { type: "new", text: "Reactions — react to reports with emoji (fire, heart, brain, battle, clap)." },
+      { type: "new", text: "Comments — leave feedback on public reports (creator-controlled)." },
+      { type: "new", text: "Creator profiles — auto-generated pages for every creator." },
+      { type: "new", text: "View counts — track engagement on public reports." },
+      { type: "new", text: "Verified creator badges with admin verification." },
+      { type: "new", text: "YouTube-style visibility — private, unlisted, or public." },
+      { type: "new", text: "Spotlight featured team report on landing and explore pages." },
+      { type: "new", text: "What's New modal for first-time visitors." },
+      { type: "new", text: "Random accent colours on landing page (8 palettes)." },
+      { type: "improved", text: "Landing page redesigned to show community features." },
+      { type: "improved", text: "Animated GIF sprites across all cards and spotlight." },
+      { type: "improved", text: "SEO metadata updated across all pages." },
+      { type: "improved", text: "Share button disabled on sample team with tooltip." },
+      { type: "improved", text: "Home logo and Build Your Own CTA on shared report views." },
+      { type: "fixed", text: "PNG and PDF export now works reliably (html2canvas-pro)." },
+      { type: "fixed", text: "Sprite loading for hyphenated Pokemon (Urshifu, Flutter Mane, etc.)." },
+    ],
+  },
+  {
+    date: "March 2026",
+    version: "1.9",
+    title: "Safety & Moderation",
+    emoji: "🛡️",
+    items: [
+      { type: "new", text: "Word filter blocks inappropriate language in comments." },
+      { type: "new", text: "Flag/report button on comments with auto-remove at 3 flags." },
+      { type: "new", text: "Self-reported label on unverified placements." },
+      { type: "improved", text: "Comments off by default — creators opt-in via Share modal." },
+      { type: "improved", text: "EV spread total shown on Pokemon cards (warns if >510)." },
+      { type: "improved", text: "Mobile navbar overflow menu for secondary controls." },
+      { type: "improved", text: "Touch-friendly swap button for lead/back in game plans." },
+      { type: "fixed", text: "Performance: spotlight caches in session, view count fires once." },
+      { type: "fixed", text: "Dot grid background disabled on mobile for better performance." },
+      { type: "fixed", text: "Reduced-motion support for all animations." },
     ],
   },
 ];
 
-type EntryType = "new" | "fixed" | "improved";
-
-const TYPE_LABEL: Record<EntryType, string> = {
-  new: "New",
-  fixed: "Fixed",
-  improved: "Improved",
+// Type-system color tokens. Each maps to a swatch that passes WCAG AA on
+// both the light surface (#FFFFFF) and the dark surface (#141428) used by
+// the changelog cards. The tinted bg + colored text + matching ring keeps
+// the badges legible without depending on the theme accent.
+const TYPE_STYLES: Record<EntryType, {
+  label: string;
+  badge: string;
+  dot: string;
+  rail: string;
+}> = {
+  new: {
+    label: "New",
+    badge:
+      "bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/30 dark:text-emerald-300 dark:ring-emerald-400/30",
+    dot: "bg-emerald-500",
+    rail: "bg-emerald-500/60",
+  },
+  improved: {
+    label: "Improved",
+    badge:
+      "bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/30 dark:text-sky-300 dark:ring-sky-400/30",
+    dot: "bg-sky-500",
+    rail: "bg-sky-500/60",
+  },
+  fixed: {
+    label: "Fixed",
+    badge:
+      "bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/30 dark:text-amber-300 dark:ring-amber-400/30",
+    dot: "bg-amber-500",
+    rail: "bg-amber-500/60",
+  },
 };
 
-const TYPE_CLASS: Record<EntryType, string> = {
-  new: "bg-green-500/10 text-green-400 border border-green-500/20",
-  fixed: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
-  improved: "bg-violet-500/10 text-violet-400 border border-violet-500/20",
-};
+type FilterType = EntryType | "all";
 
 export function ChangelogContent() {
-  const [mounted, setMounted] = useState(false);
+  return (
+    <I18nProvider>
+      <ChangelogInner />
+    </I18nProvider>
+  );
+}
+
+function ChangelogInner() {
   useEffect(() => {
-    setMounted(true);
     applyRandomAccent();
   }, []);
 
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [query, setQuery] = useState("");
+  // The two most recent releases start expanded so the latest news is
+  // visible without a click. Everything else is collapsed by default —
+  // a 28-version page would be overwhelming otherwise.
+  const [expandedVersions, setExpandedVersions] = useState<Set<string>>(
+    () => new Set([ENTRIES[0].version, ENTRIES[1].version]),
+  );
+
+  const toggleVersion = (version: string) => {
+    setExpandedVersions((prev) => {
+      const next = new Set(prev);
+      if (next.has(version)) next.delete(version);
+      else next.add(version);
+      return next;
+    });
+  };
+
+  const expandAll = () => setExpandedVersions(new Set(ENTRIES.map((e) => e.version)));
+  const collapseAll = () => setExpandedVersions(new Set());
+
+  // Filtering — narrow visible entries (and items within them) by the
+  // currently selected type and free-text query. Hides any version whose
+  // items all get filtered out so the timeline doesn't have empty cards.
+  const filteredEntries = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return ENTRIES.map((entry) => {
+      const filteredItems = entry.items.filter((it) => {
+        if (filter !== "all" && it.type !== filter) return false;
+        if (q && !it.text.toLowerCase().includes(q) && !entry.title.toLowerCase().includes(q)) {
+          return false;
+        }
+        return true;
+      });
+      return { ...entry, items: filteredItems };
+    }).filter((entry) => entry.items.length > 0);
+  }, [filter, query]);
+
+  const totalNew = ENTRIES.reduce((sum, e) => sum + e.items.filter((i) => i.type === "new").length, 0);
+  const totalImproved = ENTRIES.reduce((sum, e) => sum + e.items.filter((i) => i.type === "improved").length, 0);
+  const totalFixed = ENTRIES.reduce((sum, e) => sum + e.items.filter((i) => i.type === "fixed").length, 0);
+
   return (
-    <I18nProvider>
-      <main className="min-h-screen bg-[--bg] text-[--text]">
-        <div className="max-w-3xl mx-auto px-4 py-16">
-          <div className="mb-12">
-            <h1 className="text-3xl font-bold mb-2">Changelog</h1>
-            <p className="text-[--text-muted]">What&apos;s new in VGC Team Report</p>
+    <div className="min-h-screen bg-background text-text-primary">
+      {/* Soft accent glow behind the hero. Pure decoration; pointer-events
+          off so it never blocks clicks. The radial-gradient ramps from
+          accent → transparent so it inherits the user's theme color. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[480px] opacity-[0.18] dark:opacity-[0.22]"
+        style={{
+          background:
+            "radial-gradient(80% 60% at 50% 0%, var(--accent) 0%, transparent 60%)",
+        }}
+      />
+
+      <main className="relative max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16 pb-24 sm:pb-20">
+        {/* Hero */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="mb-10"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-11 h-11 rounded-2xl bg-accent-surface flex items-center justify-center ring-1 ring-accent/20">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-accent"
+                aria-hidden
+              >
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Changelog</h1>
+              <p className="text-sm text-text-secondary">Every shipped change, version by version</p>
+            </div>
           </div>
 
-          <div className="space-y-12">
-            {ENTRIES.map((entry, i) => (
-              <motion.div
-                key={`${entry.version}-${i}`}
-                initial={mounted ? { opacity: 0, y: 16 } : false}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="relative"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="text-2xl mt-0.5 select-none">{entry.emoji}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1 flex-wrap">
-                      <span className="text-xs font-mono text-[--text-muted]">{entry.date}</span>
-                      <span className="text-xs font-mono font-bold text-[--accent] bg-[--accent]/10 px-2 py-0.5 rounded">
-                        v{entry.version}
-                      </span>
-                      {entry.highlight && (
-                        <span className="text-xs font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                          Highlight
-                        </span>
-                      )}
-                    </div>
-                    <h2 className="text-lg font-bold mb-3">{entry.title}</h2>
-                    <ul className="space-y-2">
-                      {entry.items.map((item, j) => (
-                        <li key={j} className="flex items-start gap-2.5">
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 shrink-0 ${TYPE_CLASS[item.type]}`}>
-                            {TYPE_LABEL[item.type]}
-                          </span>
-                          <span className="text-sm text-[--text-muted] leading-relaxed">{item.text}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+          <div className="flex flex-wrap items-center gap-2 mt-5">
+            <CountPill color="emerald" label={`${totalNew} new features`} />
+            <CountPill color="sky" label={`${totalImproved} improvements`} />
+            <CountPill color="amber" label={`${totalFixed} fixes`} />
+            <span className="text-xs text-text-tertiary font-medium ml-1">across {ENTRIES.length} releases</span>
           </div>
+        </motion.div>
+
+        {/* Controls — search + type filter + expand/collapse */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08, duration: 0.4 }}
+          className="mb-8 flex flex-col sm:flex-row gap-3 sm:items-center"
+        >
+          <div className="relative flex-1">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search the changelog…"
+              aria-label="Search the changelog"
+              className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-surface border border-border focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 transition placeholder:text-text-tertiary"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <div role="tablist" aria-label="Filter changes by type" className="inline-flex rounded-xl bg-surface border border-border p-1 gap-0.5">
+              {(["all", "new", "improved", "fixed"] as FilterType[]).map((f) => {
+                const active = filter === f;
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setFilter(f)}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all capitalize cursor-pointer ${
+                      active
+                        ? "bg-accent text-white shadow-sm shadow-accent/30"
+                        : "text-text-secondary hover:text-text-primary"
+                    }`}
+                  >
+                    {f === "all" ? "All" : TYPE_STYLES[f as EntryType].label}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              onClick={expandedVersions.size === ENTRIES.length ? collapseAll : expandAll}
+              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition cursor-pointer"
+            >
+              {expandedVersions.size === ENTRIES.length ? "Collapse all" : "Expand all"}
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Timeline */}
+        <div className="relative">
+          {/* Vertical rail. Subtle accent fade at the top so it feels like
+              the timeline flows out of the hero. */}
+          <div
+            aria-hidden
+            className="absolute left-[19px] top-0 bottom-0 w-px hidden sm:block"
+            style={{
+              background:
+                "linear-gradient(to bottom, color-mix(in oklab, var(--accent) 35%, transparent), var(--border) 18%, var(--border) 92%, transparent)",
+            }}
+          />
+
+          {filteredEntries.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-surface p-10 text-center">
+              <p className="text-sm text-text-secondary">
+                No changes match your search. Try clearing the filter or query.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {filteredEntries.map((entry, i) => {
+                const isExpanded = expandedVersions.has(entry.version);
+                const newCount = entry.items.filter((it) => it.type === "new").length;
+                const improvedCount = entry.items.filter((it) => it.type === "improved").length;
+                const fixedCount = entry.items.filter((it) => it.type === "fixed").length;
+                const anchorId = `v${entry.version.replace(/\./g, "-")}`;
+
+                return (
+                  <motion.section
+                    key={entry.version}
+                    id={anchorId}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.08 + i * 0.04, duration: 0.4 }}
+                    className="relative sm:pl-14 scroll-mt-24"
+                  >
+                    {/* Timeline node. Highlight versions get the accent
+                        treatment; others get a neutral surface bubble. */}
+                    <div
+                      className={`hidden sm:flex absolute left-0 top-4 w-10 h-10 rounded-full items-center justify-center z-10 transition-transform duration-300 hover:scale-105 ${
+                        entry.highlight
+                          ? "bg-accent text-white shadow-lg shadow-accent/30 ring-4 ring-accent/15"
+                          : "bg-surface border-2 border-border text-text-tertiary"
+                      }`}
+                      aria-hidden
+                    >
+                      <span className="text-base">{entry.emoji}</span>
+                    </div>
+
+                    {/* Card */}
+                    <article
+                      className={`rounded-2xl border overflow-hidden transition-all duration-300 ${
+                        entry.highlight
+                          ? "border-accent/30 bg-gradient-to-br from-accent-surface/30 to-surface shadow-sm shadow-accent/10"
+                          : "border-border bg-surface hover:border-accent/25"
+                      }`}
+                    >
+                      {/* Clickable header — always visible */}
+                      <button
+                        type="button"
+                        onClick={() => toggleVersion(entry.version)}
+                        aria-expanded={isExpanded}
+                        aria-controls={`${anchorId}-items`}
+                        className="w-full px-4 sm:px-5 py-4 flex items-center gap-3 text-left cursor-pointer group"
+                      >
+                        <span className="sm:hidden text-xl flex-shrink-0">{entry.emoji}</span>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 text-[11px] font-extrabold rounded-lg tracking-wide flex-shrink-0 font-mono ${
+                            entry.highlight ? "bg-accent text-white" : "bg-accent-surface text-accent"
+                          }`}
+                        >
+                          v{entry.version}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <h2 className="text-sm sm:text-base font-bold text-text-primary group-hover:text-accent transition-colors truncate">
+                            {entry.title}
+                          </h2>
+                          <span className="text-[11px] text-text-tertiary font-medium">{entry.date}</span>
+                        </div>
+                        <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0" aria-hidden>
+                          {newCount > 0 && <MiniCount color="emerald">{newCount}</MiniCount>}
+                          {improvedCount > 0 && <MiniCount color="sky">{improvedCount}</MiniCount>}
+                          {fixedCount > 0 && <MiniCount color="amber">{fixedCount}</MiniCount>}
+                        </div>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={`text-text-tertiary flex-shrink-0 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+                          aria-hidden
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+
+                      {/* Items — collapsible */}
+                      <div
+                        id={`${anchorId}-items`}
+                        className={`grid transition-all duration-300 ease-out ${
+                          isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <ul className="px-4 sm:px-5 pb-5 pt-3 space-y-2.5 border-t border-border/60">
+                            {entry.items.map((item, j) => {
+                              const style = TYPE_STYLES[item.type];
+                              return (
+                                <li key={j} className="flex items-start gap-3 group/item">
+                                  <span
+                                    className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-extrabold rounded-md tracking-wider uppercase mt-0.5 ${style.badge}`}
+                                  >
+                                    <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} aria-hidden />
+                                    {style.label}
+                                  </span>
+                                  <span className="text-[13px] sm:text-sm text-text-secondary leading-relaxed">{item.text}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      </div>
+                    </article>
+                  </motion.section>
+                );
+              })}
+            </div>
+          )}
         </div>
-        <PageFooter />
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+          className="text-center mt-16"
+        >
+          <p className="text-sm text-text-tertiary mb-4">Have an idea for the next update?</p>
+          <a
+            href="/feedback"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+            </svg>
+            Send Feedback
+          </a>
+        </motion.div>
       </main>
-    </I18nProvider>
+
+      <PageFooter />
+    </div>
+  );
+}
+
+function CountPill({ color, label }: { color: "emerald" | "sky" | "amber"; label: string }) {
+  const cls =
+    color === "emerald"
+      ? "bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/30 dark:text-emerald-300 dark:ring-emerald-400/30"
+      : color === "sky"
+      ? "bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/30 dark:text-sky-300 dark:ring-sky-400/30"
+      : "bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/30 dark:text-amber-300 dark:ring-amber-400/30";
+  const dotCls =
+    color === "emerald" ? "bg-emerald-500" : color === "sky" ? "bg-sky-500" : "bg-amber-500";
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg ${cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${dotCls}`} aria-hidden />
+      {label}
+    </span>
+  );
+}
+
+function MiniCount({ color, children }: { color: "emerald" | "sky" | "amber"; children: React.ReactNode }) {
+  const cls =
+    color === "emerald"
+      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+      : color === "sky"
+      ? "bg-sky-500/10 text-sky-700 dark:text-sky-300"
+      : "bg-amber-500/10 text-amber-700 dark:text-amber-300";
+  return (
+    <span className={`w-5 h-5 rounded-md text-[10px] font-bold flex items-center justify-center ${cls}`}>
+      {children}
+    </span>
   );
 }
