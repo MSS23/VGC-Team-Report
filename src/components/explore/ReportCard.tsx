@@ -34,18 +34,14 @@ export interface ExploreReport {
 
 function getPlacementStyle(placement: string): string {
   if (placement === "1st") {
-    // Gold — champion treatment
     return "bg-amber-500/20 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30";
   }
   if (placement === "Top 4") {
-    // Silver — finalist treatment
     return "bg-slate-400/15 text-slate-600 dark:text-slate-300 ring-1 ring-slate-400/30";
   }
   if (placement === "Top 8") {
-    // Bronze — strong showing
     return "bg-orange-500/15 text-orange-600 dark:text-orange-400 ring-1 ring-orange-500/25";
   }
-  // Default — standard badge for Top 16 and other placements
   return "bg-accent-surface text-accent";
 }
 
@@ -71,25 +67,21 @@ export function ReportCard({ report }: { report: ExploreReport }) {
   const { user } = useUser();
   const sessionId = useSessionId();
 
-  // Like state — initialize from server data, then allow interactive toggling
   const initialLikes = report.likeCount ?? (report.reactionCounts
     ? Object.values(report.reactionCounts).reduce((sum, c) => sum + c, 0)
     : 0);
   const [likeCount, setLikeCount] = useState(initialLikes);
   const [liked, setLiked] = useState(false);
 
-  // Bookmark state
   const [bookmarked, setBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
-  // Hide bookmark on own reports (compare Clerk username/fullName to creatorName)
   const isOwnReport = !!(user && report.creatorName && (
     user.username === report.creatorName ||
     user.fullName === report.creatorName ||
     `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() === report.creatorName
   ));
 
-  // Check if current user already liked this report
   useEffect(() => {
     if (!sessionId || !report.id) return;
     fetch(`/api/reactions/${report.id}?sessionId=${encodeURIComponent(sessionId)}`)
@@ -105,7 +97,6 @@ export function ReportCard({ report }: { report: ExploreReport }) {
       .catch(() => {});
   }, [report.id, sessionId]);
 
-  // Check if current user already bookmarked this report
   useEffect(() => {
     if (!user || !report.id) return;
     fetch("/api/user/saved")
@@ -159,12 +150,10 @@ export function ReportCard({ report }: { report: ExploreReport }) {
     }
   }, [report.id, bookmarked, bookmarkLoading]);
 
-  // Archetype badges: show up to 3, then overflow
   const archetypes = report.tags?.archetype ?? [];
   const visibleArchetypes = archetypes.slice(0, 3);
   const overflowArchetypes = archetypes.length > 3 ? archetypes.length - 3 : 0;
 
-  // Tags section: eventType only (archetypes moved above, regulation moved to corner)
   const hasTagsSection = !!report.tags?.eventType;
 
   return (
@@ -176,9 +165,6 @@ export function ReportCard({ report }: { report: ExploreReport }) {
         visible: { opacity: 1, y: 0 },
       }}
     >
-      {/* Regulation tag — always visible in top-right corner. Dashed
-          border + "auto" suffix marks a machine-guessed format so viewers
-          don't mistake it for a creator-claimed one. */}
       {report.tags?.regulation && (
         <span
           className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 z-10 inline-flex items-center gap-1 ${
@@ -195,7 +181,6 @@ export function ReportCard({ report }: { report: ExploreReport }) {
         </span>
       )}
 
-      {/* Sprites row */}
       <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-1.5 sm:pb-2">
         <div className="bg-surface-alt/30 rounded-lg py-2">
           <div className="flex items-center justify-center gap-0.5 sm:gap-1">
@@ -214,9 +199,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
         </div>
       </div>
 
-      {/* Content */}
       <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-1.5 sm:space-y-2">
-        {/* Tournament + Placement */}
         <div className="flex items-start justify-between gap-1.5">
           <h3 className="text-xs sm:text-sm font-bold text-text-primary leading-tight group-hover:text-accent transition-colors line-clamp-2 sm:line-clamp-1">
             {report.tournamentName || report.species.join(" / ")}
@@ -224,7 +207,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           {report.placement && (
             <span className={`flex-shrink-0 inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-extrabold rounded-md tracking-wide ${getPlacementStyle(report.placement)}`}>
               {(report.placement === "1st" || report.placement === "Top 4") && (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="flex-shrink-0">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="flex-shrink-0" aria-hidden="true">
                   <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7.4L12 16.8l-6.3 4.6 2.3-7.4-6-4.6h7.6z" />
                 </svg>
               )}
@@ -233,7 +216,6 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           )}
         </div>
 
-        {/* Archetype badges — below title, up to 3 */}
         {visibleArchetypes.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {visibleArchetypes.map((a) => (
@@ -245,42 +227,37 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           </div>
         )}
 
-        {/* Creator + Collaborators */}
         {report.creatorName && (
           <p className="text-xs text-text-secondary flex items-center gap-1 flex-wrap">
             <span>{t.byCreator}</span>
-            <span
+            <a
+              href={`/creator/${encodeURIComponent(report.creatorName!)}`}
               className="font-semibold text-accent/80 hover:text-accent hover:underline transition-colors inline-flex items-center gap-1"
-              onClick={(e) => {
-                e.preventDefault();
-                window.location.href = `/creator/${encodeURIComponent(report.creatorName!)}`;
-              }}
+              onClick={(e) => e.stopPropagation()}
             >
               {report.creatorName}
               {report.isVerified && (
                 <span title="Verified creator">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-blue-500 flex-shrink-0">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-blue-500 flex-shrink-0" aria-hidden="true">
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                     <circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" strokeWidth="2" />
                   </svg>
                 </span>
               )}
-            </span>
+            </a>
             {report.collaborators && report.collaborators.length > 0 && (
               <>
                 <span className="text-text-tertiary">collabed with</span>
                 {report.collaborators.slice(0, 2).map((name, i) => (
                   <span key={name}>
                     {i > 0 && <span className="text-text-tertiary">, </span>}
-                    <span
-                      className="font-semibold hover:text-accent transition-colors cursor-pointer"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        window.location.href = `/creator/${encodeURIComponent(name)}`;
-                      }}
+                    <a
+                      href={`/creator/${encodeURIComponent(name)}`}
+                      className="font-semibold hover:text-accent transition-colors"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {name}
-                    </span>
+                    </a>
                   </span>
                 ))}
                 {report.collaborators.length > 2 && (
@@ -291,11 +268,9 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           </p>
         )}
 
-        {/* Fork credit — when this report was duplicated from another, show
-            the original creator visibly so the source builder gets attribution. */}
         {report.forkedFromCreator && (
           <p className="text-[10px] text-text-tertiary inline-flex items-center gap-1">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0" aria-hidden="true">
               <circle cx="12" cy="18" r="3" />
               <circle cx="6" cy="6" r="3" />
               <circle cx="18" cy="6" r="3" />
@@ -313,7 +288,6 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           </p>
         )}
 
-        {/* Tags — eventType + rental availability */}
         {(hasTagsSection || report.hasRental) && (
           <div className="flex flex-wrap gap-1">
             {hasTagsSection && (
@@ -324,7 +298,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                 className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-0.5"
                 title="Rental code available"
               >
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="3" y="11" width="18" height="11" rx="2" />
                   <path d="M7 11V7a5 5 0 0110 0v4" />
                 </svg>
@@ -334,36 +308,37 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           </div>
         )}
 
-        {/* Social indicators + timestamp */}
         <div className="flex items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-2.5">
-            {/* Interactive heart / like button */}
             {isSignedIn ? (
               <button
                 type="button"
                 onClick={toggleLike}
+                aria-label={liked ? "Unlike report" : "Like report"}
+                aria-pressed={liked}
                 className="inline-flex items-center gap-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={liked ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={liked ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"} aria-hidden="true">
                   <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
                 </svg>
-                <span className={`font-bold ${liked || likeCount > 0 ? "text-text-secondary" : "text-text-tertiary"}`}>{likeCount}</span>
+                <span className={`font-bold ${liked || likeCount > 0 ? "text-text-secondary" : "text-text-tertiary"}`} aria-hidden="true">{likeCount}</span>
               </button>
             ) : (
               <SignInButton mode="modal">
                 <button
                   type="button"
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  aria-label="Like report (sign in required)"
+                  aria-pressed={false}
                   className="inline-flex items-center gap-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill={likeCount > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={likeCount > 0 ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill={likeCount > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={likeCount > 0 ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"} aria-hidden="true">
                     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
                   </svg>
-                  <span className={`font-bold ${likeCount > 0 ? "text-text-secondary" : "text-text-tertiary"}`}>{likeCount}</span>
+                  <span className={`font-bold ${likeCount > 0 ? "text-text-secondary" : "text-text-tertiary"}`} aria-hidden="true">{likeCount}</span>
                 </button>
               </SignInButton>
             )}
-            {/* Bookmark */}
             {!isOwnReport && (
               isSignedIn ? (
                 <button
@@ -373,7 +348,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   className="inline-flex items-center gap-0.5 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                   aria-label={bookmarked ? "Unsave report" : "Save report"}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={bookmarked ? "text-accent" : "text-text-tertiary hover:text-accent transition-colors"}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={bookmarked ? "text-accent" : "text-text-tertiary hover:text-accent transition-colors"} aria-hidden="true">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
                   </svg>
                 </button>
@@ -385,20 +360,19 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                     className="inline-flex items-center gap-0.5 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                     aria-label="Save report"
                   >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary hover:text-accent transition-colors">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary hover:text-accent transition-colors" aria-hidden="true">
                       <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
                     </svg>
                   </button>
                 </SignInButton>
               )
             )}
-            {/* Comments */}
             {(report.commentCount ?? 0) > 0 && (
-              <span className="inline-flex items-center gap-0.5 text-text-tertiary">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <span className="inline-flex items-center gap-0.5 text-text-tertiary" aria-label={`${report.commentCount} comments`}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 </svg>
-                <span className="text-[10px] font-bold">{report.commentCount}</span>
+                <span className="text-[10px] font-bold" aria-hidden="true">{report.commentCount}</span>
               </span>
             )}
           </div>

@@ -21,7 +21,7 @@ import { useAutoDraft } from "@/hooks/useAutoDraft";
 import { useAuth } from "@clerk/nextjs";
 import { SAMPLE_PASTE } from "@/components/input/PasteInput";
 import { track } from "@vercel/analytics";
-import { usePostHog } from "posthog-js/react";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 import { useTranslation } from "@/lib/i18n";
 import { getTemplate } from "@/lib/templates";
 import type { SpriteConfig } from "@/lib/types/sprites";

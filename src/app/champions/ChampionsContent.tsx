@@ -8,13 +8,9 @@ import { PageFooter } from "@/components/layout/PageFooter";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { useEffect } from "react";
 import { track } from "@vercel/analytics";
-import { usePostHog } from "posthog-js/react";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 
-// Derive the displayed list from the canonical Reg M-A set so this never
-// drifts again. Each card carries a `hasSprite` flag — Megas without a
-// confirmed Showdown sprite render as non-clickable "Coming Soon" cards
-// instead of leading users to a broken-image landing page.
 import { getRegMAMegas, hasMegaSprite } from "@/lib/data/mega-pokemon";
 const MEGA_POKEMON = getRegMAMegas().map((m) => ({
   name: m.displayName.replace(/^Mega /, "") + "-Mega",
@@ -128,10 +124,6 @@ export function ChampionsContent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {MEGA_POKEMON.map((mon) => {
               if (!mon.hasSprite) {
-                // Coming Soon — non-clickable. Honest UX over a broken-image
-                // landing page. When Showdown ships the sprite, just add the
-                // dataKey to MEGAS_WITH_SPRITES in mega-pokemon.ts and the
-                // card flips to a real link automatically.
                 return (
                   <div
                     key={mon.name}

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { useHomePage } from "@/hooks/useHomePage";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
+import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 import { PasteInput } from "@/components/input/PasteInput";
 import { TeamReport } from "@/components/report/TeamReport";
 import { TeamCardCTA } from "@/components/report/TeamCardCTA";
@@ -30,13 +31,14 @@ import { teamToShowdown, teamToOpenSheet } from "@/lib/utils/export-paste";
 import { createPokePaste } from "@/lib/utils/pokepaste";
 import { replacePokemonSpecies } from "@/lib/utils/paste-edit";
 import { I18nProvider } from "@/lib/i18n";
+import { FAQPageJsonLd, HowToSchema } from "@/components/seo/JsonLd";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
 import { computeVersionDiff, summarizeChangedFields, getNavigableChanges, type VersionDiff, type DiffChange } from "@/lib/utils/version-diff";
 const DiffNavigator = dynamic(() => import("@/components/ui/DiffNavigator").then(m => ({ default: m.DiffNavigator })));
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import { track } from "@vercel/analytics";
-import { usePostHog } from "posthog-js/react";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
 const ShareModal = dynamic(() => import("@/components/ui/ShareModal").then(m => ({ default: m.ShareModal })));
@@ -51,9 +53,34 @@ import { DisplayTogglePill } from "@/components/display/DisplayTogglePill";
 import { useGlobalDisplayPrefs } from "@/lib/hooks/useGlobalDisplayPrefs";
 import { detectMegaFromItem } from "@/lib/utils/mega-detect";
 
+const HOW_TO_STEPS = [
+  {
+    name: "Export your team",
+    text: "Open Pokémon Showdown or PokéPaste and export your team as a text paste (Showdown format).",
+  },
+  {
+    name: "Paste your team into VGC Team Report",
+    text: "Go to pokemonvgcteamreport.com, paste your Showdown export or PokéPaste URL into the input field, and click Analyze.",
+  },
+  {
+    name: "Add notes, damage calcs, and speed tiers",
+    text: "Fill in your team overview, per-Pokémon role notes, key damage calculations, and speed tier comparisons using the built-in editor.",
+  },
+  {
+    name: "Add matchup plans",
+    text: "Document your matchup plans against common threats and tournament meta picks so viewers understand your game plan.",
+  },
+  {
+    name: "Share your report",
+    text: "Click the Share button to generate a permanent public link. Optionally publish it to the Explore page so the community can discover your report.",
+  },
+];
+
 export default function Home() {
   return (
     <I18nProvider>
+      <FAQPageJsonLd />
+      <HowToSchema steps={HOW_TO_STEPS} />
       <Suspense>
         <HomeContent />
       </Suspense>
@@ -213,6 +240,9 @@ function HomeContent() {
   // floating Display pill can react to it and drop its lift offset the
   // moment the CTA disappears, rather than staying artificially raised.
   const [shareCtaDismissed, setShareCtaDismissed] = useState(false);
+  // Tracks whether the end-of-report contextual CTA (shown on the last slide)
+  // has been dismissed by the viewer.
+  const [endOfReportCtaDismissed, setEndOfReportCtaDismissed] = useState(false);
 
   // ── Global display prefs ─────────────────────────────────────────
   // First-run discovery pulse for the floating Display pill. Mega default
@@ -278,6 +308,29 @@ function HomeContent() {
       })
       .catch(() => {});
   }, [analysis, isSharePending, loadDraft]);
+
+  // ── Load Champions sample team from ?sample=ID ────────────────────
+  // Triggered by "Try this team" buttons on the /champions page.
+  // Loads the pre-built paste directly — no server round-trip needed.
+  const sampleLoaded = useRef(false);
+  useEffect(() => {
+    if (sampleLoaded.current || analysis || isSharePending) return;
+    const params = new URLSearchParams(window.location.search);
+    const sampleId = params.get("sample");
+    if (!sampleId) return;
+    sampleLoaded.current = true;
+    const sampleTeam = CHAMPIONS_SAMPLE_TEAMS.find((t) => t.id === sampleId);
+    if (!sampleTeam) return;
+    // Remove ?sample= from URL so the paste can be freely edited
+    const url = new URL(window.location.href);
+    url.searchParams.delete("sample");
+    window.history.replaceState({}, "", url.pathname + url.search);
+    // Load the paste — marks it as a sample team so it doesn't persist
+    // to localStorage or auto-draft (same flag as the SAMPLE_PASTE path).
+    setPaste(sampleTeam.paste);
+    handleAnalyze(sampleTeam.paste);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysis, isSharePending]);
 
   // ── Version comparison state ────────────────────────────────────
   const [versionDiff, setVersionDiff] = useState<VersionDiff | null>(null);
@@ -1312,6 +1365,60 @@ function HomeContent() {
               Placed at the emotional peak (after the team has been seen)
               rather than mid-scroll. (VGC-141) */}
           <TeamCardCTA shareId={activeShareId} hasTournament={!!(placement || tournamentName)} />
+
+          {/* End-of-report conversion CTA — fires after the user has seen all
+              slides (isLast) so they've already consumed the value. Only shown
+              to non-owner guests; owners see the creator toolbar instead. */}
+          {isLast && !isOwner && !endOfReportCtaDismissed && (
+            <div className="flex items-center justify-between gap-3 px-4 py-3.5 bg-gradient-to-br from-accent/10 via-accent-surface/15 to-transparent border border-accent/25 rounded-2xl animate-fade-in">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center text-accent">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="12" y1="18" x2="12" y2="12" />
+                    <line x1="9" y1="15" x2="15" y2="15" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-text-primary">You&apos;ve reached the end!</p>
+                  <p className="text-xs text-text-secondary mt-0.5 hidden sm:block">
+                    Build your own team report — add notes, calcs, matchup plans, and share it with the community.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {isSignedIn ? (
+                  <a
+                    href="/"
+                    className="px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30"
+                  >
+                    Create yours
+                  </a>
+                ) : (
+                  <SignUpButton mode="modal">
+                    <button
+                      type="button"
+                      className="px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer"
+                    >
+                      Sign up free
+                    </button>
+                  </SignUpButton>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setEndOfReportCtaDismissed(true)}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+                  aria-label="Dismiss"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

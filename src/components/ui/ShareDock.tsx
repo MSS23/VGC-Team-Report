@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePostHog } from "posthog-js/react";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 
 interface ShareDockProps {
   publicUrl: string;
@@ -34,8 +34,6 @@ export function ShareDock({
   const [canNativeShare, setCanNativeShare] = useState(false);
   const posthog = usePostHog();
 
-  // Auto-hide on scroll-down, show on scroll-up. Reduces obstruction during
-  // slide presentation and demos.
   useEffect(() => {
     let lastY = window.scrollY;
     let raf = 0;
@@ -57,7 +55,6 @@ export function ShareDock({
     };
   }, []);
 
-  // Detect Web Share API support on the client side (after hydration)
   useEffect(() => {
     const nav = navigator as Navigator & { share?: unknown; canShare?: (data?: ShareData) => boolean };
     if (
@@ -95,7 +92,6 @@ export function ShareDock({
       await navigator.share({ title: teamTitle, url: publicUrl });
       posthog?.capture("share_dock_action", { action: "native_share" });
     } catch {
-      // User cancelled or share failed - fall back to copy-link silently
       handleCopyLink();
     }
   };
@@ -107,7 +103,7 @@ export function ShareDock({
       setTimeout(() => setLinkCopied(false), 1800);
       posthog?.capture("share_dock_action", { action: "copy_link" });
     } catch {
-      // Clipboard may be blocked - silently no-op so we don't surface a benign error
+      // Clipboard may be blocked
     }
   };
 
@@ -135,7 +131,6 @@ export function ShareDock({
           Share
         </span>
 
-        {/* Native share button - only shown on mobile devices that support the Web Share API */}
         {canNativeShare && (
           <button
             type="button"
@@ -144,16 +139,7 @@ export function ShareDock({
             aria-label="Share via device"
             title="Share via device"
           >
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="18" cy="5" r="3" />
               <circle cx="6" cy="12" r="3" />
               <circle cx="18" cy="19" r="3" />

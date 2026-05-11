@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "motion/react";
 import { track } from "@vercel/analytics";
-import { usePostHog } from "posthog-js/react";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 
 
@@ -27,7 +27,6 @@ export function ExploreContent() {
 function ExploreInner() {
   const { t } = useTranslation();
   const posthog = usePostHog();
-  // Random accent color on explore page
   useEffect(() => { applyRandomAccent(); track("explore_visited"); posthog?.capture("explore_visited"); }, [posthog]);
 
   const [reports, setReports] = useState<ExploreReport[]>([]);
@@ -78,7 +77,6 @@ function ExploreInner() {
     [query, sort, searchCategory, regulation, eventType, archetype, species, excludeSpecies, placement, followingOnly, tournamentMode, hasRental],
   );
 
-  // Initial + filter/sort change fetch
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -154,12 +152,9 @@ function ExploreInner() {
           onHasRentalChange={setHasRental}
         />
 
-        {/* Results */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {Array.from({ length: 6 }).map((_, i) => (
-              // min-h reserves vertical space matching a typical ReportCard so
-              // the layout doesn't shift when real cards replace skeletons.
               <div key={i} className="bg-surface rounded-xl border border-border overflow-hidden animate-pulse min-h-[260px]">
                 <div className="px-4 pt-4 pb-2 flex justify-center gap-1">
                   {Array.from({ length: 6 }).map((_, j) => (

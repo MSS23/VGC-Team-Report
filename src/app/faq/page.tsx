@@ -64,6 +64,11 @@ const FAQ_ITEMS = [
       "Speed tiers rank how fast each Pokémon moves in battle, accounting for base Speed stats, EV and IV investment, nature, and speed-control modifiers like Tailwind or Trick Room. In VGC, moving first can decide a game. Team reports typically include a speed tier section showing your team's Speed stats relative to key threats, whether each Pokémon outspeeds relevant benchmarks, and how speed changes under Tailwind (2× Speed) or Trick Room (reversed Speed order). VGC Team Report lets you build a speed tier comparison table and display it inline in the published report.",
   },
   {
+    question: "What is an Open Team Sheet (OTS) in VGC, and how does VGC Team Report support it?",
+    answer:
+      "An Open Team Sheet (OTS) is a document that reveals your six Pokémon, their items, abilities, moves, and Tera types before a match — but omits EV and IV spreads. OTS rules are used at many major VGC tournaments so opponents know the general team composition without seeing exact EV benchmarks. VGC Team Report includes a built-in OTS generator: open any team report and use the 'Visual OTS Sheet' option in the menu to generate a clean, shareable OTS image with all six Pokémon sprites and a QR code linking to your report. You can download the image or copy an OTS-formatted text paste compatible with Pokémon Showdown.",
+  },
+  {
     question: "How do I get my VGC team report discovered by other players?",
     answer:
       "VGC Team Report has a public Explore page where published reports can be browsed and searched by Pokémon, format, or tournament. To get your report discovered: make it public when publishing (vs. link-only), fill in tournament context (event name, placement, and format), share the link on Reddit (r/VGC, r/stunfisk, r/pokemon), Discord community servers, and Twitter/X with relevant hashtags (#VGC2026, #PokémonChampions), and tag the Pokémon in your report so it appears in search results. High-quality public reports featuring top-cut Pokémon are also surfaced on the Champions format page.",

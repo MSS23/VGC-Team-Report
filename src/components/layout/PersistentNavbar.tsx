@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { PageNavbar } from "@/components/layout/PageNavbar";
@@ -25,49 +24,17 @@ function getActivePage(pathname: string): ActivePage {
   return "home";
 }
 
-// ─── External store: lets pages hide the persistent navbar ────
-// Used by the home page report view which has its own Navbar component.
-const listeners = new Set<() => void>();
-let hidden = false;
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-function getSnapshot() { return hidden; }
-function getServerSnapshot() { return false; }
-
-/** Call from pages that render their own navbar (e.g. report view). */
-export function hidePageNavbar() {
-  if (hidden) return;
-  hidden = true;
-  listeners.forEach((fn) => fn());
-}
-
-/** Call when the page no longer needs to hide the navbar. */
-export function showPageNavbar() {
-  if (!hidden) return;
-  hidden = false;
-  listeners.forEach((fn) => fn());
-}
-
 /**
  * Renders PageNavbar once in the root layout so it persists across
  * client-side navigations instead of remounting on every page.
  *
- * Hidden on share (/s/) and embed (/embed/) routes, and when a page
- * explicitly hides it via hidePageNavbar().
+ * Hidden on share (/s/) and embed (/embed/) routes.
  */
 export function PersistentNavbar() {
   const pathname = usePathname();
   const { darkMode, toggleDarkMode } = useDarkMode();
-  const isHidden = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  // Hide on excluded routes
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
-
-  // Hide when a page explicitly requests it (e.g. report view)
-  if (isHidden) return null;
 
   return (
     <PageNavbar

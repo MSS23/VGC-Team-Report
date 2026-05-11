@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
 import { track } from "@vercel/analytics";
-import { usePostHog } from "posthog-js/react";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 
 interface ReactionBarProps {
   shareId: string;
@@ -75,7 +75,6 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
         body: JSON.stringify({ reactionType: "heart", sessionId }),
       });
       if (!res.ok) {
-        // API rejected — roll back optimistic update
         setLiked(wasLiked);
         setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));
       }
@@ -87,7 +86,6 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
 
   if (!loaded) return null;
 
-  // Compact: just show count (used in report cards)
   if (compact) {
     if (likeCount === 0) return null;
     return (
@@ -98,7 +96,6 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
     );
   }
 
-  // Owner: show count, no interaction
   if (isOwner) {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold text-text-tertiary">
@@ -108,7 +105,6 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
     );
   }
 
-  // Guest: heart icon that opens sign-in modal
   if (!isSignedIn) {
     return (
       <SignInButton mode="modal">
@@ -124,7 +120,6 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
     );
   }
 
-  // Signed in: interactive like button
   return (
     <button
       type="button"

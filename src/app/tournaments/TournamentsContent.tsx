@@ -100,7 +100,6 @@ function formatDate(dateStr: string): string {
 function TournamentCard({ tournament }: { tournament: Tournament }) {
   return (
     <div className="rounded-xl border border-border bg-surface p-5 flex flex-col gap-4 hover:border-accent/30 transition-colors">
-      {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h2 className="text-sm font-extrabold text-text-primary leading-snug">
@@ -115,7 +114,6 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         </span>
       </div>
 
-      {/* Meta */}
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2 text-xs text-text-secondary">
           <svg
@@ -157,7 +155,6 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         </div>
       </div>
 
-      {/* Top Pokémon badges */}
       <div>
         <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">
           Top Pokémon
@@ -174,14 +171,13 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         </div>
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/50">
         <span className="text-xs text-text-tertiary">
           <span className="font-bold text-text-primary">{tournament.reportCount}</span>{" "}
           {tournament.reportCount === 1 ? "report" : "reports"}
         </span>
         <Link
-          href={`/explore?tournament=${tournament.id}`}
+          href={`/explore?q=${encodeURIComponent(tournament.name)}&searchType=tournament`}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-accent bg-accent-surface rounded-lg hover:brightness-105 transition-all"
           aria-label={`View top teams from ${tournament.name}`}
         >
@@ -230,7 +226,6 @@ export function TournamentsContent() {
       />
 
       <main className="min-h-screen bg-background pb-24 sm:pb-0">
-        {/* Hero */}
         <section className="relative overflow-hidden py-16 sm:py-20 px-4">
           <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-transparent" />
           <div className="relative max-w-5xl mx-auto">
@@ -267,7 +262,6 @@ export function TournamentsContent() {
           </div>
         </section>
 
-        {/* Tournament grid */}
         <section className="max-w-5xl mx-auto px-4 py-8">
           {TOURNAMENTS.length === 0 ? (
             <div className="text-center py-20 text-text-secondary">
@@ -284,7 +278,6 @@ export function TournamentsContent() {
           )}
         </section>
 
-        {/* CTA */}
         <section className="max-w-5xl mx-auto px-4 py-12 text-center">
           <p className="text-sm text-text-secondary mb-4">
             Just finished a tournament? Share your team report with the community.

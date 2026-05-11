@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { track } from "@vercel/analytics";
-import { usePostHog } from "posthog-js/react";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 
 /**
  * End-of-report CTA: download a Spotify-Wrapped style PNG of the team
@@ -39,8 +39,6 @@ export function TeamCardCTA({
       a.remove();
       URL.revokeObjectURL(objectUrl);
     } catch {
-      // Surface failure inline rather than silently — the user clicked
-      // expecting a file.
       alert("Couldn't generate the team card. Please try again in a moment.");
     } finally {
       setDownloading(false);
