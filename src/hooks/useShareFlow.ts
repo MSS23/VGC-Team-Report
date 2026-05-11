@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useShareUrl } from "@/hooks/useShareUrl";
 import { useAuth } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
-import { usePostHog } from "posthog-js/react";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 
@@ -27,13 +27,9 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
   } = useShareUrl();
 
   const [isPublic, setIsPublic] = useState(true);
-  // Surfaced to ShareModal so a failed visibility toggle shows a real error
-  // instead of a silent "saved" that didn't actually publish anything.
   const [publishError, setPublishError] = useState<string | null>(null);
-  // Blocks sharing until the user fills in the "By" field
   const [creatorRequired, setCreatorRequired] = useState(false);
 
-  // Sync isPublic from server when share data is fetched (e.g. opening a shared view or dashboard toggle)
   useEffect(() => {
     if (fetchedIsPublic !== null) {
       setIsPublic(fetchedIsPublic);
@@ -45,14 +41,11 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
 
   const handleShareClick = useCallback(() => {
     if (!analysis || isSampleTeam) return;
-    // Saving/sharing requires a signed-in account. Anonymous users should be
-    // routed to sign-in rather than hit an obscure 401 from the server.
     if (!isSignedIn) {
       setPublishError("Sign in to save and share your team report.");
       return;
     }
     const state = buildShareState();
-    // Block sharing if no creator name
     if (!state.creatorName?.trim()) {
       setCreatorRequired(true);
       return;
@@ -60,7 +53,6 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     setCreatorRequired(false);
     copyShareUrl(state, isPublic);
     setShowEditUrl(true);
-    // Track share event
     const hasMega = analysis.pokemon.some((p) => p.parsed.species.includes("-Mega") || p.parsed.species.includes("-Primal"));
     track("report_shared", {
       regulation: (state.tags as Record<string, unknown>)?.regulation as string ?? "unknown",
@@ -93,10 +85,6 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     setShowEditUrl(true);
   }, [analysis, freshShare, buildShareState, isPublic]);
 
-  // Auto-save: debounce pushes to server when editing an unlocked shared view.
-  // Gated on isSignedIn — if the user signs out while the tab is open, stop
-  // autosaving instead of hammering the server with 401s and silently losing
-  // their unsaved changes.
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!analysis || !isEditingUnlocked || !isSignedIn) return;
@@ -110,7 +98,6 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
   }, [analysis, isEditingUnlocked, isSignedIn, buildShareState, autoSave, isPublic]);
 
   const handleSetPublic = useCallback(async (v: boolean) => {
-    // Optimistic toggle for responsive UI — reverted if the server rejects.
     setIsPublic(v);
     setPublishError(null);
     const result = await autoSave(buildShareState(), v);

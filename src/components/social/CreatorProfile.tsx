@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { track } from "@vercel/analytics";
-import { usePostHog } from "posthog-js/react";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 
 
@@ -61,7 +61,6 @@ function CreatorProfileInner({ name }: { name: string }) {
     <div className="min-h-screen bg-background text-text-primary">
       <main className="pb-24 sm:pb-12">
         {loading ? (
-          /* ── Loading State ── */
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <div className="flex flex-col items-center justify-center py-32 gap-4">
               <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
@@ -74,7 +73,6 @@ function CreatorProfileInner({ name }: { name: string }) {
             </div>
           </div>
         ) : !data ? (
-          /* ── Not Found State ── */
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <div className="flex flex-col items-center justify-center py-32 gap-5 text-center">
               <div className="w-20 h-20 rounded-2xl bg-surface border border-border flex items-center justify-center">
@@ -104,17 +102,13 @@ function CreatorProfileInner({ name }: { name: string }) {
           </div>
         ) : (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            {/* ── Hero Banner ── */}
             <div className="relative overflow-hidden">
-              {/* Gradient background */}
               <div className="absolute inset-0 bg-gradient-to-br from-accent/15 via-accent/5 to-transparent" />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-              {/* Subtle pattern overlay */}
               <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)", backgroundSize: "24px 24px" }} />
 
               <div className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-6">
                 <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 sm:gap-6">
-                  {/* Avatar */}
                   <div className="relative flex-shrink-0">
                     <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-accent/40 to-accent/10 blur-sm" />
                     {data.profile?.avatarUrl ? (
@@ -133,7 +127,6 @@ function CreatorProfileInner({ name }: { name: string }) {
                     )}
                   </div>
 
-                  {/* Name, badge, and actions */}
                   <div className="flex-1 text-center sm:text-left pb-1">
                     <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 mb-1.5">
                       <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-text-primary">
@@ -150,7 +143,6 @@ function CreatorProfileInner({ name }: { name: string }) {
                     <div className="flex items-center justify-center sm:justify-start gap-3">
                       <FollowButton creatorName={data.creator} />
 
-                      {/* Social links — inline with follow button */}
                       {data.profile?.twitter && (
                         <a
                           href={`https://twitter.com/${data.profile.twitter}`}
@@ -189,7 +181,6 @@ function CreatorProfileInner({ name }: { name: string }) {
             </div>
 
             <div className="max-w-5xl mx-auto px-4 sm:px-6">
-              {/* ── Stats Grid ── */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 -mt-1 mb-8">
                 {[
                   {
@@ -255,7 +246,6 @@ function CreatorProfileInner({ name }: { name: string }) {
                 ))}
               </div>
 
-              {/* ── Bio Card ── */}
               {data.profile?.bio && (
                 <div className="relative mb-8 rounded-xl bg-surface border border-border p-5 sm:p-6">
                   <div className="absolute top-4 left-5 text-accent/20" aria-hidden="true">
@@ -269,7 +259,6 @@ function CreatorProfileInner({ name }: { name: string }) {
                 </div>
               )}
 
-              {/* ── Social Links (expanded, only when there are details to show) ── */}
               {data.profile && (data.profile.twitter || data.profile.discord || data.profile.youtube) && (
                 <div className="flex flex-wrap items-center gap-2.5 mb-8">
                   {data.profile.twitter && (
@@ -303,7 +292,6 @@ function CreatorProfileInner({ name }: { name: string }) {
                 </div>
               )}
 
-              {/* ── Reports Section ── */}
               {data.reports.length === 0 ? (
                 <div className="text-center py-16 rounded-xl bg-surface border border-border">
                   <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-accent-surface/50 flex items-center justify-center">
@@ -317,7 +305,6 @@ function CreatorProfileInner({ name }: { name: string }) {
                 </div>
               ) : (
                 <>
-                  {/* Reports header */}
                   <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3">
                       <h2 className="text-base sm:text-lg font-extrabold text-text-primary tracking-tight">
@@ -337,7 +324,6 @@ function CreatorProfileInner({ name }: { name: string }) {
                     </select>
                   </div>
 
-                  {/* Reports grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                     {[...data.reports]
                       .sort((a, b) =>
