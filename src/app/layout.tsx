@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Analytics } from "@vercel/analytics/next";
 import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
 import { ChunkErrorReloader } from "@/components/ui/ChunkErrorReloader";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
@@ -139,9 +138,6 @@ export default function RootLayout({
         <ConnectivityStatus />
         <ServiceWorkerRegistration />
         <ChunkErrorReloader />
-        <ConsentGate>
-          <Analytics />
-        </ConsentGate>
         </ClerkProvider>
       </body>
     </html>

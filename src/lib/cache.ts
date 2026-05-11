@@ -55,6 +55,24 @@ export async function cacheSet(key: string, value: unknown, ttlSeconds: number):
 }
 
 /**
+ * Atomic set-if-absent with TTL. Returns true if the key was set (first
+ * call within the window), false if it already existed. Used for cross-
+ * Lambda dedup (e.g. view-count rate limiting per session) without keeping
+ * a serverless function warm via setInterval. Returns true on Redis miss
+ * so the caller's side-effect still runs when caching is unavailable.
+ */
+export async function cacheSetIfAbsent(key: string, ttlSeconds: number): Promise<boolean> {
+  try {
+    const r = getRedis();
+    if (!r) return true;
+    const res = await r.set(key, 1, { ex: ttlSeconds, nx: true });
+    return res === "OK";
+  } catch {
+    return true;
+  }
+}
+
+/**
  * Delete a cached key (invalidation).
  */
 export async function cacheDel(key: string): Promise<void> {

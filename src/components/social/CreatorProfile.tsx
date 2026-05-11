@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { track } from "@vercel/analytics";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 
@@ -42,7 +41,7 @@ export function CreatorProfileWrapper({ name }: { name: string }) {
 function CreatorProfileInner({ name }: { name: string }) {
   const { t } = useTranslation();
   const posthog = usePostHog();
-  useEffect(() => { applyRandomAccent(); track("creator_profile_visited", { creator: name }); posthog?.capture("creator_profile_visited", { creator_name: name }); }, [name, posthog]);
+  useEffect(() => { applyRandomAccent(); posthog?.capture("creator_profile_visited", { creator_name: name }); }, [name, posthog]);
   const [data, setData] = useState<CreatorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<"newest" | "views">("newest");

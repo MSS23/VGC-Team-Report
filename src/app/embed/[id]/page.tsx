@@ -2,7 +2,7 @@ import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 // Use canonical slug resolver — single source of truth for all sprite slugs
 import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";

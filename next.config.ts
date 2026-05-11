@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["motion/react"],
   },
+  images: {
+    remotePatterns: [],
+    minimumCacheTTL: 2592000,
+  },
   // Reverse proxy PostHog through our domain to bypass ad blockers
   async rewrites() {
     return [

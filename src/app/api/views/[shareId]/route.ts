@@ -1,15 +1,12 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { cacheSetIfAbsent } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { SeverityNumber } from "@opentelemetry/api-logs";
 import { after } from "next/server";
 import { getLogger, flushLogs } from "@/instrumentation";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-
-// In-memory dedup: prevent same session from incrementing more than once per cycle
-const recentViews = new Set<string>();
-setInterval(() => recentViews.clear(), 10 * 60 * 1000); // clear every 10 min
 
 const ViewBody = z.object({ sessionId: z.string().min(1) });
 
@@ -28,16 +25,17 @@ export async function POST(
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }
 
-    const key = `${shareId}:${parsed.data.sessionId}`;
-    if (recentViews.has(key)) {
-      // Already counted this session recently — return current count
-      const sql = getDb();
+    // Cross-Lambda dedup via Upstash SET NX EX. Replaces a module-scope
+    // setInterval + in-memory Set that kept the Lambda warm (defeating
+    // scale-to-zero) and was per-instance anyway, so cold-instance hits
+    // double-counted views. The dedup-hit branch still returns the
+    // current count via a PK lookup so the UI badge stays accurate.
+    const isFirstView = await cacheSetIfAbsent(`view:${shareId}:${parsed.data.sessionId}`, 600);
+    const sql = getDb();
+    if (!isFirstView) {
       const rows = await sql`SELECT COALESCE(view_count, 0) as vc FROM shares WHERE id = ${shareId} AND is_public = TRUE AND deleted_at IS NULL`;
       return NextResponse.json({ viewCount: rows[0]?.vc ?? 0 });
     }
-
-    recentViews.add(key);
-    const sql = getDb();
     const rows = await sql`
       UPDATE shares SET view_count = COALESCE(view_count, 0) + 1
       WHERE id = ${shareId} AND is_public = TRUE AND deleted_at IS NULL

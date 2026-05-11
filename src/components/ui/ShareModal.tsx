@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { usePostHog } from "@/components/providers/PostHogProvider";
-import { track } from "@vercel/analytics";
 
 interface ShareModalProps {
   publicUrl: string;
@@ -167,7 +166,6 @@ export function ShareModal({
       await navigator.clipboard.writeText(embedSnippet);
       setEmbedCopied(true);
       setTimeout(() => setEmbedCopied(false), 2000);
-      track("share_embed_copied");
       posthog?.capture("share_embed_copied", { has_tournament: !!tournamentName });
     } catch {
       // Clipboard unavailable (non-HTTPS or permission denied) — no-op; the
@@ -204,7 +202,6 @@ export function ShareModal({
       await navigator.clipboard.writeText(publicUrl);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
-      track("share_link_copied");
       posthog?.capture("share_link_copied", { is_short_url: isShortUrl });
     } catch {
       // Clipboard unavailable (non-HTTPS or permission denied) — no-op; the
@@ -217,7 +214,6 @@ export function ShareModal({
       await navigator.clipboard.writeText(discordText);
       setDiscordCopied(true);
       setTimeout(() => setDiscordCopied(false), 2000);
-      track("share_discord_copied");
       posthog?.capture("share_discord_copied", { has_tournament: !!tournamentName });
     } catch {
       // Clipboard unavailable (non-HTTPS or permission denied) — no-op.
@@ -230,7 +226,6 @@ export function ShareModal({
       : "VGC Team Report";
     try {
       await navigator.share({ title, url: publicUrl });
-      track("share_native_used");
       posthog?.capture("share_native_used", { has_tournament: !!tournamentName });
     } catch {
       // User cancelled or share failed — silently no-op
@@ -357,7 +352,6 @@ export function ShareModal({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => {
-              track("share_twitter_clicked");
               posthog?.capture("share_twitter_clicked", { has_tournament: !!tournamentName, has_placement: !!placement });
             }}
             className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group"
@@ -387,7 +381,6 @@ export function ShareModal({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => {
-              track("share_reddit_clicked");
               posthog?.capture("share_reddit_clicked", { has_tournament: !!tournamentName });
             }}
             className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group"

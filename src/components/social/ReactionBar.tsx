@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
-import { track } from "@vercel/analytics";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 
 interface ReactionBarProps {
@@ -65,7 +64,6 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
       setAnimating(true);
       setTimeout(() => setAnimating(false), 300);
     }
-    track("report_reacted", { shareId, action: wasLiked ? "removed" : "added" });
     posthog?.capture("report_reacted", { share_id: shareId, action: wasLiked ? "removed" : "added" });
 
     try {

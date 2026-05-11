@@ -20,7 +20,6 @@ import { useSlideSystem } from "@/hooks/useSlideSystem";
 import { useAutoDraft } from "@/hooks/useAutoDraft";
 import { useAuth } from "@clerk/nextjs";
 import { SAMPLE_PASTE } from "@/components/input/PasteInput";
-import { track } from "@vercel/analytics";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { useTranslation } from "@/lib/i18n";
 import { getTemplate } from "@/lib/templates";
@@ -683,7 +682,6 @@ export function useHomePage() {
     parseTeam(teamPaste);
     // Track team creation
     const hasMega = teamPaste.includes("-Mega") || teamPaste.includes("-Primal");
-    track("team_created", { hasMega: hasMega ? "yes" : "no" });
     posthog?.capture("team_created", { has_mega: hasMega, pokemon_count: teamPaste.split(/\n\n+/).filter(Boolean).length });
   };
 

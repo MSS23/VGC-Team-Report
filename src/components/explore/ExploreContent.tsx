@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "motion/react";
-import { track } from "@vercel/analytics";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 
@@ -27,7 +26,7 @@ export function ExploreContent() {
 function ExploreInner() {
   const { t } = useTranslation();
   const posthog = usePostHog();
-  useEffect(() => { applyRandomAccent(); track("explore_visited"); posthog?.capture("explore_visited"); }, [posthog]);
+  useEffect(() => { applyRandomAccent(); posthog?.capture("explore_visited"); }, [posthog]);
 
   const [reports, setReports] = useState<ExploreReport[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);

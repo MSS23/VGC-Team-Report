@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { track } from "@vercel/analytics";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 
 /**
@@ -23,7 +22,6 @@ export function TeamCardCTA({
   const handleDownload = async () => {
     if (downloading) return;
     setDownloading(true);
-    track("team_card_download_clicked", { share_id: shareId });
     posthog?.capture("team_card_download_clicked", { share_id: shareId });
     try {
       const url = `/api/team-graphic?id=${encodeURIComponent(shareId)}&style=wrapped`;

@@ -7,7 +7,6 @@ import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { useEffect } from "react";
-import { track } from "@vercel/analytics";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 
@@ -32,7 +31,6 @@ export function ChampionsContent() {
   const posthog = usePostHog();
   useEffect(() => {
     applyRandomAccent();
-    track("champions_page_visited");
     posthog?.capture("champions_page_visited");
   }, [posthog]);
 

@@ -37,7 +37,6 @@ import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
 import { computeVersionDiff, summarizeChangedFields, getNavigableChanges, type VersionDiff, type DiffChange } from "@/lib/utils/version-diff";
 const DiffNavigator = dynamic(() => import("@/components/ui/DiffNavigator").then(m => ({ default: m.DiffNavigator })));
 import type { ShareableState } from "@/lib/sharing/url-codec";
-import { track } from "@vercel/analytics";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
@@ -624,7 +623,6 @@ function HomeContent() {
   useEffect(() => {
     if (!isSharedView || !activeShareId || viewTracked.current) return;
     viewTracked.current = true;
-    track("report_viewed", { shareId: activeShareId });
     posthog?.capture("report_viewed", { share_id: activeShareId });
     const sessionId = getSessionId();
     if (!sessionId) return;
@@ -709,11 +707,10 @@ function HomeContent() {
     if (!isSignedIn) {
       // Route to sign-in flow; Clerk modal will handle the rest.
       // After sign-in the user can click Fork again.
-      track("fork_attempted_signed_out", { source_id: activeShareId });
+      posthog?.capture("fork_attempted_signed_out", { source_id: activeShareId });
       return;
     }
     setForkStatus("forking");
-    track("report_fork_clicked", { source_id: activeShareId });
     posthog?.capture("report_fork_clicked", { source_id: activeShareId });
     try {
       const result = await forkReport(activeShareId);
@@ -1594,7 +1591,6 @@ function HomeContent() {
           onDuplicate={handleForkReport}
           onAnonymousIntent={() => {
             if (activeShareId) {
-              track("share_view_duplicate_anonymous", { source_id: activeShareId });
               posthog.capture("share_view_duplicate_anonymous", { source_id: activeShareId });
             }
           }}

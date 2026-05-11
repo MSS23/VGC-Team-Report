@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { track } from "@vercel/analytics";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
@@ -202,10 +202,11 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
 }
 
 export function TournamentsContent() {
+  const posthog = usePostHog();
   useEffect(() => {
     applyRandomAccent();
-    track("tournaments_page_visited");
-  }, []);
+    posthog?.capture("tournaments_page_visited");
+  }, [posthog]);
 
   return (
     <>
