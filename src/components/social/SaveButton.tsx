@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useUser, SignInButton } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
-import { usePostHog } from "posthog-js/react";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 
 interface SaveButtonProps {
   shareId: string;
@@ -31,7 +31,6 @@ export function SaveButton({ shareId }: SaveButtonProps) {
   const [loading, setLoading] = useState(false);
   const [animating, setAnimating] = useState(false);
 
-  // Check if already saved
   useEffect(() => {
     if (!user) return;
     fetch("/api/user/saved")
@@ -44,7 +43,6 @@ export function SaveButton({ shareId }: SaveButtonProps) {
       .catch(() => {});
   }, [user, shareId]);
 
-  // Guest: bookmark icon that opens sign-in modal
   if (!user) {
     return (
       <SignInButton mode="modal">
