@@ -9,17 +9,35 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { name } = await params;
   const creator = decodeURIComponent(name);
+  const title = `${creator}'s VGC Team Reports | VGC Team Report`;
+  const description = `View ${creator}'s VGC competitive team reports, open team sheets (OTS), matchup analysis, and tournament results. Browse all public Pokemon VGC 2026 team builds shared by ${creator}.`;
   return {
-    title: `${creator}'s VGC Team Reports | Pokemon VGC 2026`,
-    description: `View all public VGC team reports by ${creator}.`,
+    title,
+    description,
+    keywords: [
+      `${creator} VGC`,
+      `${creator} Pokemon team`,
+      `${creator} VGC team report`,
+      `${creator} open team sheet`,
+      "VGC team reports",
+      "Pokemon VGC 2026",
+      "competitive Pokemon teams",
+      "VGC Team Report",
+    ],
     alternates: {
       canonical: `https://pokemonvgcteamreport.com/creator/${encodeURIComponent(creator)}`,
     },
     openGraph: {
-      title: `${creator}'s Teams - VGC Team Report`,
-      description: `View all public VGC team reports by ${creator}.`,
+      title,
+      description,
       type: "profile",
       siteName: "VGC Team Report",
+      url: `https://pokemonvgcteamreport.com/creator/${encodeURIComponent(creator)}`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
     },
   };
 }
