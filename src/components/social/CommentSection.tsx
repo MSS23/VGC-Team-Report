@@ -27,7 +27,6 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
   const [expanded, setExpanded] = useState(false);
   const [total, setTotal] = useState(0);
 
-  // Input state
   const [displayName, setDisplayName] = useState("");
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -35,14 +34,12 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
   const [postError, setPostError] = useState<string | null>(null);
   const nameRef = useRef(false);
 
-  // Load saved display name
   useEffect(() => {
     const saved = localStorage.getItem(DISPLAY_NAME_KEY);
     if (saved) setDisplayName(saved);
     nameRef.current = true;
   }, []);
 
-  // Save display name on change
   useEffect(() => {
     if (!nameRef.current) return;
     if (displayName.trim()) {
@@ -50,7 +47,6 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
     }
   }, [displayName]);
 
-  // Fetch comments
   const fetchComments = useCallback(
     async (cursor?: string) => {
       const params = new URLSearchParams();
@@ -148,7 +144,6 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
       if (res.ok) {
         const data = await res.json();
         if (data.autoRemoved) {
-          // Comment was auto-removed due to flags
           setComments((prev) => prev.filter((c) => c.id !== commentId));
           setTotal((prev) => Math.max(0, prev - 1));
         }
@@ -160,7 +155,6 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
 
   return (
     <div className="bg-surface border border-border rounded-2xl overflow-hidden">
-      {/* Header */}
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
@@ -207,10 +201,8 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
 
       {expanded && (
         <div className="border-t border-border">
-          {/* Input form */}
           <div className="px-5 py-4 space-y-3 bg-surface-alt/30">
             <div className="flex gap-2">
-              {/* Label visually hidden but available to screen readers */}
               <label htmlFor="comment-display-name" className="sr-only">
                 Display name (optional)
               </label>
@@ -268,7 +260,6 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
             )}
           </div>
 
-          {/* Comment list */}
           <div className="divide-y divide-border">
             {loading ? (
               <div className="px-5 py-6 text-center text-xs text-text-tertiary">
@@ -290,17 +281,13 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
                         {relativeTime(comment.createdAt)}
                       </span>
                     </div>
-                    {/* Action buttons are visually hidden until hover; excluded from
-                        tab order and AT tree while hidden to avoid confusing navigation */}
                     <div
-                      className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all"
-                      aria-hidden="true"
+                      className="flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all"
                     >
                       {canDelete(comment) && (
                         <button
                           type="button"
                           onClick={() => handleDelete(comment.id)}
-                          tabIndex={-1}
                           aria-label={`Delete comment by ${comment.displayName}`}
                           className="text-[10px] text-text-tertiary hover:text-danger cursor-pointer"
                         >
@@ -311,9 +298,8 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
                         <button
                           type="button"
                           onClick={() => handleFlag(comment.id)}
-                          tabIndex={-1}
-                          aria-label={`Report comment by ${comment.displayName}`}
-                          title="Report this comment"
+                          aria-label={`Flag comment by ${comment.displayName}`}
+                          title="Flag this comment"
                           className="text-[10px] text-text-tertiary hover:text-warning cursor-pointer"
                         >
                           Flag
@@ -329,7 +315,6 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
             )}
           </div>
 
-          {/* Load more */}
           {nextCursor && (
             <div className="px-5 py-3 border-t border-border">
               <button
