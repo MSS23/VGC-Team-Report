@@ -1,5 +1,3 @@
-"use client";
-
 interface ViewCountProps {
   count: number;
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import posthog from "posthog-js";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 import { track } from "@vercel/analytics";
 
 interface ShareModalProps {
@@ -51,6 +51,7 @@ export function ShareModal({
   publishError = null,
   onClearPublishError,
 }: ShareModalProps) {
+  const posthog = usePostHog();
   const [linkCopied, setLinkCopied] = useState(false);
   const [discordCopied, setDiscordCopied] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
@@ -162,11 +163,16 @@ export function ShareModal({
 
   const handleCopyEmbed = async () => {
     if (!embedSnippet) return;
-    await navigator.clipboard.writeText(embedSnippet);
-    setEmbedCopied(true);
-    setTimeout(() => setEmbedCopied(false), 2000);
-    track("share_embed_copied");
-    posthog.capture("share_embed_copied", { has_tournament: !!tournamentName });
+    try {
+      await navigator.clipboard.writeText(embedSnippet);
+      setEmbedCopied(true);
+      setTimeout(() => setEmbedCopied(false), 2000);
+      track("share_embed_copied");
+      posthog?.capture("share_embed_copied", { has_tournament: !!tournamentName });
+    } catch {
+      // Clipboard unavailable (non-HTTPS or permission denied) — no-op; the
+      // embed snippet is already visible in the UI and selectable by the user.
+    }
   };
 
   // Detect if this is a short DB-backed URL or the long fallback
@@ -194,19 +200,28 @@ export function ShareModal({
   const redditUrl = `https://www.reddit.com/r/VGC/submit?type=link&title=${encodeURIComponent(redditTitle)}&url=${encodeURIComponent(publicUrl)}`;
 
   const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(publicUrl);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2000);
-    track("share_link_copied");
-    posthog.capture("share_link_copied", { is_short_url: isShortUrl });
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+      track("share_link_copied");
+      posthog?.capture("share_link_copied", { is_short_url: isShortUrl });
+    } catch {
+      // Clipboard unavailable (non-HTTPS or permission denied) — no-op; the
+      // URL is visible in the display row and the user can select it manually.
+    }
   };
 
   const handleCopyDiscord = async () => {
-    await navigator.clipboard.writeText(discordText);
-    setDiscordCopied(true);
-    setTimeout(() => setDiscordCopied(false), 2000);
-    track("share_discord_copied");
-    posthog.capture("share_discord_copied", { has_tournament: !!tournamentName });
+    try {
+      await navigator.clipboard.writeText(discordText);
+      setDiscordCopied(true);
+      setTimeout(() => setDiscordCopied(false), 2000);
+      track("share_discord_copied");
+      posthog?.capture("share_discord_copied", { has_tournament: !!tournamentName });
+    } catch {
+      // Clipboard unavailable (non-HTTPS or permission denied) — no-op.
+    }
   };
 
   const handleNativeShare = async () => {
@@ -216,7 +231,7 @@ export function ShareModal({
     try {
       await navigator.share({ title, url: publicUrl });
       track("share_native_used");
-      posthog.capture("share_native_used", { has_tournament: !!tournamentName });
+      posthog?.capture("share_native_used", { has_tournament: !!tournamentName });
     } catch {
       // User cancelled or share failed — silently no-op
     }
@@ -310,6 +325,10 @@ export function ShareModal({
           <div
             className="flex items-center gap-2 bg-surface-alt border border-border rounded-xl px-4 py-2.5 cursor-pointer hover:border-accent/40 transition-colors"
             onClick={handleCopyLink}
+            role="button"
+            tabIndex={0}
+            aria-label="Copy link"
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCopyLink(); } }}
           >
             <span className="text-sm text-text-secondary truncate flex-1 font-[family-name:var(--font-mono)]">
               {displayUrl}
@@ -339,7 +358,7 @@ export function ShareModal({
             rel="noopener noreferrer"
             onClick={() => {
               track("share_twitter_clicked");
-              posthog.capture("share_twitter_clicked", { has_tournament: !!tournamentName, has_placement: !!placement });
+              posthog?.capture("share_twitter_clicked", { has_tournament: !!tournamentName, has_placement: !!placement });
             }}
             className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group"
           >
@@ -369,7 +388,7 @@ export function ShareModal({
             rel="noopener noreferrer"
             onClick={() => {
               track("share_reddit_clicked");
-              posthog.capture("share_reddit_clicked", { has_tournament: !!tournamentName });
+              posthog?.capture("share_reddit_clicked", { has_tournament: !!tournamentName });
             }}
             className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group"
           >
