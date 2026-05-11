@@ -12,7 +12,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
   }
 
-  // Extract share ID from URL pattern /s/{id}
   const match = targetUrl.match(/\/s\/([A-Za-z0-9]{6,12})/);
   if (!match) {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
@@ -36,7 +35,7 @@ export async function GET(request: Request) {
     provider_name: "VGC Team Report",
     provider_url: baseUrl,
     title: creatorName ? `${tournamentName} by ${creatorName}` : tournamentName,
-    html: `<iframe src="${baseUrl}/embed/${shareId}" width="100%" height="200" frameborder="0" style="border-radius:8px;overflow:hidden;"></iframe>`,
+    html: `<iframe src="${baseUrl}/embed/${encodeURIComponent(shareId)}" width="100%" height="200" frameborder="0" style="border-radius:8px;overflow:hidden;"></iframe>`,
     width: 600,
     height: 200,
     thumbnail_url: `${baseUrl}/api/team-graphic?id=${shareId}&style=wide`,
