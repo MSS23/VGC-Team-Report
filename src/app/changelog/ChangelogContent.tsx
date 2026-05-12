@@ -27,6 +27,20 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.12",
+    title: "Match Tracker, Champions Meta Snapshot & Mobile Touch Fixes",
+    emoji: "📊",
+    highlight: true,
+    items: [
+      { type: "new", text: "VGC match tracker added to the dashboard. Log game results against any archetype with win/loss/tie toggle, optional tournament name and notes. The tracker shows your overall W/L/T record, win rate %, and a breakdown of your top 5 matchups — all stored server-side so your record persists across sessions." },
+      { type: "new", text: "Champions meta snapshot on /champions. A live usage bar chart shows the top Pokémon from all public Champions-format team reports — updated every 5 minutes. Shows a friendly empty state until enough reports are published." },
+      { type: "new", text: "Indianapolis Regionals top-cut table on /champions. A scrollable table shows sample top-8 archetypes from the inaugural Champions Regional with Pokémon sprites, placement, and a Limitless TCG link per entry." },
+      { type: "improved", text: "Explore full-text search now routes through the stored search_vector GIN index for 'all' searches. The pre-computed column (covering tournament name, creator, paste, and team summary with relevance weighting) is used when available; rows without it fall back to inline tsvector. Query performance improvement on large result sets." },
+      { type: "fixed", text: "All mobile slide-nav touch targets now meet WCAG 2.5.5 minimum 44×44px on viewports under 390px. Prev, Next, Home, End, and the help toggle were 32px — replaced with min-w-[44px] min-h-[44px] while preserving desktop sizing via sm: responsive overrides. ReactionBar like/share pill buttons also bumped to min-h-[44px]." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.11",
     title: "Vercel Cost Optimizations & Bill Resilience",
     emoji: "💸",

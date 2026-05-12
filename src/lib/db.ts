@@ -243,4 +243,20 @@ export async function ensureTable() {
     )
   `);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_share_versions_share ON share_versions(share_id, version DESC)`);
+
+  // Match tracker — log game results vs archetypes
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS match_logs (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id TEXT NOT NULL,
+      share_id TEXT,
+      opponent_archetype TEXT NOT NULL,
+      result TEXT NOT NULL CHECK (result IN ('win', 'loss', 'tie')),
+      game_count INTEGER DEFAULT 2,
+      notes TEXT,
+      tournament_name TEXT,
+      logged_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_match_logs_user ON match_logs(user_id, logged_at DESC)`);
 }

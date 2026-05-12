@@ -7,6 +7,7 @@ import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { UserButton, Show, SignInButton, useUser } from "@clerk/nextjs";
 
 import { PageFooter } from "@/components/layout/PageFooter";
+import { MatchTracker } from "@/components/match-tracker/MatchTracker";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 
@@ -402,6 +403,11 @@ function DashboardInner() {
                 </div>
               </>
             )}
+          </div>
+
+          {/* Match Tracker section */}
+          <div className="mt-6 sm:mt-8">
+            <MatchTracker />
           </div>
         </Show>
       </main>

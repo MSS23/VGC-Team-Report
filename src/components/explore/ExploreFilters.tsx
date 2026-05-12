@@ -220,7 +220,7 @@ export function ExploreFilters({
                 ? "Search tournaments..."
                 : searchCategory === "creator"
                 ? "Search creators..."
-                : "Search teams..."
+                : "Search teams, players, Pokémon..."
             }
             className="w-full pl-9 pr-8 py-2 bg-surface border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
           />
