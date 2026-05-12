@@ -77,18 +77,33 @@ export async function generateMetadata({
   };
 }
 
-async function getTeamsForPokemon(baseName: string, megaStone: string): Promise<ExploreReport[]> {
+async function getTeamsForPokemon(
+  dataKey: string,
+  megaStone: string,
+): Promise<ExploreReport[]> {
   try {
     const sql = getDb();
-    // Two valid pieces of evidence that this team uses the Pokemon AS its Mega:
-    //   1. The paste contains the Mega Stone (e.g. "Scizorite") — base+stone form
-    //   2. The paste contains "{baseName}-Mega" — already-Mega species form
-    //      (catches "Charizard-Mega-X" / "Charizard-Mega-Y" via prefix too)
-    // Searching only on baseName ("Scizor") was wrong — it matched any team
-    // containing a regular Scizor (no stone, no Mega slot), which was the
-    // user-reported bug.
+    // Two valid pieces of evidence that this team uses the Pokemon AS its
+    // Mega:
+    //   1. The paste contains the Mega Stone (e.g. "Scizorite") — base+stone
+    //   2. The paste contains the EXACT Mega species form name
+    //
+    // The species pattern must be the FULL form name ("Charizard-Mega-Y"),
+    // NOT just "{baseName}-Mega". The shorter pattern was matching every
+    // Charizard-Mega-X paste on the Mega-Charizard-Y page (and vice versa,
+    // and the same for Mewtwo-X/Y) because PostgreSQL ILIKE with a trailing
+    // wildcard treats "Charizard-Mega" as a prefix of "Charizard-Mega-X".
+    //
+    // Derive the Showdown-format species form from dataKey (which is the
+    // canonical lowercased form, e.g. "charizard-mega-y") by title-casing
+    // each hyphen-separated segment → "Charizard-Mega-Y". ILIKE is
+    // case-insensitive so casing only affects readability of the pattern.
+    const megaSpeciesForm = dataKey
+      .split("-")
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join("-");
     const stonePattern = `%${megaStone}%`;
-    const megaSpeciesPattern = `%${baseName}-Mega%`;
+    const megaSpeciesPattern = `%${megaSpeciesForm}%`;
     const rows = await sql`
       SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
       FROM shares s
@@ -137,7 +152,7 @@ async function getTeamsForPokemon(baseName: string, megaStone: string): Promise<
       };
     });
   } catch (e) {
-    console.error("Failed to fetch teams for", baseName, e);
+    console.error("Failed to fetch teams for", dataKey, e);
     return [];
   }
 }
@@ -159,10 +174,10 @@ export default async function MegaPokemonPage({
   const pokemonData = lookupPokemon(mega.dataKey);
   if (!pokemonData) notFound();
 
-  // Fetch teams and prepare related megas in parallel. Pass both baseName
-  // AND megaStone so the query can require the team is actually using
-  // the Mega form, not just any team containing the base species.
-  const teams = await getTeamsForPokemon(mega.baseName, mega.megaStone);
+  // Fetch teams using the exact Mega species form (via dataKey) AND the
+  // Mega Stone — searching by base name alone would pull in any team
+  // containing the un-Mega'd base species.
+  const teams = await getTeamsForPokemon(mega.dataKey, mega.megaStone);
 
   // Pick up to 8 related Megas (excluding current). Filter to "legal AND
   // sprited" so we never link to a broken-image page.
