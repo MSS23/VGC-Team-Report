@@ -52,6 +52,23 @@ function detectHashId(): string | null {
   return null;
 }
 
+/**
+ * Detect share ID from the URL pathname (e.g. /s/abcd1234).
+ *
+ * This is the fallback that keeps the share alive after we clean the URL
+ * with `history.replaceState(null, "", "/s/{id}")` further down. Next.js
+ * 16's App Router syncs `useSearchParams` with window history changes, so
+ * once the `?s=` query param is gone, `searchParams.get("s")` returns
+ * null — without this fallback, the clearing effect would wipe sharedState
+ * and bounce the viewer back to the home/landing page. Guests and owners
+ * both rely on this to actually see a clicked team report.
+ */
+function detectPathnameShareId(): string | null {
+  if (typeof window === "undefined") return null;
+  const match = window.location.pathname.match(/^\/s\/([A-Za-z0-9]{8})(?:\/|$)/);
+  return match ? match[1] : null;
+}
+
 function detectInlineData(): string | null {
   if (typeof window === "undefined") return null;
   const hash = window.location.hash;
@@ -62,7 +79,16 @@ function detectInlineData(): string | null {
 export function useShareUrl() {
   // Use Next.js searchParams (works correctly across SSR and hydration)
   const searchParams = useSearchParams();
-  const shareId = searchParams.get("s") || detectHashId();
+  // shareId resolves in priority order:
+  //   1. ?s= query param (initial load via /s/[id]/page.tsx redirect)
+  //   2. /s/{id} pathname (after we clean the URL via history.replaceState)
+  //   3. #id= hash fragment (legacy short-link format)
+  // (2) is the load-bearing one: in Next.js 16, useSearchParams stays in
+  // sync with history.replaceState, so the query-param read drops to null
+  // the moment we rewrite the URL — without the pathname fallback, the
+  // clearing effect below would tear down the in-progress shared view.
+  const shareId =
+    searchParams.get("s") || detectPathnameShareId() || detectHashId();
   const editKeyFromUrl = searchParams.get("key") || null;
   const [inlineData] = useState(detectInlineData);
   const isSharePending = !!(shareId || inlineData);
