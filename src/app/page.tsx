@@ -18,8 +18,8 @@ import { SwipeHint } from "@/components/ui/SwipeHint";
 import { EditFab } from "@/components/ui/EditFab";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { Navbar } from "@/components/layout/Navbar";
-import { ReactionBar } from "@/components/social/ReactionBar";
 import { SaveButton } from "@/components/social/SaveButton";
+import { FloatingReactionDock } from "@/components/social/FloatingReactionDock";
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
 const EditChangelog = dynamic(() => import("@/components/social/EditChangelog").then(m => ({ default: m.EditChangelog })));
@@ -1567,19 +1567,15 @@ function HomeContent() {
         />
       )}
 
-      {/* Floating like/save bar for shared views — above slide nav + CTA */}
+      {/* Floating like/save bar for shared views — above slide nav + CTA.
+          Auto-hides on scroll-down, reveals on scroll-up, and stays
+          visible near the bottom of the page. Respects prefers-reduced-motion. */}
       {isSharedView && !isPresentationStyle && activeShareId && (
-        <div className={`fixed left-1/2 -translate-x-1/2 z-50 safe-bottom ${isEditingUnlocked ? "bottom-14 sm:bottom-12" : "bottom-28 sm:bottom-24"}`}>
-          <div className="flex items-center gap-0.5 pl-3 pr-1 py-1 rounded-full bg-surface/90 backdrop-blur-md border border-border shadow-lg">
-            <ReactionBar shareId={activeShareId} isOwner={isOwner} />
-            {!isOwner && (
-              <>
-                <div className="w-px h-5 bg-border/50" />
-                <SaveButton shareId={activeShareId} />
-              </>
-            )}
-          </div>
-        </div>
+        <FloatingReactionDock
+          shareId={activeShareId}
+          isOwner={isOwner}
+          isEditingUnlocked={isEditingUnlocked}
+        />
       )}
 
       {/* CTA banner for shared views (read-only viewers) — Notion-style

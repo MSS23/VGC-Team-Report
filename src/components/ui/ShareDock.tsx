@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePostHog } from "@/components/providers/PostHogProvider";
+import { useScrollHide } from "@/hooks/useScrollHide";
 
 interface ShareDockProps {
   publicUrl: string;
@@ -30,30 +31,10 @@ export function ShareDock({
 }: ShareDockProps) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [discordCopied, setDiscordCopied] = useState(false);
-  const [hidden, setHidden] = useState(false);
   const [canNativeShare, setCanNativeShare] = useState(false);
   const posthog = usePostHog();
-
-  useEffect(() => {
-    let lastY = window.scrollY;
-    let raf = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const y = window.scrollY;
-        const delta = y - lastY;
-        if (Math.abs(delta) > 4) {
-          setHidden(delta > 0 && y > 120);
-          lastY = y;
-        }
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
+  const dockRef = useRef<HTMLDivElement>(null);
+  const hidden = useScrollHide({ containerRef: dockRef });
 
   useEffect(() => {
     const nav = navigator as Navigator & { share?: unknown; canShare?: (data?: ShareData) => boolean };
@@ -120,7 +101,8 @@ export function ShareDock({
 
   return (
     <div
-      className={`fixed left-1/2 -translate-x-1/2 z-40 top-[calc(env(safe-area-inset-top,0px)+64px)] sm:top-[72px] transition-transform duration-300 ${
+      ref={dockRef}
+      className={`fixed left-1/2 -translate-x-1/2 z-40 top-[calc(env(safe-area-inset-top,0px)+64px)] sm:top-[72px] transition-transform duration-300 motion-reduce:transition-none ${
         hidden ? "-translate-y-[140%]" : "translate-y-0"
       }`}
       role="region"
