@@ -71,15 +71,21 @@ export async function GET(request: Request) {
     // Use full-text search for queries 3+ chars, fall back to ILIKE for short queries
     const searchPattern = q ? `%${q}%` : null;
     const useFts = q.length >= 3;
-    // Convert query to tsquery: split words, add :* prefix matching to each
-    const tsQuery = q ? q.trim().split(/\s+/).map(w => w.replace(/[^\w]/g, "")).filter(Boolean).map(w => `${w}:*`).join(" & ") : null;
+    // Convert query to tsquery: split words, add :* prefix matching to each word.
+    // The :* suffix enables prefix matching so "chien" matches "Chien-Pao".
+    const tsQuery = q
+      ? q.trim().split(/\s+/).map(w => w.replace(/[^\w]/g, "")).filter(Boolean).map(w => `${w}:*`).join(" & ")
+      : null;
 
     // For popular sort, we need a subquery to count likes
     // For other sorts, use the column directly
     let rows;
 
-    // Search condition builder — uses FTS when possible, ILIKE fallback for short queries
-    // When a specific searchType is selected, narrow both FTS and ILIKE to that field
+    // Search condition builder — uses FTS when possible, ILIKE fallback for short queries.
+    // For "all" searches, use the stored search_vector column (covers tournamentName,
+    // creatorName, paste, and teamSummary with weights A/A/B/C) and lets Postgres use
+    // the GIN index. For specific field searches, compute to_tsvector() inline so we
+    // can target only the relevant field.
     const ftsCondition = (useFts && tsQuery)
       ? (searchType === "pokemon"
           ? sql`AND to_tsvector('english', COALESCE(s.data->>'paste', '')) @@ to_tsquery('english', ${tsQuery})`
@@ -87,7 +93,7 @@ export async function GET(request: Request) {
           ? sql`AND to_tsvector('english', COALESCE(s.data->>'tournamentName', '')) @@ to_tsquery('english', ${tsQuery})`
         : searchType === "creator"
           ? sql`AND to_tsvector('english', COALESCE(s.data->>'creatorName', '')) @@ to_tsquery('english', ${tsQuery})`
-        : sql`AND s.search_vector @@ to_tsquery('english', ${tsQuery})`)
+        : sql`AND COALESCE(s.search_vector, to_tsvector('english', COALESCE(s.data->>'tournamentName','') || ' ' || COALESCE(s.data->>'creatorName','') || ' ' || COALESCE(s.data->>'paste',''))) @@ to_tsquery('english', ${tsQuery})`)
       : sql``;
     const ilikeFallback = (!useFts && searchPattern)
       ? (searchType === "pokemon" ? sql`AND s.data->>'paste' ILIKE ${searchPattern}`
