@@ -192,7 +192,7 @@ export function SlideNavControls({
             }}
             aria-label="Back to team overview"
             title="Back to team overview"
-            className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-text-secondary hover:text-accent hover:bg-accent/5 active:scale-95 transition-all"
+            className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-text-secondary hover:text-accent hover:bg-accent/5 active:scale-95 transition-all"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1 sm:w-3.5 sm:h-3.5">
               <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -205,7 +205,7 @@ export function SlideNavControls({
           onClick={onPrev}
           disabled={isFirst}
           aria-label="Previous slide"
-          className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
+          className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1 sm:w-3.5 sm:h-3.5">
             <polyline points="15,18 9,12 15,6" />
@@ -338,7 +338,7 @@ export function SlideNavControls({
             <button
               type="button"
               onClick={onToggleHide}
-              className={`relative flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-xs font-bold transition-all ${
+              className={`relative flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-xs font-bold transition-all ${
                 isCurrentHidden
                   ? "text-amber-500 hover:bg-amber-500/10"
                   : "text-text-tertiary hover:text-text-secondary hover:bg-surface-alt"
@@ -389,7 +389,7 @@ export function SlideNavControls({
           {isLast ? (
             <span
               aria-label="End of report"
-              className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-accent cursor-default select-none"
+              className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-accent cursor-default select-none"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1 sm:w-3.5 sm:h-3.5">
                 <polyline points="20,6 9,17 4,12" />
@@ -401,7 +401,7 @@ export function SlideNavControls({
               onClick={onNext}
               disabled={isFirst && totalSlides <= 1}
               aria-label="Next slide"
-              className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
+              className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
             >
               <span className="hidden sm:inline">{t.next}</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:ml-1 sm:w-3.5 sm:h-3.5">

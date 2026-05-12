@@ -109,7 +109,7 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
         <button
           type="button"
           aria-label="Like report"
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold text-text-secondary hover:text-red-500 transition-all cursor-pointer active:scale-95"
+          className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-full text-sm font-bold text-text-secondary hover:text-red-500 transition-all cursor-pointer active:scale-95"
         >
           <HeartIcon filled={false} />
           <span className="opacity-70">{likeCount}</span>
@@ -122,7 +122,7 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
     <button
       type="button"
       onClick={toggleLike}
-      className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold transition-all duration-200 cursor-pointer active:scale-95 ${
+      className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-full text-sm font-bold transition-all duration-200 cursor-pointer active:scale-95 ${
         liked
           ? "text-red-500"
           : "text-text-secondary hover:text-red-500"
