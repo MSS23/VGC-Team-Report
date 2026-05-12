@@ -9,8 +9,10 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { useEffect } from "react";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
+import { INDY_TOP_CUT } from "@/data/indy-top-cut";
 
 import { getRegMAMegas, hasMegaSprite } from "@/lib/data/mega-pokemon";
+import { MetaSnapshot } from "@/components/champions/MetaSnapshot";
 const MEGA_POKEMON = getRegMAMegas().map((m) => ({
   name: m.displayName.replace(/^Mega /, "") + "-Mega",
   ability: m.ability,
@@ -215,6 +217,128 @@ export function ChampionsContent() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* Champions Meta Snapshot */}
+        <MetaSnapshot />
+
+        {/* Indy Regionals Top Cut */}
+        <section className="max-w-5xl mx-auto px-4 py-12">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-2 mb-2">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
+              Indianapolis Regionals Top Cut
+            </h2>
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full self-start sm:self-auto mb-0.5">
+              Sample — May 29-31, 2026
+            </span>
+          </div>
+          <p className="text-sm text-text-secondary mb-1">
+            The inaugural Champions format Regional Championship. These are representative archetypes from the Regulation M-A meta.
+          </p>
+          <p className="text-xs text-text-tertiary mb-6">
+            Real results will be published on{" "}
+            <a
+              href="https://play.limitlesstcg.com/tournaments"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent underline underline-offset-2 hover:opacity-80 transition-opacity"
+            >
+              Limitless TCG
+            </a>{" "}
+            once the tournament concludes.
+          </p>
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="bg-surface-alt border-b border-border">
+                  <th className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3 w-16">
+                    Place
+                  </th>
+                  <th className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3">
+                    Player
+                  </th>
+                  <th className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3">
+                    Team
+                  </th>
+                  <th className="text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3 w-20">
+                    Details
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {INDY_TOP_CUT.map((entry, idx) => (
+                  <tr
+                    key={`${entry.placement}-${idx}`}
+                    className="border-b border-border last:border-0 bg-surface hover:bg-surface-alt transition-colors"
+                  >
+                    <td className="px-4 py-3 font-extrabold text-accent whitespace-nowrap">
+                      {entry.placement}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="text-sm font-bold text-text-primary">
+                        {entry.country} {entry.player}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        {entry.species.map((name) => {
+                          const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+                          return (
+                            <span
+                              key={name}
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-text-secondary bg-surface-alt border border-border px-2 py-0.5 rounded-full"
+                            >
+                              <img
+                                src={`https://play.pokemonshowdown.com/sprites/home/${slug}.png`}
+                                alt={name}
+                                width={20}
+                                height={20}
+                                loading="lazy"
+                                className="object-contain"
+                                style={{ maxWidth: 20, maxHeight: 20 }}
+                              />
+                              {name}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {entry.limitlessUrl ? (
+                        <a
+                          href={entry.limitlessUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
+                          aria-label={`View ${entry.player} team on Limitless`}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
+                          View
+                        </a>
+                      ) : (
+                        <span className="text-xs text-text-tertiary">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-text-tertiary mt-3 text-center">
+            Full bracket and team lists:{" "}
+            <a
+              href="https://play.limitlesstcg.com/tournaments"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent underline underline-offset-2 hover:opacity-80 transition-opacity"
+            >
+              play.limitlesstcg.com/tournaments
+            </a>
+          </p>
         </section>
 
         {/* How it works */}
