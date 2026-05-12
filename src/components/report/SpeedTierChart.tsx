@@ -364,14 +364,31 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   // half of a tie pair — making the user think the unmarked top row
   // wasn't tied with anything, then misreading the marked row as
   // "tied with whatever's directly above me" (which it usually wasn't).
+  //
+  // Only surface tie groups that contain at least one team Pokemon
+  // (isYours). A speed tie between two meta-threat Pokemon the user
+  // doesn't run is noise — they only care about races their own
+  // Pokemon are part of. Meta entries in a relevant group are kept so
+  // a team Pokemon's tooltip can list "tied with X" even when X is a
+  // meta threat, and so the meta row also shows the TIE marker (the
+  // user wants to see who they're racing).
   const speedTieGroups = useMemo(() => {
-    const groups = new Map<number, string[]>();
+    const groups = new Map<number, { species: string[]; hasTeamMember: boolean }>();
     for (const e of allEntries) {
-      const list = groups.get(e.displaySpeed);
-      if (list) list.push(e.species);
-      else groups.set(e.displaySpeed, [e.species]);
+      const existing = groups.get(e.displaySpeed);
+      if (existing) {
+        existing.species.push(e.species);
+        if (e.isYours) existing.hasTeamMember = true;
+      } else {
+        groups.set(e.displaySpeed, { species: [e.species], hasTeamMember: e.isYours });
+      }
     }
-    return groups;
+    // Drop groups with no team member — those are meta-vs-meta ties (noise).
+    const relevant = new Map<number, string[]>();
+    for (const [speed, group] of groups) {
+      if (group.hasTeamMember) relevant.set(speed, group.species);
+    }
+    return relevant;
   }, [allEntries]);
 
   // Build active modifier summary for each side
