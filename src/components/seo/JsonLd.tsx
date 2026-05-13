@@ -1,8 +1,12 @@
 export function JsonLd({ data }: { data: Record<string, unknown> }) {
+  // Escape </script> to prevent HTML injection from user-controlled values
+  // (e.g. creatorName containing "</script>"). JSON is still valid — the
+  // escape is transparent to JSON parsers, which decode \/ as /.
+  const safe = JSON.stringify(data).replace(/<\/script>/gi, "<\\/script>");
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: safe }}
     />
   );
 }

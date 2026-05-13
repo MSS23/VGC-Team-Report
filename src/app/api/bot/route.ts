@@ -33,10 +33,17 @@ async function sendDiscordMessage(channelId: string, content: string, embeds?: u
 export async function GET(request: NextRequest) {
   const action = request.nextUrl.searchParams.get("action");
 
-  // Require CRON_SECRET via Authorization: Bearer header to avoid logging secrets in access logs
-  const authHeader = request.headers.get("authorization");
+  // Require CRON_SECRET via Authorization: Bearer header to avoid logging secrets in access logs.
+  // Fail closed when CRON_SECRET is unset; use timing-safe comparison to prevent timing oracles.
+  const authHeader = request.headers.get("authorization") ?? "";
   const expectedSecret = process.env.CRON_SECRET;
-  if (authHeader !== `Bearer ${expectedSecret}`) {
+  if (!expectedSecret) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const expected = `Bearer ${expectedSecret}`;
+  const { timingSafeEqual } = await import("crypto");
+  const aLen = Math.max(authHeader.length, expected.length);
+  if (!timingSafeEqual(Buffer.from(authHeader.padEnd(aLen)), Buffer.from(expected.padEnd(aLen))) || authHeader.length !== expected.length) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
