@@ -44,6 +44,9 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Path not allowed", { status: 400 });
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+
   try {
     const upstream = await fetch(target.href, {
       headers: { "User-Agent": "VGC-Team-Report/1.0" },
@@ -51,6 +54,7 @@ export async function GET(req: NextRequest) {
       // a day of freshness at the origin is fine; we add a long
       // Cache-Control below for the client + CDN.
       next: { revalidate: 86400 },
+      signal: controller.signal,
     });
 
     if (!upstream.ok) {
@@ -68,7 +72,12 @@ export async function GET(req: NextRequest) {
         "Access-Control-Allow-Origin": "*",
       },
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return new NextResponse("Sprite fetch timed out", { status: 504 });
+    }
     return new NextResponse("Proxy fetch failed", { status: 502 });
+  } finally {
+    clearTimeout(timeoutId);
   }
 }

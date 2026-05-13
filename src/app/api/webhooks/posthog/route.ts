@@ -209,14 +209,18 @@ export async function POST(request: Request) {
     }
 
     // Create Linear issue with Bug label
-    const result = await fetch("https://api.linear.app/graphql", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: linearApiKey,
-      },
-      body: JSON.stringify({
-        query: `mutation($title: String!, $description: String!, $teamId: String!, $priority: Int!, $labelIds: [String!]) {
+    const linearController = new AbortController();
+    const linearTimeoutId = setTimeout(() => linearController.abort(), 5000);
+    let result: Response;
+    try {
+      result = await fetch("https://api.linear.app/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: linearApiKey,
+        },
+        body: JSON.stringify({
+          query: `mutation($title: String!, $description: String!, $teamId: String!, $priority: Int!, $labelIds: [String!]) {
           issueCreate(input: {
             teamId: $teamId,
             title: $title,
@@ -228,9 +232,13 @@ export async function POST(request: Request) {
             issue { identifier url }
           }
         }`,
-        variables: { title, description, teamId, priority, labelIds },
-      }),
-    });
+          variables: { title, description, teamId, priority, labelIds },
+        }),
+        signal: linearController.signal,
+      });
+    } finally {
+      clearTimeout(linearTimeoutId);
+    }
 
     const linearRes = await result.json();
 
@@ -245,21 +253,31 @@ export async function POST(request: Request) {
     const discordWebhook = process.env.DISCORD_BUILDS_WEBHOOK;
     if (discordWebhook) {
       const severityEmoji = priority <= 2 ? "🔴" : "🟡";
-      await fetch(discordWebhook, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          embeds: [
-            {
-              title: `${severityEmoji} PostHog Alert → ${issue.identifier}`,
-              description: `**${title}**\n\n[View in Linear](${issue.url})\n\n**Event:** \`${event}\`\n**User:** ${personEmail}\n**Page:** ${properties.$current_url ?? "N/A"}`,
-              color: priority <= 2 ? 0xef4444 : 0xf9a825,
-              footer: { text: "PostHog → Linear auto-triage" },
-              timestamp: new Date().toISOString(),
-            },
-          ],
-        }),
-      });
+      const discordController = new AbortController();
+      const discordTimeoutId = setTimeout(() => discordController.abort(), 3000);
+      try {
+        await fetch(discordWebhook, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            embeds: [
+              {
+                title: `${severityEmoji} PostHog Alert → ${issue.identifier}`,
+                description: `**${title}**\n\n[View in Linear](${issue.url})\n\n**Event:** \`${event}\`\n**User:** ${personEmail}\n**Page:** ${properties.$current_url ?? "N/A"}`,
+                color: priority <= 2 ? 0xef4444 : 0xf9a825,
+                footer: { text: "PostHog → Linear auto-triage" },
+                timestamp: new Date().toISOString(),
+              },
+            ],
+          }),
+          signal: discordController.signal,
+        });
+      } catch {
+        // Discord notification is non-critical — log but don't fail the webhook
+        console.warn("PostHog webhook: Discord notification failed or timed out");
+      } finally {
+        clearTimeout(discordTimeoutId);
+      }
     }
 
     return NextResponse.json({
