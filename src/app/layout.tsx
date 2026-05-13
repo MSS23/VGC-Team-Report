@@ -37,7 +37,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "VGC Team Report — Build, Share & Analyse Your Pokémon VGC Team",
+    default: "VGC Team Report — Build & Share Pokémon VGC Teams | Pokemon Champions 2026",
     template: "%s | VGC Team Report",
   },
   description: "The free VGC team report builder — share your VGC team with notes, matchup plans, and damage calcs. Supports Pokémon Champions, Mega Evolution, and all VGC team builder formats.",

@@ -33,11 +33,13 @@ export async function generateMetadata({
       type: "profile",
       siteName: "VGC Team Report",
       url: `https://pokemonvgcteamreport.com/creator/${encodeURIComponent(creator)}`,
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
     },
   };
 }

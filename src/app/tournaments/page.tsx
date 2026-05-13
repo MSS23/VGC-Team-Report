@@ -13,12 +13,14 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "VGC Team Report",
     url: "https://pokemonvgcteamreport.com/tournaments",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "VGC Tournament Results Archive",
     description:
       "Discover team reports from top finishers at VGC Regionals, Internationals, and Worlds.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
   },
   keywords: [
     "VGC tournament results",

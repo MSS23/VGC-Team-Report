@@ -3,10 +3,10 @@ import { ExploreContent } from "@/components/explore/ExploreContent";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
-  title: "Browse VGC Team Reports | Top Pokémon VGC Teams",
+  title: "Explore VGC Teams | VGC Team Report",
   alternates: { canonical: "https://pokemonvgcteamreport.com/explore" },
   description:
-    "Browse the best VGC team reports from top competitive players. Find Pokemon Champions team builds, open team sheets (OTS), matchup notes, and EV spreads for VGC 2026 Regulation M-A. Search by Pokémon, tournament, or creator.",
+    "Browse community VGC team reports. Find top Pokemon Champions teams, Mega Evolution builds, and competitive team analysis from players worldwide.",
   keywords: [
     "VGC team reports",
     "top VGC teams",
@@ -22,9 +22,9 @@ export const metadata: Metadata = {
     "VGC team analysis",
   ],
   openGraph: {
-    title: "Browse VGC Team Reports | Top Pokémon VGC Teams",
+    title: "Explore VGC Teams | VGC Team Report",
     description:
-      "Find the best Pokemon Champions team builds, open team sheets (OTS), and competitive VGC reports from top players. Search by Pokémon, tournament, or creator.",
+      "Browse community VGC team reports. Find top Pokemon Champions teams, Mega Evolution builds, and competitive team analysis from players worldwide.",
     type: "website",
     siteName: "VGC Team Report",
     url: "https://pokemonvgcteamreport.com/explore",
@@ -32,9 +32,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Browse VGC Team Reports | Top Pokémon VGC Teams",
+    title: "Explore VGC Teams | VGC Team Report",
     description:
-      "Find the best Pokemon Champions team builds, open team sheets (OTS), and competitive VGC reports from top players.",
+      "Browse community VGC team reports. Find top Pokemon Champions teams, Mega Evolution builds, and competitive team analysis from players worldwide.",
+    images: [{ url: "/explore/opengraph-image", width: 1200, height: 630, alt: "Explore VGC Teams — Browse competitive Pokemon team reports" }],
   },
 };
 

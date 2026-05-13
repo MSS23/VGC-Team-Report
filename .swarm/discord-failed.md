@@ -1,42 +1,23 @@
-# Discord Notification — Swarm 11-05-26 (intelligent-cerf)
+# Discord Notification — UNSENT (no .env.local)
 
-**Status:** PENDING — DISCORD_WEBHOOK_URL not available in this session.
-**Post this manually to #builds when the webhook is available.**
+**Run:** 13-05-26
+**Target channel:** #builds (ID: 1487202217298493493)
+**Reason:** DISCORD_BUILDS_WEBHOOK not set (no .env.local in environment)
 
----
+## Payload that should be sent
 
-## Payload
-
-```json
-{
-  "embeds": [{
-    "title": "🤖 Swarm 11-05-26 complete — 5 tickets shipped",
-    "description": "Nightly improvement swarm `intelligent-cerf` finished. Draft PR open for review.",
-    "color": 5763719,
-    "fields": [
-      {
-        "name": "Tickets",
-        "value": "VGC-68 · VGC-77 · VGC-114 · VGC-157 · VGC-163",
-        "inline": true
-      },
-      {
-        "name": "PR",
-        "value": "[#24 — swarm/11-05-26](https://github.com/MSS23/VGC-Team-Report/pull/24)",
-        "inline": true
-      },
-      {
-        "name": "Branch",
-        "value": "`claude/intelligent-cerf-BtfJd`",
-        "inline": false
-      },
-      {
-        "name": "Highlights",
-        "value": "• OG image sprites restored (VGC-68)\n• Champions sample teams with 1-click Try (VGC-77)\n• WCAG 2.1 AA keyboard nav + ARIA fixes (VGC-114)\n• FAQPage + HowTo + Organization JSON-LD (VGC-157)\n• PostHog deferred to idle — ~150KB out of initial bundle (VGC-163)",
-        "inline": false
-      }
-    ],
-    "footer": { "text": "VGC Team Report · claude/intelligent-cerf-BtfJd" },
-    "timestamp": "2026-05-11T00:00:00Z"
-  }]
-}
 ```
+🤖 Swarm 13-05-26 landed — 11 commits → claude-dev
+
+🔒 Security: JSON-LD XSS fix + timing-safe CRON_SECRET auth
+⚡ Reliability: AbortController on all external fetches; champions meta capped
+🎯 UX: Match Tracker delete entries + Share modal Copy Paste button
+📈 SEO: Homepage/Champions/Explore titles + og:image on 4 pages (VGC-156)
+🧪 Tests: 43 new tests (33 redact-paste + 10 dex drift guard)
+
+PR: https://github.com/MSS23/VGC-Team-Report/pull/27
+```
+
+## To send manually after adding DISCORD_BUILDS_WEBHOOK to .env.local
+
+source .claude/scripts/linear.sh && discord_notify_build "swarm-13-05-26" "Swarm 13-05-26: Security + Match Tracker + SEO + Tests"

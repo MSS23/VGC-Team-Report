@@ -1,7 +1,7 @@
 # Reddit Sentiment Research: VGC Team Tools & Sharing
-**Research Date:** 2026-05-07 (updated 2026-05-10)
+**Research Date:** 2026-05-07 (updated 2026-05-13)
 **Topics Covered:** team builder, team report, sharing teams, pokepaste alternative, vgc tools
-**Sources:** Reddit (r/VGC, r/stunfisk), GitHub Issues, Smogon Forums, community tool sites
+**Sources:** Reddit (r/VGC, r/stunfisk), GitHub Issues, Smogon Forums, community tool sites, App Store reviews, Twitter/X signals
 
 ---
 
@@ -260,6 +260,94 @@ No Reddit or Discord user-generated mentions were found in indexed search result
 
 ---
 
+## 10. May 2026 Second Refresh — Confirmed Signals & New Data
+
+*Research session: 2026-05-13*
+
+### Top 5 Confirmed Pain Points (Ranked by Evidence Strength)
+
+**1. PokePaste Broken Images / Stale Sprite Support** (CRITICAL)
+- A dedicated Chrome extension ("Pokepastefix") was built specifically to patch missing sprites on pokepast.es. As of May 2026 (v1.1.1) it is still being actively maintained to add Pokémon Legends ZA Mega forms — confirming the pain is *ongoing*, not resolved.
+- GitHub issues #306, #307, #309, #313 all active in 2025-2026 window: Silvally forms, Farfetch'd, column display mode bugs.
+- The "PokePaste Exporter" Chrome extension also exists separately — confirming players are patching pokepaste's workflow gaps with third-party tooling.
+
+**2. PokePaste Creation/Import Failures** (HIGH)
+- Issue #313 (Feb 2026): "Copy and pasting from Pokemonshowdown isn't working" — a fully fresh report of the core function failing, 7 years after Issue #99 (Dec 2019) raised the same problem. The issue has never been definitively resolved.
+- 155 total open issues with 6 unmerged PRs confirms near-zero maintenance capacity.
+
+**3. Pikalytics Update Lag** (HIGH — confirmed via App Store reviews)
+- Multiple App Store reviews explicitly state: "can't give it 5 stars because it's not updated regularly," "just a few months behind," "needs to be updated with each new regulation."
+- MunchStats was created *specifically because "Pikalytics is taking a while to update its usage stats"* — a community fork born from frustration. Still active as of March 2026.
+- Mobile app lags behind website by weeks. Players using mobile (casual players, newer players) get stale data.
+
+**4. VGC Helper App Maintenance Abandonment** (HIGH)
+- Last updated April 2024. Community explicitly says "not relevant to 2025" due to stale data.
+- Despite a 4.85/5 rating and 470 reviews (indicating strong initial demand), it was abandoned mid-cycle. This is a recurring pattern in VGC tools — high demand, single developer, eventual abandonment.
+
+**5. No Unified Searchable Team Archive** (HIGH — structural)
+- Teams scattered across: Medium blogs, personal blogs, Smogon, Victory Road, Twitter/X, Discord (ephemeral), Google Docs, Limitless, VGCPastes.
+- VGC guide's explicit statement: "determining what to read, where to learn and who can be trusted is a hard task."
+- Discord posts become unsearchable within days — tournament team reports disappear from the accessible record.
+- No tool allows querying "show me all regulation G teams featuring Calyrex-Shadow with a written matchup breakdown."
+
+### Top 5 Unmet Feature Requests (Ranked by Signal Frequency)
+
+**1. Searchable/filterable team library by Pokémon, regulation, tournament result** — requested across VGC.tools, Falinks, individual developer projects (archived vgcteamshare), Discord bots (Sandshrew Bot), and community resource lists.
+
+**2. Rental code + pokepaste + report as a single permanent URL** — VGCPastes Twitter explicitly tracks this combination because players want it bundled. Current state: code in Discord, paste on pokepast.es, report on Medium — three separate links.
+
+**3. Mobile-first experience** — VGC Helper's abandonment left a gap; Porygon Labs entering the market in 2026 as mobile-first confirms demand. Pikalytics app lag complaints confirm mobile players are underserved.
+
+**4. Structured matchup notes (not free-form)** — current reports are narrative prose; newer players need structured templates. Pokémon Champions' open team list rule reinforces this: players must document teams formally.
+
+**5. Team version history / iteration tracking** — implied by the Falinks "collaborative teambuilder" feature set and by VGC tour players' iterative teambuilding culture (referenced in "The Porygon2 Crew" report: "a case for iterative teambuilding").
+
+### Pokemon Champions 2026: VGC Team Report's Highest-Leverage Window
+
+Pokemon Champions at launch (April 8, 2026) received widespread criticism for: only 186 Pokémon, missing key items (Assault Vest, Life Orb, Clear Amulet), no 6v6 battles, 30fps performance issues on both Switch 1 and 2. Community described it as "a fleshed out beta."
+
+This is significant for VGC Team Report because:
+- The established community is frustrated and actively seeking tools that make competitive play *more* organized and accessible
+- New player onboarding is disrupted (no rental teams at launch) — creating demand for a structured team-discovery resource
+- VGCPastes Regulation I has only 63 teams vs 1,150+ for Regulation H — the community archive is rebuilding from near zero
+- The official open team list format requirement (all players must file team lists) creates institutional demand for a clean team documentation tool
+
+### Competitive Tool Additions Found (2026)
+
+| Tool | Status | What It Does | Why It Matters |
+|------|--------|-------------|----------------|
+| crob.at | Active, growing | Visual pokepaste viewer, instant rendering from any paste URL | Fastest growing alternative — beauty over function, no context layer |
+| VRPastes (vrpastes.com) | Active | Paste sharing with private/public control | Addresses pokepaste's zero access control |
+| MetaGame VGC (metagamevgc.com/team-reports) | Active | Structured team reports as content | Direct competitor to pokemonvgcteamreport.com |
+| Porygon Labs (porygonlabs.com) | Active (2026) | Mobile-first damage calc + team builder for Pokemon Champions | Confirms mobile demand |
+| VGC Team Helper (vgcteamhelper.com) | Active | Automated team grading from pokepaste import | Demand for instant AI feedback, no narrative |
+| Champions Lab (championslab.xyz) | Active (2026) | Team builder + battle sim + Pokemon data | Competitive with Pikalytics scope |
+| MunchStats (munchstats.com) | Active | Faster usage stats than Pikalytics; includes MunchTeams replay scanner | Born from Pikalytics lag frustration |
+| PikaChampions (pikachampions.com) | Active (2026) | Free Pokemon Champions team builder with pokepaste export and 10-char replica code sharing | Replica code + paste in one workflow |
+
+### VGC Team Report — Current Community Signal
+
+No organic Reddit/Discord user-generated mentions found in indexed search results from this or prior research sessions. The site appears in:
+- VGCpedia resources list
+- DevonCorp's up-to-date VGC resources
+- Multiple web search result pages for "VGC team report tool"
+
+Interpretation: the product is indexed and known to *resource curators* but has not yet generated grassroots community discussion. Players sharing teams in Discord and Twitter have not yet adopted it as a default. This is the primary growth gap — tool quality is not the constraint, distribution and habit formation are.
+
+### Recommendations for Product Team
+
+1. **Solve the rental code gap first**: PikaChampions shows players want pokepaste + replica code in one workflow. If VGC Team Report adds replica code input alongside the pokepaste/Showdown import, it becomes the only tool that links paste + report + rental code in a single shareable URL. This is the feature most likely to generate organic sharing.
+
+2. **Build for discoverability not just creation**: The community's biggest pain is *finding* teams, not *building* them. A searchable public library browsable by regulation, Pokémon, and tournament result fills a gap nothing else fills. This is what makes the product a destination, not just a tool.
+
+3. **Target the Pokemon Champions reset moment now**: With VGCPastes at only 63 Regulation I teams (vs. 1,150 for Regulation H) and no established resource habits for new Champions players, Q2-Q3 2026 is the highest-leverage window for adoption. New players entering via Pokemon Champions have no established loyalty to existing tools.
+
+4. **Fix mobile or partner with a mobile-first tool**: VGC Helper's abandonment and Pikalytics mobile lag represent a structural gap. Either build a responsive mobile experience or position as the canonical web complement to mobile tools, with explicit cross-linking.
+
+5. **Make submitting a report frictionless for tournament players**: Victory Road requires DMing over Twitter; Smogon has cultural approval barriers. A self-service submission flow with structured templates (that pre-fills regulation, placement, event name) would capture reports that currently go to Medium or personal blogs with zero reach.
+
+---
+
 ## Sources
 
 - [PokePaste GitHub Issues](https://github.com/felixphew/pokepaste/issues)
@@ -283,4 +371,22 @@ No Reddit or Discord user-generated mentions were found in indexed search result
 - [Pikalytics VGC team builder](https://pikalytics.com/team)
 - [Best Team Builders 2025 — PokeTeamBuilder blog](https://blog.poketeambuilder.app/best-team-builders-2025)
 - [VGCPedia Resources](https://www.vgcpedia.com/resources/)
-- [VGCPastes Regulation I tweet](https://x.com/VGCPastes/status/1910793869333324057)
+- [VGCPastes Regulation I tweet](https://x.com/VGCPastes/status/1910793869333324457)
+- [crob.at pokepaste alternative](https://crob.at/pokepaste)
+- [Pokepastefix Chrome extension](https://chromewebstore.google.com/detail/pokepastefix/ekceaboabpgkgbpigacngnjagcdhdkmn)
+- [Pokepastefix GitHub repo](https://github.com/afnleaf/pokepastefix)
+- [PokePaste Exporter Chrome extension](https://chromewebstore.google.com/detail/pokepaste-exporter/eehioifimidcjcdlaehajhdeaekmmdne)
+- [MunchStats](https://munchstats.com/)
+- [MunchStats GitHub](https://github.com/PizzaTimeJoshua/munchstats)
+- [VGC Helper App (last update April 2024)](https://apps.apple.com/us/app/vgc-helper/id1598784937)
+- [Pikalytics App Store reviews](https://apps.apple.com/us/app/pikalytics-battle-strategy/id1511370166)
+- [Pokemon Champions launch backlash — Nintendo Life](https://www.nintendolife.com/news/2026/04/feels-like-a-fleshed-out-beta-fans-are-unhappy-with-pokemon-champions-at-launch)
+- [Pokemon Champions backlash — Game8](https://game8.co/articles/latest/pokemon-champions-launch-met-with-backlash-over-performance-issues-and-missing-features)
+- [Pokemon Champions missing features — GameFragger](https://gamefragger.com/nintendo/pokemon-champions-faces-early-criticism-over-limited-pokdex-performance-issues-and-cut-items-a28205)
+- [PikaChampions team builder](https://pikachampions.com/)
+- [Porygon Labs damage calc](https://www.porygonlabs.com/)
+- [VGenC top teams pastes](https://vgenc.net/top-teams)
+- [Top Cut Explorer](https://cut-explorer.stalruth.dev/)
+- [VGC-Bench research paper (arxiv, 2026)](https://arxiv.org/html/2506.10326v2)
+- [VGC Smogon analysis format discussion](https://www.smogon.com/forums/threads/vgc-analysis-format-discussion.3761710/)
+- [Smogon VGC Regulation F 2.0 sample teams](https://www.smogon.com/forums/threads/vgc-regulation-f-2-0-sample-teams.3777032/)

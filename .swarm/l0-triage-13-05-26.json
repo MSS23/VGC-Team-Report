@@ -1,0 +1,158 @@
+[
+  {
+    "identifier": "VGC-156",
+    "title": "Add default OG fallback image to root metadata",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-156/add-default-og-fallback-image-to-root-metadata",
+    "files_likely_to_change": [
+      "src/app/layout.tsx",
+      "public/og-default.png"
+    ],
+    "scope_estimate": "30min",
+    "priority": "Urgent",
+    "posthog_signal": false,
+    "new_bug": false,
+    "labels": ["auto-research", "SEO"],
+    "notes": "Partial fix already in a commit (abb4c58) — openGraph.images and twitter.images point to /opengraph-image. Remaining work: add a static /public/og-default.png as a belt-and-suspenders fallback, verify /opengraph-image route resolves for root URL, and test via Twitter Card Validator."
+  },
+  {
+    "identifier": "VGC-173",
+    "title": "HogQL injection: parameterise PostHog webhook queries",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-173/hogql-injection-parameterise-posthog-webhook-queries",
+    "files_likely_to_change": [
+      "src/app/api/webhooks/posthog/route.ts"
+    ],
+    "scope_estimate": "0min (ALREADY FIXED)",
+    "priority": "High",
+    "posthog_signal": false,
+    "new_bug": false,
+    "labels": ["auto-research", "Bug"],
+    "notes": "ALREADY FIXED in codebase. The route now uses parameterized HogQL with `values: { session_id: sessionId, before_ts: beforeTimestamp }` syntax and a UUID allowlist guard. No interpolation of user data into the query string. Ticket should be moved to Done/Cancelled — no implementation work needed."
+  },
+  {
+    "identifier": "VGC-172",
+    "title": "Tests: add unit tests for redact-paste.ts regex patterns",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-172/tests-add-unit-tests-for-redact-pastets-regex-patterns",
+    "files_likely_to_change": [
+      "src/lib/sharing/redact-paste.ts",
+      "src/lib/sharing/__tests__/redact-paste.test.ts"
+    ],
+    "scope_estimate": "45min",
+    "priority": "Medium",
+    "posthog_signal": false,
+    "new_bug": false,
+    "labels": ["auto-research"],
+    "notes": "No test file exists yet for src/lib/sharing/redact-paste.ts. High-consequence if regex fails: private spread data exposed to public viewers. Need 5+ test cases: standard paste, no EV line, Unicode names, empty string, held-item redaction."
+  },
+  {
+    "identifier": "VGC-171",
+    "title": "CI: add champions-dex drift guard to prevent species list from desynchronising",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-171/ci-add-champions-dex-drift-guard-to-prevent-species-list-from",
+    "files_likely_to_change": [
+      "src/lib/data/champions-dex.ts",
+      "src/lib/data/mega-pokemon.ts",
+      "src/lib/data/__tests__/champions-dex.test.ts"
+    ],
+    "scope_estimate": "30min",
+    "priority": "Medium",
+    "posthog_signal": false,
+    "new_bug": false,
+    "labels": ["auto-research", "Improvement"],
+    "notes": "No test file exists at src/lib/data/__tests__/champions-dex.test.ts. Need: assert every species in CHAMPIONS_REG_MA_MEGAS appears in CHAMPIONS_DEX, assert total Mega count is consistent, add a negative test that catches drift. Runs on every push to prevent silent desync."
+  },
+  {
+    "identifier": "VGC-170",
+    "title": "Security: add AbortController timeouts to all external API fetch calls",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-170/security-add-abortcontroller-timeouts-to-all-external-api-fetch-calls",
+    "files_likely_to_change": [
+      "src/app/api/cron/daily-ops/route.ts",
+      "src/app/api/webhooks/posthog/route.ts",
+      "src/app/api/sprite/route.ts"
+    ],
+    "scope_estimate": "0min (LARGELY ALREADY FIXED)",
+    "priority": "Medium",
+    "posthog_signal": false,
+    "new_bug": false,
+    "labels": ["auto-research", "Improvement"],
+    "notes": "ALREADY FIXED in all three mentioned routes. daily-ops/route.ts has AbortControllers at lines 32-33, 78-79, 115-116, 156-157. webhooks/posthog/route.ts has controller at lines 36-37. sprite/route.ts has controller at lines 47-48. Ticket should be moved to Done — no implementation work needed."
+  },
+  {
+    "identifier": "VGC-169",
+    "title": "PostHog event schema: standardize property naming (snake_case vs camelCase inconsistency)",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-169/posthog-event-schema-standardize-property-naming-snake-case-vs",
+    "files_likely_to_change": [
+      "src/hooks/useHomePage.ts",
+      "src/hooks/useShareFlow.ts",
+      "src/components/ui/ShareModal.tsx",
+      "src/components/social/SaveButton.tsx",
+      "src/components/social/ReactionBar.tsx",
+      ".eslintrc.json"
+    ],
+    "scope_estimate": "45min",
+    "priority": "Low",
+    "posthog_signal": true,
+    "new_bug": false,
+    "labels": ["auto-research", "Analytics", "Bug"],
+    "notes": "Code audit shows the specific camelCase violations mentioned in the ticket (shareId, pokemonCount) are already fixed — all current posthog.capture() calls use snake_case properties. Remaining work is the acceptance criteria item: add ESLint rule or type helper to enforce snake_case and prevent future drift. Without this the fix is fragile."
+  },
+  {
+    "identifier": "VGC-166",
+    "title": "i18n: audit string extraction readiness before adding new locales",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-166/i18n-audit-string-extraction-readiness-before-adding-new-locales",
+    "files_likely_to_change": [
+      "src/lib/i18n.ts",
+      "src/app/page.tsx",
+      "src/components/report/TeamReport.tsx",
+      "src/app/champions/ChampionsContent.tsx",
+      "src/app/faq/page.tsx"
+    ],
+    "scope_estimate": "2-3hr",
+    "priority": "Low",
+    "posthog_signal": false,
+    "new_bug": false,
+    "labels": ["auto-research", "Improvement"],
+    "notes": "~340 hardcoded English strings across components not routed through useTranslation. Work is: grep + extract strings to src/lib/i18n.ts, add CI check for hardcoded strings. Scope is the largest of tonight's tickets — prioritize lower if time is tight. No external dependencies."
+  },
+  {
+    "identifier": "NEW-BUG-001",
+    "title": "MatchTracker: silent fetchStats catch leaves users with blank state on API failure",
+    "url": null,
+    "files_likely_to_change": [
+      "src/components/match-tracker/MatchTracker.tsx"
+    ],
+    "scope_estimate": "15min",
+    "priority": "Medium",
+    "posthog_signal": false,
+    "new_bug": true,
+    "labels": ["Bug"],
+    "notes": "src/components/match-tracker/MatchTracker.tsx line 84: `catch { /* silent */ }` in fetchStats swallows all errors silently. When the /api/match-log GET fails (network error, 401, 500), loadingStats is cleared but logs/summary remain at their initial empty values and the user sees a blank stats panel with no indication of failure. Fix: surface a `loadError` state and render a user-visible error message. Note: the submit path (handleSubmit) does properly surface errors via setSubmitError — only the initial load fetch is silent."
+  },
+  {
+    "identifier": "NEW-BUG-002",
+    "title": "Match log DELETE endpoint exists but MatchTracker UI has no delete button",
+    "url": null,
+    "files_likely_to_change": [
+      "src/components/match-tracker/MatchTracker.tsx",
+      "src/app/api/match-log/route.ts"
+    ],
+    "scope_estimate": "30min",
+    "priority": "Medium",
+    "posthog_signal": false,
+    "new_bug": true,
+    "labels": ["Bug"],
+    "notes": "The DELETE handler exists in src/app/api/match-log/route.ts (lines 62-98) — it accepts ?id=<uuid>, verifies user ownership, and returns 204. However, the MatchTracker component has no UI to call it. Users who log a wrong result cannot delete it. Fix: add a delete icon button next to each log entry in the log list that calls DELETE /api/match-log?id=X and refreshes stats on success."
+  },
+  {
+    "identifier": "NEW-BUG-003",
+    "title": "Champions meta SQL: Node.js aggregation instead of SQL — scalability cliff at 500 reports",
+    "url": null,
+    "files_likely_to_change": [
+      "src/app/api/champions/meta/route.ts"
+    ],
+    "scope_estimate": "45min",
+    "priority": "Medium",
+    "posthog_signal": false,
+    "new_bug": true,
+    "labels": ["Bug"],
+    "notes": "src/app/api/champions/meta/route.ts fetches up to 500 raw paste strings from the DB (LIMIT 500) and then parses + aggregates species usage in Node.js. This is a scalability cliff: at 500 reports, the code logs a warning and silently truncates the dataset, producing misleading usage percentages. Also transfers ~500 large text blobs from DB to Node per uncached request. Fix: push the COUNT/GROUP BY aggregation into SQL so only the top-N counts are transferred, removing the LIMIT-induced data truncation. The 5-min cache (CACHE_TTL=300) mitigates frequency but not correctness."
+  }
+]

@@ -7,6 +7,8 @@ import { usePostHog } from "@/components/providers/PostHogProvider";
 interface ShareModalProps {
   publicUrl: string;
   teamSpecies: string[];
+  /** Raw Showdown-format paste text for the "Copy Paste" action. */
+  showdownPaste?: string;
   tournamentName?: string;
   creatorName?: string;
   placement?: string;
@@ -35,6 +37,7 @@ interface ShareModalProps {
 export function ShareModal({
   publicUrl,
   teamSpecies,
+  showdownPaste,
   tournamentName,
   creatorName,
   placement,
@@ -54,6 +57,7 @@ export function ShareModal({
   const [linkCopied, setLinkCopied] = useState(false);
   const [discordCopied, setDiscordCopied] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
+  const [pasteCopied, setPasteCopied] = useState(false);
   const [publicConfirmDismissed, setPublicConfirmDismissed] = useState(false);
   const [tagError, setTagError] = useState(false);
   const [creatorError, setCreatorError] = useState(false);
@@ -215,6 +219,18 @@ export function ShareModal({
       setDiscordCopied(true);
       setTimeout(() => setDiscordCopied(false), 2000);
       posthog?.capture("share_discord_copied", { has_tournament: !!tournamentName });
+    } catch {
+      // Clipboard unavailable (non-HTTPS or permission denied) — no-op.
+    }
+  };
+
+  const handleCopyPaste = async () => {
+    if (!showdownPaste) return;
+    try {
+      await navigator.clipboard.writeText(showdownPaste);
+      setPasteCopied(true);
+      setTimeout(() => setPasteCopied(false), 2000);
+      posthog?.capture("share_paste_copied", { has_tournament: !!tournamentName });
     } catch {
       // Clipboard unavailable (non-HTTPS or permission denied) — no-op.
     }
@@ -428,6 +444,34 @@ export function ShareModal({
               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
             </svg>
           </button>
+
+          {/* Copy Paste — shown only when showdownPaste is available */}
+          {showdownPaste && (
+            <button
+              type="button"
+              onClick={handleCopyPaste}
+              className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group cursor-pointer text-left w-full"
+            >
+              <div className="w-9 h-9 rounded-lg bg-surface border border-border flex items-center justify-center flex-shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary group-hover:text-accent transition-colors">
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
+                  {pasteCopied ? "Showdown paste copied!" : "Copy Paste"}
+                </div>
+                <div className="text-xs text-text-tertiary truncate">
+                  Showdown format — paste into PokéPaste or Discord
+                </div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+              </svg>
+            </button>
+          )}
 
           {/* Native share — shown only when the OS supports Web Share API (mobile/desktop with share support) */}
           {canNativeShare && (

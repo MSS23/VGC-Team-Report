@@ -1,189 +1,123 @@
-# Code Review: Last 20 Commits on origin/main
-**Date:** 2026-05-10  
-**Reviewer:** Claude Code Analysis  
-**Scope:** Commits from `6c005fa` (most recent) through `ddaca39` (20 commits back)
+# Code Review: Last 20 Commits on main
+**Date:** 2026-05-13
+**Reviewer:** Claude Code (Sonnet 4.6)
+**Scope:** Commits `a2a8cc2` through `92a5fe4` (last 20 on main)
 
 ---
 
 ## Executive Summary
 
-The last 20 commits show a healthy pattern of iterative feature development and proactive bug fixes, with strong security hygiene. However, three architectural concerns emerge: (1) PokemonDetailSlide remains at 962 lines and needs decomposition; (2) repeated fixes to champions/mega validation indicate the data model needs stronger guardrails; (3) the large multi-part swarm commit mixes research documentation with production code in a way that makes atomicity testing difficult.
+The last 20 commits show a strong velocity of feature additions and targeted bug fixes, with solid security practices throughout. Five src/ files with the heaviest recent churn were audited in depth: `src/app/api/match-log/route.ts`, `src/components/match-tracker/MatchTracker.tsx`, `src/app/api/champions/meta/route.ts`, `src/hooks/useShareUrl.ts`, and `src/app/api/explore/route.ts`. No critical bugs found. Key concerns: silent error suppression in MatchTracker's fetch, a stats calculation bug that under-counts the match log (win-rate uses `logs.length` instead of total game count), the explore route's unbounded query complexity under heavy filter combinations, and `useShareUrl`'s growing surface area (474 lines, 21 exported values) which is a maintenance hazard.
 
-**Overall Assessment:** **YELLOW** (watch pattern for follow-ups)
-
----
-
-## Commit Analysis
-
-| SHA | Title | Files | Rating | Notes |
-|-----|-------|-------|--------|-------|
-| 6c005fa | fix(footer): wrap nav links on mobile + bump SW cache | 2 | **OK** | Minimal, targeted. SW cache version bump is correct pattern for PWA invalidation. |
-| 4c4d101 | fix(mobile): eliminate horizontal scroll + make OTS sheet readable | 3 | **OK** | Responsive UI fix; adds 57 CSS lines, removes 19. Well-reasoned overflow-x handling. |
-| 0cb23fc | swarm: nightly improvements 08-05-26 | 11 | **WATCH** | Adds Web Share API, a11y improvements, SEO schemas, robots.txt for AI crawlers. 213 insertions, clean. See pattern notes below. |
-| 0c0598c | swarm: nightly improvements 07-05-26 | 55 | **CONCERN** | Massive commit: 4,515 insertions across research docs, security upgrades, performance refactors, dead code removal, cron fixes. See detailed findings below. |
-| e5b4bfa | docs(changelog): v5.9 entry | 1 | **OK** | Documentation only. |
-| ecf9e00 | fix(mega): toggle requires Reg M-A AND Mega Stone | 1 | **OK** | Single-file logic fix. Part of repeated mega-validation pattern. |
-| 3ec0e3d | fix(pokemon-card): always show Mega/base flip toggle | 1 | **OK** | UI fix, targeted. |
-| e514a8e | fix(analysis): suppress Mega forms when regulation isn't Reg M-A | 1 | **OK** | Regulation-aware validation. |
-| a2a8cc2 | fix(explore): popular/views feed pagination + fork credits | 3 | **OK** | Feature enhancement; tie-group pagination + UI credit display. |
-| 50f3426 | docs(changelog): v5.8 entry | 1 | **OK** | Documentation only. |
-| f701a5c | fix(champions-dex): align base species with Serebii canonical list | 1 | **CONCERN** | Major data correction: removed 4 illegal species (Metagross, Pawmot, etc.), added 47 missing legal species. Hand-validated against Serebii. No automated test for dex completeness. |
-| 46662e0 | VGC-140/141/142: share viewing, duplicate flow, downloadable card, tiered publishing | 11 | **WATCH** | Feature: new redact-paste.ts (86 lines) strips private fields from Showdown paste. Zod validation added. Good error handling (alert on card generation failure). **Issue:** No unit tests for redact-paste.ts regex logic. See findings. |
-| 44ffb6e | VGC-143: rental code filter + Rental badge | 3 | **OK** | Feature; straightforward addition. |
-| 7dd30b4 | VGC-146: harden share/cache reads with Zod schema validation | 2 | **OK** | Security hardening; URL-decoded state now validated. timingSafeEqual used correctly for signature comparison in Linear webhook. |
-| cd8984d | VGC-144: derive CHAMPIONS_DEX megas from CHAMPIONS_REG_MA_MEGAS | 1 | **OK** | Data deduplication; eliminates drift risk. Well-justified. |
-| fa2663b | VGC-145: delete 4 dead components, 3 dead lib files, 2 dead exports | 12 | **OK** | Cleanup commit; 1,177 deletions verified via grep. |
-| 4bb854b | fix(speed-tiers): mark every entry in a tie group, not just the second row | 1 | **OK** | Logic fix to tie-group marking. Part of speed-tiers refinement sequence. |
-| 506d79b | swarm: nightly improvements 07-05-26 | Multiple | **WATCH** | Earlier nightly commit; follows same pattern as 0c0598c. |
-| ac12688 | Merge: integrate VGC-69, -75, -95, -100, -106, -111, -135, -138, -139 | 9 | **WATCH** | Large merge with conflict resolution in SpeedTierChart.tsx. Integrates 9 features. No diff shown, unclear if all conflicts resolved correctly. |
-| ddaca39 | feat(report): SP-only display in Reg M-A — drop EV toggle | 1 | **OK** | Feature; regulation-specific UI change. |
+**Overall Assessment:** YELLOW — ship-ready, but three issues warrant follow-up tickets before the tracker becomes widely used.
 
 ---
 
-## Key Findings
+## Files Reviewed
 
-### 1. **PokemonDetailSlide: 962-line component (Architecture Smell)**
-- Identified in commit 0c0598c research notes as exceeding safe complexity threshold
-- Combines slide rendering, detail display, Mega toggles, stats display, and more
-- **Risk:** Hard to test in isolation; high cost of change; poor maintainability
-- **Follow-up:** VGC-SPLIT-PokemonDetailSlide (decompose into MegaFormToggle, StatsPanel, DetailPanel, HeaderSection)
+### 1. `src/app/api/match-log/route.ts`
 
-### 2. **Champions Data Model: Repeated Fixes (Data Integrity Pattern)**
-Recent commits show four fixes to mega/champion validation:
-- `ecf9e00`: Mega toggle logic
-- `3ec0e3d`: Mega toggle UI
-- `e514a8e`: Regulation-aware Mega suppression
-- `f701a5c`: Manual correction of 51 species (4 wrong + 47 missing)
-- `cd8984d`: Deduplication of mega keys
-
-**Root cause:** No automated validation that champions-dex.ts stays in sync with canonical Serebii data or that CHAMPIONS_REG_MA_MEGAS and champions-dex.ts never drift. Fixes are reactive, not preventive.
-
-**Follow-up:** VGC-DEXSYNC (add nightly GitHub Actions job that scrapes Serebii canonical list, compares against champions-dex.ts, posts PR if drift detected; fail CI if CHAMPIONS_DEX and CHAMPIONS_REG_MA_MEGAS diverge)
-
-### 3. **Massive Swarm Commit (0c0598c): Mixed Concerns**
-- **What:** Single commit bundling research docs, security upgrades (Clerk CVE, axios 13 CVEs), performance refactors (tree-shaking print context), a11y fixes, dead code removal, cron job fix
-- **Files:** 55 changed; 4,515 insertions
-- **Issue:** Atomicity — if QA discovers a bug in one of 5+ feature areas, the whole commit becomes suspect. Bisect becomes painful
-- **Positive:** All tests pass (141/141); stale sort assertions fixed; champions-legality test fixed; commit message is clear
-- **Recommendation:** Future swarm waves should split into logical commits (Security / Performance / A11y / DeadCode) even if in same PR, to maintain bisectability
-
-### 4. **Redact-Paste Implementation (VGC-142): Missing Tests**
-File: `src/lib/sharing/redact-paste.ts` (86 lines)
-- **What:** Regex-based line-by-line stripping of EVs, IVs, Nature, Item from Showdown paste
-- **Implementation:** Clean, well-commented, handles block boundaries
-- **Missing:** Zero unit tests for:
-  - Edge case: Nature with trailing spaces (`\s+Nature\s*$`)
-  - Edge case: Multi-block pastes with varying whitespace
-  - Edge case: Malformed items (no space around @)
-  - Empty input behavior
-- **Risk:** Moderate; regex is only applied to non-owner cache views (server-side), so exploitation is low, but silent data corruption is possible
-- **Follow-up:** VGC-REDACT-PASTE-TESTS (add vitest unit tests for edge cases)
-
-### 5. **Security Improvements Implemented Correctly**
-- `@clerk/nextjs ^7.2.4` CVE fix: ✓ Documented
-- `axios ^1.15.2` (13 CVEs): ✓ Documented
-- HMAC-SHA256 Linear webhook signature verification: ✓ Uses timingSafeEqual
-- CRON_SECRET moved from URL query param to Authorization header: ✓ Correct pattern
-- shareId regex validation in API routes: ✓ Zod schema added in VGC-146
-- **Assessment:** No red flags; proactive vulnerability management visible
-
-### 6. **Error Handling Gaps**
-- **TeamCardCTA.tsx (VGC-141):** Uses `alert()` on card generation failure; acceptable UX for rare case, but ideally toast notification
-- **CommentSection.tsx:** Has try-catch with timeout-based error clearing; reasonable but could be centralized
-- **redact-paste.ts:** No error handling; assumes input is well-formed string (acceptable for internal use)
-- **GraphQL Discord fix:** Changed from string interpolation to $body variable (VGC-142 wave); good
-
-### 7. **Test Coverage Note**
-- Commit 0cb23fc reports "141/141 passing"
-- Stale test assertion fixed (useExploreUrlSync default sort changed from "newest" to "popular")
-- champions-legality test fixed (Metagross → Arcanine)
-- **Observation:** Tests are present and maintained, but no mention of vitest coverage percentage or new test additions for VGC-142 redact-paste logic
+| # | Issue Type | Severity | Description | Suggested Fix |
+|---|-----------|----------|-------------|---------------|
+| 1.1 | Logic Bug | **HIGH** | `overallWinRate` in GET is calculated as `Math.round((totalWins / totalGames) * 100)` where `totalGames = logs.length` — i.e., number of *match entries*, not actual *games played*. A 3-game series logged as one entry with `gameCount=3` counts the same as a 1-game entry. The `gameCount` column is stored but never summed in the win-rate denominator. This means a user who plays lots of Bo3 will see an inflated win-rate relative to their actual game-level performance, and the dashboard `overallWinRate` is semantically misleading unless clearly labelled "per-match". | Either sum `game_count` (`SELECT SUM(game_count)`) and use that as the denominator, or clearly rename the metric to `matchWinRate` and add a `gameWinRate` that accounts for game_count. |
+| 1.2 | Missing Validation | LOW | `ensureTable()` is called on every POST and GET, adding a no-op DB round-trip per request in the happy path. The table is created once; after that, `IF NOT EXISTS` is a cheap but still-present DDL statement that bypasses connection pool optimisation. | Move `ensureTable()` to an app-startup hook or lazy-init pattern with a module-scope boolean guard. |
+| 1.3 | Missing Feature / UX | LOW | No DELETE endpoint. Users who accidentally log a match (wrong archetype, wrong result) have no way to remove it. Over time, garbage entries will distort win-rate stats. | Add `DELETE /api/match-log?id=<uuid>` with user ownership verification. |
 
 ---
 
-## Commit Patterns
+### 2. `src/components/match-tracker/MatchTracker.tsx`
 
-### Positive Patterns
-1. **Iterative feature shipping:** VGC-140/141/142 shipped as one logical unit but could be 3 PRs
-2. **Proactive security:** CVE upgrades bundled with feature work, not emergency patches
-3. **Documentation:** Clear commit messages with Linear ticket refs; swarm research logged
-4. **Dead code cleanup:** VGC-145 audit followed through on C1 findings
+| # | Issue Type | Severity | Description | Suggested Fix |
+|---|-----------|----------|-------------|---------------|
+| 2.1 | Error Handling | **MEDIUM** | `fetchStats` has a silent catch block (`catch { /* silent */ }`). If the API is down or returns a non-200 (e.g. rate-limit 429, DB connection failure 500), the loading spinner clears and the user sees the empty-state "No matches logged yet" message — even if they have 50 logged matches. There is no error UI path from `fetchStats`. | Add a `fetchError` state. On catch (or `!res.ok`), set `fetchError = true` and render an error banner with a retry button. |
+| 2.2 | Logic Bug (mirrors 1.1) | **HIGH** | The stats displayed in the UI (from the GET response) inherit the server-side win-rate bug (1.1 above). Additionally, the component's local "Recent Matches" section shows `logs.slice(0, 5)` — this is fine — but the "My Record" displays `summary.totalGames` labelled as "N games" while it actually means "N match entries". If the word "games" is surfaced to the user it is factually wrong for multi-game series. | Fix server-side calculation (1.1) and update label to "matches" until game-count denominator is implemented. |
+| 2.3 | UX / Accessibility | LOW | The autocomplete dropdown (`filteredSuggestions`) has no keyboard navigation. Tab moves focus away from the input; arrow-key navigation between suggestions is expected by keyboard users per WCAG 1.3.1 and common autocomplete pattern. The `onBlur` `setTimeout(150)` trick is fragile across screen-readers. | Use `role="listbox"` + `role="option"` + `aria-activedescendant` pattern, or a library like Downshift. |
+| 2.4 | Stale Timer | LOW | `setTimeout(() => setSubmitSuccess(false), 2000)` on line 126 is not cleared on unmount. If the user closes the form or navigates away within 2 seconds of a successful submit, the callback fires on an unmounted component. While React 18 suppresses the warning, it is still a logical stale-closure risk. | Return a cleanup from `useEffect`, or capture the timer ref and clear it in an `useEffect` cleanup. |
 
-### Risk Patterns
-1. **Nightly swarm commits:** Large, multi-concern commits (0c0598c, 0cb23fc) make bisecting harder
-2. **Reactive data fixes:** Champions-dex corrections are manual, not automated
-3. **Large components:** PokemonDetailSlide at 962 lines flagged in research but not refactored
-4. **Merge commits:** ac12688 integrates 9 tickets with conflict in SpeedTierChart; unclear if conflict resolution was tested
+---
+
+### 3. `src/app/api/champions/meta/route.ts`
+
+| # | Issue Type | Severity | Description | Suggested Fix |
+|---|-----------|----------|-------------|---------------|
+| 3.1 | Performance | **MEDIUM** | The query `SELECT data->>'paste' FROM shares WHERE …` has no LIMIT. If Champions-format reports grow to thousands, this will SELECT and transfer every paste to the Node.js process for in-memory aggregation. SQL-side aggregation (e.g. `unnest(string_to_array(paste, '\n'))` or a materialized view) would be dramatically cheaper. | Add `LIMIT 2000` as a safety ceiling for now; file a follow-up to move species aggregation to a DB function or nightly materialized view. |
+| 3.2 | Type Duplication | LOW | `MetaEntry` and `ChampionsMetaResult` interfaces are defined both in this route file and re-defined identically in `MetaSnapshot.tsx`. They diverge silently if either side is updated. | Move interfaces to a shared `src/types/champions-meta.ts` and import in both files. |
+| 3.3 | Regex / Filter Fragility | LOW | The WHERE clause matches `data->>'regulation' ILIKE '%champion%'` and `ILIKE '%reg-m%'`. A team tagged `regulation = "regm-special-event"` would match. The filter is intentionally broad but could pull in noise as new regulation slugs are added. | Document the accepted slugs as a typed union in the data model and use `= ANY(…)` with an allowlist rather than ILIKE wildcards. |
+
+---
+
+### 4. `src/hooks/useShareUrl.ts`
+
+| # | Issue Type | Severity | Description | Suggested Fix |
+|---|-----------|----------|-------------|---------------|
+| 4.1 | Complexity | **MEDIUM** | At 474 lines with 21 returned values, `useShareUrl` violates the single-responsibility principle. It manages: (a) URL parsing, (b) share creation/update, (c) auto-save, (d) fork, (e) session persistence in `localStorage`, (f) owner/collaborator state, and (g) forkedFrom metadata. Any change to one concern requires understanding all 474 lines. Tested in isolation this would require mocking 7+ dependencies. | Split into: `useShareSession` (active token/id refs, localStorage), `useShareActions` (copyShareUrl, freshShare, autoSave, forkReport), `useSharedViewLoader` (fetch on shareId, populate sharedState). Compose from a thin `useShareUrl` coordinator. |
+| 4.2 | Missing Error State | LOW | `copyShareUrl` has two nested try/catch blocks. The inner one sets `shareStatus="error"` and returns early; the outer one also sets `shareStatus="error"`. If `navigator.clipboard.writeText` throws (e.g. on HTTP-only origins or permissions denied), the user sees the error state but no message explaining it was a clipboard issue vs a server issue. | Distinguish clipboard errors from API errors in the error message. |
+| 4.3 | Regex Brittleness | LOW | `detectPathnameShareId` uses `/^\/s\/([A-Za-z0-9]{8})(?:\/|$)/` — exactly 8 alphanumeric characters. If the share ID scheme ever changes length (e.g. 12 chars), this silently stops matching and triggers the "bounced back to home" bug that this code was written to fix. | Store the share ID length as a named constant (e.g. `SHARE_ID_LENGTH = 8`) used in both generation and detection, so a length change propagates automatically. |
+
+---
+
+### 5. `src/app/api/explore/route.ts`
+
+| # | Issue Type | Severity | Description | Suggested Fix |
+|---|-----------|----------|-------------|---------------|
+| 5.1 | Performance | **MEDIUM** | When `sort=popular` (the default), the query does a full `LEFT JOIN (SELECT share_id, COUNT(*) FROM reactions GROUP BY share_id)` subquery on every non-cached request. With cursor pagination and many reactions rows, this scales as O(reactions) even for page 2+. The cursor condition `AND (COALESCE(rc.like_count, 0), s.created_at) < (…)` can't use an index because the `rc` subquery is recalculated. | Materialize reaction counts into a `like_count` column on `shares` updated via DB trigger or background job. The views column already follows this pattern (`COALESCE(s.view_count, 0)`). |
+| 5.2 | Cache Bypass Risk | LOW | The cache key includes every filter combination as a colon-delimited string (line 37). Any new filter parameter added to the route will silently bypass caching if not added to the cache key string. There is no automated guard. | Build the cache key from a typed params object serialized via `JSON.stringify(sortedEntries)` so new params are included automatically. |
+| 5.3 | Inconsistent Error Handling | LOW | The `forked_from_id` join (lines 276–289) silently swallows errors with `catch { }`. All other DB errors in this route are caught at the outer try/catch and return a 500. The inconsistency means a structural DB error inside the fork join (e.g. table lock) will produce a partial response with `forkedFromCreator` missing for all items rather than a proper 500. | Log the error at minimum (`console.error("Fork lineage join failed:", e)`) so it appears in Vercel function logs. |
+| 5.4 | Potential ReDoS | LOW | `tsQuery` is built by splitting `q` on whitespace and calling `.replace(/[^\w]/g, "")`. The `\w` character class in JS regexes does not include Unicode word chars, so a user searching "Chien-Pao" has the hyphen stripped and gets `"chien:* & Pao:*"` — which matches correctly via GIN prefix. But a query of only special chars (e.g. `"---"`) reduces to an empty `tsQuery`, and the condition `(useFts && tsQuery)` guards against this. | This is handled correctly; no action needed. (Noted for completeness.) |
+
+---
+
+### 6. `src/app/champions/[pokemon]/page.tsx`
+
+| # | Issue Type | Severity | Description | Suggested Fix |
+|---|-----------|----------|-------------|---------------|
+| 6.1 | Missing Error Handling | LOW | `getTeamsForPokemon` wraps the entire body in `try/catch` and returns `[]` on any error — including DB connection failures. The page silently renders with an empty "Featured Teams" section. Since this is an ISR page, a DB failure during revalidation would persist the "no teams" render until the next revalidation cycle (1 hour). | Distinguish `null` (DB error, skip the section and show a retry message) from `[]` (genuinely no teams). Pass an error flag through the return type. |
+| 6.2 | N+1 Pattern | LOW | `getTeamsForPokemon` makes 2 sequential DB queries: one for shares, then one for likes. This is already a micro-optimisation compared to a true N+1, and the second query uses `ANY(${shareIds})`, so it's acceptable. | No action required; noted for awareness. |
+
+---
+
+### 7. `src/hooks/useScrollHide.ts`
+
+| # | Issue Type | Severity | Description | Suggested Fix |
+|---|-----------|----------|-------------|---------------|
+| 7.1 | MediaQuery Listener Leak | LOW | `mq.addEventListener("change", onMotionChange)` is registered, but if `mq.matches` is `true` on mount (reduced-motion user), the hook returns early after `setHidden` — without ever attaching the listener to clean it up. In practice the early return means the listener is never registered in this path, so there is no leak. However the `onMotionChange` function is defined before the early return, making the control flow confusing and hard to audit. | Move `onMotionChange` definition and `mq.addEventListener` calls after the `if (mq.matches) return` guard to make the intent unambiguous. |
+| 7.2 | No HACK/TODO comments | INFO | Well-documented, clean implementation. The `reducedMotionRef` pattern correctly avoids a React state closure in the scroll handler. No issues. | — |
+
+---
+
+## Pattern-Level Findings
+
+### P1 — Stats Calculated Client-Side Instead of DB-Side (MEDIUM)
+Both `/api/match-log` GET and `/api/champions/meta` GET pull raw data rows to Node.js and aggregate in JavaScript. For small datasets this is fine, but both are unbounded. The match-log GET fetches up to 200 rows then groups by archetype in JS; the champions meta fetches ALL qualifying rows. Moving aggregation to SQL (`COUNT`, `GROUP BY`) would cut memory usage and latency.
+
+### P2 — Duplicated Interface Definitions (LOW)
+`MetaEntry`/`ChampionsMetaResult` appear in both the route and the component. `MatchLog`/`ArchetypeStat`/`Summary` are defined in `MatchTracker.tsx` but nowhere else — if the API response shape changes, the component's types drift silently (TypeScript won't catch this without a shared type import). File a ticket to move API response types to `src/types/`.
+
+### P3 — No Delete/Edit on Match Logs (LOW)
+The match tracker has no mechanism to correct or delete an erroneously logged match. Once the feature is in users' hands, this will become a pain point immediately. Prioritise before wide promotion.
+
+---
+
+## TODO / FIXME Scan
+No `TODO`, `FIXME`, or `HACK` comments found in any of the five primary files reviewed.
 
 ---
 
 ## Recommended Follow-up Tickets
 
-### Priority 1 (High Impact)
-1. **VGC-DEXSYNC:** Automate champions-dex.ts validation against Serebii canonical list
-   - Add nightly GH Actions job to scrape regulation pages
-   - Fail CI if CHAMPIONS_DEX ≠ CHAMPIONS_REG_MA_MEGAS keys
-   - Auto-PR on drift
-
-2. **VGC-SPLIT-PokemonDetailSlide:** Decompose 962-line component
-   - Extract MegaFormToggle (Mega vs base decision)
-   - Extract StatsPanel (base/Mega stat comparison)
-   - Extract DetailPanel (moves, ability, item display)
-   - Enables independent testing and change isolation
-
-### Priority 2 (Medium)
-3. **VGC-REDACT-PASTE-TESTS:** Add unit tests for redact-paste.ts regex logic
-   - Edge cases: trailing spaces, multi-block, malformed items
-   - Snapshot tests for common pastes
-
-4. **VGC-SWARM-ATOMICITY:** Establish commit granularity guidelines for agent runs
-   - Split security/perf/a11y/cleanup into separate commits within same PR
-   - Enables bisectability without losing feature velocity
-
-### Priority 3 (Nice-to-have)
-5. **VGC-CARD-UX:** Upgrade card generation error UX from alert() to toast
-   - Matches design system; better mobile UX
+| Priority | Ticket | Description |
+|----------|--------|-------------|
+| P1 | VGC-MATCH-WINRATE | Fix win-rate denominator to use sum of game_count instead of match count; or relabel "matches" vs "games" clearly in UI |
+| P1 | VGC-MATCH-FETCHERROR | Surface fetch error state in MatchTracker (silent catch → error banner + retry) |
+| P2 | VGC-MATCH-DELETE | Add DELETE /api/match-log?id= with user ownership check |
+| P2 | VGC-META-LIMIT | Add LIMIT 2000 safety ceiling to champions meta query; file follow-up for SQL aggregation |
+| P2 | VGC-SHARE-SPLIT | Decompose useShareUrl (474 lines, 21 exports) into 3 focused hooks |
+| P3 | VGC-SHARED-TYPES | Move API response interfaces to src/types/ (MetaEntry, MatchLog, etc.) |
+| P3 | VGC-SHARE-ID-CONST | Extract SHARE_ID_LENGTH constant to guard detectPathnameShareId against future length changes |
 
 ---
 
-## Test Status
-
-- **Last reported:** 141/141 passing (commit 0cb23fc)
-- **Recent fixes:**
-  - useExploreUrlSync assertions (sort default)
-  - champions-legality test (Metagross → Arcanine)
-- **Known gaps:**
-  - No tests for redact-paste.ts
-  - No mention of vitest coverage for VGC-140/141/142 additions
-
----
-
-## Dependency Changes
-
-Added in 0c0598c and earlier:
-- `zod@^4.3.6` — Schema validation (good for security)
-- `@clerk/nextjs@^7.2.4` — Auth security patch
-- `axios@^1.15.2` — 13 CVE fixes
-- No unexpected or unmotivated dependencies
-
----
-
-## Security Assessment
-
-**Overall: STRONG**
-
-- Linear webhook HMAC verification: ✓ timingSafeEqual
-- CRON_SECRET in Authorization header (not query): ✓
-- shareId regex validation: ✓ Zod schema
-- URL-decoded state casting: ✓ VGC-146 hardening
-- No new secrets in commits: ✓
-
-**Minor note:** LINEAR_WEBHOOK_SECRET defaults to skip verification if not set (dev mode); acceptable with clear console.warn.
-
----
-
-## Conclusion
-
-The codebase shows healthy iterative development with proactive security and performance work. The main architectural concerns are (1) PokemonDetailSlide at 962 lines, (2) reactive rather than preventive champions-data validation, and (3) large multi-concern swarm commits that reduce bisectability. No critical bugs detected; all test-reported issues pass. Recommend filing the three follow-up tickets to strengthen data integrity and component architecture.
-
-**Suggested action:** Review and approve with request for attention to follow-up tickets in next sprint.
+## Test Status at HEAD
+- No new tests introduced with the MatchTracker or MetaSnapshot additions.
+- The win-rate bug (finding 1.1 / 2.2) is not caught by any existing test.
+- `useScrollHide` has no unit test; the hook logic is straightforward but the RAF + MediaQuery combination is hard to reason about without one.

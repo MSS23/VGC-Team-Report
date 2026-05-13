@@ -63,6 +63,7 @@ export function MatchTracker() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [archetypeStats, setArchetypeStats] = useState<ArchetypeStat[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   const filteredSuggestions = archetype.length > 0
@@ -80,10 +81,28 @@ export function MatchTracker() {
         setLogs(data.logs ?? []);
         setSummary(data.summary ?? null);
         setArchetypeStats(data.archetypeStats ?? []);
+        setFetchError(null);
+      } else {
+        setFetchError("Failed to load match history. Tap to retry.");
       }
-    } catch { /* silent */ }
-    finally { setLoadingStats(false); }
+    } catch {
+      setFetchError("Failed to load match history. Tap to retry.");
+    } finally {
+      setLoadingStats(false);
+    }
   }, []);
+
+  const handleDelete = useCallback(async (id: string) => {
+    if (!window.confirm("Delete this match entry?")) return;
+    try {
+      const res = await fetch(`/api/match-log?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (res.ok) {
+        await fetchStats();
+      }
+    } catch {
+      // best-effort — user can refresh manually
+    }
+  }, [fetchStats]);
 
   useEffect(() => {
     fetchStats();
@@ -322,6 +341,17 @@ export function MatchTracker() {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           </div>
+        ) : fetchError ? (
+          <div className="flex flex-col items-center py-6 gap-2">
+            <p className="text-xs text-amber-500 dark:text-amber-400 font-medium text-center">{fetchError}</p>
+            <button
+              type="button"
+              onClick={fetchStats}
+              className="text-xs font-bold text-accent hover:underline cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
         ) : !summary || summary.totalGames === 0 ? (
           <div className="text-center py-6">
             <p className="text-sm text-text-secondary">No matches logged yet.</p>
@@ -388,7 +418,7 @@ export function MatchTracker() {
                 <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">Recent Matches</p>
                 <div className="space-y-1">
                   {logs.slice(0, 5).map((log) => (
-                    <div key={log.id} className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-1.5 rounded-lg hover:bg-surface-alt/50 transition-colors">
+                    <div key={log.id} className="group flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-1.5 rounded-lg hover:bg-surface-alt/50 transition-colors">
                       <span className={`text-[10px] font-extrabold uppercase tracking-wider w-6 flex-shrink-0 ${resultColor(log.result)}`}>
                         {log.result === "win" ? "W" : log.result === "loss" ? "L" : "T"}
                       </span>
@@ -396,6 +426,19 @@ export function MatchTracker() {
                       <span className="text-[10px] text-text-tertiary flex-shrink-0">
                         {new Date(log.loggedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(log.id)}
+                        aria-label="Delete match entry"
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded text-text-tertiary hover:text-red-500 transition-all cursor-pointer"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                          <path d="M10 11v6M14 11v6" />
+                          <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+                        </svg>
+                      </button>
                     </div>
                   ))}
                 </div>

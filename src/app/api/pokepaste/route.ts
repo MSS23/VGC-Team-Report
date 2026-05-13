@@ -52,11 +52,14 @@ export async function GET(request: NextRequest) {
   const rawUrl = `https://pokepast.es${basePath}/raw`;
   const htmlUrl = `https://pokepast.es${basePath}`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
   try {
-    // Fetch both raw paste and HTML page in parallel
+    // Fetch both raw paste and HTML page in parallel under a shared timeout
     const [rawRes, htmlRes] = await Promise.all([
-      fetch(rawUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" } }),
-      fetch(htmlUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" } }),
+      fetch(rawUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" }, signal: controller.signal }),
+      fetch(htmlUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" }, signal: controller.signal }),
     ]);
 
     if (!rawRes.ok) {
@@ -92,11 +95,16 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ paste: text, title });
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return NextResponse.json({ error: "Request timed out" }, { status: 504 });
+    }
     return NextResponse.json(
       { error: "Failed to fetch from PokéPaste" },
       { status: 502 }
     );
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -141,6 +149,9 @@ export async function POST(request: NextRequest) {
   if (author) form.set("author", author);
   if (notes) form.set("notes", notes);
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
   try {
     const res = await fetch("https://pokepast.es/create", {
       method: "POST",
@@ -150,6 +161,7 @@ export async function POST(request: NextRequest) {
       },
       body: form.toString(),
       redirect: "manual",
+      signal: controller.signal,
     });
 
     // pokepast.es responds with 302 Location: /<id> on success
@@ -176,10 +188,15 @@ export async function POST(request: NextRequest) {
       { error: `PokéPaste returned ${res.status}` },
       { status: 502 }
     );
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return NextResponse.json({ error: "Request timed out" }, { status: 504 });
+    }
     return NextResponse.json(
       { error: "Failed to create PokéPaste" },
       { status: 502 }
     );
+  } finally {
+    clearTimeout(timeoutId);
   }
 }

@@ -1536,6 +1536,7 @@ function HomeContent() {
         <ShareModal
           publicUrl={lastShareResult.publicUrl}
           teamSpecies={teamSpecies}
+          showdownPaste={analysis ? teamToShowdown(analysis.pokemon.map((p) => p.parsed)) : undefined}
           tournamentName={tournamentName}
           creatorName={creatorName}
           placement={placement}
