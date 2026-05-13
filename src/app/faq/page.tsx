@@ -14,6 +14,14 @@ export const metadata: Metadata = {
       "Answers to the most common questions about VGC Team Report: how to share a Pokémon VGC team, what a team report is, format support, and more.",
     url: "https://pokemonvgcteamreport.com/faq",
     type: "website",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VGC Team Report FAQ — Common Questions Answered",
+    description:
+      "Answers to the most common questions about VGC Team Report: how to share a Pokémon VGC team, what a team report is, format support, and more.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
   },
 };
 
