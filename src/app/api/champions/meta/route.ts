@@ -38,7 +38,9 @@ export async function GET(request: Request) {
 
     const sql = getDb();
 
-    // Query public Champions-format reports
+    const QUERY_LIMIT = 500;
+
+    // Query public Champions-format reports — capped to avoid unbounded memory usage
     const rows = await sql`
       SELECT data->>'paste' AS paste
       FROM shares
@@ -50,7 +52,23 @@ export async function GET(request: Request) {
           OR data->'tags'->>'regulation' ILIKE '%champion%'
           OR data->'tags'->>'regulation' ILIKE '%reg-m%'
         )
+      ORDER BY created_at DESC
+      LIMIT ${QUERY_LIMIT}
     `;
+
+    if (rows.length === 0) {
+      const empty: ChampionsMetaResult = { entries: [], totalReports: 0, hasEnoughData: false };
+      await cacheSet(CACHE_KEY, empty, CACHE_TTL);
+      const res = NextResponse.json(empty);
+      res.headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+      return res;
+    }
+
+    if (rows.length >= QUERY_LIMIT) {
+      console.warn(
+        `[champions/meta] Query hit the ${QUERY_LIMIT}-report limit — dataset may have grown; consider raising QUERY_LIMIT or pushing aggregation into SQL.`
+      );
+    }
 
     const totalReports = rows.length;
     const hasEnoughData = totalReports >= MIN_REPORTS;
