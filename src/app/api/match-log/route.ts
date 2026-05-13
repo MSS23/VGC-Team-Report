@@ -59,6 +59,44 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function DELETE(request: NextRequest) {
+  const guard = await apiGuard(request, { rateLimit: { key: "match-log-delete", max: 30 } });
+  if (guard) return guard;
+
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const idParam = searchParams.get("id");
+    const parsed = z.string().uuid().safeParse(idParam);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid or missing id" }, { status: 400 });
+    }
+    const id = parsed.data;
+
+    await ensureTable();
+
+    const sql = getDb();
+    const rows = await sql`
+      DELETE FROM match_logs
+      WHERE id = ${id} AND user_id = ${userId}
+      RETURNING id
+    `;
+
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    console.error("Match log DELETE error:", e);
+    return NextResponse.json({ error: "Failed to delete match log" }, { status: 500 });
+  }
+}
+
 export async function GET(request: NextRequest) {
   const guard = await apiGuard(request, { rateLimit: { key: "match-log-get", max: 30 } });
   if (guard) return guard;
