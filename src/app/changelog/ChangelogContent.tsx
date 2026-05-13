@@ -27,6 +27,25 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.13",
+    title: "Security Hardening, Match Tracker Polish & SEO Improvements",
+    emoji: "🔒",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "JSON-LD structured data now escapes </script> sequences to prevent HTML injection from user-controlled report fields (creatorName, tournamentName)." },
+      { type: "fixed", text: "Bot route secret comparison is now timing-safe (crypto.timingSafeEqual) and fails closed when CRON_SECRET is unset — previously accepted 'Bearer undefined'." },
+      { type: "fixed", text: "Added AbortController timeouts to all external API fetches (pokepaste 5s/8s, sprite proxy 3s, PostHog webhook Linear 5s + Discord 3s) to prevent hanging requests under slow CDN conditions." },
+      { type: "fixed", text: "Champions meta snapshot query now caps at 500 most recent reports with ORDER BY created_at DESC, preventing unbounded memory usage as the dataset grows." },
+      { type: "new", text: "Match Tracker: delete individual match log entries with a trash icon button (confirms before deleting) and shows an error banner with Retry if stats fail to load." },
+      { type: "new", text: "Share modal now has a 'Copy Paste' button that copies the full Showdown team paste to clipboard for sharing on PokéPaste or Discord." },
+      { type: "new", text: "Added 33 unit tests for team paste redaction (private spread hiding) covering all 4 field types and 8 edge cases including CRLF inputs and multi-Pokemon pastes." },
+      { type: "new", text: "Added Champions format Pokédex drift guard CI tests — 10 assertions prevent the class of bug where a Mega species is in the dex but has no stats entry." },
+      { type: "improved", text: "Homepage title now includes 'Pokemon Champions 2026' for better search keyword targeting; Explore and Champions page descriptions updated with Mega Evolution and format keywords." },
+      { type: "improved", text: "OG image meta tags now correctly set on Compare, FAQ, Tournaments, and Creator pages — Next.js shallow metadata merge meant these pages were missing og:image and twitter:image tags entirely." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.12",
     title: "Match Tracker, Champions Meta Snapshot & Mobile Touch Fixes",
     emoji: "📊",
