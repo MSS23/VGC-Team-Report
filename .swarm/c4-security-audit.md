@@ -1,337 +1,185 @@
-# VGC Team Report - Security Audit
+# Security Audit — VGC Team Report
 
-**Date:** May 10, 2026  
-**Scope:** Full codebase security review  
-**Focus Areas:** API routes, authentication, data validation, injection risks, secret handling
-
----
-
-## Executive Summary
-
-The application demonstrates a **solid security foundation** with Clerk-based authentication, Zod input validation, parameterized SQL queries (via `postgres.js`), and comprehensive Content Security Policy. However, several **medium-to-high severity issues** were identified, primarily:
-
-1. **HogQL Query Injection** (Medium) — String interpolation in PostHog queries
-2. **CSP Allows `unsafe-eval`** (Medium) — Too permissive script policy
-3. **Missing Timeout on External Fetches** (Medium) — Potential DoS/hang vectors
-4. **Linear GraphQL Query Injection Risk** (Low) — Hardcoded `teamId` in query strings
-5. **Error Information Leakage** (Low) — Stack traces in 500 responses
+**Date:** 2026-05-13
+**Auditor:** Claude Code (Security Agent)
+**Scope:** `src/app/api/`, `src/lib/`, `src/lib/security/`, `next.config.ts`, `src/middleware.ts`
 
 ---
 
-## Detailed Findings
+## 1. npm audit Summary
 
-### CRITICAL ISSUES
-None identified at this time.
+**Total vulnerabilities: 7** (as of audit run)
 
----
+| Severity | Count | Packages |
+|----------|-------|----------|
+| Critical | 1 | `semver` (ReDoS via untrusted version string) |
+| High | 3 | `next` (DoS with Server Components), `fast-uri` (path traversal + host confusion), `protobufjs` (code injection, DoS) |
+| Moderate | 3 | `@protobufjs/utf8` (overlong UTF-8 decode), `dompurify` (FORBID_TAGS bypass × 4 advisories), `vite` (path traversal, arbitrary file read via dev-server WebSocket) |
 
-### HIGH SEVERITY ISSUES
-None identified at this time.
-
----
-
-### MEDIUM SEVERITY ISSUES
-
-#### 1. HogQL Query Injection in PostHog Webhook Handler
-**File:** `/home/user/VGC-Team-Report/src/app/api/webhooks/posthog/route.ts`  
-**Lines:** 33-34  
-**Severity:** MEDIUM  
-**Type:** Query Injection
-
-**Issue:**
-```typescript
-const query = `
-  SELECT event, timestamp, properties
-  FROM events
-  WHERE properties.$session_id = '${sessionId.replace(/'/g, "")}'
-    AND timestamp <= '${beforeTimestamp.replace(/'/g, "")}'
-  ORDER BY timestamp DESC
-  LIMIT 15
-`;
-```
-
-While the code attempts to sanitize by stripping single quotes (`replace(/'/g, "")`), this is **insufficient protection** against HogQL injection. An attacker who controls `sessionId` or `beforeTimestamp` (from PostHog webhook payload) could:
-- Break the query logic with comment injection (`--`, `//`)
-- Inject operators or functions
-- Bypass the timestamp filter
-
-**Recommended Fix:**
-Use PostHog's official SDK with parameterized query support, or switch to GraphQL queries with variables:
-
-```typescript
-// Use variables instead of string interpolation
-const res = await fetch(`${host}/api/projects/${projectId}/query/`, {
-  method: "POST",
-  headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-  body: JSON.stringify({
-    query: { 
-      kind: "HogQLQuery", 
-      query: "SELECT event, timestamp, properties FROM events WHERE properties.$session_id = {sessionId} AND timestamp <= {timestamp} ORDER BY timestamp DESC LIMIT 15",
-      values: { sessionId, timestamp: beforeTimestamp }
-    }
-  }),
-});
-```
+All have fixes available (`npm audit fix` should resolve most). The `dompurify` advisories affect versions `<=3.3.3`; upgrade to `>=3.4.0`. The `next` DoS is in the direct dependency; ensure `next` is pinned to a patched release.
 
 ---
 
-#### 2. CSP Header Allows `unsafe-eval` and `unsafe-inline`
-**File:** `/home/user/VGC-Team-Report/next.config.ts`  
-**Line:** 81  
-**Severity:** MEDIUM  
-**Type:** Content Security Policy Weakness
+## 2. OWASP Top 10 Analysis
 
-**Issue:**
-```
-script-src 'self' 'unsafe-inline' 'unsafe-eval' 
-  https://*.clerk.accounts.dev https://*.clerk.com ...
-```
+### 2.1 SQL Injection
 
-**Problem:**
-- `'unsafe-eval'` allows `eval()`, `Function()`, `setTimeout(code, delay)` — undermines CSP's primary defense against XSS
-- `'unsafe-inline'` weakens inline script protection
-- While Clerk integration legitimately requires these for OAuth, the policy is unnecessarily broad
+**Status: LOW RISK — parameterized queries used throughout**
 
-**Impact:**
-An XSS vulnerability would have higher impact under this permissive CSP. The code itself doesn't use `eval()` or `new Function()`, but the CSP permits it.
+The codebase uses Neon's `@neondatabase/serverless` tagged-template client (`sql\`...\``), which parameterises every interpolation. No raw SQL string concatenation was found. All API routes querying the DB pass user-controlled values as template arguments, never as interpolated string fragments.
 
-**Recommended Fix:**
-```typescript
-// In next.config.ts
-"script-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://va.vercel-scripts.com https://vercel.live https://*.vercel.live https://*.sentry.io https://challenges.cloudflare.com https://eu-assets.i.posthog.com",
-```
-
-- Remove `'unsafe-eval'` (not needed for Clerk OAuth)
-- Document why `'unsafe-inline'` is required (Clerk SDK) and plan migration
+No findings.
 
 ---
 
-#### 3. Missing Timeouts on External Fetch Calls
-**Files:**
-- `/home/user/VGC-Team-Report/src/app/api/webhooks/posthog/route.ts` (line 201)
-- `/home/user/VGC-Team-Report/src/app/api/pokepaste/route.ts` (lines 57-59)
-- `/home/user/VGC-Team-Report/src/app/api/discord/route.ts` (line 23)
-- `/home/user/VGC-Team-Report/src/app/api/cron/daily-ops/route.ts` (multiple)
+### 2.2 Cross-Site Scripting (XSS)
 
-**Severity:** MEDIUM  
-**Type:** Denial of Service / Resource Exhaustion
+#### Finding 1 — `dangerouslySetInnerHTML` with user-controlled JSON-LD data
+- **OWASP Category:** A03:2021 – Injection (XSS)
+- **File:** `src/components/seo/JsonLd.tsx:5`, used at `src/app/s/[id]/page.tsx:195`
+- **Severity:** Medium
+- **Details:** The `JsonLd` component renders `JSON.stringify(data)` directly into a `<script type="application/ld+json">` tag via `dangerouslySetInnerHTML`. On the `/s/[id]` share page, the `data` object is built from DB-stored user content: `creatorName`, `tournamentName`, `teamSummary`, and collaborator `user_name` values are all user-supplied. If any of these fields contain the string `</script>`, a browser may terminate the script block early, potentially injecting arbitrary HTML.
+- **Fix:** Escape `</script>` in the serialised string after `JSON.stringify`. Standard approach: `JSON.stringify(data).replace(/<\/script>/gi, '<\\/script>')`.
 
-**Issue:**
-Multiple `fetch()` calls to external APIs (PostHog, PokéPaste, Linear, Discord) **lack timeout configuration**. If an external service hangs, the serverless function will block indefinitely, consuming resource slots.
+#### Finding 2 — `dangerouslySetInnerHTML` in `layout.tsx` (inline theme script)
+- **OWASP Category:** A03:2021 – Injection (XSS)
+- **File:** `src/app/layout.tsx:96`
+- **Severity:** Low (static content, no user data injected)
+- **Details:** A static inline script uses `dangerouslySetInnerHTML`. Content is 100% hardcoded; no user input is interpolated. Not exploitable in isolation but represents a pattern to monitor.
+- **Fix:** No immediate action required; document as intentional.
 
-**Example from pokepaste:**
-```typescript
-const [rawRes, htmlRes] = await Promise.all([
-  fetch(rawUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" } }),
-  fetch(htmlUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" } }),
-]);
-// No timeout — could hang forever
-```
-
-**Recommended Fix:**
-```typescript
-const controller = new AbortController();
-const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-try {
-  const res = await fetch(url, { 
-    signal: controller.signal,
-    headers: { "User-Agent": "..." }
-  });
-  clearTimeout(timeoutId);
-  // ... handle response
-} catch (e) {
-  if (e.name === 'AbortError') {
-    return NextResponse.json({ error: "External service timeout" }, { status: 504 });
-  }
-  throw e;
-}
-```
+#### Finding 3 — CSP uses `'unsafe-inline'` for scripts
+- **OWASP Category:** A05:2021 – Security Misconfiguration
+- **File:** `next.config.ts:85`
+- **Severity:** Medium
+- **Details:** `script-src` includes `'unsafe-inline'`, which negates most XSS protection the CSP would otherwise provide. Any reflected or stored XSS payload (including the JSON-LD issue above) can execute inline scripts without restriction.
+- **Fix:** Migrate to nonce-based CSP (`'nonce-{nonce}'`) using Next.js middleware to inject a per-request nonce, removing `'unsafe-inline'` from `script-src`. For `style-src`, also remove `'unsafe-inline'` where possible.
 
 ---
 
-### LOW SEVERITY ISSUES
+### 2.3 Insecure Authentication / Broken Access Control
 
-#### 4. Linear GraphQL Query Hardcodes `teamId` in Query String
-**File:** `/home/user/VGC-Team-Report/src/app/api/cron/daily-ops/route.ts`  
-**Line:** 79  
-**Severity:** LOW  
-**Type:** GraphQL Injection
+#### Finding 4 — Non-timing-safe secret comparison in `/api/bot`
+- **OWASP Category:** A07:2021 – Identification and Authentication Failures
+- **File:** `src/app/api/bot/route.ts:39`
+- **Severity:** Medium
+- **Details:** Auth check `authHeader !== \`Bearer ${expectedSecret}\`` uses JavaScript `!==`, which is not constant-time. A timing oracle could allow incremental brute-force of `CRON_SECRET`. The Linear webhook (`src/app/api/webhooks/linear/route.ts`) correctly uses `crypto.timingSafeEqual`; this endpoint does not.
+- **Fix:** Use `crypto.timingSafeEqual` with a length guard (check lengths are equal first to avoid exceptions), matching the pattern in the Linear webhook handler.
 
-**Issue:**
-```typescript
-body: JSON.stringify({
-  query: `{ team(id: "${teamId}") { issues(...) } }`,
-})
-```
+#### Finding 5 — `CRON_SECRET` unset allows trivial bypass in `/api/bot`
+- **OWASP Category:** A07:2021 – Identification and Authentication Failures
+- **File:** `src/app/api/bot/route.ts:38-40`
+- **Severity:** Medium
+- **Details:** When `CRON_SECRET` is undefined, `expectedSecret` is `undefined`. The check `authHeader !== "Bearer undefined"` only blocks a literal `Bearer undefined` string. A missing env var silently degrades security. The `isCronAuthorized` helper correctly returns `false` when `cronSecret` is falsy, but `/api/bot` does not use that helper.
+- **Fix:** Add `if (!expectedSecret) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });` before the comparison. Alternatively, refactor to use `isCronAuthorized`.
 
-While `teamId` comes from a trusted environment variable (not user input), this pattern creates a theoretical injection risk if the env var were ever compromised or malformed. GraphQL queries should use variables.
+#### Finding 6 — Secret passed in request body (not header) on `/api/migrate`
+- **OWASP Category:** A02:2021 – Cryptographic Failures
+- **File:** `src/app/api/migrate/route.ts:22-23`
+- **Severity:** Low-Medium
+- **Details:** The `MIGRATE_SECRET` is sent as `{ secret: "..." }` in the JSON request body. This risks the secret appearing in CDN access logs, application logs that log request bodies, or browser network tab history. Other protected endpoints (`/api/setup`, `/api/cleanup`) correctly use the `Authorization: Bearer` header.
+- **Fix:** Change `/api/migrate` to accept `Authorization: Bearer <MIGRATE_SECRET>` header, matching the pattern used by all other protected endpoints.
 
-**Recommended Fix:**
-```typescript
-body: JSON.stringify({
-  query: `query($teamId: String!) { team(id: $teamId) { issues(...) } }`,
-  variables: { teamId },
-})
-```
-
----
-
-#### 5. Error Stack Traces Leaked in 500 Responses
-**Files:** All API routes  
-**Severity:** LOW  
-**Type:** Information Disclosure
-
-**Issue:**
-Error handlers log stack traces to `console.error()`:
-```typescript
-} catch (e) {
-  console.error("Share fetch error:", e); // Stack trace to logs (ok)
-  return NextResponse.json(
-    { error: "Failed to load share" },
-    { status: 500 }
-  );
-}
-```
-
-While the **client-facing response is safe** (generic error message), server logs (CloudWatch, Vercel) may be accessible to unauthorized personnel. This is **not a direct vulnerability** but a data sensitivity concern.
-
-**Recommended Fix:**
-```typescript
-} catch (e) {
-  const errorId = crypto.randomUUID();
-  console.error(`[${errorId}] Share fetch error:`, e);
-  return NextResponse.json(
-    { error: "Failed to load share", errorId }, // For debugging
-    { status: 500 }
-  );
-}
-```
-
-Correlate logs by `errorId` so users can report issues without exposing stack traces.
+#### Finding 7 — Discord public key hardcoded in source
+- **OWASP Category:** A02:2021 – Cryptographic Failures (key management)
+- **File:** `src/app/api/discord/route.ts:6`
+- **Severity:** Low (public key — not a secret credential)
+- **Details:** `DISCORD_PUBLIC_KEY` is an Ed25519 public key embedded as a literal string. Discord public keys are intended to be public (they verify signatures from Discord's servers), so this is not a credential leak. However, if the Discord application is re-registered or rotated, the value must be updated in code.
+- **Fix:** Move to `process.env.DISCORD_PUBLIC_KEY` for operational flexibility without a code change on rotation.
 
 ---
 
-#### 6. Missing Input Validation in SHARE_ID_RE Regex
-**Files:** Multiple comment/changelog/reactions routes  
-**Severity:** LOW  
-**Type:** Input Validation
+### 2.4 SSRF (Server-Side Request Forgery)
 
-**Issue:**
-```typescript
-const SHARE_ID_RE = /^[a-zA-Z0-9_-]{6,16}$/;
-```
+#### Finding 8 — `NEXT_PUBLIC_POSTHOG_HOST` used in server-side fetch without allowlist validation
+- **OWASP Category:** A10:2021 – Server-Side Request Forgery
+- **File:** `src/app/api/webhooks/posthog/route.ts:23-40`, `src/app/api/cron/posthog-errors/route.ts:63,142`
+- **Severity:** Low (environment-variable-controlled, not user-controlled)
+- **Details:** `NEXT_PUBLIC_POSTHOG_HOST` is read from an env var and used to construct server-side fetch URLs. This is not a runtime SSRF (user cannot set it), but misconfiguration or supply-chain compromise could redirect PostHog calls to an attacker host that would receive the PostHog API key.
+- **Fix:** Validate the env var at startup against a hardcoded pattern: e.g. `if (!/^https:\/\/[a-z.-]+\.posthog\.com(\/.*)?$/.test(host)) throw new Error("Invalid PostHog host");`.
 
-Share IDs are validated against this regex, but the database query in `/share/route.ts` expects exactly 8 alphanumeric characters (from `generateId()`):
-
-```typescript
-const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
-```
-
-Inconsistency between read and write schemas could allow edge cases (though current logic doesn't create IDs outside [A-Za-z0-9]).
-
-**Recommended Fix:**
-Standardize to `^[A-Za-z0-9]{8}$` across all routes.
+All other server-side fetch calls use hardcoded URLs or validated allowlists (sprite proxy, pokepaste proxy, Linear API). No user-controlled URL fetch was found.
 
 ---
 
-### POSITIVE SECURITY PRACTICES
+### 2.5 Hardcoded Secrets
 
-The following security measures are **well-implemented**:
+**Status: PASS — No hardcoded credentials found.**
 
-1. **Parameterized SQL Queries** ✅  
-   All database queries use `postgres.js` template literals with automatic parameterization — no raw SQL concatenation.
-
-2. **Zod Input Validation** ✅  
-   Every API route uses Zod schemas to validate request bodies and query parameters.
-
-3. **Authentication via Clerk** ✅  
-   Clerk OAuth is properly integrated. Edit tokens require both the token AND authenticated Clerk session (no anonymous mutations).
-
-4. **Rate Limiting** ✅  
-   `apiGuard()` enforces per-IP rate limits on all user-facing routes (20 req/min for shares, 5 req/min for comments, etc.).
-
-5. **CSRF Protection** ✅  
-   Double-submit cookies validate cross-origin requests; same-origin requests exempt (correct pattern).
-
-6. **CORS Policy** ✅  
-   CORS origins validated via `isAllowedOrigin()` before allowing cross-origin requests.
-
-7. **XSS Prevention** ✅  
-   - `escapeHtml()` used on comment/feedback text
-   - Word filter blocks common vulgarities
-   - `dangerouslySetInnerHTML` removed (per changelog note line 34)
-   - JsonLd JSON is safe (not evaluated)
-
-8. **Webhook Signature Verification** ✅  
-   - Linear webhooks validated with HMAC-SHA256 and timing-safe comparison
-   - Discord webhooks verified with Ed25519 signatures
-   - PostHog webhooks checked against `POSTHOG_WEBHOOK_SECRET`
-
-9. **CRON Secret Validation** ✅  
-   `isCronAuthorized()` properly validates `Bearer ${CRON_SECRET}` on cron routes.
-
-10. **Security Headers** ✅  
-    ```
-    X-Frame-Options: DENY          ← prevents clickjacking
-    X-Content-Type-Options: nosniff ← prevents MIME sniffing
-    Strict-Transport-Security: max-age=63072000 ← enforces HTTPS
-    Referrer-Policy: strict-origin-when-cross-origin
-    Permissions-Policy: disables camera/mic/geo/payment/etc.
-    ```
+All secrets (DATABASE_URL, API keys, webhook tokens, CRON_SECRET) are correctly loaded from `process.env`. The `DISCORD_PUBLIC_KEY` (Finding 7) is a public verification key by design, not a secret.
 
 ---
 
-## Summary Table
+### 2.6 Rate Limiting Coverage
 
-| Issue | Severity | Type | File | Line | Impact | Fix Effort |
-|-------|----------|------|------|------|--------|-----------|
-| HogQL Query Injection | MEDIUM | Injection | webhooks/posthog/route.ts | 33-34 | Bypass filters, data exposure | Medium |
-| CSP `unsafe-eval` | MEDIUM | CSP | next.config.ts | 81 | XSS impact increase | Low |
-| Missing Fetch Timeouts | MEDIUM | DoS | pokepaste/route.ts, others | 57-59, multi | Function hangs, resource exhaustion | Low |
-| Linear Query Hardcoding | LOW | Injection | cron/daily-ops/route.ts | 79 | Theoretical injection | Low |
-| Error Stack Traces | LOW | Info Disclosure | All routes | various | Log exposure | Low |
-| SHARE_ID_RE Mismatch | LOW | Validation | comments/reactions | various | Edge cases | Low |
+Routes **with** rate limiting (via `apiGuard` or explicit `isRateLimitedAsync`):
+All user-facing data-read and write endpoints are covered: `share`, `explore`, `comments`, `reactions`, `views`, `feedback`, `match-log`, `pokepaste`, `user/*`, `changelog`, `creator`, `spotlight`, `oembed`, `sync`, `share/*/collaborators`, `share/*/versions`, `share/*/fork`.
 
----
+Routes **without standard rate limiting:**
 
-## Remediation Priority
+| Route | Auth | Risk |
+|-------|------|------|
+| `GET /api/sprite` | None | Low — edge-cached, strict allowlist |
+| `GET /api/keep-alive` | None | Low — static 200 |
+| `POST /api/webhooks/linear` | HMAC signature | Low |
+| `POST /api/webhooks/posthog` | Token header | Low |
+| `GET /api/setup` | Bearer secret | Medium — runs DDL |
+| `POST /api/migrate` | Body secret | Medium — batch DB writes |
 
-1. **High Priority (address in next sprint):**
-   - Fix HogQL query injection (use variables instead of string interpolation)
-   - Add timeouts to all external fetch calls
-
-2. **Medium Priority (next quarter):**
-   - Remove `'unsafe-eval'` from CSP
-   - Standardize share ID validation regex
-   - Implement error ID correlation in logs
-
-3. **Low Priority (backlog):**
-   - Migrate Linear queries to GraphQL variables
-   - Review third-party service integrations for additional timeout configurations
+#### Finding 9 — No rate limiting on `/api/setup` and `/api/migrate`
+- **OWASP Category:** A05:2021 – Security Misconfiguration
+- **File:** `src/app/api/setup/route.ts`, `src/app/api/migrate/route.ts`
+- **Severity:** Medium
+- **Details:** Both endpoints are secret-gated but lack rate limiting. Repeated requests with wrong secrets could be used to brute-force values (compounding Finding 4). Even with correct secrets, rapid calls could hammer the database.
+- **Fix:** Add `apiGuard` with a tight IP-based rate limit (e.g. `max: 5, windowMs: 60_000`) as a first line before the secret check.
 
 ---
 
-## No Issues Found
+## 3. Security Utilities (`src/lib/security/`) — Assessment
 
-The following checks passed:
+| Utility | Assessment |
+|---------|-----------|
+| `api-guard.ts` | Good — wraps rate limiting, Content-Type, and body-size checks. Used consistently across most routes. |
+| `cors.ts` | Good — strict allowlist with regex for Vercel previews. `isAllowedOrigin` correctly returns `true` for no-origin (same-origin) requests. |
+| `csrf.ts` | Good — double-submit cookie with constant-length token check. `httpOnly: false` is intentional to allow JS access. |
+| `input-validation.ts` | Good — null-byte stripping, injection pattern matching, IP validation. Note: `containsInjection` regex can be bypassed with character encoding tricks; should be supplementary, not primary defence. |
+| `bot-detection.ts` | Good — comprehensive scanner/scraper blocklist with legitimate bot allowlist. |
 
-- ✅ No hardcoded API keys or secrets in source files (env vars only)
-- ✅ No `eval()` or `new Function()` usage in application code
-- ✅ No raw SQL injection (all parameterized)
-- ✅ No `dangerouslySetInnerHTML` in active components
-- ✅ All user input is escaped or sanitized before storage
-- ✅ Cron routes properly authenticated with `CRON_SECRET`
-- ✅ No unvalidated redirects (share/fork uses explicit URL construction)
-- ✅ Account deletion properly cascades foreign keys and anonymizes PII
+**Weakness:** `containsInjection` in `input-validation.ts:12-21` uses simple regex patterns. An attacker could bypass with unicode escapes, null bytes between characters, or CSS encoding. The codebase correctly uses this only as a supplementary check alongside `escapeHtml`; ensure it is never used as the sole defence.
 
 ---
 
-## Conclusion
+## 4. CSP and Security Headers (`next.config.ts`)
 
-The VGC Team Report application has a **strong security posture**. The identified issues are **moderate in severity** and do not represent critical vulnerabilities. All high-risk patterns (SQLi, XSS, CSRF, broken auth) are properly mitigated. Addressing the three MEDIUM-severity findings will bring the application to a **high security standard**.
+**Headers correctly set:**
+- `X-Frame-Options: DENY` ✓
+- `X-Content-Type-Options: nosniff` ✓
+- `Referrer-Policy: strict-origin-when-cross-origin` ✓
+- `Permissions-Policy` — camera/mic/geolocation/payment disabled ✓
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` ✓
+- `Content-Security-Policy` — comprehensive, covering all major directive categories ✓
 
-Recommended next steps:
-1. Implement fetch timeouts across all external API calls
-2. Refactor HogQL query to use parameterized variables
-3. Remove `unsafe-eval` from CSP and test Clerk OAuth compatibility
+**CSP Issues:**
+
+| Issue | Severity | Detail |
+|-------|----------|--------|
+| `script-src 'unsafe-inline'` | Medium | Nullifies inline-script XSS protection (see Finding 3) |
+| `style-src 'unsafe-inline'` | Low | Permits CSS injection; lower risk for most threat models |
+| `Cross-Origin-Opener-Policy: unsafe-none` | Low | Required for Clerk OAuth popups; acceptable trade-off but documented |
+
+---
+
+## 5. Prioritised Fix List
+
+| Priority | Severity | Finding | Location |
+|----------|----------|---------|----------|
+| 1 | High | `npm audit fix` — semver (Critical ReDoS), next DoS, fast-uri, dompurify | `package.json` |
+| 2 | Medium | JSON-LD XSS: `</script>` in user content in `<script>` tag | `src/components/seo/JsonLd.tsx:5` |
+| 3 | Medium | `'unsafe-inline'` in `script-src` CSP — switch to nonce-based | `next.config.ts:85` |
+| 4 | Medium | Non-timing-safe secret comparison in `/api/bot` | `src/app/api/bot/route.ts:39` |
+| 5 | Medium | `CRON_SECRET` unset allows `Bearer undefined` bypass | `src/app/api/bot/route.ts:38-40` |
+| 6 | Medium | No rate limiting on `/api/setup` and `/api/migrate` | respective route files |
+| 7 | Low-Med | Secret in request body on `/api/migrate` (should be Authorization header) | `src/app/api/migrate/route.ts:22` |
+| 8 | Low | Discord public key hardcoded (move to env var for rotation ease) | `src/app/api/discord/route.ts:6` |
+| 9 | Low | `NEXT_PUBLIC_POSTHOG_HOST` lacks allowlist validation before server-side fetch | `src/app/api/webhooks/posthog/route.ts:23` |
+| 10 | Low | Export endpoint rate limit not resilient to Redis cache failure | `src/app/api/user/export/route.ts` |
