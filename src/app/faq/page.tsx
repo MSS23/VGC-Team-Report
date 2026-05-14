@@ -25,6 +25,16 @@ export const metadata: Metadata = {
   },
 };
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/[\s]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 50);
+}
+
 const FAQ_ITEMS = [
   {
     question: "What is VGC Team Report?",
@@ -75,6 +85,16 @@ const FAQ_ITEMS = [
     question: "What is an Open Team Sheet (OTS) in VGC, and how does VGC Team Report support it?",
     answer:
       "An Open Team Sheet (OTS) is a document that reveals your six Pokémon, their items, abilities, moves, and Tera types before a match — but omits EV and IV spreads. OTS rules are used at many major VGC tournaments so opponents know the general team composition without seeing exact EV benchmarks. VGC Team Report includes a built-in OTS generator: open any team report and use the 'Visual OTS Sheet' option in the menu to generate a clean, shareable OTS image with all six Pokémon sprites and a QR code linking to your report. You can download the image or copy an OTS-formatted text paste compatible with Pokémon Showdown.",
+  },
+  {
+    question: "What are SP spreads in Pokémon Champions?",
+    answer:
+      "In the Pokémon Champions format, Stat Points (SP) replace the traditional EV (Effort Value) system. Each Pokémon has 600 total SP to distribute across the six stats (HP, Attack, Defense, Sp. Atk, Sp. Def, Speed), with a maximum of 200 SP per individual stat. SP function similarly to EVs but with different numerical values — 200 SP in a stat is roughly equivalent to 252 EVs in traditional VGC. VGC Team Report automatically detects Champion format teams and displays SP values correctly when you import a team paste.",
+  },
+  {
+    question: "What is Regulation M-A in Pokémon Champions?",
+    answer:
+      "Regulation M-A is the current competitive ruleset for Pokémon Champions, the official format for the 2026 Play! Pokémon Championship Series. It features a Mega Evolution mechanic — each player can have one Mega Evolution per team, activated by giving a Pokémon a Mega Stone held item. Regulation M-A is used for the 2026 Regional Championships (including Indianapolis Regionals) and the 2026 World Championships. VGC Team Report fully supports Regulation M-A, including auto-detection of Mega Evolutions from team pastes and SP spread display.",
   },
   {
     question: "How do I get my VGC team report discovered by other players?",
@@ -128,7 +148,7 @@ export default function FAQPage() {
         <div className="space-y-0 divide-y divide-border/50">
           {FAQ_ITEMS.map((item, index) => (
             <div key={index} className="py-6 first:pt-0">
-              <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3 leading-snug">
+              <h2 id={slugify(item.question)} className="text-base sm:text-lg font-semibold text-text-primary mb-3 leading-snug">
                 {item.question}
               </h2>
               <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
