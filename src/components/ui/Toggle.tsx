@@ -6,7 +6,7 @@ interface ToggleProps {
 
 export function Toggle({ checked, onChange, label }: ToggleProps) {
   return (
-    <label className="inline-flex items-center gap-2 cursor-pointer select-none group min-h-[36px]">
+    <div className="inline-flex items-center gap-2 cursor-pointer select-none group min-h-[36px]">
       <button
         role="switch"
         aria-checked={checked}
@@ -23,6 +23,6 @@ export function Toggle({ checked, onChange, label }: ToggleProps) {
         />
       </button>
       <span className="text-xs font-semibold text-text-secondary group-hover:text-text-primary transition-colors hidden sm:inline uppercase tracking-wider">{label}</span>
-    </label>
+    </div>
   );
 }

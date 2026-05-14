@@ -122,6 +122,8 @@ export function ReactionBar({ shareId, compact = false, isOwner = false }: React
     <button
       type="button"
       onClick={toggleLike}
+      aria-label={liked ? "Unlike report" : "Like report"}
+      aria-pressed={liked}
       className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-full text-sm font-bold transition-all duration-200 cursor-pointer active:scale-95 ${
         liked
           ? "text-red-500"

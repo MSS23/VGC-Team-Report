@@ -81,6 +81,7 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
           </p>
         </div>
         <button
+          type="button"
           onClick={onDismiss}
           className="mt-4 w-full text-center text-xs text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
         >

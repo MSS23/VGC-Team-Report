@@ -504,7 +504,7 @@ export function Navbar(props: NavbarProps) {
                 {/* Dark mode */}
                 <div className="px-4 py-2.5 flex items-center justify-between">
                   <span className="text-sm font-semibold text-text-secondary">{darkMode ? t.dark : t.light} mode</span>
-                  <Toggle checked={darkMode} onChange={(v) => { onDarkModeChange(v); }} label="" />
+                  <Toggle checked={darkMode} onChange={(v) => { onDarkModeChange(v); }} label="Dark mode" />
                 </div>
 
                 {/* Language */}
