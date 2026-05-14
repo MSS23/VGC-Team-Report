@@ -2,25 +2,6 @@
  * Enhanced input validation utilities for API security.
  */
 
-/** Strip null bytes and other control characters that could cause issues */
-export function sanitizeInput(str: string): string {
-  // Remove null bytes and non-printable control chars (except newline, tab, carriage return)
-  return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
-}
-
-/** Validate that a string doesn't contain common injection patterns */
-export function containsInjection(str: string): boolean {
-  const patterns = [
-    /<script\b/i,                    // XSS script tags
-    /javascript:/i,                  // javascript: protocol
-    /on\w+\s*=/i,                    // inline event handlers (onclick=, etc.)
-    /data:\s*text\/html/i,           // data: HTML injection
-    /\beval\s*\(/i,                  // eval() calls
-    /\bexpression\s*\(/i,            // CSS expression()
-  ];
-  return patterns.some((p) => p.test(str));
-}
-
 /** Validate IP address format */
 export function isValidIp(ip: string): boolean {
   // IPv4
