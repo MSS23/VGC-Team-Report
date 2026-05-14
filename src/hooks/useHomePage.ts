@@ -262,7 +262,7 @@ export function useHomePage() {
   }), [paste, notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId, privateFields, genTheme]);
 
   // ── Share flow (extracted) ───────────────────────────────────────
-  const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t: t as unknown as Record<string, string> });
+  const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t });
 
   // ── Auto-draft (logged-in users) ─────────────────────────────────
   const { clearDraft } = useAutoDraft({
@@ -436,7 +436,7 @@ export function useHomePage() {
     setShowShortcutHint: setShowShortcutHint as (fn: (v: boolean) => boolean) => void,
     handleUndo, handleRedo,
     setCreatorMode,
-    t: t as unknown as Record<string, string>,
+    t,
   });
 
   // Shared views (/s/{id}) require an authenticated owner/collaborator to edit.

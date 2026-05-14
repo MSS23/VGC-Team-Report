@@ -4,6 +4,7 @@ import { useMemo, useCallback, useLayoutEffect, useRef } from "react";
 import { useSlideNavigation } from "@/hooks/useSlideNavigation";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 import type { MatchupPlan } from "@/hooks/useMatchupPlans";
+import type { TranslationKeys } from "@/lib/i18n/translations/en";
 
 interface SlideSystemOptions {
   analysis: TeamAnalysis | null;
@@ -25,7 +26,7 @@ interface SlideSystemOptions {
   setCreatorMode: (v: boolean) => void;
   onMoveSlideUp?: () => void;
   onMoveSlideDown?: () => void;
-  t: Record<string, string>;
+  t: TranslationKeys;
 }
 
 export function useSlideSystem(opts: SlideSystemOptions) {

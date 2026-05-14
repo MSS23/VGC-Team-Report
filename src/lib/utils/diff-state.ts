@@ -3,10 +3,11 @@
  * Returns a list of human-readable section names that were modified.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyState = Record<string, any>;
+import type { SerializedMatchupPlan, SerializedGamePlan } from "@/lib/sharing/url-codec";
 
-export function detectChangedSections(oldState: AnyState | null, newState: AnyState): string[] {
+type StateRecord = Record<string, unknown>;
+
+export function detectChangedSections(oldState: StateRecord | null, newState: StateRecord): string[] {
   if (!oldState) return ["Created report"];
 
   const sections: string[] = [];
@@ -47,19 +48,19 @@ export function detectChangedSections(oldState: AnyState | null, newState: AnySt
   }
 
   // Per-Pokemon notes
-  const changedNotes = diffRecordKeys(oldState.notes, newState.notes);
+  const changedNotes = diffRecordKeys(asRecord(oldState.notes), asRecord(newState.notes));
   if (changedNotes.length > 0) {
     sections.push(`Notes (${changedNotes.join(", ")})`);
   }
 
   // Per-Pokemon calcs
-  const changedCalcs = diffRecordKeys(oldState.calcs, newState.calcs);
+  const changedCalcs = diffRecordKeys(asRecord(oldState.calcs), asRecord(newState.calcs));
   if (changedCalcs.length > 0) {
     sections.push(`Damage calcs (${changedCalcs.join(", ")})`);
   }
 
   // Roles
-  const changedRoles = diffRecordKeys(oldState.roles, newState.roles);
+  const changedRoles = diffRecordKeys(asRecord(oldState.roles), asRecord(newState.roles));
   if (changedRoles.length > 0) {
     sections.push(`Roles (${changedRoles.join(", ")})`);
   }
@@ -67,7 +68,7 @@ export function detectChangedSections(oldState: AnyState | null, newState: AnySt
 
 
   // Matchup plans — only compare user-editable content, not structural fields
-  if (matchupPlansChanged(oldState.matchupPlans ?? [], newState.matchupPlans ?? [])) {
+  if (matchupPlansChanged(asArray(oldState.matchupPlans), asArray(newState.matchupPlans))) {
     sections.push("Matchup plans");
   }
 
@@ -82,16 +83,26 @@ export function detectChangedSections(oldState: AnyState | null, newState: AnySt
   return sections;
 }
 
+/** Safely coerce an unknown value to Record<string, unknown> or undefined */
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return undefined;
+}
+
+/** Safely coerce an unknown value to an array or empty array */
+function asArray(value: unknown): SerializedMatchupPlan[] {
+  return Array.isArray(value) ? (value as SerializedMatchupPlan[]) : [];
+}
+
 /** Compare matchup plans by user-editable content only (ignores structural fields like IDs, showSlide) */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function matchupPlansChanged(oldPlans: any[], newPlans: any[]): boolean {
+function matchupPlansChanged(oldPlans: SerializedMatchupPlan[], newPlans: SerializedMatchupPlan[]): boolean {
   if (oldPlans.length !== newPlans.length) return true;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const normalize = (p: any) => JSON.stringify({
+  const normalize = (p: SerializedMatchupPlan) => JSON.stringify({
     opponentLabel: p.opponentLabel ?? "",
     opponentPaste: p.opponentPaste ?? "",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    gamePlans: (p.gamePlans ?? []).map((gp: any) => ({
+    gamePlans: (p.gamePlans ?? []).map((gp: SerializedGamePlan) => ({
       notes: gp.notes ?? "",
       bring: gp.bring ?? [],
       result: gp.result ?? null,
