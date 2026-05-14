@@ -146,7 +146,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
         <section className="max-w-5xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-extrabold text-text-primary">
-              {mega.displayName} EV Spreads & Competitive Teams
+              {mega.displayName} SP Spreads & Competitive Teams
             </h2>
             <Link
               href={`/explore?species=${encodeURIComponent(mega.baseName)}&regulation=Reg+M-A`}

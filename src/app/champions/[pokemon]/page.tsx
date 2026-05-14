@@ -33,10 +33,10 @@ export async function generateMetadata({
   if (!mega) return {};
 
   // Title targets the highest-volume long-tail queries: "{Pokemon} VGC",
-  // "{Pokemon} EV spread", "{Pokemon} moveset". Keeping it under ~60 chars
+  // "{Pokemon} SP spread", "{Pokemon} moveset". Keeping it under ~60 chars
   // so Google doesn't truncate in SERPs.
-  const title = `${mega.displayName} VGC Guide — EV Spreads, Movesets & Teams`;
-  const description = `Complete ${mega.displayName} VGC guide for Pokemon Champions Regulation M-A: best EV spreads, movesets, damage calcs, and top competitive teams. ${mega.ability} with ${mega.megaStone}.`;
+  const title = `${mega.displayName} VGC Guide — SP Spreads, Movesets & Teams`;
+  const description = `Complete ${mega.displayName} VGC guide for Pokemon Champions Regulation M-A: best SP spreads, movesets, damage calcs, and top competitive teams. ${mega.ability} with ${mega.megaStone}.`;
 
   return {
     title,
@@ -59,7 +59,7 @@ export async function generateMetadata({
     keywords: [
       mega.displayName,
       `${mega.displayName} VGC`,
-      `${mega.displayName} EV spread`,
+      `${mega.displayName} SP spread`,
       `${mega.displayName} moveset`,
       `${mega.displayName} competitive set`,
       `${mega.displayName} best set`,
@@ -67,7 +67,7 @@ export async function generateMetadata({
       `${mega.displayName} stats`,
       `${mega.baseName} Mega Evolution`,
       `${mega.baseName} VGC`,
-      `${mega.baseName} EV spread`,
+      `${mega.baseName} SP spread`,
       "Pokemon Champions",
       "Regulation M-A",
       "VGC 2026",
@@ -219,7 +219,7 @@ export default async function MegaPokemonPage({
     ...(teams.length > 0
       ? [{
           q: `Where can I find competitive ${mega.displayName} VGC teams?`,
-          a: `VGC Team Report hosts ${teams.length} public competitive team${teams.length === 1 ? "" : "s"} featuring ${mega.displayName}, with full EV spreads, movesets, and matchup notes. Browse them on this page or create your own report by pasting your Showdown team.`,
+          a: `VGC Team Report hosts ${teams.length} public competitive team${teams.length === 1 ? "" : "s"} featuring ${mega.displayName}, with full SP spreads, movesets, and matchup notes. Browse them on this page or create your own report by pasting your Showdown team.`,
         }]
       : []),
   ];
@@ -230,7 +230,7 @@ export default async function MegaPokemonPage({
         data={{
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: `${mega.displayName} VGC Guide — EV Spreads, Movesets & Teams`,
+          name: `${mega.displayName} VGC Guide — SP Spreads, Movesets & Teams`,
           description: mega.description,
           url: `https://pokemonvgcteamreport.com/champions/${mega.slug}`,
           isPartOf: {
