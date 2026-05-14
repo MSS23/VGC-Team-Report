@@ -1,123 +1,210 @@
-# WCAG 2.1 AA Static Accessibility Audit — VGC Team Report
+# R8 — Accessibility Audit
 
-**Audit date:** 2026-05-07
-**Scope:** Static source analysis only (no live browser testing)
-**Standard:** WCAG 2.1 Level AA
-**Auditor:** Automated static analysis (Claude)
-
-**Files audited:**
-- `src/app/page.tsx`
-- `src/app/layout.tsx`
-- `src/app/s/[id]/page.tsx`
-- `src/app/explore/page.tsx` + `src/components/explore/ExploreContent.tsx`
-- `src/components/ui/ShareModal.tsx`
-- `src/components/ui/Button.tsx`
-- `src/components/social/ReactionBar.tsx`
-- `src/components/social/SaveButton.tsx`
-- `src/components/social/CreatorLink.tsx`
-- `src/components/social/ViewCount.tsx`
-- `src/components/social/CommentSection.tsx`
-- `src/components/social/CollaboratorPanel.tsx`
-- `src/components/social/FollowButton.tsx`
-- `src/components/social/VersionHistory.tsx`
-- `src/components/social/EditChangelog.tsx`
+**Date:** 2026-05-14  
+**Scope:** src/app/globals.css, src/components/ui/, src/components/social/ReactionBar.tsx, src/app/layout.tsx, src/components/layout/Navbar.tsx  
+**Standard:** WCAG 2.1 Level AA  
+**Method:** Static source analysis
 
 ---
 
-## Severity legend
+## B1 — `text-text-tertiary` Fails WCAG AA Contrast
 
-| Level | Meaning |
-|-------|---------|
-| **Critical** | Clear WCAG 2.1 AA failure; blocks AT users |
-| **High** | Very likely failure; requires manual verification to confirm |
-| **Medium** | Best-practice gap; degraded but not blocked AT experience |
-| **Low** | Minor / informational; no direct AT blocker |
+**File:** `src/app/globals.css:16` (light), `globals.css:273` (dark)  
+**WCAG Criterion:** 1.4.3 Contrast (Minimum) — AA requires 4.5:1 for normal text  
+**Severity:** HIGH — affects ~470 occurrences across the codebase  
 
----
+**Finding:**  
+- Light mode: `--text-tertiary: #6E6E8A` on `--background: #FAF9F6` → contrast ratio **4.0:1** (FAIL)  
+- Dark mode: `--text-tertiary: #9898B8` on `--background: #0B0B1A` → contrast ratio **5.6:1** (PASS)  
 
-## Findings
+The light-mode tertiary color fails by ~0.5 ratio points. It is used in ~470 places across TSX files for labels, timestamps, helper text, placeholder descriptions, and decorative caption text.
 
----
+**Minimum fix — change one CSS custom property:**  
+```css
+/* src/app/globals.css, line 16 — change from: */
+--text-tertiary: #6E6E8A;
+/* to: */
+--text-tertiary: #5E5E7A;
+```
+`#5E5E7A` on `#FAF9F6` yields approximately **4.6:1** — passing AA. This is a single-line change that cascades everywhere via `var(--text-tertiary)` and the Tailwind token `text-text-tertiary`.
 
-**[WCAG 4.1.2 Name, Role, Value / 2.1.2 No Keyboard Trap]** `src/app/page.tsx:1527–1586` — Export theme picker modal rendered as a plain `<div>` with no `role="dialog"`, no `aria-modal="true"`, no `aria-labelledby`, and no focus trap. Backdrop click closes it but `Escape` key does not (no keydown handler). Screen readers will read background content; keyboard users cannot navigate within the modal or dismiss it without a mouse. — Severity: **Critical**
-
-**[WCAG 1.3.1 Info and Relationships / 4.1.2 Name, Role, Value]** `src/components/social/CommentSection.tsx:199–228` — The comment form contains two unlabelled inputs: the `<input type="text">` for display name (line 200) and the `<textarea>` for the comment body (line 210). Neither has a `<label>`, `aria-label`, or `aria-labelledby`. The `placeholder` attribute is not a substitute for a label per WCAG. — Severity: **Critical**
-
-**[WCAG 4.1.2 Name, Role, Value]** `src/components/ui/ShareModal.tsx:435–475` — The "List on Explore" toggle and the "Enable comments" toggle (lines 536–561) use `<button role="switch" aria-checked={...}>` — these are implemented correctly. However, the toggle buttons use `disabled` in combination with `role="switch"`, and when `disabled` the `aria-checked` state is still present but interaction is blocked without announcing the reason. The `title` attribute on the public/private button at `src/app/page.tsx:1206` is used as a tooltip for mouse users but is not reliably exposed by all screen readers as an accessible description. — Severity: **High**
-
-**[WCAG 4.1.2 Name, Role, Value]** `src/app/page.tsx:1487–1494` — Edit URL toast close button contains only an SVG (X icon) with no `aria-label` and no `aria-hidden` on the SVG. Screen readers will announce "button" with no name. Fix: add `aria-label="Dismiss edit link toast"` and `aria-hidden="true"` on the SVG. — Severity: **High**
-
-**[WCAG 4.1.3 Status Messages]** `src/app/page.tsx:1589–1600` — PokéPaste error toast is rendered as a plain `<div>` with no `role="alert"` and no `aria-live="assertive"`. The error message will not be announced to screen reader users when it appears dynamically. Fix: add `role="alert"` to the toast container. — Severity: **High**
-
-**[WCAG 1.3.1 Info and Relationships]** `src/components/explore/ExploreContent.tsx:122` — The `<main>` landmark is placed inside a `<div class="min-h-screen">` wrapper. In the same rendering tree, `src/app/layout.tsx:127` wraps all children with `<div id="main-content">` (no role). When `ExploreContent` renders its own `<main>`, it becomes a nested `<main>` inside the layout wrapper, which already contains a `<main>` from other routes. A page should have exactly one `<main>` landmark. The layout wrapper `<div id="main-content">` should carry `role="main"` instead, and individual page components should not add another `<main>`. — Severity: **High**
-
-**[WCAG 2.4.1 Bypass Blocks]** `src/app/layout.tsx:100,127` — The skip link targets `#main-content` which resolves to a `<div id="main-content">`. This `<div>` has no `tabindex="-1"`, so browsers that do not natively focus plain `<div>` targets will silently skip the skip link. Additionally, the `<div>` has no `role="main"`, so it is not a landmark region. Fix: add `tabIndex={-1}` to `<div id="main-content">` or move the `id` to the `<main>` element inside each page. — Severity: **High**
-
-**[WCAG 4.1.2 Name, Role, Value]** `src/components/social/CollaboratorPanel.tsx:246–251` — The "Remove" button for a collaborator carries only the text "Remove" with a `title="Remove access"`. When multiple collaborators are listed the buttons are identical in accessible name — screen reader users cannot distinguish which user each button removes. Fix: `aria-label={`Remove ${collab.name}`}`. — Severity: **High**
-
-**[WCAG 4.1.2 Name, Role, Value]** `src/components/social/CommentSection.tsx:256–261` — Per-comment "Delete" and "Flag" buttons carry only text labels ("Delete", "Flag") with no accessible context identifying which comment they act on. When multiple comments are listed, screen reader users cannot distinguish between buttons. Fix: `aria-label={`Delete comment by ${comment.displayName}`}` and `aria-label={`Report comment by ${comment.displayName}`}`. — Severity: **High**
-
-**[WCAG 2.5.5 Target Size / Project UI standards (44×44px min)]** `src/app/page.tsx:892` — Welcome-back banner close button is `w-6 h-6` (24×24 CSS px). `src/components/ui/ShareModal.tsx:249–259` — "Dismiss thank you message" button is also sized as `min-w-[44px] min-h-[44px]` — this one is correct. However, at `src/app/page.tsx:1487` the edit URL toast close button has no explicit size constraints. The project's own UI/UX standards mandate 44×44px minimum. — Severity: **High**
-
-**[WCAG 4.1.3 Status Messages]** `src/components/social/CommentSection.tsx:230–235` — The "Comment posted!" success message and "Failed to post comment" error message are rendered with `animate-fade-in` but no `role="status"` or `aria-live`. Screen reader users will not be notified when a comment is successfully posted or when posting fails. Fix: wrap in a `<div role="status" aria-live="polite">` for success, `role="alert"` for error. — Severity: **Medium**
-
-**[WCAG 1.1.1 Non-text Content]** `src/components/social/ViewCount.tsx:11–14` — The eye/view icon SVG inside `<ViewCount>` has no `aria-hidden="true"`. The parent `<span>` has no accessible label contextualising that the number is a view count. A screen reader will announce the SVG path data (or nothing) followed by the count number. Fix: add `aria-hidden="true"` to the SVG and `aria-label={`${count} views`}` to the outer `<span>`. — Severity: **Medium**
-
-**[WCAG 1.1.1 Non-text Content]** `src/components/social/CreatorLink.tsx:14–17` — The user icon SVG inside `<CreatorLink>` has no `aria-hidden="true"`. Because the adjacent `<span>` contains the creator name as visible text, the link already has an accessible name from its text content. The SVG is purely decorative here and should be `aria-hidden="true"`. — Severity: **Medium**
-
-**[WCAG 4.1.2 Name, Role, Value]** `src/components/social/CollaboratorPanel.tsx:133–154` — The "Manage Access" toggle button does not carry `aria-expanded` to reflect whether the panel is open or closed. The chevron rotation is a visual-only affordance. Fix: add `aria-expanded={open}`. — Severity: **Medium**
-
-**[WCAG 4.1.2 Name, Role, Value]** `src/components/social/EditChangelog.tsx:67–90` — The "Version History" toggle button does not carry `aria-expanded`. Same issue as CollaboratorPanel. Fix: add `aria-expanded={open}`. Also applies to `src/components/social/VersionHistory.tsx:82–93` (the collapsed button) and `src/components/social/CommentSection.tsx:164–193` (comments accordion). — Severity: **Medium**
-
-**[WCAG 4.1.2 Name, Role, Value]** `src/components/social/FollowButton.tsx:49–78` — The Follow/Unfollow button uses `disabled` + opacity for the loading state but does not communicate the loading state to AT. When loading, `aria-busy="true"` or an `aria-label` update would inform screen reader users that an action is in progress. — Severity: **Low**
-
-**[WCAG 1.1.1 Non-text Content]** `src/components/social/CollaboratorPanel.tsx:183` — The user avatar `<img src={user.imageUrl} alt="" .../>` correctly uses empty `alt` for a decorative avatar. This is correct. However, the avatar initials fallback `<div>` at line 225 has no `aria-hidden`, so screen readers may announce the single letter character as content. Fix: `aria-hidden="true"` on the initials `<div>` since the name is already exposed in the adjacent `<span>`. — Severity: **Low**
-
-**[WCAG 2.4.6 Headings and Labels]** `src/components/ui/ShareModal.tsx:208–211` — The close button has `aria-label="Close"`, which is acceptable per WCAG but provides no context about what is being closed. Because the modal now has a correct `aria-labelledby` linking to the dialog title, AT users do receive context from the dialog role itself. This is a low-priority polish item; `aria-label="Close share modal"` is more descriptive. — Severity: **Low**
-
-**[WCAG 1.3.1 Info and Relationships]** `src/app/page.tsx:975` — `aria-hidden` attribute written as bare JSX boolean (`aria-hidden` without `="true"`). In React this compiles to `aria-hidden={true}` which is correct, but it is worth noting that the string form `aria-hidden="true"` is the canonical HTML form. No runtime impact in React 19. — Severity: **Low**
-
-**[WCAG 2.4.3 Focus Order]** `src/components/social/CommentSection.tsx:254–275` — Comment action buttons ("Delete", "Flag") are only visible on hover (`opacity-0 group-hover:opacity-100`). They are still in the tab order when hidden (no `tabIndex={-1}` applied when invisible). Keyboard-only users will focus invisible buttons, which is a confusing and broken experience. Fix: conditionally apply `tabIndex={-1}` when the buttons are visually hidden, or always show them (perhaps smaller) so they are consistently focusable. — Severity: **High**
+**Note on large text:** WCAG allows 3:1 for text ≥18pt or ≥14pt bold. Some tertiary usages (10px labels, small captions) are well below this threshold, so the full fix requires the colour change rather than relying on the size exemption.
 
 ---
 
-## Positive observations (correctly implemented)
+## B2 — Toggle: `<button role="switch">` Nested Inside `<label>` (Invalid HTML, Double-Announces)
 
-- `lang="en"` on `<html>` — `src/app/layout.tsx:94` — correct.
-- Skip-to-content link — `src/app/layout.tsx:100` — present with correct `sr-only focus:not-sr-only` pattern.
-- `role="dialog"`, `aria-modal="true"`, `aria-labelledby` and full focus trap on `ShareModal` — `src/components/ui/ShareModal.tsx:189–193,100–138` — well implemented.
-- `role="switch"` + `aria-checked` on visibility and comments toggles in ShareModal — correct.
-- `role="status" aria-live="polite"` on version comparison "no differences" banner — `src/app/page.tsx:971–972` — correct.
-- `aria-hidden="true"` on PDF print container — `src/app/page.tsx:1607` — correct.
-- `viewport` meta allows user scaling — `userScalable: true`, `maximumScale: 5` — correct.
-- `aria-label` on welcome-back banner close button — `src/app/page.tsx:892` — present.
-- `aria-label` on SaveButton authenticated state — `src/components/social/SaveButton.tsx:98` — present.
-- `aria-label="Like report"` on guest ReactionBar — `src/components/social/ReactionBar.tsx:117` — present.
-- `Button.tsx` has `focus-visible:ring-2 focus-visible:ring-accent/50` — focus ring always applied to primary interactive component.
-- `rel="noopener noreferrer"` on all external `target="_blank"` links in ShareModal — correct.
-- Escape key handler in ShareModal closes the dialog — `src/components/ui/ShareModal.tsx:111–115` — correct.
+**File:** `src/components/ui/Toggle.tsx:9-13`  
+**Caller with empty label:** `src/components/layout/Navbar.tsx:507`  
+**WCAG Criterion:** 4.1.2 Name, Role, Value; 1.3.1 Info and Relationships  
+**Severity:** HIGH — screen readers double-announce the element; empty `label=""` causes Navbar toggle to have no accessible name  
+
+**Finding:**  
+`Toggle.tsx` wraps a `<button role="switch">` inside a `<label>`. Per HTML spec, interactive elements must not be descendants of `<label>`. Screen readers (NVDA, VoiceOver) announce both the label's text content and the button's `aria-label`, producing "Dark mode Dark mode switch on/off" noise. Additionally, `Navbar.tsx:507` passes `label=""`, leaving the switch with an empty `aria-label` when the visible label span is hidden at small screen sizes.
+
+**Fix — Remove `<label>`, use `<div>` wrapper:**  
+```tsx
+// src/components/ui/Toggle.tsx
+export function Toggle({ checked, onChange, label }: ToggleProps) {
+  return (
+    <div className="inline-flex items-center gap-2 cursor-pointer select-none group min-h-[36px]">
+      <button
+        role="switch"
+        aria-checked={checked}
+        aria-label={label || undefined}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-[24px] w-[42px] items-center rounded-full transition-all duration-300 flex-shrink-0 ${
+          checked ? "bg-accent shadow-md shadow-accent/30" : "bg-border"
+        }`}
+      >
+        <span
+          className={`inline-block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-all duration-300 ${
+            checked ? "translate-x-[20px] scale-110" : "translate-x-[3px]"
+          }`}
+        />
+      </button>
+      {label && (
+        <span
+          aria-hidden="true"
+          className="text-xs font-semibold text-text-secondary group-hover:text-text-primary transition-colors hidden sm:inline uppercase tracking-wider"
+        >
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+```
+
+**Fix for Navbar.tsx:507 — provide a real label:**  
+```tsx
+// src/components/layout/Navbar.tsx:507 — change from:
+<Toggle checked={darkMode} onChange={(v) => { onDarkModeChange(v); }} label="" />
+// to:
+<Toggle checked={darkMode} onChange={(v) => { onDarkModeChange(v); }} label="Dark mode" />
+```
 
 ---
 
-## Remediation priority
+## B3 — ReactionBar Like Button: Missing `aria-label` and `aria-pressed`
 
-| Priority | Finding | File:approx-line | Effort |
-|----------|---------|-------------------|--------|
-| P0 | Export theme picker modal: missing dialog semantics + focus trap | `page.tsx:1527` | Medium |
-| P0 | Comment form inputs: no labels | `CommentSection.tsx:200,210` | Low |
-| P0 | Comment action buttons focusable when visually hidden | `CommentSection.tsx:254` | Low |
-| P1 | Edit URL toast close button: no aria-label | `page.tsx:1487` | Trivial |
-| P1 | PokéPaste error toast: no role=alert | `page.tsx:1589` | Trivial |
-| P1 | Multiple `<main>` landmarks (layout + ExploreContent) | `layout.tsx:127 / ExploreContent.tsx:122` | Low |
-| P1 | Skip link `<div>` target missing tabindex=-1 | `layout.tsx:127` | Trivial |
-| P1 | Collaborator "Remove" buttons: non-unique accessible names | `CollaboratorPanel.tsx:246` | Trivial |
-| P1 | Comment "Delete"/"Flag" buttons: non-unique accessible names | `CommentSection.tsx:256` | Trivial |
-| P1 | Welcome-back banner close: 24×24px touch target | `page.tsx:892` | Low |
-| P2 | Comment posted/failed: no live region | `CommentSection.tsx:230` | Low |
-| P2 | ViewCount SVG not aria-hidden; span lacks accessible label | `ViewCount.tsx:11` | Trivial |
-| P2 | CreatorLink SVG not aria-hidden | `CreatorLink.tsx:14` | Trivial |
-| P2 | CollaboratorPanel toggle: missing aria-expanded | `CollaboratorPanel.tsx:133` | Trivial |
-| P2 | EditChangelog / VersionHistory / CommentSection toggles: missing aria-expanded | multiple | Trivial |
-| P3 | Collaborator initials fallback div: missing aria-hidden | `CollaboratorPanel.tsx:225` | Trivial |
-| P3 | FollowButton: no aria-busy during loading | `FollowButton.tsx:49` | Trivial |
-| P3 | ShareModal close button: generic "Close" label | `ShareModal.tsx:208` | Trivial |
+**File:** `src/components/social/ReactionBar.tsx:122-135`  
+**WCAG Criterion:** 4.1.2 Name, Role, Value  
+**Severity:** MEDIUM — screen reader users cannot determine button purpose or state  
+
+**Finding:**  
+The authenticated-user like button at line 122 has no `aria-label` and no `aria-pressed` attribute. Screen readers announce it as "button" with no context. The `liked` state is conveyed only visually (filled/unfilled heart icon). The `SignInButton` variant at line 109 correctly has `aria-label="Like report"` — the logged-in path is missing the same.
+
+```tsx
+// src/components/social/ReactionBar.tsx:122 — current:
+<button
+  type="button"
+  onClick={toggleLike}
+  className={`inline-flex ...`}
+>
+```
+
+**Fix:**
+```tsx
+<button
+  type="button"
+  onClick={toggleLike}
+  aria-label={liked ? "Unlike report" : "Like report"}
+  aria-pressed={liked}
+  className={`inline-flex ...`}
+>
+```
+
+---
+
+## VGC-177 — Skip-to-Content Link: PRESENT (No Bug)
+
+**File:** `src/app/layout.tsx:99-101`  
+**WCAG Criterion:** 2.4.1 Bypass Blocks  
+**Severity:** NONE — already implemented correctly  
+
+**Finding:**  
+A skip link exists at layout.tsx:99:
+```tsx
+<a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-accent focus:text-white focus:rounded-lg focus:text-sm focus:font-bold">
+  Skip to content
+</a>
+```
+The `<div id="main-content">` target is at line 134. The link appears visually on keyboard focus. Implementation is correct. No action needed.
+
+---
+
+## Additional Issues Found in `src/components/ui/`
+
+### B4 — `ShortcutHintOverlay.tsx:83` — Dismiss Button Missing `type="button"`
+
+**File:** `src/components/ui/ShortcutHintOverlay.tsx:83`  
+**WCAG Criterion:** 4.1.2 Name, Role, Value  
+**Severity:** LOW — without `type="button"`, defaults to `type="submit"` if ever inside a form ancestor; accessible name from text content is adequate  
+
+**Fix:** Add `type="button"` to the dismiss button at line 83.
+
+### B5 — `ShareModal.tsx:594,695` — Inline `role="switch"` Buttons Without Explicit `aria-label`
+
+**File:** `src/components/ui/ShareModal.tsx:594, 695`  
+**WCAG Criterion:** 4.1.2 Name, Role, Value  
+**Severity:** MEDIUM — two inline switches (public visibility toggle, comments toggle) use `role="switch"` and `aria-checked` correctly but rely on verbose child text content for their accessible name rather than a concise `aria-label`  
+
+**Fix — add explicit `aria-label` to both:**
+```tsx
+// Visibility toggle (line 594)
+<button
+  type="button"
+  role="switch"
+  aria-checked={isPublic}
+  aria-label="List report on Explore page"
+  ...
+>
+
+// Comments toggle (line 695)
+<button
+  type="button"
+  role="switch"
+  aria-checked={allowComments}
+  aria-label="Enable comments on this report"
+  ...
+>
+```
+
+### B6 — Items Verified as Compliant
+
+| Component | Verification |
+|-----------|-------------|
+| NotificationBell.tsx | Bell button has `aria-label="Notifications"` ✓ |
+| EditFab.tsx | Has dynamic `aria-label` per mode ✓ |
+| DiffNavigator.tsx | Prev/Next/Dismiss all have `aria-label` ✓ |
+| ShareDock.tsx | All buttons have `aria-label` ✓ |
+| ShareModal.tsx close | Has `aria-label="Close"`, focus trap with Escape ✓ |
+| WalkthroughOverlay.tsx | Dialog has `aria-label`, close has `aria-label="Close tour"` ✓ |
+| OTSSheetModal.tsx | Close has `aria-label="Close"`, action buttons have text labels ✓ |
+| PdfExport.tsx | Has `aria-label="Export report as PDF"` ✓ |
+| LanguageSelector.tsx | Trigger has `aria-label` from i18n ✓ |
+| ShareViewCTA.tsx | Dismiss has `aria-label="Dismiss"` ✓ |
+
+---
+
+## Priority Fix Order
+
+1. **B1** — Single CSS line change, fixes 470+ locations. Do first.  
+2. **B2** — Two file edits (Toggle.tsx + Navbar.tsx:507), fixes invalid HTML structure.  
+3. **B3** — One-line addition in ReactionBar.tsx for authenticated like button.  
+4. **B5** — Add `aria-label` to two switches in ShareModal.tsx.  
+5. **B4** — Add `type="button"` to ShortcutHintOverlay dismiss button.
+
+---
+
+## Summary Table
+
+| ID | File | Line | Criterion | Severity | Status |
+|----|------|------|-----------|----------|--------|
+| B1 | globals.css | 16 | 1.4.3 Contrast AA | HIGH | FAIL — #6E6E8A = 4.0:1 on #FAF9F6 |
+| B2 | Toggle.tsx / Navbar.tsx | 9, 507 | 4.1.2 Name/Role/Value | HIGH | FAIL — button inside label; empty aria-label |
+| B3 | ReactionBar.tsx | 122 | 4.1.2 Name/Role/Value | MEDIUM | FAIL — no aria-label or aria-pressed |
+| VGC-177 | layout.tsx | 99 | 2.4.1 Bypass Blocks | — | PASS |
+| B4 | ShortcutHintOverlay.tsx | 83 | 4.1.2 | LOW | Missing type="button" |
+| B5 | ShareModal.tsx | 594, 695 | 4.1.2 | MEDIUM | No explicit aria-label on role="switch" buttons |
