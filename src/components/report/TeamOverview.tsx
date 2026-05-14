@@ -744,6 +744,7 @@ export function TeamOverview({
                 onToggleMega={onToggleMega ? () => onToggleMega(i) : undefined}
                 regulation={tags?.regulation}
                 onReplaceSpecies={onReplacePokemon ? (next) => onReplacePokemon(i, next) : undefined}
+                priority={i === 0}
               />
               </FieldDiffHighlight>
             </LongPressWrapper>
