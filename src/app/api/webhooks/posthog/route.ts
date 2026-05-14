@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 
 // ── Session timeline enrichment ──────────────────────────────────────────────
@@ -166,9 +167,19 @@ function isDuplicate(fingerprint: string): boolean {
 
 export async function POST(request: Request) {
   try {
-    // Verify webhook authenticity
-    const token = request.headers.get("x-posthog-token");
-    if (!process.env.POSTHOG_WEBHOOK_SECRET || token !== process.env.POSTHOG_WEBHOOK_SECRET) {
+    // Verify webhook authenticity using timing-safe comparison to prevent
+    // timing side-channel attacks.
+    const token = request.headers.get("x-posthog-token") ?? "";
+    const webhookSecret = process.env.POSTHOG_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const expectedBuf = Buffer.from(webhookSecret);
+    const actualBuf = Buffer.from(token);
+    if (
+      expectedBuf.length !== actualBuf.length ||
+      !timingSafeEqual(expectedBuf, actualBuf)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -211,9 +222,9 @@ export async function POST(request: Request) {
     // Create Linear issue with Bug label
     const linearController = new AbortController();
     const linearTimeoutId = setTimeout(() => linearController.abort(), 5000);
-    let result: Response;
+    let linearRawRes: Response | null = null;
     try {
-      result = await fetch("https://api.linear.app/graphql", {
+      linearRawRes = await fetch("https://api.linear.app/graphql", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -236,11 +247,17 @@ export async function POST(request: Request) {
         }),
         signal: linearController.signal,
       });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        console.warn("PostHog webhook: Linear request timed out");
+        return NextResponse.json({ ok: false, error: "timeout" }, { status: 200 });
+      }
+      throw err;
     } finally {
       clearTimeout(linearTimeoutId);
     }
 
-    const linearRes = await result.json();
+    const linearRes = await linearRawRes.json();
 
     if (!linearRes.data?.issueCreate?.success) {
       console.error("PostHog webhook: Linear issue creation failed", linearRes);
