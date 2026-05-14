@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getDb } from "@/lib/db";
-import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
+import { getRegMAMegasWithSprites } from "@/lib/data/mega-pokemon";
 
 const BASE = "https://pokemonvgcteamreport.com";
 
@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3, lastModified: now },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
     { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
-    ...MEGA_POKEMON_LIST.map((m) => ({
+    ...getRegMAMegasWithSprites().map((m) => ({
       url: `${BASE}/champions/${m.slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.8,
