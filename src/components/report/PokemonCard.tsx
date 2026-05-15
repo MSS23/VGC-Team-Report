@@ -265,7 +265,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             {/* Damage calculator deep-link — always visible, hidden in print */}
             {!isPrint && (
               <a
-                href={`https://calc.pokemonshowdown.com/?atk=${encodeURIComponent(showMega && megaEntry ? megaEntry.displayName : parsed.species)}`}
+                href="https://nerd-of-now.github.io/NCP-VGC-Damage-Calculator/"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => posthog?.capture("calc_opened", { pokemon_name: showMega && megaEntry ? megaEntry.displayName : parsed.species })}
