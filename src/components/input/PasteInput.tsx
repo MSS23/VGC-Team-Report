@@ -123,6 +123,8 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [showPasteHint, setShowPasteHint] = useState(false);
+  const [pasteHintSeen, setPasteHintSeen] = useState(false);
 
   // Random accent color on landing page
   useEffect(() => { applyRandomAccent(); }, []);
@@ -137,6 +139,10 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
     } else {
       setHowItWorksOpen(true);
       localStorage.setItem("vgc-visited", "1");
+    }
+    // Seed hint-seen flag from localStorage
+    if (localStorage.getItem("vgc-paste-hint-seen")) {
+      setPasteHintSeen(true);
     }
   }, []);
   const [championsBannerDismissed, setChampionsBannerDismissed] = useState(true);
@@ -394,10 +400,23 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             onPasteChange(e.target.value);
             setFetchError(null);
             setValidationError(null);
+            // Dismiss hint on first keystroke
+            if (showPasteHint) setShowPasteHint(false);
           }}
           onKeyDown={handleKeyDown}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={() => {
+            setIsFocused(true);
+            // Show hint for new users on first focus of empty textarea
+            if (!isReturningUser && !paste.trim() && !pasteHintSeen) {
+              setShowPasteHint(true);
+              setPasteHintSeen(true);
+              localStorage.setItem("vgc-paste-hint-seen", "1");
+            }
+          }}
+          onBlur={() => {
+            setIsFocused(false);
+            setShowPasteHint(false);
+          }}
           placeholder={
             "Incineroar @ Sitrus Berry\nAbility: Intimidate\nLevel: 50\nEVs: 252 HP / 4 Atk / 252 Spe\nCareful Nature\n- Fake Out\n- Knock Off\n- Flare Blitz\n- Parting Shot"
           }
@@ -414,6 +433,20 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           </motion.span>
         )}
       </motion.div>
+
+      {/* Contextual paste hint for new users */}
+      {showPasteHint && (
+        <motion.p
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          aria-live="polite"
+          className="text-xs text-text-secondary mt-2 px-1"
+        >
+          Paste your full 6-Pok&eacute;mon Showdown export, or a{" "}
+          <span className="font-semibold text-text-primary">pokepast.es</span> URL
+        </motion.p>
+      )}
 
       {/* Error */}
       {(fetchError || validationError) && (
