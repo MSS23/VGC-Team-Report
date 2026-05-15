@@ -65,6 +65,7 @@ export function MatchTracker() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const filteredSuggestions = archetype.length > 0
     ? COMMON_ARCHETYPES.filter((a) =>
@@ -93,7 +94,6 @@ export function MatchTracker() {
   }, []);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!window.confirm("Delete this match entry?")) return;
     try {
       const res = await fetch(`/api/match-log?id=${encodeURIComponent(id)}`, { method: "DELETE" });
       if (res.ok) {
@@ -101,6 +101,8 @@ export function MatchTracker() {
       }
     } catch {
       // best-effort — user can refresh manually
+    } finally {
+      setPendingDeleteId(null);
     }
   }, [fetchStats]);
 
@@ -426,19 +428,40 @@ export function MatchTracker() {
                       <span className="text-[10px] text-text-tertiary flex-shrink-0">
                         {new Date(log.loggedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(log.id)}
-                        aria-label="Delete match entry"
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded text-text-tertiary hover:text-red-500 transition-all cursor-pointer"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
-                          <path d="M10 11v6M14 11v6" />
-                          <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
-                        </svg>
-                      </button>
+                      {pendingDeleteId === log.id ? (
+                        <div role="group" aria-label="Confirm deletion" className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(log.id)}
+                            aria-label="Confirm delete match entry"
+                            className="min-h-[32px] px-2 text-[10px] font-bold rounded bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500/20 transition-colors cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPendingDeleteId(null)}
+                            aria-label="Cancel delete"
+                            className="min-h-[32px] px-2 text-[10px] font-bold rounded bg-surface-alt border border-border text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setPendingDeleteId(log.id)}
+                          aria-label="Delete match entry"
+                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded text-text-tertiary hover:text-red-500 transition-all cursor-pointer"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                            <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -1,4 +1,4 @@
-import type { ShareableState } from "@/lib/sharing/url-codec";
+import type { ShareableState, SerializedMatchupPlan, SerializedGamePlan } from "@/lib/sharing/url-codec";
 
 /**
  * Represents which parts of the report changed between two versions.
@@ -150,14 +150,11 @@ export function computeVersionDiff(
   const currentPlans = current.matchupPlans ?? [];
   const oldPlans = old.matchupPlans ?? [];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const normalizePlan = (p: any) => ({
+  const normalizePlan = (p: SerializedMatchupPlan) => ({
     opponentLabel: p.opponentLabel ?? "",
     opponentPaste: p.opponentPaste ?? "",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     gamePlans: Array.isArray(p.gamePlans)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ? p.gamePlans.map((gp: any) => ({
+      ? p.gamePlans.map((gp: SerializedGamePlan) => ({
           notes: gp.notes ?? "",
           bring: gp.bring ?? [],
           result: gp.result ?? null,

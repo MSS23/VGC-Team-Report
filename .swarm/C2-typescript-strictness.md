@@ -1,121 +1,155 @@
-# C2 — TypeScript Strictness Audit
+# C2 TypeScript Strictness Audit
 
-**Date:** 2026-05-07  
-**Scope:** `src/lib/`, `src/app/api/`, `src/components/`
-
----
-
-## 1. tsconfig.json Strictness
-
-`strict: true` is set. This enables the full strict bundle:
-- `noImplicitAny`, `strictNullChecks`, `strictFunctionTypes`, `strictPropertyInitialization`, `strictBindCallApply`, `noImplicitThis`, `alwaysStrict`.
-
-No additional strictness flags are missing. The baseline is sound.
+_Audited: 2026-05-14 | Scope: src/ | Focus: VGC-179 + general strictness_
 
 ---
 
-## 2. `any` Usage
+## 1. `as unknown as X` Casts (VGC-179) — 4 occurrences
 
-**Total confirmed `any` hits (non-comment, non-test): 8 occurrences across 4 files.**
-
-| File | Lines | Pattern |
-|------|-------|---------|
-| `src/lib/utils/diff-state.ts` | 7, 87, 90, 94 | `type AnyState = Record<string, any>`, `any[]` params, `(p: any)`, `(gp: any)` |
-| `src/lib/utils/normalize-report.ts` | 8 | `type AnyRecord = Record<string, any>` |
-| `src/lib/utils/version-diff.ts` | 154, 160 | `(p: any)`, `(gp: any)` |
-| `src/app/api/migrate/route.ts` | 50 | `row.data as Record<string, any>` |
-
-All occurrences in `diff-state.ts` and `version-diff.ts` are individually suppressed with `// eslint-disable-next-line @typescript-eslint/no-explicit-any` inline comments, indicating the authors were aware. The `normalize-report.ts` type alias is also suppressed at the type definition line. These are concentrated in report-state diffing logic where the stored JSON blob is genuinely untyped at the DB boundary.
-
-**Zero hits** in `src/components/` (the two matches there were in JSDoc comment text, not code).  
-**Zero hits** in `@ts-ignore` / `@ts-nocheck` / `@ts-expect-error` — none found anywhere.
-
----
-
-## 3. Missing Return Types on Exported Functions
-
-**27 exported functions lack explicit return type annotations** (detected via signature analysis). After manual verification, several multi-line signatures do have return types on the closing line of the parameter list. Confirmed **true missing return types**:
-
-| File | Function | Notes |
-|------|----------|-------|
-| `src/lib/db.ts` | `getDb()` | Returns inferred `NeonQueryFunction` — complex type |
-| `src/lib/db.ts` | `ensureTable()` | Returns `Promise<void>` implicitly |
-| `src/lib/email.ts` | `sendEmail(opts)` | Returns `Promise<unknown>` implicitly (returns `null` or fetch result) |
-| `src/lib/email.ts` | `sendCommentNotificationEmail(opts)` | Returns `Promise<void>` implicitly |
-| `src/lib/email.ts` | `buildWeeklySummaryHtml(data)` | Returns `string` implicitly |
-| `src/lib/discord-bot.ts` | `postFeedbackEmbed(opts)` | Returns `Promise<unknown>` implicitly |
-| `src/lib/discord-bot.ts` | `postBuildNotification(opts)` | Returns `Promise<void>` implicitly |
-| `src/lib/discord-webhook.ts` | `postToBuildsChannel(embed)` | Returns `Promise<void>` implicitly |
-| `src/lib/discord-webhook.ts` | `postToFeedbackChannel(embed)` | Returns `Promise<void>` implicitly |
-| `src/lib/notifications.ts` | `createNotification(...)` | Returns `Promise<void>` implicitly |
-| `src/lib/notifications.ts` | `notifyFollowers(...)` | Returns `Promise<void>` implicitly |
-| `src/lib/posthog-server.ts` | `captureServerEvent(...)` | Returns `void` implicitly |
-| `src/lib/hooks/useGlobalDisplayPrefs.ts` | `useGlobalDisplayPrefs()` | Returns complex object, inferred |
-| `src/lib/i18n/index.ts` | `I18nProvider(...)` | Returns `JSX.Element` implicitly |
-| `src/lib/i18n/index.ts` | `useTranslation()` | Returns context object, inferred |
-| `src/lib/contexts/VersionDiffContext.tsx` | `useVersionDiff()` | Returns context value, inferred |
-| `src/lib/utils/game-plan-helpers.tsx` | `ReplayIcon(...)` | Returns `JSX.Element`, missing `: JSX.Element` |
-| `src/lib/utils/game-plan-helpers.tsx` | `ResultBadge(...)` | Returns `JSX.Element \| null` |
-| `src/lib/utils/game-plan-helpers.tsx` | `ResultToggle(...)` | Returns `JSX.Element`, missing `: JSX.Element` |
-| `src/lib/utils/haptics.ts` | `hapticLight()` | Returns `void` implicitly |
-| `src/lib/utils/haptics.ts` | `hapticMedium()` | Returns `void` implicitly |
-| `src/lib/utils/haptics.ts` | `hapticSuccess()` | Returns `void` implicitly |
-| `src/lib/linear.ts` | `createLinearIssue(opts)` | Has return type — false positive (multi-line) |
-
-> Note: `calculateStat`, `calculateAllStats`, `computeVersionDiff`, `importTeam`, `createLinearIssue`, `isRateLimitedAsync`, `isRateLimited`, `getItemStatBoost` all have return types on the closing `)` line of their multi-line param lists — they are **correctly annotated** and were false positives in the initial grep.
-
-**True missing return types: ~20 functions.**
+### 1a. `src/components/providers/PostHogProvider.tsx:14`
+```ts
+let _usePostHog: typeof usePostHogType = () => undefined as unknown as ReturnType<typeof usePostHogType>;
+```
+**Issue:** Stub initializer silences TS by double-casting `undefined` to `PostHog`.
+**Fix:** Type the variable to allow `undefined` for the no-op stub:
+```ts
+let _usePostHog: () => ReturnType<typeof usePostHogType> | undefined = () => undefined;
+export function usePostHog(): ReturnType<typeof usePostHogType> | undefined {
+  return _usePostHog();
+}
+```
+Callers already guard with `if (!posthog)`, so adding `| undefined` to the return type propagates safely.
 
 ---
 
-## 4. `@ts-ignore` / `@ts-nocheck`
+### 1b–1c. `src/hooks/useHomePage.ts:265` and `:439`
+```ts
+t: t as unknown as Record<string, string>
+```
+**Issue:** `t` is `TranslationKeys` (a typed flat object from `src/lib/i18n/index.ts`). `useShareFlow` and `useSlideSystem` both declare their parameter as `t: Record<string, string>`, forcing a double-cast at every call site.
 
-**0 instances.** No suppression directives found anywhere in `src/lib/`, `src/app/api/`, or `src/components/`.
+**Fix:** Widen the consumer interfaces instead of casting at call sites:
+```ts
+// In useShareFlow.ts and useSlideSystem.ts
+import type { TranslationKeys } from "@/lib/i18n/translations/en";
 
----
-
-## 5. Unsound Generics
-
-**3 distinct type-level occurrences** (all overlapping with the `any` section above):
-
-| File | Pattern |
-|------|---------|
-| `src/lib/utils/diff-state.ts:7` | `type AnyState = Record<string, any>` |
-| `src/lib/utils/normalize-report.ts:8` | `type AnyRecord = Record<string, any>` |
-| `src/app/api/migrate/route.ts:50` | `row.data as Record<string, any>` |
-
-No `Array<any>` or `Promise<any>` found.
-
----
-
-## Priority Files to Fix
-
-### High priority (broadest impact, structural)
-1. **`src/lib/utils/diff-state.ts`** — Replace `AnyState = Record<string, any>` with a typed interface for the report state shape. The `any[]` params in `matchupPlansChanged` and inline `(p: any)` lambdas can be replaced with `MatchupPlan[]`.
-2. **`src/lib/utils/normalize-report.ts`** — Replace `AnyRecord = Record<string, any>` with `Record<string, unknown>` and update downstream casts. The function signature `normalizeReportData(data: AnyRecord): AnyRecord` is the API boundary for all DB-sourced data.
-3. **`src/lib/utils/version-diff.ts`** — Same `(p: any)` pattern as diff-state.ts; can use the same typed `MatchupPlan` interface.
-4. **`src/app/api/migrate/route.ts`** — `row.data as Record<string, any>` should be `Record<string, unknown>` with proper narrowing.
-
-### Medium priority (missing return types on async utility functions)
-5. **`src/lib/email.ts`** — `sendEmail`, `sendCommentNotificationEmail`, `buildWeeklySummaryHtml` all missing return types
-6. **`src/lib/discord-bot.ts`** and **`src/lib/discord-webhook.ts`** — async webhook functions missing `Promise<void>` return types
-7. **`src/lib/notifications.ts`** — `createNotification`, `notifyFollowers` missing `Promise<void>`
-8. **`src/lib/db.ts`** — `getDb()` and `ensureTable()` missing return types
-
-### Lower priority (React components / hooks — TypeScript infers these well)
-9. **`src/lib/utils/game-plan-helpers.tsx`** — React components missing `: JSX.Element` return types
-10. **`src/lib/utils/haptics.ts`** — `void` functions, cosmetic only
-11. **`src/lib/hooks/useGlobalDisplayPrefs.ts`**, **`src/lib/i18n/index.ts`**, **`src/lib/contexts/VersionDiffContext.tsx`** — hooks and providers missing explicit return types
+interface ShareFlowOptions {
+  // ...
+  t: TranslationKeys;
+}
+```
+`TranslationKeys` is a concrete `Record<string, string>`-compatible object literal type. This eliminates both casts with no runtime impact.
 
 ---
 
-## Summary Counts
+### 1d. `src/hooks/useSlideNavigation.ts:46`
+```ts
+const transition = (document as unknown as { startViewTransition: ... }).startViewTransition(update);
+```
+**Issue:** The View Transitions API is not in the TypeScript DOM lib, so casting `document` is necessary — but the double-cast obscures the intent.
+**Fix:** Use a named interface to make a single, readable cast:
+```ts
+interface DocumentWithViewTransition extends Document {
+  startViewTransition(cb: () => void): { ready: Promise<void>; finished: Promise<void> };
+}
+const transition = (document as DocumentWithViewTransition).startViewTransition(update);
+```
+Single cast `as DocumentWithViewTransition` is cleaner and the check `"startViewTransition" in document` already guards the call.
 
-| Category | Count |
-|----------|-------|
-| `any` usages (non-comment, non-test) | 8 |
-| Unsound generics (`Record<string, any>` etc.) | 3 (subset of above) |
-| `@ts-ignore` / `@ts-nocheck` | 0 |
-| Exported functions missing return types | ~20 |
-| `tsconfig.json` strict: true | YES |
-| `noImplicitAny` active (via strict) | YES |
+---
+
+## 2. `: any` Annotations in `src/lib/` — 5 occurrences
+
+### 2a. `src/lib/utils/version-diff.ts:154`
+```ts
+const normalizePlan = (p: any) => ({
+```
+**Issue:** `p` is a `SerializedMatchupPlan` from `url-codec.ts`. The `any` was written before `SerializedMatchupPlan` was exported.
+**Fix:**
+```ts
+import type { SerializedMatchupPlan, SerializedGamePlan } from "@/lib/sharing/url-codec";
+const normalizePlan = (p: SerializedMatchupPlan) => ({ ... });
+```
+
+### 2b. `src/lib/utils/version-diff.ts:160`
+```ts
+? p.gamePlans.map((gp: any) => ({
+```
+Same root cause as 2a. Fixed by the same `SerializedGamePlan` import.
+
+### 2c–2e. `src/lib/utils/diff-state.ts:87,90,94`
+```ts
+function matchupPlansChanged(oldPlans: any[], newPlans: any[]): boolean {
+  const normalize = (p: any) => JSON.stringify({
+    gamePlans: (p.gamePlans ?? []).map((gp: any) => ({
+```
+**Fix:** Same import approach — parameter types become `SerializedMatchupPlan[]` and `SerializedMatchupPlan`/`SerializedGamePlan` respectively.
+
+---
+
+## 3. `as any` Casts in `src/` — 0 occurrences
+
+No `as any` casts found in production source (excluding JSDoc comments). Clean.
+
+---
+
+## 4. VGC-146: JSON.parse Validation in `src/lib/sharing/url-codec.ts` — FIXED
+
+```ts
+const parsed: unknown = JSON.parse(json);           // line 208 — typed as unknown ✓
+const result2 = ShareableStateSchema.safeParse(parsed);  // line 213 — Zod validated ✓
+if (!result2.success) return null;
+return result2.data as ShareableState;
+```
+**Status: Fixed.** `JSON.parse` output is explicitly `unknown`, run through `ShareableStateSchema.safeParse`, and returns `null` on shape mismatch. The only remaining cast (`as ShareableState` on line 215) is safe because it follows a successful `safeParse`. No action required.
+
+---
+
+## 5. `cacheGet<T>` Unsound Generic in `src/lib/cache.ts` — PARTIALLY ADDRESSED
+
+```ts
+export async function cacheGet<T>(key: string, schema?: ZodType<T>): Promise<T | null> {
+  // ...
+  if (!schema) return raw as T;   // line 35 — unsound unchecked cast
+```
+**Issue:** The `schema` parameter is optional. When omitted, the function performs a bare `raw as T` cast on the Redis value with no runtime shape guarantee. The JSDoc comment at line 27 acknowledges this ("the generic is just an unchecked cast").
+
+**Recommended Fix:** Make the schema required, or use overloads to split paths:
+```ts
+// Typed, validated path (preferred)
+export async function cacheGet<T>(key: string, schema: ZodType<T>): Promise<T | null>;
+// Untyped path — caller receives unknown and must narrow
+export async function cacheGet(key: string): Promise<unknown | null>;
+```
+All current call sites that pass a schema continue to work unchanged.
+
+---
+
+## 6. Top 5 Exported Functions Missing Return Type Annotations
+
+| # | File:Line | Function | Missing Return Type |
+|---|-----------|----------|---------------------|
+| 1 | `src/lib/notifications.ts:9` | `createNotification(...)` | `: Promise<void>` |
+| 2 | `src/lib/notifications.ts:30` | `notifyFollowers(...)` | `: Promise<void>` |
+| 3 | `src/lib/discord-webhook.ts:15` | `postToBuildsChannel(embed)` | `: Promise<void>` |
+| 4 | `src/lib/discord-webhook.ts:31` | `postToFeedbackChannel(embed)` | `: Promise<void>` |
+| 5 | `src/lib/db.ts:3` | `getDb()` | `: ReturnType<typeof neon>` |
+
+`ensureTable()` at `src/lib/db.ts:9` also lacks `: Promise<void>`. `getDb` is the highest-impact gap because its return type is consumed by 12+ API routes — making it explicit prevents breakage if the neon version changes.
+
+---
+
+## Summary Table
+
+| Issue Type | Count | Files |
+|-----------|-------|-------|
+| `as unknown as` casts (VGC-179) | 4 | PostHogProvider.tsx, useHomePage.ts (×2), useSlideNavigation.ts |
+| `: any` annotations in src/lib/ | 5 | version-diff.ts (×2), diff-state.ts (×3) |
+| `as any` casts | 0 | — clean |
+| JSON.parse unvalidated (VGC-146) | 0 | Fixed in url-codec.ts |
+| Unsound optional generic (cache.ts) | 1 | cache.ts:35 |
+| Missing explicit return types | 5+ | notifications.ts, discord-webhook.ts, db.ts |
+
+**Total actionable issues: 15**
+
+**Priority for VGC-179:** Fix the `t: TranslationKeys` mismatch (issues 1b–1c) first — changing two interface declarations in `useShareFlow.ts` and `useSlideSystem.ts` eliminates two call-site casts with zero runtime risk and no breaking change. The `useSlideNavigation.ts` double-cast (1d) is the next easiest win. The PostHog stub (1a) requires adding `| undefined` to callers, which is a slightly larger change.

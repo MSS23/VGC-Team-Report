@@ -246,10 +246,16 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   // wants to compare it against the standard max-speed meta build of the
   // same species. Duplicates are visually disambiguated by a "META" badge
   // on the meta entry (see render below).
-  const teamSpeciesSet = useMemo(
-    () => new Set(pokemon.map(p => p.parsed.species.toLowerCase().replace(/\s+/g, "-"))),
-    [pokemon],
-  );
+  const teamSpeciesSet = useMemo(() => {
+    const set = new Set(pokemon.map(p => p.parsed.species.toLowerCase().replace(/\s+/g, "-")));
+    // Also include Mega variant keys so isDuplicateOfTeam fires for meta entries
+    // like "garchomp-mega" when the user has "garchomp" on their team.
+    for (const key of Array.from(set)) {
+      const megaKeys = BASE_KEY_TO_MEGA_KEYS.get(key);
+      if (megaKeys) megaKeys.forEach(mk => set.add(mk));
+    }
+    return set;
+  }, [pokemon]);
   const metaEntries = useMemo(() => {
     if (!showMetaThreats) return [];
     return META_THREATS
@@ -276,6 +282,13 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         isYours: false; isDuplicateOfTeam: boolean;
       }>;
   }, [showMetaThreats, regulation, META_THREATS, teamSpeciesSet]);
+
+  // Set of species keys that appear as meta threats — used to show a "Yours" badge
+  // on the user's entry when a meta benchmark of the same species is also shown.
+  const metaSpeciesSet = useMemo(
+    () => new Set(metaEntries.map(e => e.speciesKey)),
+    [metaEntries],
+  );
 
   // Combine and apply per-side modifiers
   const allEntries = useMemo(() => {
@@ -537,10 +550,21 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                       to the meta max-speed Garchomp. */}
                   {!entry.isYours && entry.isDuplicateOfTeam && (
                     <span
-                      className="text-[8px] sm:text-[9px] font-extrabold text-slate-500 bg-slate-500/10 border border-slate-500/20 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
-                      title="Standard meta variant (max speed)"
+                      className="text-[8px] sm:text-[9px] font-extrabold text-blue-400 bg-blue-500/15 border border-blue-500/30 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
+                      title="Standard meta variant (max speed benchmark)"
                     >
                       Meta
+                    </span>
+                  )}
+                  {/* "Yours" badge — shown when a meta benchmark of the same species
+                      is also visible, so users can tell which bar is their own spread. */}
+                  {entry.isYours && !entry.isMega && showMetaThreats && metaSpeciesSet.has(entry.speciesKey) && (
+                    <span
+                      className="text-[8px] sm:text-[9px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
+                      style={{ color: "var(--stat-spe)", backgroundColor: "color-mix(in srgb, var(--stat-spe) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--stat-spe) 30%, transparent)" }}
+                      title="Your spread"
+                    >
+                      Yours
                     </span>
                   )}
                 </div>

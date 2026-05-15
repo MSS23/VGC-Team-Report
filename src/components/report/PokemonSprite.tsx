@@ -11,6 +11,8 @@ interface PokemonSpriteProps {
   className?: string;
   animated?: boolean;
   shiny?: boolean;
+  /** When true, sets fetchPriority="high" and loading="eager" for LCP optimization. */
+  priority?: boolean;
 }
 
 /**
@@ -24,6 +26,7 @@ export function PokemonSprite({
   className = "",
   animated = true,
   shiny = false,
+  priority = false,
 }: PokemonSpriteProps) {
   const { genTheme } = useTheme();
   const isPrint = useIsPrintMode();
@@ -61,7 +64,8 @@ export function PokemonSprite({
       alt={species}
       width={size}
       height={size}
-      loading={isPrint ? "eager" : "lazy"}
+      loading={isPrint || priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
       className={`object-contain ${className}`}
       style={{
         maxWidth: size,

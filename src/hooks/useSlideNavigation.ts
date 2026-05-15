@@ -43,9 +43,9 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
       return;
     }
     try {
-      const transition = (document as unknown as { startViewTransition: (cb: () => void) => { ready: Promise<void>; finished: Promise<void> } }).startViewTransition(update);
-      transition.ready.catch(() => { /* superseded by newer transition */ });
-      transition.finished.catch(() => { /* superseded by newer transition */ });
+      const transition = document.startViewTransition?.(update);
+      transition?.ready.catch(() => { /* superseded by newer transition */ });
+      transition?.finished.catch(() => { /* superseded by newer transition */ });
     } catch {
       update();
     }

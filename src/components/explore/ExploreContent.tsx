@@ -169,7 +169,23 @@ function ExploreInner() {
             ))}
           </div>
         ) : reports.length === 0 ? (
-          <ExploreEmpty hasSearch={!!query} />
+          <ExploreEmpty
+            hasSearch={!!query}
+            hasActiveFilters={!!(query || regulation || eventType || archetype || species || excludeSpecies || placement || followingOnly || tournamentMode || hasRental)}
+            onSearch={setQuery}
+            onClearFilters={() => {
+              setQuery("");
+              setRegulation("");
+              setEventType("");
+              setArchetype("");
+              setSpecies("");
+              setExcludeSpecies("");
+              setPlacement("");
+              setFollowingOnly(false);
+              setTournamentMode(false);
+              setHasRental(false);
+            }}
+          />
         ) : (
           <>
             <motion.div

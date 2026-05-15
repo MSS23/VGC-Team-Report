@@ -1,53 +1,70 @@
 # Dead Code Scan — VGC Team Report
 
-_Scanned: 2026-05-07. Static analysis only (grep/find). No modifications made._
+_Scanned: 2026-05-14. Static analysis only (grep/find). No modifications made._
 
 ---
 
-## Top 5 Dead Code Candidates
+## Top Findings
 
-### 1. `src/components/social/VersionHistory.tsx` — Orphaned Component
-`export function VersionHistory` is never imported anywhere. It was superseded by `VersionHistoryPanel` (same directory), which **is** imported by `Navbar.tsx`. The old `VersionHistory` component remains as a full standalone implementation (~130 lines) with its own API calls, state, and JSX — completely unreachable dead code.
+### 1. `postBuildNotification` — UNUSED EXPORT (Delete)
+- **File:** `src/lib/discord-bot.ts` (line 151)
+- **Issue:** Zero call sites anywhere in the codebase. The exported async function is never invoked — Discord build notifications flow through `postToBuildsChannel` in `discord-webhook.ts` instead.
+- **Action:** **Delete** the exported function.
 
-### 2. `src/lib/security/csrf-client.ts` — Unused Export
-`export function secureFetch(url, init)` is defined but never imported in any `.ts` or `.tsx` file across the entire codebase. The CSRF cookie is set server-side via `middleware.ts`, but the client-side `secureFetch` wrapper that was meant to attach the token to fetch calls is never used. All client-side fetches use the native `fetch` directly.
+### 2. `postToFeedbackChannel` — UNUSED EXPORT (Delete)
+- **File:** `src/lib/discord-webhook.ts` (line 31)
+- **Issue:** Zero call sites. Feedback notifications go through `discord-bot.ts::postFeedbackEmbed` instead. This is an unreachable parallel implementation.
+- **Action:** **Delete** the exported function.
 
-### 3. `src/app/api/keep-alive/route.ts` — Dead API Route
-The route file's JSDoc says _"Called by Vercel cron every 5 minutes"_ but `/api/keep-alive` is **not registered** in `vercel.json` crons (which only lists `daily-ops`, `weekly-report`, `cleanup`, and `posthog-errors`). The route is also not called by any client-side code. It receives no traffic.
+### 3. `sanitizeInput` and `containsInjection` — UNUSED EXPORTS (Delete or keep for policy)
+- **File:** `src/lib/security/input-validation.ts` (lines 6, 12)
+- **Issue:** Zero call sites. The only importer of `input-validation.ts` is `api-guard.ts`, which uses only `getClientIp` and `hasValidContentType`.
+- **Action:** **Delete** both functions unless a security policy mandates keeping them available.
 
-### 4. `src/app/api/cron/posthog-errors/route.ts` — Undocumented/Unbounded Cron
-Not mentioned in `CLAUDE.md`'s cron table at all, yet registered in `vercel.json` on `schedule: "0 */4 * * *"` (every 4 hours = **6 runs/day**). This contradicts the project's stated "daily max" guardrail and silently consumes build/function minutes. Either the route is undocumented dead infra or it's a cost leak.
+### 4. `/api/bot` — POSSIBLY DEPRECATED ROUTE (Needs more context)
+- **File:** `src/app/api/bot/route.ts`
+- **Issue:** Not registered in `vercel.json` crons. Referenced only in `middleware.ts` auth-bypass list. Provides `?action=summary|popular|bugs|weekly-email` but these capabilities overlap with `/api/cron/weekly-report` and `/api/cron/daily-ops`. No code in the project calls this route.
+- **Action:** **Needs more context** — confirm if triggered by an external scheduler or manually. If not actively used, candidate for deletion.
 
-### 5. `src/lib/utils/export-report.ts` — Lazy-Only, Potentially Underused
-Only referenced via a dynamic `import()` inside a rarely-triggered event handler in `page.tsx` (`const { exportAsImage } = await import("@/lib/utils/export-report")`). Not a hard blocker, but worth confirming the export-as-image feature is still intentional and tested, as lazy dynamic imports of this kind are invisible to tree-shaking analysis.
-
----
-
-## Additional Findings
-
-| File | Issue |
-|------|-------|
-| `src/lib/security/csrf-client.ts` | `secureFetch` export — zero importers |
-| `src/components/social/VersionHistory.tsx` | Entire file — zero importers (superseded by `VersionHistoryPanel`) |
-| `src/app/api/keep-alive/route.ts` | Not in `vercel.json` crons, not called by app code |
-| `src/app/api/cron/posthog-errors/route.ts` | Runs 6x/day — undocumented, violates CLAUDE.md cost guardrails |
-| `src/lib/utils/export-report.ts` | Dynamic-only import; confirm feature is still live |
+### 5. `/api/keep-alive` — STALE DOC COMMENT (Low severity)
+- **File:** `src/app/api/keep-alive/route.ts`
+- **Issue:** JSDoc says _"Called by Vercel cron every 5 minutes"_ but route is absent from `vercel.json` crons. It is pinged indirectly by `/api/cron/daily-ops` health check, not by its own cron schedule.
+- **Action:** **Update doc comment** to reflect actual usage. Route itself is not dead.
 
 ---
 
-## TODO / FIXME / HACK Comments
+## Specifically-Flagged Files — All Active
 
-**None found.** The codebase has no `// TODO`, `// FIXME`, or `// HACK` annotations in TypeScript/TSX source files. Two minor inline notes were found but are informational comments, not action items:
+All four recently-added UI files are properly imported in `src/app/page.tsx`:
 
-- `src/components/layout/Navbar.tsx:40` — `// Warnings / save indicator` (section label)
-- `src/lib/utils/diff-state.ts:79` — `// Note: hiddenSlides and allowComments are UI preferences...` (clarifying comment)
+| File | How Imported |
+|------|-------------|
+| `src/components/ui/DiffNavigator.tsx` | Dynamic `import()` at line 38 |
+| `src/components/ui/EditFab.tsx` | Static import, rendered at line 1475 |
+| `src/components/ui/SwipeHint.tsx` | Static import, rendered at line 1491 |
+| `src/components/ui/ShortcutHintOverlay.tsx` | Static import, rendered at line 1515 |
 
 ---
 
-## Scan Coverage
+## API Routes — Active Assessment
 
-- **Components checked:** 70 `.tsx` files in `src/components/`
-- **Hooks checked:** 22 files in `src/hooks/`
-- **Lib utilities checked:** ~45 files in `src/lib/` (utils, analysis, data, security, sharing, types)
-- **App routes checked:** All `src/app/` pages and API routes
-- **Method:** `grep -r "import.*from.*<path>"` for each file; cross-referenced against all importers
+All routes checked. Key routes confirmed active:
+- `/api/setup` — one-time DB migration, protected by `MIGRATE_SECRET`, referenced in middleware
+- `/api/migrate` — batch data migration, protected by `MIGRATE_SECRET`
+- `/api/cleanup` — registered in `vercel.json` cron at 3am daily
+- `/api/keep-alive` — pinged via `daily-ops` health check (stale doc comment only)
+
+---
+
+## No Issues Found (Components)
+
+All 75+ components in `src/components/` have at least one import. All `src/lib/utils/`, `src/lib/analysis/`, `src/lib/data/`, and `src/lib/security/` exports are used — except the three noted above (`postBuildNotification`, `postToFeedbackChannel`, `sanitizeInput`, `containsInjection`).
+
+---
+
+## Previous Scan Notes (2026-05-07)
+
+Items from the prior scan that have since been resolved or are still valid:
+- `src/components/social/VersionHistory.tsx` — verify if file still exists (not found in current scan; may have been deleted)
+- `src/lib/security/csrf-client.ts` — verify if file still exists (not found in current scan)
+- `src/app/api/cron/posthog-errors/route.ts` — still runs on `0 8 * * 1` (Monday 8am weekly per vercel.json, not 6x/day as previously noted; prior scan may have misread the schedule)

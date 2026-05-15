@@ -48,13 +48,19 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "VGC Team Report",
     url: "https://pokemonvgcteamreport.com",
-    images: [{ url: "https://pokemonvgcteamreport.com/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
+    images: [
+      { url: "https://pokemonvgcteamreport.com/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" },
+      { url: "https://pokemonvgcteamreport.com/og-default.png", width: 1200, height: 630, alt: "VGC Team Report" },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "VGC Team Report — Build, Share & Discover Pokemon Teams",
     description: "The home for competitive Pokemon VGC team reports. Build, share, and explore team breakdowns from players around the world.",
-    images: [{ url: "https://pokemonvgcteamreport.com/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
+    images: [
+      { url: "https://pokemonvgcteamreport.com/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" },
+      { url: "https://pokemonvgcteamreport.com/og-default.png", width: 1200, height: 630, alt: "VGC Team Report" },
+    ],
   },
   icons: {
     icon: [

@@ -1,0 +1,85 @@
+[
+  {
+    "identifier": "VGC-183",
+    "title": "Match tracker: replace window.confirm with inline confirmation UI (iOS PWA fix)",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-183/match-tracker-replace-windowconfirm-with-inline-confirmation-ui",
+    "files_likely_to_change": [
+      "src/components/match-tracker/MatchTracker.tsx"
+    ],
+    "scope_estimate": "2h",
+    "priority": "high",
+    "posthog_signal": false,
+    "notes": "Bug — always implement. Confirmed: window.confirm at line 96 of MatchTracker.tsx. iOS PWA silently swallows window.confirm, making delete impossible. Replace with inline confirmation state (e.g. a 'confirm delete?' toggle button row). No external dependencies."
+  },
+  {
+    "identifier": "VGC-186",
+    "title": "Change calc link URL from Showdown to NCP-VGC calculator",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-186/change-calc-link-url-from-showdown-to-ncp-vgc-calculator",
+    "files_likely_to_change": [
+      "src/components/report/PokemonCard.tsx"
+    ],
+    "scope_estimate": "30min",
+    "priority": "medium",
+    "posthog_signal": false,
+    "notes": "Quick win. Confirmed: line 268 of PokemonCard.tsx has hardcoded calc.pokemonshowdown.com URL. Change base URL to https://nerd-of-now.github.io/NCP-VGC-Damage-Calculator/ — keep query param encoding logic. Verify href format matches NCP-VGC calculator's expected query structure."
+  },
+  {
+    "identifier": "VGC-169",
+    "title": "PostHog event schema: standardize property naming (snake_case vs camelCase)",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-169/posthog-event-schema-standardize-property-naming-snake_case-vs",
+    "files_likely_to_change": [
+      "src/components/ui/ShareModal.tsx",
+      "src/components/social/CreatorProfile.tsx",
+      "src/components/social/FollowButton.tsx",
+      "src/components/social/SaveButton.tsx",
+      "src/components/social/ReactionBar.tsx",
+      "src/components/ui/ShareDock.tsx",
+      "src/components/report/TeamCardCTA.tsx",
+      "src/components/report/PokemonCard.tsx",
+      "src/hooks/useShareFlow.ts",
+      "src/hooks/useHomePage.ts",
+      "src/app/page.tsx"
+    ],
+    "scope_estimate": "1h",
+    "priority": "low",
+    "posthog_signal": true,
+    "notes": "Audit shows 25+ posthog.capture() calls across ~10 files. Preliminary check shows most properties already use snake_case (share_id, source_id, creator_name, has_mega, pokemon_count etc). Scope is an audit-and-fix pass: grep all calls, confirm consistency, fix any remaining camelCase props, add inline comment noting the snake_case convention. Low risk change."
+  },
+  {
+    "identifier": "VGC-137",
+    "title": "Duplicate pokemon in meta threats speed tier section",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-137/duplicate-pokemon-in-meta-threats-speed-tier-section",
+    "files_likely_to_change": [
+      "src/components/report/SpeedTierChart.tsx"
+    ],
+    "scope_estimate": "2h",
+    "priority": "medium",
+    "posthog_signal": false,
+    "notes": "User's own pokemon should appear alongside meta threat versions in the speed tier chart. SpeedTierChart.tsx is 651 lines — medium complexity. Work involves identifying where the chart data is built and injecting a user-pokemon row alongside the matching meta threat entry. No external dependencies."
+  },
+  {
+    "identifier": "VGC-182",
+    "title": "Champions meta snapshot: push species aggregation into SQL",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-182/champions-meta-snapshot-push-species-aggregation-into-sql",
+    "files_likely_to_change": [
+      "src/app/api/champions/meta/route.ts"
+    ],
+    "scope_estimate": "2h",
+    "priority": "medium",
+    "posthog_signal": false,
+    "notes": "Route is 118 lines. Move JS-side species GROUP BY aggregation into a SQL GROUP BY query. Reduces payload size and server-side computation. Straightforward refactor with no UI changes. Verify existing tests still pass after SQL restructure."
+  },
+  {
+    "identifier": "VGC-175",
+    "title": "Add static /public/og-default.png as OG image fallback",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-175/add-static-publicog-defaultpng-as-og-image-fallback",
+    "files_likely_to_change": [
+      "src/app/layout.tsx",
+      "public/og-default.png"
+    ],
+    "scope_estimate": "2h",
+    "priority": "medium",
+    "posthog_signal": false,
+    "notes": "No og-default.png exists in /public (only icon-192.png, icon-512.png, apple-touch-icon.png). Previous triage (VGC-156, 13-05-26) noted a related partial fix. Generate a 1200x630 static OG image (can use SVG-to-PNG via canvas or a Node script) and wire it into layout.tsx metadata as fallback. Blocked only on PNG generation approach — use a simple programmatic canvas/sharp script or a pre-made template."
+  }
+]

@@ -6,12 +6,13 @@ import { useAuth } from "@clerk/nextjs";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import type { TeamAnalysis } from "@/lib/types/analysis";
+import type { TranslationKeys } from "@/lib/i18n/translations/en";
 
 interface ShareFlowOptions {
   analysis: TeamAnalysis | null;
   isSampleTeam: boolean;
   buildShareState: () => ShareableState;
-  t: Record<string, string>;
+  t: TranslationKeys;
 }
 
 export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: ShareFlowOptions) {

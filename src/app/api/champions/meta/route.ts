@@ -1,6 +1,5 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
-import { extractSpecies } from "@/lib/utils/extract-species";
 import { cacheGet, cacheSet } from "@/lib/cache";
 import { NextResponse } from "next/server";
 
@@ -38,22 +37,88 @@ export async function GET(request: Request) {
 
     const sql = getDb();
 
-    const QUERY_LIMIT = 500;
-
-    // Query public Champions-format reports — capped to avoid unbounded memory usage
+    // Single SQL query: extract species from paste text using CTEs, aggregate in-DB.
+    // Returns at most TOP_N rows instead of transferring up to 500 paste blobs (~5MB).
+    // Uses WITH ORDINALITY for stable block ordering and replicates extractSpecies() logic:
+    //   - CRLF normalisation
+    //   - blank-line block split
+    //   - "@ Item" suffix strip
+    //   - "(M)"/"(F)" gender suffix strip
+    //   - "Nickname (Species)" pattern detection
+    //   - 6-block cap per team, de-dup species within a team
     const rows = await sql`
-      SELECT data->>'paste' AS paste
-      FROM shares
-      WHERE is_public = TRUE
-        AND deleted_at IS NULL
-        AND (
-          data->>'regulation' ILIKE '%champion%'
-          OR data->>'regulation' ILIKE '%reg-m%'
-          OR data->'tags'->>'regulation' ILIKE '%champion%'
-          OR data->'tags'->>'regulation' ILIKE '%reg-m%'
-        )
-      ORDER BY created_at DESC
-      LIMIT ${QUERY_LIMIT}
+      WITH filtered AS (
+        SELECT id, data->>'paste' AS paste
+        FROM shares
+        WHERE is_public = TRUE
+          AND deleted_at IS NULL
+          AND (
+            data->>'regulation' ILIKE '%champion%'
+            OR data->>'regulation' ILIKE '%reg-m%'
+            OR data->'tags'->>'regulation' ILIKE '%champion%'
+            OR data->'tags'->>'regulation' ILIKE '%reg-m%'
+          )
+        ORDER BY created_at DESC
+        LIMIT 500
+      ),
+      blocks AS (
+        SELECT
+          f.id,
+          t.block_num,
+          trim(split_part(trim(t.block), E'\n', 1)) AS first_line
+        FROM filtered f,
+        LATERAL regexp_split_to_table(
+          regexp_replace(f.paste, E'\r\n', E'\n', 'g'),
+          E'\n[ \t]*\n'
+        ) WITH ORDINALITY AS t(block, block_num)
+        WHERE trim(t.block) <> ''
+      ),
+      name_parts AS (
+        SELECT
+          id,
+          block_num,
+          trim(split_part(first_line, ' @ ', 1)) AS name_part
+        FROM blocks
+        WHERE first_line <> ''
+      ),
+      gender_stripped AS (
+        SELECT
+          id,
+          block_num,
+          trim(regexp_replace(name_part, E'\\s+\\([MF]\\)\\s*$', '')) AS stripped
+        FROM name_parts
+      ),
+      species_extracted AS (
+        SELECT
+          id,
+          block_num,
+          CASE
+            WHEN stripped ~ E'^.+\\s+\\([^)]+\\)$'
+              THEN trim(regexp_replace(stripped, E'^.*\\(([^)]+)\\)$', E'\\1'))
+            ELSE stripped
+          END AS species
+        FROM gender_stripped
+      ),
+      per_team AS (
+        SELECT DISTINCT id, species
+        FROM species_extracted
+        WHERE block_num <= 6 AND species <> ''
+      ),
+      total AS (
+        SELECT count(DISTINCT id) AS total_reports FROM per_team
+      ),
+      counts AS (
+        SELECT species, count(*) AS usage_count
+        FROM per_team
+        GROUP BY species
+      )
+      SELECT
+        c.species AS name,
+        c.usage_count AS count,
+        (SELECT total_reports FROM total) AS total_reports
+      FROM counts c
+      ORDER BY c.usage_count DESC
+      LIMIT ${TOP_N}
     `;
 
     if (rows.length === 0) {
@@ -64,45 +129,16 @@ export async function GET(request: Request) {
       return res;
     }
 
-    if (rows.length >= QUERY_LIMIT) {
-      console.warn(
-        `[champions/meta] Query hit the ${QUERY_LIMIT}-report limit — dataset may have grown; consider raising QUERY_LIMIT or pushing aggregation into SQL.`
-      );
-    }
-
-    const totalReports = rows.length;
+    const totalReports = Number((rows[0] as { total_reports: string }).total_reports ?? 0);
     const hasEnoughData = totalReports >= MIN_REPORTS;
 
-    let entries: MetaEntry[] = [];
-
-    if (hasEnoughData) {
-      // Count species usage across all reports
-      const usageMap = new Map<string, number>();
-      for (const row of rows) {
-        const paste = (row.paste as string) ?? "";
-        if (!paste.trim()) continue;
-        const species = extractSpecies(paste);
-        // Use a Set to count each species only once per team
-        const seen = new Set<string>();
-        for (const sp of species) {
-          const key = sp.trim();
-          if (!key || seen.has(key)) continue;
-          seen.add(key);
-          usageMap.set(key, (usageMap.get(key) ?? 0) + 1);
-        }
-      }
-
-      // Sort by count descending, take top N
-      const sorted = [...usageMap.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, TOP_N);
-
-      entries = sorted.map(([name, count]) => ({
-        name,
-        count,
-        percentage: totalReports > 0 ? Math.round((count / totalReports) * 100) : 0,
-      }));
-    }
+    const entries: MetaEntry[] = hasEnoughData
+      ? (rows as Array<{ name: string; count: string; total_reports: string }>).map(r => ({
+          name: r.name,
+          count: Number(r.count),
+          percentage: totalReports > 0 ? Math.round((Number(r.count) / totalReports) * 100) : 0,
+        }))
+      : [];
 
     const result: ChampionsMetaResult = { entries, totalReports, hasEnoughData };
 

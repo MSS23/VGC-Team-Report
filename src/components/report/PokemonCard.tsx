@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { Card } from "@/components/ui/Card";
 import { PokemonSprite } from "./PokemonSprite";
+import { useIsPrintMode } from "@/components/ui/print-context";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 
 // Lazy-load the editor — most card renders never need it (read-only views,
 // presentation mode, embeds), so we keep the modal + dex-search bundle out
@@ -39,6 +41,8 @@ interface PokemonCardProps {
   /** Inline replace — when provided, a small pencil button on the card
    *  opens a search picker to swap the species without re-pasting the team. */
   onReplaceSpecies?: (newSpecies: string) => void;
+  /** When true, hints the browser to load this card's sprite with high fetch priority (LCP optimization). */
+  priority?: boolean;
 }
 
 const STAT_COLORS: Record<string, string> = {
@@ -50,9 +54,11 @@ const STAT_COLORS: Record<string, string> = {
   spe: "var(--stat-spe)",
 };
 
-export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation, onReplaceSpecies }: PokemonCardProps) {
+export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation, onReplaceSpecies, priority = false }: PokemonCardProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
+  const isPrint = useIsPrintMode();
+  const posthog = usePostHog();
 
   // Inline-edit modal — opened via the pencil button when the card is editable.
   const [editing, setEditing] = useState(false);
@@ -216,6 +222,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             className="sm:hidden"
             animated={animated}
             shiny={shiny}
+            priority={priority}
           />
           <PokemonSprite
             species={spriteSpecies}
@@ -223,6 +230,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             className="hidden sm:block"
             animated={animated}
             shiny={shiny}
+            priority={priority}
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -253,6 +261,32 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               <span className={`text-sm font-bold ${parsed.gender === "M" ? "text-blue-500" : "text-pink-500"}`}>
                 {parsed.gender === "M" ? "\u2642" : "\u2640"}
               </span>
+            )}
+            {/* Damage calculator deep-link — always visible, hidden in print */}
+            {!isPrint && (
+              <a
+                href="https://nerd-of-now.github.io/NCP-VGC-Damage-Calculator/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => posthog?.capture("calc_opened", { pokemon_name: showMega && megaEntry ? megaEntry.displayName : parsed.species })}
+                className="p-2 rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200"
+                title="Open damage calculator"
+                aria-label={`Open damage calculator for ${showMega && megaEntry ? megaEntry.displayName : parsed.species}`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+                  <line x1="8" y1="6" x2="16" y2="6" />
+                  <line x1="8" y1="10" x2="8" y2="10" strokeWidth="3" strokeLinecap="round" />
+                  <line x1="12" y1="10" x2="12" y2="10" strokeWidth="3" strokeLinecap="round" />
+                  <line x1="16" y1="10" x2="16" y2="10" strokeWidth="3" strokeLinecap="round" />
+                  <line x1="8" y1="14" x2="8" y2="14" strokeWidth="3" strokeLinecap="round" />
+                  <line x1="12" y1="14" x2="12" y2="14" strokeWidth="3" strokeLinecap="round" />
+                  <line x1="16" y1="14" x2="16" y2="14" strokeWidth="3" strokeLinecap="round" />
+                  <line x1="8" y1="18" x2="8" y2="18" strokeWidth="3" strokeLinecap="round" />
+                  <line x1="12" y1="18" x2="12" y2="18" strokeWidth="3" strokeLinecap="round" />
+                  <line x1="16" y1="18" x2="16" y2="18" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+              </a>
             )}
             {/* Inline replace — pencil button opens a search picker.
                 Same surface as MVP star but to the LEFT of it so it does
