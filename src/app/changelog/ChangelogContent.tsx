@@ -27,6 +27,25 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.15",
+    title: "Match Tracker Polish, Speed Tier Clarity & SQL Performance",
+    emoji: "⚡",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Match tracker delete confirmation now works on iOS PWA and Android WebView — replaced window.confirm() (which is silently blocked in installed PWAs) with inline Delete/Cancel buttons that appear directly on the match row." },
+      { type: "fixed", text: "Speed tier chart now shows a 'Yours' badge on your own Pokémon when a meta benchmark of the same species appears alongside it — so you can clearly tell which bar is your actual spread vs the max-speed meta build. Meta badge colour updated to blue to match the Meta Threats toggle." },
+      { type: "fixed", text: "Speed tier chart Mega form matching: if you run base Garchomp, the 'Garchomp-Mega' meta threat entry is now correctly flagged as a duplicate, showing both the Meta badge and Yours badge for disambiguation." },
+      { type: "improved", text: "Champions meta snapshot now aggregates species usage in SQL (6-CTE query) instead of shipping up to 500 paste blobs (~5MB) to the serverless function — significantly faster cold-start response and eliminates the JS parse loop." },
+      { type: "improved", text: "Damage calculator link updated to the NCP-VGC Damage Calculator (nerd-of-now.github.io) as requested by the community." },
+      { type: "improved", text: "Added static /og-default.png as a branded CDN-served OG image fallback (1200x630, brand background) — pages without a dynamic OG image now have a proper social preview." },
+      { type: "improved", text: "PWA install prompt now requires user engagement (60s on page + 200px scroll) before appearing, instead of interrupting new visitors after 15 seconds. Chrome's enhanced install dialog activated by updating manifest screenshot entries with correct dimensions and form_factor values." },
+      { type: "improved", text: "Explore empty state: when a search returns no results, popular shortcut pills (Groudon Sun, Calyrex Shadow, Flutter Mane) and a Clear Filters button now appear. Cold-start empty state adds a demo link." },
+      { type: "improved", text: "New user paste input: a contextual hint ('Paste your full 6-Pokémon Showdown export, or a pokepast.es URL') appears on first focus and auto-dismisses on typing." },
+      { type: "improved", text: "Removed 2 dead exports (isDiscordBotConfigured, isValidIp) and fixed implicit-any TypeScript errors in 3 API routes. PostHogProvider double-cast resolved." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.14",
     title: "Accessibility, SEO & TypeScript Hardening",
     emoji: "♿",
