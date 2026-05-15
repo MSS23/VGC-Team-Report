@@ -4,6 +4,17 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+interface MatchLogRow {
+  id: string;
+  opponent_archetype: string;
+  result: "win" | "loss" | "tie";
+  game_count: number;
+  notes: string | null;
+  tournament_name: string | null;
+  share_id: string | null;
+  logged_at: Date;
+}
+
 const MatchLogBody = z.object({
   opponentArchetype: z.string().min(1).max(100),
   result: z.enum(["win", "loss", "tie"]),
@@ -111,23 +122,23 @@ export async function GET(request: NextRequest) {
     await ensureTable();
 
     const sql = getDb();
-    const rows = await sql`
+    const rows = (await sql`
       SELECT id, opponent_archetype, result, game_count, notes, tournament_name, logged_at, share_id
       FROM match_logs
       WHERE user_id = ${userId}
       ORDER BY logged_at DESC
       LIMIT 200
-    `;
+    `) as MatchLogRow[];
 
     const logs = rows.map((r) => ({
-      id: r.id as string,
-      opponentArchetype: r.opponent_archetype as string,
-      result: r.result as "win" | "loss" | "tie",
-      gameCount: r.game_count as number,
-      notes: r.notes as string | null,
-      tournamentName: r.tournament_name as string | null,
-      shareId: r.share_id as string | null,
-      loggedAt: (r.logged_at as Date).toISOString(),
+      id: r.id,
+      opponentArchetype: r.opponent_archetype,
+      result: r.result,
+      gameCount: r.game_count,
+      notes: r.notes,
+      tournamentName: r.tournament_name,
+      shareId: r.share_id,
+      loggedAt: r.logged_at.toISOString(),
     }));
 
     // Build win-rate summary by archetype

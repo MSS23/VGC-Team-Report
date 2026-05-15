@@ -2,6 +2,10 @@ import { getDb } from "@/lib/db";
 import { sendWeeklySummary, buildWeeklySummaryHtml } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
 
+interface FeedbackRecentRow { type: string; title: string; submitter_name: string | null; created_at: string; }
+interface FeedbackPopularRow { title: string; type: string; count: number; }
+interface FeedbackBugRow { title: string; submitter_name: string | null; created_at: string; }
+
 const DISCORD_API = "https://discord.com/api/v10";
 
 async function discordFetch(path: string, options: RequestInit = {}) {
@@ -84,29 +88,29 @@ export async function GET(request: NextRequest) {
         WHERE created_at > NOW() - INTERVAL '7 days'
       `;
 
-      const recent = await sql`
+      const recent = (await sql`
         SELECT type, title, submitter_name, created_at
         FROM feedback
         WHERE created_at > NOW() - INTERVAL '7 days'
         ORDER BY created_at DESC
         LIMIT 10
-      `;
+      `) as FeedbackRecentRow[];
 
       // Find trending: group similar titles
-      const allRecent = await sql`
+      const allRecent = (await sql`
         SELECT title, type FROM feedback
         WHERE created_at > NOW() - INTERVAL '30 days'
-      `;
+      `) as FeedbackRecentRow[];
 
       // Simple keyword clustering — count repeated words in titles
       const wordCounts: Record<string, { count: number; titles: Set<string> }> = {};
       for (const row of allRecent) {
-        const title = (row.title as string).toLowerCase();
+        const title = row.title.toLowerCase();
         const words = title.split(/\s+/).filter((w) => w.length > 3);
         for (const word of words) {
           if (!wordCounts[word]) wordCounts[word] = { count: 0, titles: new Set() };
           wordCounts[word].count++;
-          wordCounts[word].titles.add(row.title as string);
+          wordCounts[word].titles.add(row.title);
         }
       }
 
@@ -148,10 +152,10 @@ export async function GET(request: NextRequest) {
           other: Number(s.other_count),
           topRequests: trending,
           recentItems: recent.map((r) => ({
-            type: r.type as string,
-            title: r.title as string,
-            submitter: (r.submitter_name as string) ?? "Unknown",
-            date: new Date(r.created_at as string).toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
+            type: r.type,
+            title: r.title,
+            submitter: r.submitter_name ?? "Unknown",
+            date: new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
           })),
           openBugs: Number(openBugs[0].count),
           weekLabel,
@@ -192,14 +196,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (action === "popular") {
-      const popular = await sql`
+      const popular = (await sql`
         SELECT title, type, COUNT(*) as count
         FROM feedback
         WHERE type = 'feature' AND created_at > NOW() - INTERVAL '90 days'
         GROUP BY title, type
         ORDER BY count DESC
         LIMIT 10
-      `;
+      `) as FeedbackPopularRow[];
 
       const lines = popular.map((r, i) =>
         `${i + 1}. **${r.title}** — ${r.count}x requested`
@@ -217,16 +221,16 @@ export async function GET(request: NextRequest) {
     }
 
     if (action === "bugs") {
-      const bugs = await sql`
+      const bugs = (await sql`
         SELECT title, submitter_name, created_at
         FROM feedback
         WHERE type = 'bug' AND status = 'new'
         ORDER BY created_at DESC
         LIMIT 10
-      `;
+      `) as FeedbackBugRow[];
 
       const lines = bugs.map((r) => {
-        const date = new Date(r.created_at as string).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+        const date = new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
         return `🐛 **${r.title}** — ${r.submitter_name ?? "Unknown"} (${date})`;
       }).join("\n");
 

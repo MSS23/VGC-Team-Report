@@ -144,10 +144,3 @@ export async function postFeedbackEmbed(opts: {
 
   return message;
 }
-
-/**
- * Check if the Discord bot is configured.
- */
-export function isDiscordBotConfigured(): boolean {
-  return getConfig().configured;
-}

@@ -11,8 +11,8 @@ import type {
   usePostHog as usePostHogType,
 } from "posthog-js/react";
 
-let _usePostHog: typeof usePostHogType = () => undefined as unknown as ReturnType<typeof usePostHogType>;
-export function usePostHog() {
+let _usePostHog: () => ReturnType<typeof usePostHogType> | undefined = () => undefined;
+export function usePostHog(): ReturnType<typeof usePostHogType> | undefined {
   return _usePostHog();
 }
 

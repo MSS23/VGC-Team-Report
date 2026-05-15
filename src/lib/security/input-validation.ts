@@ -3,7 +3,7 @@
  */
 
 /** Validate IP address format */
-export function isValidIp(ip: string): boolean {
+function isValidIp(ip: string): boolean {
   // IPv4
   if (/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
     return ip.split(".").every((octet) => {
