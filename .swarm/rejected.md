@@ -1,14 +1,15 @@
-# Rejected Changes
+# Rejected Changes — 15-05-26 Swarm
 
-## swarm-og-page-unsuppress — src/app/s/[id]/page.tsx
+## VGC-169: PostHog event naming standardization
+- STATUS: NOT NEEDED — all 27 posthog.capture() calls already use consistent snake_case
+- Wave 1 audit found 0 inconsistencies
+- Ticket moved to Done in Linear post-run
 
-**Reason:** High risk — reverted without committing.
+## VGC-181: Indianapolis Regionals top-cut table update
+- STATUS: SKIPPED — requires real tournament data not available programmatically
+- L0 triage excluded per selection criteria
 
-The VGC-68 agent removed the `images: []` suppression from `s/[id]/page.tsx` and updated the comment. However, the original code contains a `// load-bearing` comment explaining that this was deliberately added after two previous failed attempts at OG images for share pages — both produced "image failed to load" unfurls in Discord due to edge runtime + sprite CDN + unfurler timeout issues.
-
-**What to do:** The new `src/app/s/[id]/opengraph-image.tsx` (committed separately) implements a fallback card. A human reviewer should:
-1. Test the OG image by sharing a `/s/[id]` URL in Discord/Twitter preview
-2. If it renders reliably, update `s/[id]/page.tsx` to remove `images: []` and change `twitter.card` to `summary_large_image`
-3. If it still breaks, keep the suppression and delete the opengraph-image.tsx
-
-**Files affected:** src/app/s/[id]/page.tsx (reverted), src/app/s/[id]/opengraph-image.tsx (committed — the new implementation)
+## npm run build
+- STATUS: ENVIRONMENT LIMITATION — node_modules not present in sandbox
+- Fallback: npx tsc --noEmit passed with zero new errors (only pre-existing env-level errors)
+- Same approach as previous swarm runs (14-05-26, 13-05-26) which passed Vercel production build
