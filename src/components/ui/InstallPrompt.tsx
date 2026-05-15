@@ -23,30 +23,63 @@ export function InstallPrompt() {
     // Don't show if already installed
     if (window.matchMedia("(display-mode: standalone)").matches) return;
 
+    // Engagement gates: both a 60-second dwell AND 200px scroll must be
+    // satisfied before the prompt is shown. Whichever gate fires last triggers
+    // the reveal — prevents interrupting users mid-task in the first 15s.
+    let timerFired = false;
+    let scrollFired = false;
+    let promptReady = false;
+
+    const maybeReveal = () => {
+      if (timerFired && scrollFired && promptReady) setDismissed(false);
+    };
+
+    const onScroll = () => {
+      if (!scrollFired && window.scrollY >= 200) {
+        scrollFired = true;
+        window.removeEventListener("scroll", onScroll);
+        maybeReveal();
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    const engagementTimer = setTimeout(() => {
+      timerFired = true;
+      maybeReveal();
+    }, 60000);
+
     // Android/Chrome: capture the beforeinstallprompt event
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      // Delay reveal so it doesn't distract from first interaction
-      setTimeout(() => setDismissed(false), 15000);
+      promptReady = true;
+      maybeReveal();
     };
     window.addEventListener("beforeinstallprompt", handler);
 
-    // iOS Safari: show manual instructions after delay
+    // iOS Safari: show manual instructions after engagement gates
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
     const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
     if (isIOS && isSafari) {
-      const timer = setTimeout(() => {
-        setShowIOSPrompt(true);
-        setDismissed(false);
-      }, 45000);
+      const iosTimer = setTimeout(() => {
+        if (scrollFired) {
+          setShowIOSPrompt(true);
+          setDismissed(false);
+        }
+      }, 60000);
       return () => {
-        clearTimeout(timer);
+        clearTimeout(engagementTimer);
+        clearTimeout(iosTimer);
+        window.removeEventListener("scroll", onScroll);
         window.removeEventListener("beforeinstallprompt", handler);
       };
     }
 
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    return () => {
+      clearTimeout(engagementTimer);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
   }, []);
 
   const handleInstall = useCallback(async () => {
