@@ -89,7 +89,7 @@ export function ExploreEmpty({
             {t.buildYourOwn}
           </a>
           <a
-            href="/?sample=1"
+            href="/?sample=sample-groudon-sun"
             className="text-sm text-text-tertiary hover:text-accent transition-colors font-medium"
           >
             See how a report looks &rarr;

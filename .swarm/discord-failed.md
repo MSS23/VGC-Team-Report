@@ -52,3 +52,34 @@ PR: https://github.com/MSS23/VGC-Team-Report/pull/28
 ## To send manually after adding DISCORD_BUILDS_WEBHOOK to .env.local
 
 source .claude/scripts/linear.sh && discord_notify_build "swarm-14-05-26" "Swarm 14-05-26 Wave 2: A11y + Security + SEO + TypeScript + Perf + Dead Code"
+
+---
+
+# Discord Notification — UNSENT (no .env.local)
+
+**Run:** 16-05-26 (Wave 2 overnight swarm)
+**Target channel:** #builds (ID: 1487202217298493493)
+**Reason:** DISCORD_BUILDS_WEBHOOK and DISCORD_BOT_TOKEN not set (no .env.local in swarm environment)
+
+## Payload that should be sent
+
+```
+🌙 Swarm 16-05-26 landed — 8 commits → claude-dev → PR #29
+
+🎯 UX: 3-card archetype sample picker on homepage (VGC-188)
+🗄️ DB: species[] materialised column + GIN index migration (VGC-189)
+🔒 Security: isCronAuthorized on keep-alive; Linear webhook fail-closed; Zod on notifications PATCH
+📈 SEO/AEO: llms.txt + llms-full.txt; SportsEvent JSON-LD on /tournaments
+♿ A11y: aria-pressed on Win/Loss/Tie; 44px touch targets on ShareDock + MatchTracker; role=alert + aria-label on paste input
+🐛 Bugs: totalReports denominator fix (inflated % fixed); /?sample broken link; posthog?.capture TS error
+✅ VGC-174 closed as already Done (Web Share API already shipped)
+
+Tickets → Done: VGC-188, VGC-189, VGC-174
+New backlog: VGC-190 (unlisted tier), VGC-191 (Next.js upgrade URGENT), VGC-192 (dead code), VGC-193 (iOS PWA), VGC-194 (MatchTracker a11y)
+
+PR: https://github.com/MSS23/VGC-Team-Report/pull/29
+```
+
+## To send manually after adding DISCORD_BUILDS_WEBHOOK to .env.local
+
+source .claude/scripts/linear.sh && discord_notify_build "swarm-16-05-26" "Swarm 16-05-26: Sample Picker + species[] column + Security + SEO/AEO + A11y + Bug Fixes"

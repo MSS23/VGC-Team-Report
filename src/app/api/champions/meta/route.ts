@@ -105,7 +105,7 @@ export async function GET(request: Request) {
         WHERE block_num <= 6 AND species <> ''
       ),
       total AS (
-        SELECT count(DISTINCT id) AS total_reports FROM per_team
+        SELECT count(DISTINCT id) AS total_reports FROM filtered
       ),
       counts AS (
         SELECT species, count(*) AS usage_count

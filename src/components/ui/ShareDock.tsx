@@ -179,7 +179,7 @@ export function ShareDock({
         <button
           type="button"
           onClick={handleCopyLink}
-          className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full bg-accent text-white text-xs font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer ml-0.5 shadow-sm shadow-accent/30"
+          className="h-11 inline-flex items-center gap-1.5 px-3 rounded-full bg-accent text-white text-xs font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer ml-0.5 shadow-sm shadow-accent/30"
           aria-label={linkCopied ? "Link copied" : "Copy link"}
         >
           {linkCopied ? (

@@ -565,7 +565,7 @@ export function ShareModal({
                   <button
                     type="button"
                     onClick={() => setPublicConfirmDismissed(true)}
-                    className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors cursor-pointer"
+                    className="px-3.5 py-2.5 text-xs font-bold rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors cursor-pointer"
                   >
                     Yes, publish it
                   </button>
@@ -575,7 +575,7 @@ export function ShareModal({
                       handleTogglePublic(false);
                       setPublicConfirmDismissed(true);
                     }}
-                    className="px-3.5 py-1.5 text-xs font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
+                    className="px-3.5 py-2.5 text-xs font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
                   >
                     Keep Private
                   </button>

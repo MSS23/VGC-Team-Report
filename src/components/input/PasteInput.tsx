@@ -11,6 +11,7 @@ import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { resolveSlug, getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 
 const WhatsNewModal = dynamic(
   () => import("@/components/ui/WhatsNewModal").then(m => ({ default: m.WhatsNewModal })),
@@ -420,6 +421,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           placeholder={
             "Incineroar @ Sitrus Berry\nAbility: Intimidate\nLevel: 50\nEVs: 252 HP / 4 Atk / 252 Spe\nCareful Nature\n- Fake Out\n- Knock Off\n- Flare Blitz\n- Parting Shot"
           }
+          aria-label="Paste your Showdown team export, PokéPaste URL, or replay URL"
           className="relative w-full h-40 sm:h-56 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none focus:border-accent/50 transition-all duration-300"
           spellCheck={false}
         />
@@ -453,6 +455,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         <motion.p
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
+          role="alert"
           className="text-sm text-danger font-semibold mt-3 px-1"
         >
           {fetchError || validationError}
@@ -503,27 +506,40 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           </motion.button>
         )}
 
-        {/* One-click Try — instantly loads the full sample report */}
+        {/* Archetype sample team picker — 3 cards, horizontally scrollable on mobile */}
         {!hasContent && (
-          <div className="flex flex-col gap-2">
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.97 }}
-              onClick={() => { onPasteChange(SAMPLE_PASTE); onAnalyze(SAMPLE_PASTE); }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-accent/40 bg-accent/10 text-accent text-sm font-bold hover:bg-accent/20 transition-all cursor-pointer"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-              Try a sample team — see the full report instantly
-            </motion.button>
+          <motion.div className="flex flex-col gap-2">
+            <p className="text-[11px] font-bold text-text-tertiary uppercase tracking-widest px-0.5">
+              Try a sample team:
+            </p>
+            <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-none -mx-1 px-1">
+              {CHAMPIONS_SAMPLE_TEAMS.map((team) => (
+                <motion.button
+                  key={team.id}
+                  type="button"
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => { onPasteChange(team.paste); onAnalyze(team.paste); }}
+                  className="flex-shrink-0 snap-start flex flex-col items-center justify-center gap-1.5 min-w-[140px] min-h-[88px] px-3 py-3 rounded-xl border border-accent/30 bg-accent/[0.08] hover:bg-accent/15 hover:border-accent/50 transition-all cursor-pointer text-center"
+                  aria-label={`Try ${team.name} sample team`}
+                >
+                  <div className="flex flex-wrap justify-center gap-0.5 w-full max-w-[96px]">
+                    {team.pokemon.map((species) => (
+                      <PopularCardSprite key={species} species={species} />
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-bold text-accent leading-tight mt-0.5 px-1">
+                    {team.name}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
             <p className="text-[11px] text-text-tertiary text-center">
               Or paste from{" "}
               <a href="https://pokepast.es" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-semibold">PokePaste</a>{" "}
               /{" "}
               <a href="https://play.pokemonshowdown.com" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-semibold">Showdown</a>
             </p>
-          </div>
+          </motion.div>
         )}
       </motion.div>
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { PageFooter } from "@/components/layout/PageFooter";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { JsonLd, SportsEventJsonLd } from "@/components/seo/JsonLd";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 
 interface Tournament {
@@ -224,6 +224,19 @@ export function TournamentsContent() {
             url: "https://pokemonvgcteamreport.com",
           },
         }}
+      />
+      <SportsEventJsonLd
+        events={TOURNAMENTS.map((t) => ({
+          name: t.name,
+          startDate: t.date,
+          location: t.location,
+          url: `https://pokemonvgcteamreport.com/explore?q=${encodeURIComponent(t.name)}&searchType=tournament`,
+          description: `Team reports from the ${t.name} (${t.format}). Browse the top Pokémon and winning strategies from this VGC event.`,
+          eventStatus:
+            t.date > new Date().toISOString().slice(0, 10)
+              ? "https://schema.org/EventScheduled"
+              : "https://schema.org/EventCompleted",
+        }))}
       />
 
       <main className="min-h-screen bg-background pb-24 sm:pb-0">

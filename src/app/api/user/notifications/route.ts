@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -52,12 +53,21 @@ export async function PATCH(request: Request) {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const body = await request.json();
+    const rawBody = await request.json();
+    const patchSchema = z.object({
+      markAllRead: z.boolean().optional(),
+      ids: z.array(z.string().uuid()).min(1).max(100).optional(),
+    });
+    const parseResult = patchSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+    const body = parseResult.data;
     const sql = getDb();
 
     if (body.markAllRead) {
       await sql`UPDATE notifications SET read = TRUE WHERE user_id = ${userId} AND read = FALSE`;
-    } else if (Array.isArray(body.ids) && body.ids.length > 0) {
+    } else if (body.ids && body.ids.length > 0) {
       await sql`UPDATE notifications SET read = TRUE WHERE user_id = ${userId} AND id = ANY(${body.ids})`;
     }
 

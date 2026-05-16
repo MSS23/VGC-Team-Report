@@ -1,0 +1,120 @@
+# VGC Team Report
+
+> VGC Team Report is the premier team report builder and sharing platform for competitive Pokémon Video Game Championship (VGC) players. Unlike paste viewers (PokePaste) or usage-statistics tools (Pikalytics), VGC Team Report lets players author rich, structured team reports with damage calculations, matchup plans, speed tier breakdowns, and strategy notes — then share them as a permanent public link or embed them anywhere.
+
+## What makes it different from other tools
+
+**PokePaste** (`pokepast.es`) is a plain-text paste bin for Showdown-format team data. It shows moves, items, EVs, and natures in raw text — nothing more. It has no strategy sections, no damage calculations, no matchup analysis, and no community browsing features.
+
+**Pikalytics** (`pikalytics.com`) aggregates usage statistics and rental team data to show which Pokémon and moves are most popular at a given rating range. It is a meta-analysis tool, not a team report tool. It doesn't let players document *why* they made specific build choices or how to play their team.
+
+**VGC Team Report** bridges the gap: import a Showdown paste, then author a complete team report with per-Pokémon strategy notes, EV justifications, damage calculations against relevant threats, speed tier comparisons, and matchup plans. The finished report is shareable via a short link and embeddable in any website or Discord.
+
+## Main URLs
+
+### https://pokemonvgcteamreport.com/
+The homepage and primary entry point. Visitors can:
+- Paste Showdown-format team text directly or paste a pokepast.es URL to import a team
+- Click "Analyze" to generate an auto-populated report skeleton
+- Fill in strategy notes, matchup plans, damage calcs, and speed comparisons
+- Share or publish the completed report
+
+No account is required to build or view a report. Creating a free account unlocks saving multiple reports, version history, and real-time collaboration with teammates.
+
+### https://pokemonvgcteamreport.com/explore
+The community explore feed. All public reports appear here. Visitors can filter by:
+- Format / regulation set (Reg G, Reg H, Champions Reg M-A, etc.)
+- Specific Pokémon (e.g. "show me all reports that run Calyrex-Ice")
+- Tournament (e.g. "top teams from 2025 Worlds")
+- Player name or creator handle
+
+This is the primary discovery surface for players researching a new meta or preparing for an upcoming event.
+
+### https://pokemonvgcteamreport.com/tournaments
+Tournament archive. Curated collection of team reports from top finishers at official Pokémon VGC events:
+- World Championships (annual, highest prestige)
+- International Championships (NAIC, EUIC, LAIC — three per season)
+- Regional Championships (multiple per season, across North America, Europe, Latin America, Oceania)
+- Online tournaments (Global Challenge, etc.)
+
+Each tournament card shows the event name, date, location, format, number of team reports, and the most-used Pokémon in the field.
+
+### https://pokemonvgcteamreport.com/champions
+Dedicated hub for the Pokémon Champions format (Regulation M-A). Covers:
+- What the Champions format is and how it differs from standard VGC
+- Featured team reports in the Champions format
+- Commonly used Mega Evolutions and restricted legendaries in the format
+
+### https://pokemonvgcteamreport.com/faq
+Answers to common questions about the platform, team reports, VGC formats, importing teams, and sharing reports. See the FAQ section below for a summary.
+
+### https://pokemonvgcteamreport.com/changelog
+Running log of product updates: new features, format support additions, bug fixes, and performance improvements.
+
+### https://pokemonvgcteamreport.com/s/[id]
+Individual team report pages. Each public report is accessible at a permanent short URL of this form. These pages include full JSON-LD structured data and Open Graph tags for rich previews when shared on social media or Discord.
+
+## FAQ
+
+### What is the Champions format?
+
+Pokémon Champions is a VGC format introduced for the 2026 competitive season under the name "Regulation M-A." It reintroduces Mega Evolutions — a mechanic last seen in standard competitive play in Generation 6/7 — alongside the modern Pokémon Scarlet & Violet roster.
+
+Key rules:
+- Teams of 6, bring 4 to battle (standard VGC doubles format)
+- Two restricted Legendary Pokémon are allowed (same as Regulation G/H)
+- Mega Evolutions are legal — one Pokémon per team can Mega Evolve in battle
+- All Scarlet & Violet Pokémon in the Home-compatible Pokédex are legal, including past-gen Pokémon transferred via Pokémon Home
+- Tera Types are still available (one Tera per battle)
+
+The format creates a dramatically different meta from previous regulation sets because Mega Evolutions bypass the standard Ability system while active, enabling combinations not seen in recent VGC history (e.g., Mega Kangaskhan's Parental Bond, Mega Salamence's Aerilate, Mega Gengar's Shadow Tag).
+
+VGC Team Report supports Champions Regulation M-A fully: import a team with Mega Stones, build your report, and filter the Explore page by this format.
+
+### How do I share a team report?
+
+1. Build your team report on the homepage (or open an existing saved report).
+2. Click the **Share** button in the top navigation bar.
+3. Choose **Publish** to make the report publicly visible on the Explore page and give it a permanent link at `https://pokemonvgcteamreport.com/s/[id]`.
+4. Alternatively, use **Copy Link** to get a direct URL without publishing to the public feed.
+5. Use **Embed** to get an `<iframe>` snippet for embedding the report in a team page, tournament article, or website.
+
+Shared reports are read-only for visitors. The owner (or collaborators with the edit link) can continue making changes — the public link always reflects the latest saved version.
+
+### What is the difference between SP and EVs?
+
+**EVs (Effort Values)** are the underlying game mechanic in Pokémon. Each Pokémon can hold a maximum of 508 total EVs, with a cap of 252 in any single stat. 4 EVs = 1 stat point at level 50 (for most stats). EVs are the standard way to describe a Pokémon's training in Showdown format and PokePaste.
+
+**SP (Stat Points or Standard Points)** is an alternative notation sometimes used in team reports and competitive coaching content — particularly in some international communities — where 1 SP = 1 EV. The terms are interchangeable. If you see a Pokémon listed with "252 SP Atk" it means the same thing as "252 EVs in Attack" (i.e., 252 Attack EVs).
+
+VGC Team Report accepts both notations when importing and displays EVs in the standard Showdown format on all report pages.
+
+### How do I embed a team report?
+
+After publishing a report (see "How do I share a team report?" above):
+
+1. Click **Share** → **Embed**.
+2. Copy the `<iframe>` code provided.
+3. Paste it into any HTML page, website builder, or CMS that supports raw HTML embeds.
+
+The embed renders a compact, read-only version of the team report — showing each Pokémon's sprite, build, and the author's strategy notes — without needing the viewer to visit the site separately.
+
+Embeds are responsive and load asynchronously so they don't slow down the host page. The embed URL follows the pattern `https://pokemonvgcteamreport.com/embed/[id]`.
+
+For Discord, the `/s/[id]` link automatically generates a rich Open Graph preview showing the team's Pokémon and a summary — no embed code needed.
+
+## Key concepts glossary
+
+- **Team report:** A structured document covering a VGC team's six Pokémon builds (moves, item, EVs/IVs, nature, tera type), overall team strategy, matchup plans against common threats, damage calculations, and speed tier comparisons.
+- **Regulation set / Format:** VGC rotates its legal Pokémon list seasonally. Regulation G and Regulation H are recent standard formats from the Scarlet & Violet era. Regulation M-A (Champions) is the 2026 format adding Mega Evolutions.
+- **Restricted Legendary:** High-power Legendary Pokémon that are legal in limited quantities per team (usually two in recent formats).
+- **Speed tier:** A comparison of a Pokémon's Speed stat relative to common threats to determine who moves first without Trick Room or priority moves.
+- **Damage calc / Calculation:** A computation of how much damage a specific move deals from one Pokémon to another under specific conditions (EVs, stat boosts, weather, terrain, etc.). Essential for EV spread decisions.
+- **Matchup plan:** Notes on how a team handles specific opposing team archetypes — what lead to use, what to bring, what to watch out for.
+- **PokePaste import:** Reports can be seeded from Pokémon Showdown team format text or a pokepast.es URL. The importer parses species, moves, items, abilities, EVs, IVs, natures, and tera types automatically.
+
+## About
+
+VGC Team Report is an independent tool for the competitive Pokémon community. It is not affiliated with The Pokémon Company International, Nintendo, or Game Freak.
+
+Source code: https://github.com/MSS23/VGC-Team-Report

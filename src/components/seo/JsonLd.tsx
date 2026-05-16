@@ -75,6 +75,65 @@ export function OrganizationJsonLd() {
   );
 }
 
+export interface SportsEventData {
+  name: string;
+  startDate: string;
+  location: string;
+  url: string;
+  description?: string;
+  eventStatus?: string;
+}
+
+export function SportsEventJsonLd({ events }: { events: SportsEventData[] }) {
+  if (events.length === 0) return null;
+
+  // Emit an array of SportsEvent nodes so Google can index each event individually
+  const schemaData =
+    events.length === 1
+      ? {
+          "@context": "https://schema.org",
+          "@type": "SportsEvent",
+          name: events[0].name,
+          startDate: events[0].startDate,
+          location: {
+            "@type": "Place",
+            name: events[0].location,
+          },
+          url: events[0].url,
+          sport: "Pokémon Video Game Championship (VGC)",
+          ...(events[0].description ? { description: events[0].description } : {}),
+          eventStatus: events[0].eventStatus ?? "https://schema.org/EventScheduled",
+          organizer: {
+            "@type": "Organization",
+            name: "The Pokémon Company International",
+            url: "https://www.pokemon.com",
+          },
+        }
+      : {
+          "@context": "https://schema.org",
+          "@graph": events.map((e) => ({
+            "@type": "SportsEvent",
+            name: e.name,
+            startDate: e.startDate,
+            location: {
+              "@type": "Place",
+              name: e.location,
+            },
+            url: e.url,
+            sport: "Pokémon Video Game Championship (VGC)",
+            ...(e.description ? { description: e.description } : {}),
+            eventStatus: e.eventStatus ?? "https://schema.org/EventScheduled",
+            organizer: {
+              "@type": "Organization",
+              name: "The Pokémon Company International",
+              url: "https://www.pokemon.com",
+            },
+          })),
+        };
+
+  return <JsonLd data={schemaData as Record<string, unknown>} />;
+}
+
 export function FAQPageJsonLd() {
   return (
     <JsonLd

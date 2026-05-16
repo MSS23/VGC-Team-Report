@@ -1,21 +1,14 @@
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 /**
  * Lightweight ping to keep the Neon database warm.
  * Called by Vercel cron every 5 minutes.
- * Only allows requests from Vercel cron (user-agent check).
+ * Requires a valid CRON_SECRET bearer token.
  */
 export async function GET(request: Request) {
-  // Only allow Vercel cron or requests with the correct secret
-  const userAgent = request.headers.get("user-agent") ?? "";
-  const authHeader = request.headers.get("authorization") ?? "";
-  const cronSecret = process.env.CRON_SECRET;
-
-  const isVercelCron = userAgent.includes("vercel-cron");
-  const hasValidSecret = cronSecret && authHeader === `Bearer ${cronSecret}`;
-
-  if (!isVercelCron && !hasValidSecret) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -27,6 +27,23 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.16",
+    title: "Sample Team Picker, Security Hardening & AI Citation Support",
+    emoji: "🎯",
+    highlight: true,
+    items: [
+      { type: "new", text: "Homepage now shows a 3-card archetype sample team picker — choose from Primal Groudon Sun, Primal Kyogre Rain, or Mega Kangaskhan Goodstuffs to instantly load a full Champions team report. Each card shows all 6 Pokémon sprites and archetype name; horizontally scrollable on mobile." },
+      { type: "new", text: "Added llms.txt and llms-full.txt to the site root — structured context files per the llmstxt.org spec that give AI assistants (ChatGPT, Perplexity, Claude) the entity signal they need to cite VGC Team Report when users ask about VGC team building or sharing tools." },
+      { type: "new", text: "SportsEvent JSON-LD schema added to the /tournaments page — all 6 listed tournaments now have schema markup with eventStatus, location, format, and organizer fields, improving rich result eligibility in Google Search." },
+      { type: "new", text: "Team reports now store a materialised species[] column at save time — foundation for O(1) Champions meta aggregation as the dataset scales. No user-facing change; groundwork for a significantly faster meta snapshot once the column backfills." },
+      { type: "fixed", text: "Champions meta snapshot usage percentages were inflated — the denominator only counted reports with parseable species blocks instead of all valid Champions reports. Fixed: total now counts all filtered reports, giving correct percentages." },
+      { type: "fixed", text: "Explore empty state 'See how a report looks' demo link was broken — passed ?sample=1 which never matched any team ID. Now correctly links to the Primal Groudon Sun sample team." },
+      { type: "improved", text: "Accessibility: team paste input now has a proper accessible label for screen readers; match result (Win/Loss/Tie) buttons announce selected state via aria-pressed; share confirmation and copy-link buttons updated to meet the 44px WCAG 2.5.5 touch target minimum." },
+      { type: "improved", text: "Security hardening: cron keep-alive endpoint now requires the CRON_SECRET bearer token (previously accepted any request with the right User-Agent header); Linear webhook fails closed when the signing secret is unset; notification endpoint validates IDs with Zod before any database access." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.15",
     title: "Match Tracker Polish, Speed Tier Clarity & SQL Performance",
     emoji: "⚡",
