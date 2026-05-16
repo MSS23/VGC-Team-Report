@@ -14,26 +14,23 @@ export async function POST(request: Request) {
 
     // Verify Linear webhook signature using LINEAR_WEBHOOK_SECRET
     const webhookSecret = process.env.LINEAR_WEBHOOK_SECRET;
-    if (webhookSecret) {
-      const signature = request.headers.get("x-linear-signature");
-      if (!signature) {
-        return NextResponse.json({ error: "Missing signature" }, { status: 401 });
-      }
-      const expected = createHmac("sha256", webhookSecret)
-        .update(rawBody)
-        .digest("hex");
-      const expectedBuf = Buffer.from(expected, "utf8");
-      const signatureBuf = Buffer.from(signature, "utf8");
-      if (
-        expectedBuf.length !== signatureBuf.length ||
-        !timingSafeEqual(expectedBuf, signatureBuf)
-      ) {
-        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-      }
-    } else {
-      console.warn(
-        "LINEAR_WEBHOOK_SECRET is not set — skipping signature verification (local dev mode)"
-      );
+    if (!webhookSecret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const signature = request.headers.get("x-linear-signature");
+    if (!signature) {
+      return NextResponse.json({ error: "Missing signature" }, { status: 401 });
+    }
+    const expected = createHmac("sha256", webhookSecret)
+      .update(rawBody)
+      .digest("hex");
+    const expectedBuf = Buffer.from(expected, "utf8");
+    const signatureBuf = Buffer.from(signature, "utf8");
+    if (
+      expectedBuf.length !== signatureBuf.length ||
+      !timingSafeEqual(expectedBuf, signatureBuf)
+    ) {
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
     const body = JSON.parse(rawBody);
