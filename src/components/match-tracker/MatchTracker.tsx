@@ -244,7 +244,8 @@ export function MatchTracker() {
                     key={r}
                     type="button"
                     onClick={() => setResult(r)}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg border capitalize transition-all cursor-pointer ${
+                    aria-pressed={result === r}
+                    className={`flex-1 py-2 min-h-[44px] text-xs font-bold rounded-lg border capitalize transition-all cursor-pointer ${
                       result === r ? resultBg(r) : "bg-surface border-border text-text-tertiary hover:text-text-primary"
                     }`}
                   >
