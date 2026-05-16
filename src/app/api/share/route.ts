@@ -43,6 +43,28 @@ const ShareBodySchema = z.object({
   isPublish: z.boolean().optional(),
 });
 
+function extractSpecies(paste: string): string[] {
+  const species: string[] = [];
+  const lines = paste.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('-') || trimmed.startsWith('Ability') ||
+        trimmed.startsWith('Level') || trimmed.startsWith('EVs') ||
+        trimmed.startsWith('IVs') || trimmed.startsWith('Nature') ||
+        trimmed.startsWith('Tera')) continue;
+    // Match "PokemonName @ Item" or just "PokemonName" (name line)
+    const match = trimmed.match(/^([A-Za-z][A-Za-z0-9 '-]+?)(?:\s*@.*)?$/);
+    if (match) {
+      // Normalize: lowercase, replace spaces with hyphens
+      const name = match[1].trim().toLowerCase().replace(/\s+/g, '-');
+      if (name.length > 1 && !name.includes('ability') && !name.includes('level')) {
+        species.push(name);
+      }
+    }
+  }
+  return [...new Set(species)].slice(0, 6); // max 6, deduplicated
+}
+
 function generateId(): string {
   const chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -302,15 +324,17 @@ export async function POST(request: Request) {
 
     const id = generateId();
     const newEditToken = generateEditToken();
+    const parsedSpecies = extractSpecies(state.paste);
 
     await sql`
-      INSERT INTO shares (id, edit_token, data, version, is_public, owner_id, search_vector)
+      INSERT INTO shares (id, edit_token, data, version, is_public, owner_id, search_vector, species)
       VALUES (
         ${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${ownerId},
         setweight(to_tsvector('english', ${searchCreator}), 'A') ||
         setweight(to_tsvector('english', ${searchTournament}), 'A') ||
         setweight(to_tsvector('english', ${searchPaste}), 'B') ||
-        setweight(to_tsvector('english', ${searchSummary}), 'C')
+        setweight(to_tsvector('english', ${searchSummary}), 'C'),
+        ${parsedSpecies.length > 0 ? sql`${parsedSpecies}::text[]` : sql`NULL`}
       )
     `;
 
