@@ -1588,7 +1588,7 @@ function HomeContent() {
           onDuplicate={handleForkReport}
           onAnonymousIntent={() => {
             if (activeShareId) {
-              posthog.capture("share_view_duplicate_anonymous", { source_id: activeShareId });
+              posthog?.capture("share_view_duplicate_anonymous", { source_id: activeShareId });
             }
           }}
           onDismiss={() => setShareCtaDismissed(true)}
