@@ -62,7 +62,10 @@ export function InstallPrompt() {
     const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
     if (isIOS && isSafari) {
       const iosTimer = setTimeout(() => {
-        if (scrollFired) {
+        // Show if user scrolled OR if the page has insufficient scroll height
+        // (non-scrolling pages like iPad full-viewport, content shorter than 200px)
+        const pageIsShort = document.documentElement.scrollHeight - window.innerHeight < 200;
+        if (scrollFired || pageIsShort) {
           setShowIOSPrompt(true);
           setDismissed(false);
         }
