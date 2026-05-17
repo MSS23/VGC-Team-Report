@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  encodeShareState,
   decodeShareState,
   type ShareableState,
 } from "@/lib/sharing/url-codec";
@@ -101,6 +100,7 @@ export function useShareUrl() {
   const [isEditingUnlocked, setIsEditingUnlocked] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [fetchedIsPublic, setFetchedIsPublic] = useState<boolean | null>(null);
+  const [fetchedIsUnlisted, setFetchedIsUnlisted] = useState<boolean | null>(null);
   const [fetchedCollaborators, setFetchedCollaborators] = useState<string[]>([]);
   const [forkedFrom, setForkedFrom] = useState<ForkedFromMeta | null>(null);
   const [redactedFields, setRedactedFields] = useState<string[]>([]);
@@ -137,6 +137,7 @@ export function useShareUrl() {
     setIsEditingUnlocked(false);
     setIsOwner(false);
     setFetchedIsPublic(null);
+    setFetchedIsUnlisted(null);
     setFetchedCollaborators([]);
     setForkedFrom(null);
     setRedactedFields([]);
@@ -181,6 +182,7 @@ export function useShareUrl() {
           if (!data) return settle(null);
           const editable = data._editable === true;
           if (data._isPublic !== undefined) setFetchedIsPublic(!!data._isPublic);
+          if (data._isUnlisted !== undefined) setFetchedIsUnlisted(!!data._isUnlisted);
           setIsOwner(!!data._isOwner);
           setForkedFrom((data._forkedFrom as ForkedFromMeta | null) ?? null);
           setRedactedFields(Array.isArray(data._redactedFields) ? (data._redactedFields as string[]) : []);
@@ -228,7 +230,7 @@ export function useShareUrl() {
     return null;
   }, []);
 
-  const copyShareUrl = useCallback(async (state: ShareableState, isPublic?: boolean) => {
+  const copyShareUrl = useCallback(async (state: ShareableState, isPublic?: boolean, isUnlisted?: boolean) => {
     setShareStatus("copying");
     setUrlWarning(null);
     setLastShareResult(null);
@@ -248,6 +250,7 @@ export function useShareUrl() {
             existingId: active?.shareId,
             editToken: active?.editToken,
             isPublic,
+            isUnlisted,
             isPublish: true,
           }),
         });
@@ -302,7 +305,8 @@ export function useShareUrl() {
    */
   const autoSave = useCallback(async (
     state: ShareableState,
-    isPublic?: boolean
+    isPublic?: boolean,
+    isUnlisted?: boolean
   ): Promise<{ ok: boolean; error?: string; status?: number }> => {
     const active = getActiveShare();
     if (!active) {
@@ -319,6 +323,7 @@ export function useShareUrl() {
           existingId: active.shareId,
           editToken: active.editToken,
           isPublic,
+          isUnlisted,
         }),
       });
       if (res.ok) {
@@ -464,6 +469,7 @@ export function useShareUrl() {
     hasExistingShare,
     clearStoredShare,
     fetchedIsPublic,
+    fetchedIsUnlisted,
     fetchedCollaborators,
     autoSaveStatus,
     forkedFrom,

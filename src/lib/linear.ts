@@ -219,9 +219,3 @@ export async function createLinearIssue(opts: {
   return result.issueCreate.issue;
 }
 
-/**
- * Check if Linear is configured.
- */
-export function isLinearConfigured(): boolean {
-  return getConfig().configured;
-}
