@@ -19,18 +19,18 @@ export async function GET(request: NextRequest) {
 
     const rows = showTrash
       ? await sql`
-          SELECT id, edit_token, data, created_at, updated_at, COALESCE(view_count, 0) as view_count, is_public, deleted_at
+          SELECT id, edit_token, data, created_at, updated_at, COALESCE(view_count, 0) as view_count, is_public, COALESCE(is_unlisted, FALSE) as is_unlisted, deleted_at
           FROM shares
           WHERE owner_id = ${userId} AND deleted_at IS NOT NULL
           ORDER BY deleted_at DESC
         `
       : await sql`
-          SELECT s.id, s.edit_token, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, s.is_public,
+          SELECT s.id, s.edit_token, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, s.is_public, COALESCE(s.is_unlisted, FALSE) as is_unlisted,
                  CASE WHEN s.owner_id = ${userId} THEN 0 ELSE 1 END as collab_order
           FROM shares s
           WHERE s.owner_id = ${userId} AND s.deleted_at IS NULL AND (s.is_draft IS NULL OR s.is_draft = FALSE)
           UNION ALL
-          SELECT s.id, s.edit_token, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, s.is_public,
+          SELECT s.id, s.edit_token, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, s.is_public, COALESCE(s.is_unlisted, FALSE) as is_unlisted,
                  1 as collab_order
           FROM shares s
           INNER JOIN collaborators c ON c.share_id = s.id AND c.user_id = ${userId}
@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
         updatedAt: (row.updated_at as Date).toISOString(),
         viewCount: row.view_count as number,
         isPublic: row.is_public as boolean,
+        isUnlisted: row.is_unlisted as boolean,
         editToken: row.edit_token as string,
         ...(row.collab_order !== undefined && { isCollab: (row.collab_order as number) === 1 }),
         ...(row.deleted_at ? { deletedAt: (row.deleted_at as Date).toISOString() } : {}),

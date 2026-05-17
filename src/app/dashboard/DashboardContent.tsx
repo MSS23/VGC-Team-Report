@@ -13,6 +13,7 @@ import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 
 interface DashboardReport extends ExploreReport {
   isPublic?: boolean;
+  isUnlisted?: boolean;
   editToken?: string;
   deletedAt?: string;
   isCollab?: boolean;
@@ -551,14 +552,30 @@ function ManagedReportCard({
   const toggleVisibility = async () => {
     if (toggling) return;
     setToggling(true);
+    // Cycle: private → unlisted → public → private
+    let nextIsPublic: boolean;
+    let nextIsUnlisted: boolean;
+    if (!report.isPublic && !report.isUnlisted) {
+      // private → unlisted
+      nextIsPublic = false;
+      nextIsUnlisted = true;
+    } else if (report.isUnlisted) {
+      // unlisted → public
+      nextIsPublic = true;
+      nextIsUnlisted = false;
+    } else {
+      // public → private
+      nextIsPublic = false;
+      nextIsUnlisted = false;
+    }
     try {
       const res = await fetch(`/api/user/reports/${report.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPublic: !report.isPublic }),
+        body: JSON.stringify({ isPublic: nextIsPublic, isUnlisted: nextIsUnlisted }),
       });
       if (res.ok) {
-        onUpdate(report.id, { isPublic: !report.isPublic });
+        onUpdate(report.id, { isPublic: nextIsPublic, isUnlisted: nextIsUnlisted });
       }
     } catch { /* silent */ }
     finally { setToggling(false); }
@@ -613,13 +630,16 @@ function ManagedReportCard({
                 type="button"
                 onClick={toggleVisibility}
                 disabled={toggling}
+                title="Click to cycle: Private → Unlisted → Public"
                 className={`inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md border transition-all cursor-pointer ${
                   report.isPublic
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                    : report.isUnlisted
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
                     : "bg-surface-alt text-text-tertiary border-border"
                 }`}
               >
-                {report.isPublic ? "Public" : "Private"}
+                {report.isPublic ? "Public" : report.isUnlisted ? "Unlisted" : "Private"}
               </button>
             )}
             <a

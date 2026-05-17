@@ -8,6 +8,7 @@ import { z } from "zod";
 
 const UpdateBody = z.object({
   isPublic: z.boolean().optional(),
+  isUnlisted: z.boolean().optional(),
   restore: z.boolean().optional(),
 });
 
@@ -48,11 +49,16 @@ export async function PATCH(
       return NextResponse.json({ id: shareId, restored: true });
     }
 
-    if (parsed.data.isPublic !== undefined) {
+    if (parsed.data.isPublic !== undefined || parsed.data.isUnlisted !== undefined) {
+      const newIsPublic = parsed.data.isPublic;
+      const newIsUnlisted = parsed.data.isUnlisted ?? false;
       const rows = await sql`
-        UPDATE shares SET is_public = ${parsed.data.isPublic}, updated_at = NOW()
+        UPDATE shares
+        SET is_public = COALESCE(${newIsPublic ?? null}::boolean, is_public),
+            is_unlisted = ${newIsUnlisted},
+            updated_at = NOW()
         WHERE id = ${shareId} AND owner_id = ${userId} AND deleted_at IS NULL
-        RETURNING id, is_public
+        RETURNING id, is_public, is_unlisted
       `;
       if (rows.length === 0) {
         return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
@@ -65,8 +71,9 @@ export async function PATCH(
       captureServerEvent(userId, "report_visibility_changed", {
         report_id: shareId,
         is_public: !!rows[0].is_public,
+        is_unlisted: !!rows[0].is_unlisted,
       });
-      return NextResponse.json({ id: shareId, isPublic: rows[0].is_public });
+      return NextResponse.json({ id: shareId, isPublic: rows[0].is_public, isUnlisted: rows[0].is_unlisted });
     }
 
     return NextResponse.json({ id: shareId });

@@ -40,6 +40,7 @@ const ShareBodySchema = z.object({
   existingId: z.string().optional(),
   editToken: z.string().optional(),
   isPublic: z.boolean().optional(),
+  isUnlisted: z.boolean().optional(),
   isPublish: z.boolean().optional(),
 });
 
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const { state, existingId, editToken, isPublic, isPublish } = parsed.data;
+    const { state, existingId, editToken, isPublic, isUnlisted, isPublish } = parsed.data;
 
     // Require authentication for ALL writes — both create and update. An edit
     // token in localStorage alone must never grant mutation rights to an
@@ -175,6 +176,7 @@ export async function POST(request: Request) {
 
       // Only the owner can change visibility — collaborators keep the existing value
       let effectiveIsPublic = isPublic ?? false;
+      const effectiveIsUnlisted = isUnlisted ?? false;
       if (oldRows.length > 0 && isPublic !== undefined) {
         const currentIsPublic = !!oldRows[0].is_public;
         if (isPublic !== currentIsPublic) {
@@ -217,13 +219,15 @@ export async function POST(request: Request) {
         SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(),
             version = COALESCE(version, 1) + ${hasDataChanges ? 1 : 0},
             is_public = ${effectiveIsPublic},
+            is_unlisted = ${effectiveIsUnlisted},
+            species = ${extractSpecies(state.paste)},
             search_vector =
               setweight(to_tsvector('english', ${searchCreator}), 'A') ||
               setweight(to_tsvector('english', ${searchTournament}), 'A') ||
               setweight(to_tsvector('english', ${searchPaste}), 'B') ||
               setweight(to_tsvector('english', ${searchSummary}), 'C')
         WHERE id = ${existingId} AND edit_token = ${editToken}
-        RETURNING id, COALESCE(version, 1) AS version, is_public
+        RETURNING id, COALESCE(version, 1) AS version, is_public, is_unlisted
       `;
       if (rows.length > 0) {
         // Record changelog entry (fire-and-forget, only for authenticated users)
@@ -257,7 +261,7 @@ export async function POST(request: Request) {
           is_publish: isPublish ?? false,
         });
 
-        return NextResponse.json({ id: existingId, editToken, updated: true, version: rows[0].version, isPublic: rows[0].is_public });
+        return NextResponse.json({ id: existingId, editToken, updated: true, version: rows[0].version, isPublic: rows[0].is_public, isUnlisted: rows[0].is_unlisted });
       }
       // Token mismatch or not found — fall through to create new
     }
@@ -297,11 +301,14 @@ export async function POST(request: Request) {
       // Update the existing share instead of creating a duplicate
       const dup = existingDup[0];
       const effectiveIsPublic = isPublic ?? !!dup.is_public;
+      const effectiveIsUnlistedDup = isUnlisted ?? false;
       await sql`
         UPDATE shares
         SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(),
             version = COALESCE(version, 1) + 1,
             is_public = ${effectiveIsPublic},
+            is_unlisted = ${effectiveIsUnlistedDup},
+            species = ${extractSpecies(state.paste)},
             search_vector =
               setweight(to_tsvector('english', ${searchCreator}), 'A') ||
               setweight(to_tsvector('english', ${searchTournament}), 'A') ||
@@ -319,6 +326,7 @@ export async function POST(request: Request) {
         updated: true,
         version: Number(dup.version) + 1,
         isPublic: effectiveIsPublic,
+        isUnlisted: effectiveIsUnlistedDup,
       });
     }
 
@@ -327,9 +335,9 @@ export async function POST(request: Request) {
     const parsedSpecies = extractSpecies(state.paste);
 
     await sql`
-      INSERT INTO shares (id, edit_token, data, version, is_public, owner_id, search_vector, species)
+      INSERT INTO shares (id, edit_token, data, version, is_public, is_unlisted, owner_id, search_vector, species)
       VALUES (
-        ${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${ownerId},
+        ${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${isUnlisted ?? false}, ${ownerId},
         setweight(to_tsvector('english', ${searchCreator}), 'A') ||
         setweight(to_tsvector('english', ${searchTournament}), 'A') ||
         setweight(to_tsvector('english', ${searchPaste}), 'B') ||
@@ -360,8 +368,8 @@ export async function POST(request: Request) {
     // Invalidate explore cache on new share
     cacheInvalidatePrefix("explore:");
 
-    // Notify followers when a new public report is created (fire-and-forget)
-    if (isPublic && state.creatorName) {
+    // Notify followers when a new public (non-unlisted) report is created (fire-and-forget)
+    if (isPublic && !isUnlisted && state.creatorName) {
       notifyFollowers(state.creatorName as string, id, ownerId ?? undefined);
     }
 
@@ -375,7 +383,7 @@ export async function POST(request: Request) {
       creator_name: state.creatorName ?? null,
     });
 
-    return NextResponse.json({ id, editToken: newEditToken, updated: false, version: 1, isPublic: isPublic ?? false });
+    return NextResponse.json({ id, editToken: newEditToken, updated: false, version: 1, isPublic: isPublic ?? false, isUnlisted: isUnlisted ?? false });
   } catch (e) {
     console.error("Share create/update error:", e);
     return NextResponse.json(

@@ -130,7 +130,7 @@ export async function GET(
       } catch { /* not authenticated */ }
 
       const rows = await sql`
-        SELECT data, (edit_token = ${key}) AS editable, COALESCE(version, 1) AS version, is_public FROM shares WHERE id = ${id} AND deleted_at IS NULL
+        SELECT data, (edit_token = ${key}) AS editable, COALESCE(version, 1) AS version, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL
       `;
       if (rows.length === 0) {
         return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -155,6 +155,7 @@ export async function GET(
         _editable: editable,
         _version: Number(rows[0].version),
         _isPublic: !!rows[0].is_public,
+        _isUnlisted: !!rows[0].is_unlisted,
         _isOwner: false,
         _forkedFrom: forkedFrom,
         _redactedFields: redactedFields,
@@ -171,7 +172,7 @@ export async function GET(
     // If the user is the owner or a collaborator, grant edit access
     if (userId) {
       const ownerRows = await sql`
-        SELECT data, edit_token, COALESCE(version, 1) AS version, is_public, owner_id
+        SELECT data, edit_token, COALESCE(version, 1) AS version, is_public, is_unlisted, owner_id
         FROM shares WHERE id = ${id} AND deleted_at IS NULL
       `;
       if (ownerRows.length > 0) {
@@ -198,6 +199,7 @@ export async function GET(
             _editToken: ownerRows[0].edit_token as string,
             _version: Number(ownerRows[0].version),
             _isPublic: !!ownerRows[0].is_public,
+            _isUnlisted: !!ownerRows[0].is_unlisted,
             _isOwner: isOwner,
             _collaborators: collabNameRows.map((r) => r.user_name as string),
             _forkedFrom: forkedFrom,
@@ -210,13 +212,14 @@ export async function GET(
     // Private reports behave as "unlisted": anyone with the /s/{id} link can view,
     // but they are not listed on Explore and edit requires the ?key= collab token.
     const rows = await sql`
-      SELECT data, COALESCE(version, 1) AS version, is_public FROM shares WHERE id = ${id} AND deleted_at IS NULL
+      SELECT data, COALESCE(version, 1) AS version, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL
     `;
     if (rows.length === 0) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     const isPublic = !!rows[0].is_public;
+    const isUnlisted = !!rows[0].is_unlisted;
 
     // Check cache for public reads only — unlisted reports skip cache to avoid
     // leaking stale visibility state on public↔private toggles.
@@ -246,6 +249,7 @@ export async function GET(
       ...viewable,
       _version: Number(rows[0].version),
       _isPublic: isPublic,
+      _isUnlisted: isUnlisted,
       _isOwner: false,
       _collaborators: collaboratorNames,
       _forkedFrom: forkedFrom,

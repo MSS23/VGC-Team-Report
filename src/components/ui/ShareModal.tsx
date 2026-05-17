@@ -3,16 +3,19 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { usePostHog } from "@/components/providers/PostHogProvider";
+import { TeamCardExport } from "@/components/ui/TeamCardExport";
 
 interface ShareModalProps {
   publicUrl: string;
   teamSpecies: string[];
   /** Raw Showdown-format paste text for the "Copy Paste" action. */
   showdownPaste?: string;
+  teamName?: string;
   tournamentName?: string;
   creatorName?: string;
   placement?: string;
   isPublic: boolean;
+  isUnlisted?: boolean;
   isOwner?: boolean;
   /**
    * When true, the modal is being opened by a read-only viewer of someone
@@ -23,6 +26,8 @@ interface ShareModalProps {
    */
   viewerMode?: boolean;
   onTogglePublic: (v: boolean) => void;
+  /** Called when the user changes visibility to a specific (isPublic, isUnlisted) combo. */
+  onSetVisibility?: (isPublic: boolean, isUnlisted: boolean) => void;
   allowComments: boolean;
   onToggleComments: (v: boolean) => void;
   onClose: () => void;
@@ -38,13 +43,16 @@ export function ShareModal({
   publicUrl,
   teamSpecies,
   showdownPaste,
+  teamName,
   tournamentName,
   creatorName,
   placement,
   isPublic,
+  isUnlisted = false,
   isOwner = true,
   viewerMode = false,
   onTogglePublic,
+  onSetVisibility,
   allowComments,
   onToggleComments,
   onClose,
@@ -503,6 +511,19 @@ export function ShareModal({
               </svg>
             </button>
           )}
+
+          {/* Download Team Card */}
+          {teamSpecies.length > 0 && (
+            <div className="relative">
+              <TeamCardExport
+                teamName={teamName || tournamentName || "vgc-team"}
+                playerName={creatorName}
+                tournamentName={tournamentName}
+                teamSpecies={teamSpecies}
+                onExported={() => posthog?.capture("team_card_downloaded", { has_tournament: !!tournamentName })}
+              />
+            </div>
+          )}
         </div>
 
         {/* Embed snippet — only shown when a short /s/ URL is available */}
@@ -585,53 +606,101 @@ export function ShareModal({
           </div>
         )}
 
-        {/* Visibility toggle — only owner can change; blocked when warnings exist.
+        {/* Visibility picker — only owner can change; blocked when warnings exist.
             Hidden entirely in viewer mode since it's irrelevant to someone
             who's just sharing someone else's report. */}
         {!viewerMode && (
         <div className="px-6 py-4 border-t border-border">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={isPublic}
-            onClick={() => isOwner && !hasWarnings && handleTogglePublic(!isPublic)}
-            disabled={!isOwner || (hasWarnings && !isPublic)}
-            className={`flex items-center gap-3 w-full text-left group ${isOwner && !(hasWarnings && !isPublic) ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
-          >
-            <div className={`relative inline-flex h-[24px] w-[42px] items-center rounded-full transition-all duration-300 flex-shrink-0 ${
-              isPublic ? "bg-accent shadow-md shadow-accent/30" : "bg-border"
-            }`}>
-              <span className={`inline-block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-all duration-300 ${
-                isPublic ? "translate-x-[20px] scale-110" : "translate-x-[3px]"
-              }`} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
-                {isPublic ? "Listed on Explore" : "List on Explore"}
-              </div>
-              <div className="text-xs text-text-tertiary">
-                {!isOwner
-                  ? "Only the report owner can change visibility."
-                  : hasWarnings && !isPublic
-                  ? "Fix team warnings before publishing publicly."
-                  : isPublic
-                  ? "Your team is visible in the public gallery. Toggle off to unlist."
-                  : "Currently unlisted. Toggle on to feature in the public gallery."}
-              </div>
-            </div>
-            {isPublic && (
-              <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-extrabold rounded-md tracking-wide bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                PUBLIC
-              </span>
-            )}
-            {!isPublic && (
-              <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-extrabold rounded-md tracking-wide bg-surface-alt text-text-tertiary border border-border">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-                UNLISTED
-              </span>
-            )}
-          </button>
+          <p className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-3">Visibility</p>
+          {/* 3-state picker: Private | Unlisted | Public */}
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Report visibility">
+            {/* Private */}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={!isPublic && !isUnlisted}
+              disabled={!isOwner}
+              onClick={() => {
+                if (!isOwner) return;
+                if (onSetVisibility) onSetVisibility(false, false);
+                else handleTogglePublic(false);
+              }}
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all ${
+                !isPublic && !isUnlisted
+                  ? "bg-surface border-accent/50 shadow-sm shadow-accent/10"
+                  : isOwner ? "bg-surface-alt border-border hover:border-accent/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
+              }`}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"}>
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <span className={`text-[11px] font-bold leading-none ${!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"}`}>Private</span>
+              <span className="text-[9px] text-text-tertiary leading-tight text-center">Only you</span>
+            </button>
+            {/* Unlisted */}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={isUnlisted && !isPublic}
+              disabled={!isOwner}
+              onClick={() => {
+                if (!isOwner) return;
+                if (onSetVisibility) onSetVisibility(false, true);
+                else handleTogglePublic(false);
+              }}
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all ${
+                isUnlisted && !isPublic
+                  ? "bg-surface border-amber-500/50 shadow-sm shadow-amber-500/10"
+                  : isOwner ? "bg-surface-alt border-border hover:border-amber-500/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
+              }`}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"}>
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+              <span className={`text-[11px] font-bold leading-none ${isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"}`}>Unlisted</span>
+              <span className="text-[9px] text-text-tertiary leading-tight text-center">Link only</span>
+            </button>
+            {/* Public */}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={isPublic}
+              disabled={!isOwner || hasWarnings}
+              onClick={() => {
+                if (!isOwner || hasWarnings) return;
+                if (!hasCreator) { setCreatorError(true); return; }
+                if (!hasTags) { setTagError(true); return; }
+                setTagError(false);
+                setCreatorError(false);
+                if (!isPublic) setJustPublished(true);
+                if (onSetVisibility) onSetVisibility(true, false);
+                else handleTogglePublic(true);
+              }}
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all ${
+                isPublic
+                  ? "bg-surface border-emerald-500/50 shadow-sm shadow-emerald-500/10"
+                  : isOwner && !hasWarnings ? "bg-surface-alt border-border hover:border-emerald-500/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
+              }`}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isPublic ? "text-emerald-500" : "text-text-tertiary"}>
+                <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+              <span className={`text-[11px] font-bold leading-none ${isPublic ? "text-emerald-500" : "text-text-tertiary"}`}>Public</span>
+              <span className="text-[9px] text-text-tertiary leading-tight text-center">On Explore</span>
+            </button>
+          </div>
+          {/* Description line */}
+          <p className="text-xs text-text-tertiary mt-2.5 leading-relaxed">
+            {!isOwner
+              ? "Only the report owner can change visibility."
+              : hasWarnings && !isPublic
+              ? "Fix team warnings before publishing publicly."
+              : isPublic
+              ? "Listed on Explore — discoverable by anyone."
+              : isUnlisted
+              ? "Anyone with this link can view, but it won't appear on Explore."
+              : "Only accessible to you."}
+          </p>
 
           {/* Creator name error message */}
           {creatorError && (
