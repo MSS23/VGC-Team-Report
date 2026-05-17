@@ -27,6 +27,24 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.17",
+    title: "Unlisted Teams, Team Card Export & Newsletter Signup",
+    emoji: "🃏",
+    highlight: true,
+    items: [
+      { type: "new", text: "Teams can now be set to Unlisted — accessible via direct link but not listed on Explore or creator profiles. The share modal and dashboard both show a 3-state toggle: Private / Unlisted (link icon, amber badge) / Public." },
+      { type: "new", text: "Download Team Card button added to the share modal — exports a branded 600×338px PNG with all 6 Pokémon sprites, player name, tournament details, and site watermark. Uses html2canvas-pro at 2× scale." },
+      { type: "new", text: "Weekly VGC meta update newsletter signup added to the homepage — enter your email to receive weekly meta digests. Powered by Resend, rate-limited, and gated on RESEND_API_KEY." },
+      { type: "fixed", text: "Security: Next.js pinned to 16.2.6, patching a critical SSRF (CVSS 8.6) and auth/middleware bypass (CVSS 8.1) — 14 advisories resolved, zero breaking changes." },
+      { type: "fixed", text: "MatchTracker delete confirmation: pressing Escape now dismisses the confirmation and returns focus to the trash icon; keyboard focus moves to the Delete button when it appears; failed deletions now show an error message instead of failing silently." },
+      { type: "fixed", text: "iOS PWA 'Add to Home Screen' prompt now fires on iPad and short pages that can't be scrolled 200px — after the 60-second engagement timer the page height is checked and the prompt appears if scrolling isn't possible." },
+      { type: "fixed", text: "Species column now written on both INSERT and UPDATE paths — previously team edits left the materialised species[] column stale, causing Champions meta analytics to under-count edited teams." },
+      { type: "improved", text: "SEO: OrganizationJsonLd now includes a logo ImageObject (512×512) for Google Knowledge Panel eligibility; /tournaments page emits SportsEvent schema for Indianapolis Regionals and World Championships; /champions hub adds ItemList JSON-LD for Reg M-A Mega Pokémon rich results." },
+      { type: "improved", text: "Removed 14 dead exports and unused imports across src/lib/ and src/hooks/ — smaller TypeScript surface, no user-facing changes." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.16",
     title: "Sample Team Picker, Security Hardening & AI Citation Support",
     emoji: "🎯",
