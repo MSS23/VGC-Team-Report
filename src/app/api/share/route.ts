@@ -335,7 +335,7 @@ export async function POST(request: Request) {
     const parsedSpecies = extractSpecies(state.paste);
 
     await sql`
-      INSERT INTO shares (id, edit_token, data, version, is_public, is_unlisted, owner_id, search_vector, species)
+      INSERT INTO shares (id, edit_token, data, version, is_public, owner_id, search_vector, species)
       VALUES (
         ${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${isUnlisted ?? false}, ${ownerId},
         setweight(to_tsvector('english', ${searchCreator}), 'A') ||
