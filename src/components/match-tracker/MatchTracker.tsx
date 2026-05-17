@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const COMMON_ARCHETYPES = [
   "Flutter Mane + Iron Hands",
@@ -66,6 +66,10 @@ export function MatchTracker() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const deleteConfirmRef = useRef<HTMLButtonElement>(null);
+  const trashRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   const filteredSuggestions = archetype.length > 0
     ? COMMON_ARCHETYPES.filter((a) =>
@@ -97,18 +101,43 @@ export function MatchTracker() {
     try {
       const res = await fetch(`/api/match-log?id=${encodeURIComponent(id)}`, { method: "DELETE" });
       if (res.ok) {
+        setDeleteError(null);
+        setPendingDeleteId(null);
         await fetchStats();
+      } else {
+        setDeleteError("Failed to delete. Try again.");
       }
     } catch {
-      // best-effort — user can refresh manually
-    } finally {
-      setPendingDeleteId(null);
+      setDeleteError("Failed to delete. Try again.");
     }
   }, [fetchStats]);
 
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  // Escape key dismisses delete confirmation and returns focus to the trash button
+  useEffect(() => {
+    if (!pendingDeleteId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        const trashBtn = trashRefs.current.get(pendingDeleteId);
+        setPendingDeleteId(null);
+        setDeleteError(null);
+        // Defer focus so the trash button is visible again after state update
+        requestAnimationFrame(() => trashBtn?.focus());
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pendingDeleteId]);
+
+  // Move focus to Delete confirm button when confirmation appears
+  useEffect(() => {
+    if (pendingDeleteId) {
+      requestAnimationFrame(() => deleteConfirmRef.current?.focus());
+    }
+  }, [pendingDeleteId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -419,6 +448,9 @@ export function MatchTracker() {
             {logs.length > 0 && (
               <div>
                 <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">Recent Matches</p>
+                {deleteError && (
+                  <p role="alert" className="text-[10px] text-red-500 font-medium mb-1.5">{deleteError}</p>
+                )}
                 <div className="space-y-1">
                   {logs.slice(0, 5).map((log) => (
                     <div key={log.id} className="group flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-1.5 rounded-lg hover:bg-surface-alt/50 transition-colors">
@@ -432,6 +464,7 @@ export function MatchTracker() {
                       {pendingDeleteId === log.id ? (
                         <div role="group" aria-label="Confirm deletion" className="flex items-center gap-1 flex-shrink-0">
                           <button
+                            ref={deleteConfirmRef}
                             type="button"
                             onClick={() => handleDelete(log.id)}
                             aria-label="Confirm delete match entry"
@@ -441,7 +474,12 @@ export function MatchTracker() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => setPendingDeleteId(null)}
+                            onClick={() => {
+                              const trashBtn = trashRefs.current.get(log.id);
+                              setPendingDeleteId(null);
+                              setDeleteError(null);
+                              requestAnimationFrame(() => trashBtn?.focus());
+                            }}
                             aria-label="Cancel delete"
                             className="min-h-[32px] px-2 text-[10px] font-bold rounded bg-surface-alt border border-border text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
                           >
@@ -450,6 +488,10 @@ export function MatchTracker() {
                         </div>
                       ) : (
                         <button
+                          ref={(el) => {
+                            if (el) trashRefs.current.set(log.id, el);
+                            else trashRefs.current.delete(log.id);
+                          }}
                           type="button"
                           onClick={() => setPendingDeleteId(log.id)}
                           aria-label="Delete match entry"
