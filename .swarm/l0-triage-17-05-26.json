@@ -1,0 +1,131 @@
+[
+  {
+    "identifier": "VGC-191",
+    "title": "Security: upgrade Next.js 16.2.2 → 16.2.6 (SSRF + auth bypass CVEs)",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-191",
+    "files_likely_to_change": [
+      "package.json",
+      "package-lock.json"
+    ],
+    "scope_estimate": "30min",
+    "priority": "Urgent",
+    "is_bug": true,
+    "posthog_signal": false,
+    "implementation_notes": "Run `npm install next@16.2.6`, verify `npx tsc --noEmit && npm run build` pass. The `^16.2.2` range in package.json already allows the patch — just `npm install` may be enough; pin exact version to 16.2.6 for safety. No code changes expected — pure dependency bump."
+  },
+  {
+    "identifier": "VGC-194",
+    "title": "A11y: MatchTracker delete — Escape dismiss, focus management, error feedback",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-194",
+    "files_likely_to_change": [
+      "src/components/match-tracker/MatchTracker.tsx"
+    ],
+    "scope_estimate": "2hr",
+    "priority": "Medium",
+    "is_bug": true,
+    "posthog_signal": false,
+    "implementation_notes": "Audit already completed (r8-accessibility-16-05-26.md). Fix Issues C, D, E in MatchTracker.tsx: (C) change delete confirm/cancel from `min-h-[32px]` to `min-h-[44px]`; (D) replace delete trigger `p-1` with `min-w-[44px] min-h-[44px] flex items-center justify-center`; (E) add `aria-pressed={result === r}` to Win/Loss/Tie buttons. Also add Escape key handler to dismiss the inline confirm state, and return focus to the delete trigger button after cancel/dismiss."
+  },
+  {
+    "identifier": "VGC-193",
+    "title": "Bug: iOS PWA install prompt silently never fires on non-scrolling pages",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-193",
+    "files_likely_to_change": [
+      "src/components/ui/InstallPrompt.tsx"
+    ],
+    "scope_estimate": "1hr",
+    "priority": "Medium",
+    "is_bug": true,
+    "posthog_signal": false,
+    "implementation_notes": "PWA research (r-pwa-15-05-26.md) confirmed: iOS path shows after a fixed 45-second delay, but `beforeinstallprompt` never fires on iOS at all (Apple restriction). The real fix is switching from a time-based trigger to an engagement-based trigger (e.g., after user completes a meaningful action like first share or first report view). Also add a persistent low-pressure install entry in the navbar or settings menu so users who dismissed the sheet can re-invoke. The 15-second Android timer should also be replaced with an engagement trigger to avoid mid-read interruptions."
+  },
+  {
+    "identifier": "VGC-192",
+    "title": "Tech debt: remove 14 dead exports across src/lib/ and src/hooks/",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-192",
+    "files_likely_to_change": [
+      "src/lib/analysis/stat-calculator.ts",
+      "src/lib/utils/mega-detect.ts",
+      "src/lib/linear.ts",
+      "src/lib/utils/multi-import.ts",
+      "src/lib/utils/game-plan-helpers.tsx",
+      "src/lib/data/tags.ts",
+      "src/hooks/useExploreUrlSync.ts",
+      "src/lib/utils/pokepaste.ts",
+      "src/components/layout/Navbar.tsx",
+      "src/hooks/useShareUrl.ts"
+    ],
+    "scope_estimate": "1hr",
+    "priority": "Low",
+    "is_bug": false,
+    "posthog_signal": false,
+    "implementation_notes": "Dead code audit (c1-dead-code-17-05-26.md) is fully completed with exact line numbers. Remove exports: `evSpreadToSp`, `spToEvSpread`, `formatSpSpread`, `isChampionsOptimized` from stat-calculator.ts; `getBaseFormName`, `getMegaDataKey` from mega-detect.ts; `isLinearConfigured` from linear.ts; `importTeam` from multi-import.ts; `ResultBadge`, `ResultToggle` from game-plan-helpers.tsx; `EventType` from tags.ts. Unexport (keep internal): `PokePasteResult`, `CreatePokePasteInput` from pokepaste.ts; `ExploreUrlSyncResult` from useExploreUrlSync.ts. Remove dead imports: `hapticMedium` from Navbar.tsx line 13; `encodeShareState` from useShareUrl.ts line 6. Run `npx tsc --noEmit` to confirm no breakage."
+  },
+  {
+    "identifier": "VGC-190",
+    "title": "UX: Add unlisted privacy tier (draft → unlisted → public)",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-190",
+    "files_likely_to_change": [
+      "src/lib/db/migrations/add-unlisted-column.sql",
+      "src/app/api/share/route.ts",
+      "src/app/api/share/[id]/route.ts",
+      "src/app/api/user/reports/[shareId]/route.ts",
+      "src/app/api/explore/route.ts",
+      "src/app/dashboard/DashboardContent.tsx",
+      "src/components/ui/ShareModal.tsx"
+    ],
+    "scope_estimate": "4hr",
+    "priority": "High",
+    "is_bug": false,
+    "posthog_signal": false,
+    "implementation_notes": "Design doc (vgc190-design-17-05-26.md) complete. Strategy B: additive `ALTER TABLE shares ADD COLUMN IF NOT EXISTS is_unlisted BOOLEAN NOT NULL DEFAULT FALSE`. No downtime, no backfill. API: add `isUnlisted` to ShareBodySchema in share/route.ts and reports/[shareId]/route.ts; filter unlisted from explore/route.ts, sitemap, feeds (same as is_public=FALSE). UI: replace binary toggle in ShareModal.tsx and DashboardContent.tsx with a 3-state picker (Private / Unlisted / Public). Current 'UNLISTED' badge (which actually means private) should be repurposed correctly."
+  },
+  {
+    "identifier": "VGC-152",
+    "title": "Downloadable 'team card' image — Spotify Wrapped-style shareable artifact",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-152",
+    "files_likely_to_change": [
+      "src/components/ui/TeamCardExport.tsx",
+      "src/components/ui/ShareModal.tsx",
+      "src/components/ui/ShareDock.tsx"
+    ],
+    "scope_estimate": "3hr",
+    "priority": "High",
+    "is_bug": false,
+    "posthog_signal": false,
+    "implementation_notes": "Design doc (vgc152-design-17-05-26.md) complete. Create TeamCardExport.tsx: hidden 1200x675 div with fixed layout (header: player + tournament, 6 sprites via PrintContext to force /api/sprite proxy, species labels, footer branding). On button click: html2canvas-pro (already installed at ^2.0.2) with `{useCORS:true, scale:2}`, download as PNG. Add 'Download card' button in ShareModal.tsx social-actions grid. Optionally add icon in ShareDock.tsx. Use explicit hex colors for CSS vars since html2canvas-pro doesn't resolve custom properties."
+  },
+  {
+    "identifier": "VGC-116",
+    "title": "Growth: Email capture for weekly meta update newsletter",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-116",
+    "files_likely_to_change": [
+      "src/app/api/newsletter/subscribe/route.ts",
+      "src/components/ui/NewsletterSignup.tsx",
+      "src/app/page.tsx",
+      "src/app/dashboard/DashboardContent.tsx",
+      "src/lib/email.ts"
+    ],
+    "scope_estimate": "3hr",
+    "priority": "Urgent",
+    "is_bug": false,
+    "posthog_signal": false,
+    "implementation_notes": "Resend is already wired (src/lib/email.ts). Build: (1) new API route POST /api/newsletter/subscribe — validate email, store in a `subscribers` table (or use Resend Audiences API if RESEND_API_KEY is set), return 201; (2) NewsletterSignup.tsx — small inline form with email input + subscribe button, respect consent (ConsentGate pattern); (3) embed in homepage below hero and optionally in dashboard sidebar. Gate behind RESEND_API_KEY env var (silent skip if missing). Use Resend Audiences endpoint `POST /audiences/{id}/contacts` if audience ID is configured, else store locally in DB."
+  },
+  {
+    "identifier": "VGC-166",
+    "title": "i18n: audit string extraction readiness",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-166",
+    "files_likely_to_change": [
+      "src/lib/i18n/translations/en.ts",
+      "src/components/layout/Navbar.tsx",
+      "src/app/page.tsx",
+      "src/components/report/TeamOverview.tsx"
+    ],
+    "scope_estimate": "2hr",
+    "priority": "Low",
+    "is_bug": false,
+    "posthog_signal": false,
+    "implementation_notes": "i18n system exists (useTranslation from @/lib/i18n) but only ~10 components import it (LanguageSelector, WalkthroughOverlay, ShortcutHintOverlay, CreatorProfile, AddOpponentInput, PokemonDetailSlide, PokemonDropdown, CalcInput, SpeedTierChart). Audit scope: (1) grep all string literals in UI components not behind `t.`; (2) identify top-priority untranslated strings in high-traffic components (Navbar, page.tsx, ShareModal, DashboardContent); (3) extract the top 20-30 hardcoded English strings into en.ts and add corresponding keys to all language files (can use empty string fallback for non-en initially); (4) wire useTranslation into those components. Deliverable: audit report + partial extraction for highest-visibility strings."
+  }
+]
