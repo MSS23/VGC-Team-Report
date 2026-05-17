@@ -4,8 +4,7 @@
  * to ensure consistent data format across all access paths.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyRecord = Record<string, any>;
+type AnyRecord = Record<string, unknown>;
 
 /** Migrate old calc entries that may be stored as plain strings to {text, category} objects */
 export function migrateCalcEntries(rawCalcs: unknown): Record<string, Array<{ text: string; category: string }>> {
@@ -45,9 +44,10 @@ function migratePlan(plan: AnyRecord) {
   // Legacy: migrate planA/planB or selectedIndices → gamePlans[0]
   let bring: [number | null, number | null, number | null, number | null] = [null, null, null, null];
   if (plan.planA) {
+    const planA = plan.planA as { lead?: (number | null)[]; back?: (number | null)[] };
     bring = [
-      plan.planA.lead?.[0] ?? null, plan.planA.lead?.[1] ?? null,
-      plan.planA.back?.[0] ?? null, plan.planA.back?.[1] ?? null,
+      planA.lead?.[0] ?? null, planA.lead?.[1] ?? null,
+      planA.back?.[0] ?? null, planA.back?.[1] ?? null,
     ];
   } else if (Array.isArray(plan.selectedIndices)) {
     bring = [

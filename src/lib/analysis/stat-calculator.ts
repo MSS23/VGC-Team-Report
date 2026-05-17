@@ -84,18 +84,6 @@ export function evsToSp(ev: number): number {
   return Math.ceil(ev / 8);
 }
 
-/** Convert a full EV spread to SP spread. */
-export function evSpreadToSp(evs: StatSpread): StatSpread {
-  return {
-    hp: evsToSp(evs.hp),
-    atk: evsToSp(evs.atk),
-    def: evsToSp(evs.def),
-    spa: evsToSp(evs.spa),
-    spd: evsToSp(evs.spd),
-    spe: evsToSp(evs.spe),
-  };
-}
-
 /** Champions SP budget constants. */
 export const CHAMPIONS_MAX_SP_PER_STAT = 32;
 export const CHAMPIONS_TOTAL_SP = 66;
@@ -175,38 +163,9 @@ export function convertToChampionsSp(evs: StatSpread): StatSpread {
   return sp;
 }
 
-/**
- * Check if an EV spread is already Champions-optimized.
- * Valid Champions EV values: 0, 4, 12, 20, 28, ... 252 (pattern: 8*SP - 4).
- * Total SP must equal 66.
- */
-export function isChampionsOptimized(evs: StatSpread): boolean {
-  const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
-  const validChampionsEv = (ev: number) => ev === 0 || (ev >= 4 && (ev - 4) % 8 === 0);
-  const allValid = stats.every((s) => validChampionsEv(evs[s]));
-  const totalSp = stats.reduce((sum, s) => sum + evsToSp(evs[s]), 0);
-  return allValid && totalSp === CHAMPIONS_TOTAL_SP;
-}
-
-/** Format a SP spread as a readable string: "32/32/1/1/0/0" */
-export function formatSpSpread(sp: StatSpread): string {
-  return `${sp.hp}/${sp.atk}/${sp.def}/${sp.spa}/${sp.spd}/${sp.spe}`;
-}
-
 /** Convert SP to EV value. 1 SP = 4 EVs, 2 SP = 12 EVs, ... N SP = 8N - 4 EVs. */
 export function spToEv(sp: number): number {
   if (sp <= 0) return 0;
   return sp * 8 - 4;
 }
 
-/** Convert SP spread back to EV values. */
-export function spToEvSpread(sp: StatSpread): StatSpread {
-  return {
-    hp: spToEv(sp.hp),
-    atk: spToEv(sp.atk),
-    def: spToEv(sp.def),
-    spa: spToEv(sp.spa),
-    spd: spToEv(sp.spd),
-    spe: spToEv(sp.spe),
-  };
-}

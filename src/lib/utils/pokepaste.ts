@@ -4,7 +4,7 @@ export function isPokePasteUrl(input: string): boolean {
   return POKEPASTE_REGEX.test(input.trim());
 }
 
-export interface PokePasteResult {
+interface PokePasteResult {
   paste: string;
   title: string | null;
 }
@@ -23,7 +23,7 @@ export async function fetchPokePaste(url: string): Promise<PokePasteResult> {
   return { paste: data.paste, title: data.title ?? null };
 }
 
-export interface CreatePokePasteInput {
+interface CreatePokePasteInput {
   paste: string;
   title?: string;
   author?: string;

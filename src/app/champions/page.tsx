@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { ChampionsContent } from "./ChampionsContent";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { getRegMAMegas } from "@/lib/data/mega-pokemon";
 
 export const metadata: Metadata = {
   title: "Pokemon Champions Format | Mega Evolution Teams — VGC Team Report",
@@ -33,5 +35,27 @@ export const metadata: Metadata = {
 };
 
 export default function ChampionsPage() {
-  return <ChampionsContent />;
+  const regMAMegas = getRegMAMegas();
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "VGC Champions Format Pokémon — Regulation M-A",
+    description: "All Mega Evolution Pokémon legal in the Pokemon Champions Regulation M-A competitive format (VGC 2026).",
+    url: "https://pokemonvgcteamreport.com/champions",
+    numberOfItems: regMAMegas.length,
+    itemListElement: regMAMegas.map((mega, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: mega.displayName,
+      url: `https://pokemonvgcteamreport.com/champions/${mega.slug}`,
+      description: mega.description,
+    })),
+  };
+
+  return (
+    <>
+      <JsonLd data={itemListSchema} />
+      <ChampionsContent />
+    </>
+  );
 }

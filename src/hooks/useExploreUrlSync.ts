@@ -18,7 +18,7 @@ export interface FilterState {
   hasRental: boolean;
 }
 
-export interface ExploreUrlSyncResult extends FilterState {
+interface ExploreUrlSyncResult extends FilterState {
   setQuery: (v: string) => void;
   setSort: (v: "newest" | "updated" | "popular" | "views") => void;
   setSearchCategory: (v: SearchCategory) => void;

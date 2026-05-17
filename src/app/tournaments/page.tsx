@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { TournamentsContent } from "./TournamentsContent";
+import { SportsEventJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "VGC Tournament Results Archive | Team Reports 2026",
@@ -34,6 +35,28 @@ export const metadata: Metadata = {
   ],
 };
 
+const UPCOMING_TOURNAMENTS = [
+  {
+    name: "VGC Indianapolis Regionals 2026",
+    startDate: "2026-05-29",
+    location: "Indianapolis, Indiana, USA",
+    url: "https://pokemonvgcteamreport.com/tournaments",
+    description: "The first Pokemon Champions Regulation M-A Regional Championship, held May 29-31, 2026 in Indianapolis.",
+  },
+  {
+    name: "2026 Pokemon World Championships",
+    startDate: "2026-08-14",
+    location: "San Francisco, California, USA",
+    url: "https://pokemonvgcteamreport.com/tournaments",
+    description: "The 2026 Pokemon World Championships held August 14-17 in San Francisco, the pinnacle of the VGC competitive season.",
+  },
+];
+
 export default function TournamentsPage() {
-  return <TournamentsContent />;
+  return (
+    <>
+      <SportsEventJsonLd events={UPCOMING_TOURNAMENTS} />
+      <TournamentsContent />
+    </>
+  );
 }

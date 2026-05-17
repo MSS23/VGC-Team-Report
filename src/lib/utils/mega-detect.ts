@@ -55,24 +55,6 @@ export function isMegaForm(species: string): boolean {
 }
 
 /**
- * Get the base form species name from a mega form key.
- * e.g. "kangaskhan-mega" → "Kangaskhan"
- */
-export function getBaseFormName(megaDataKey: string): string | null {
-  const entry = MEGA_BY_KEY.get(megaDataKey);
-  return entry?.baseName ?? null;
-}
-
-/**
- * Get the mega form data key from a base species + mega stone.
- * e.g. ("Kangaskhan", "Kangaskhanite") → "kangaskhan-mega"
- */
-export function getMegaDataKey(species: string, item: string | null): string | null {
-  const entry = detectMegaFromItem(item, species);
-  return entry?.dataKey ?? null;
-}
-
-/**
  * Given a species string that IS already a mega form (e.g. "Kangaskhan-Mega",
  * "Charizard-Mega-Y"), return the matching MegaPokemonEntry.
  *

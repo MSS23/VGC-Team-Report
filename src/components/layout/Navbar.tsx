@@ -10,7 +10,7 @@ import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
 import { NotificationBell } from "@/components/ui/NotificationBell";
 import { VersionHistoryPanel } from "@/components/social/VersionHistoryPanel";
-import { hapticLight, hapticMedium } from "@/lib/utils/haptics";
+import { hapticLight } from "@/lib/utils/haptics";
 
 interface NavbarProps {
   // Mode flags

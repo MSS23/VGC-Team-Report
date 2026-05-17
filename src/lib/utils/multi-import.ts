@@ -64,37 +64,3 @@ export function parsePikalyticsUrl(url: string): string | null {
   }
 }
 
-/**
- * Attempt to import team data from any supported source.
- * Returns the Showdown-format paste text, or null if parsing fails.
- */
-export async function importTeam(
-  input: string,
-  fetchPokePaste: (url: string) => Promise<{ paste: string }>
-): Promise<{ paste: string; source: ImportSource } | null> {
-  const source = detectImportSource(input);
-
-  switch (source) {
-    case "pokepaste": {
-      try {
-        const result = await fetchPokePaste(input);
-        return { paste: result.paste, source };
-      } catch {
-        return null;
-      }
-    }
-
-    case "pikalytics": {
-      const paste = parsePikalyticsUrl(input);
-      if (paste) return { paste, source };
-      return null;
-    }
-
-    case "showdown": {
-      return { paste: input, source };
-    }
-
-    default:
-      return null;
-  }
-}

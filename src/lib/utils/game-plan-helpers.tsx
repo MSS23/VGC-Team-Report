@@ -1,7 +1,3 @@
-"use client";
-
-import type { GameResult } from "@/hooks/useMatchupPlans";
-
 export const GAME_COLORS = [
   { badge: "bg-blue-500/20 text-blue-400 border-blue-500/30", accent: "border-l-blue-500" },
   { badge: "bg-amber-500/20 text-amber-400 border-amber-500/30", accent: "border-l-amber-500" },
@@ -45,56 +41,3 @@ export function ReplayIcon({ type }: { type: "youtube" | "showdown" | "other" })
   );
 }
 
-const RESULT_STYLES: Record<string, string> = {
-  W: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
-  L: "bg-red-500/20 text-red-400 border-red-500/40",
-  T: "bg-amber-500/20 text-amber-400 border-amber-500/40",
-};
-
-export function ResultBadge({ result }: { result: GameResult }) {
-  if (!result) return null;
-  return (
-    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-md text-[10px] font-bold border ${RESULT_STYLES[result]}`}>
-      {result}
-    </span>
-  );
-}
-
-export function ResultToggle({
-  result,
-  onChange,
-}: {
-  result: GameResult;
-  onChange: (result: GameResult) => void;
-}) {
-  const options: ("W" | "L" | "T")[] = ["W", "L", "T"];
-  return (
-    <div className="flex items-center gap-1" role="group">
-      {options.map((opt) => (
-        <span
-          key={opt}
-          role="button"
-          tabIndex={0}
-          onClick={(e) => {
-            e.stopPropagation();
-            onChange(result === opt ? null : opt);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              e.stopPropagation();
-              onChange(result === opt ? null : opt);
-            }
-          }}
-          className={`inline-flex items-center justify-center w-6 h-6 rounded-md text-[10px] font-bold border transition-all cursor-pointer select-none ${
-            result === opt
-              ? RESULT_STYLES[opt]
-              : "border-border text-text-tertiary hover:border-border-subtle hover:text-text-secondary"
-          }`}
-        >
-          {opt}
-        </span>
-      ))}
-    </div>
-  );
-}

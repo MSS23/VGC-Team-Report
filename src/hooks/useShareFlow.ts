@@ -23,10 +23,11 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     editKeyFromUrl, copyShareUrl, freshShare, autoSave, shareStatus,
     urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, isOwner,
     sessionShareId, lastShareResult, openShareSheetForUrl, getEditUrl, hasExistingShare, clearStoredShare,
-    fetchedIsPublic, fetchedCollaborators, autoSaveStatus, forkedFrom, forkReport, redactedFields,
+    fetchedIsPublic, fetchedIsUnlisted, fetchedCollaborators, autoSaveStatus, forkedFrom, forkReport, redactedFields,
   } = useShareUrl();
 
   const [isPublic, setIsPublic] = useState(true);
+  const [isUnlisted, setIsUnlisted] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [creatorRequired, setCreatorRequired] = useState(false);
 
@@ -35,6 +36,12 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
       setIsPublic(fetchedIsPublic);
     }
   }, [fetchedIsPublic]);
+
+  useEffect(() => {
+    if (fetchedIsUnlisted !== null) {
+      setIsUnlisted(fetchedIsUnlisted);
+    }
+  }, [fetchedIsUnlisted]);
   const [allowComments, setAllowComments] = useState(false);
   const [showEditUrl, setShowEditUrl] = useState(false);
   const [editLinkCopied, setEditLinkCopied] = useState(false);
@@ -51,7 +58,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
       return;
     }
     setCreatorRequired(false);
-    copyShareUrl(state, isPublic);
+    copyShareUrl(state, isPublic, isUnlisted);
     setShowEditUrl(true);
     const hasMega = analysis.pokemon.some((p) => p.parsed.species.includes("-Mega") || p.parsed.species.includes("-Primal"));
     posthog?.capture("report_shared", {
@@ -64,8 +71,8 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
 
   const handleReshare = useCallback(() => {
     if (!analysis) return;
-    copyShareUrl(buildShareState(), isPublic);
-  }, [analysis, copyShareUrl, buildShareState, isPublic]);
+    copyShareUrl(buildShareState(), isPublic, isUnlisted);
+  }, [analysis, copyShareUrl, buildShareState, isPublic, isUnlisted]);
 
   const handleCopyEditLink = useCallback(() => {
     const url = getEditUrl();
@@ -86,22 +93,34 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     if (!analysis || !isEditingUnlocked || !isSignedIn) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
-      autoSave(buildShareState(), isPublic);
+      autoSave(buildShareState(), isPublic, isUnlisted);
     }, 3000);
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [analysis, isEditingUnlocked, isSignedIn, buildShareState, autoSave, isPublic]);
+  }, [analysis, isEditingUnlocked, isSignedIn, buildShareState, autoSave, isPublic, isUnlisted]);
 
   const handleSetPublic = useCallback(async (v: boolean) => {
     setIsPublic(v);
     setPublishError(null);
-    const result = await autoSave(buildShareState(), v);
+    const result = await autoSave(buildShareState(), v, isUnlisted);
     if (!result.ok) {
       setIsPublic(!v);
       setPublishError(result.error ?? "Could not update visibility.");
     }
-  }, [autoSave, buildShareState]);
+  }, [autoSave, buildShareState, isUnlisted]);
+
+  const handleSetVisibility = useCallback(async (newIsPublic: boolean, newIsUnlisted: boolean) => {
+    setIsPublic(newIsPublic);
+    setIsUnlisted(newIsUnlisted);
+    setPublishError(null);
+    const result = await autoSave(buildShareState(), newIsPublic, newIsUnlisted);
+    if (!result.ok) {
+      setIsPublic(isPublic);
+      setIsUnlisted(isUnlisted);
+      setPublishError(result.error ?? "Could not update visibility.");
+    }
+  }, [autoSave, buildShareState, isPublic, isUnlisted]);
 
   const clearPublishError = useCallback(() => setPublishError(null), []);
 
@@ -121,6 +140,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     showEditUrl, setShowEditUrl, editLinkCopied, shareButtonText,
     handleShareClick, handleReshare, handleCopyEditLink, handleFreshReshare,
     isPublic, setIsPublic, handleSetPublic,
+    isUnlisted, setIsUnlisted, handleSetVisibility,
     publishError, clearPublishError,
     creatorRequired,
     allowComments, setAllowComments,
