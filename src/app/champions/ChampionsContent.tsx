@@ -13,6 +13,7 @@ import { INDY_TOP_CUT } from "@/data/indy-top-cut";
 
 import { getRegMAMegas, hasMegaSprite } from "@/lib/data/mega-pokemon";
 import { MetaSnapshot } from "@/components/champions/MetaSnapshot";
+import { I18nProvider, useTranslation } from "@/lib/i18n";
 const MEGA_POKEMON = getRegMAMegas().map((m) => ({
   name: m.displayName.replace(/^Mega /, "") + "-Mega",
   ability: m.ability,
@@ -30,7 +31,16 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export function ChampionsContent() {
+  return (
+    <I18nProvider>
+      <ChampionsContentInner />
+    </I18nProvider>
+  );
+}
+
+function ChampionsContentInner() {
   const posthog = usePostHog();
+  const { t } = useTranslation();
   useEffect(() => {
     applyRandomAccent();
     posthog?.capture("champions_page_visited");
@@ -60,7 +70,7 @@ export function ChampionsContent() {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent-surface rounded-full mb-6">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-xs font-extrabold text-accent uppercase tracking-widest">
-                Champions Ready
+                {t.championsReady}
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight leading-tight">
@@ -80,13 +90,13 @@ export function ChampionsContent() {
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-                Build a Team Report
+                {t.buildTeamReport}
               </Link>
               <Link
                 href="/explore?regulation=Reg+M-A"
                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-text-secondary hover:text-text-primary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all"
               >
-                Explore Champions Teams
+                {t.exploreChampionsTeams}
               </Link>
             </div>
           </div>
@@ -119,7 +129,7 @@ export function ChampionsContent() {
         {/* Featured Mega Pokemon */}
         <section className="max-w-5xl mx-auto px-4 py-12">
           <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
-            Featured Mega Evolutions
+            {t.featuredMegaEvolutions}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {MEGA_POKEMON.map((mon) => {
@@ -133,7 +143,7 @@ export function ChampionsContent() {
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-sm font-bold text-text-tertiary">{mon.name}</h3>
                       <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
-                        Coming Soon
+                        {t.comingSoon}
                       </span>
                     </div>
                     <p className="text-xs text-text-tertiary/70 mt-0.5">{mon.ability}</p>
@@ -148,7 +158,7 @@ export function ChampionsContent() {
                         </span>
                       ))}
                     </div>
-                    <p className="text-[10px] text-text-tertiary/60 mt-2 italic">Sprite unavailable</p>
+                    <p className="text-[10px] text-text-tertiary/60 mt-2 italic">{t.spriteUnavailable}</p>
                   </div>
                 );
               }
@@ -180,10 +190,10 @@ export function ChampionsContent() {
         {/* Sample Teams */}
         <section className="max-w-5xl mx-auto px-4 py-12">
           <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-2">
-            Sample Teams to Get You Started
+            {t.sampleTeamsHeading}
           </h2>
           <p className="text-sm text-text-secondary mb-6">
-            New to Champions format? Try one of these classic archetypes and build your first report in seconds.
+            {t.sampleTeamsDesc}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {CHAMPIONS_SAMPLE_TEAMS.map((team) => (
@@ -212,7 +222,7 @@ export function ChampionsContent() {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <polygon points="5 3 19 12 5 21 5 3" />
                   </svg>
-                  Try this team
+                  {t.tryThisTeam}
                 </Link>
               </div>
             ))}
@@ -252,16 +262,16 @@ export function ChampionsContent() {
               <thead>
                 <tr className="bg-surface-alt border-b border-border">
                   <th className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3 w-16">
-                    Place
+                    {t.tablePlace}
                   </th>
                   <th className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3">
-                    Player
+                    {t.tablePlayer}
                   </th>
                   <th className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3">
-                    Team
+                    {t.tableTeam}
                   </th>
                   <th className="text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3 w-20">
-                    Details
+                    {t.tableDetails}
                   </th>
                 </tr>
               </thead>
@@ -317,7 +327,7 @@ export function ChampionsContent() {
                             <polyline points="15 3 21 3 21 9" />
                             <line x1="10" y1="14" x2="21" y2="3" />
                           </svg>
-                          View
+                          {t.viewLink}
                         </a>
                       ) : (
                         <span className="text-xs text-text-tertiary">—</span>
@@ -395,7 +405,7 @@ export function ChampionsContent() {
         {/* CTA */}
         <section className="max-w-5xl mx-auto px-4 py-16 text-center">
           <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
-            Ready for Champions?
+            {t.readyForChampions}
           </h2>
           <p className="text-sm text-text-secondary mb-6 max-w-lg mx-auto">
             Create your first Pokemon Champions team report in under a minute.
@@ -405,7 +415,7 @@ export function ChampionsContent() {
             href="/"
             className="inline-flex items-center gap-2 px-8 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
           >
-            Start Building
+            {t.startBuilding}
           </Link>
         </section>
       </main>

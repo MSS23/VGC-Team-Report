@@ -263,6 +263,32 @@ const fr: TranslationKeys = {
   publicReports: "Rapports publics",
   totalReactions: "Réactions totales",
   noCreatorReports: "Ce créateur n'a pas encore de rapports publics.",
+
+  // TeamReport — redacted fields notice
+  redactedSomeHidden: "Some fields hidden by the creator.",
+  redactedNotShownSuffix: "are not shown on this public view.",
+  redactedEvsSpreads: "EV/SP spreads",
+  redactedIvs: "IVs",
+  redactedNature: "nature",
+  redactedHeldItems: "held items",
+
+  // Champions page — UI chrome
+  championsReady: "Champions Ready",
+  buildTeamReport: "Build a Team Report",
+  exploreChampionsTeams: "Explore Champions Teams",
+  featuredMegaEvolutions: "Featured Mega Evolutions",
+  comingSoon: "Coming Soon",
+  spriteUnavailable: "Sprite unavailable",
+  sampleTeamsHeading: "Sample Teams to Get You Started",
+  sampleTeamsDesc: "New to Champions format? Try one of these classic archetypes and build your first report in seconds.",
+  tryThisTeam: "Try this team",
+  tablePlace: "Place",
+  tablePlayer: "Player",
+  tableTeam: "Team",
+  tableDetails: "Details",
+  viewLink: "View",
+  readyForChampions: "Ready for Champions?",
+  startBuilding: "Start Building",
 };
 
 export default fr;

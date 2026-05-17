@@ -9,6 +9,7 @@ import type { ReportTags } from "@/lib/data/tags";
 import { TeamOverview } from "./TeamOverview";
 import { PokemonDetailSlide } from "./PokemonDetailSlide";
 import { useVersionDiff } from "@/lib/contexts/VersionDiffContext";
+import { useTranslation } from "@/lib/i18n";
 
 // Lazy-load heavy analysis and matchup components
 const SpeedTierChart = dynamic(() => import("./SpeedTierChart").then(m => ({ default: m.SpeedTierChart })), {
@@ -172,6 +173,7 @@ export function TeamReport({
   onPrivateFieldsChange,
   redactedFields,
 }: TeamReportProps) {
+  const { t } = useTranslation();
   const pokemonCount = analysis.pokemon.length;
 
   const redactedNotice = (redactedFields && redactedFields.length > 0) ? (
@@ -182,12 +184,12 @@ export function TeamReport({
           <path d="M7 11V7a5 5 0 0110 0v4" />
         </svg>
         <p className="text-xs leading-relaxed">
-          <span className="font-bold">Some fields hidden by the creator.</span>{" "}
-          {redactedFields.includes("evs") && "EV/SP spreads, "}
-          {redactedFields.includes("ivs") && "IVs, "}
-          {redactedFields.includes("nature") && "nature, "}
-          {redactedFields.includes("item") && "held items, "}
-          are not shown on this public view.
+          <span className="font-bold">{t.redactedSomeHidden}</span>{" "}
+          {redactedFields.includes("evs") && `${t.redactedEvsSpreads}, `}
+          {redactedFields.includes("ivs") && `${t.redactedIvs}, `}
+          {redactedFields.includes("nature") && `${t.redactedNature}, `}
+          {redactedFields.includes("item") && `${t.redactedHeldItems}, `}
+          {t.redactedNotShownSuffix}
         </p>
       </div>
     </div>

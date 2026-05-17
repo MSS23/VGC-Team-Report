@@ -263,6 +263,32 @@ const ko: TranslationKeys = {
   publicReports: "공개 리포트",
   totalReactions: "총 반응",
   noCreatorReports: "이 크리에이터에게는 아직 공개 리포트가 없습니다.",
+
+  // TeamReport — redacted fields notice
+  redactedSomeHidden: "Some fields hidden by the creator.",
+  redactedNotShownSuffix: "are not shown on this public view.",
+  redactedEvsSpreads: "EV/SP spreads",
+  redactedIvs: "IVs",
+  redactedNature: "nature",
+  redactedHeldItems: "held items",
+
+  // Champions page — UI chrome
+  championsReady: "Champions Ready",
+  buildTeamReport: "Build a Team Report",
+  exploreChampionsTeams: "Explore Champions Teams",
+  featuredMegaEvolutions: "Featured Mega Evolutions",
+  comingSoon: "Coming Soon",
+  spriteUnavailable: "Sprite unavailable",
+  sampleTeamsHeading: "Sample Teams to Get You Started",
+  sampleTeamsDesc: "New to Champions format? Try one of these classic archetypes and build your first report in seconds.",
+  tryThisTeam: "Try this team",
+  tablePlace: "Place",
+  tablePlayer: "Player",
+  tableTeam: "Team",
+  tableDetails: "Details",
+  viewLink: "View",
+  readyForChampions: "Ready for Champions?",
+  startBuilding: "Start Building",
 };
 
 export default ko;
