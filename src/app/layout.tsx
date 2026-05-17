@@ -122,7 +122,7 @@ export default function RootLayout({
             featureList: [
               "PokePaste Import",
               "VGC Speed Tiers",
-              "EV Spread Builder",
+              "SP Spread Builder",
               "Matchup Plans",
               "Team Sharing",
               "Champions Format Support",
