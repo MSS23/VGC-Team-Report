@@ -1,3 +1,4 @@
+import { getDb } from "@/lib/db";
 import { isRateLimitedAsync } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -34,9 +35,21 @@ export async function POST(request: Request) {
 
     const apiKey = process.env.RESEND_API_KEY;
 
-    // If Resend is not configured, acknowledge the signup without an API call
+    // If Resend is not configured, store the signup in the database instead
     if (!apiKey) {
-      console.info("[newsletter] RESEND_API_KEY not set — skipping Resend call for:", email);
+      console.info("[newsletter] RESEND_API_KEY not set — storing signup in DB for:", email);
+      // newsletter_subscribers table migration needed — see VGC-116 description
+      const sql = getDb();
+      try {
+        await sql`
+          INSERT INTO newsletter_subscribers (email, subscribed_at)
+          VALUES (${email}, NOW())
+          ON CONFLICT (email) DO NOTHING
+        `;
+      } catch (e) {
+        console.warn("Failed to store newsletter signup in DB:", e);
+        // Still return ok: true — the user did nothing wrong
+      }
       return NextResponse.json({ ok: true, method: "db" });
     }
 
