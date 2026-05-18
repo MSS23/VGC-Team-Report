@@ -27,6 +27,22 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.17",
+    title: "Notifications Feed, Welcome Emails, Weekly Digest & i18n",
+    emoji: "🔔",
+    highlight: true,
+    items: [
+      { type: "new", text: "New /notifications page shows your full activity feed — comments, reactions, follows, and collab invites grouped into Today / This Week / Older with unread highlights. Paginated with Load More. Accessible from the bell icon in the nav." },
+      { type: "new", text: "Welcome email sent automatically when you sign up — a Day 0 email with 3 quick-start steps (paste your team, share the link, explore the meta). Powered by the Clerk user.created webhook and Resend." },
+      { type: "new", text: "Weekly digest email every Monday at 9am — 'Your reports this week' shows views, comments, and reactions on your reports. Users with no activity get a curated trending-teams digest instead." },
+      { type: "improved", text: "Share modal is now fully internationalised — all 49 visible UI strings (modal title, privacy option labels, social share buttons, copy-link feedback, error messages) are extracted into the i18n system and ready for translation via the language selector." },
+      { type: "fixed", text: "Critical: share creation was corrupting owner_id on every new report since the 17 May deploy — a column-position mismatch in the INSERT statement put a boolean in the owner_id column and the Clerk user ID in search_vector. Fixed; DB repair script drafted for affected rows (see VGC-195)." },
+      { type: "fixed", text: "Notification mark-as-read silently failed — the API was validating integer IDs as UUIDs. Fixed: IDs now correctly typed as integers throughout the notifications stack." },
+      { type: "fixed", text: "Newsletter signup no longer silently discarded when Resend is unconfigured — the route now writes the email to the database as a fallback so no signups are lost." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.16",
     title: "Sample Team Picker, Security Hardening & AI Citation Support",
     emoji: "🎯",

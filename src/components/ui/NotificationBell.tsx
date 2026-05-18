@@ -30,6 +30,17 @@ const TYPE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
     ),
     color: "text-accent",
   },
+  collab_invite: {
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 00-3-3.87" />
+        <path d="M16 3.13a4 4 0 010 7.75" />
+      </svg>
+    ),
+    color: "text-purple-500",
+  },
 };
 
 export function NotificationBell({ enabled }: { enabled: boolean }) {
@@ -94,7 +105,7 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
                 return (
                   <a
                     key={n.id}
-                    href={n.sourceShareId ? `/s/${n.sourceShareId}` : "#"}
+                    href={n.sourceShareId ? `/s/${n.sourceShareId}` : n.sourceUserName ? `/creator/${n.sourceUserName}` : "#"}
                     className={`flex items-start gap-3 px-4 py-3 hover:bg-surface-alt/50 transition-colors border-b border-border/50 last:border-0 ${
                       !n.read ? "bg-accent/5" : ""
                     }`}
@@ -118,6 +129,15 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
                 );
               })
             )}
+          </div>
+          <div className="px-4 py-2.5 border-t border-border flex items-center justify-end">
+            <a
+              href="/notifications"
+              className="text-xs text-accent hover:underline"
+              onClick={() => setOpen(false)}
+            >
+              View all notifications →
+            </a>
           </div>
         </div>
       )}

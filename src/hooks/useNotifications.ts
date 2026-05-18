@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 
 export interface Notification {
   id: number;
-  type: "comment" | "reaction" | "new_report";
+  type: "comment" | "reaction" | "new_report" | "collab_invite";
   sourceShareId: string | null;
   sourceUserName: string | null;
   message: string;
@@ -21,7 +21,7 @@ export function useNotifications(enabled: boolean) {
   const fetchNotifications = useCallback(async () => {
     if (!enabled) return;
     try {
-      const res = await fetch("/api/user/notifications");
+      const res = await fetch("/api/user/notifications?limit=50&offset=0");
       if (!res.ok) return;
       const data = await res.json();
       setNotifications(data.notifications ?? []);
@@ -69,5 +69,22 @@ export function useNotifications(enabled: boolean) {
     }
   }, []);
 
-  return { notifications, unreadCount, loading, markAllRead, refetch: fetchNotifications };
+  const markIdsRead = useCallback(async (ids: number[]) => {
+    if (ids.length === 0) return;
+    try {
+      await fetch("/api/user/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      setNotifications((prev) =>
+        prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - ids.length));
+    } catch {
+      // silently fail
+    }
+  }, []);
+
+  return { notifications, unreadCount, loading, markAllRead, markIdsRead, refetch: fetchNotifications };
 }

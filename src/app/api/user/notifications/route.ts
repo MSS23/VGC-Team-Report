@@ -15,16 +15,29 @@ export async function GET(request: Request) {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const sql = getDb();
-    const rows = await sql`
-      SELECT id, type, source_share_id, source_user_name, message, read, created_at
-      FROM notifications
-      WHERE user_id = ${userId}
-      ORDER BY created_at DESC
-      LIMIT 50
-    `;
+    const url = new URL(request.url);
+    const limit = Math.min(Number(url.searchParams.get("limit") ?? 50), 100);
+    const offset = Number(url.searchParams.get("offset") ?? 0);
 
-    const unreadCount = rows.filter((r) => !r.read).length;
+    const sql = getDb();
+    const [rows, countRows] = await Promise.all([
+      sql`
+        SELECT id, type, source_share_id, source_user_name, message, read, created_at
+        FROM notifications
+        WHERE user_id = ${userId}
+        ORDER BY created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `,
+      sql`
+        SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE read = FALSE) AS unread_count
+        FROM notifications
+        WHERE user_id = ${userId}
+      `,
+    ]);
+
+    const total = Number(countRows[0]?.total ?? 0);
+    const unreadCount = Number(countRows[0]?.unread_count ?? 0);
+    const hasMore = offset + rows.length < total;
 
     return NextResponse.json({
       notifications: rows.map((r) => ({
@@ -37,6 +50,8 @@ export async function GET(request: Request) {
         createdAt: (r.created_at as Date).toISOString(),
       })),
       unreadCount,
+      total,
+      hasMore,
     });
   } catch (e) {
     console.error("Notifications GET error:", e);
@@ -56,7 +71,7 @@ export async function PATCH(request: Request) {
     const rawBody = await request.json();
     const patchSchema = z.object({
       markAllRead: z.boolean().optional(),
-      ids: z.array(z.string().uuid()).min(1).max(100).optional(),
+      ids: z.array(z.number().int().positive()).min(1).max(100).optional(),
     });
     const parseResult = patchSchema.safeParse(rawBody);
     if (!parseResult.success) {
