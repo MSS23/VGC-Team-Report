@@ -158,6 +158,145 @@ function buildCommentNotificationHtml(
 }
 
 /**
+ * Send a welcome email to a newly signed-up user.
+ * Day 0 of the welcome series.
+ */
+export async function sendWelcomeEmail(opts: {
+  to: string;
+  firstName: string | null;
+}) {
+  try {
+    const displayName = opts.firstName || "there";
+    const html = buildWelcomeEmailHtml(displayName);
+    await sendEmail({
+      to: opts.to,
+      subject: "Welcome to VGC Team Report!",
+      html,
+    });
+  } catch (e) {
+    console.warn("Failed to send welcome email:", e);
+  }
+}
+
+/**
+ * Build the HTML for a Day 0 welcome email.
+ * Table-based light theme matching the comment notification pattern.
+ */
+function buildWelcomeEmailHtml(firstName: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Welcome to VGC Team Report!</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F4F5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F4F5;">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+
+        <!-- Logo -->
+        <tr><td style="padding-bottom:24px;text-align:center;">
+          <table role="presentation" cellpadding="0" cellspacing="0" align="center">
+            <tr>
+              <td style="padding-right:10px;vertical-align:middle;">
+                <div style="width:32px;height:32px;background:#E11D48;border-radius:8px;text-align:center;line-height:32px;">
+                  <span style="color:#FFF;font-size:15px;font-weight:800;">V</span>
+                </div>
+              </td>
+              <td style="vertical-align:middle;">
+                <span style="font-size:15px;font-weight:700;color:#111827;">VGC Team Report</span>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+
+        <!-- Main card -->
+        <tr><td>
+          <div style="background:#FFFFFF;border-radius:16px;border:1px solid #E5E7EB;padding:28px;">
+            <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 8px;">Welcome to VGC Team Report, ${firstName}!</h1>
+            <p style="font-size:14px;color:#6B7280;margin:0 0 24px;">You're ready to build and share your VGC team reports.</p>
+
+            <!-- Quick-start steps -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr>
+                <td style="padding-bottom:12px;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td style="width:32px;vertical-align:top;">
+                        <div style="width:24px;height:24px;background:#FEF2F2;border-radius:50%;text-align:center;line-height:24px;">
+                          <span style="font-size:12px;font-weight:700;color:#E11D48;">1</span>
+                        </div>
+                      </td>
+                      <td style="vertical-align:top;padding-left:4px;">
+                        <p style="font-size:14px;font-weight:600;color:#111827;margin:0 0 2px;">Paste your Showdown export</p>
+                        <p style="font-size:13px;color:#6B7280;margin:0;">Get an instant, shareable team report in seconds.</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-bottom:12px;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td style="width:32px;vertical-align:top;">
+                        <div style="width:24px;height:24px;background:#FEF2F2;border-radius:50%;text-align:center;line-height:24px;">
+                          <span style="font-size:12px;font-weight:700;color:#E11D48;">2</span>
+                        </div>
+                      </td>
+                      <td style="vertical-align:top;padding-left:4px;">
+                        <p style="font-size:14px;font-weight:600;color:#111827;margin:0 0 2px;">Share your link with teammates or coaches</p>
+                        <p style="font-size:13px;color:#6B7280;margin:0;">One link, every detail — no screenshots needed.</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td style="width:32px;vertical-align:top;">
+                        <div style="width:24px;height:24px;background:#FEF2F2;border-radius:50%;text-align:center;line-height:24px;">
+                          <span style="font-size:12px;font-weight:700;color:#E11D48;">3</span>
+                        </div>
+                      </td>
+                      <td style="vertical-align:top;padding-left:4px;">
+                        <p style="font-size:14px;font-weight:600;color:#111827;margin:0 0 2px;">Explore what other players are running</p>
+                        <p style="font-size:13px;color:#6B7280;margin:0;">Browse public reports and discover new team ideas.</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- CTA -->
+            <div style="text-align:center;">
+              <a href="https://pokemonvgcteamreport.com/" style="display:inline-block;padding:12px 24px;background:#E11D48;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">Build your first report</a>
+            </div>
+          </div>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:24px 0 0;text-align:center;">
+          <p style="font-size:11px;color:#D1D5DB;margin:0;">
+            You received this because you signed up for VGC Team Report. pokemonvgcteamreport.com
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+
+</body>
+</html>`;
+}
+
+/**
  * Build the HTML for a weekly feedback summary email.
  * Clean light theme, table-based layout for email client compatibility.
  */
