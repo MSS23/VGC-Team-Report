@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { TeamCardExport } from "@/components/ui/TeamCardExport";
+import { useTranslation } from "@/lib/i18n";
+import en from "@/lib/i18n/translations/en";
 
 interface ShareModalProps {
   publicUrl: string;
@@ -62,6 +64,14 @@ export function ShareModal({
   onClearPublishError,
 }: ShareModalProps) {
   const posthog = usePostHog();
+  const { t: tRaw } = useTranslation();
+  // Fall back to English for any untranslated (empty string) keys
+  const t = new Proxy(tRaw, {
+    get(target, key: string) {
+      const val = target[key as keyof typeof tRaw];
+      return val !== "" ? val : en[key as keyof typeof en];
+    },
+  }) as typeof en;
   const [linkCopied, setLinkCopied] = useState(false);
   const [discordCopied, setDiscordCopied] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
@@ -279,7 +289,7 @@ export function ShareModal({
         <div className="px-6 pt-3 sm:pt-6 pb-4">
           <div className="flex items-center justify-between mb-1">
             <h3 id={titleId} className="text-lg font-extrabold text-text-primary tracking-tight">
-              {viewerMode ? "Share this report" : "Team shared!"}
+              {viewerMode ? t.shareModalTitleViewer : t.shareModalTitleOwner}
             </h3>
             <button
               type="button"
@@ -295,8 +305,8 @@ export function ShareModal({
           </div>
           <p className="text-sm text-text-secondary">
             {viewerMode
-              ? "Copy the link or post it to social."
-              : "Link copied to clipboard. Share it everywhere!"}
+              ? t.shareModalSubtitleViewer
+              : t.shareModalSubtitleOwner}
           </p>
         </div>
 
@@ -311,17 +321,17 @@ export function ShareModal({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-extrabold text-text-primary mb-0.5">
-                  Thank you for sharing with the community!
+                  {t.shareModalThankYouTitle}
                 </p>
                 <p className="text-xs text-text-secondary leading-relaxed">
-                  Your report is now live on the Explore page. Every public team helps other players learn, build, and grow the VGC scene.
+                  {t.shareModalThankYouBody}
                 </p>
                 <button
                   type="button"
                   onClick={() => setJustPublished(false)}
                   className="mt-2 text-[11px] font-bold text-accent hover:underline cursor-pointer"
                 >
-                  Got it
+                  {t.shareModalGotIt}
                 </button>
               </div>
               <button
@@ -353,7 +363,7 @@ export function ShareModal({
               {displayUrl}
             </span>
             <span className="text-xs font-bold text-accent flex-shrink-0">
-              {linkCopied ? "Copied!" : "Copy"}
+              {linkCopied ? t.copied : t.copy}
             </span>
           </div>
           {!isShortUrl && (
@@ -363,7 +373,7 @@ export function ShareModal({
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
-              Link is long (server offline). Try sharing again for a short URL.
+              {t.shareModalLongLinkWarning}
             </p>
           )}
         </div>
@@ -387,10 +397,10 @@ export function ShareModal({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
-                Post on X / Twitter
+                {t.shareModalPostOnTwitter}
               </div>
               <div className="text-xs text-text-tertiary truncate">
-                Share with the VGC community
+                {t.shareModalTwitterSubtitle}
               </div>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
@@ -416,10 +426,10 @@ export function ShareModal({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
-                Post on Reddit
+                {t.shareModalPostOnReddit}
               </div>
               <div className="text-xs text-text-tertiary truncate">
-                Share to r/VGC
+                {t.shareModalRedditSubtitle}
               </div>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
@@ -441,10 +451,10 @@ export function ShareModal({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
-                {discordCopied ? "Copied for Discord!" : "Copy for Discord"}
+                {discordCopied ? t.shareModalCopiedForDiscord : t.shareModalCopyForDiscord}
               </div>
               <div className="text-xs text-text-tertiary truncate">
-                Formatted message with team preview
+                {t.shareModalDiscordSubtitle}
               </div>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
@@ -468,10 +478,10 @@ export function ShareModal({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
-                  {pasteCopied ? "Showdown paste copied!" : "Copy Paste"}
+                  {pasteCopied ? t.shareModalPasteCopied : t.shareModalCopyPaste}
                 </div>
                 <div className="text-xs text-text-tertiary truncate">
-                  Showdown format — paste into PokéPaste or Discord
+                  {t.shareModalPasteSubtitle}
                 </div>
               </div>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
@@ -499,10 +509,10 @@ export function ShareModal({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
-                  Share via…
+                  {t.shareModalNativeShare}
                 </div>
                 <div className="text-xs text-text-tertiary truncate">
-                  Discord DM, WhatsApp, Messages &amp; more
+                  {t.shareModalNativeShareSubtitle}
                 </div>
               </div>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
@@ -530,7 +540,7 @@ export function ShareModal({
         {embedSnippet && (
           <div className="px-6 pb-6 border-t border-border pt-4">
             <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-2">
-              Embed on your blog or forum
+              {t.shareModalEmbedLabel}
             </p>
             <div
               className="flex items-start gap-2 bg-surface-alt border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-accent/40 transition-colors group"
@@ -544,11 +554,11 @@ export function ShareModal({
                 {embedSnippet}
               </code>
               <span className="text-xs font-bold text-accent flex-shrink-0 group-hover:text-accent/80 transition-colors mt-0.5">
-                {embedCopied ? "Copied!" : "Copy"}
+                {embedCopied ? t.copied : t.copy}
               </span>
             </div>
             <p className="text-[11px] text-text-tertiary mt-2 leading-relaxed">
-              Paste into any blog post, forum thread, or YouTube description. Includes a &ldquo;Powered by VGC Team Report&rdquo; link.
+              {t.shareModalEmbedNote}
             </p>
           </div>
         )}
@@ -559,7 +569,7 @@ export function ShareModal({
             {hasWarnings ? (
               <>
                 <p className="text-sm font-semibold text-text-primary mb-1">
-                  Fix warnings before publishing
+                  {t.shareModalFixWarningsTitle}
                 </p>
                 <p className="text-xs text-text-secondary mb-1">
                   Your report has {warnings.length} warning{warnings.length > 1 ? "s" : ""}. Resolve them to publish on Explore. You can still share privately and collaborate.
@@ -568,7 +578,7 @@ export function ShareModal({
             ) : !hasCreator || !hasTags ? (
               <>
                 <p className="text-sm font-semibold text-text-primary mb-1">
-                  Almost ready to publish
+                  {t.shareModalAlmostReadyTitle}
                 </p>
                 <p className="text-xs text-text-secondary mb-1">
                   Public reports need {!hasCreator && !hasTags ? "an author name and at least one tag" : !hasCreator ? "an author name in the \"By\" field" : "at least one tag (regulation, event type, or archetype)"}. Add {!hasCreator && !hasTags ? "them" : "it"} and your team will appear on Explore.
@@ -577,10 +587,10 @@ export function ShareModal({
             ) : (
               <>
                 <p className="text-sm font-semibold text-text-primary mb-1">
-                  This report will be listed publicly
+                  {t.shareModalPublicConfirmTitle}
                 </p>
                 <p className="text-xs text-text-secondary mb-3">
-                  Your team will appear on the Explore page for anyone to discover. Happy to share with the community?
+                  {t.shareModalPublicConfirmBody}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
@@ -588,7 +598,7 @@ export function ShareModal({
                     onClick={() => setPublicConfirmDismissed(true)}
                     className="px-3.5 py-2.5 text-xs font-bold rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors cursor-pointer"
                   >
-                    Yes, publish it
+                    {t.shareModalYesPublish}
                   </button>
                   <button
                     type="button"
@@ -598,7 +608,7 @@ export function ShareModal({
                     }}
                     className="px-3.5 py-2.5 text-xs font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
                   >
-                    Keep Private
+                    {t.shareModalKeepPrivate}
                   </button>
                 </div>
               </>
@@ -611,7 +621,7 @@ export function ShareModal({
             who's just sharing someone else's report. */}
         {!viewerMode && (
         <div className="px-6 py-4 border-t border-border">
-          <p className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-3">Visibility</p>
+          <p className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-3">{t.shareModalVisibilityLabel}</p>
           {/* 3-state picker: Private | Unlisted | Public */}
           <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Report visibility">
             {/* Private */}
@@ -634,8 +644,8 @@ export function ShareModal({
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"}>
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-              <span className={`text-[11px] font-bold leading-none ${!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"}`}>Private</span>
-              <span className="text-[9px] text-text-tertiary leading-tight text-center">Only you</span>
+              <span className={`text-[11px] font-bold leading-none ${!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"}`}>{t.shareModalPrivate}</span>
+              <span className="text-[9px] text-text-tertiary leading-tight text-center">{t.shareModalPrivateDesc}</span>
             </button>
             {/* Unlisted */}
             <button
@@ -657,8 +667,8 @@ export function ShareModal({
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"}>
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
               </svg>
-              <span className={`text-[11px] font-bold leading-none ${isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"}`}>Unlisted</span>
-              <span className="text-[9px] text-text-tertiary leading-tight text-center">Link only</span>
+              <span className={`text-[11px] font-bold leading-none ${isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"}`}>{t.shareModalUnlisted}</span>
+              <span className="text-[9px] text-text-tertiary leading-tight text-center">{t.shareModalUnlistedDesc}</span>
             </button>
             {/* Public */}
             <button
@@ -685,21 +695,21 @@ export function ShareModal({
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isPublic ? "text-emerald-500" : "text-text-tertiary"}>
                 <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
               </svg>
-              <span className={`text-[11px] font-bold leading-none ${isPublic ? "text-emerald-500" : "text-text-tertiary"}`}>Public</span>
-              <span className="text-[9px] text-text-tertiary leading-tight text-center">On Explore</span>
+              <span className={`text-[11px] font-bold leading-none ${isPublic ? "text-emerald-500" : "text-text-tertiary"}`}>{t.shareModalPublicOption}</span>
+              <span className="text-[9px] text-text-tertiary leading-tight text-center">{t.shareModalPublicOptionDesc}</span>
             </button>
           </div>
           {/* Description line */}
           <p className="text-xs text-text-tertiary mt-2.5 leading-relaxed">
             {!isOwner
-              ? "Only the report owner can change visibility."
+              ? t.shareModalVisibilityOwnerOnly
               : hasWarnings && !isPublic
-              ? "Fix team warnings before publishing publicly."
+              ? t.shareModalVisibilityFixWarnings
               : isPublic
-              ? "Listed on Explore — discoverable by anyone."
+              ? t.shareModalVisibilityPublicActive
               : isUnlisted
-              ? "Anyone with this link can view, but it won't appear on Explore."
-              : "Only accessible to you."}
+              ? t.shareModalVisibilityUnlistedActive
+              : t.shareModalVisibilityPrivateActive}
           </p>
 
           {/* Creator name error message */}
@@ -711,7 +721,7 @@ export function ShareModal({
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
               <p className="text-xs font-semibold text-red-600 dark:text-red-400">
-                Add your name in the &quot;By&quot; field before publishing. Public reports need an author so the community knows who made it.
+                {t.shareModalCreatorError}
               </p>
             </div>
           )}
@@ -725,7 +735,7 @@ export function ShareModal({
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
               <p className="text-xs font-semibold text-red-600 dark:text-red-400">
-                Cannot publish to the public as there are no tags on this report. Add a regulation, event type, or archetype tag first.
+                {t.shareModalTagError}
               </p>
             </div>
           )}
@@ -748,7 +758,7 @@ export function ShareModal({
                     onClick={onClearPublishError}
                     className="mt-1 text-[10px] font-semibold text-red-600/80 dark:text-red-400/80 hover:underline"
                   >
-                    Dismiss
+                    {t.shareModalDismiss}
                   </button>
                 )}
               </div>
@@ -777,12 +787,12 @@ export function ShareModal({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
-                {allowComments ? "Comments enabled" : "Enable comments"}
+                {allowComments ? t.shareModalCommentsEnabled : t.shareModalEnableComments}
               </div>
               <div className="text-xs text-text-tertiary">
                 {allowComments
-                  ? "Viewers can leave comments on your report."
-                  : "Comments are off. Turn on to let others share feedback."}
+                  ? t.shareModalCommentsEnabledDesc
+                  : t.shareModalCommentsDisabledDesc}
               </div>
             </div>
           </button>
@@ -800,12 +810,12 @@ export function ShareModal({
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
               </svg>
               <p className="text-[11px] text-text-secondary leading-relaxed">
-                <span className="font-bold text-text-primary">Bookmark this link now.</span> If you close the tab without saving it, you&apos;ll lose edit access to this report.
+                <span className="font-bold text-text-primary">{t.shareModalBookmarkBold}</span> {t.shareModalBookmarkDesc}
               </p>
             </div>
           )}
           <p className="text-xs text-text-tertiary text-center">
-            The more you share, the more the VGC community grows.
+            {t.shareModalGrowthNote}
             <br />
             <span className="font-semibold text-text-secondary">pokemonvgcteamreport.com</span>
           </p>
