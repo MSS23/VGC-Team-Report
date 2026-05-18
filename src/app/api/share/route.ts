@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { notifyFollowers } from "@/lib/notifications";
 import { detectChangedSections } from "@/lib/utils/diff-state";
+import { extractSpecies } from "@/lib/utils/extract-species";
 import { cacheInvalidatePrefix, cacheDel, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, currentUser } from "@clerk/nextjs/server";
@@ -44,27 +45,6 @@ const ShareBodySchema = z.object({
   isPublish: z.boolean().optional(),
 });
 
-function extractSpecies(paste: string): string[] {
-  const species: string[] = [];
-  const lines = paste.split('\n');
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('-') || trimmed.startsWith('Ability') ||
-        trimmed.startsWith('Level') || trimmed.startsWith('EVs') ||
-        trimmed.startsWith('IVs') || trimmed.startsWith('Nature') ||
-        trimmed.startsWith('Tera')) continue;
-    // Match "PokemonName @ Item" or just "PokemonName" (name line)
-    const match = trimmed.match(/^([A-Za-z][A-Za-z0-9 '-]+?)(?:\s*@.*)?$/);
-    if (match) {
-      // Normalize: lowercase, replace spaces with hyphens
-      const name = match[1].trim().toLowerCase().replace(/\s+/g, '-');
-      if (name.length > 1 && !name.includes('ability') && !name.includes('level')) {
-        species.push(name);
-      }
-    }
-  }
-  return [...new Set(species)].slice(0, 6); // max 6, deduplicated
-}
 
 function generateId(): string {
   const chars =
@@ -335,7 +315,7 @@ export async function POST(request: Request) {
     const parsedSpecies = extractSpecies(state.paste);
 
     await sql`
-      INSERT INTO shares (id, edit_token, data, version, is_public, owner_id, search_vector, species)
+      INSERT INTO shares (id, edit_token, data, version, is_public, is_unlisted, owner_id, search_vector, species)
       VALUES (
         ${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${isUnlisted ?? false}, ${ownerId},
         setweight(to_tsvector('english', ${searchCreator}), 'A') ||
