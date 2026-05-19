@@ -27,6 +27,22 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.18",
+    title: "Security hardening, Accessibility & i18n filter labels",
+    emoji: "🔒",
+    highlight: false,
+    items: [
+      { type: "fixed", text: "Security: weekly digest email templates now HTML-escape all user-controlled strings (report titles, first names) before embedding in HTML — prevents potential XSS via malicious team/creator names in email clients." },
+      { type: "fixed", text: "TeamCardExport: Download Team Card button now shows a user-friendly error message if sprites fail to load during canvas capture, and disables the button while export is in progress to prevent double-clicks." },
+      { type: "improved", text: "Accessibility: Notifications bell button now announces unread count to screen readers via aria-label, includes aria-expanded for dropdown state, and the dropdown panel uses role=dialog for proper semantics." },
+      { type: "improved", text: "Accessibility: /notifications feed page now uses semantic <ul>/<li> list structure for notification groups (was plain <div> containers), spinners are aria-hidden, and the Load More button announces loading state via aria-busy." },
+      { type: "improved", text: "Performance: /notifications page no longer makes two simultaneous API calls on load — the hook's initial fetch now serves as the single source of truth; hasMore/total are exposed from useNotifications and used directly." },
+      { type: "improved", text: "i18n: Explore page filter labels (All/Pokemon/Tournament/Creator category chips, Popular/Newest/Views/Updated sort options, 1st/Top 4/Top 8/Top 16 placement chips) are now wired into the translation system and ready for localisation." },
+      { type: "improved", text: "SEO: /notifications page marked noindex/nofollow (user-specific content should not be indexed); /feedback page now has a canonical URL to consolidate ranking signals." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.17",
     title: "Notifications Feed, Welcome Emails, Weekly Digest & i18n",
     emoji: "🔔",
