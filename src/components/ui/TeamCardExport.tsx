@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 interface TeamCardExportProps {
   teamName: string;
@@ -20,20 +20,35 @@ export function TeamCardExport({
   onExported,
 }: TeamCardExportProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const handleExport = async () => {
-    if (!cardRef.current) return;
-    const { default: html2canvas } = await import("html2canvas-pro");
-    const canvas = await html2canvas(cardRef.current, {
-      useCORS: true,
-      scale: 2,
-      backgroundColor: null,
-    });
-    const link = document.createElement("a");
-    link.download = `${teamName.toLowerCase().replace(/\s+/g, "-")}-team-card.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-    onExported?.();
+    if (!cardRef.current || exporting) return;
+    setExportError(null);
+    setExporting(true);
+    try {
+      const { default: html2canvas } = await import("html2canvas-pro");
+      const canvas = await html2canvas(cardRef.current, {
+        useCORS: true,
+        scale: 2,
+        backgroundColor: null,
+      });
+      const link = document.createElement("a");
+      link.download = `${teamName.toLowerCase().replace(/\s+/g, "-")}-team-card.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      onExported?.();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Export failed";
+      setExportError(
+        msg.toLowerCase().includes("image") || msg.toLowerCase().includes("cors")
+          ? "Some sprites failed to load. Try again in a moment."
+          : "Export failed. Please try again."
+      );
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -167,11 +182,18 @@ export function TeamCardExport({
         </div>
       </div>
 
+      {/* Error message */}
+      {exportError && (
+        <p role="alert" className="text-xs text-red-500 mb-2 px-1">{exportError}</p>
+      )}
+
       {/* Export button — rendered in-flow */}
       <button
         type="button"
         onClick={handleExport}
-        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-alt border border-border hover:bg-surface-alt/80 hover:border-accent/40 transition-all text-left w-full group cursor-pointer"
+        disabled={exporting}
+        aria-busy={exporting}
+        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-alt border border-border hover:bg-surface-alt/80 hover:border-accent/40 transition-all text-left w-full group cursor-pointer disabled:opacity-60 disabled:cursor-wait"
       >
         <div className="w-9 h-9 rounded-lg bg-surface border border-border flex items-center justify-center flex-shrink-0">
           <svg
@@ -191,10 +213,10 @@ export function TeamCardExport({
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
-            Download Team Card
+            {exporting ? "Generating…" : "Download Team Card"}
           </div>
           <div className="text-[11px] text-text-tertiary">
-            Save as PNG image
+            {exporting ? "Please wait" : "Save as PNG image"}
           </div>
         </div>
         <svg

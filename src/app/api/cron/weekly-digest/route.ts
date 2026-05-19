@@ -7,6 +7,10 @@ import { NextResponse } from "next/server";
 const APP_URL = "https://pokemonvgcteamreport.com";
 const MAX_USERS = 500;
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 // ── HTML Builders ─────────────────────────────────────────────────────────────
 
 function buildDigestEmailHtml(data: {
@@ -16,7 +20,7 @@ function buildDigestEmailHtml(data: {
   newComments: number;
   newReactions: number;
 }) {
-  const name = data.firstName || "there";
+  const name = escapeHtml(data.firstName || "there");
 
   const statCard = (value: number, label: string, color: string) =>
     `<td style="padding:0 6px;" width="33%">
@@ -120,12 +124,12 @@ function buildTrendingDigestHtml(data: {
   firstName: string | null;
   topTitles: string[];
 }) {
-  const name = data.firstName || "there";
+  const name = escapeHtml(data.firstName || "there");
 
   const titleRows = data.topTitles.length > 0
     ? data.topTitles.map((title) =>
         `<tr>
-          <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;">${title}</td>
+          <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;">${escapeHtml(title)}</td>
         </tr>`
       ).join("")
     : `<tr><td style="padding:24px;text-align:center;font-size:13px;color:#9CA3AF;">Check out the latest reports from the community</td></tr>`;

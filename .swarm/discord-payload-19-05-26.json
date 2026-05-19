@@ -1,0 +1,19 @@
+{
+  "embeds": [{
+    "title": "🤖 Nightly Swarm — 19 May 2026",
+    "color": 5763719,
+    "fields": [
+      { "name": "Branch", "value": "swarm-nightly-2026-05-19", "inline": true },
+      { "name": "Commits pushed", "value": "8", "inline": true },
+      { "name": "Build status", "value": "✅ Passing", "inline": true },
+      { "name": "Linear tickets closed", "value": "VGC-127 (notifications feed), VGC-195 (share INSERT bug), VGC-197 (PATCH uuid→int), VGC-196 (collab_invite icon), VGC-194 (MatchTracker a11y), VGC-198 (TeamCardExport errors), VGC-199 (i18n filters) — 7 Done", "inline": false },
+      { "name": "PostHog signals acted on", "value": "None (credentials unavailable)", "inline": false },
+      { "name": "Updates page", "value": "7 entries added to May 2026 section (v5.18)", "inline": false },
+      { "name": "Merge conflicts", "value": "None", "inline": false },
+      { "name": "Rejected changes", "value": "None — all changes passed tsc + next build", "inline": false },
+      { "name": "PR", "value": "https://github.com/MSS23/VGC-Team-Report/pull/33", "inline": false },
+      { "name": "What was pushed", "value": "• 🔒 P0 security: HTML-escape weekly digest email templates (XSS via user-controlled strings)\n• VGC-198: TeamCardExport error handling + in-progress state for sprite capture failures\n• VGC-199: i18n wired into ExploreFilters — 12 new translation keys for category/sort/placement chips\n• SEO: noindex on /notifications page, canonical for /feedback\n• A11y: NotificationBell aria-expanded + aria-label with unread count + role=dialog\n• A11y+Perf: NotificationsContent semantic ul/li structure + remove duplicate API fetch on mount\n• 5 new Backlog tickets filed: VGC-201 (N+1 cron), VGC-202 (CRLF injection), VGC-203 (tab keyboard nav), VGC-204 (aria-live), VGC-205 (dashboard noindex)", "inline": false }
+    ],
+    "footer": { "text": "vgc-overnight-swarm • channel 1487202217298493493 • Review and merge to main when ready" }
+  }]
+}

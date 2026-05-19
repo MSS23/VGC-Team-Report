@@ -77,6 +77,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
     : "#";
 
   return (
+    <li>
     <a
       href={href}
       className={`flex items-start gap-4 px-4 py-4 rounded-xl transition-colors hover:bg-surface-alt/50 ${
@@ -105,9 +106,10 @@ function NotificationItem({ notification }: { notification: Notification }) {
         </p>
       </div>
       {!notification.read && (
-        <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-accent mt-2" />
+        <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-accent mt-2" aria-hidden="true" />
       )}
     </a>
+    </li>
   );
 }
 
@@ -119,22 +121,23 @@ function NotificationGroup({
   notifications: Notification[];
 }) {
   if (notifications.length === 0) return null;
+  const headingId = `notif-group-${label.toLowerCase().replace(/\s+/g, "-")}`;
   return (
-    <div className="mb-6">
-      <h2 className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest mb-2 px-1">
+    <section className="mb-6" aria-labelledby={headingId}>
+      <h2 id={headingId} className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest mb-2 px-1">
         {label}
       </h2>
-      <div className="bg-surface border border-border rounded-2xl overflow-hidden divide-y divide-border/50">
+      <ul className="bg-surface border border-border rounded-2xl overflow-hidden divide-y divide-border/50 list-none p-0 m-0">
         {notifications.map((n) => (
           <NotificationItem key={n.id} notification={n} />
         ))}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }
 
 export function NotificationsContent() {
-  const { notifications: realtimeNotifications, unreadCount, markAllRead } =
+  const { notifications: realtimeNotifications, unreadCount, hasMore: hookHasMore, loading: hookLoading, markAllRead } =
     useNotifications(true);
 
   const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
@@ -143,11 +146,15 @@ export function NotificationsContent() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [initialLoaded, setInitialLoaded] = useState(false);
 
-  // Merge realtime notifications (from hook) into our full list
+  // Seed allNotifications from the hook's initial fetch (eliminates the duplicate fetchInitial call)
   useEffect(() => {
     if (realtimeNotifications.length > 0 && !initialLoaded) {
       setAllNotifications(realtimeNotifications);
       setOffset(realtimeNotifications.length);
+      setHasMore(hookHasMore);
+      setInitialLoaded(true);
+    } else if (!hookLoading && !initialLoaded) {
+      // Hook finished loading but returned empty — mark as loaded
       setInitialLoaded(true);
     } else if (realtimeNotifications.length > 0 && initialLoaded) {
       // Merge in any new notifications at the top without losing paginated ones
@@ -164,25 +171,7 @@ export function NotificationsContent() {
         return [...newOnes, ...prev];
       });
     }
-  }, [realtimeNotifications, initialLoaded]);
-
-  const fetchInitial = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/user/notifications?limit=${PAGE_SIZE}&offset=0`);
-      if (!res.ok) return;
-      const data = await res.json();
-      setAllNotifications(data.notifications ?? []);
-      setOffset(data.notifications?.length ?? 0);
-      setHasMore(data.hasMore ?? false);
-      setInitialLoaded(true);
-    } catch {
-      // silently fail
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchInitial();
-  }, [fetchInitial]);
+  }, [realtimeNotifications, hookHasMore, hookLoading, initialLoaded]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
@@ -254,6 +243,7 @@ export function NotificationsContent() {
                 className="animate-spin h-5 w-5"
                 viewBox="0 0 24 24"
                 fill="none"
+                aria-hidden="true"
               >
                 <circle
                   className="opacity-25"
@@ -322,11 +312,12 @@ export function NotificationsContent() {
                   type="button"
                   onClick={loadMore}
                   disabled={loadingMore}
+                  aria-busy={loadingMore}
                   className="px-6 py-2.5 text-sm font-bold rounded-xl bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-wait"
                 >
                   {loadingMore ? (
                     <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
