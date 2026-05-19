@@ -1,0 +1,82 @@
+[
+  {
+    "identifier": "VGC-191",
+    "title": "Security: upgrade Next.js 16.2.2 → 16.2.6",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-191",
+    "files_likely_to_change": ["package.json", "package-lock.json"],
+    "scope_estimate": "small",
+    "priority": "Urgent",
+    "posthog_signal": false,
+    "conflict_risk": false
+  },
+  {
+    "identifier": "VGC-197",
+    "title": "Notifications API PATCH - ids typed as uuid[] but notification IDs are integers",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-197",
+    "files_likely_to_change": ["src/app/api/user/notifications/route.ts"],
+    "scope_estimate": "small",
+    "priority": "High",
+    "posthog_signal": false,
+    "conflict_risk": true
+  },
+  {
+    "identifier": "VGC-181",
+    "title": "Update Indianapolis Regionals top-cut table with real post-event data",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-181",
+    "files_likely_to_change": ["src/data/indy-top-cut.ts"],
+    "scope_estimate": "small",
+    "priority": "High",
+    "posthog_signal": true,
+    "conflict_risk": false
+  },
+  {
+    "identifier": "VGC-196",
+    "title": "A11y: NotificationBell TYPE_ICONS missing collab_invite entry",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-196",
+    "files_likely_to_change": ["src/components/ui/NotificationBell.tsx"],
+    "scope_estimate": "small",
+    "priority": "Medium",
+    "posthog_signal": false,
+    "conflict_risk": true
+  },
+  {
+    "identifier": "VGC-198",
+    "title": "TeamCardExport error handling for failed sprite loads",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-198",
+    "files_likely_to_change": ["src/components/ui/TeamCardExport.tsx"],
+    "scope_estimate": "small",
+    "priority": "Medium",
+    "posthog_signal": false,
+    "conflict_risk": false
+  },
+  {
+    "identifier": "VGC-199",
+    "title": "i18n: Wire useTranslation into ExploreFilters.tsx CATEGORIES, SORT_OPTIONS, PLACEMENTS",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-199",
+    "files_likely_to_change": ["src/components/explore/ExploreFilters.tsx", "src/lib/i18n/translations/en.ts"],
+    "scope_estimate": "small",
+    "priority": "Medium",
+    "posthog_signal": true,
+    "conflict_risk": false
+  },
+  {
+    "identifier": "VGC-194",
+    "title": "A11y: MatchTracker delete — Escape dismiss, focus management",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-194",
+    "files_likely_to_change": ["src/components/match-tracker/MatchTracker.tsx"],
+    "scope_estimate": "small",
+    "priority": "Medium",
+    "posthog_signal": false,
+    "conflict_risk": false
+  },
+  {
+    "identifier": "VGC-192",
+    "title": "Tech debt: remove 14 dead exports across src/lib/ and src/hooks/",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-192",
+    "files_likely_to_change": ["src/lib/", "src/hooks/"],
+    "scope_estimate": "medium",
+    "priority": "Medium",
+    "posthog_signal": false,
+    "conflict_risk": false
+  }
+]
