@@ -24,7 +24,6 @@ import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
 const EditChangelog = dynamic(() => import("@/components/social/EditChangelog").then(m => ({ default: m.EditChangelog })));
 const CollaboratorPanel = dynamic(() => import("@/components/social/CollaboratorPanel").then(m => ({ default: m.CollaboratorPanel })));
-const NewsletterSignup = dynamic(() => import("@/components/ui/NewsletterSignup").then(m => ({ default: m.NewsletterSignup })));
 import { getSessionId } from "@/lib/utils/session-id";
 import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { setViewOverrideTheme, reapplyCurrentTheme, type GenTheme } from "@/hooks/useTheme";
@@ -742,9 +741,6 @@ function HomeContent() {
           selectedTemplate={pendingTemplateId}
           onTemplateSelect={setPendingTemplateId}
         />
-        <div className="max-w-md mx-auto px-4 pb-10 -mt-2">
-          <NewsletterSignup />
-        </div>
       </main>
     );
   }

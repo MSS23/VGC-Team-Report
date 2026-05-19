@@ -54,7 +54,6 @@ const ENTRIES: ChangelogEntry[] = [
       { type: "improved", text: "Share modal is now fully internationalised — all 49 visible UI strings (modal title, privacy option labels, social share buttons, copy-link feedback, error messages) are extracted into the i18n system and ready for translation via the language selector." },
       { type: "fixed", text: "Critical: share creation was corrupting owner_id on every new report since the 17 May deploy — a column-position mismatch in the INSERT statement put a boolean in the owner_id column and the Clerk user ID in search_vector. Fixed; DB repair script drafted for affected rows (see VGC-195)." },
       { type: "fixed", text: "Notification mark-as-read silently failed — the API was validating integer IDs as UUIDs. Fixed: IDs now correctly typed as integers throughout the notifications stack." },
-      { type: "fixed", text: "Newsletter signup no longer silently discarded when Resend is unconfigured — the route now writes the email to the database as a fallback so no signups are lost." },
     ],
   },
   {
