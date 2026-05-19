@@ -65,8 +65,10 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="true"
         className="relative p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all"
-        aria-label="Notifications"
+        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -80,7 +82,11 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+        <div
+          role="dialog"
+          aria-label="Notifications"
+          className="absolute right-0 top-full mt-2 w-80 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in"
+        >
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h3 className="text-sm font-bold text-text-primary">Notifications</h3>
             {unreadCount > 0 && (
