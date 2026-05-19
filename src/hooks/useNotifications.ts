@@ -15,6 +15,8 @@ export interface Notification {
 export function useNotifications(enabled: boolean) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
@@ -26,6 +28,8 @@ export function useNotifications(enabled: boolean) {
       const data = await res.json();
       setNotifications(data.notifications ?? []);
       setUnreadCount(data.unreadCount ?? 0);
+      setHasMore(data.hasMore ?? false);
+      setTotal(data.total ?? 0);
     } catch {
       // silently fail
     }
@@ -86,5 +90,5 @@ export function useNotifications(enabled: boolean) {
     }
   }, []);
 
-  return { notifications, unreadCount, loading, markAllRead, markIdsRead, refetch: fetchNotifications };
+  return { notifications, unreadCount, hasMore, total, loading, markAllRead, markIdsRead, refetch: fetchNotifications };
 }
