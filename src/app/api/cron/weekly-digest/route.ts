@@ -264,17 +264,32 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
   }
 
-  // 3. Process each user
+  // 3. Batch-fetch all Clerk users in chunks of 100 (avoids N+1 per-user API calls)
   const clerk = await clerkClient();
+  const CLERK_BATCH = 100;
+  const clerkUserMap = new Map<string, Awaited<ReturnType<typeof clerk.users.getUser>>>();
+
+  for (let i = 0; i < userIds.length; i += CLERK_BATCH) {
+    const chunk = userIds.slice(i, i + CLERK_BATCH);
+    try {
+      const res = await clerk.users.getUserList({ userId: chunk, limit: CLERK_BATCH });
+      for (const u of res.data) {
+        clerkUserMap.set(u.id, u);
+      }
+    } catch (e) {
+      console.warn(`[weekly-digest] Clerk batch fetch failed for chunk ${i}-${i + CLERK_BATCH}:`, e);
+    }
+  }
+
+  // 4. Collect email jobs first, then send in parallel batches
+  type EmailJob = { to: string; subject: string; html: string };
+  const emailJobs: EmailJob[] = [];
 
   for (const userId of userIds) {
     try {
-      // a. Fetch Clerk user
-      let user;
-      try {
-        user = await clerk.users.getUser(userId);
-      } catch (e) {
-        console.warn(`[weekly-digest] Could not fetch Clerk user ${userId}:`, e);
+      // a. Look up user from pre-fetched map
+      const user = clerkUserMap.get(userId);
+      if (!user) {
         skipped++;
         continue;
       }
@@ -293,13 +308,14 @@ export async function GET(request: Request) {
 
       const firstName = user.firstName ?? null;
 
-      // c. Query engagement stats
+      // c. Query engagement stats — includes total_shares to avoid a second query
       const [stats] = await sql`
         SELECT
           COUNT(DISTINCT r.id) FILTER (WHERE r.created_at > NOW() - INTERVAL '7 days') AS new_reports,
           COALESCE(SUM(r.view_count), 0) AS total_views,
           COUNT(DISTINCT c.id) AS new_comments,
-          COUNT(DISTINCT rc.id) AS new_reactions
+          COUNT(DISTINCT rc.id) AS new_reactions,
+          COUNT(r.id) AS total_shares
         FROM shares r
         LEFT JOIN comments c ON c.share_id = r.id AND c.created_at > NOW() - INTERVAL '7 days'
         LEFT JOIN reactions rc ON rc.share_id = r.id AND rc.created_at > NOW() - INTERVAL '7 days'
@@ -310,16 +326,9 @@ export async function GET(request: Request) {
       const totalViews = Number(stats.total_views ?? 0);
       const newComments = Number(stats.new_comments ?? 0);
       const newReactions = Number(stats.new_reactions ?? 0);
+      const totalShares = Number(stats.total_shares ?? 0);
 
-      // d. Check if user has any activity at all
       const hasActivity = newReports > 0 || newComments > 0 || newReactions > 0 || totalViews > 0;
-
-      // e. Check if user has any shares (needed to decide trending vs personalized)
-      const [shareCount] = await sql`
-        SELECT COUNT(*) AS c FROM shares
-        WHERE owner_id = ${userId} AND deleted_at IS NULL
-      `;
-      const totalShares = Number(shareCount.c ?? 0);
       const sendTrending = totalShares === 0 && !hasActivity;
 
       let html: string;
@@ -333,11 +342,21 @@ export async function GET(request: Request) {
         subject = `Your reports this week, ${firstName || "there"}!`;
       }
 
-      await sendEmail({ to: email, subject, html });
-      sent++;
+      emailJobs.push({ to: email, subject, html });
     } catch (e) {
-      console.error(`[weekly-digest] Error processing user ${userId}:`, e);
+      console.error(`[weekly-digest] Error preparing email for ${userId}:`, e);
       errors++;
+    }
+  }
+
+  // 5. Send emails in parallel batches of 15
+  const EMAIL_BATCH = 15;
+  for (let i = 0; i < emailJobs.length; i += EMAIL_BATCH) {
+    const chunk = emailJobs.slice(i, i + EMAIL_BATCH);
+    const results = await Promise.all(chunk.map((job) => sendEmail(job).catch(() => null)));
+    for (const r of results) {
+      if (r !== null) sent++;
+      else errors++;
     }
   }
 
