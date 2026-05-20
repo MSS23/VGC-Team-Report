@@ -188,6 +188,45 @@ export function Navbar(props: NavbarProps) {
   const [pasteCopied, setPasteCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // ── Save toggle for shared-view non-owner menu item ───────────────
+  // Replaces the deleted FloatingReactionDock's bookmark control. Lives
+  // in the overflow menu so the report content is never overlaid.
+  const [saved, setSaved] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const canSave = isSharedView && !isOwner && isSignedIn && !!activeShareId;
+  useEffect(() => {
+    if (!canSave || !activeShareId) return;
+    fetch("/api/user/saved")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.reports?.some((r: { id: string }) => r.id === activeShareId)) {
+          setSaved(true);
+        } else {
+          setSaved(false);
+        }
+      })
+      .catch(() => {});
+  }, [canSave, activeShareId]);
+  const toggleSaved = async () => {
+    if (saveLoading || !activeShareId) return;
+    setSaveLoading(true);
+    const wasSaved = saved;
+    // Optimistic — rollback on failure.
+    setSaved(!wasSaved);
+    try {
+      const res = await fetch("/api/user/saved", {
+        method: wasSaved ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shareId: activeShareId }),
+      });
+      if (!res.ok) setSaved(wasSaved);
+    } catch {
+      setSaved(wasSaved);
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
   // Derive the effective share ID for version history
   const versionShareId = (activeShareId && isOwner) ? activeShareId : sessionShareId;
   const canShowVersionHistory = !!versionShareId;
@@ -583,6 +622,34 @@ export function Navbar(props: NavbarProps) {
                       {creatorMode ? <path d="M7 11V7a5 5 0 019.9-1" /> : <path d="M7 11V7a5 5 0 0110 0v4" />}
                     </svg>
                     {creatorMode ? "Lock Editing" : "Unlock Editing"}
+                  </button>
+                )}
+
+                {/* Save / Unsave — shared-view non-owners only. Replaces
+                    the deleted FloatingReactionDock bookmark so viewers can
+                    still collect reports without an overlaid floating pill. */}
+                {canSave && (
+                  <button
+                    type="button"
+                    onClick={() => { toggleSaved(); }}
+                    disabled={saveLoading}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors disabled:opacity-60 disabled:cursor-wait"
+                    aria-label={saved ? "Remove from saved" : "Save report"}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill={saved ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className={saved ? "text-accent" : ""}
+                    >
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+                    </svg>
+                    {saved ? "Saved" : "Save to my reports"}
                   </button>
                 )}
 

@@ -19,7 +19,6 @@ import { EditFab } from "@/components/ui/EditFab";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { Navbar } from "@/components/layout/Navbar";
 import { SaveButton } from "@/components/social/SaveButton";
-import { FloatingReactionDock } from "@/components/social/FloatingReactionDock";
 const DoubleTapLikeOverlay = dynamic(() => import("@/components/social/DoubleTapLikeOverlay").then(m => ({ default: m.DoubleTapLikeOverlay })), { ssr: false });
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
@@ -42,7 +41,6 @@ import { usePostHog } from "@/components/providers/PostHogProvider";
 
 // Lazy-load heavy modal and social components (only rendered conditionally)
 const ShareModal = dynamic(() => import("@/components/ui/ShareModal").then(m => ({ default: m.ShareModal })));
-const ShareDock = dynamic(() => import("@/components/ui/ShareDock").then(m => ({ default: m.ShareDock })), { ssr: false });
 const CommentSection = dynamic(() => import("@/components/social/CommentSection").then(m => ({ default: m.CommentSection })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-32" />,
 });
@@ -237,10 +235,16 @@ function HomeContent() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showOTSSheet, setShowOTSSheet] = useState(false);
   const [tournamentMode, setTournamentMode] = useState(false);
-  // Tracks whether the shared-view "Build your own team report" CTA has
-  // been dismissed. Hoisted here (instead of inside ShareViewCTA) so the
+  // Tracks whether the shared-view "Duplicate this team" CTA has been
+  // dismissed. Hoisted here (instead of inside ShareViewCTA) so the
   // floating Display pill can react to it and drop its lift offset the
   // moment the CTA disappears, rather than staying artificially raised.
+  //
+  // Dismissal is persisted in localStorage per share-id under the
+  // SHARE_CTA_DISMISSED_KEY namespace, so a viewer who dismisses the
+  // CTA once never sees it again on subsequent visits to that report.
+  // Per-id keying matters: dismissing one team's CTA should NOT also
+  // dismiss the next team you click through to.
   const [shareCtaDismissed, setShareCtaDismissed] = useState(false);
   // Tracks whether the end-of-report contextual CTA (shown on the last slide)
   // has been dismissed by the viewer.
@@ -619,6 +623,25 @@ function HomeContent() {
     }
     return () => setViewOverrideTheme(null);
   }, [isSharedView]);
+
+  // Restore the "duplicate CTA dismissed" flag for the current share so a
+  // viewer who closed the banner once never sees it again on the same
+  // report. Resets when navigating to a different share id (or away from
+  // a shared view) so the next team gets a fresh chance to prompt.
+  useEffect(() => {
+    if (!isSharedView || !activeShareId) {
+      setShareCtaDismissed(false);
+      return;
+    }
+    try {
+      const stored = localStorage.getItem(`vgc-share-cta-dismissed:${activeShareId}`);
+      setShareCtaDismissed(stored === "1");
+    } catch {
+      // localStorage may be blocked — fall back to in-session state.
+      setShareCtaDismissed(false);
+    }
+  }, [isSharedView, activeShareId]);
+
   const [viewCount, setViewCount] = useState(0);
   const viewTracked = useRef(false);
 
@@ -1553,19 +1576,6 @@ function HomeContent() {
         isPresentationMode={isPresentationStyle}
       />
 
-      {/* Persistent share dock — visible on every shared report view so the
-          4 share targets (X / Reddit / Discord / Copy) are one tap away,
-          not buried in the navbar. Hidden during presentation mode. */}
-      {isSharedView && !isPresentationStyle && activeShareId && (
-        <ShareDock
-          publicUrl={`${typeof window !== "undefined" ? window.location.origin : "https://pokemonvgcteamreport.com"}/s/${activeShareId}`}
-          teamSpecies={teamSpecies}
-          tournamentName={tournamentName}
-          creatorName={creatorName}
-          placement={placement}
-        />
-      )}
-
       {/* Share modal — social share options */}
       {showShareModal && lastShareResult?.publicUrl && (
         <ShareModal
@@ -1606,17 +1616,6 @@ function HomeContent() {
         />
       )}
 
-      {/* Floating like/save bar for shared views — above slide nav + CTA.
-          Auto-hides on scroll-down, reveals on scroll-up, and stays
-          visible near the bottom of the page. Respects prefers-reduced-motion. */}
-      {isSharedView && !isPresentationStyle && activeShareId && (
-        <FloatingReactionDock
-          shareId={activeShareId}
-          isOwner={isOwner}
-          isEditingUnlocked={isEditingUnlocked}
-        />
-      )}
-
       {/* Instagram-style double-tap to like — listens window-wide for two
           quick presses and bursts a heart at the tap location. Active on
           BOTH presentation and non-presentation shared views (so viewers
@@ -1642,7 +1641,17 @@ function HomeContent() {
               posthog?.capture("share_view_duplicate_anonymous", { source_id: activeShareId });
             }
           }}
-          onDismiss={() => setShareCtaDismissed(true)}
+          onDismiss={() => {
+            setShareCtaDismissed(true);
+            if (activeShareId) {
+              try {
+                localStorage.setItem(`vgc-share-cta-dismissed:${activeShareId}`, "1");
+              } catch {
+                // Storage may be blocked (private browsing, full disk, etc.);
+                // dismissal still applies in-session via React state.
+              }
+            }
+          }}
           busy={forkStatus === "forking"}
         />
       )}
