@@ -1,10 +1,19 @@
-# Swarm Run Meta — 19-05-26
-- Branch: swarm-nightly-2026-05-19
-- Started: Tue May 19 01:04:58 BST 2026
-- Status: In Progress
-- Wave 1 agents: 8 planned
-- Wave 2 agents: 14 planned (budget: 25 total)
-- PostHog: unavailable (no .env.local)
-- Board state:
-  - In Progress: VGC-127 (implemented 18-05-26), VGC-195 (fixed 18-05-26), VGC-64 (no-claude, skip)
-  - Backlog implementable: VGC-197, VGC-196, VGC-198, VGC-199, VGC-200, VGC-181, VGC-162, VGC-187, VGC-191, VGC-194, VGC-192
+# Swarm Run Meta — 2026-05-20
+
+- Date: 2026-05-20 (UK)
+- Run started: 2026-05-20T00:09:29Z
+- Branch: claude/wizardly-hopper-YFtj1
+- Status: RUNNING
+
+## Notes
+- Using assigned development branch: claude/wizardly-hopper-YFtj1 (serves as nightly branch)
+- Branch is in sync with origin/main (0 ahead, 0 behind at run start)
+- Working directory: /home/user/VGC-Team-Report
+
+## Skipped Tickets
+- VGC-181: Indianapolis Regionals top-cut — event is May 29-31, 2026, FUTURE EVENT — data does not exist yet. Cannot implement.
+- VGC-64: In Progress, has no-claude label, non-bug — skipped
+- VGC-162: Root page.tsx refactor — marked risky/large in description, "should be done on a feature branch" — skip this run
+
+## PostHog
+- Credentials not available in this environment — skipping PostHog data pull
