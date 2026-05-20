@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useCallback, useRef } from "react";
 
 interface UseSwipeNavigationOptions {
   onSwipeLeft: () => void;
@@ -11,11 +11,18 @@ interface UseSwipeNavigationOptions {
 
 /**
  * Adds horizontal swipe gesture detection for mobile slide navigation.
- * Returns a ref to attach to the swipeable container.
- * Includes visual drag feedback and optional haptic vibration.
+ * Returns a callback ref to attach to the swipeable container.
  *
- * Touch listeners attach ONCE and read callbacks via refs so they are
- * never torn down mid-gesture when the parent re-renders.
+ * Why a callback ref (not a regular ref + useEffect): the swipeable
+ * container is conditionally rendered after the team analysis is loaded,
+ * so a useEffect with [] dependency would run BEFORE the ref is populated
+ * and never reattach. A callback ref fires when the element mounts and
+ * unmounts, so we attach the touch listeners exactly when the container
+ * is in the DOM.
+ *
+ * Touch listeners read callbacks via refs so they remain stable across
+ * re-renders — handlers aren't torn down mid-gesture when the parent
+ * component re-renders.
  */
 
 /** Width of the edge zone (px) where browser back/forward gestures trigger on Android/iOS.
@@ -35,16 +42,27 @@ export function useSwipeNavigation({
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const touchEnd = useRef<{ x: number; y: number } | null>(null);
   const isDragging = useRef(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const ignoreSwipe = useRef(false);
+  const attachedElRef = useRef<HTMLDivElement | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   // Store callbacks and config in refs — listeners never need re-attaching
   const callbacksRef = useRef({ onSwipeLeft, onSwipeRight, threshold, enabled });
   callbacksRef.current = { onSwipeLeft, onSwipeRight, threshold, enabled };
 
-  // Single useEffect — attaches once when containerRef is set, never tears down mid-gesture
-  useEffect(() => {
-    const el = containerRef.current;
+  // Callback ref — fires when the swipeable container mounts or unmounts.
+  // Attaches listeners on mount, detaches on unmount, and stays idempotent
+  // if React calls it with the same element (which it normally does not,
+  // but we guard against it).
+  const setSwipeRef = useCallback((el: HTMLDivElement | null) => {
+    if (attachedElRef.current === el) return;
+
+    // Detach from previous element if any
+    if (cleanupRef.current) {
+      cleanupRef.current();
+      cleanupRef.current = null;
+    }
+    attachedElRef.current = el;
     if (!el) return;
 
     const handleTouchStart = (e: TouchEvent) => {
@@ -145,12 +163,12 @@ export function useSwipeNavigation({
     el.addEventListener("touchmove", handleTouchMove, { passive: false });
     el.addEventListener("touchend", handleTouchEnd);
 
-    return () => {
+    cleanupRef.current = () => {
       el.removeEventListener("touchstart", handleTouchStart);
       el.removeEventListener("touchmove", handleTouchMove);
       el.removeEventListener("touchend", handleTouchEnd);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — refs are stable, listeners attach once
+  }, []);
 
-  return containerRef;
+  return setSwipeRef;
 }

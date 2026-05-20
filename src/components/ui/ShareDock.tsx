@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { useScrollHide } from "@/hooks/useScrollHide";
+import { useTouchIdleHide } from "@/hooks/useTouchIdleHide";
 
 interface ShareDockProps {
   publicUrl: string;
@@ -34,7 +35,17 @@ export function ShareDock({
   const [canNativeShare, setCanNativeShare] = useState(false);
   const posthog = usePostHog();
   const dockRef = useRef<HTMLDivElement>(null);
-  const hidden = useScrollHide({ containerRef: dockRef });
+  const scrollHidden = useScrollHide({ containerRef: dockRef });
+  const idleHidden = useTouchIdleHide({ containerRef: dockRef });
+  // User-initiated collapse — overrides the auto-reveal from idle hook on
+  // first paint. Tapping the peek tab re-expands; another tap on the
+  // close button collapses again.
+  const [userCollapsed, setUserCollapsed] = useState(false);
+  const hidden = userCollapsed || scrollHidden || idleHidden;
+
+  const expand = useCallback(() => {
+    setUserCollapsed(false);
+  }, []);
 
   useEffect(() => {
     const nav = navigator as Navigator & { share?: unknown; canShare?: (data?: ShareData) => boolean };
@@ -100,7 +111,30 @@ export function ShareDock({
   };
 
   return (
-    <div
+    <>
+      {/* When the dock is collapsed/hidden on mobile, surface a tiny peek
+          tab so viewers know how to bring sharing back. Touch-only —
+          desktop already has the persistent dock + scroll-reveal. */}
+      <button
+        type="button"
+        onClick={expand}
+        aria-label="Show share options"
+        aria-expanded={!hidden}
+        className={`fixed left-1/2 -translate-x-1/2 z-40 top-[calc(env(safe-area-inset-top,0px)+64px)] sm:hidden flex items-center gap-1 px-3 py-1 rounded-full bg-surface/90 backdrop-blur-md border border-border shadow-md text-[10px] font-extrabold uppercase tracking-wider text-text-tertiary transition-opacity duration-200 motion-reduce:transition-none cursor-pointer ${
+          hidden ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="18" cy="5" r="3" />
+          <circle cx="6" cy="12" r="3" />
+          <circle cx="18" cy="19" r="3" />
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+        </svg>
+        Share
+      </button>
+
+      <div
       ref={dockRef}
       className={`fixed left-1/2 -translate-x-1/2 z-40 top-[calc(env(safe-area-inset-top,0px)+64px)] sm:top-[72px] transition-transform duration-300 motion-reduce:transition-none ${
         hidden ? "-translate-y-[140%]" : "translate-y-0"
@@ -112,6 +146,21 @@ export function ShareDock({
         <span className="hidden sm:inline px-3 text-[11px] font-extrabold uppercase tracking-wider text-text-tertiary">
           Share
         </span>
+
+        {/* Mobile-only collapse handle — lets viewers hide the dock when
+            it's in the way without waiting for the idle timer. Reappears
+            via the peek tab above. */}
+        <button
+          type="button"
+          onClick={() => setUserCollapsed(true)}
+          aria-label="Hide share dock"
+          className="sm:hidden w-8 h-8 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all cursor-pointer -ml-0.5"
+          title="Hide"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="18 15 12 9 6 15" />
+          </svg>
+        </button>
 
         {canNativeShare && (
           <button
@@ -201,5 +250,6 @@ export function ShareDock({
         </button>
       </div>
     </div>
+    </>
   );
 }

@@ -555,6 +555,24 @@ export function useHomePage() {
     if (share.sharedState.allowComments) share.setAllowComments(true);
   }, [share.sharedState, analysis, speciesKeys, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
 
+  // Auto-enter presentation mode when a viewer opens a shared team report.
+  // The intent is "click a team → drop straight into the deck", same as
+  // tapping a slide deck on Apple Keynote on the web. Skipped when the URL
+  // carries an explicit edit key (?key=...) because those visitors came
+  // here to edit, not present. Tracked via a ref so exiting presentation
+  // mode mid-view doesn't snap the viewer back in.
+  const autoPresentTriggered = useRef(false);
+  useEffect(() => {
+    if (!share.sharedState || !share.isSharedView) {
+      autoPresentTriggered.current = false;
+      return;
+    }
+    if (!analysis || autoPresentTriggered.current) return;
+    if (share.editKeyFromUrl) return;
+    autoPresentTriggered.current = true;
+    setPresentationMode(true);
+  }, [share.sharedState, share.isSharedView, share.editKeyFromUrl, analysis, setPresentationMode]);
+
   // ── Apply template defaults when analysis first appears (non-shared) ──
   const templateApplied = useRef(false);
   useEffect(() => {
