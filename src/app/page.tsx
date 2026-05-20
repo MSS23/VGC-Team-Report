@@ -20,6 +20,7 @@ import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { Navbar } from "@/components/layout/Navbar";
 import { SaveButton } from "@/components/social/SaveButton";
 import { FloatingReactionDock } from "@/components/social/FloatingReactionDock";
+const DoubleTapLikeOverlay = dynamic(() => import("@/components/social/DoubleTapLikeOverlay").then(m => ({ default: m.DoubleTapLikeOverlay })), { ssr: false });
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
 const EditChangelog = dynamic(() => import("@/components/social/EditChangelog").then(m => ({ default: m.EditChangelog })));
@@ -909,6 +910,16 @@ function HomeContent() {
         onShowShortcuts={setShowShortcutHint}
         onSetCreatorMode={setCreatorMode}
         onSetPresentationMode={setPresentationMode}
+        onEditPresentation={() => {
+          // Owner pencil: leave presentation mode AND turn editing on in one
+          // gesture. Without explicitly setting creator mode here, the
+          // useLayoutEffect that restores creatorMode on present-exit only
+          // does so when it was true before entering — but on auto-present
+          // owners enter presentation before owner-edit could engage, so the
+          // captured value is false. Forcing it true here is the contract.
+          setPresentationMode(false);
+          setCreatorMode(true);
+        }}
         onReset={handleReset}
         onExitSharedView={exitSharedView}
         onStartTour={!presentationMode ? startWalkthrough : undefined}
@@ -1603,6 +1614,19 @@ function HomeContent() {
           shareId={activeShareId}
           isOwner={isOwner}
           isEditingUnlocked={isEditingUnlocked}
+        />
+      )}
+
+      {/* Instagram-style double-tap to like — listens window-wide for two
+          quick presses and bursts a heart at the tap location. Active on
+          BOTH presentation and non-presentation shared views (so viewers
+          can still react while the deck is open). Owners and the landing
+          page are filtered out inside the component. */}
+      {isSharedView && activeShareId && (
+        <DoubleTapLikeOverlay
+          shareId={activeShareId}
+          isOwner={isOwner}
+          enabled={!!analysis}
         />
       )}
 

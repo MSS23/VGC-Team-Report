@@ -93,6 +93,9 @@ interface NavbarProps {
   onShowShortcuts: (v: boolean) => void;
   onSetCreatorMode: (v: boolean) => void;
   onSetPresentationMode: (v: boolean) => void;
+  /** Owner-only: exit presentation mode AND unlock editing in one tap.
+   *  Surfaced as the pencil icon in the top-right while presenting. */
+  onEditPresentation?: () => void;
   onReset: () => void;
   onExitSharedView: () => void;
 
@@ -173,7 +176,7 @@ export function Navbar(props: NavbarProps) {
     comparingVersion, onCompareVersion, onClearCompareVersion, compareLoading,
     onExportPdf, onExportPokepaste, onCreatePokepaste, pokepasteCreating, onOpenOTSSheet,
     tournamentMode, onSetTournamentMode,
-    onShowShortcuts, onSetCreatorMode, onSetPresentationMode,
+    onShowShortcuts, onSetCreatorMode, onSetPresentationMode, onEditPresentation,
     onReset, onExitSharedView, onStartTour,
   } = props;
 
@@ -421,7 +424,7 @@ export function Navbar(props: NavbarProps) {
             <>
               <button
                 onClick={() => onShowShortcuts(true)}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer"
+                className="hidden sm:flex min-w-[44px] min-h-[44px] items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors cursor-pointer"
                 title="Keyboard shortcuts (?)"
                 aria-label="Keyboard shortcuts"
               >
@@ -429,6 +432,22 @@ export function Navbar(props: NavbarProps) {
                   <rect x="2" y="4" width="20" height="16" rx="2" /><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
                 </svg>
               </button>
+              {/* Owner-only pencil — drops out of presentation mode and unlocks
+                  editing in one tap. Placed before Exit so the primary owner
+                  action is always reachable in the top-right corner. */}
+              {isOwner && isEditingUnlocked && onEditPresentation && (
+                <button
+                  type="button"
+                  onClick={onEditPresentation}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer"
+                  title="Edit this report"
+                  aria-label="Edit this report"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                </button>
+              )}
               <Button variant="ghost" size="sm" onClick={() => onSetPresentationMode(false)}>
                 {t.exit}
               </Button>

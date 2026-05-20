@@ -36,7 +36,10 @@ export function ShareDock({
   const posthog = usePostHog();
   const dockRef = useRef<HTMLDivElement>(null);
   const scrollHidden = useScrollHide({ containerRef: dockRef });
-  const idleHidden = useTouchIdleHide({ containerRef: dockRef });
+  const { hidden: idleHidden, reveal: revealIdle } = useTouchIdleHide({
+    containerRef: dockRef,
+    initialFlashMs: 2000,
+  });
   // User-initiated collapse — overrides the auto-reveal from idle hook on
   // first paint. Tapping the peek tab re-expands; another tap on the
   // close button collapses again.
@@ -45,7 +48,10 @@ export function ShareDock({
 
   const expand = useCallback(() => {
     setUserCollapsed(false);
-  }, []);
+    // Touch devices don't fire `pointerenter` from a sibling-element tap,
+    // so the hook can't auto-reveal. Imperatively kick it.
+    revealIdle();
+  }, [revealIdle]);
 
   useEffect(() => {
     const nav = navigator as Navigator & { share?: unknown; canShare?: (data?: ShareData) => boolean };
@@ -112,15 +118,14 @@ export function ShareDock({
 
   return (
     <>
-      {/* When the dock is collapsed/hidden on mobile, surface a tiny peek
-          tab so viewers know how to bring sharing back. Touch-only —
-          desktop already has the persistent dock + scroll-reveal. */}
+      {/* When the dock is collapsed/hidden, surface a tiny peek tab on
+          all breakpoints so viewers know how to bring sharing back. */}
       <button
         type="button"
         onClick={expand}
         aria-label="Show share options"
         aria-expanded={!hidden}
-        className={`fixed left-1/2 -translate-x-1/2 z-40 top-[calc(env(safe-area-inset-top,0px)+64px)] sm:hidden flex items-center gap-1 px-3 py-1 rounded-full bg-surface/90 backdrop-blur-md border border-border shadow-md text-[10px] font-extrabold uppercase tracking-wider text-text-tertiary transition-opacity duration-200 motion-reduce:transition-none cursor-pointer ${
+        className={`fixed left-1/2 -translate-x-1/2 z-40 top-[calc(env(safe-area-inset-top,0px)+64px)] flex items-center gap-1 px-3 py-2 rounded-full bg-surface/90 backdrop-blur-md border border-border shadow-md text-[10px] font-extrabold uppercase tracking-wider text-text-tertiary transition-opacity duration-200 motion-reduce:transition-none cursor-pointer ${
           hidden ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
@@ -136,6 +141,7 @@ export function ShareDock({
 
       <div
       ref={dockRef}
+      data-vgc-dock="share"
       className={`fixed left-1/2 -translate-x-1/2 z-40 top-[calc(env(safe-area-inset-top,0px)+64px)] sm:top-[72px] transition-transform duration-300 motion-reduce:transition-none ${
         hidden ? "-translate-y-[140%]" : "translate-y-0"
       }`}
@@ -147,14 +153,14 @@ export function ShareDock({
           Share
         </span>
 
-        {/* Mobile-only collapse handle — lets viewers hide the dock when
-            it's in the way without waiting for the idle timer. Reappears
-            via the peek tab above. */}
+        {/* Collapse handle — lets viewers hide the dock when it's in
+            the way without waiting for the idle timer. Reappears via
+            the peek tab above. Available on all breakpoints. */}
         <button
           type="button"
           onClick={() => setUserCollapsed(true)}
           aria-label="Hide share dock"
-          className="sm:hidden w-8 h-8 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all cursor-pointer -ml-0.5"
+          className="w-8 h-8 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all cursor-pointer -ml-0.5"
           title="Hide"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

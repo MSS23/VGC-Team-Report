@@ -42,26 +42,32 @@ export function FloatingReactionDock({
 }: FloatingReactionDockProps) {
   const dockRef = useRef<HTMLDivElement>(null);
   const scrollHidden = useScrollHide({ containerRef: dockRef });
-  const idleHidden = useTouchIdleHide({ containerRef: dockRef });
+  const { hidden: idleHidden, reveal: revealIdle } = useTouchIdleHide({
+    containerRef: dockRef,
+    initialFlashMs: 2000,
+  });
   const [userCollapsed, setUserCollapsed] = useState(false);
   const hidden = userCollapsed || scrollHidden || idleHidden;
 
   const expand = useCallback(() => {
     setUserCollapsed(false);
-  }, []);
+    // Touch devices don't fire `pointerenter` from a sibling-element tap,
+    // so the hook can't auto-reveal. Imperatively kick it.
+    revealIdle();
+  }, [revealIdle]);
 
   const bottomClass = isEditingUnlocked ? "bottom-14 sm:bottom-12" : "bottom-28 sm:bottom-24";
 
   return (
     <>
-      {/* Peek tab — only rendered on mobile when the dock is hidden so
-          viewers can summon the heart/save controls without scrolling. */}
+      {/* Peek tab — rendered on all breakpoints when the dock is hidden
+          so viewers can summon the heart/save controls without scrolling. */}
       <button
         type="button"
         onClick={expand}
         aria-label="Show reactions"
         aria-expanded={!hidden}
-        className={`fixed left-1/2 -translate-x-1/2 z-50 safe-bottom sm:hidden flex items-center gap-1 px-3 py-1 rounded-full bg-surface/90 backdrop-blur-md border border-border shadow-md text-[10px] font-extrabold uppercase tracking-wider text-text-tertiary transition-opacity duration-200 motion-reduce:transition-none cursor-pointer ${bottomClass} ${
+        className={`fixed left-1/2 -translate-x-1/2 z-50 safe-bottom flex items-center gap-1 px-3 py-2 rounded-full bg-surface/90 backdrop-blur-md border border-border shadow-md text-[10px] font-extrabold uppercase tracking-wider text-text-tertiary transition-opacity duration-200 motion-reduce:transition-none cursor-pointer ${bottomClass} ${
           hidden ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
@@ -73,6 +79,8 @@ export function FloatingReactionDock({
 
       <div
         ref={dockRef}
+        data-vgc-dock="reactions"
+        aria-label="Reactions"
         className={`fixed left-1/2 -translate-x-1/2 z-50 safe-bottom transition-transform duration-300 motion-reduce:transition-none ${bottomClass} ${
           hidden ? "translate-y-[200%]" : "translate-y-0"
         }`}
@@ -85,12 +93,12 @@ export function FloatingReactionDock({
               <SaveButton shareId={shareId} />
             </>
           )}
-          {/* Mobile-only collapse handle */}
+          {/* Collapse handle — available on all breakpoints */}
           <button
             type="button"
             onClick={() => setUserCollapsed(true)}
             aria-label="Hide reactions"
-            className="sm:hidden ml-1 w-8 h-8 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all cursor-pointer"
+            className="ml-1 w-8 h-8 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all cursor-pointer"
             title="Hide"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
