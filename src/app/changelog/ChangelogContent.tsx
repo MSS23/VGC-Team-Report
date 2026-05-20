@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { I18nProvider } from "@/lib/i18n";
 
@@ -25,6 +25,24 @@ interface ChangelogEntry {
 }
 
 const ENTRIES: ChangelogEntry[] = [
+  {
+    date: "May 2026",
+    version: "5.19",
+    title: "Performance, Security & Accessibility Hardening",
+    emoji: "⚡",
+    highlight: false,
+    items: [
+      { type: "improved", text: "Performance: weekly digest cron no longer makes N+1 Clerk API calls for 500 users — a single batched getUserList() call fetches all users before the main loop, reducing the Clerk phase from ~25s to ~2s. The redundant shareCount query is folded into the main stats query. Email sends now run in parallel batches of 15." },
+      { type: "fixed", text: "Security: RESEND_FROM_EMAIL environment variable is now stripped of CRLF characters before use — defence-in-depth against email header injection if the env var is ever compromised or misconfigured." },
+      { type: "improved", text: "Accessibility: Changelog filter tabs (All/New/Improved/Fixed) now support WCAG 2.1.1 keyboard navigation — Left/Right arrow keys move focus between tabs, Home/End jump to first/last, active tab uses roving tabindex." },
+      { type: "improved", text: "Accessibility: Notifications feed adds an aria-live='polite' region that announces incoming notification counts to screen readers when real-time updates arrive via the background poll." },
+      { type: "improved", text: "SEO: /dashboard/profile and /dashboard/privacy now carry robots noindex/nofollow metadata, preventing search engines from accidentally indexing authenticated-only content." },
+      { type: "improved", text: "Accessibility: Champions Regionals top-cut table has a screen-reader caption and scope='col' on all column headers; Explore filter chips have aria-label and aria-pressed state for keyboard and screen reader users." },
+      { type: "improved", text: "Share modal on mobile: the native OS share sheet ('Share via…') is now the primary full-width action at the top of the modal, surfacing WhatsApp, iMessage, and Discord Stories immediately. Desktop layout unchanged." },
+      { type: "improved", text: "SEO: /feedback page added to the XML sitemap; /faq priority raised to 0.8 to better signal high search-intent content to crawlers." },
+      { type: "improved", text: "Removed 3 confirmed dead exports (parsePikalyticsUrl, evsToSp, spToEv) that had zero call sites across the codebase." },
+    ],
+  },
   {
     date: "May 2026",
     version: "5.18",
@@ -741,6 +759,7 @@ function ChangelogInner() {
 
   const [filter, setFilter] = useState<FilterType>("all");
   const [query, setQuery] = useState("");
+  const tabListRef = useRef<HTMLDivElement>(null);
   // The two most recent releases start expanded so the latest news is
   // visible without a click. Everything else is collapsed by default —
   // a 28-version page would be overwhelming otherwise.
@@ -872,7 +891,7 @@ function ChangelogInner() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <div role="tablist" aria-label="Filter changes by type" className="inline-flex rounded-xl bg-surface border border-border p-1 gap-0.5">
+            <div ref={tabListRef} role="tablist" aria-label="Filter changes by type" className="inline-flex rounded-xl bg-surface border border-border p-1 gap-0.5">
               {(["all", "new", "improved", "fixed"] as FilterType[]).map((f) => {
                 const active = filter === f;
                 return (
@@ -881,7 +900,16 @@ function ChangelogInner() {
                     type="button"
                     role="tab"
                     aria-selected={active}
+                    tabIndex={active ? 0 : -1}
                     onClick={() => setFilter(f)}
+                    onKeyDown={(e) => {
+                      const tabs = [...(tabListRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
+                      const idx = tabs.indexOf(e.currentTarget);
+                      if (e.key === "ArrowRight") { e.preventDefault(); tabs[(idx + 1) % tabs.length]?.focus(); }
+                      if (e.key === "ArrowLeft") { e.preventDefault(); tabs[(idx - 1 + tabs.length) % tabs.length]?.focus(); }
+                      if (e.key === "Home") { e.preventDefault(); tabs[0]?.focus(); }
+                      if (e.key === "End") { e.preventDefault(); tabs[tabs.length - 1]?.focus(); }
+                    }}
                     className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all capitalize cursor-pointer ${
                       active
                         ? "bg-accent text-white shadow-sm shadow-accent/30"
