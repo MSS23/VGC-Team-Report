@@ -248,19 +248,22 @@ export function ChampionsContent() {
             once the tournament concludes.
           </p>
           <div className="overflow-x-auto rounded-xl border border-border">
-            <table className="w-full text-sm border-collapse">
+            <table className="w-full text-sm border-collapse" aria-label="Indianapolis Regionals top cut teams">
+              <caption className="sr-only">
+                Indianapolis Regionals Top Cut — Sample representatives from the Regulation M-A meta. Columns: placement, player, team Pokémon, and Limitless link.
+              </caption>
               <thead>
                 <tr className="bg-surface-alt border-b border-border">
-                  <th className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3 w-16">
+                  <th scope="col" className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3 w-16">
                     Place
                   </th>
-                  <th className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3">
+                  <th scope="col" className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3">
                     Player
                   </th>
-                  <th className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3">
+                  <th scope="col" className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3">
                     Team
                   </th>
-                  <th className="text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3 w-20">
+                  <th scope="col" className="text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3 w-20">
                     Details
                   </th>
                 </tr>
