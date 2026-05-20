@@ -145,6 +145,7 @@ export function NotificationsContent() {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [initialLoaded, setInitialLoaded] = useState(false);
+  const [liveMessage, setLiveMessage] = useState("");
 
   // Seed allNotifications from the hook's initial fetch (eliminates the duplicate fetchInitial call)
   useEffect(() => {
@@ -168,6 +169,7 @@ export function NotificationsContent() {
             return updated ? { ...n, read: updated.read } : n;
           });
         }
+        setLiveMessage(`${newOnes.length} new notification${newOnes.length === 1 ? "" : "s"} arrived.`);
         return [...newOnes, ...prev];
       });
     }
@@ -206,6 +208,7 @@ export function NotificationsContent() {
 
   return (
     <div className="min-h-screen bg-background text-text-primary">
+      <div aria-live="polite" aria-atomic="true" className="sr-only">{liveMessage}</div>
       <main className="max-w-5xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between gap-4">

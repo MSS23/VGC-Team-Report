@@ -288,13 +288,15 @@ export function ExploreFilters({
             key={cat.value}
             type="button"
             onClick={() => onSearchCategoryChange(cat.value)}
+            aria-label={`Filter by ${catLabel[cat.value] ?? cat.label}`}
+            aria-pressed={searchCategory === cat.value}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap ${
               searchCategory === cat.value
                 ? "bg-accent text-white shadow-sm"
                 : "bg-surface-alt/60 text-text-tertiary hover:text-text-secondary hover:bg-surface-alt"
             }`}
           >
-            {cat.icon}
+            <span aria-hidden="true">{cat.icon}</span>
             {catLabel[cat.value] ?? cat.label}
           </button>
         ))}
@@ -508,13 +510,14 @@ export function ExploreFilters({
                   type="button"
                   onClick={handleTournamentToggle}
                   aria-pressed={tournamentMode}
+                  aria-label="Filter by tournament results"
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
                     tournamentMode
                       ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30"
                       : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="6" y="2" width="12" height="10" rx="2" />
                     <path d="M12 12v4" /><path d="M8 20h8" /><path d="M9 16h6" />
                   </svg>
@@ -525,14 +528,14 @@ export function ExploreFilters({
                   type="button"
                   onClick={() => onHasRentalChange(!hasRental)}
                   aria-pressed={hasRental}
+                  aria-label="Filter to teams with rental codes"
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
                     hasRental
                       ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30"
                       : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
                   }`}
-                  title="Only show teams with a rental code"
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="11" width="18" height="11" rx="2" />
                     <path d="M7 11V7a5 5 0 0110 0v4" />
                     <circle cx="12" cy="16" r="1.5" />
@@ -545,13 +548,14 @@ export function ExploreFilters({
                     type="button"
                     onClick={() => onFollowingOnlyChange(!followingOnly)}
                     aria-pressed={followingOnly}
+                    aria-label="Show reports from creators I follow"
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
                       followingOnly
                         ? "bg-accent text-white"
                         : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
                     }`}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><polyline points="16 11 18 13 22 9" />
                     </svg>
                     Following only

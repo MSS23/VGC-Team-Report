@@ -31,7 +31,7 @@ export async function sendEmail(opts: {
     return null;
   }
 
-  const from = process.env.RESEND_FROM_EMAIL || DEFAULT_FROM;
+  const from = (process.env.RESEND_FROM_EMAIL || DEFAULT_FROM).replace(/[\r\n]/g, "");
 
   const res = await fetch(`${RESEND_API}/emails`, {
     method: "POST",

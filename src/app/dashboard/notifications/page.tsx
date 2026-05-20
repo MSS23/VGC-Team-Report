@@ -6,6 +6,7 @@ import { NotificationsContent } from "./NotificationsContent";
 export const metadata: Metadata = {
   title: "Notification Preferences",
   description: "Manage your email notification preferences for VGC Team Report.",
+  robots: { index: false, follow: false },
 };
 
 export default async function NotificationsPage() {

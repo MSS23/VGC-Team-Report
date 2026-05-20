@@ -378,8 +378,33 @@ export function ShareModal({
           )}
         </div>
 
+        {/* Native share — PRIMARY action on mobile (shown first, full-width, above all other options) */}
+        {canNativeShare && (
+          <div className="sm:hidden px-6 pb-4">
+            <button
+              type="button"
+              onClick={handleNativeShare}
+              className="flex items-center justify-center gap-3 w-full px-4 py-3.5 bg-accent text-white rounded-xl font-bold text-sm hover:bg-accent/90 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-accent/25"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              {t.shareModalNativeShare}
+            </button>
+            <p className="text-xs text-text-tertiary text-center mt-2">{t.shareModalNativeShareSubtitle}</p>
+          </div>
+        )}
+
         {/* Social buttons — only shown for short URLs */}
         <div className={`px-6 pb-6 grid grid-cols-1 gap-2 ${!isShortUrl ? "opacity-40 pointer-events-none" : ""}`}>
+          {/* "Or share to:" section label — shown on mobile when native share is available */}
+          {canNativeShare && (
+            <p className="sm:hidden text-xs font-bold text-text-tertiary uppercase tracking-widest mb-1">Or share to:</p>
+          )}
           {/* Twitter/X */}
           <a
             href={twitterUrl}
@@ -491,12 +516,12 @@ export function ShareModal({
             </button>
           )}
 
-          {/* Native share — shown only when the OS supports Web Share API (mobile/desktop with share support) */}
+          {/* Native share — shown in the list on desktop only; on mobile the primary version is shown above */}
           {canNativeShare && (
             <button
               type="button"
               onClick={handleNativeShare}
-              className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group cursor-pointer text-left w-full"
+              className="hidden sm:flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group cursor-pointer text-left w-full"
             >
               <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
