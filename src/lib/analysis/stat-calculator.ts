@@ -74,16 +74,6 @@ export function calculateAllChampionsStats(
   return result as StatSpread;
 }
 
-/**
- * Convert EVs to Stat Points using Champions conversion table.
- * 4 EVs = 1 SP, 12 = 2, 20 = 3, ... 252 = 32.
- * Formula: ceil(EV / 8) for EV > 0, 0 for EV = 0.
- */
-export function evsToSp(ev: number): number {
-  if (ev <= 0) return 0;
-  return Math.ceil(ev / 8);
-}
-
 /** Champions SP budget constants. */
 export const CHAMPIONS_MAX_SP_PER_STAT = 32;
 export const CHAMPIONS_TOTAL_SP = 66;
@@ -163,9 +153,4 @@ export function convertToChampionsSp(evs: StatSpread): StatSpread {
   return sp;
 }
 
-/** Convert SP to EV value. 1 SP = 4 EVs, 2 SP = 12 EVs, ... N SP = 8N - 4 EVs. */
-export function spToEv(sp: number): number {
-  if (sp <= 0) return 0;
-  return sp * 8 - 4;
-}
 
