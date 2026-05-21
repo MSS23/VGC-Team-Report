@@ -27,6 +27,23 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.20",
+    title: "Webhook Reliability, Security & Accessibility Pass",
+    emoji: "🔧",
+    highlight: false,
+    items: [
+      { type: "fixed", text: "Linear webhook handler was reading the HMAC signature from x-linear-signature, but Linear sends it as linear-signature (no x- prefix) — every request was returning 401 and Linear had flagged the webhook for auto-disable. The handler now reads the correct header, falls back to the old one for safety, and supports both LINEAR_WEBHOOK_SIGNING_SECRET (preferred) and LINEAR_WEBHOOK_SECRET (legacy) env var names." },
+      { type: "improved", text: "Security: /api/migrate now uses crypto.timingSafeEqual with a length-check guard when validating the migration secret, matching the pattern already in /api/bot — removes a low-bandwidth timing side-channel on the one unauthenticated mutation endpoint." },
+      { type: "improved", text: "Security: /api/share/[id]/collaborators POST and DELETE now validate the request body through a Zod schema, and /api/user/collaborations POST replaces a manual cast with a Zod schema — bringing both routes in line with the validation pattern used across the rest of the codebase." },
+      { type: "improved", text: "Accessibility: the dashboard's New Collection form inputs (name, description, regulation) now carry aria-label so screen readers announce them by purpose; the Notification bell's Mark all read action has an explicit aria-label; the Share modal's visibility radio group uses aria-labelledby pointing at the visible Visibility heading." },
+      { type: "improved", text: "SEO: /feedback now ships full openGraph + twitter card metadata and the 'Feedback | VGC Team Report' title pattern so Discord/Twitter unfurls show the brand card; every /champions/[pokemon] Mega landing page now references its own dynamic OG image rather than the global fallback." },
+      { type: "improved", text: "Performance: the WarningPopover warning-fix list in the navbar and the visible-stats filter in PokemonCard are now wrapped in useMemo, avoiding redundant filter/map work during high-frequency re-renders like presentation-mode slide navigation." },
+      { type: "improved", text: "TypeScript hygiene: 5 defensive catch blocks in src/lib/db.ts, email.ts and notifications.ts now type the caught error as unknown rather than implicit any, with no behavioural change." },
+      { type: "improved", text: "Removed two unused exports (useScrollHide hook, ReactionBar component) and dropped the unused axios dependency from package.json — all HTTP calls already use native fetch." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.19",
     title: "Performance, Security & Accessibility Hardening",
     emoji: "⚡",
