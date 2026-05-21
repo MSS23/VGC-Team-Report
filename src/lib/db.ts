@@ -9,7 +9,7 @@ export function getDb() {
 export async function ensureTable() {
   const sql = getDb();
   const run = async (query: ReturnType<typeof sql>) => {
-    try { await query; } catch (e) { console.warn("Migration statement skipped:", e); }
+    try { await query; } catch (e: unknown) { console.warn("Migration statement skipped:", e); }
   };
 
   await run(sql`
