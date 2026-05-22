@@ -27,6 +27,25 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.20",
+    title: "Webhook Recovery, Rental Codes & A11y Polish",
+    emoji: "🔧",
+    highlight: false,
+    items: [
+      { type: "fixed", text: "Critical: Linear webhook handler at /api/webhooks/linear was reading the wrong signature header (x-linear-signature) and rejecting every legitimate delivery with 401. Linear had warned the webhook would be auto-disabled; now correctly reads the linear-signature header, handles empty setup-time pings, and acknowledges unknown event types with 200 instead of throwing a 500." },
+      { type: "new", text: "Share modal now surfaces the rental code in a prominent amber-accented card above the social-share row when a report has one — players can grab the team in Play! Pokemon alongside the paste. A new share_rental_code_copied event fires on copy for measuring adoption." },
+      { type: "fixed", text: "Weekly digest stats query (Monday email) had a cross-product bug: LEFT JOIN comments x reactions inflated total_views and total_shares by N*M per share. A user with 100 views, 3 comments and 4 reactions saw 1200 views reported. Replaced with scalar subqueries so Monday's numbers will be accurate." },
+      { type: "fixed", text: "Save toggle on shared views was duplicated (Navbar overflow menu + inline) — both fetched /api/user/saved on mount, doubling requests per visit and racing on optimistic state. Kept the Navbar version as the single source of truth, added an AbortController + touched-ref guard so the late initial-fetch cannot overwrite a user toggle." },
+      { type: "fixed", text: "Privacy: collaborator edit URLs (?key=…) are now noindex/nofollow even on public shares — previously the edit token could leak into Google's SERP snippet cache if a creator pasted a collab URL anywhere indexable." },
+      { type: "improved", text: "Accessibility: Mega toggle, damage-calc link, replace, and MVP star buttons on the Pokemon card and detail slide bumped from 28-32 px to the WCAG 2.5.5 minimum of 44 x 44 px while keeping the visible icon sizes unchanged." },
+      { type: "improved", text: "Accessibility: damage-calc category toggles (Offensive / Defensive / Speed) now expose aria-label and aria-pressed for screen-reader and dictation users on mobile, where the visual label is hidden. Explore search and sort controls gained aria-label per WCAG 1.3.1 / 3.3.2." },
+      { type: "improved", text: "Security hardening: Linear cron routes (daily-ops, weekly-report) now bind the GraphQL teamId via $teamId variables instead of template-string interpolation — defence-in-depth against future hand-offs through user-controllable data." },
+      { type: "improved", text: "Type soundness: removed the last Record<string, any> + eslint-disable in the migrate route; added explicit return types to getDb, ensureTable, the haptic helpers, postToBuildsChannel, useVersionDiff, and useGlobalDisplayPrefs; widened useAutoDraft's analysis param to the proper TeamAnalysis type." },
+      { type: "improved", text: "Cleanup: removed three confirmed-dead exports (useScrollHide hook, ReactionBar component, PdfExportButton) for a net 311-line reduction; the legitimate export flow (PrintableReport) is unchanged. Stale Pikalytics import references were removed across multi-import.ts, PasteInput.tsx and TeamOverview.tsx since the parser was deleted last week." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.19",
     title: "Performance, Security & Accessibility Hardening",
     emoji: "⚡",
