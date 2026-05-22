@@ -1582,6 +1582,7 @@ function HomeContent() {
           publicUrl={lastShareResult.publicUrl}
           teamSpecies={teamSpecies}
           showdownPaste={analysis ? teamToShowdown(analysis.pokemon.map((p) => p.parsed)) : undefined}
+          rentalCode={rentalCode}
           teamName={teamName}
           tournamentName={tournamentName}
           creatorName={creatorName}
