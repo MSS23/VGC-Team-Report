@@ -46,8 +46,7 @@ export async function POST(request: Request) {
       for (const row of rows) {
         stats.total++;
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = row.data as Record<string, any>;
+          const data = row.data as Record<string, unknown>;
           const normalized = normalizeReportData(data);
           const changed = JSON.stringify(data) !== JSON.stringify(normalized);
 
