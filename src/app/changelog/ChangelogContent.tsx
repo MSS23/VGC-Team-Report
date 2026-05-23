@@ -27,6 +27,28 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.20",
+    title: "Webhook fix, ~300 KB per-page perf win, XSS + auth hardening",
+    emoji: "🚀",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Critical: Linear webhook handler now reads the correct linear-signature header (was x-linear-signature, which rejected every Linear delivery with 401) and accepts both LINEAR_WEBHOOK_SIGNING_SECRET and the legacy LINEAR_WEBHOOK_SECRET env-var names. Linear was about to auto-disable the integration." },
+      { type: "improved", text: "Performance: @pkmn/dex no longer ships in the client bundle. A pre-extracted ~47 KB gzipped JSON subset replaces the full dex for the two client-reachable importers (InlinePokemonEditor, pkmn-dex-fallback). Home page drops from 701.7 KB → 402.3 KB gzipped; /compare drops from 499.3 KB → 199.8 KB gzipped — about ~300 KB saved on every page load." },
+      { type: "fixed", text: "Security: welcome and comment-notification email templates now HTML-escape all user-controlled strings (firstName, commenterName, reportTitle, commentBody) before embedding — closes the same XSS class as the prior weekly-digest fix. Email subjects also strip CRLF as defence in depth." },
+      { type: "fixed", text: "Security: POST /api/user/saved now verifies the share exists and is either public or owned by the authenticated user before adding it to the saved list — closes an information-disclosure bug where probing share ids could leak private share titles via the GET list." },
+      { type: "improved", text: "Security: /api/migrate, /api/cleanup, /api/setup, and /api/bot now share a single verifyBearer() helper using crypto.timingSafeEqual. /api/migrate no longer accepts the secret in the JSON request body — only the standard Authorization: Bearer header." },
+      { type: "fixed", text: "Removed the write-only shares.species[] column and its GIN index. Five fire-and-forget SQL calls in /api/share are now awaited inside try/catch so changelog inserts and draft cleanup actually complete before the Vercel lambda freezes." },
+      { type: "improved", text: "Accessibility: shared report pages without teamName/tournamentName render a visually-hidden h1 derived from the species line; the mobile slide-progress slider now responds to Arrow/Home/End keys; ReportCard like/save buttons bumped to min-h-[32px] tap targets." },
+      { type: "improved", text: "Accessibility: NotificationBell dropdown closes on Escape and restores focus to the trigger; added a sitewide :focus-visible outline so keyboard users always see where focus is." },
+      { type: "improved", text: "PWA install prompt now reveals on short, non-scrolling pages for Android/Chrome users — the pageIsShort rescue previously only ran on the iOS path, so desktop Chrome users on the home page never saw the install bottom-sheet." },
+      { type: "improved", text: "SEO: added BreadcrumbList JSON-LD to Explore, Champions, Tournaments, and Changelog — enables Google breadcrumb display in SERPs and improves crawl-graph signals." },
+      { type: "improved", text: "AEO: llms.txt and llms-full.txt now carry Updated: dates and a Source: URL; /faq emits FAQPage JSON-LD using the existing Q&A list. Perplexity weights recency at ~82% for citation eligibility." },
+      { type: "improved", text: "Performance: html2canvas-pro now ships in a single chunk instead of two — OTSSheetModal, TeamCardExport, and export-report all route through a shared getHtml2Canvas() helper, saving ~60 KB gzipped for users who trigger any export flow." },
+      { type: "improved", text: "Removed 2 confirmed orphaned files (Badge, useScrollHide) and dropped the export keyword from 5 internal-only helpers flagged by the C1 dead-code audit." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.19",
     title: "Performance, Security & Accessibility Hardening",
     emoji: "⚡",
