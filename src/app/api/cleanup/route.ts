@@ -1,8 +1,8 @@
+import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-const CLEANUP_SECRET = process.env.CLEANUP_SECRET;
 const DEFAULT_TTL_DAYS = 90;
 const TRASH_TTL_DAYS = 30;
 const MAX_DELETE_PER_RUN = 500;
@@ -96,8 +96,7 @@ export async function GET(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   // Verify authorization
-  const authHeader = request.headers.get("authorization");
-  if (!CLEANUP_SECRET || authHeader !== `Bearer ${CLEANUP_SECRET}`) {
+  if (!verifyBearer(request, "CLEANUP_SECRET")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
