@@ -140,8 +140,12 @@ export default async function SharePage({
     ? `?s=${encodeURIComponent(id)}&key=${encodeURIComponent(key)}`
     : `?s=${encodeURIComponent(id)}`;
 
-  // Build JSON-LD from DB (best-effort)
+  // Build JSON-LD from DB (best-effort). We also derive a heading string
+  // here that gets handed to the redirect client so its visually-hidden
+  // <h1> can carry meaningful context for screen readers and crawlers,
+  // instead of always falling back to the generic site name.
   let jsonLd: Record<string, unknown> | null = null;
+  let heading = "VGC Team Report";
   try {
     const sql = getDb();
     const [shareRows, jsonLdCollabRows] = await Promise.all([
@@ -154,6 +158,14 @@ export default async function SharePage({
       const ldCreatorName = (data.creatorName as string) || undefined;
       const tournamentName = (data.tournamentName as string) || undefined;
       const ldCollabNames = jsonLdCollabRows.map((r) => r.user_name as string);
+
+      // Heading priority matches the spec: teamName → tournamentName →
+      // species line → site name. teamName isn't currently a top-level
+      // field on every share's data blob, but we read it defensively in
+      // case future shares (or older imports) carry it.
+      const teamName = (data.teamName as string) || "";
+      const speciesLine = species.length > 0 ? species.join(" / ") : "";
+      heading = teamName || tournamentName || speciesLine || "VGC Team Report";
 
       const primaryAuthor = ldCreatorName
         ? { "@type": "Person", name: ldCreatorName }
@@ -194,7 +206,7 @@ export default async function SharePage({
       {jsonLd && (
         <JsonLd data={jsonLd} />
       )}
-      <ShareRedirectClient to={`/${qs}`} />
+      <ShareRedirectClient to={`/${qs}`} heading={heading} />
     </>
   );
 }

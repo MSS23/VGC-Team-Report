@@ -168,6 +168,52 @@ export function SlideNavControls({
     [resolveSlideFromX, currentSlide, onGoTo],
   );
 
+  // The mobile progress bar exposes role="slider" + tabIndex={0} for a11y,
+  // but until now it had no keyboard handlers — so focusing it via a
+  // keyboard-only flow gave you no way to actually navigate. ARIA's
+  // slider pattern expects Left/Right (and Up/Down) to step and Home/End
+  // to jump to the extremes, so we wire exactly those keys and
+  // preventDefault on hits so they don't also scroll the page.
+  const handleBarKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      switch (e.key) {
+        case "ArrowLeft":
+        case "ArrowDown":
+          if (!isFirst) {
+            e.preventDefault();
+            hapticLight();
+            onPrev();
+          }
+          break;
+        case "ArrowRight":
+        case "ArrowUp":
+          if (!isLast) {
+            e.preventDefault();
+            hapticLight();
+            onNext();
+          }
+          break;
+        case "Home":
+          if (currentSlide !== 0) {
+            e.preventDefault();
+            hapticLight();
+            onGoTo(0);
+          }
+          break;
+        case "End": {
+          const last = totalSlides - 1;
+          if (currentSlide !== last && last >= 0) {
+            e.preventDefault();
+            hapticLight();
+            onGoTo(last);
+          }
+          break;
+        }
+      }
+    },
+    [isFirst, isLast, currentSlide, totalSlides, onPrev, onNext, onGoTo],
+  );
+
   // Progress fraction for the bar
   const progress = totalSlides <= 1 ? 1 : currentSlide / (totalSlides - 1);
 
@@ -224,6 +270,7 @@ export function SlideNavControls({
               onTouchMove={handleBarTouchMove}
               onTouchEnd={handleBarTouchEnd}
               onClick={handleBarClick}
+              onKeyDown={handleBarKeyDown}
               role="slider"
               aria-label="Slide progress"
               aria-valuemin={1}
