@@ -68,6 +68,24 @@ export async function POST(request: Request) {
     }
 
     const sql = getDb();
+
+    // Verify the share exists and is accessible to this user before saving.
+    // Without this, a caller could save arbitrary share ids and then leak
+    // title/preview of private shares via GET /api/user/saved (which JOINs
+    // the shares table). Return 404 — not 403 — so we don't confirm the
+    // existence of private shares to an unauthorised caller.
+    const accessible = await sql`
+      SELECT 1
+      FROM shares
+      WHERE id = ${parsed.data.shareId}
+        AND deleted_at IS NULL
+        AND (is_public = true OR owner_id = ${userId})
+      LIMIT 1
+    `;
+    if (accessible.length === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     await sql`
       INSERT INTO saved_reports (user_id, share_id)
       VALUES (${userId}, ${parsed.data.shareId})
