@@ -140,54 +140,81 @@ export function SportsEventJsonLd({ events }: { events: SportsEventData[] }) {
   return <JsonLd data={schemaData as Record<string, unknown>} />;
 }
 
-export function FAQPageJsonLd() {
+export interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
+/**
+ * BreadcrumbList JSON-LD for SERP breadcrumb display.
+ * Pass items in order from root → current page (e.g. [Home, Explore]).
+ */
+export function BreadcrumbListJsonLd({ items }: { items: BreadcrumbItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: items.map((item, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: item.name,
+          item: item.url,
+        })),
+      }}
+    />
+  );
+}
+
+export interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+const DEFAULT_FAQ_ITEMS: FAQItem[] = [
+  {
+    question: "What is a VGC team report?",
+    answer:
+      "A VGC team report is a detailed breakdown of a competitive Pokemon Video Game Championship (VGC) team. It includes each Pokemon's build (moves, item, EVs, nature), the team's overall strategy, matchup plans against common threats, damage calculations, and speed tier comparisons. Coaches and players share these reports to document and analyze their tournament teams.",
+  },
+  {
+    question: "How do I share a VGC team report?",
+    answer:
+      "After building your team report on VGC Team Report, click the Share button in the top navigation bar. You can create a permanent public link that anyone can view, or keep it private and share a direct edit link with collaborators. Public reports are also listed on the Explore page for the community to discover.",
+  },
+  {
+    question: "What is Pokemon Champions Regulation M-A?",
+    answer:
+      "Pokemon Champions Regulation M-A (Reg M-A) is a competitive VGC format that re-introduces Mega Evolutions alongside modern Pokemon. Teams can include two restricted legendaries and Mega Pokemon, creating a unique format distinct from the standard Scarlet & Violet regulation sets. VGC Team Report fully supports building and sharing team reports in this format.",
+  },
+  {
+    question: "How do I import a PokePaste into VGC Team Report?",
+    answer:
+      "On the VGC Team Report homepage, paste your team's Showdown-format text (or a pokepast.es URL) into the import box and click Analyze. The tool will automatically parse your team's Pokemon, moves, items, EVs, IVs, and natures. You can also import directly from a PokePaste link by pasting the URL into the input field.",
+  },
+  {
+    question: "Is VGC Team Report free to use?",
+    answer:
+      "Yes, VGC Team Report is completely free to use. You can build, analyze, and share team reports without an account. Creating a free account unlocks additional features like saving reports permanently, real-time collaboration with teammates, version history, and publishing your report to the community Explore page.",
+  },
+];
+
+export function FAQPageJsonLd({ items }: { items?: FAQItem[] } = {}) {
+  const entries = items ?? DEFAULT_FAQ_ITEMS;
   return (
     <JsonLd
       data={{
         "@context": "https://schema.org",
         "@type": "FAQPage",
-        mainEntity: [
-          {
-            "@type": "Question",
-            name: "What is a VGC team report?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "A VGC team report is a detailed breakdown of a competitive Pokemon Video Game Championship (VGC) team. It includes each Pokemon's build (moves, item, EVs, nature), the team's overall strategy, matchup plans against common threats, damage calculations, and speed tier comparisons. Coaches and players share these reports to document and analyze their tournament teams.",
-            },
+        mainEntity: entries.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
           },
-          {
-            "@type": "Question",
-            name: "How do I share a VGC team report?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "After building your team report on VGC Team Report, click the Share button in the top navigation bar. You can create a permanent public link that anyone can view, or keep it private and share a direct edit link with collaborators. Public reports are also listed on the Explore page for the community to discover.",
-            },
-          },
-          {
-            "@type": "Question",
-            name: "What is Pokemon Champions Regulation M-A?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "Pokemon Champions Regulation M-A (Reg M-A) is a competitive VGC format that re-introduces Mega Evolutions alongside modern Pokemon. Teams can include two restricted legendaries and Mega Pokemon, creating a unique format distinct from the standard Scarlet & Violet regulation sets. VGC Team Report fully supports building and sharing team reports in this format.",
-            },
-          },
-          {
-            "@type": "Question",
-            name: "How do I import a PokePaste into VGC Team Report?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "On the VGC Team Report homepage, paste your team's Showdown-format text (or a pokepast.es URL) into the import box and click Analyze. The tool will automatically parse your team's Pokemon, moves, items, EVs, IVs, and natures. You can also import directly from a PokePaste link by pasting the URL into the input field.",
-            },
-          },
-          {
-            "@type": "Question",
-            name: "Is VGC Team Report free to use?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "Yes, VGC Team Report is completely free to use. You can build, analyze, and share team reports without an account. Creating a free account unlocks additional features like saving reports permanently, real-time collaboration with teammates, version history, and publishing your report to the community Explore page.",
-            },
-          },
-        ],
+        })),
       }}
     />
   );
