@@ -203,18 +203,20 @@ export function ShareModal({
 
   const speciesText = teamSpecies.join(" / ");
 
-  // Build share text variants (only useful with short URLs)
-  const twitterText = tournamentName
-    ? `Check out my ${tournamentName}${placement ? ` (${placement})` : ""} VGC team report: ${speciesText}\n\n${publicUrl}\n\n#PokemonChampions #VGC2026\nMade with @VGCTeamReport`
-    : `Check out my VGC team report: ${speciesText}\n\n${publicUrl}\n\n#PokemonChampions #VGC2026\nMade with @VGCTeamReport`;
+  const achievementHeadline = (() => {
+    if (placement && tournamentName) return `${placement} at ${tournamentName} with ${speciesText}`;
+    if (tournamentName) return `${tournamentName}: ${speciesText}`;
+    if (placement) return `${placement} — ${speciesText}`;
+    return speciesText;
+  })();
+
+  const twitterText = `${achievementHeadline}\n\n${publicUrl}\n\n#PokemonChampions #VGC2026\nMade with @VGCTeamReport`;
 
   const redditTitle = tournamentName
     ? `[Team Report] ${tournamentName}${placement ? ` - ${placement}` : ""}: ${speciesText}`
     : `[Team Report] ${speciesText}`;
 
-  const discordText = tournamentName
-    ? `**${tournamentName}**${placement ? ` (${placement})` : ""}${creatorName ? ` by ${creatorName}` : ""}\n${speciesText}\n${publicUrl}`
-    : `**VGC Team Report**${creatorName ? ` by ${creatorName}` : ""}\n${speciesText}\n${publicUrl}`;
+  const discordText = `**${achievementHeadline}**${creatorName ? `\nby ${creatorName}` : ""}\n${publicUrl}`;
 
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}`;
   const redditUrl = `https://www.reddit.com/r/VGC/submit?type=link&title=${encodeURIComponent(redditTitle)}&url=${encodeURIComponent(publicUrl)}`;
