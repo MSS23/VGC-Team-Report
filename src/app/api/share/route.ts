@@ -267,7 +267,7 @@ export async function POST(request: Request) {
     // This prevents duplicate public reports when a user navigates away from
     // /s/{id} (clearing the client-side session refs) and clicks Share again.
     const existingDup = await sql`
-      SELECT id, edit_token, COALESCE(version, 1) AS version, is_public
+      SELECT id, edit_token, COALESCE(version, 1) AS version, is_public, is_unlisted
       FROM shares
       WHERE owner_id = ${ownerId}
         AND deleted_at IS NULL
@@ -281,7 +281,9 @@ export async function POST(request: Request) {
       // Update the existing share instead of creating a duplicate
       const dup = existingDup[0];
       const effectiveIsPublic = isPublic ?? !!dup.is_public;
-      const effectiveIsUnlistedDup = isUnlisted ?? false;
+      // Preserve existing unlisted state when the client doesn't explicitly
+      // pass isUnlisted — otherwise a re-share silently flips unlisted → private.
+      const effectiveIsUnlistedDup = isUnlisted ?? !!dup.is_unlisted;
       await sql`
         UPDATE shares
         SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(),
