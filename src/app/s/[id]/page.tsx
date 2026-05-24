@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { ShareRedirectClient } from "./redirect";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { ArticleJsonLd, SportsTeamJsonLd } from "@/components/seo/JsonLd";
 
 export async function generateMetadata({
   params,
@@ -141,7 +141,16 @@ export default async function SharePage({
     : `?s=${encodeURIComponent(id)}`;
 
   // Build JSON-LD from DB (best-effort)
-  let jsonLd: Record<string, unknown> | null = null;
+  let articleLd: {
+    headline: string;
+    description: string;
+    url: string;
+    datePublished: string;
+    dateModified: string;
+    authorName?: string;
+  } | null = null;
+  let sportsTeamLd: { teamName: string; species: string[]; url: string } | null = null;
+
   try {
     const sql = getDb();
     const [shareRows, jsonLdCollabRows] = await Promise.all([
@@ -153,37 +162,40 @@ export default async function SharePage({
       const species = extractSpecies((data.paste as string) ?? "");
       const ldCreatorName = (data.creatorName as string) || undefined;
       const tournamentName = (data.tournamentName as string) || undefined;
-      const ldCollabNames = jsonLdCollabRows.map((r) => r.user_name as string);
+      const placement = (data.placement as string) || undefined;
+      const teamSummary = (data.teamSummary as string) || undefined;
+      const pageUrl = `https://pokemonvgcteamreport.com/s/${id}`;
 
-      const primaryAuthor = ldCreatorName
-        ? { "@type": "Person", name: ldCreatorName }
-        : null;
-      const contributors = ldCollabNames.map((name) => ({ "@type": "Person", name }));
-
-      jsonLd = {
-        "@context": "https://schema.org",
-        "@type": "CreativeWork",
-        name: tournamentName
-          ? `${tournamentName} - VGC Team Report`
+      const headline = tournamentName && placement
+        ? `${tournamentName} — ${placement} VGC Team`
+        : tournamentName
+          ? `${tournamentName} VGC Team Report`
           : species.length > 0
-            ? `${species.join(" / ")} - VGC Team Report`
-            : "VGC Team Report",
-        url: `https://pokemonvgcteamreport.com/s/${id}`,
-        description:
-          (data.teamSummary as string) ||
-          `VGC team: ${species.join(", ")}`,
+            ? `${species.join(" / ")} — VGC Team Report`
+            : "VGC Team Report";
+
+      const description = teamSummary ||
+        (species.length > 0
+          ? `VGC team: ${species.join(", ")}`
+          : "VGC team report");
+
+      articleLd = {
+        headline: headline.slice(0, 110),
+        description,
+        url: pageUrl,
         datePublished: (shareRows[0].created_at as Date).toISOString(),
         dateModified: (shareRows[0].updated_at as Date).toISOString(),
-        ...(primaryAuthor && { author: primaryAuthor }),
-        ...(contributors.length > 0 && {
-          contributor: contributors.length === 1 ? contributors[0] : contributors,
-        }),
-        isPartOf: {
-          "@type": "WebApplication",
-          name: "VGC Team Report",
-          url: "https://pokemonvgcteamreport.com",
-        },
+        authorName: ldCreatorName,
       };
+
+      if (species.length > 0) {
+        const teamName = tournamentName
+          ? `${tournamentName} VGC Team`
+          : ldCreatorName
+            ? `${ldCreatorName}'s VGC Team`
+            : "VGC Team";
+        sportsTeamLd = { teamName, species, url: pageUrl };
+      }
     }
   } catch {
     // Non-critical — skip JSON-LD
@@ -191,9 +203,8 @@ export default async function SharePage({
 
   return (
     <>
-      {jsonLd && (
-        <JsonLd data={jsonLd} />
-      )}
+      {articleLd && <ArticleJsonLd {...articleLd} />}
+      {sportsTeamLd && <SportsTeamJsonLd {...sportsTeamLd} />}
       <ShareRedirectClient to={`/${qs}`} />
     </>
   );
