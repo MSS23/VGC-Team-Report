@@ -24,6 +24,7 @@ export async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
+  headers?: Record<string, string>;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -33,18 +34,23 @@ export async function sendEmail(opts: {
 
   const from = (process.env.RESEND_FROM_EMAIL || DEFAULT_FROM).replace(/[\r\n]/g, "");
 
+  const body: Record<string, unknown> = {
+    from,
+    to: opts.to,
+    subject: opts.subject,
+    html: opts.html,
+  };
+  if (opts.headers && Object.keys(opts.headers).length > 0) {
+    body.headers = opts.headers;
+  }
+
   const res = await fetch(`${RESEND_API}/emails`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      from,
-      to: opts.to,
-      subject: opts.subject,
-      html: opts.html,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {

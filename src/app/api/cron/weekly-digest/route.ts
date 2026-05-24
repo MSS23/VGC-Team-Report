@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 
 const APP_URL = "https://pokemonvgcteamreport.com";
 const MAX_USERS = 500;
+const UNSUBSCRIBE_URL = `${APP_URL}/dashboard/notifications`;
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -282,7 +283,7 @@ export async function GET(request: Request) {
   }
 
   // 4. Collect email jobs first, then send in parallel batches
-  type EmailJob = { to: string; subject: string; html: string };
+  type EmailJob = { to: string; subject: string; html: string; headers?: Record<string, string> };
   const emailJobs: EmailJob[] = [];
 
   for (const userId of userIds) {
@@ -342,7 +343,15 @@ export async function GET(request: Request) {
         subject = `Your reports this week, ${firstName || "there"}!`;
       }
 
-      emailJobs.push({ to: email, subject, html });
+      emailJobs.push({
+        to: email,
+        subject,
+        html,
+        headers: {
+          "List-Unsubscribe": `<${UNSUBSCRIBE_URL}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
+      });
     } catch (e) {
       console.error(`[weekly-digest] Error preparing email for ${userId}:`, e);
       errors++;
