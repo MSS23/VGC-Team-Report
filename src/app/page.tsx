@@ -1612,6 +1612,8 @@ function HomeContent() {
           shareUrl={activeShareId ? `${typeof window !== "undefined" ? window.location.origin : "https://pokemonvgcteamreport.com"}/s/${activeShareId}` : undefined}
           tournamentName={tournamentName}
           teamName={teamName}
+          regulation={tags?.regulation}
+          eventType={tags?.eventType}
           onClose={() => setShowOTSSheet(false)}
         />
       )}
