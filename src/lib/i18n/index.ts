@@ -71,9 +71,23 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = code;
   }, []);
 
+  // Fall back to English when a localised value is missing or an empty-string
+  // stub. The non-English translation files ship stubs like `shareModalTitle: ""`
+  // and would otherwise render blank UI for fr/es/it/ja/ko/zh users.
+  const tWithFallback = React.useMemo(() => {
+    if (translations === en) return en;
+    return new Proxy(translations as Record<string, string>, {
+      get(target, prop: string) {
+        const v = target[prop];
+        if (typeof v === "string" && v.length > 0) return v;
+        return (en as unknown as Record<string, string>)[prop];
+      },
+    }) as TranslationKeys;
+  }, [translations]);
+
   const value = React.useMemo(
-    () => ({ language, setLanguage, t: translations }),
-    [language, setLanguage, translations]
+    () => ({ language, setLanguage, t: tWithFallback }),
+    [language, setLanguage, tWithFallback]
   );
 
   return React.createElement(I18nContext.Provider, { value }, children);
