@@ -423,34 +423,24 @@ export function ExploreFilters({
           >
             <div className="pt-3 pb-1 space-y-3">
 
-              {/* Pokemon include/exclude inputs */}
+              {/* Pokemon include/exclude chip pickers */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <div>
-                  <label htmlFor="filter-species" className={`text-[11px] font-bold uppercase tracking-wide mb-1 block ${species ? "text-accent" : "text-text-tertiary"}`}>
-                    Include Pokemon
-                  </label>
-                  <input
-                    id="filter-species"
-                    type="text"
-                    value={species}
-                    onChange={(e) => onSpeciesChange(e.target.value)}
-                    placeholder="e.g. Flutter Mane, Incineroar"
-                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="filter-exclude" className={`text-[11px] font-bold uppercase tracking-wide mb-1 block ${excludeSpecies ? "text-red-400" : "text-text-tertiary"}`}>
-                    Exclude Pokemon
-                  </label>
-                  <input
-                    id="filter-exclude"
-                    type="text"
-                    value={excludeSpecies}
-                    onChange={(e) => onExcludeSpeciesChange(e.target.value)}
-                    placeholder="e.g. Urshifu, Calyrex"
-                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-red-400/40 focus:border-red-400 transition-all"
-                  />
-                </div>
+                <SpeciesChipPicker
+                  id="filter-species"
+                  label="Include Pokemon"
+                  value={species}
+                  onChange={onSpeciesChange}
+                  placeholder="e.g. Flutter Mane, Incineroar"
+                  variant="include"
+                />
+                <SpeciesChipPicker
+                  id="filter-exclude"
+                  label="Exclude Pokemon"
+                  value={excludeSpecies}
+                  onChange={onExcludeSpeciesChange}
+                  placeholder="e.g. Urshifu, Calyrex"
+                  variant="exclude"
+                />
               </div>
 
               {/* Event type dropdown */}
@@ -566,6 +556,168 @@ export function ExploreFilters({
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* SpeciesChipPicker                                                          */
+/* -------------------------------------------------------------------------- */
+/* Chip-based input that stores its value as a comma-separated string so it   */
+/* drops into the existing onSpeciesChange / onExcludeSpeciesChange API       */
+/* without touching ExploreContent.tsx or the /api/explore route.             */
+
+const MAX_CHIPS = 10;
+
+interface SpeciesChipPickerProps {
+  id: string;
+  label: string;
+  value: string; // comma-separated
+  onChange: (next: string) => void;
+  placeholder: string;
+  variant: "include" | "exclude";
+}
+
+function parseChips(value: string): string[] {
+  return value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function serializeChips(chips: string[]): string {
+  return chips.join(",");
+}
+
+function SpeciesChipPicker({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+  variant,
+}: SpeciesChipPickerProps) {
+  const [draft, setDraft] = useState("");
+  const chips = parseChips(value);
+  const atMax = chips.length >= MAX_CHIPS;
+
+  const accentText = variant === "include" ? "text-accent" : "text-red-400";
+  const chipClass =
+    variant === "include"
+      ? "bg-accent/10 text-accent ring-1 ring-accent/20"
+      : "bg-red-500/10 text-red-500 ring-1 ring-red-500/20";
+  const focusRing =
+    variant === "include"
+      ? "focus-within:ring-accent/40 focus-within:border-accent"
+      : "focus-within:ring-red-400/40 focus-within:border-red-400";
+
+  const commitTokens = (raw: string) => {
+    const incoming = parseChips(raw);
+    if (incoming.length === 0) return;
+    const existing = new Set(chips.map((c) => c.toLowerCase()));
+    const merged = [...chips];
+    for (const tok of incoming) {
+      if (merged.length >= MAX_CHIPS) break;
+      const key = tok.toLowerCase();
+      if (!existing.has(key)) {
+        merged.push(tok);
+        existing.add(key);
+      }
+    }
+    onChange(serializeChips(merged));
+    setDraft("");
+  };
+
+  const removeChip = (name: string) => {
+    const next = chips.filter((c) => c !== name);
+    onChange(serializeChips(next));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const trimmed = draft.trim();
+      if (trimmed) commitTokens(trimmed);
+    } else if (e.key === "Backspace" && draft === "" && chips.length > 0) {
+      e.preventDefault();
+      const next = chips.slice(0, -1);
+      onChange(serializeChips(next));
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData("text");
+    if (text.includes(",")) {
+      e.preventDefault();
+      commitTokens(text);
+    }
+  };
+
+  const handleBlur = () => {
+    const trimmed = draft.trim();
+    if (trimmed) commitTokens(trimmed);
+  };
+
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className={`text-[11px] font-bold uppercase tracking-wide mb-1 block ${
+          value ? accentText : "text-text-tertiary"
+        }`}
+      >
+        {label}
+      </label>
+      <div
+        className={`flex flex-wrap items-center gap-1 w-full px-2 py-1.5 bg-surface border border-border rounded-lg transition-all focus-within:outline-none focus-within:ring-2 ${focusRing}`}
+      >
+        {chips.map((chip) => (
+          <button
+            key={chip}
+            type="button"
+            onClick={() => removeChip(chip)}
+            aria-label={`Remove ${chip}`}
+            className={`inline-flex items-center gap-1 min-h-[24px] px-2 py-0.5 text-[11px] font-bold rounded-md transition-all active:scale-[0.95] cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-surface ${
+              variant === "include" ? "focus:ring-accent/50" : "focus:ring-red-400/50"
+            } ${chipClass}`}
+          >
+            <span>{chip}</span>
+            <svg
+              width="8"
+              height="8"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        ))}
+        <input
+          id={id}
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          onBlur={handleBlur}
+          disabled={atMax}
+          placeholder={
+            atMax
+              ? `Max ${MAX_CHIPS} reached`
+              : chips.length === 0
+              ? placeholder
+              : "Add another..."
+          }
+          aria-label={label}
+          className="flex-1 min-w-[120px] bg-transparent border-0 px-1.5 py-1 text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none disabled:opacity-50"
+        />
+      </div>
     </div>
   );
 }
