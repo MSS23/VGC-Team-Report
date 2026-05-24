@@ -1,23 +1,19 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 
-/**
- * POST /api/webhooks/linear
- *
- * Receives Linear webhook events. Currently only handles URL verification
- * for the webhook registration. Issue implementation is done manually
- * via Claude Code CLI in the terminal.
- */
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     const rawBody = await request.text();
 
-    // Verify Linear webhook signature using LINEAR_WEBHOOK_SECRET
-    const webhookSecret = process.env.LINEAR_WEBHOOK_SECRET;
+    const webhookSecret =
+      process.env.LINEAR_WEBHOOK_SIGNING_SECRET ||
+      process.env.LINEAR_WEBHOOK_SECRET;
     if (!webhookSecret) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const signature = request.headers.get("x-linear-signature");
+    const signature = request.headers.get("linear-signature");
     if (!signature) {
       return NextResponse.json({ error: "Missing signature" }, { status: 401 });
     }
@@ -33,16 +29,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    const body = JSON.parse(rawBody);
+    let body: { type?: string; challenge?: string } = {};
+    if (rawBody) {
+      try {
+        body = JSON.parse(rawBody);
+      } catch {
+        return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+      }
+    }
 
-    // Linear sends a verification request on webhook creation
-    if (body.type === "url_verification") {
+    if (body.type === "url_verification" && body.challenge) {
       return NextResponse.json({ challenge: body.challenge });
     }
 
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("Linear webhook error:", e);
-    return NextResponse.json({ error: "Webhook failed" }, { status: 500 });
+    return NextResponse.json({ ok: true, handled: false });
   }
 }
