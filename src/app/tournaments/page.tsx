@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { TournamentsContent } from "./TournamentsContent";
-import { SportsEventJsonLd } from "@/components/seo/JsonLd";
+import { BreadcrumbJsonLd, SportsEventJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "VGC Tournament Results Archive | Team Reports 2026",
@@ -55,6 +55,12 @@ const UPCOMING_TOURNAMENTS = [
 export default function TournamentsPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "https://pokemonvgcteamreport.com" },
+          { name: "Tournaments", url: "https://pokemonvgcteamreport.com/tournaments" },
+        ]}
+      />
       <SportsEventJsonLd events={UPCOMING_TOURNAMENTS} />
       <TournamentsContent />
     </>

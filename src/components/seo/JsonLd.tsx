@@ -140,6 +140,35 @@ export function SportsEventJsonLd({ events }: { events: SportsEventData[] }) {
   return <JsonLd data={schemaData as Record<string, unknown>} />;
 }
 
+export interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
+/**
+ * Emits a schema.org BreadcrumbList JSON-LD script.
+ * Pass items in order from root to current page, e.g.:
+ *   [{ name: "Home", url: "https://pokemonvgcteamreport.com" },
+ *    { name: "Explore", url: "https://pokemonvgcteamreport.com/explore" }]
+ */
+export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: items.map((item, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: item.name,
+          item: item.url,
+        })),
+      }}
+    />
+  );
+}
+
 export function FAQPageJsonLd() {
   return (
     <JsonLd
