@@ -1,19 +1,22 @@
-# Swarm Run Meta — 2026-05-20
+# Nightly Swarm Run Meta
 
-- Date: 2026-05-20 (UK)
-- Run started: 2026-05-20T00:09:29Z
-- Branch: claude/wizardly-hopper-YFtj1
-- Status: RUNNING
+- Date: 24 May 2026
+- Branch: swarm-nightly-2026-05-24
+- Branch newly cut from main (no existing branch for today)
+- Run started: in progress
+
+## PR
+TBD
 
 ## Notes
-- Using assigned development branch: claude/wizardly-hopper-YFtj1 (serves as nightly branch)
-- Branch is in sync with origin/main (0 ahead, 0 behind at run start)
-- Working directory: /home/user/VGC-Team-Report
 
-## Skipped Tickets
-- VGC-181: Indianapolis Regionals top-cut — event is May 29-31, 2026, FUTURE EVENT — data does not exist yet. Cannot implement.
-- VGC-64: In Progress, has no-claude label, non-bug — skipped
-- VGC-162: Root page.tsx refactor — marked risky/large in description, "should be done on a feature branch" — skip this run
+## Run state at PR time
 
-## PostHog
-- Credentials not available in this environment — skipping PostHog data pull
+- Branch: swarm-nightly-2026-05-24
+- Total commits this run: 12 (1 webhook fix + 10 implementation + 1 changelog)
+- Subagents dispatched: 13 of 25 (8 Wave 1 + 5 Wave 2)
+- Build status: ✅ tsc clean, next build clean
+- Webhook health: 🔧 fixed in commit VGC-WEBHOOK
+
+## Commits
+$(git log --oneline origin/main..HEAD 2>/dev/null | sed 's/^/- /')
