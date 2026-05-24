@@ -1,6 +1,9 @@
 import { getDb } from "@/lib/db";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 /**
  * POST /api/migrate
@@ -20,7 +23,16 @@ export async function POST(request: Request) {
   try {
     // Auth check — require secret to prevent abuse
     const { secret } = await request.json().catch(() => ({ secret: "" }));
-    if (!secret || secret !== process.env.MIGRATE_SECRET) {
+    const expectedSecret = process.env.MIGRATE_SECRET;
+    if (!secret || !expectedSecret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const receivedBuf = Buffer.from(String(secret));
+    const expectedBuf = Buffer.from(expectedSecret);
+    if (
+      receivedBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(receivedBuf, expectedBuf)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
