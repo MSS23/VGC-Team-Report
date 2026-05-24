@@ -1,15 +1,12 @@
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
+import { html, raw } from "@/lib/email-html";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 const APP_URL = "https://pokemonvgcteamreport.com";
 const MAX_USERS = 500;
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
 
 // ── HTML Builders ─────────────────────────────────────────────────────────────
 
@@ -20,17 +17,17 @@ function buildDigestEmailHtml(data: {
   newComments: number;
   newReactions: number;
 }) {
-  const name = escapeHtml(data.firstName || "there");
+  const name = data.firstName || "there";
 
   const statCard = (value: number, label: string, color: string) =>
-    `<td style="padding:0 6px;" width="33%">
+    raw(`<td style="padding:0 6px;" width="33%">
       <div style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;padding:20px 8px;text-align:center;">
         <div style="font-size:28px;font-weight:800;color:${color};line-height:1;">${value}</div>
         <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;margin-top:8px;font-weight:600;">${label}</div>
       </div>
-    </td>`;
+    </td>`);
 
-  return `<!DOCTYPE html>
+  return html`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -43,7 +40,7 @@ function buildDigestEmailHtml(data: {
 
   <!-- Preheader -->
   <div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#F4F4F5;">
-    ${data.totalViews} views, ${data.newComments} comments, ${data.newReactions} reactions this week.
+    ${raw(data.totalViews)} views, ${raw(data.newComments)} comments, ${raw(data.newReactions)} reactions this week.
   </div>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F4F5;">
@@ -82,18 +79,18 @@ function buildDigestEmailHtml(data: {
               </tr>
             </table>
 
-            ${data.newReports > 0 ? `
+            ${data.newReports > 0 ? raw(`
             <!-- New reports callout -->
             <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:12px 16px;margin-bottom:24px;">
               <p style="font-size:13px;font-weight:600;color:#15803D;margin:0;">
                 You published ${data.newReports} new report${data.newReports > 1 ? "s" : ""} this week. Keep it up!
               </p>
             </div>
-            ` : ""}
+            `) : ""}
 
             <!-- CTA -->
             <div style="text-align:center;">
-              <a href="${APP_URL}/dashboard" style="display:inline-block;padding:12px 28px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">View your reports</a>
+              <a href="${raw(APP_URL)}/dashboard" style="display:inline-block;padding:12px 28px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">View your reports</a>
             </div>
 
           </div>
@@ -102,9 +99,9 @@ function buildDigestEmailHtml(data: {
         <!-- Footer -->
         <tr><td style="padding:24px 0 0;text-align:center;">
           <p style="font-size:12px;color:#9CA3AF;margin:0 0 6px;">
-            <a href="${APP_URL}/explore" style="color:#6B7280;text-decoration:none;font-weight:500;">Explore</a>
+            <a href="${raw(APP_URL)}/explore" style="color:#6B7280;text-decoration:none;font-weight:500;">Explore</a>
             <span style="margin:0 6px;color:#D1D5DB;">&middot;</span>
-            <a href="${APP_URL}/dashboard" style="color:#6B7280;text-decoration:none;font-weight:500;">Dashboard</a>
+            <a href="${raw(APP_URL)}/dashboard" style="color:#6B7280;text-decoration:none;font-weight:500;">Dashboard</a>
           </p>
           <p style="font-size:11px;color:#D1D5DB;margin:0;">
             VGC Team Report &mdash; pokemonvgcteamreport.com<br>
@@ -124,17 +121,17 @@ function buildTrendingDigestHtml(data: {
   firstName: string | null;
   topTitles: string[];
 }) {
-  const name = escapeHtml(data.firstName || "there");
+  const name = data.firstName || "there";
 
-  const titleRows = data.topTitles.length > 0
+  const titleRows = raw(data.topTitles.length > 0
     ? data.topTitles.map((title) =>
-        `<tr>
-          <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;">${escapeHtml(title)}</td>
+        html`<tr>
+          <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;">${title}</td>
         </tr>`
       ).join("")
-    : `<tr><td style="padding:24px;text-align:center;font-size:13px;color:#9CA3AF;">Check out the latest reports from the community</td></tr>`;
+    : `<tr><td style="padding:24px;text-align:center;font-size:13px;color:#9CA3AF;">Check out the latest reports from the community</td></tr>`);
 
-  return `<!DOCTYPE html>
+  return html`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -186,7 +183,7 @@ function buildTrendingDigestHtml(data: {
 
             <!-- CTA -->
             <div style="text-align:center;">
-              <a href="${APP_URL}/explore" style="display:inline-block;padding:12px 28px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">Explore trending teams</a>
+              <a href="${raw(APP_URL)}/explore" style="display:inline-block;padding:12px 28px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">Explore trending teams</a>
             </div>
 
           </div>
@@ -195,9 +192,9 @@ function buildTrendingDigestHtml(data: {
         <!-- Footer -->
         <tr><td style="padding:24px 0 0;text-align:center;">
           <p style="font-size:12px;color:#9CA3AF;margin:0 0 6px;">
-            <a href="${APP_URL}/explore" style="color:#6B7280;text-decoration:none;font-weight:500;">Explore</a>
+            <a href="${raw(APP_URL)}/explore" style="color:#6B7280;text-decoration:none;font-weight:500;">Explore</a>
             <span style="margin:0 6px;color:#D1D5DB;">&middot;</span>
-            <a href="${APP_URL}/dashboard" style="color:#6B7280;text-decoration:none;font-weight:500;">Dashboard</a>
+            <a href="${raw(APP_URL)}/dashboard" style="color:#6B7280;text-decoration:none;font-weight:500;">Dashboard</a>
           </p>
           <p style="font-size:11px;color:#D1D5DB;margin:0;">
             VGC Team Report &mdash; pokemonvgcteamreport.com<br>
@@ -331,18 +328,18 @@ export async function GET(request: Request) {
       const hasActivity = newReports > 0 || newComments > 0 || newReactions > 0 || totalViews > 0;
       const sendTrending = totalShares === 0 && !hasActivity;
 
-      let html: string;
+      let emailHtml: string;
       let subject: string;
 
       if (sendTrending) {
-        html = buildTrendingDigestHtml({ firstName, topTitles });
+        emailHtml = buildTrendingDigestHtml({ firstName, topTitles });
         subject = "Here's what's trending in VGC this week";
       } else {
-        html = buildDigestEmailHtml({ firstName, newReports, totalViews, newComments, newReactions });
+        emailHtml = buildDigestEmailHtml({ firstName, newReports, totalViews, newComments, newReactions });
         subject = `Your reports this week, ${firstName || "there"}!`;
       }
 
-      emailJobs.push({ to: email, subject, html });
+      emailJobs.push({ to: email, subject, html: emailHtml });
     } catch (e) {
       console.error(`[weekly-digest] Error preparing email for ${userId}:`, e);
       errors++;
