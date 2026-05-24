@@ -27,6 +27,26 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.20",
+    title: "Webhook Fix, Email XSS Hardening, Share Preview & i18n Fallback",
+    emoji: "🛡️",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Critical: Linear webhook handler was rejecting every authentic delivery with HTTP 401 because it read the wrong signature header. Now reads 'linear-signature' (Linear's actual header name, not 'x-linear-signature'), accepts both LINEAR_WEBHOOK_SIGNING_SECRET and the legacy LINEAR_WEBHOOK_SECRET env var, and returns 200 (not 500) on unknown event types so Linear stops marking the endpoint unhealthy." },
+      { type: "fixed", text: "Security: welcome email and comment notification email no longer interpolate user-controlled firstName, commenterName, commentBody, or reportTitle raw into HTML. A single shared escapeHtml helper now guards every email template — closes a stored-XSS class that hit every welcome and every comment notification." },
+      { type: "fixed", text: "Bug: re-sharing an unlisted report silently demoted it to private because the dedup SELECT did not fetch is_unlisted. Now preserves the existing unlisted state when the client doesn't explicitly toggle it — unlisted shares stay unlisted across saves." },
+      { type: "fixed", text: "i18n: ShareModal and other recently-translated surfaces were rendering blank labels for fr/es/it/ja/ko/zh users because translation files ship empty-string stubs for keys not yet translated. The provider now falls back to English whenever a localised value is missing or empty." },
+      { type: "improved", text: "Share sheet: the team card preview now renders at the top of the modal — users see what they're sharing before any URL or social tile, mirroring Spotify Wrapped / Strava share patterns. Download PNG remains one tap away in the social grid." },
+      { type: "improved", text: "Share text on Twitter/X and Discord now leads with the achievement ('2nd at Hartford Regional with Calyrex-Shadow / Urshifu / …') instead of 'Check out my report' — reads as a brag-worthy headline, not a link drop." },
+      { type: "improved", text: "Explore: Pokemon include/exclude filters are now chip pickers. Press Enter or comma to add a chip, ✕ to remove, paste comma-separated lists to bulk-add. Closes VGC-209." },
+      { type: "improved", text: "Accessibility: focus ring restored on the inline calc textarea; MatchupSheetRow remove button now has an aria-label (title alone is unreliable for screen readers and touch); WalkthroughOverlay and VersionHistoryPanel backdrops are keyboard-dismissable; TeamOverview form inputs have aria-labels matching their placeholders; the calc category buttons are now 44×44px on mobile, meeting WCAG 2.5.5 target size." },
+      { type: "improved", text: "Security: /api/migrate, /api/setup, and /api/cleanup DELETE now use crypto.timingSafeEqual for bearer-token comparison instead of !== — closes a side-channel that could leak secret length to an attacker probing with timing." },
+      { type: "improved", text: "SEO: BreadcrumbList JSON-LD now ships on /explore, /tournaments, and /creator/[name] — Google rich results parses these into the breadcrumb chip under each result." },
+      { type: "improved", text: "Removed dead code: unused useScrollHide hook and orphaned ReactionBar component (its consumer FloatingReactionDock was removed earlier)." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.19",
     title: "Performance, Security & Accessibility Hardening",
     emoji: "⚡",
