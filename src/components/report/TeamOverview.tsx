@@ -497,6 +497,7 @@ export function TeamOverview({
               value={teamName ?? ""}
               onChange={(e) => onTeamNameChange?.(e.target.value)}
               placeholder={t.teamNamePlaceholder}
+              aria-label={t.teamNamePlaceholder}
               maxLength={80}
               className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-surface border-2 border-border rounded-lg text-base sm:text-lg font-extrabold text-text-primary placeholder:text-text-tertiary placeholder:font-medium focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-tight"
             />
@@ -507,6 +508,7 @@ export function TeamOverview({
               value={tournamentName ?? ""}
               onChange={(e) => onTournamentNameChange?.(e.target.value)}
               placeholder={t.eventNamePlaceholder}
+              aria-label={t.eventNamePlaceholder}
               className="w-full sm:flex-1 sm:min-w-[180px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:flex sm:gap-3 sm:w-auto">
@@ -515,6 +517,7 @@ export function TeamOverview({
                 value={placement ?? ""}
                 onChange={(e) => onPlacementChange?.(e.target.value)}
                 placeholder={t.placementPlaceholder}
+                aria-label={t.placementPlaceholder}
                 className="w-full sm:w-[140px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
               />
               <input
@@ -522,6 +525,7 @@ export function TeamOverview({
                 value={record ?? ""}
                 onChange={(e) => onRecordChange?.(e.target.value)}
                 placeholder={t.recordPlaceholder}
+                aria-label={t.recordPlaceholder}
                 className="w-full sm:w-[120px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
               />
               <input
@@ -529,6 +533,7 @@ export function TeamOverview({
                 value={rentalCode ?? ""}
                 onChange={(e) => onRentalCodeChange?.(e.target.value.toUpperCase())}
                 placeholder={t.rentalPlaceholder}
+                aria-label={t.rentalPlaceholder}
                 maxLength={20}
                 className="w-full sm:flex-none sm:w-[160px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm font-[family-name:var(--font-mono)] font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-widest"
               />
@@ -538,6 +543,7 @@ export function TeamOverview({
               value={creatorName ?? ""}
               onChange={(e) => onCreatorNameChange?.(e.target.value)}
               placeholder={t.creatorNamePlaceholder}
+              aria-label={t.creatorNamePlaceholder}
               className="w-full sm:flex-1 sm:min-w-[200px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             />
           </div>
@@ -556,6 +562,7 @@ export function TeamOverview({
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
               <select
                 value={tags?.regulation ?? ""}
+                aria-label="Regulation"
                 onChange={(e) => onTagsChange?.({
                   ...(tags ?? {}),
                   regulation: e.target.value || undefined,
@@ -570,6 +577,7 @@ export function TeamOverview({
               </select>
               <select
                 value={tags?.eventType ?? ""}
+                aria-label="Event Type"
                 onChange={(e) => onTagsChange?.({ ...(tags ?? {}), eventType: e.target.value || undefined })}
                 className="w-full sm:w-[160px] px-3 py-2 bg-surface border-2 border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
               >
@@ -644,6 +652,7 @@ export function TeamOverview({
             value={summary}
             onChange={(e) => onSummaryChange(e.target.value)}
             placeholder={t.teamSummaryPlaceholder}
+            aria-label={t.teamSummary}
             className="w-full min-h-[4rem] sm:min-h-[8rem] p-3 sm:p-6 bg-surface border-2 border-border rounded-xl text-sm sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
             spellCheck={false}
           />
