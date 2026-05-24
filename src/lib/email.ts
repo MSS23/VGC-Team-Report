@@ -182,7 +182,7 @@ export async function sendWelcomeEmail(opts: {
  * Build the HTML for a Day 0 welcome email.
  * Table-based light theme matching the comment notification pattern.
  */
-function buildWelcomeEmailHtml(firstName: string): string {
+export function buildWelcomeEmailHtml(firstName: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
