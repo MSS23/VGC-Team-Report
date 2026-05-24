@@ -4,6 +4,18 @@
 
 const RESEND_API = "https://api.resend.com";
 
+// HTML-escape any user-controlled value before embedding in an email template.
+// Email clients render unescaped <img>, <script>, and event handlers — without this
+// every interpolated firstName / comment / report-title is a stored-XSS vector.
+export function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /**
  * From address — uses RESEND_FROM_EMAIL env var.
  * For sandbox testing: "VGC Team Report <onboarding@resend.dev>"
@@ -73,9 +85,10 @@ export async function sendCommentNotificationEmail(opts: {
   try {
     const reportUrl = `${APP_URL}/report/${opts.shareId}`;
     const html = buildCommentNotificationHtml(opts.commenterName, opts.commentBody, opts.reportTitle, reportUrl);
+    const safeReportTitle = opts.reportTitle.replace(/[\r\n"]/g, "");
     await sendEmail({
       to: opts.ownerEmail,
-      subject: `New comment on "${opts.reportTitle}"`,
+      subject: `New comment on "${safeReportTitle}"`,
       html,
     });
   } catch (e) {
@@ -87,11 +100,14 @@ export async function sendCommentNotificationEmail(opts: {
  * Build the HTML for a comment notification email.
  */
 function buildCommentNotificationHtml(
-  commenterName: string,
-  commentBody: string,
-  reportTitle: string,
+  commenterNameRaw: string,
+  commentBodyRaw: string,
+  reportTitleRaw: string,
   reportUrl: string,
 ) {
+  const commenterName = escapeHtml(commenterNameRaw);
+  const commentBody = escapeHtml(commentBodyRaw);
+  const reportTitle = escapeHtml(reportTitleRaw);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -182,7 +198,8 @@ export async function sendWelcomeEmail(opts: {
  * Build the HTML for a Day 0 welcome email.
  * Table-based light theme matching the comment notification pattern.
  */
-function buildWelcomeEmailHtml(firstName: string): string {
+function buildWelcomeEmailHtml(firstNameRaw: string): string {
+  const firstName = escapeHtml(firstNameRaw);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>

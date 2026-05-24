@@ -1,15 +1,11 @@
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, escapeHtml } from "@/lib/email";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 const APP_URL = "https://pokemonvgcteamreport.com";
 const MAX_USERS = 500;
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
 
 // ── HTML Builders ─────────────────────────────────────────────────────────────
 
