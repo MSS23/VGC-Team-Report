@@ -351,6 +351,21 @@ export function ShareModal({
           </div>
         )}
 
+        {/* Team card preview — shown FIRST so users see what they're sharing
+            before any URL/social actions. Download button stays in the social
+            grid below (full TeamCardExport with capture node). */}
+        {teamSpecies.length > 0 && (
+          <div className="px-6 pb-4">
+            <TeamCardExport
+              compact
+              teamName={teamName || tournamentName || "vgc-team"}
+              playerName={creatorName}
+              tournamentName={tournamentName}
+              teamSpecies={teamSpecies}
+            />
+          </div>
+        )}
+
         {/* URL display */}
         <div className="px-6 pb-4">
           <div
