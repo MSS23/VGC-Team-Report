@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "VGC Team Report FAQ — Common Questions Answered",
   description:
     "Answers to the most common questions about VGC Team Report: how to share a Pokémon VGC team, what a team report is, format support, and more.",
+  keywords: ["VGC team report FAQ", "how to share VGC team", "Pokemon team report", "VGC team builder help", "Showdown export", "PokePaste alternative", "VGC damage calcs", "speed tiers VGC", "Pokemon Champions format"],
   alternates: { canonical: "https://pokemonvgcteamreport.com/faq" },
   openGraph: {
     title: "VGC Team Report FAQ — Common Questions Answered",
