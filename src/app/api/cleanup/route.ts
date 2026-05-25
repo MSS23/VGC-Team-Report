@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -95,9 +96,10 @@ export async function GET(request: NextRequest) {
  *   Authorization: Bearer <CLEANUP_SECRET>
  */
 export async function DELETE(request: NextRequest) {
-  // Verify authorization
   const authHeader = request.headers.get("authorization");
-  if (!CLEANUP_SECRET || authHeader !== `Bearer ${CLEANUP_SECRET}`) {
+  const expected = `Bearer ${CLEANUP_SECRET}`;
+  if (!CLEANUP_SECRET || !authHeader || authHeader.length !== expected.length ||
+    !timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
