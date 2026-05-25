@@ -512,6 +512,8 @@ export function Navbar(props: NavbarProps) {
               onClick={() => setMenuOpen(!menuOpen)}
               className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Settings"
+              aria-expanded={menuOpen}
+              aria-haspopup="menu"
             >
               {showUser ? (
                 <div className="w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center text-accent">
@@ -527,7 +529,7 @@ export function Navbar(props: NavbarProps) {
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl py-2 min-w-[240px] z-50 animate-fade-in">
+              <div role="menu" className="absolute right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl py-2 min-w-[240px] z-50 animate-fade-in">
                 {/* Account section */}
                 {showUser && (
                   <>
