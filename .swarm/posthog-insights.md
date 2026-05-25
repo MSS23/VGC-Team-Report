@@ -1,16 +1,17 @@
-# PostHog Insights — Swarm Run 20-05-26
+# PostHog Insights — 2026-05-25
 
-## Status: CREDENTIALS NOT AVAILABLE
+## Status: UNAVAILABLE
 
-No `.env.local` file exists in the remote execution environment.
-POSTHOG_API_KEY and POSTHOG_PROJECT_ID are not accessible.
-PostHog API calls are skipped for this run.
+PostHog credentials (POSTHOG_API_KEY, POSTHOG_PROJECT_ID) are not available in this environment.
+The .env.local file does not exist in this container, and no environment variables are set.
 
-## Impact
-- No error event correlation
-- No rage-click/dead-click data
-- No funnel drop-off data
-- No PostHog-sourced bug tickets this run
+Cannot pull:
+- Error events
+- Rage-click events
+- Funnel drop-off data
+- Most visited pages
+- User feedback/survey responses
 
-## Fallback
-Using prior-run insights from `.swarm/posthog-insights-19-05-26.md` (same — also unavailable).
+## Action Required
+Human should check PostHog dashboard manually for error patterns and rage-click data.
+Previous swarm runs' PostHog data is available at .swarm/posthog-insights-18-05-26.md (from earlier run).
