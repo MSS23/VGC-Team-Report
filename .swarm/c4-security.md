@@ -1,262 +1,259 @@
-# Security Audit — VGC Team Report
-**Date:** 2026-05-09  
-**Auditor:** Claude Code (Security Engineer role)  
-**Scope:** Full codebase at `/home/user/VGC-Team-Report`
+# Security Audit Report -- VGC Team Report
+
+**Date:** 2026-05-26
+**Auditor:** Claude Code (Opus 4.7, Security Engineer)
+**Scope:** `src/`, `.env.example`, API routes, webhook handlers, email templates
+**Previous audit:** 2026-05-09 (this supersedes it)
 
 ---
 
-## Summary
+## Executive Summary
 
-12 npm vulnerabilities (3 Critical, 6 High, 3 Moderate). Two Critical CVEs directly affect auth (Clerk middleware bypass). Several medium-risk issues in API design and CSP configuration. No plaintext secrets found in source. SQL injection risk is low (parameterized queries used throughout). Overall security posture is reasonable but the Clerk vulnerabilities require immediate patching.
+No **critical** issues found. No hardcoded secrets in source, no SQL injection, all webhook endpoints verify signatures using timing-safe comparisons. The codebase demonstrates strong security hygiene: Zod schemas validate input, SQL uses parameterized queries via `postgres` tagged templates, CORS + CSRF protections are applied in middleware, and rate limiting is distributed via Upstash Redis.
 
----
-
-## Findings
-
-### CRITICAL-1: Clerk Auth Middleware Bypass (GHSA-vqx2-fgx2-5wq9)
-**Severity:** Critical  
-**Package:** `@clerk/nextjs`, `@clerk/shared`  
-**File:** `src/middleware.ts`, all `/api/user/*` routes
-
-The installed version of `@clerk/nextjs` has a confirmed vulnerability where middleware-based route protection can be bypassed. Since the application relies on Clerk middleware (`clerkMiddleware`) in `src/middleware.ts` as the primary auth gate for all `/api/user/*` routes (delete account, export data, drafts, analytics, feed, saved, etc.), an attacker who can exploit this bypass could access any authenticated user's private data or delete accounts without credentials.
-
-**CVE:** GHSA-vqx2-fgx2-5wq9 — "Official Clerk JavaScript SDKs: Middleware-based route protection bypass"  
-**Recommendation:** Run `npm update @clerk/nextjs @clerk/backend @clerk/react @clerk/shared` immediately and verify the patched version resolves these CVEs.
+Two **high-severity** findings (email HTML injection) and two **medium** findings are detailed below.
 
 ---
 
-### CRITICAL-2: Clerk Authorization Bypass for Combined Permission Checks (GHSA-w24r-5266-9c3c)
-**Severity:** Critical  
-**Package:** `@clerk/nextjs`, `@clerk/backend`, `@clerk/react`, `@clerk/shared`
+## 1. Dependency Vulnerabilities (`npm audit`)
 
-A second Clerk CVE (GHSA-w24r-5266-9c3c) allows authorization bypass when combining organization, billing, or reverification checks. All four Clerk packages are affected. This is particularly relevant if any route combines Clerk auth with role/org checks.
+| Severity | Count |
+|----------|-------|
+| Critical | 0     |
+| High     | 2     |
+| Moderate | 10    |
+| Low      | 0     |
 
-**Recommendation:** Same fix as CRITICAL-1 — update all `@clerk/*` packages.
+### HIGH: `js-cookie <= 3.0.5` (GHSA-qjx8-664m-686j)
+- **Impact:** Prototype hijack in `assign()` enables cookie-attribute injection.
+- **Path:** `@clerk/shared` -> `js-cookie`
+- **Fix:** `npm audit fix` or update `@clerk/shared` when a patched version ships.
 
----
+### HIGH: `@clerk/shared` (via js-cookie above)
+- **Impact:** Same vulnerability surface via transitive dependency.
 
-### CRITICAL-3: Arbitrary Code Execution in protobufjs (GHSA-xq3m-2v4x-88gg)
-**Severity:** Critical  
-**Package:** `protobufjs` (transitive dependency)
+### MODERATE highlights:
+- `postcss < 8.5.10` -- XSS via unescaped `</style>` in CSS stringify output (Next.js transitive)
+- `brace-expansion 5.0.2-5.0.5` -- DoS via large numeric ranges
+- `uuid` (via `@cypress/request`, `@sentry/webpack-plugin`) -- various issues
 
-protobufjs has a known arbitrary code execution vulnerability via prototype pollution. This is a transitive dependency (likely pulled in by a monitoring or gRPC library). While exploitation requires attacker-controlled protobuf input, the severity is Critical.
-
-**Recommendation:** Identify which direct dependency pulls in protobufjs (`npm ls protobufjs`) and update it.
-
----
-
-### HIGH-1: Axios — Multiple CVEs including SSRF, Prototype Pollution, Header Injection
-**Severity:** High  
-**Package:** `axios` (direct dependency)  
-**Files:** Any route using axios for outbound HTTP
-
-The installed axios version has 14+ CVEs including:
-- SSRF via NO_PROXY bypass (GHSA-3p68-rc4w-qgx5, GHSA-m7pr-hjqh-92cm)
-- Prototype pollution gadgets enabling credential injection and request hijacking (GHSA-q8qp-cvcw-x6jj, GHSA-pf86-5x62-jrwf)
-- CRLF injection in multipart/form-data (GHSA-445q-vr5w-6q77)
-- Authentication bypass via prototype pollution (GHSA-w9j2-pvgh-6h63)
-- Header injection via prototype pollution (GHSA-6chq-wfr3-2hj9)
-
-**Recommendation:** `npm update axios` to latest patched version.
+**Note vs. previous audit:** The previous CRITICAL Clerk middleware bypass CVEs (GHSA-vqx2-fgx2-5wq9, GHSA-w24r-5266-9c3c) and protobufjs ACE (GHSA-xq3m-2v4x-88gg) are no longer flagged, indicating those packages were updated. The axios CVEs (HIGH-1 in previous audit) are also resolved.
 
 ---
 
-### HIGH-2: Next.js Denial of Service with Server Components (GHSA-q4gf-8mx6-v5v3)
-**Severity:** High  
-**Package:** `next` (direct dependency)
+## 2. Hardcoded Secrets Scan
 
-The installed Next.js version is vulnerable to DoS via specially crafted Server Component requests. On a Vercel Pro plan with build minute budgets, a sustained DoS attack could also exhaust serverless function invocations.
+### PASS -- No hardcoded API keys or tokens found in `src/`
 
-**Recommendation:** `npm update next` to the patched version.
+Searched for patterns: `sk-*`, `ghp_*`, `whsec_*`, `lin_api_*`, `xoxb-*`, `xoxp-*`, inline string assignments to `secret`/`token`/`api_key` variables. **No real credentials detected.**
+
+### INFO: Hardcoded Discord public key (not a secret)
+- **File:** `src/app/api/discord/route.ts:6`
+- `DISCORD_PUBLIC_KEY = "44b2cb..."`
+- **Assessment:** This is a **public** verification key, not a secret. Standard Discord practice. No action needed, but moving to an env var would be cleaner for key rotation.
+
+### PASS -- `.env.example` contains only placeholder values
+- All values are `your-*-here`, `xxxx/xxxx`, or `lin_api_xxxx...` placeholders.
+- No real credentials leaked.
 
 ---
 
-### HIGH-3: Secret Exposed in URL Query Parameter — `/api/bot`
-**Severity:** High  
-**File:** `src/app/api/bot/route.ts`, line 35
+## 3. OWASP Top-10 Analysis -- API Routes
 
-```ts
-const secret = request.nextUrl.searchParams.get("secret");
+### 3.1 SQL Injection -- PASS
+
+All database queries use the `postgres` tagged template literal (`sql\`...\``) which auto-parameterizes. No raw string concatenation into SQL was found anywhere in the codebase. The PostHog webhook handler uses parameterized HogQL `values` for session timeline queries.
+
+### 3.2 XSS -- TWO FINDINGS
+
+#### FINDING H-1 (HIGH): Email HTML injection via unescaped `reportTitle` in comment notification emails
+
+- **File:** `src/lib/email.ts:130-135` **(recently changed file)**
+- **File:** `src/app/api/comments/[shareId]/route.ts:132`
+
+The `commenterName` and `commentBody` are HTML-escaped via `escapeHtml()` before being passed to `sendCommentNotificationEmail()`. However, `reportTitle` is read directly from the database (`shareData.tournamentName || shareData.creatorName`) and is **NOT escaped** before being interpolated into the HTML email template:
+
+```typescript
+// comments/route.ts:132 -- value comes directly from DB, no escaping
+const reportTitle = (shareData.tournamentName as string) || ...;
+
+// email.ts:130 -- injected directly into HTML
+<strong>${commenterName}</strong> commented on <strong>${reportTitle}</strong>
+
+// email.ts:78 -- also in subject line
+subject: `New comment on "${opts.reportTitle}"`,
 ```
 
-The bot endpoint authenticates callers by reading `CRON_SECRET` from the URL query string (`?secret=...`). Query parameters are logged in:
-- Vercel access logs
-- CDN/reverse proxy logs
-- Browser history if ever triggered from a browser
-- Any monitoring or observability tool that captures full URLs
+**Attack vector:** A user sets their `tournamentName` to `<img src=x onerror=alert(1)>` or a tracking pixel URL. When someone comments on their report, the owner receives an email with executable HTML. Most modern email clients block scripts, but image-based tracking and CSS-based data exfiltration remain viable.
 
-This means the `CRON_SECRET` is effectively logged in plaintext.
-
-**Recommendation:** Move the secret to the `Authorization: Bearer <secret>` header, consistent with how other cron routes (e.g., `/api/cron/daily-ops`) handle it via `isCronAuthorized()`.
-
----
-
-### HIGH-4: Linear Webhook — No Signature Verification
-**Severity:** High  
-**File:** `src/app/api/webhooks/linear/route.ts`
-
-The Linear webhook endpoint has no HMAC signature verification. Any actor who discovers the endpoint URL can send arbitrary webhook payloads, including spoofed `url_verification` challenges. Linear supports webhook signing via an `X-Linear-Signature` header using HMAC-SHA256.
-
-```ts
-// Current code — no signature check at all
-export async function POST(request: Request) {
-  const body = await request.json();
-  if (body.type === "url_verification") {
-    return NextResponse.json({ challenge: body.challenge });
-  }
-  return NextResponse.json({ ok: true });
-}
+**Recommendation:** Escape `reportTitle` before passing to the email builder:
+```typescript
+const reportTitle = escapeHtml(
+  (shareData.tournamentName as string) || (shareData.creatorName as string) || "your report"
+);
 ```
 
-Although the current handler only does URL verification (no business logic), this is a security gap if the handler is ever extended.
+#### FINDING H-2 (HIGH): Email HTML injection in weekly summary email -- `item.title` and `req.title`
 
-**Recommendation:** Add HMAC-SHA256 verification using `LINEAR_WEBHOOK_SECRET` env var before processing any payload.
+- **File:** `src/lib/email.ts:339,346`
+- **File:** `src/app/api/bot/route.ts:154`
 
----
+The `buildWeeklySummaryHtml()` function interpolates `item.title` and `req.title` directly into HTML without escaping. These values come from the `feedback` table. While feedback titles ARE escaped before database insertion (`escapeHtml(rawTitle)` in the feedback route), the email template relies solely on write-time sanitization. If any other code path (migration, direct DB edit, admin tool) writes unescaped titles, the email template is vulnerable.
 
-### HIGH-5: vite — Path Traversal and File Read CVEs (dev dependency)
-**Severity:** High (dev-only risk)  
-**Package:** `vite` (dev dependency)
+**Recommendation:** Apply `escapeHtml()` at render-time inside `buildWeeklySummaryHtml()` as defense-in-depth.
 
-Multiple vite CVEs: path traversal in optimized deps `.map` handling (GHSA-4w7w-66w2-5vf9), `server.fs.deny` bypass (GHSA-v2wj-q39q-566r), arbitrary file read via dev server WebSocket (GHSA-p9ff-h696-f583). These only apply to the local development server; production Vercel deployments are not affected.
+### 3.3 CSRF -- PASS
 
-**Recommendation:** `npm update vite` — low urgency for production, but high urgency for developer machines.
+Strong CSRF protection is implemented:
+- CORS origin validation in middleware blocks unknown origins
+- Double-submit cookie pattern via `X-CSRF-Token` header
+- CSRF enforcement for cross-origin mutating requests
+- `SameSite=Strict` on CSRF cookie
 
----
+### 3.4 Rate Limiting -- PASS (with note)
 
-### MEDIUM-1: CSP Contains `unsafe-inline` and `unsafe-eval` in `script-src`
-**Severity:** Medium  
-**File:** `next.config.ts`, line 81
+Rate limiting is applied broadly:
+- Upstash Redis distributed rate limiter with in-memory fallback
+- `apiGuard()` utility applied to most routes
+- Feedback route: 3 req/min per user
+- Comments: 5 req/min per IP
+- Share reads: 60 req/min per IP
+- Share writes: 20 req/min per IP
 
-```
-"script-src 'self' 'unsafe-inline' 'unsafe-eval' ..."
-```
+**Note:** The `/api/migrate` and `/api/setup` routes do NOT have rate limiting. Both are protected by secret tokens, so this is acceptable but could allow brute-force attacks against the secret (see M-1).
 
-Both `'unsafe-inline'` and `'unsafe-eval'` are present in `script-src`, which significantly weakens the XSS protection provided by CSP. While `dangerouslySetInnerHTML` is used for the dark-mode init script in `layout.tsx` (which renders only static, hardcoded values from a predefined map), the presence of `'unsafe-eval'` allows any injected script to call `eval()`.
+### 3.5 Authentication Bypass -- PASS
 
-**Recommendation:** Replace `'unsafe-inline'` with a nonce-based or hash-based approach for the dark-mode init script. Remove `'unsafe-eval'` if not strictly required by Clerk/Sentry SDKs.
+- All user-mutating routes require Clerk authentication
+- Share writes require auth (edit token alone is insufficient -- anonymous sessions cannot mutate)
+- Cron routes check `CRON_SECRET` via `isCronAuthorized()` with timing-safe comparison
+- Webhook routes verify signatures (Clerk via SDK, Linear via HMAC-SHA256, PostHog via token)
+- `/api/bot` uses timing-safe comparison for Bearer token
 
----
+### 3.6 Mass Assignment -- PASS
 
-### MEDIUM-2: `Cross-Origin-Opener-Policy` Set to `unsafe-none`
-**Severity:** Medium  
-**File:** `next.config.ts`, line 61
+The share POST route uses a strict Zod schema (`ShareBodySchema`) with `.strip()` which removes unknown fields. Feedback uses `FeedbackBody` schema. Comments use `CommentBody` schema. No mass assignment vulnerabilities found.
 
-```ts
-key: "Cross-Origin-Opener-Policy",
-value: "unsafe-none",  // Required for Clerk OAuth popups
-```
+### 3.7 Timing-Safe Comparison -- FINDING M-1 (MEDIUM)
 
-`COOP: unsafe-none` disables cross-origin isolation, which enables Spectre-style side-channel attacks from other tabs and prevents use of `SharedArrayBuffer`. The comment correctly notes this is required for Clerk OAuth popups. However, this is a known trade-off worth documenting.
+- **File:** `src/app/api/migrate/route.ts:23`
+- **File:** `src/app/api/setup/route.ts:7`
 
-**Recommendation:** Track Clerk's roadmap for COOP-compatible OAuth flows. No immediate action needed, but document the risk.
+Both routes compare secrets using `===` (JavaScript string equality) instead of `timingSafeEqual`:
 
----
+```typescript
+// migrate/route.ts:23
+if (!secret || secret !== process.env.MIGRATE_SECRET) {
 
-### MEDIUM-3: `dangerouslySetInnerHTML` in JsonLd Component — Potential XSS if Input is User-Controlled
-**Severity:** Medium  
-**File:** `src/components/seo/JsonLd.tsx`
-
-```tsx
-dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-```
-
-`JSON.stringify` does NOT escape HTML special characters by default. If any user-controlled string (e.g., `creatorName`, `tournamentName`, `teamSummary`) reaches this component and contains `</script>`, it can break out of the JSON-LD script block and execute arbitrary HTML/JS.
-
-Example: a `creatorName` of `"</script><script>alert(1)</script>"` would produce:
-```html
-<script type="application/ld+json">{"creatorName":"</script><script>alert(1)</script>"}</script>
+// setup/route.ts:7
+if (!secret || authHeader !== `Bearer ${secret}`) {
 ```
 
-**Recommendation:** Use a JSON serializer that escapes `<`, `>`, and `&`:
-```ts
-const safe = JSON.stringify(data).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
-```
+This is a timing side-channel vulnerability. An attacker can measure response times to incrementally guess the secret byte-by-byte. Other routes (cron, bot, webhooks) correctly use `timingSafeEqual`.
+
+**Recommendation:** Use `timingSafeEqual` from `crypto` module, consistent with `cron-auth.ts` and `bot/route.ts`.
 
 ---
 
-### MEDIUM-4: fast-uri Path Traversal (GHSA-q3j6-qgpj-74h6)
-**Severity:** Medium  
-**Package:** `fast-uri` (likely transitive via Sentry or a validation library)
+## 4. Webhook Security
 
-Vulnerable to path traversal via percent-encoded dot segments and host confusion via percent-encoded authority delimiters. Impact depends on whether this library is used to parse attacker-controlled URLs.
+### 4.1 Clerk Webhook (`/api/webhooks/clerk`) -- PASS
+- Uses `@clerk/nextjs/webhooks` `verifyWebhook()` for signature verification
+- Fails closed when `CLERK_WEBHOOK_SIGNING_SECRET` is not set
+- Proper error handling
 
-**Recommendation:** `npm update` to pull in a fixed transitive version.
+### 4.2 Linear Webhook (`/api/webhooks/linear`) -- PASS
+- HMAC-SHA256 signature verification using `createHmac` + `timingSafeEqual`
+- Compares buffer lengths before `timingSafeEqual` (correct)
+- Fails closed when `LINEAR_WEBHOOK_SIGNING_SECRET` is missing
 
----
+**Note vs. previous audit:** The previous HIGH-4 finding (Linear webhook had no signature verification) is now fully resolved. HMAC-SHA256 verification with timing-safe comparison has been implemented.
 
-### MEDIUM-5: dompurify — Moderate Vulnerability
-**Severity:** Moderate  
-**Package:** `dompurify` (direct dependency)
-
-A moderate severity vulnerability exists in the installed dompurify version. DOMPurify is the primary XSS sanitizer — any weakness here directly increases XSS risk for any content it sanitizes.
-
-**Recommendation:** `npm update dompurify` immediately, given its critical security role.
-
----
-
-### LOW-1: Discord Public Key Hardcoded in Source
-**Severity:** Low  
-**File:** `src/app/api/discord/route.ts`, line 6
-
-```ts
-const DISCORD_PUBLIC_KEY = "44b2cb02932ad5b5eae681352246314ffb23ecd299c2490d7875d5883e5596ae";
-```
-
-The Discord application's Ed25519 public key is hardcoded directly in source. This is a public key (not a secret), so there's no direct security risk — it cannot be used to forge signatures. However, if the Discord app is ever re-created or the key rotated, this requires a code change and redeployment rather than an env var update.
-
-**Recommendation:** Move to `process.env.DISCORD_PUBLIC_KEY` for operational flexibility. Low priority.
+### 4.3 PostHog Webhook (`/api/webhooks/posthog`) -- PASS
+- Token-based auth via `x-posthog-token` header
+- Uses `timingSafeEqual` for comparison
+- Deduplication window prevents ticket flooding
+- HogQL queries use parameterized `values` (not string interpolation)
+- 5-second timeout on outbound requests to Linear and PostHog APIs
+- Fails closed when `POSTHOG_WEBHOOK_SECRET` is not set
 
 ---
 
-### LOW-2: follow-redirects — Moderate Vulnerability
-**Severity:** Low (Moderate in npm)  
-**Package:** `follow-redirects` (transitive)
+## 5. Recently-Changed Files Assessment
 
-Moderate vulnerability in follow-redirects. This library handles HTTP redirects for axios/node-fetch. The specific CVE details weren't fully resolved but this is patched in newer versions.
+### `src/app/api/cron/weekly-digest/route.ts` (recently changed)
+- **Auth:** Uses `isCronAuthorized()` -- PASS
+- **SQL:** All queries parameterized -- PASS
+- **Email:** Uses `escapeHtml()` for `firstName` and trending report titles -- PASS
+- **Privacy:** Respects `digestUnsubscribed` user preference -- PASS
+- **Scale:** Caps at 500 users (`MAX_USERS`), batches Clerk API calls (100/batch) and email sends (15/batch) -- PASS
+- **No issues found in this file.**
 
-**Recommendation:** Updating axios (HIGH-1) should transitively fix this.
+### `src/app/api/newsletter/route.ts` (recently changed)
+- **File does not exist.** No findings.
 
----
-
-### LOW-3: postcss — Moderate Vulnerability
-**Severity:** Low  
-**Package:** `postcss` (dev dependency, build-time only)
-
-Moderate vulnerability in postcss. This only affects the build pipeline, not the production runtime.
-
-**Recommendation:** `npm update postcss` — low urgency.
-
----
-
-## What Was Found to Be Good
-
-- **Parameterized SQL queries throughout**: All DB queries use tagged template literals with the `postgres` library, which parameterizes inputs automatically. No SQL injection risk found.
-- **Zod validation on most POST routes**: 19 of 48 API routes use Zod schema validation. All high-risk mutation routes were checked.
-- **Rate limiting via `apiGuard`**: The `apiGuard` wrapper applies per-IP rate limiting (via Upstash) consistently across most public-facing endpoints.
-- **CSRF double-submit cookie**: Middleware validates CSRF tokens for cross-origin state-changing requests.
-- **CORS enforcement**: Unknown origins are blocked at the middleware level.
-- **HSTS with preload**: `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` correctly configured.
-- **X-Frame-Options DENY + frame-ancestors none**: Double protection against clickjacking.
-- **No hardcoded secrets in source**: All secrets (API keys, DB credentials) are properly read from `process.env`.
-- **Discord webhook uses Ed25519 signature verification**: The Discord route correctly verifies cryptographic signatures using `tweetnacl`.
-- **Bot detection and suspicious request filtering** in middleware.
-- **Canonical redirect** prevents staging URL leakage.
+### `src/lib/email.ts` (recently changed)
+- **H-1 finding:** `buildCommentNotificationHtml()` does not escape `commenterName`, `commentBody`, or `reportTitle` parameters internally. The caller (`comments/route.ts`) escapes `commenterName` and `commentBody` but NOT `reportTitle`. See finding H-1 above.
+- **H-2 finding:** `buildWeeklySummaryHtml()` does not escape `item.title` or `req.title`. See finding H-2 above.
+- **LOW finding:** `buildWelcomeEmailHtml()` interpolates `firstName` without escaping. The `firstName` comes from Clerk (user-provided at signup), so this is a minor XSS vector in email. Severity: LOW (email clients strip scripts, but tracking pixels remain possible).
+- **Positive:** `buildDigestEmailHtml()` and `buildTrendingDigestHtml()` correctly escape `firstName` via `escapeHtml()`.
 
 ---
 
-## Prioritized Action List
+## 6. Summary of Findings
+
+| ID   | Severity | Category        | File(s) | Description |
+|------|----------|-----------------|---------|-------------|
+| H-1  | HIGH     | XSS (Email)     | `src/lib/email.ts:130-135`, `src/app/api/comments/[shareId]/route.ts:132` | `reportTitle` not HTML-escaped in comment notification email |
+| H-2  | HIGH     | XSS (Email)     | `src/lib/email.ts:339,346`, `src/app/api/bot/route.ts:154` | `item.title`/`req.title` not escaped in weekly summary email |
+| M-1  | MEDIUM   | Timing Attack   | `src/app/api/migrate/route.ts:23`, `src/app/api/setup/route.ts:7` | Secret comparison uses `===` instead of `timingSafeEqual` |
+| M-2  | MEDIUM   | Dependencies    | `package.json` | 2 high-severity npm vulnerabilities (js-cookie prototype hijack via @clerk/shared) |
+| L-1  | LOW      | XSS (Email)     | `src/lib/email.ts:219` | `firstName` not escaped in welcome email HTML |
+| I-1  | INFO     | Best Practice   | `src/app/api/discord/route.ts:6` | Discord public key hardcoded (not a secret, but env var is cleaner) |
+| I-2  | INFO     | Rate Limiting   | `src/app/api/migrate/route.ts`, `src/app/api/setup/route.ts` | No rate limiting on secret-protected admin routes |
+
+---
+
+## 7. Resolved Findings (from previous audit 2026-05-09)
+
+| Previous ID | Status | Notes |
+|-------------|--------|-------|
+| CRITICAL-1 (Clerk middleware bypass) | RESOLVED | Clerk packages updated |
+| CRITICAL-2 (Clerk auth bypass) | RESOLVED | Clerk packages updated |
+| CRITICAL-3 (protobufjs ACE) | RESOLVED | Dependency updated |
+| HIGH-1 (axios CVEs) | RESOLVED | axios updated or removed |
+| HIGH-3 (bot secret in query param) | RESOLVED | Now uses `Authorization: Bearer` header with timing-safe comparison |
+| HIGH-4 (Linear webhook no sig verification) | RESOLVED | HMAC-SHA256 + timingSafeEqual implemented |
+| HIGH-5 (vite path traversal) | RESOLVED | No longer flagged by npm audit |
+
+---
+
+## 8. Positive Security Observations
+
+The codebase demonstrates above-average security practices:
+
+1. **Parameterized SQL everywhere** -- no raw string concatenation in queries
+2. **Zod schema validation** with `.strip()` on all user-facing POST bodies to prevent mass assignment
+3. **Timing-safe comparisons** on all high-traffic auth paths (cron, webhooks, bot)
+4. **CORS + CSRF** double protection in middleware
+5. **Bot detection** in middleware for non-cron API routes
+6. **Input sanitization** (`escapeHtml`, `containsBlockedWords`) on user-generated content
+7. **Rate limiting** with distributed Redis (Upstash) + in-memory fallback
+8. **Auth-gated mutations** -- edit token alone cannot mutate; Clerk session required
+9. **Webhook signature verification** on all three webhook endpoints (Clerk SDK, Linear HMAC, PostHog token)
+10. **Body size limits** on share POST (512KB max)
+11. **Canonical redirect** prevents staging URL leakage
+12. **Session UUID validation** before use in PostHog HogQL queries
+
+---
+
+## 9. Prioritized Action List
 
 | Priority | Finding | Action |
 |----------|---------|--------|
-| P0 | CRITICAL-1, CRITICAL-2 | `npm update @clerk/nextjs @clerk/backend @clerk/react @clerk/shared` |
-| P0 | MEDIUM-3 | Fix JsonLd XSS — escape `<>& ` in JSON.stringify output |
-| P1 | HIGH-3 | Move `/api/bot` secret from query param to Authorization header |
-| P1 | HIGH-1 | `npm update axios` |
-| P1 | MEDIUM-5 | `npm update dompurify` |
-| P2 | HIGH-4 | Add HMAC-SHA256 verification to Linear webhook |
-| P2 | CRITICAL-3 | Identify and update protobufjs parent dependency |
-| P2 | HIGH-2 | `npm update next` |
-| P3 | MEDIUM-1 | Replace `unsafe-inline`/`unsafe-eval` in CSP with nonces/hashes |
-| P4 | HIGH-5, LOW-2, LOW-3 | `npm update vite postcss` (dev/transitive) |
-| P4 | LOW-1 | Move Discord public key to env var |
+| P0 | H-1 | Escape `reportTitle` with `escapeHtml()` in `comments/[shareId]/route.ts:132` before passing to email builder |
+| P0 | H-2 | Add `escapeHtml()` at render-time in `buildWeeklySummaryHtml()` for `item.title` and `req.title` |
+| P1 | M-1 | Replace `===` with `timingSafeEqual` in `migrate/route.ts` and `setup/route.ts` |
+| P1 | M-2 | Monitor `@clerk/shared` for js-cookie fix; run `npm audit fix` when available |
+| P2 | L-1 | Escape `firstName` in `buildWelcomeEmailHtml()` (already done in `buildDigestEmailHtml`) |
+| P3 | I-1 | Move Discord public key to env var for operational flexibility |

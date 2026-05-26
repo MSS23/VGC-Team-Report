@@ -1,4 +1,4 @@
-# PostHog Insights — Swarm Run 20-05-26
+# PostHog Insights — Swarm Run 26-05-26
 
 ## Status: CREDENTIALS NOT AVAILABLE
 
@@ -11,6 +11,3 @@ PostHog API calls are skipped for this run.
 - No rage-click/dead-click data
 - No funnel drop-off data
 - No PostHog-sourced bug tickets this run
-
-## Fallback
-Using prior-run insights from `.swarm/posthog-insights-19-05-26.md` (same — also unavailable).

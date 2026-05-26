@@ -1,160 +1,187 @@
-# Code Review — Last 20 Commits (main)
+# C5 Code Review — Last 20 Commits (26-05-26)
 
-**Date:** 2026-05-07  
-**Range:** `main~20..main` (c247fc1 → e5b4bfa)  
-**Reviewer:** Claude (automated audit)
+Reviewed: `03c1547` through `850e91c` (20 commits on `origin/main`).
 
 ---
 
-## Commit Overview
+## CRITICAL: XSS in Comment Notification Email (src/lib/email.ts)
 
-| SHA | Message | Files Changed | Rating |
-|-----|---------|--------------|--------|
-| e5b4bfa | docs(changelog): v5.9 entry | 1 | Clean |
-| ecf9e00 | fix(mega): toggle requires Reg M-A AND Mega Stone | 1 | Clean |
-| 3ec0e3d | fix(pokemon-card): always show flip toggle | 1 | Clean |
-| e514a8e | fix(analysis): suppress Megas outside Reg M-A | 1 | Clean |
-| a2a8cc2 | fix(explore): popular/views feed pagination + fork credits | 3 | Clean |
-| 50f3426 | docs(changelog): v5.8 entry | 1 | Clean |
-| f701a5c | fix(champions-dex): align base species with Serebii | 1 | Clean |
-| 46662e0 | VGC-140/141/142: share viewing + duplicate + team card + publishing | 11 | Large, reviewed |
-| 7dd30b4 | VGC-143: rental code filter + Rental badge | 3 | Clean |
-| cd8984d | VGC-146: Zod schema validation on share/cache reads | 2 | Good |
-| fa2663b | VGC-144: derive CHAMPIONS_DEX megas from canonical list | 1 | Clean |
-| 4bb854b | VGC-145: delete dead components/lib/exports | 9 | Clean |
-| 506d79b | swarm: nightly improvements 07-05-26 (#14) | 41 | Large, see below |
-| ac12688 | Merge: integrate VGC-69/-75/-95/-100/-106/-111/-135/-138/-139 | 9 | Merge |
-| ddaca39 | feat(report): SP-only display in Reg M-A | ~10 | Clean |
-| 6b8176a | VGC-37: OTS sheet + QR code + PNG download (#9) | 3 | Reviewed |
-| bdc6637 | VGC-75: Mega vs base stat delta strip (#10) | ~5 | Clean |
-| bdc6637 | VGC-69: one-click try — sample report on landing (#8) | ~5 | Clean |
-| c247fc1 | VGC-95: Cypress E2E tests for explore + champions (#11) | 2 | Good |
+**Commit**: `b1e95df` (swarm 18-05-26, VGC-125 welcome email + comment notifications)
+**File**: `src/lib/email.ts`, lines 89-136
+**Risk**: HIGH — stored XSS via email injection
 
----
+The `buildCommentNotificationHtml()` function interpolates `commenterName`, `commentBody`, and `reportTitle` directly into HTML template literals with **zero escaping**:
 
-## Findings
-
-### 1. Known Failing Tests Never Fixed — Acknowledged Tech Debt (HIGH)
-
-**Commit:** `46662e0` (VGC-140/141/142)  
-**File:** `src/hooks/__tests__/useExploreUrlSync.test.ts`
-
-The commit message explicitly notes:
-> "Existing 3 useExploreUrlSync test failures are pre-existing (default sort changed to 'popular' in fc8b08d era; tests were never updated) and reproduce on origin/main."
-
-Confirmed: `DEFAULTS.sort` in `useExploreUrlSync.ts` is `"popular"` (line 38), but the test at line 8 asserts `toBe("newest")`. Across 6 test cases, all "default sort" assertions are stale. Beyond the sort mismatch, running any tests with the project's Jest configuration fails entirely because test files use `vitest` imports (`import { describe, it, expect } from "vitest"`) while the runner invoked by most tooling is Jest — `vitest` is not installed in `node_modules` (only listed as a devDependency). This means `npm test` silently reports 14 failed suites with zero tests run — all green status checks are vacuous.
-
-**Impact:** CI test gate is broken across the entire test suite. Any commit that breaks runtime behaviour would not be caught.
-
-**Recommended ticket:** Fix `useExploreUrlSync` test defaults to match `"popular"`, install `vitest` properly, and verify `npm test` produces green output before the next push.
-
----
-
-### 2. `opengraph-image.tsx` Duplicates `sprite-slug.ts` Logic — Documented But Untracked (MEDIUM)
-
-**Commit:** `506d79b` (swarm nightly)  
-**File:** `src/app/s/[id]/opengraph-image.tsx` lines 8–45
-
-A ~40-entry `SLUG_MAP` constant and `resolveSlug` function are copied verbatim from `src/lib/utils/sprite-slug.ts` with an inline comment:
-> "Mirrors the slug logic from src/lib/utils/sprite-slug.ts — duplicated here because edge runtime cannot import from @/lib."
-
-The rationale is valid (edge runtime cannot pull in Node.js-linked modules), but the consequence is that any new Pokemon added to `sprite-slug.ts` must also be added here manually or OG images will silently generate broken sprite URLs. This already caused the `opengraph-image.tsx` to be reverted once in the previous commit window (per the prior review finding on `221da19`).
-
-`src/app/api/team-graphic/route.tsx` correctly imports `resolveSlug` from `@/lib/utils/sprite-slug` because it is a regular Node.js API route — the divergence shows the edge runtime constraint is specific to the OG image file.
-
-**Recommended ticket:** Extract the SLUG_MAP into a separate file with no Node imports (`src/lib/data/sprite-slug-map.ts`), importable from both the edge OG handler and the regular route, eliminating the manual mirror.
-
----
-
-### 3. `VGC-140/141/142` Bundles Three Tickets in One Commit (MEDIUM)
-
-**Commit:** `46662e0` — 11 files, 633 insertions / 19 deletions
-
-The commit combines three independent features (Duplicate CTA, Spotify-Wrapped PNG card, tiered EV/IV/Nature publishing) in one commit. The commit message acknowledges this:
-> "These three changes all reshape the public-share experience and share the same plumbing."
-
-Concerns:
-- **No rollback granularity.** If the `redact-paste.ts` tiered publishing logic introduces a regression, reverting `46662e0` also removes the team card download feature and the duplicate CTA — two unrelated features go with it.
-- **`redact-paste.ts` has no tests.** The module performs line-by-line Showdown paste surgery (stripping EVs, IVs, Nature, Item on a per-field basis). This is exactly the kind of string-manipulation logic that benefits from unit tests covering edge cases (multi-form Pokemon, nickname `(F)` gender markers, species with `@` in the name). No test file exists.
-- **`team-graphic/route.tsx` reaches 526 lines.** The new `isWrapped` branch adds ~280 lines of inline JSX to an already large route file. This is a good candidate for extraction into a dedicated `WrappedCard.tsx` Satori component.
-
-**Recommended ticket:** Add `redact-paste.test.ts` covering all four Showdown line formats; extract the wrapped-card JSX from `route.tsx`.
-
----
-
-### 4. `swarm` Commit Mixes Research Docs with Production Code Changes (MEDIUM)
-
-**Commit:** `506d79b` — 41 files, 4588 insertions / 72 deletions
-
-The swarm nightly commit bundles:
-- 7 `.swarm/` research markdown files (not part of the app)
-- Production code changes: `src/app/s/[id]/opengraph-image.tsx` (505 lines, new), `src/components/seo/JsonLd.tsx` (71 lines, new), `src/app/api/cleanup/route.ts`, `src/app/api/discord/route.ts`, `public/manifest.json`, and 9 other app files
-
-Mixing research artifacts with production changes makes it impossible to bisect if the OG image or JSON-LD output introduces a regression. The `.swarm/` directory is read-only research output — it should be committed separately or excluded from production change commits.
-
-**No immediate action needed**, but the pattern should be avoided going forward. Swarm research output and app code changes belong in separate commits.
-
----
-
-### 5. `PokemonDetailSlide.tsx` at 962 Lines — Compound Component Creep (LOW-MEDIUM)
-
-**File:** `src/components/report/PokemonDetailSlide.tsx` (962 lines after `ac12688` + `bdc6637` additions)
-
-This file has grown across multiple tickets (VGC-75 added the stat delta strip, the mega fixes added the Mega toggle path, the SP-only regulation work added additional conditional branches). At 962 lines it is the largest component in the codebase and handles:
-- Stat bar rendering
-- Mega vs base toggle with regulation gating
-- Speed tier comparison callout
-- Stat delta strip (new in VGC-75)
-- Move detail panel
-- Type badge rendering
-
-There are no `TODO` or `FIXME` comments left behind, and there are no `console.log` statements — the file is clean. However the complexity is high enough that future changes have a meaningful chance of introducing regressions.
-
-**Recommended ticket:** Split `PokemonDetailSlide` into sub-components: `StatBarsPanel`, `MegaToggleHeader`, `MovesPanel`. Reduces per-component line count and makes individual sections independently testable.
-
----
-
-### 6. `useExploreUrlSync` Test Default Mismatch Is Also a Semantic Bug (LOW)
-
-**File:** `src/hooks/useExploreUrlSync.ts` line 82
-
-```typescript
-if (filters.sort !== "popular") params.set("sort", filters.sort);
+```ts
+<strong>${commenterName}</strong> commented on <strong>${reportTitle}</strong>
+...
+<p ...>${commentBody}</p>
 ```
 
-This means `sort=popular` is never written to the URL (treated as the canonical default). But the sort default was changed to `"popular"` at some point — previously `"newest"` was the default. If a user bookmarks a URL with no `sort` param, they expect "popular" results, and that is what they get. However, any external link with an explicit `?sort=popular` query string will also work identically. The asymmetry is harmless but the test file's `"newest"` assertions are a reliable signal that the URL serialization contract changed without a corresponding doc update or test fix.
+An attacker can set their Clerk display name or submit a comment containing `<script>` or `<img onerror=...>` tags. While most modern email clients strip scripts, many still render arbitrary HTML, enabling phishing links disguised as UI elements, form injection, and CSS-based data exfiltration.
+
+The weekly-digest cron (`src/app/api/cron/weekly-digest/route.ts`) has its own local `escapeHtml()` (added in `6f1e552`), but `src/lib/email.ts` has **no** escape function at all. The `buildWelcomeEmailHtml()` function (same file, line 219) also interpolates `firstName` raw.
+
+**Fix**: Add `escapeHtml()` to `src/lib/email.ts` and apply it to all user-controlled interpolations in `buildCommentNotificationHtml()` and `buildWelcomeEmailHtml()`. Consider extracting the helper to a shared `src/lib/utils/escape-html.ts` to avoid the duplicate in weekly-digest.
+
+**Follow-up ticket**: YES — P0 security fix.
 
 ---
 
-## No Console Statements or Commented-Out Code Found
+## HIGH: Navbar Save Effect Missing Abort/Cancellation (src/components/layout/Navbar.tsx)
 
-A full grep across `src/app/`, `src/components/`, `src/hooks/`, and `src/lib/` found:
-- **No `console.log` or `console.warn` statements** (only `console.error` in API catch blocks — appropriate)
-- **No `TODO` or `FIXME` comments** in source files
-- **No commented-out code blocks** in recently modified files
+**Commit**: `850e91c` (delete share + reaction docks)
+**File**: `src/components/layout/Navbar.tsx`, lines 197-208
+**Risk**: Race condition — stale setState on unmount
 
-Error handling is consistent across API routes: every route wraps handlers in try/catch and returns structured `NextResponse.json({ error: "..." }, { status: 500 })`. The pattern is uniform.
+The `useEffect` that fetches `/api/user/saved` on mount has no cancellation mechanism:
+
+```ts
+useEffect(() => {
+  if (!canSave || !activeShareId) return;
+  fetch("/api/user/saved")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => {
+      if (data?.reports?.some(...)) { setSaved(true); }
+      else { setSaved(false); }
+    })
+    .catch(() => {});
+}, [canSave, activeShareId]);
+```
+
+If the user navigates away (changing `activeShareId`) before the fetch resolves, the `.then` will call `setSaved` with stale data for the previous share. In React 18+ strict mode this also fires twice in development.
+
+**Fix**: Add an AbortController or a `cancelled` flag pattern (as used correctly in `DoubleTapLikeOverlay.tsx` line 141).
 
 ---
 
-## Churn Summary
+## HIGH: Manifest Screenshots Reference Non-Existent Files (public/manifest.json)
 
-| File cluster | Commits touching it |
-|---|---|
-| `PokemonCard.tsx` / Mega toggle logic | 4 (ecf9e00, 3ec0e3d, e514a8e, ac12688) |
-| `champions-dex.ts` / Mega data | 3 (f701a5c, fa2663b, 506d79b) |
-| Share/OG pipeline | 3 (46662e0, cd8984d, 506d79b) |
-| Explore filters | 2 (a2a8cc2, 7dd30b4) |
+**Commit**: `09c073c` (PWA engagement-triggered install prompt)
+**File**: `public/manifest.json`, lines 82-108
+**Risk**: Broken PWA enhanced install dialog on Chrome
+
+The manifest references 4 screenshot paths (`/screenshots/desktop-team-report.png`, etc.) but the `public/screenshots/` directory does not exist. Chrome's enhanced install dialog silently degrades, but Lighthouse PWA audits will flag the broken references.
+
+The commit message acknowledged this ("actual PNGs to be captured and placed there"), but no follow-up ticket was created.
+
+**Fix**: Either capture and add the screenshots, or revert the manifest entries to prevent broken references. File a ticket.
+
+**Follow-up ticket**: YES — capture PWA screenshots.
 
 ---
 
-## Priority Follow-Up Tickets
+## MEDIUM: Share INSERT Column Mismatch Shipped to Prod (src/app/api/share/route.ts)
 
-| Priority | Title |
-|---|---|
-| P1 | Fix vitest installation + update useExploreUrlSync test defaults to "popular" |
-| P1 | Add `redact-paste.test.ts` covering all four Showdown paste line formats |
-| P2 | Extract `SLUG_MAP` into `src/lib/data/sprite-slug-map.ts` — eliminate OG image duplication |
-| P2 | Split `PokemonDetailSlide.tsx` (962 lines) into StatBarsPanel + MegaToggleHeader + MovesPanel |
-| P3 | Extract wrapped-card JSX from `team-graphic/route.tsx` into a `WrappedCard.tsx` Satori component |
-| P3 | Separate swarm research commits from production app code commits going forward |
+**Commits**: `90c57c2` introduced the bug (swarm 17-05-26), `b1e95df` fixed it (swarm 18-05-26)
+**File**: `src/app/api/share/route.ts`
+**Risk**: Data corruption — ownership corruption on shares created between these commits
+
+The VGC-190 unlisted tier commit added `is_unlisted` to the INSERT VALUES but not the column list, shifting `owner_id` to receive a boolean. This was live for approximately 24 hours. The commit message in `b1e95df` mentions a repair draft at `.swarm/drafts/vgc195-db-repair.sql`.
+
+**Question**: Was the repair SQL actually run against production? If shares were created during that window, ownership is corrupted. This needs confirmation.
+
+**Follow-up ticket**: YES — verify VGC-195 DB repair was executed.
+
+---
+
+## MEDIUM: Churned Components — 3 Build/Delete Cycles in One Day (multiple commits)
+
+**Commits**: `b1af62f` (create), `3ace051` (rewrite), `850e91c` (delete)
+**Files**: `ShareDock.tsx`, `FloatingReactionDock.tsx`, `useTouchIdleHide.ts`
+**Risk**: Wasted build minutes and review effort
+
+Three components were created, rewritten with new UX patterns, and then fully deleted — all within the same day (May 20). While the final state is clean, this represents 3 separate commits that each modified `page.tsx` and `Navbar.tsx`. If these had been pushed individually, that would have been 3 Vercel builds for features that ended up deleted.
+
+**Lesson**: For experimental UI, prototype locally before committing. The current batching strategy (commit locally, push once) mitigated the build cost, but the commit history is noisy.
+
+---
+
+## MEDIUM: page.tsx is 1,881 Lines (src/app/page.tsx)
+
+**Multiple commits**: Nearly every feature commit touches this file
+**Risk**: Merge conflicts, readability, maintainability
+
+`page.tsx` has grown to 1,881 lines as a single "use client" component (`HomeContent`). It contains presentation mode logic, share flow, CTA persistence, view tracking, fork flow, version comparison, tour system, and more. Every UI feature commit has to modify this file, creating a constant merge-conflict hotspot.
+
+**Fix**: Extract logical sections into custom hooks or sub-components:
+- Share/fork CTA logic -> `useShareCta.ts`
+- View tracking -> `useViewTracking.ts`
+- Presentation mode orchestration -> `usePresentationMode.ts`
+
+**Follow-up ticket**: YES — refactor page.tsx into composable pieces.
+
+---
+
+## MEDIUM: i18n Stubs Are Empty Strings (6 language files)
+
+**Commit**: `b1e95df` (VGC-121: ShareModal i18n)
+**Files**: `src/lib/i18n/translations/{fr,es,it,ja,ko,zh}.ts`
+**Risk**: Broken UI for non-English users
+
+All 6 non-English translation files have empty-string stubs for the ~26 ShareModal keys added in VGC-121. The `ShareModal.tsx` uses a `Proxy` that falls back to English when the value is empty (`""`), which is clever but fragile — if the Proxy pattern is removed or if a key is missing entirely (not just empty), users will see blank buttons and labels.
+
+Additionally, the ExploreFilters i18n keys added in `6f1e552` (VGC-199) also have empty stubs in non-English files.
+
+**Fix**: At minimum, copy the English strings as placeholders into all translation files. Better: use a typed i18n system that enforces key completeness at build time.
+
+**Follow-up ticket**: YES — translate or copy English fallbacks for ShareModal + ExploreFilters keys.
+
+---
+
+## LOW: DoubleTapLikeOverlay Inline `<style>` on Every Render (src/components/social/DoubleTapLikeOverlay.tsx)
+
+**Commit**: `3ace051` (Instagram-style dock UX)
+**File**: `src/components/social/DoubleTapLikeOverlay.tsx`, lines 291-300
+**Risk**: Minor performance — repeated style injection
+
+The component injects a `<style>` block with `@keyframes` on every render cycle. Since this is a fixed-position overlay that is always mounted on shared views, the styles are re-injected on every heart spawn/despawn state change.
+
+**Fix**: Move the keyframe definitions to `globals.css` or use a `useEffect`-based style injection that runs once on mount.
+
+---
+
+## LOW: InstallPrompt localStorage Access Without Try/Catch (src/components/ui/InstallPrompt.tsx)
+
+**Commit**: `09c073c` (PWA engagement prompt)
+**File**: `src/components/ui/InstallPrompt.tsx`, lines 20-21
+**Risk**: Crash in private browsing on older Safari
+
+```ts
+const dismissedAt = localStorage.getItem(DISMISS_KEY);
+```
+
+This is called at the top of a `useEffect` without a try/catch. In older Safari private browsing, `localStorage` throws on access. The CTA persistence code in `page.tsx` (line 637) correctly wraps localStorage in try/catch — this should too.
+
+---
+
+## LOW: Weekly Digest Send Errors Silently Swallowed (src/app/api/cron/weekly-digest/route.ts)
+
+**Commit**: `767ef07` (VGC-201: batch Clerk getUserList)
+**File**: `src/app/api/cron/weekly-digest/route.ts`, lines 352-357
+**Risk**: Silent email delivery failures
+
+The parallel batch sending catches failures via `.catch(() => null)` and increments the `errors` counter, but the actual error is swallowed. If Resend rate-limits the batch or rejects emails, there is no logged reason.
+
+**Fix**: Log the error in the catch: `.catch((e) => { console.error('Email send failed:', e); return null; })`.
+
+---
+
+## INFORMATIONAL: Dead Code Already Cleaned Well
+
+Across commits `761a10d`, `767ef07`, and `90c57c2`, approximately 17 dead exports and 3 unused imports were systematically removed. The codebase is notably clean of dead code as of HEAD. Good hygiene.
+
+---
+
+## Summary of Follow-Up Tickets Recommended
+
+| Priority | Issue | File(s) |
+|----------|-------|---------|
+| P0 | XSS in comment notification email — add escapeHtml | `src/lib/email.ts` |
+| P1 | Verify VGC-195 DB repair was executed | `src/app/api/share/route.ts` |
+| P2 | Navbar save effect missing abort controller | `src/components/layout/Navbar.tsx` |
+| P2 | Capture PWA screenshots or revert manifest | `public/manifest.json` |
+| P2 | Translate or backfill i18n empty stubs | `src/lib/i18n/translations/*.ts` |
+| P3 | Refactor page.tsx (1,881 lines) | `src/app/page.tsx` |
+| P3 | InstallPrompt localStorage try/catch | `src/components/ui/InstallPrompt.tsx` |
+| P3 | Weekly digest error logging | `src/app/api/cron/weekly-digest/route.ts` |
