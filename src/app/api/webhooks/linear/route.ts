@@ -47,3 +47,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 }
+
+export function GET() {
+  return NextResponse.json(
+    { error: "Method not allowed. This endpoint accepts POST requests only." },
+    { status: 405, headers: { Allow: "POST" } }
+  );
+}
