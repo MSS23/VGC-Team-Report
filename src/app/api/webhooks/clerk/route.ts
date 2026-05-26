@@ -67,6 +67,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("Clerk webhook handler error:", e);
-    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "handler_error" });
   }
 }
