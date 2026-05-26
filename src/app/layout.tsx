@@ -8,7 +8,6 @@ import { ConnectivityStatus } from "@/components/ui/ConnectivityStatus";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ClarityProvider } from "@/components/providers/ClarityProvider";
 import { CookieBanner } from "@/components/providers/CookieBanner";
-import { ConsentGate } from "@/components/providers/ConsentGate";
 import { JsonLd, OrganizationJsonLd, WebSiteSchema } from "@/components/seo/JsonLd";
 import { PersistentNavbar } from "@/components/layout/PersistentNavbar";
 import "./globals.css";
