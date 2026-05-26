@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { JsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { PageFooter } from "@/components/layout/PageFooter";
 
 export const metadata: Metadata = {
@@ -120,6 +120,10 @@ export default function FAQPage() {
   return (
     <div className="min-h-screen bg-background">
       <JsonLd data={faqJsonLd} />
+      <BreadcrumbJsonLd items={[
+        { name: "Home", url: "https://pokemonvgcteamreport.com" },
+        { name: "FAQ", url: "https://pokemonvgcteamreport.com/faq" },
+      ]} />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         {/* Breadcrumb */}

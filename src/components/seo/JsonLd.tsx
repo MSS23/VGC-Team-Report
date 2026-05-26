@@ -140,6 +140,28 @@ export function SportsEventJsonLd({ events }: { events: SportsEventData[] }) {
   return <JsonLd data={schemaData as Record<string, unknown>} />;
 }
 
+interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
+export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: items.map((item, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: item.name,
+          item: item.url,
+        })),
+      }}
+    />
+  );
+}
+
 export function FAQPageJsonLd() {
   return (
     <JsonLd
