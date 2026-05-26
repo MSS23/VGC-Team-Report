@@ -27,6 +27,23 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.20",
+    title: "Webhook Reliability, SEO & Accessibility Fixes",
+    emoji: "🔧",
+    highlight: false,
+    items: [
+      { type: "fixed", text: "Linear webhook handler fixed — was reading wrong env var name (LINEAR_WEBHOOK_SECRET → LINEAR_WEBHOOK_SIGNING_SECRET), wrong signature header (x-linear-signature → linear-signature), and missing force-dynamic export. All three issues caused every webhook delivery to fail." },
+      { type: "fixed", text: "PostHog webhook now returns 200 on internal errors instead of 500, preventing PostHog from auto-disabling the webhook after transient failures." },
+      { type: "fixed", text: "Clerk webhook now returns 200 on internal handler errors (e.g. failed email sends) to prevent Clerk from retrying the entire webhook event." },
+      { type: "improved", text: "All webhook routes (Linear, PostHog, Clerk) now return 405 Method Not Allowed for GET requests with proper Allow header." },
+      { type: "improved", text: "SEO: Added BreadcrumbList JSON-LD structured data to FAQ, Changelog, and Tournaments pages for richer search engine result snippets." },
+      { type: "improved", text: "SEO: Added /compare page to the XML sitemap; set robots noindex on /compare to prevent thin-content indexing." },
+      { type: "improved", text: "Accessibility: Error, 404, and global error pages now have role=alert, aria-hidden on decorative icons, and aria-live=assertive for screen reader announcements." },
+      { type: "improved", text: "Removed unused ConsentGate import from root layout." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.19",
     title: "Performance, Security & Accessibility Hardening",
     emoji: "⚡",
