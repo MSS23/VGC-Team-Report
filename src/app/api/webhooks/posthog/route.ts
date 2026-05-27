@@ -1,6 +1,8 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 // ── Session timeline enrichment ──────────────────────────────────────────────
 // On every webhook, query PostHog for the user's last ~15 events leading up to
 // the exception. The webhook fires once per Linear ticket, so this is a single
@@ -261,7 +263,7 @@ export async function POST(request: Request) {
 
     if (!linearRes.data?.issueCreate?.success) {
       console.error("PostHog webhook: Linear issue creation failed", linearRes);
-      return NextResponse.json({ error: "Linear creation failed" }, { status: 500 });
+      return NextResponse.json({ ok: false, error: "Linear creation failed" });
     }
 
     const issue = linearRes.data.issueCreate.issue;
@@ -303,7 +305,7 @@ export async function POST(request: Request) {
     });
   } catch (e) {
     console.error("PostHog webhook error:", e);
-    return NextResponse.json({ error: "Webhook failed" }, { status: 500 });
+    return NextResponse.json({ ok: false });
   }
 }
 
