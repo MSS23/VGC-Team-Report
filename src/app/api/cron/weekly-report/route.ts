@@ -14,22 +14,31 @@ async function runLinearDigest() {
 
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  async function query(q: string) {
+  async function query(q: string, variables?: Record<string, unknown>) {
     const linearController = new AbortController();
     const linearTimeout = setTimeout(() => linearController.abort(), 5000);
     const res = await fetch(LINEAR_API, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: apiKey! },
-      body: JSON.stringify({ query: q }),
+      body: JSON.stringify({ query: q, variables }),
       signal: linearController.signal,
     }).finally(() => clearTimeout(linearTimeout));
     return (await res.json()).data;
   }
 
   try {
-    const completed = await query(`{ team(id: "${teamId}") { issues(filter: { state: { type: { eq: "completed" } }, completedAt: { gte: "${oneWeekAgo}" } }, first: 50) { nodes { identifier title } } } }`);
-    const inProgress = await query(`{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title } } } }`);
-    const inReview = await query(`{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Review" } } }, first: 50) { nodes { identifier title } } } }`);
+    const completed = await query(
+      `query($teamId: String!, $since: DateTime!) { team(id: $teamId) { issues(filter: { state: { type: { eq: "completed" } }, completedAt: { gte: $since } }, first: 50) { nodes { identifier title } } } }`,
+      { teamId, since: oneWeekAgo },
+    );
+    const inProgress = await query(
+      `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title } } } }`,
+      { teamId },
+    );
+    const inReview = await query(
+      `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Review" } } }, first: 50) { nodes { identifier title } } } }`,
+      { teamId },
+    );
 
     const done = completed.team.issues.nodes;
     const wip = inProgress.team.issues.nodes;

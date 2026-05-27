@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   } catch (e) {
     console.error("Setup error:", e);
     return NextResponse.json(
-      { error: "Setup failed", details: String(e) },
+      { error: "Setup failed" },
       { status: 500 }
     );
   }
