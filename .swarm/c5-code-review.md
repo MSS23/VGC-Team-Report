@@ -1,150 +1,98 @@
 # Code Review — Last 20 Commits (main)
 
-**Date:** 2026-05-07  
-**Range:** `main~20..main` (c247fc1 → e5b4bfa)  
+**Date:** 2026-05-27  
+**Range:** `03c1547..850e91c` (20 commits)  
 **Reviewer:** Claude (automated audit)
 
 ---
 
-## Commit Overview
+## Prioritized Findings
 
-| SHA | Message | Files Changed | Rating |
-|-----|---------|--------------|--------|
-| e5b4bfa | docs(changelog): v5.9 entry | 1 | Clean |
-| ecf9e00 | fix(mega): toggle requires Reg M-A AND Mega Stone | 1 | Clean |
-| 3ec0e3d | fix(pokemon-card): always show flip toggle | 1 | Clean |
-| e514a8e | fix(analysis): suppress Megas outside Reg M-A | 1 | Clean |
-| a2a8cc2 | fix(explore): popular/views feed pagination + fork credits | 3 | Clean |
-| 50f3426 | docs(changelog): v5.8 entry | 1 | Clean |
-| f701a5c | fix(champions-dex): align base species with Serebii | 1 | Clean |
-| 46662e0 | VGC-140/141/142: share viewing + duplicate + team card + publishing | 11 | Large, reviewed |
-| 7dd30b4 | VGC-143: rental code filter + Rental badge | 3 | Clean |
-| cd8984d | VGC-146: Zod schema validation on share/cache reads | 2 | Good |
-| fa2663b | VGC-144: derive CHAMPIONS_DEX megas from canonical list | 1 | Clean |
-| 4bb854b | VGC-145: delete dead components/lib/exports | 9 | Clean |
-| 506d79b | swarm: nightly improvements 07-05-26 (#14) | 41 | Large, see below |
-| ac12688 | Merge: integrate VGC-69/-75/-95/-100/-106/-111/-135/-138/-139 | 9 | Merge |
-| ddaca39 | feat(report): SP-only display in Reg M-A | ~10 | Clean |
-| 6b8176a | VGC-37: OTS sheet + QR code + PNG download (#9) | 3 | Reviewed |
-| bdc6637 | VGC-75: Mega vs base stat delta strip (#10) | ~5 | Clean |
-| bdc6637 | VGC-69: one-click try — sample report on landing (#8) | ~5 | Clean |
-| c247fc1 | VGC-95: Cypress E2E tests for explore + champions (#11) | 2 | Good |
+### 1. Dock UX Churn — Built, Rewritten, and Deleted in 8 Hours (HIGH)
+
+**Commits:** `b1af62f` (create) -> `3ace051` (rewrite) -> `850e91c` (delete)
+
+`ShareDock.tsx`, `FloatingReactionDock.tsx`, and `useTouchIdleHide.ts` were created, significantly rewritten (brief-flash + peek-tab + data-vgc-dock), and then entirely deleted — all on 2026-05-20. The 345-line `DoubleTapLikeOverlay.tsx` was also added in the same rewrite and survives. Net churn: ~600 lines added then removed in a single day.
+
+**Impact:** Wasted review bandwidth and inflated the diff. The intermediate commits are noise in `git blame` and `git bisect`. **Follow-up:** No action needed now (files are gone), but future UI experiments should be prototyped in a branch rather than committed to main in rapid succession.
 
 ---
 
-## Findings
+### 2. Weekly Digest N+1 Query Still Present Per-User (HIGH)
 
-### 1. Known Failing Tests Never Fixed — Acknowledged Tech Debt (HIGH)
+**File:** `src/app/api/cron/weekly-digest/route.ts` lines 312-323
 
-**Commit:** `46662e0` (VGC-140/141/142)  
-**File:** `src/hooks/__tests__/useExploreUrlSync.test.ts`
+The Clerk N+1 was fixed (VGC-201), but a per-user engagement stats query remains inside the loop:
 
-The commit message explicitly notes:
-> "Existing 3 useExploreUrlSync test failures are pre-existing (default sort changed to 'popular' in fc8b08d era; tests were never updated) and reproduce on origin/main."
-
-Confirmed: `DEFAULTS.sort` in `useExploreUrlSync.ts` is `"popular"` (line 38), but the test at line 8 asserts `toBe("newest")`. Across 6 test cases, all "default sort" assertions are stale. Beyond the sort mismatch, running any tests with the project's Jest configuration fails entirely because test files use `vitest` imports (`import { describe, it, expect } from "vitest"`) while the runner invoked by most tooling is Jest — `vitest` is not installed in `node_modules` (only listed as a devDependency). This means `npm test` silently reports 14 failed suites with zero tests run — all green status checks are vacuous.
-
-**Impact:** CI test gate is broken across the entire test suite. Any commit that breaks runtime behaviour would not be caught.
-
-**Recommended ticket:** Fix `useExploreUrlSync` test defaults to match `"popular"`, install `vitest` properly, and verify `npm test` produces green output before the next push.
-
----
-
-### 2. `opengraph-image.tsx` Duplicates `sprite-slug.ts` Logic — Documented But Untracked (MEDIUM)
-
-**Commit:** `506d79b` (swarm nightly)  
-**File:** `src/app/s/[id]/opengraph-image.tsx` lines 8–45
-
-A ~40-entry `SLUG_MAP` constant and `resolveSlug` function are copied verbatim from `src/lib/utils/sprite-slug.ts` with an inline comment:
-> "Mirrors the slug logic from src/lib/utils/sprite-slug.ts — duplicated here because edge runtime cannot import from @/lib."
-
-The rationale is valid (edge runtime cannot pull in Node.js-linked modules), but the consequence is that any new Pokemon added to `sprite-slug.ts` must also be added here manually or OG images will silently generate broken sprite URLs. This already caused the `opengraph-image.tsx` to be reverted once in the previous commit window (per the prior review finding on `221da19`).
-
-`src/app/api/team-graphic/route.tsx` correctly imports `resolveSlug` from `@/lib/utils/sprite-slug` because it is a regular Node.js API route — the divergence shows the edge runtime constraint is specific to the OG image file.
-
-**Recommended ticket:** Extract the SLUG_MAP into a separate file with no Node imports (`src/lib/data/sprite-slug-map.ts`), importable from both the edge OG handler and the regular route, eliminating the manual mirror.
-
----
-
-### 3. `VGC-140/141/142` Bundles Three Tickets in One Commit (MEDIUM)
-
-**Commit:** `46662e0` — 11 files, 633 insertions / 19 deletions
-
-The commit combines three independent features (Duplicate CTA, Spotify-Wrapped PNG card, tiered EV/IV/Nature publishing) in one commit. The commit message acknowledges this:
-> "These three changes all reshape the public-share experience and share the same plumbing."
-
-Concerns:
-- **No rollback granularity.** If the `redact-paste.ts` tiered publishing logic introduces a regression, reverting `46662e0` also removes the team card download feature and the duplicate CTA — two unrelated features go with it.
-- **`redact-paste.ts` has no tests.** The module performs line-by-line Showdown paste surgery (stripping EVs, IVs, Nature, Item on a per-field basis). This is exactly the kind of string-manipulation logic that benefits from unit tests covering edge cases (multi-form Pokemon, nickname `(F)` gender markers, species with `@` in the name). No test file exists.
-- **`team-graphic/route.tsx` reaches 526 lines.** The new `isWrapped` branch adds ~280 lines of inline JSX to an already large route file. This is a good candidate for extraction into a dedicated `WrappedCard.tsx` Satori component.
-
-**Recommended ticket:** Add `redact-paste.test.ts` covering all four Showdown line formats; extract the wrapped-card JSX from `route.tsx`.
-
----
-
-### 4. `swarm` Commit Mixes Research Docs with Production Code Changes (MEDIUM)
-
-**Commit:** `506d79b` — 41 files, 4588 insertions / 72 deletions
-
-The swarm nightly commit bundles:
-- 7 `.swarm/` research markdown files (not part of the app)
-- Production code changes: `src/app/s/[id]/opengraph-image.tsx` (505 lines, new), `src/components/seo/JsonLd.tsx` (71 lines, new), `src/app/api/cleanup/route.ts`, `src/app/api/discord/route.ts`, `public/manifest.json`, and 9 other app files
-
-Mixing research artifacts with production changes makes it impossible to bisect if the OG image or JSON-LD output introduces a regression. The `.swarm/` directory is read-only research output — it should be committed separately or excluded from production change commits.
-
-**No immediate action needed**, but the pattern should be avoided going forward. Swarm research output and app code changes belong in separate commits.
-
----
-
-### 5. `PokemonDetailSlide.tsx` at 962 Lines — Compound Component Creep (LOW-MEDIUM)
-
-**File:** `src/components/report/PokemonDetailSlide.tsx` (962 lines after `ac12688` + `bdc6637` additions)
-
-This file has grown across multiple tickets (VGC-75 added the stat delta strip, the mega fixes added the Mega toggle path, the SP-only regulation work added additional conditional branches). At 962 lines it is the largest component in the codebase and handles:
-- Stat bar rendering
-- Mega vs base toggle with regulation gating
-- Speed tier comparison callout
-- Stat delta strip (new in VGC-75)
-- Move detail panel
-- Type badge rendering
-
-There are no `TODO` or `FIXME` comments left behind, and there are no `console.log` statements — the file is clean. However the complexity is high enough that future changes have a meaningful chance of introducing regressions.
-
-**Recommended ticket:** Split `PokemonDetailSlide` into sub-components: `StatBarsPanel`, `MegaToggleHeader`, `MovesPanel`. Reduces per-component line count and makes individual sections independently testable.
-
----
-
-### 6. `useExploreUrlSync` Test Default Mismatch Is Also a Semantic Bug (LOW)
-
-**File:** `src/hooks/useExploreUrlSync.ts` line 82
-
-```typescript
-if (filters.sort !== "popular") params.set("sort", filters.sort);
+```sql
+SELECT ... FROM shares r LEFT JOIN comments c ... LEFT JOIN reactions rc ...
+WHERE r.owner_id = ${userId} AND r.deleted_at IS NULL
 ```
 
-This means `sort=popular` is never written to the URL (treated as the canonical default). But the sort default was changed to `"popular"` at some point — previously `"newest"` was the default. If a user bookmarks a URL with no `sort` param, they expect "popular" results, and that is what they get. However, any external link with an explicit `?sort=popular` query string will also work identically. The asymmetry is harmless but the test file's `"newest"` assertions are a reliable signal that the URL serialization contract changed without a corresponding doc update or test fix.
+With 500 users, this is 500 sequential DB queries inside a single serverless invocation. At scale this will timeout the Vercel function (default 10s on Pro). **Follow-up ticket:** Batch the engagement stats query — a single `GROUP BY owner_id` CTE returning all 500 users' stats eliminates the loop.
 
 ---
 
-## No Console Statements or Commented-Out Code Found
+### 3. Email Unsubscribe Link Is a Dead End (HIGH — CAN-SPAM)
 
-A full grep across `src/app/`, `src/components/`, `src/hooks/`, and `src/lib/` found:
-- **No `console.log` or `console.warn` statements** (only `console.error` in API catch blocks — appropriate)
-- **No `TODO` or `FIXME` comments** in source files
-- **No commented-out code blocks** in recently modified files
+**File:** `src/app/api/cron/weekly-digest/route.ts` lines 111, 204
 
-Error handling is consistent across API routes: every route wraps handlers in try/catch and returns structured `NextResponse.json({ error: "..." }, { status: 500 })`. The pattern is uniform.
+Both email templates say "To unsubscribe from weekly digests, visit your notification preferences" but no `/notification-preferences` or `/unsubscribe` page exists. The opt-out check (`user.publicMetadata?.digestUnsubscribed`) works server-side, but users have no self-service way to set that flag. Under CAN-SPAM and GDPR, every marketing email must contain a functional unsubscribe mechanism. **Follow-up ticket: P0** — add `/dashboard/notifications/preferences` page or a one-click unsubscribe token link.
 
 ---
 
-## Churn Summary
+### 4. SQL Injection Surface in Champions Meta CTE (MEDIUM)
 
-| File cluster | Commits touching it |
-|---|---|
-| `PokemonCard.tsx` / Mega toggle logic | 4 (ecf9e00, 3ec0e3d, e514a8e, ac12688) |
-| `champions-dex.ts` / Mega data | 3 (f701a5c, fa2663b, 506d79b) |
-| Share/OG pipeline | 3 (46662e0, cd8984d, 506d79b) |
-| Explore filters | 2 (a2a8cc2, 7dd30b4) |
+**File:** `src/app/api/champions/meta/route.ts` (commit `282aef1`)
+
+The 6-CTE query uses `regexp_split_to_table` on user-submitted paste text stored in `data->>'paste'`. While the paste is not interpolated (it comes from the DB, not the request), the regex operations run on arbitrary user content. A paste containing pathological regex patterns (e.g., deeply nested `((((...))))` blocks) could cause exponential backtracking in PostgreSQL. Low probability, but worth noting. **Mitigation:** Add a `LENGTH(paste) < 10000` guard in the `filtered` CTE.
+
+---
+
+### 5. Clerk Webhook `as unknown as` Type Cast (MEDIUM)
+
+**File:** `src/app/api/webhooks/clerk/route.ts` line 46
+
+```typescript
+const data = event.data as unknown as ClerkUserCreatedData;
+```
+
+This double-cast bypasses TypeScript's type system entirely. If Clerk changes the `user.created` event payload shape, the code will silently access undefined properties (e.g., `data.email_addresses` could be missing) with no compile-time warning. **Follow-up:** Use Zod to validate `event.data` at runtime, matching the pattern used in the notifications PATCH route.
+
+---
+
+### 6. `page.tsx` Complexity Continues to Grow (MEDIUM)
+
+**File:** `src/app/page.tsx`
+
+Across these 20 commits, `page.tsx` was touched in 4 of them. The `HomeContent` component now manages share state, localStorage persistence, fork status, presentation mode, theme overrides, and more — all in a single function component. The localStorage effect added in `850e91c` (lines 623-637) is clean but adds yet another effect to an already effect-heavy component.
+
+**Follow-up ticket:** Extract `useShareCtaPersistence(activeShareId)` custom hook to encapsulate the localStorage read/write + state, reducing `HomeContent`'s effect count.
+
+---
+
+### 7. Swarm Nightly Commits Bundle Too Much (LOW-MEDIUM, recurring)
+
+**Commits:** `767ef07`, `6f1e552`, `b1e95df`, `90c57c2`, `7dd9900`
+
+Each "swarm: nightly improvements" PR merges 8-18 sub-commits spanning security fixes, a11y work, new features, SEO changes, i18n additions, and research docs. Example: `b1e95df` (18-05-26) mixes a critical share INSERT column mismatch fix with a brand-new weekly-digest cron route and i18n extraction — all in one merge commit. Bisecting a regression across any of these is painful. The column mismatch bug itself (17-05-26 swarm introduced `is_unlisted` value without the column name) shows the risk of large bundled commits.
+
+---
+
+### 8. InstallPrompt iOS Engagement Gate Race (LOW)
+
+**File:** `src/components/ui/InstallPrompt.tsx` (commit `09c073c`, fixed in `90c57c2`)
+
+The iOS Safari branch checks `if (scrollFired)` inside a `setTimeout(60000)`, but if the user scrolls after the timer fires, the prompt never shows. Commit `90c57c2` (VGC-193) added a `pageIsShort` fallback, but the general case (user scrolls at second 61) still silently drops the prompt. Low priority — iOS A2HS is niche.
+
+---
+
+## Positive Patterns
+
+- **Accessibility work is consistent.** Every swarm nightly includes WCAG fixes (aria-pressed, aria-live, focus management, 44px touch targets). The MatchTracker Escape-key + focus-return pattern (VGC-194) is well done.
+- **Security improvements are proactive.** XSS fix in digest emails, CRLF injection guard on RESEND_FROM_EMAIL, Zod validation on notification PATCH, Next.js 16.2.6 pin for SSRF/auth CVEs.
+- **VGC-182 SQL migration is excellent.** Moving species aggregation from JS to a 6-CTE query is a textbook performance win — 5MB transfer eliminated.
+- **Error handling is uniform.** API routes consistently use try/catch with structured JSON error responses. The DoubleTapLikeOverlay has proper cleanup (timer refs, listener removal, unmount guards).
 
 ---
 
@@ -152,9 +100,9 @@ Error handling is consistent across API routes: every route wraps handlers in tr
 
 | Priority | Title |
 |---|---|
-| P1 | Fix vitest installation + update useExploreUrlSync test defaults to "popular" |
-| P1 | Add `redact-paste.test.ts` covering all four Showdown paste line formats |
-| P2 | Extract `SLUG_MAP` into `src/lib/data/sprite-slug-map.ts` — eliminate OG image duplication |
-| P2 | Split `PokemonDetailSlide.tsx` (962 lines) into StatBarsPanel + MegaToggleHeader + MovesPanel |
-| P3 | Extract wrapped-card JSX from `team-graphic/route.tsx` into a `WrappedCard.tsx` Satori component |
-| P3 | Separate swarm research commits from production app code commits going forward |
+| P0 | Add functional email unsubscribe mechanism (CAN-SPAM/GDPR) |
+| P1 | Batch weekly-digest engagement stats into single GROUP BY query |
+| P1 | Validate Clerk webhook payload with Zod instead of double-cast |
+| P2 | Extract `useShareCtaPersistence` hook from page.tsx |
+| P2 | Add LENGTH guard to champions/meta CTE for paste text |
+| P3 | Separate swarm research docs from production code in future commits |

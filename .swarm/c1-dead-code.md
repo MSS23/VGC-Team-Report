@@ -1,96 +1,50 @@
-# Dead Code Scan Report - VGC Team Report
+# Dead Code Audit -- 2026-05-27
 
-**Date:** 2026-05-13  
-**Codebase:** `/home/user/VGC-Team-Report/src/`  
-**Scope:** All TypeScript/React files (280 files scanned)
+## Unused Hook
 
----
+- `src/hooks/useScrollHide.ts` -- not imported anywhere in the codebase
 
-## Findings Summary
+## Unused Dependency
 
-After comprehensive grep-based analysis across the entire codebase, **only 1 confirmed dead export** was found:
+- **axios** -- never imported in `src/`. Only present because `start-server-and-test` pulls `wait-on` which uses it. Safe to remove from top-level `dependencies`.
 
-### Confirmed Dead Code
+## Unused Exports (never imported outside defining file, excluding tests)
 
-#### 1. PdfExportButton Component
-- **File:** `/home/user/VGC-Team-Report/src/components/ui/PdfExport.tsx`
-- **Export:** `export function PdfExportButton(props: PdfExportProps)`
-- **Line:** 208-254 (~46 lines)
-- **Confidence:** HIGH
-- **Evidence:** 
-  ```
-  grep "PdfExportButton" --include="*.ts" --include="*.tsx"
-  # Result: Only appears in definition file, never imported elsewhere
-  ```
-- **Notes:** The sibling export `PrintableReport` in the same file IS actively used (imported with dynamic() in src/app/page.tsx). Only `PdfExportButton` is unused.
+| Symbol | File | Notes |
+|--------|------|-------|
+| `pokemonToShowdown` | `src/lib/utils/export-paste.ts` | Only tested, never called from app |
+| `pokemonToOpenSheet` | `src/lib/utils/export-paste.ts` | Only tested, never called from app |
+| `migrateCalcEntries` | `src/lib/utils/normalize-report.ts` | Dead after calc migration completed |
+| `replaceSpeciesInBlock` | `src/lib/utils/paste-edit.ts` | Unused utility |
+| `MoveCategory` | `src/lib/data/moves.ts` | Type export, never imported |
+| `MoveFlag` | `src/lib/data/moves.ts` | Type export, never imported |
+| `MoveData` | `src/lib/data/moves.ts` | Type export, never imported |
+| `NatureData` | `src/lib/data/natures.ts` | Type export, never imported |
+| `RegulationDetection` | `src/lib/analysis/detect-regulation.ts` | Type, never imported |
+| `detectRegulationWithSignals` | `src/lib/analysis/detect-regulation.ts` | Function never called |
+| `isDynamicAllowedOrigin` | `src/lib/security/cors.ts` | Never called |
+| `generateCsrfToken` | `src/lib/security/csrf.ts` | Never called |
+| `PrivateField` | `src/lib/sharing/redact-paste.ts` | Type, never imported |
+| `SerializedGamePlanSchema` | `src/lib/sharing/url-codec.ts` | Only in tests |
+| `SerializedMatchupPlanSchema` | `src/lib/sharing/url-codec.ts` | Only in tests |
+| `ShareableStateSchema` | `src/lib/sharing/url-codec.ts` | Only in tests |
+| `encodeShareState` | `src/lib/sharing/url-codec.ts` | Only in tests |
 
-#### 2. sanitizeInput Function
-- **File:** `/home/user/VGC-Team-Report/src/lib/security/input-validation.ts`
-- **Export:** `export function sanitizeInput(str: string): string`
-- **Lines:** 6-8 (~3 lines)
-- **Confidence:** HIGH
-- **Evidence:**
-  ```
-  grep -r "sanitizeInput" --include="*.ts" --include="*.tsx"
-  # Result: Only the export definition appears, zero external imports
-  ```
-- **Notes:** Four other functions in the same file (containsInjection, isValidIp, getClientIp, hasValidContentType) ARE used. Only sanitizeInput is dead code.
+## Previously Identified (still present)
 
----
+- `PdfExportButton` in `src/components/ui/PdfExport.tsx` -- still unused
+- `sanitizeInput` in `src/lib/security/input-validation.ts` -- still unused
 
-## Comprehensive Scan Results
+## Duplicate Routes
 
-### Categories Analyzed
+- `/notifications` and `/dashboard/notifications` serve different notification pages. `NotificationBell` links to `/notifications`; dashboard links to `/dashboard/notifications`. Likely the standalone one is legacy.
 
-1. **Exported Functions in src/lib/** (211 exports)
-   - ✓ All actively used except sanitizeInput
-   - Notable usage: Data accessors, API utilities, parsing functions all have >1 import
+## Admin-Only Routes (not dead, but never called from client)
 
-2. **React Components in src/components/** (50+ components)
-   - ✓ All actively used except PdfExportButton
-   - Verified: Navbar, ThemePicker, CommentSection, MatchupSheet all imported
+- `src/app/api/migrate/route.ts` -- manual curl; Vercel cron does not call it
+- `src/app/api/cleanup/route.ts` -- Vercel cron at 3am
+- `src/app/api/setup/route.ts` -- one-time DB bootstrap
 
-3. **Hooks in src/hooks/** (25+ custom hooks)
-   - ✓ All actively used in other components
-   - Examples: useSlideSystem → 1 import (used in page.tsx), useTeamReport → 1 import, etc.
+## Recently Changed Files (conflict risk)
 
-4. **API Routes in src/app/api/** (47 routes)
-   - ✓ All routed API endpoints are called from frontend or internal cron jobs
-   - /api/setup, /api/keep-alive, /api/migrate: Used in middleware or cron tasks
-
-5. **Type Definitions**
-   - ✓ All exported types are used either internally or by imports
-   - Examples: MoveData, NatureData, EventType all referenced in analysis code
-
-6. **Utility Exports**
-   - ✓ All major utilities used (version-diff, word-filter, diff-state, multi-import)
-
----
-
-## Safe Deletions
-
-### Quick Wins (~50 lines total)
-1. Remove `PdfExportButton` function from `src/components/ui/PdfExport.tsx` (46 lines)
-2. Remove `sanitizeInput` function from `src/lib/security/input-validation.ts` (3 lines)
-
-These deletions are safe because:
-- No imports of these symbols exist anywhere in the codebase
-- No grep-able string references (no dynamic calls)
-- Sibling/related exports remain intact and functional
-
----
-
-## Notes
-
-- **Conservative approach:** Used grep to confirm zero imports. This catches direct usage but may miss:
-  - Indirect dynamic imports via string interpolation
-  - Metaprogramming patterns
-  - Comments that appear to reference code
-- **API routes:** All routes are either called from frontend, used in cron/webhook handlers, or explicitly whitelisted (setup, migrate)
-- **No orphaned pages:** All route segments in src/app/ are reachable
-- **Type exports:** Many types are only used in their defining file (common pattern for internal types)
-
----
-
-**Estimated LOC for safe deletion:** ~50 lines  
-**Risk level:** VERY LOW (confirmed unused with zero external references)
+`src/app/page.tsx`, `src/app/changelog/ChangelogContent.tsx`, `src/components/layout/Navbar.tsx`, `src/app/sitemap.ts` -- all actively used, none are dead code.
