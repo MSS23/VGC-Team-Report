@@ -1,6 +1,33 @@
-# Discord Notification — UNSENT (no .env.local)
+# Discord Notification — UNSENT (27-05-26)
 
-**Run:** 13-05-26
+Neither `DISCORD_BUILDS_WEBHOOK` nor `DISCORD_BOT_TOKEN` are available in this remote environment.
+
+**Target channel:** 1487202217298493493 (#builds)
+
+**Payload (copy-paste ready for manual post):**
+
+```json
+{
+  "embeds": [{
+    "title": "🤖 Nightly Swarm — 27 May 2026",
+    "color": 5763719,
+    "fields": [
+      { "name": "Branch", "value": "swarm-nightly-2026-05-27", "inline": true },
+      { "name": "Commits pushed", "value": "8", "inline": true },
+      { "name": "Build status", "value": "✅ Passing", "inline": true },
+      { "name": "Linear webhook", "value": "🔧 Fixed (commit 24d052e) — human must verify Vercel env var + re-enable in Linear", "inline": false },
+      { "name": "Linear tickets closed", "value": "None (no Linear API access)", "inline": false },
+      { "name": "PostHog signals acted on", "value": "None (no credentials)", "inline": false },
+      { "name": "Updates page", "value": "12 entries added to May 2026 section (v5.21)", "inline": false },
+      { "name": "Merge conflicts", "value": "None", "inline": false },
+      { "name": "Rejected changes", "value": "None", "inline": false },
+      { "name": "PR", "value": "https://github.com/MSS23/VGC-Team-Report/pull/48", "inline": false },
+      { "name": "What was pushed", "value": "• Linear webhook handler fix (header + env var + resilience)\n• Email XSS fix (HTML-escape all user fields)\n• Timing-safe bearer comparisons on admin routes\n• GraphQL injection fix in cron routes\n• Webhook resilience (200 on errors for PostHog + Clerk)\n• A11y: 44px touch targets on Navbar + PokemonCard\n• SEO: SportsApplication + /explore keyword targeting\n• Dead code: removed useScrollHide, ReactionBar, axios", "inline": false }
+    ],
+    "footer": { "text": "vgc-overnight-swarm • channel 1487202217298493493 • Review and merge to main when ready" }
+  }]
+}
+```
 **Target channel:** #builds (ID: 1487202217298493493)
 **Reason:** DISCORD_BUILDS_WEBHOOK not set (no .env.local in environment)
 
