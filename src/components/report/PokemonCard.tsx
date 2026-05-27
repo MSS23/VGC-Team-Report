@@ -295,7 +295,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="ml-auto p-2 rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200 cursor-pointer"
+                className="ml-auto min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200 cursor-pointer"
                 title="Replace this Pokemon"
                 aria-label={`Replace ${displaySpecies}`}
               >

@@ -3,10 +3,10 @@ import { ExploreContent } from "@/components/explore/ExploreContent";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
-  title: "Explore VGC Teams | VGC Team Report",
+  title: "Explore Best VGC Teams 2026 — Pokemon Champions Team Reports",
   alternates: { canonical: "https://pokemonvgcteamreport.com/explore" },
   description:
-    "Browse community VGC team reports. Find top Pokemon Champions teams, Mega Evolution builds, and competitive team analysis from players worldwide.",
+    "Browse the best VGC teams for 2026. Find top Pokemon Champions teams, Mega Evolution builds, tournament-winning team reports, and competitive analysis from players worldwide. PokePaste alternative with full team breakdowns.",
   keywords: [
     "VGC team reports",
     "top VGC teams",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     "VGC team analysis",
   ],
   openGraph: {
-    title: "Explore VGC Teams | VGC Team Report",
+    title: "Explore Best VGC Teams 2026 — Pokemon Champions Team Reports",
     description:
       "Browse community VGC team reports. Find top Pokemon Champions teams, Mega Evolution builds, and competitive team analysis from players worldwide.",
     type: "website",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Explore VGC Teams | VGC Team Report",
+    title: "Explore Best VGC Teams 2026 — Pokemon Champions Team Reports",
     description:
       "Browse community VGC team reports. Find top Pokemon Champions teams, Mega Evolution builds, and competitive team analysis from players worldwide.",
     images: [{ url: "/explore/opengraph-image", width: 1200, height: 630, alt: "Explore VGC Teams — Browse competitive Pokemon team reports" }],

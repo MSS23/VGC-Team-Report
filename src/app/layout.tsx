@@ -117,7 +117,7 @@ export default function RootLayout({
             url: "https://pokemonvgcteamreport.com",
             description:
               "Build detailed competitive Pokemon VGC team breakdowns with notes, matchup plans, and damage calcs — then share them with the community or present at tournaments.",
-            applicationCategory: "GameApplication",
+            applicationCategory: "SportsApplication",
             operatingSystem: "Any",
             featureList: [
               "PokePaste Import",

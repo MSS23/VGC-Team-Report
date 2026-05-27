@@ -510,8 +510,9 @@ export function Navbar(props: NavbarProps) {
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Settings"
+              aria-expanded={menuOpen}
             >
               {showUser ? (
                 <div className="w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center text-accent">
