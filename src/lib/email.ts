@@ -2,6 +2,15 @@
  * Email utilities using Resend for weekly feedback summaries.
  */
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const RESEND_API = "https://api.resend.com";
 
 /**
@@ -73,9 +82,10 @@ export async function sendCommentNotificationEmail(opts: {
   try {
     const reportUrl = `${APP_URL}/report/${opts.shareId}`;
     const html = buildCommentNotificationHtml(opts.commenterName, opts.commentBody, opts.reportTitle, reportUrl);
+    const safeSubjectTitle = opts.reportTitle.replace(/[\r\n"]/g, "");
     await sendEmail({
       to: opts.ownerEmail,
-      subject: `New comment on "${opts.reportTitle}"`,
+      subject: `New comment on "${safeSubjectTitle}"`,
       html,
     });
   } catch (e) {
@@ -92,6 +102,9 @@ function buildCommentNotificationHtml(
   reportTitle: string,
   reportUrl: string,
 ) {
+  const safeName = escapeHtml(commenterName);
+  const safeBody = escapeHtml(commentBody);
+  const safeTitle = escapeHtml(reportTitle);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -127,12 +140,12 @@ function buildCommentNotificationHtml(
           <div style="background:#FFFFFF;border-radius:16px;border:1px solid #E5E7EB;padding:28px;">
             <h1 style="font-size:18px;font-weight:700;color:#111827;margin:0 0 8px;">New comment on your report</h1>
             <p style="font-size:14px;color:#6B7280;margin:0 0 20px;">
-              <strong>${commenterName}</strong> commented on <strong>${reportTitle}</strong>
+              <strong>${safeName}</strong> commented on <strong>${safeTitle}</strong>
             </p>
 
             <!-- Comment body -->
             <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:16px;margin-bottom:24px;">
-              <p style="font-size:14px;color:#374151;margin:0;line-height:1.5;white-space:pre-wrap;">${commentBody}</p>
+              <p style="font-size:14px;color:#374151;margin:0;line-height:1.5;white-space:pre-wrap;">${safeBody}</p>
             </div>
 
             <!-- CTA -->
@@ -183,6 +196,7 @@ export async function sendWelcomeEmail(opts: {
  * Table-based light theme matching the comment notification pattern.
  */
 function buildWelcomeEmailHtml(firstName: string): string {
+  const safeName = escapeHtml(firstName);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -216,7 +230,7 @@ function buildWelcomeEmailHtml(firstName: string): string {
         <!-- Main card -->
         <tr><td>
           <div style="background:#FFFFFF;border-radius:16px;border:1px solid #E5E7EB;padding:28px;">
-            <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 8px;">Welcome to VGC Team Report, ${firstName}!</h1>
+            <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 8px;">Welcome to VGC Team Report, ${safeName}!</h1>
             <p style="font-size:14px;color:#6B7280;margin:0 0 24px;">You're ready to build and share your VGC team reports.</p>
 
             <!-- Quick-start steps -->
@@ -336,14 +350,14 @@ export function buildWeeklySummaryHtml(data: {
           </td>
         </tr></table>
       </td>
-      <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;vertical-align:top;">${item.title}</td>
-      <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:12px;color:#9CA3AF;vertical-align:top;white-space:nowrap;">${item.date}</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;vertical-align:top;">${escapeHtml(item.title)}</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:12px;color:#9CA3AF;vertical-align:top;white-space:nowrap;">${escapeHtml(item.date)}</td>
     </tr>`
   ).join("");
 
   const topRequestRows = data.topRequests.slice(0, 5).map((req) =>
     `<tr>
-      <td style="padding:10px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;">${req.title}</td>
+      <td style="padding:10px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;">${escapeHtml(req.title)}</td>
       <td style="padding:10px 16px;border-bottom:1px solid #F3F4F6;font-size:12px;font-weight:700;color:#E11D48;text-align:right;white-space:nowrap;">${req.count}x</td>
     </tr>`
   ).join("");

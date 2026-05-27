@@ -1,8 +1,16 @@
+import { timingSafeEqual } from "crypto";
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 const CLEANUP_SECRET = process.env.CLEANUP_SECRET;
+
+function safeCompare(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a, "utf8");
+  const bBuf = Buffer.from(b, "utf8");
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
+}
 const DEFAULT_TTL_DAYS = 90;
 const TRASH_TTL_DAYS = 30;
 const MAX_DELETE_PER_RUN = 500;
@@ -97,7 +105,7 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   // Verify authorization
   const authHeader = request.headers.get("authorization");
-  if (!CLEANUP_SECRET || authHeader !== `Bearer ${CLEANUP_SECRET}`) {
+  if (!CLEANUP_SECRET || !authHeader || !safeCompare(authHeader, `Bearer ${CLEANUP_SECRET}`)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

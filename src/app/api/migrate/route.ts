@@ -1,6 +1,14 @@
+import { timingSafeEqual } from "crypto";
 import { getDb } from "@/lib/db";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
 import { NextResponse } from "next/server";
+
+function safeCompare(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a, "utf8");
+  const bBuf = Buffer.from(b, "utf8");
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
+}
 
 /**
  * POST /api/migrate
@@ -20,7 +28,8 @@ export async function POST(request: Request) {
   try {
     // Auth check — require secret to prevent abuse
     const { secret } = await request.json().catch(() => ({ secret: "" }));
-    if (!secret || secret !== process.env.MIGRATE_SECRET) {
+    const expected = process.env.MIGRATE_SECRET;
+    if (!secret || !expected || !safeCompare(secret, expected)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
