@@ -27,6 +27,27 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.21",
+    title: "Webhook Fixes, Security Hardening & Dead Code Cleanup",
+    emoji: "🔧",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Linear webhook handler: corrected signature header name (x-linear-signature to linear-signature), fixed env var name to LINEAR_WEBHOOK_SIGNING_SECRET, added force-dynamic, and graceful handling of empty bodies and unknown event types." },
+      { type: "fixed", text: "Security: all email templates now HTML-escape user-controlled fields (commenterName, commentBody, reportTitle, firstName) before interpolation — prevents stored XSS via malicious team/creator names in email clients." },
+      { type: "fixed", text: "Security: timing-safe bearer token comparison added to /api/migrate, /api/setup, and /api/cleanup DELETE routes — closes timing side-channel that could leak secret length." },
+      { type: "fixed", text: "Security: Linear GraphQL queries in daily-ops and weekly-report crons now use parameterized $teamId variables instead of string interpolation — defence-in-depth against GraphQL injection." },
+      { type: "fixed", text: "Security: /api/setup no longer exposes error details (String(e)) in 500 responses — prevents potential DB connection string leakage." },
+      { type: "fixed", text: "Webhook resilience: PostHog and Clerk webhook handlers now return 200 on internal errors instead of 500, preventing auto-disable by upstream services and retry storms that could cause duplicate emails." },
+      { type: "fixed", text: "PostHog webhook handler now has force-dynamic export to prevent Next.js static optimization." },
+      { type: "improved", text: "Accessibility: Navbar settings button bumped to 44px minimum touch target (was 36px) and now announces expanded/collapsed state via aria-expanded." },
+      { type: "improved", text: "Accessibility: PokemonCard replace button bumped to 44px minimum touch target for WCAG 2.5.5 compliance." },
+      { type: "improved", text: "SEO: applicationCategory corrected from GameApplication to SportsApplication in schema.org structured data." },
+      { type: "improved", text: "SEO: /explore page title and description updated to target 'best VGC teams 2026' and 'PokePaste alternative' keywords." },
+      { type: "improved", text: "Removed dead code: useScrollHide hook (124 lines), ReactionBar component (139 lines), and axios dependency (zero imports in codebase)." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.19",
     title: "Performance, Security & Accessibility Hardening",
     emoji: "⚡",
