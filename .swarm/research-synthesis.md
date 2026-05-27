@@ -1,4 +1,4 @@
-# Swarm Research Synthesis — 10-05-26
+# Swarm Research Synthesis — 27-05-26
 
 Synthesised from 13 Wave 1 agent reports (R1–R8, C1–C5).
 
