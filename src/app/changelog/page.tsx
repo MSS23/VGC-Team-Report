@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ChangelogContent } from "./ChangelogContent";
+import { ENTRIES } from "./data";
 
 export const metadata: Metadata = {
   title: "Changelog — VGC Team Report",
@@ -21,5 +22,5 @@ export const metadata: Metadata = {
 };
 
 export default function ChangelogPage() {
-  return <ChangelogContent />;
+  return <ChangelogContent entries={ENTRIES} />;
 }
