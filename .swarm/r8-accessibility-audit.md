@@ -1,69 +1,198 @@
-# Accessibility Audit — WCAG 2.1 AA Static Analysis
-**Date:** 2026-05-13  
-**Auditor:** Claude Code (static analysis)  
-**Scope:** `src/app/page.tsx`, `src/app/layout.tsx`, `src/app/explore/page.tsx`, `src/app/champions/page.tsx`, `src/app/s/[id]/`, `src/components/`
+# R8 — WCAG 2.1 AA Accessibility Audit (Updated 2026-05-28)
+
+**Date:** 2026-05-28
+**Scope:** Static code analysis of the VGC Team Report Next.js application
+**Standard:** WCAG 2.1 Level AA
+**Auditor:** Claude (automated)
+**Previous audits:** 2026-05-13 (20 findings), 2026-05-14 (5 deep-dive findings B1-B5)
 
 ---
 
-## Summary
+## Executive Summary
 
-The codebase has a solid baseline: a skip-to-content link, semantic `<main>` elements, widespread `aria-label` usage on icon buttons, focus traps in key modals, an `aria-live` region for slide transitions, and consistent 44×44 px touch targets. However, several high-impact gaps remain.
+The codebase demonstrates strong accessibility awareness: ShareModal has a textbook focus-trap implementation, touch targets consistently use 44x44px minimums, semantic ARIA roles are applied to complex widgets (radio groups, switches, sliders, tablists), and a skip-to-content link exists in the layout. Since the May 13/14 audits, the Toggle component's invalid `<label>` nesting was fixed (B2), the ReactionBar was replaced with a properly-labeled `SaveButton` (B3), and the ShortcutHintOverlay dismiss button gained `type="button"` (B4).
 
-**Most critical:** colour contrast for `text-text-tertiary` (#6E6E8A on #FFFFFF = 4.0:1 — fails AA for small text), pervasive use of this token at `text-[9px]`–`text-[11px]` (as low as 9 px rendered) worsens the failure significantly. Data tables (defensive/offensive coverage charts, champions top-cut table) have no `scope` attributes on `<th>` elements. Several modal dialogs are missing `aria-modal="true"` and `aria-labelledby`. The `ReactionBar` "liked" state button never announces its pressed state. The `Toggle` component renders a `<button role="switch">` inside a `<label>` — invalid nesting that confuses screen readers.
-
----
-
-## Issues Table
-
-| # | WCAG Criterion | Severity | File(s) + Line(s) | Issue | Suggested Fix |
-|---|---|---|---|---|---|
-| 1 | **1.4.3 Colour Contrast** | **Critical** | `globals.css:16` (`--text-tertiary: #6E6E8A`), used in ~200+ locations | `text-text-tertiary` on `--surface` (#FFFFFF) yields 4.0:1 — fails AA (4.5:1) for normal text. Extensively used at `text-[9px]`–`text-[11px]` which doubles the failure (large-text threshold 3:1 does not apply below 18px/14px bold). | Darken to >= #5F5F7A (passes 4.5:1 on white). Dark-mode value #9898B8 on #141428 = ~3.8:1 — also marginal; target >= #A8A8C8. |
-| 2 | **1.4.3 Colour Contrast** | **Critical** | `globals.css:16`, `ReportCard.tsx:379`, `SpotlightCard.tsx:106`, `OTSSheetModal.tsx:185`, `NotificationBell.tsx:110`, many others | Timestamps, secondary labels, embed code, and help-text rendered at `text-[9px]`–`text-[11px]` with `text-text-tertiary`. At 9 px these are below any WCAG exception and must meet 4.5:1. Current ratio fails even at normal size. | Either raise contrast token or increase font-size to >= 12 px and bold weight (then 3:1 threshold applies). |
-| 3 | **1.3.1 Info and Relationships** | **Critical** | `DefensiveCoverageChart.tsx:125–131`, `OffensiveCoverageChart.tsx:220–226`, `ChampionsContent.tsx:254–263` | Data `<table>` elements have column `<th>` elements with no `scope="col"` and row headers with no `scope="row"`. The coverage charts have a sticky left column that functions as a row header but uses `<td>`. Screen readers cannot associate cells with headers. | Add `scope="col"` to all `<th>` in `<thead>`. Change the sticky left `<td>` for the Pokemon name column to `<th scope="row">`. Add `<caption>` or `aria-label` to each table element. |
-| 4 | **4.1.2 Name, Role, Value** | **Critical** | `Toggle.tsx:10–15` | `<button role="switch">` nested inside `<label>`. The `<label>` wraps both the button and visible text, but `<button>` is not a labelable element. Screen readers double-announce. When `label=""` (as called from `Navbar.tsx:507`), the button has no accessible name at all. | Remove `<label>` wrapper. Apply `aria-label` directly on the `<button role="switch">` element. Render associated text as a sibling `<span id="...">` and reference it with `aria-labelledby`. |
-| 5 | **4.1.2 Name, Role, Value** | **Critical** | `ReactionBar.tsx:122–136` | The "like" button (signed-in path) has no `aria-label` and no `aria-pressed`. Screen readers announce only a heart SVG (which lacks accessible text) plus a number. State change (liked/unliked) is not communicated. | Add `aria-label={liked ? "Unlike report" : "Like report"}` and `aria-pressed={liked}`. |
-| 6 | **4.1.2 Name, Role, Value** | **Major** | `WalkthroughOverlay.tsx:247–248`, `VersionHistoryPanel.tsx:155–156`, `InlinePokemonEditor.tsx:132–133` | `role="dialog"` elements are missing `aria-modal="true"`. WalkthroughOverlay and InlinePokemonEditor also lack `aria-labelledby` (pointing to a visible heading). Without `aria-modal`, screen readers may continue reading content outside the dialog. | Add `aria-modal="true"` to all three. Add a matching `id` to the heading inside each dialog and reference it with `aria-labelledby`. |
-| 7 | **2.1.1 Keyboard** | **Major** | `DefensiveCoverageChart.tsx:133–138`, `OffensiveCoverageChart.tsx` | `<th>` cells in the coverage charts have `onClick` to highlight a column but no `onKeyDown`, `tabIndex`, or `role`. They are not keyboard-accessible; keyboard users cannot filter by type. | Add `tabIndex={0}`, `role="button"`, `aria-pressed`, and an `onKeyDown` handler for Enter/Space. |
-| 8 | **1.1.1 Non-text Content** | **Major** | `SpotlightCard.tsx:47`, `SpotlightCard.tsx:63`, `SpotlightCard.tsx:129–145`, `ReportCard.tsx:273–277`, many SVGs | Decorative SVGs used as status icons (star for spotlight, checkmark for verified, heart/comment/view counts) have no `aria-hidden="true"` and no accessible text. The verified creator badge uses `<span title="Verified creator">` wrapping an SVG — `title` is not reliably announced by screen readers. | Add `aria-hidden="true"` to all purely decorative SVGs. For the verified checkmark, move the label to the wrapping `<span>`: `<span aria-label="Verified creator" role="img">`. |
-| 9 | **4.1.2 Name, Role, Value** | **Major** | `Navbar.tsx:455` | The Settings / overflow menu trigger button is missing `aria-expanded={menuOpen}`. Screen readers cannot tell whether the menu is open or closed. | Add `aria-expanded={menuOpen}` to the menu trigger button (line ~455). |
-| 10 | **1.3.1 Info and Relationships** | **Major** | `PageNavbar.tsx:113–137` | Mobile bottom tab bar correctly uses `<nav aria-label="Mobile navigation">` but the active tab indicator is conveyed purely visually via accent colour and a pill. Screen readers do not know which tab is current. | Add `aria-current="page"` to the active `<Link>` in the mobile tab bar. |
-| 11 | **2.4.3 Focus Order** | **Major** | `VersionHistoryPanel.tsx:154–186` | The panel slides in from the right but does not programmatically move focus inside on open. Users who Tab after the panel opens remain at whatever element was focused before. | Add a `useEffect` that focuses the panel's close button (or first focusable child) when `open` transitions to `true`. Return focus to the trigger on close. |
-| 12 | **1.4.3 Colour Contrast** | **Major** | `ChampionsContent.tsx:135`, `ReportCard.tsx:169–181`, `Navbar.tsx:530`, badge components | The "Coming Soon" / warning badges use `text-amber-600` (#D97706) on `bg-amber-500/10` (~#FFF7ED in light mode). Contrast ratio = ~2.8:1 — fails AA. | Use `text-amber-700` (#B45309) in light mode which achieves ~4.6:1 on the same background. |
-| 13 | **1.4.3 Colour Contrast** | **Major** | `ChampionsContent.tsx:142–149`, `TypeBadge.tsx` (inferred), type badge cells throughout coverage charts | Type badge colours for Electric (#F8D030), Ice (#98D8D8), Fairy (#EE99AC), Normal (#A8A878) use `text-white` or `text-white/70`. White on Electric yellow = ~1.4:1. These fail severely. | Apply per-type text colour: use dark text (`#1A1A2E`) for light-background types (Electric, Ice, Fairy, Normal, Bug). Use white only for dark-background types. |
-| 14 | **1.3.1 Info and Relationships** | **Minor** | `Navbar.tsx:116–155` (`WarningPopover`) | The warning popover is triggered by a `<button>` but the popover `<div>` has no `role`, no `aria-live`, and no `aria-labelledby`. Screen reader users who activate the button receive no announcement of the content. | Add `role="dialog"` + `aria-label="Team warnings"` to the popover `<div>`, and `aria-expanded` on the trigger button. |
-| 15 | **2.1.1 Keyboard** | **Minor** | `ExploreFilters.tsx` (more-filters disclosure button) | "More filters" disclosure button likely lacks `aria-expanded` and `aria-controls` linking to the revealed panel. | Add `aria-expanded={moreOpen}` and `aria-controls="more-filters-panel"` to the toggle button; add `id="more-filters-panel"` to the revealed `<div>`. |
-| 16 | **4.1.2 Name, Role, Value** | **Minor** | `game-plan-helpers.tsx:74–94` | `ResultToggle` uses `<span role="button">` for W/L/T game result buttons. These are keyboard-accessible (tabIndex, onKeyDown) but have no `aria-label` and no `aria-pressed`. | Add `aria-label` (e.g., "Mark as Win", "Mark as Loss", "Mark as Tie") and `aria-pressed={result === opt}`. |
-| 17 | **1.3.1 Info and Relationships** | **Minor** | `SlideNavControls.tsx:270–293` | Desktop dot indicators: hidden-slide state is communicated only via visual styling (amber dots) and `title` attribute. `title` is not reliably announced by screen readers. | Include the hidden state in the `aria-label` of each tab button: e.g., `aria-label={`Go to ${slideLabels[i]}${isHidden ? " (hidden from viewers)" : ""}`}`. |
-| 18 | **4.1.2 Name, Role, Value** | **Minor** | `Navbar.tsx:507` | `Toggle` called with `label=""` — the dark-mode toggle in the settings menu has no visible or announced text label. | Pass a non-empty `label` prop such as `label={darkMode ? "Dark mode" : "Light mode"}`. |
-| 19 | **1.1.1 Non-text Content** | **Minor** | `OTSSheetModal.tsx:177–184` | The QR code `<img>` in the OTS sheet modal has no alt text describing what it links to. | Add `alt={`QR code linking to ${shareUrl}`}`. |
-| 20 | **1.3.1 Info and Relationships** | **Minor** | `DefensiveCoverageChart.tsx:122`, `OffensiveCoverageChart.tsx:217` | Tables have no `<caption>` or `aria-label`. Screen readers announce "table" with no context about its purpose. | Add `aria-label="Defensive type chart"` / `aria-label="Offensive type coverage chart"` to the `<table>` elements. |
+**Three high-severity issues remain open:** (1) the light-mode `text-text-tertiary` contrast ratio at 4.0:1 still fails the 4.5:1 AA minimum and is used in ~470+ locations; (2) OTSSheetModal lacks `role="dialog"`, `aria-modal`, and a focus trap entirely; (3) most interactive elements have no explicit `focus-visible` styles, making the focus ring invisible or low-contrast in dark mode.
 
 ---
 
-## Positive Findings
+## Status of Previous Findings
 
-- `src/app/layout.tsx:99` — Skip-to-content link (`<a href="#main-content">`) with `sr-only focus:not-sr-only` correctly implemented.
-- `src/app/layout.tsx:94` — `<html lang="en">` set.
-- `src/app/layout.tsx:29` — `userScalable: true`, `maximumScale: 5` — pinch-zoom not disabled.
-- `src/components/ui/ShareModal.tsx:106–153` — Full focus-trap with Escape, Tab/Shift-Tab cycling, focus restoration on close.
-- `src/components/report/SlideNavControls.tsx:228–233` — Mobile slider uses `role="slider"` with `aria-valuemin`, `aria-valuemax`, `aria-valuenow`, `aria-valuetext`.
-- `src/components/report/SlideNavControls.tsx:303–305` — `aria-live="polite"` live region for slide changes.
-- `src/components/ui/Button.tsx:13` — Base button uses `focus:outline-none focus-visible:ring-2` pattern (correct: hides ring for mouse, shows for keyboard).
-- `src/components/report/PokemonCard.tsx:245–248` — Mega toggle uses `aria-pressed` correctly.
-- `src/components/report/PokemonSprite.tsx:60` — `alt={species}` on all sprites.
-- `src/components/report/PokemonDetailSlide.tsx:196` — Category segmented buttons use `aria-pressed` and `focus-visible:ring-2`.
-- Most interactive SVG icons have `aria-hidden="true"` and the parent button carries the `aria-label`.
+### From 2026-05-13 Audit (Issues 1-20)
+
+| # | Finding | Status |
+|---|---------|--------|
+| 1-2 | `text-text-tertiary` contrast fails AA | **OPEN** — `#6E6E8A` still in globals.css |
+| 3 | Data tables missing `scope` attributes | **OPEN** — DefensiveCoverageChart/OffensiveCoverageChart unchanged |
+| 4 | Toggle: `<button>` inside `<label>` | **FIXED** — now uses `<div>` wrapper |
+| 5 | ReactionBar like button missing aria-label | **RESOLVED** — component deleted, replaced by SaveButton |
+| 6 | Missing `aria-modal` on some dialogs | **PARTIALLY FIXED** — WalkthroughOverlay still lacks `aria-modal` |
+| 7 | Coverage chart `<th>` click not keyboard-accessible | **OPEN** |
+| 8 | Decorative SVGs missing `aria-hidden` | **OPEN** — still widespread |
+| 9 | Navbar menu trigger missing `aria-expanded` | **OPEN** |
+| 10 | Mobile tab bar missing `aria-current="page"` | **OPEN** |
+| 11 | VersionHistoryPanel no focus on open | **OPEN** |
+| 12 | Amber badge contrast fails AA | **OPEN** |
+| 13 | Type badge colors: white on light backgrounds | **OPEN** |
+| 14 | WarningPopover missing `role` and `aria-expanded` | **OPEN** |
+| 15 | ExploreFilters disclosure missing `aria-expanded` | Not re-checked |
+| 16 | ResultToggle missing `aria-label`/`aria-pressed` | Not re-checked |
+| 17 | SlideNavControls hidden state in `aria-label` | **OPEN** |
+| 18 | Navbar dark mode toggle empty label | **FIXED** — now passes `label="Dark mode"` |
+| 19 | QR code alt text | **FIXED** — now reads "QR code for this team report" |
+| 20 | Tables missing `<caption>`/`aria-label` | **OPEN** |
+
+### From 2026-05-14 Deep Dive (B1-B5)
+
+| ID | Finding | Status |
+|----|---------|--------|
+| B1 | `text-text-tertiary` contrast 4.0:1 | **OPEN** |
+| B2 | Toggle `<button>` inside `<label>` | **FIXED** |
+| B3 | ReactionBar like button | **RESOLVED** (component deleted) |
+| B4 | ShortcutHintOverlay missing `type="button"` | **FIXED** |
+| B5 | ShareModal switches missing `aria-label` | **PARTIALLY FIXED** — visibility picker refactored to radiogroup (correct); comments toggle still relies on child text |
 
 ---
 
-## Contrast Token Reference
+## New / Updated Findings (2026-05-28)
 
-| Token | Light hex | On #FFFFFF | AA small (>=4.5:1) | AA large (>=3:1) |
-|---|---|---|---|---|
-| `--text-primary` | #1A1A2E | ~14.7:1 | Pass | Pass |
-| `--text-secondary` | #4A4A68 | ~7.0:1 | Pass | Pass |
-| `--text-tertiary` | #6E6E8A | ~4.0:1 | **FAIL** | Pass |
+### HIGH Severity
 
-Dark mode `--text-tertiary` (#9898B8) on `--surface` (#141428): approximately 3.8:1 — **FAILS** AA for small text in dark mode too.
+#### H1. OTSSheetModal missing dialog semantics and focus trap
+**File:** `src/components/ui/OTSSheetModal.tsx:142`
+**WCAG:** 4.1.2, 2.4.3
+The modal container lacks `role="dialog"`, `aria-modal="true"`, and `aria-labelledby`. Tab focus escapes into background content — no focus trap implemented. Only Escape is handled.
+**Fix:** Add `role="dialog" aria-modal="true" aria-labelledby="ots-sheet-title"` to the container div; add `id="ots-sheet-title"` to the h2 (line 146). Implement focus trap matching ShareModal's pattern.
 
-**Minimum fix:** Change light `--text-tertiary` to `#5A5A78` (4.6:1 on white) and dark to `#ABABC8` (4.6:1 on #141428).
+#### H2. `text-text-tertiary` contrast still fails AA (B1 open)
+**File:** `src/app/globals.css`
+**WCAG:** 1.4.3
+Light mode: `#6E6E8A` on `#FAF9F6` = ~4.0:1 (fails 4.5:1). Used in ~470+ locations. Compounded at `text-[9px]`/`text-[10px]` sizes.
+Worst offenders: ShareModal visibility descriptions (`text-[9px]`), SlideNavControls counter (`text-text-tertiary/70` — opacity drops contrast further), OTSSheetModal URL (`text-[10px]`), PageNavbar tab labels (`text-[9px]`).
+**Fix:** Change `--text-tertiary: #6E6E8A` to `#5E5E7A` (~4.6:1). Single-line change cascades everywhere.
+
+#### H3. Missing focus-visible indicators globally
+**File:** All interactive elements
+**WCAG:** 2.4.7
+Only `DisplayTogglePill` and `Button.tsx` have explicit `focus-visible` styles. The vast majority of buttons/links across Navbar, ShareModal, SlideNavControls, PageNavbar, PasteInput, all overlays have no custom focus ring. Browser defaults may be invisible on dark theme.
+**Fix:** Add to globals.css:
+```css
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+```
+
+### MEDIUM Severity
+
+#### M1. Export Theme Picker missing focus trap
+**File:** `src/app/page.tsx:1722-1802`
+**WCAG:** 2.4.3
+Has `role="dialog"`, `aria-modal`, initial focus management, but no Tab trapping.
+**Fix:** Add Tab/Shift-Tab trapping to the dialog's keydown handler.
+
+#### M2. ShortcutHintOverlay missing dialog semantics and focus trap
+**File:** `src/components/ui/ShortcutHintOverlay.tsx:62`
+**WCAG:** 4.1.2, 2.4.3
+No `role="dialog"`, `aria-modal`, or `aria-labelledby`. Escape works but Tab escapes.
+**Fix:** Add dialog semantics and auto-focus the dismiss button on open.
+
+#### M3. No visible `<h1>` in report view
+**File:** `src/app/page.tsx`
+**WCAG:** 1.3.1
+The report page uses `<h2>` and `<h3>` inside modals but lacks a visible `<h1>`. Screen readers cannot build a meaningful document outline.
+**Fix:** Add `<h1>` — tournament name or "VGC Team Report" — styled to match.
+
+#### M4. Navbar overflow menu trigger undersized (36px)
+**File:** `src/components/layout/Navbar.tsx:511`
+**WCAG:** 2.5.8
+Uses `w-9 h-9` (36x36px), below 44px minimum.
+**Fix:** Change to `min-w-[44px] min-h-[44px]`.
+
+#### M5. PageNavbar dark mode toggle undersized (~32px)
+**File:** `src/components/layout/PageNavbar.tsx:88`
+**WCAG:** 2.5.8
+Uses `p-2` producing ~32px hit area.
+**Fix:** Change to `min-w-[44px] min-h-[44px] flex items-center justify-center`.
+
+#### M6. Disabled button contrast too low (`opacity-30`)
+**File:** `src/components/report/SlideNavControls.tsx:208`
+**WCAG:** 1.4.11
+`disabled:opacity-30` drops below 3:1 for non-text UI components.
+**Fix:** Use `disabled:opacity-40` minimum.
+
+### LOW Severity
+
+#### L1. Decorative SVGs missing `aria-hidden` — widespread
+**Files:** Navbar.tsx, ShareModal.tsx, OTSSheetModal.tsx, SlideNavControls.tsx, PageNavbar.tsx, PasteInput.tsx, ShareViewCTA.tsx, EditFab.tsx, DisplayTogglePill.tsx
+**WCAG:** 1.3.1
+**Fix:** Add `aria-hidden="true"` to all decorative SVGs.
+
+#### L2. Sprite alt text uses slugs not human-readable names
+**Files:** `OTSSheetModal.tsx:28`, `PasteInput.tsx:114`
+**WCAG:** 1.1.1
+Alt text like `kangaskhan-mega` instead of "Kangaskhan Mega".
+**Fix:** Transform slug to readable name.
+
+#### L3. `prefers-reduced-motion` not globally respected
+**WCAG:** 2.3.3
+Only DisplayTogglePill checks this. CSS animations run unconditionally elsewhere.
+**Fix:** Add global CSS media query.
+
+#### L4. WarningPopover missing `aria-expanded`
+**File:** `Navbar.tsx:~135`
+**WCAG:** 4.1.2
+
+#### L5. Navbar menu missing `aria-expanded`
+**File:** `Navbar.tsx:511`
+**WCAG:** 4.1.2
+
+#### L6. DisplayTogglePill popover focus not moved on open
+**File:** `DisplayTogglePill.tsx`
+**WCAG:** 2.4.3
+
+#### L7. Restore banner action buttons undersized (~26px tall)
+**File:** `page.tsx:969-985`
+**WCAG:** 2.5.8
+
+---
+
+## Dialog/Modal Compliance Matrix
+
+| Modal | `role="dialog"` | `aria-modal` | `aria-labelledby` | Focus trap | Escape | Focus restore |
+|-------|:---:|:---:|:---:|:---:|:---:|:---:|
+| ShareModal | Yes | Yes | Yes | Yes | Yes | Yes |
+| WhatsNewModal | Yes | Yes | Yes | Yes | Yes | No |
+| WalkthroughOverlay | Yes | No | No (uses aria-label) | N/A (overlay) | Yes | No |
+| Export Theme Picker | Yes | Yes | Yes | **No** | Yes | No |
+| OTSSheetModal | **No** | **No** | **No** | **No** | Yes | No |
+| ShortcutHintOverlay | **No** | **No** | **No** | **No** | Yes | No |
+| DisplayTogglePill popover | Yes (non-modal) | No (correct) | Yes | N/A | Yes | Yes |
+
+---
+
+## What the Codebase Does Well
+
+1. **44x44px touch targets** consistently applied to close buttons, nav buttons, toggle buttons across ShareModal, WalkthroughOverlay, SlideNavControls, DisplayTogglePill, OTSSheetModal, EditFab. Exceeds WCAG 2.5.5 (AAA).
+2. **ShareModal focus trap** — textbook: saves `previouslyFocused`, wraps Tab/Shift-Tab, Escape closes, restores focus.
+3. **Semantic ARIA roles** for complex widgets: radiogroups (visibility picker, Mega toggle), switch (comments/dark mode), slider (mobile slide nav), tablist (desktop slide dots).
+4. **Live regions** — `aria-live="polite"` announces slide changes.
+5. **Skip-to-content link** in layout.tsx with sr-only/focus-reveal pattern.
+6. **Cookie consent** — equal-weight Accept/Reject buttons, no dark patterns.
+7. **`prefers-reduced-motion`** check in DisplayTogglePill.
+8. **`userScalable: true`, `maximumScale: 5`** — pinch-zoom not disabled.
+
+---
+
+## Priority Fix Order
+
+1. **H2 (B1)** — Single CSS line change (`--text-tertiary` to `#5E5E7A`), cascades to 470+ locations. Highest ROI.
+2. **H3** — Global `focus-visible` CSS rule, one addition to globals.css.
+3. **H1** — OTSSheetModal: add dialog role, aria-modal, focus trap. One file.
+4. **M1-M2** — Focus traps for Export Theme Picker and ShortcutHintOverlay.
+5. **M4-M5** — Touch target size fixes (two one-line changes).
+6. **L1** — Batch `aria-hidden` addition across decorative SVGs.
+
+---
+
+*End of audit. 16 new/updated findings: 3 High, 6 Medium, 7 Low. 3 previous findings confirmed fixed. ~10 from the May 13 audit remain open and are tracked above.*

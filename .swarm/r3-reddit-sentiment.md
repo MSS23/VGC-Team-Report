@@ -1,5 +1,5 @@
 # Reddit Sentiment Research: VGC Team Tools & Sharing
-**Research Date:** 2026-05-07 (updated 2026-05-13)
+**Research Date:** 2026-05-07 (updated 2026-05-13, 2026-05-28)
 **Topics Covered:** team builder, team report, sharing teams, pokepaste alternative, vgc tools
 **Sources:** Reddit (r/VGC, r/stunfisk), GitHub Issues, Smogon Forums, community tool sites, App Store reviews, Twitter/X signals
 
@@ -390,3 +390,103 @@ Interpretation: the product is indexed and known to *resource curators* but has 
 - [VGC-Bench research paper (arxiv, 2026)](https://arxiv.org/html/2506.10326v2)
 - [VGC Smogon analysis format discussion](https://www.smogon.com/forums/threads/vgc-analysis-format-discussion.3761710/)
 - [Smogon VGC Regulation F 2.0 sample teams](https://www.smogon.com/forums/threads/vgc-regulation-f-2-0-sample-teams.3777032/)
+
+---
+
+## 11. May 28, 2026 Refresh — Regulation M-A Era Signals
+
+*Research session: 2026-05-28*
+
+### Methodology Note (This Session)
+
+Reddit remains inaccessible for direct scraping (both www.reddit.com and old.reddit.com blocked by fetching tools; `site:reddit.com` search operator not supported). All Reddit-adjacent signals gathered through: Google web search surfacing Reddit-indexed content, GitHub issues, competitor tool pages, community resource aggregator sites, and Twitter/X references.
+
+### Format Transition: Regulation I → Regulation M-A
+
+The VGC meta has shifted again. Regulation M-A (Pokemon Champions) is now the active format:
+- **Indianapolis Regionals (May 29-31, 2026)** — imminent as of this research date
+- **2026 World Championships** in San Francisco (August 28-30) will use Regulation M-A
+- Regulation M-A **bans all Legendary/Restricted Pokemon** — no Groudon, Kyogre, Calyrex, Miraidon, etc.
+- 59 legal Mega forms; Mega Salamence, Mega Metagross, and Mega Mawile are explicitly NOT legal
+- This is the most significant format reset since Regulation G — new meta = new team reports needed = high-leverage window for VGC Team Report adoption
+
+### PokePaste: 156 Open Issues (Up From 155)
+
+The PokePaste issue count has grown to **156 open issues** as of May 2026. New issues include:
+- **#319** "RobertoZs" (May 17, 2026) — appears to be a misused issue tracker (team submission, not a bug)
+- **#318** "Meowstic Psyspam" (May 4, 2026) — another team post in the issue tracker
+- **#317** "duo duelers" (Apr 18, 2026) — same pattern
+- **#316** "Team" (Apr 15, 2026) — same
+- **#315** "1" (Apr 7, 2026) — same
+
+**Key signal**: Users are now using PokePaste's GitHub issue tracker as a makeshift team-sharing platform because they cannot reliably create pastes through the normal interface. At least 6 of the most recent "issues" are actually team exports dumped into GitHub. This is a strong indicator of: (a) the paste creation flow being broken or confusing, and (b) users wanting a shareable team URL badly enough to misuse a bug tracker to get one.
+
+### Pokepastefix Extension: Still Growing
+
+The Pokepastefix Chrome/Firefox extension continues active maintenance:
+- **April 16, 2026**: Added Floette-Eternal form
+- **April 12, 2026**: Added Pokemon Legends ZA Mega Pokemon for Pokemon Champions
+- Confirms the broken-image problem on pokepast.es is ongoing and expanding with each new game release
+- The extension's existence and continued growth is the single strongest community evidence that pokepast.es is inadequate
+
+### New & Updated Competitor Signals
+
+| Tool | Update Since Last Research | Significance |
+|------|--------------------------|--------------|
+| **PokeStats.gg** | Live team builder covering VGC, Smogon, HOME, Champions Reg M-A. Auto-computes defensive/offensive coverage, speed tiers, teammate suggestions. Showdown/PokePaste import/export. | Most feature-complete builder found — direct competitor to Pikalytics builder. Shareable team URLs but no report layer. |
+| **PikaChampions** | Free Champions builder with SP calculator, type coverage, match log tracker, PokePaste import/export, **community team code sharing**, Firebase-backed saving. 263 Pokemon + Megas. | Community team codes = replica code sharing in the builder itself. Closest to the "paste + code + share" unified workflow. |
+| **Game8 Team Sharing Board** | Voting system where highly upvoted teams get showcased. Creator credit with social links. | Social discovery via upvotes — the only tool with a community curation/voting layer. |
+| **Champions Lab** | Updated May 27, 2026. Team builder + battle sim + meta analysis. Powered by 2M+ Battle Engine data. | Claims real tournament data integration. Direct competitor to Pikalytics scope. |
+| **VGenC** | 2,769 tournament pastes for Reg M-A. AI-powered team builder. Browse teams from Wolfey Patreon, VGC Trainer School, Delites Champions Cup. | Largest paste archive found for the current format. AI angle differentiates. |
+| **MetaVGC** | Publishing structured team reports and guides for Pokemon Champions. | Direct competitor to pokemonvgcteamreport.com in the team report content space. |
+
+### Open Team List Format — Continued Structural Tailwind
+
+The 2026 VGC open team list requirement (all players must submit legible team lists before tournament deadlines) is now confirmed active for Indianapolis Regionals and Worlds. This means:
+- Every serious VGC player must create a clean, formatted team document for official events
+- The demand for structured team documentation tools is now **institutional**, not just community-driven
+- VGC Team Report's matchup plans, damage calcs, and speed tiers align directly with what players need to prepare against opponents' open lists
+
+### Pokemon Champions Game-Level Issues Still Active
+
+Pokemon Champions continues to have known bugs (Mega Evolution turn order, Lightning Rod + Encore interaction, move selection bugs, gender display errors in shared Replica Teams). The **gender display in shared Replica Teams** bug is particularly relevant: it means the game's own team-sharing feature is unreliable, pushing players further toward third-party tools.
+
+### VGC Team Report (pokemonvgcteamreport.com) — Visibility Check
+
+The site now surfaces in web search results for:
+- "VGC team report" (top 1-2 results)
+- "Pokemon Champions VGC team reports" (top result)
+- "VGC team report matchup notes damage calc" (top 3)
+
+**Still no organic Reddit/Discord user-generated discussion threads found.** The product continues to appear in curated resource lists (VGCpedia, DevonCorp) and in search results but has not yet generated grassroots community word-of-mouth. The gap between search visibility and community adoption remains the primary growth constraint.
+
+### Updated Unmet Needs (Top 3, May 2026)
+
+**1. Unified team archive with search/filter/discovery** — The landscape is more fragmented than ever: VGenC has 2,769 pastes, VGCPastes has its spreadsheet, Game8 has a voting board, PikaChampions has community codes, Victory Road has curated reports, MetaVGC has guides. No single destination lets you search "all Mega Charizard Y teams that placed top 8 at a Regional with written matchup notes." Every new tool adds to the fragmentation rather than solving it.
+
+**2. Structured team documentation for open team list prep** — The official open team list requirement creates demand for a tool that helps players prepare *against* opponents' teams, not just document their own. Matchup notes, damage calcs, and speed tiers tied to specific opponent archetypes are what players need before a tournament round. Current tools focus on team *creation*, not team *preparation*.
+
+**3. Reliable, maintained paste infrastructure** — PokePaste has 156 open issues and users are dumping teams into its GitHub issue tracker because the main interface fails. Pokepastefix continues patching broken images. The community needs a paste layer that actually works and stays maintained — not another side project that gets abandoned (VGC Helper, VGC Team Share, countless others). Trust in tool longevity is itself an unmet need.
+
+### Sources (New in This Session)
+
+- [PokePaste GitHub Issues — 156 open](https://github.com/felixphew/pokepaste/issues)
+- [PokePaste Issue #313 — paste creation failure](https://github.com/felixphew/pokepaste/issues/313)
+- [PokePaste Issue #311 — Showdown copy-paste broken](https://github.com/felixphew/pokepaste/issues/311)
+- [Pokepastefix extension — Chrome Web Store](https://chromewebstore.google.com/detail/pokepastefix/ekceaboabpgkgbpigacngnjagcdhdkmn)
+- [PokeStats.gg Team Builder](https://pokestats.gg/team-builder)
+- [PikaChampions Team Builder](https://pikachampions.com/)
+- [Game8 Team Sharing Board](https://game8.co/games/Pokemon-Champions/archives/Team-Share)
+- [Champions Lab](https://championslab.xyz/team-builder)
+- [VGenC Top Teams — 2,769 pastes](https://vgenc.net/top-teams)
+- [MetaVGC Team Guides](https://metavgc.com/guides/pokemon-champions-teams)
+- [Victory Road — Pokemon Champions Regulations](https://victoryroad.pro/champions-regulations/)
+- [Victory Road — Replica Teams](https://victoryroad.pro/champions-replica/)
+- [Pokemon Zone — Rules and Regulations](https://www.pokemon-zone.com/champions/guides/rules-and-regulations/)
+- [Pikalytics VGC 2026 Team Builder](https://www.pikalytics.com/team)
+- [Pikalytics Damage Calculator](https://www.pikalytics.com/calc)
+- [Porygon Labs Damage Calculator](https://www.porygonlabs.com/)
+- [VGCcalc.com](https://vgccalc.com/)
+- [crob.at PokePaste Alternative](https://crob.at/pokepaste)
+- [Pokemon Champions known bugs — Game8](https://game8.co/games/Pokemon-Champions/archives/593898)
+- [Pokemon Champions patch notes — Serebii](https://www.serebii.net/pokemonchampions/patch.shtml)
