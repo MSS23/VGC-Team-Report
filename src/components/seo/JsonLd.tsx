@@ -66,7 +66,6 @@ export function OrganizationJsonLd() {
         name: "VGC Team Report",
         url: "https://pokemonvgcteamreport.com",
         description: "The team report builder for VGC Pokemon players",
-        applicationCategory: "SportsApplication",
         logo: {
           "@type": "ImageObject",
           url: "https://pokemonvgcteamreport.com/icon-512.png",

@@ -3,11 +3,15 @@ import { ExploreContent } from "@/components/explore/ExploreContent";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
-  title: "Explore VGC Teams | VGC Team Report",
+  title: "Best VGC Teams 2026 — Explore Top Team Reports | VGC Team Report",
   alternates: { canonical: "https://pokemonvgcteamreport.com/explore" },
   description:
-    "Browse community VGC team reports. Find top Pokemon Champions teams, Mega Evolution builds, and competitive team analysis from players worldwide.",
+    "Discover the best VGC teams for 2026. Browse and share VGC team reports, use our VGC team builder tools, and find top Pokemon Champions teams with Mega Evolution builds and competitive analysis.",
   keywords: [
+    "best VGC teams 2026",
+    "best VGC teams",
+    "VGC team builder",
+    "share VGC team",
     "VGC team reports",
     "top VGC teams",
     "Pokemon Champions team builds",
@@ -16,26 +20,25 @@ export const metadata: Metadata = {
     "OTS Pokemon",
     "Pokemon VGC open team sheet",
     "competitive Pokemon teams",
-    "VGC team builder",
     "Regulation M-A teams",
     "Pokemon VGC team report",
     "VGC team analysis",
   ],
   openGraph: {
-    title: "Explore VGC Teams | VGC Team Report",
+    title: "Best VGC Teams 2026 — Explore Top Team Reports",
     description:
-      "Browse community VGC team reports. Find top Pokemon Champions teams, Mega Evolution builds, and competitive team analysis from players worldwide.",
+      "Discover the best VGC teams for 2026. Browse and share VGC team reports, use our VGC team builder tools, and find top Pokemon Champions teams with competitive analysis.",
     type: "website",
     siteName: "VGC Team Report",
     url: "https://pokemonvgcteamreport.com/explore",
-    images: [{ url: "/explore/opengraph-image", width: 1200, height: 630, alt: "Explore VGC Teams — Browse competitive Pokemon team reports" }],
+    images: [{ url: "/explore/opengraph-image", width: 1200, height: 630, alt: "Best VGC Teams 2026 — Browse and share competitive Pokemon team reports" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Explore VGC Teams | VGC Team Report",
+    title: "Best VGC Teams 2026 — Explore Top Team Reports",
     description:
-      "Browse community VGC team reports. Find top Pokemon Champions teams, Mega Evolution builds, and competitive team analysis from players worldwide.",
-    images: [{ url: "/explore/opengraph-image", width: 1200, height: 630, alt: "Explore VGC Teams — Browse competitive Pokemon team reports" }],
+      "Discover the best VGC teams for 2026. Browse and share VGC team reports, use our VGC team builder tools, and find top Pokemon Champions teams with competitive analysis.",
+    images: [{ url: "/explore/opengraph-image", width: 1200, height: 630, alt: "Best VGC Teams 2026 — Browse and share competitive Pokemon team reports" }],
   },
 };
 
@@ -46,14 +49,31 @@ export default function ExplorePage() {
         data={{
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          name: "Explore VGC Teams",
+          name: "Best VGC Teams 2026",
           url: "https://pokemonvgcteamreport.com/explore",
           description:
-            "Browse Pokemon VGC team reports shared by competitive players from tournaments around the world.",
+            "Discover the best VGC teams for 2026. Browse and share competitive Pokemon team reports from tournaments worldwide.",
           isPartOf: {
             "@type": "WebApplication",
             name: "VGC Team Report",
             url: "https://pokemonvgcteamreport.com",
+          },
+          breadcrumb: {
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://pokemonvgcteamreport.com",
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Explore Best VGC Teams 2026",
+                item: "https://pokemonvgcteamreport.com/explore",
+              },
+            ],
           },
         }}
       />
