@@ -27,6 +27,27 @@ interface ChangelogEntry {
 const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.22",
+    title: "Security Hardening, AI Discoverability & Accessibility",
+    emoji: "🛡️",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Linear webhook handler: corrected signature header name (linear-signature), env var (LINEAR_WEBHOOK_SIGNING_SECRET), added force-dynamic and empty body handling. 8th consecutive fix proposal — please merge!" },
+      { type: "fixed", text: "Security: all user-controlled fields in comment notification, welcome, and weekly summary emails are now HTML-escaped to prevent XSS. Subject lines stripped of CR/LF/quotes." },
+      { type: "fixed", text: "Security: Linear GraphQL queries in daily-ops and weekly-report crons now use parameterized variables instead of string interpolation." },
+      { type: "fixed", text: "Security: /api/migrate and /api/setup routes now use crypto.timingSafeEqual for secret comparison. Setup route no longer leaks internal error details." },
+      { type: "fixed", text: "Security: /api/views shareId now validated against regex before database queries, matching comments and reactions routes." },
+      { type: "improved", text: "AI discoverability: GPTBot, ClaudeBot, PerplexityBot, and OAI-SearchBot moved from blocked to allowed in bot-detection middleware. Previously blocked with 403 despite robots.txt allowing them." },
+      { type: "improved", text: "Accessibility: OTSSheetModal now has role='dialog', aria-modal, aria-labelledby, focus trap, Escape-to-close, and focus-restore-on-close." },
+      { type: "improved", text: "Accessibility: Navbar settings button and PageNavbar dark mode toggle bumped to WCAG 2.5.8 minimum 44x44px touch targets." },
+      { type: "improved", text: "SEO: /explore page title and description updated to target 'Best VGC Teams 2026' and 'VGC team builder' keywords." },
+      { type: "improved", text: "PWA: removed 4 broken screenshot references from manifest.json (404 fix) and fixed InstallPrompt pageIsShort detection on Android/Chrome." },
+      { type: "improved", text: "Webhook resilience: PostHog and Clerk webhooks now return 200 on internal errors, preventing auto-disable and retry storms." },
+      { type: "improved", text: "Removed dead code: useScrollHide hook (124 lines), ReactionBar component (139 lines), and axios dependency (zero imports)." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.19",
     title: "Performance, Security & Accessibility Hardening",
     emoji: "⚡",
