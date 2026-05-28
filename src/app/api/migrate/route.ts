@@ -1,26 +1,18 @@
+import { timingSafeEqual } from "crypto";
 import { getDb } from "@/lib/db";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
 import { NextResponse } from "next/server";
 
-/**
- * POST /api/migrate
- *
- * Batch-migrates all reports in the database to the latest data format.
- * Protected by MIGRATE_SECRET environment variable.
- *
- * What it does:
- * 1. Normalizes matchupPlans from legacy planA/planB/selectedIndices → gamePlans[]
- * 2. Ensures all top-level fields exist with proper defaults
- * 3. Backfills search_vector for public reports missing it
- * 4. Preserves ALL existing user data — only adds missing defaults
- *
- * Safe to run multiple times (idempotent).
- */
 export async function POST(request: Request) {
   try {
-    // Auth check — require secret to prevent abuse
     const { secret } = await request.json().catch(() => ({ secret: "" }));
-    if (!secret || secret !== process.env.MIGRATE_SECRET) {
+    const expected = process.env.MIGRATE_SECRET;
+    if (!secret || !expected) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const a = Buffer.from(String(secret));
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
