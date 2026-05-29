@@ -1,346 +1,260 @@
-# R5: Mobile UX Sharing Patterns - Cross-App Analysis
+# Mobile UX Sharing Patterns Research: Strava, Pinterest, Behance, Figma Community
 
-**Date:** 2026-05-26
-**Focus:** Share-to-view flows from successful sharing apps and applicability to VGC Team Report
-
----
-
-## 1. Strava - Activity Sharing
-
-### Share Flow UX
-- **Taps to share:** 2 taps (activity screen -> share icon -> choose destination)
-- Share icon is prominent on every activity view
-- On tap, presents a horizontal scrollable row of share destinations (Instagram Stories, WhatsApp, Copy Link, etc.)
-- Activity visibility must be set to "everyone" or "followers" for sharing to work (private activities blocked)
-
-### Preview / OG Image Generation
-- **Auto-generated share cards:** Strava creates a visual card with route map, distance, elevation, and time stats
-- GPS-recorded activities show a map overlay; non-GPS activities show stats only
-- "Sticker Stats" feature (Spring 2025): transparent PNG stickers with route line drawing + stats, optimized for Instagram Stories overlay
-- If photos are attached, user chooses between map card or photo share
-- Share image cropped to 16:9 portrait for Stories compatibility
-
-### Deep Linking
-- Uses **Branch.io** for deferred deep links
-- Non-app users directed to app store; app users deep-linked to the specific activity
-- 75% click-to-install rate reported in Facebook Ad campaigns
-- ~10% of users share activities externally, generating tens of millions of shares/month
-- Shared links open a rich web preview for non-app users, deep-link into app for installed users
-
-### Mobile-First Design Patterns
-- Share button always visible without scrolling on activity view
-- Instagram Stories integration is first-class (auto-opens Instagram with sticker placed)
-- Snapchat Lens integration for overlaying stats on photos/videos
-- Embeddable widgets for blogs/websites (activities, routes, weekly summaries)
-
-### What Converts
-- **Visual identity:** The route map is instantly recognizable as "a Strava share" - builds brand recognition
-- **Stats as social proof:** Distance/elevation/pace creates aspirational content
-- **Frictionless Instagram flow:** One tap opens Stories with sticker pre-placed
-- **Deferred deep links:** Non-users see rich content on web, get prompted to install for the full experience
+**Date:** 2026-05-25
+**Focus:** Share-to-view flows, social proof, mobile-first virality, onboarding, and discovery mechanisms applicable to VGC Team Report.
 
 ---
 
-## 2. Pinterest - Pin Sharing & Re-pin UX
+## 1. Strava — Activity Sharing & Social Feed
 
-### Share Flow UX
-- **Taps to share:** 1-2 taps (tap pin -> share icon or long-press -> share sheet)
-- Re-pin (save) is even simpler: 1 tap on the "Save" button directly on the pin card
-- "Direct Links" feature: 1 click directly to advertiser site (vs 2 clicks for other ad types)
+### Share-to-View Flow
+- **Record > View > Share** — the core loop is tight. Users complete an activity, immediately see stats (distance, pace, elevation, heart rate), then share with one tap.
+- **Share Card Generator:** Strava auto-generates a branded image card with a map/route overlay + key stats. Users can customize which stats appear, choose a photo background, and share directly to Instagram Stories, TikTok, X, etc.
+- **Stats Stickers:** Native integration with Instagram Stories — tapping "Share to Stories" opens IG with a pre-made stats sticker overlay positioned on the image.
+- **Deep links:** Every shared card links back to the full activity on Strava, driving view-to-install conversion.
 
-### Preview / OG Image Generation
-- **Rich Pins:** Pull structured metadata from page via Open Graph tags or Schema.org markup
-- Required OG tags: `og:title`, `og:type`, `og:image`, `og:url`
-- Optimal image size: 1000x1500px (portrait, 2:3 ratio) for Pinterest; 1200x630px for cross-platform
-- Pinterest extends OG with `article:author` and Rich Pin type-specific metadata
-- Must pass Pinterest Rich Pin Validator before Rich Pins activate
+### Social Proof & Engagement Signals
+- **Kudos** (lightweight likes): 14 billion+ given globally by 2025. Low-friction — single tap, no commitment, drives reciprocity.
+- **Comments** visible below every activity in the feed.
+- **Group amplification:** Athletes in groups receive 95% more kudos than solo users — social context multiplies engagement.
+- **Leaderboard segments:** Competitive social proof via KOM/QOM crowns and local segment rankings.
 
-### Deep Linking
-- **Universal Deep Links (UDL):** Single link routes to correct destination across Android, iOS, and web
-- Mobile deep links direct users from Pins into retailer native apps
-- Fallback: If app not installed, opens same page on mobile web within Pinterest app
-- Early Direct Links adopters: **88% higher outbound CTR**, **39% decrease in CPC**
+### Mobile-First Patterns That Drive Sharing
+- **One-tap share to multiple platforms** from activity detail or feed.
+- **Auto-generated visual assets** — users never need to manually create shareable images.
+- **Activity feed as social timeline** — scrollable, thumb-friendly, single-column layout.
+- **Reshare others' activities** to amplify social reach within the network.
 
-### Mobile-First Design Patterns
-- Card-based masonry layout optimized for thumb scrolling
-- Save button prominently placed on every pin (no need to open detail view)
-- Share sheet appears as bottom drawer on mobile
-- Visual-first: image dominates, text is secondary
+### Onboarding & Empty States
+- **Data-first onboarding:** Immediately syncs with wearables (Apple Watch, Garmin) and shows past activity data — avoids blank empty states entirely.
+- **Motivation-based routing:** Asks users their goals, then routes to relevant features (clubs, leaderboards, training plans).
+- **First-action focus:** Onboarding skips secondary features and pushes users to record their first activity fast.
+- **Kudos on first activity:** Immediate positive feedback reinforces the core loop.
 
-### What Converts
-- **Visual-first cards:** Large images with minimal text drive engagement
-- **1-tap save:** Reducing re-pin to a single tap massively increases save rates
-- **Direct links eliminating clicks:** Going from 2 clicks to 1 click = 88% higher CTR
-- **Rich metadata:** Structured data creates trust and context without user effort
-
----
-
-## 3. Behance - Portfolio/Project Sharing
-
-### Share Flow UX
-- **Taps to share:** 2-3 taps (project page -> share icon -> choose method)
-- Share icon on right side of project page opens Share and Embed menu
-- Options: Copy Link, Copy Embed, direct social platform shares
-- Mobile app supports creating and sharing directly
-
-### Preview / OG Image Generation
-- **Cover image as thumbnail:** The first/cover image in a project becomes the social media preview
-- Recommendation: Upload cover image closest to the top of project content for best preview
-- No dynamic OG image generation - uses the uploaded project cover
-- Each project has a unique URL for sharing across networks
-
-### Deep Linking
-- Standard URL-based linking (no deferred deep links documented)
-- Mobile app opens project pages when available
-- Embed codes available for blogs/websites
-
-### Mobile-First Design Patterns
-- Full-bleed image presentations on mobile
-- Scroll-based project viewing (vertical scroll through project modules)
-- Simple share icon placement consistent with platform conventions
-- Work-in-Progress sharing from iOS app for iterative feedback
-
-### What Converts
-- **Hero image quality:** The cover image IS the share preview - high-quality visuals are critical
-- **Full project context:** Shared links show the complete project, not a truncated preview
-- **Creator credibility:** Profile/follower info visible alongside shared content
-- **Embed capability:** Projects can live on external sites, driving traffic back to Behance
+### Discovery Mechanisms
+- **Following/Followers social graph** — friends' activities surface in feed.
+- **Clubs** — topic/sport communities with activity feeds.
+- **Local segments** — discover popular routes nearby.
+- **Challenges** — time-limited community goals that surface trending activities.
 
 ---
 
-## 4. Figma Community - Design File Sharing
+## 2. Pinterest — Visual Discovery & Saving
 
-### Share Flow UX
-- **Taps to share:** 2 taps (open file -> Share button in top-right)
-- Share modal allows setting permissions and copying link
-- Deep-linking to specific frames: If a frame is selected, the shared link opens to that exact frame
-- Community files have dedicated resource pages with preview and metadata
+### Share-to-View Flow
+- **Pin > Save to Board > Share Board/Pin** — content is always visual-first.
+- **One-tap Save:** Hovering/long-pressing any pin reveals a "Save" button; user selects a board and it's done in 2 taps.
+- **Share flow:** Every pin has a share icon leading to platform share sheet (link, message, social platforms).
+- **Rich link previews:** Shared Pinterest URLs render with image + title, making shared pins visually compelling in any context.
 
-### Preview / OG Image Generation
-- **Custom thumbnails:** Recommended size 1920x1080px
-- Community file cover frame preset available in Figma for correct sizing
-- Up to 9 preview images can be added to Community file pages
-- Thumbnail design guidance: "Keep it simple but eye-catching, less text is more"
-- Thumbnails serve as the OG image when shared on social media
+### Social Proof & Engagement Signals
+- **Save count** visible on pins — social proof of content value.
+- **"Tried it" photos** — user-generated proof that a pin was useful.
+- **Board followers** — signals board curation quality.
+- **Related pins** — algorithmic "more like this" creates endless engagement loops.
 
-### Deep Linking
-- Frame-level deep links: Selected frame/node included in URL, opens directly to that location
-- Nested frames link to parent frame for context
-- Public link sharing with configurable permissions
-- "Duplicate" flow: 1-click copy of Community file to user's drafts (entire new file, no history)
+### Mobile-First Patterns That Drive Sharing
+- **Masonry grid layout:** Variable-height cards create visual density — maximizes content per screen. Accommodates different aspect ratios naturally.
+- **Infinite scroll:** No pagination friction. Users spend longer per session, discovering more content passively.
+- **Thumb-friendly single-column browse** on mobile with tap-to-expand detail.
+- **Personalized "For You" feed:** ML-driven content recommendations achieve 80% more engagement than non-personalized content.
+- **Visual-first, text-secondary:** Images dominate — descriptions are below the fold.
 
-### Mobile-First Design Patterns
-- Resource pages with interactive previews (prototypes playable inline)
-- Duplicate button prominent on Community file pages
-- File metadata (description, tags, creator info) structured for discovery
+### Onboarding & Empty States
+- **Interest selection on signup:** Users pick 5+ topics to seed their feed — eliminates cold-start empty states.
+- **Pre-populated boards:** "Start with ideas" — suggested pins on new boards to show what's possible.
+- **Progressive disclosure:** Core action (browse, save) taught first; creation (make pins) comes later.
 
-### What Converts
-- **1-click duplicate:** Lowest friction path from "see it" to "use it"
-- **Frame-level deep links:** Share exactly the relevant part, not the whole file
-- **Interactive previews:** Users can explore before committing to duplicate
-- **Thumbnail quality:** Well-designed thumbnails significantly increase discovery and clicks
-
----
-
-## 5. Linktree - Link Sharing Patterns
-
-### Share Flow UX
-- **Taps to share:** 0-1 taps (the entire page IS the share destination)
-- Single URL houses all links - optimized for social media bios (Instagram, TikTok, Twitter)
-- Mobile preview feature during setup ensures mobile-first design
-- Strategic link ordering: most important in first 2-3 positions (above fold)
-
-### Preview / OG Image Generation
-- Profile image: 800x800px optimized for mobile
-- Clean, branded preview when shared on social media
-- Customizable themes and appearance for brand consistency
-- The page itself is the "card" - no separate preview generation needed
-
-### Deep Linking
-- Universal link: One URL works everywhere, no platform-specific routing needed
-- Each link on the page goes directly to its destination
-- No deferred deep links or app-install flows
-
-### Mobile-First Design Patterns
-- Vertical stack of tappable buttons - designed for thumb reach
-- Mobile users rarely scroll beyond visible screen, so top 2-3 links are critical
-- Profile image + bio text at top for identity/trust
-- Large tap targets (full-width buttons)
-- Minimal cognitive load: scan and tap
-
-### What Converts
-- **Simplicity:** One page, one purpose, zero navigation
-- **Above-the-fold priority:** Top 3 links get the most clicks
-- **3-7 links optimal:** Too many links = decision paralysis
-- **Mobile-native layout:** Full-width buttons designed for finger taps, not cursor clicks
-- **Platform-specific strategy:** Tailoring link order per platform = 15-25% performance lift
-- **34% traffic increase** reported by brands using strategic link ordering
+### Discovery Mechanisms
+- **Algorithmic "For You" feed** based on saves, clicks, and time spent.
+- **Search with visual results** — even text searches show image grids.
+- **"More like this"** on every pin detail page — endless related content.
+- **Trending** section for viral/seasonal content.
+- **Board recommendations** based on your interests.
 
 ---
 
-## Cross-App Pattern Synthesis
+## 3. Behance — Portfolio/Project Sharing
 
-### Universal Share Flow Principles
+### Share-to-View Flow
+- **Create Project > Add Images/Video > Publish > Share URL** — long-form showcase format.
+- **Unique shareable URL** for every project — designed for external sharing.
+- **Cover image system:** 808x632px minimum, displays at 202x158px in browse — the thumbnail IS the share preview.
+- **Full-width presentation:** Project detail is a vertical scroll of full-width images — immersive, gallery-like experience on mobile.
 
-| Pattern | Strava | Pinterest | Behance | Figma | Linktree |
-|---------|--------|-----------|---------|-------|----------|
-| Taps to share | 2 | 1-2 | 2-3 | 2 | 0-1 |
-| Auto-generated preview | Yes (map+stats) | Via Rich Pins | Cover image | Custom thumbnail | Profile card |
-| Deep linking | Branch.io deferred | UDL universal | Standard URLs | Frame-level | Simple URL |
-| Native share sheet | Yes | Yes | Yes | Yes | N/A |
-| 1-click action | Instagram Stories | Save/Re-pin | Copy Link | Duplicate | Tap link |
+### Social Proof & Engagement Signals
+- **Appreciations** (hearts) — equivalent to likes, visible on project cards in browse.
+- **View counter** — shows project reach, builds credibility.
+- **Featured badge** — curated by Behance team, massive visibility boost and social proof.
+- **Comments/critiques** — community feedback loop.
+- **"Project Boost"** (Pro feature) — amplifies visibility in search + For You feeds.
 
-### Key Findings
+### Mobile-First Patterns That Drive Sharing
+- **Image-dominant layout** — minimal text chrome, maximum visual impact.
+- **Full-bleed images** in project detail view — phone screens become galleries.
+- **Quick-appreciate from browse** — no need to open a project to give kudos.
+- **Sticky creator bar** — profile photo + follow button persist while scrolling.
 
-#### 1. Two Taps or Fewer
-Every successful app keeps sharing to 2 taps maximum. The "Rule of Three Taps" from UX research is the ceiling, but best-in-class aim for 1-2. Pinterest's 1-tap Save is the gold standard.
+### Onboarding & Empty States
+- **"Add your first project"** CTA with clear instructions on what makes a good project.
+- **Role-based recommendations:** Content surfaced based on declared creative field.
+- **Featured/curated galleries** as starter content — shows quality bar and inspires creation.
 
-#### 2. Auto-Generated Visual Previews Are Essential
-- Strava auto-generates map cards with stats
-- Pinterest pulls Rich Pin data from OG tags
-- Figma uses custom 1920x1080 thumbnails
-- Users should NEVER have to create their own share image
-
-#### 3. OG Image Specs That Work Everywhere
-- **Cross-platform default:** 1200x630px (1.91:1 ratio) - works on Facebook, Twitter/X, LinkedIn, Slack, Discord
-- **Pinterest/vertical:** 1000x1500px (2:3 ratio)
-- **Instagram Stories:** 16:9 portrait (1080x1920)
-- **Figma Community:** 1920x1080px
-- For VGC Team Report: Generate 1200x630 OG images dynamically using Next.js `ImageResponse` (Satori)
-
-#### 4. Deep Linking Is Table Stakes
-- Deferred deep links (Branch.io pattern): show content on web, prompt app install, then deep-link after install
-- For a web-first app like VGC Team Report: focus on rich web previews with OG tags rather than app-install flows
-- Frame-level/section-level deep links (Figma pattern) are valuable - link to specific Pokemon on a team
-
-#### 5. The Share Card IS the Marketing
-- Strava's route map is instantly recognizable
-- Pinterest's Rich Pins show structured product data
-- For VGC Team Report: The share card should be visually distinctive and immediately signal "Pokemon VGC team"
-
-#### 6. Web Share API for Native Feel
-- `navigator.share()` triggers the OS-native share sheet on mobile
-- Requires HTTPS (which Vercel provides)
-- Must include fallback for unsupported browsers
-- Can share URL + title + text; some browsers support file sharing
-
-#### 7. Mobile-First Layout Principles
-- Large tap targets: minimum 44x44px (Apple HIG) / 48x48dp (Material Design)
-- Above-the-fold priority: key actions visible without scrolling
-- Vertical stacking for thumb-friendly navigation
-- Full-width buttons for primary actions
+### Discovery Mechanisms
+- **Curated "Featured" galleries** — editorial picks by category.
+- **"For You" feed** — personalized by your creative fields and interaction history.
+- **Search + filters** by creative field, tools used, color.
+- **"Discover" tab** — trending projects, new creators, thematic collections.
+- **Adobe integration** — cross-pollination from Creative Cloud apps.
 
 ---
 
-## Recommendations for VGC Team Report
+## 4. Figma Community — Design File Sharing
 
-### Priority 1: Dynamic OG Image Generation
-```
-Route: /api/og/team/[id]
-Tech: next/og ImageResponse (Satori)
-Size: 1200x630px
-Content: Team name, 6 Pokemon sprites in a row, format/regulation badge, author name
-```
-This is the single highest-impact improvement. Every shared link becomes a branded visual card showing the team composition at a glance.
+### Share-to-View Flow
+- **Design > Publish to Community > Users Duplicate** — "open-source" model for design files.
+- **One-click Duplicate:** Any community file can be duplicated to your drafts with a single button — zero friction to adopt.
+- **Preview before duplicating:** Users see a full file preview, component list, and description before committing.
+- **Versioning:** Publishers can update files; duplicates are snapshots (no live sync).
 
-### Priority 2: Web Share API Integration
-```typescript
-// Share button component
-async function shareTeam(team) {
-  if (navigator.share) {
-    await navigator.share({
-      title: `${team.name} - VGC Team Report`,
-      text: `Check out this ${team.format} team by ${team.author}`,
-      url: `https://pokemonvgcteamreport.com/team/${team.id}`
-    });
-  } else {
-    // Fallback: copy to clipboard + toast notification
-    await navigator.clipboard.writeText(url);
-  }
-}
-```
-2 taps maximum: tap share icon -> native share sheet opens.
+### Social Proof & Engagement Signals
+- **Duplicate count** — primary engagement metric (equivalent to GitHub stars/forks).
+- **Like count** — secondary engagement signal.
+- **Creator profile** with follower count and published file portfolio.
+- **"Used by" signals** — seeing which teams/companies use a community file.
 
-### Priority 3: Share Card Design (Strava Pattern)
-- Auto-generate a visually distinctive card for every team
-- Include: Pokemon sprites, team name, format, win rate if available
-- Make it instantly recognizable as "a VGC Team Report share" (like Strava's route maps)
-- Consider a "Sticker Stats" equivalent: transparent PNG with team sprites for Instagram Stories
+### Mobile-First Patterns That Drive Sharing
+- **Rich preview cards** — thumbnail + title + creator + duplicate count visible in browse.
+- **Category tags** — quick filtering by design system, icons, wireframes, etc.
+- **Personalized recommendations** based on your role (designer, developer, PM) set in profile.
 
-### Priority 4: Deep Link to Specific Pokemon
-- Follow Figma's frame-level deep linking pattern
-- URL like `/team/abc123#pokemon-3` scrolls to and highlights the third Pokemon
-- Useful for Discord discussions: "look at this Urshifu set"
+### Onboarding & Empty States
+- **Role-based personalization** — on signup, selecting your role seeds recommendations.
+- **Curated "Getting Started" collections** — official Figma files teaching the tool.
+- **Empty canvas prompts:** "Start from a Community file" — routes new users to templates rather than blank pages.
 
-### Priority 5: Linktree-Style Team Hub
-- Player profile page as a "link hub" for all their teams
-- Vertical stack of team cards, most recent first
-- Shareable profile URL: `pokemonvgcteamreport.com/@username`
-- Top 3 teams above the fold
-
-### Priority 6: Copy-to-Clipboard Fallback
-- Always provide "Copy Link" as an alternative to native share
-- Show a brief toast/snackbar confirmation ("Link copied!")
-- Include the OG-image URL in clipboard for platforms that support rich paste
+### Discovery Mechanisms
+- **Trending/Popular** rankings by time period.
+- **Curated collections** — thematic groupings by Figma team.
+- **Search with rich filters** — by category, creator, recency.
+- **"Related files"** on every community file page.
+- **Plugin/widget ecosystem** — discovery of complementary tools alongside files.
 
 ---
 
-## Technical Implementation Notes (Next.js 16)
+## Synthesis: Patterns for VGC Team Report
 
-### OG Image Generation
-```
-// app/api/og/team/[id]/route.tsx
-import { ImageResponse } from 'next/og'
+### Pattern 1: Auto-Generated Share Cards (from Strava)
+**What:** When a user publishes a team report, automatically generate a branded, visually rich image card showing key team info (Pokemon sprites, format, creator name, results/placement if any).
+**Why:** Strava's auto-generated activity cards are the single biggest driver of organic sharing. Users share to X/Discord/Reddit without needing to manually screenshot or design anything.
+**Implementation:**
+- OG image generation via Next.js `ImageResponse` (already standard in Next.js 16)
+- Include: 6 Pokemon sprites in party layout, format badge, creator avatar, win rate if available
+- One-tap "Share to X" / "Copy Link" / "Share to Discord" buttons
+- Stats sticker variant for Instagram Stories (vertical format, transparent overlay style)
 
-// Use Satori JSX to render:
-// - Team name (bold, large)
-// - 6 Pokemon sprites in a grid
-// - Format badge (e.g., "Regulation H")
-// - Author name
-// - VGC Team Report branding/logo
+### Pattern 2: Masonry Grid Discovery Feed (from Pinterest)
+**What:** Browse/discover page uses a masonry grid of team report cards with variable heights based on content (some show EV spreads, some show results, some are minimal).
+**Why:** Pinterest proves masonry grids maximize visual density and engagement. Infinite scroll eliminates pagination friction. Variable card heights create visual rhythm that keeps users scanning.
+**Implementation:**
+- Card shows: 6 Pokemon sprites (row), format tag, creator name, engagement count
+- Infinite scroll with skeleton loading states
+- Personalized "For You" based on formats played, Pokemon used, creators followed
+- "More like this" on every team detail page
 
-// Size: 1200x630 for cross-platform compatibility
-// Edge runtime for fast generation
-```
+### Pattern 3: Kudos/Appreciation System (from Strava + Behance)
+**What:** Lightweight one-tap engagement signal on team reports. Not "likes" — something VGC-flavored (e.g., "GG" button, trophy icon, or "Strong Team" kudos).
+**Why:** Strava's 14B+ kudos prove low-friction appreciation drives reciprocal engagement and retention. Behance's appreciations visible on browse cards provide social proof that influences click-through.
+**Implementation:**
+- Single-tap from feed (no need to open the full report)
+- Count visible on card in browse view (social proof)
+- Notification to creator ("X gave your team a GG")
+- Weekly "most appreciated teams" trending section
 
-### Meta Tags per Team Page
-```html
-<meta property="og:title" content="Rain Team by Player123 - VGC Team Report" />
-<meta property="og:description" content="Pelipper / Palafin / Rillaboom / Urshifu / Amoonguss / Incineroar" />
-<meta property="og:image" content="https://pokemonvgcteamreport.com/api/og/team/abc123" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://pokemonvgcteamreport.com/team/abc123" />
-<meta name="twitter:card" content="summary_large_image" />
-```
+### Pattern 4: Interest-Seeded Onboarding / Empty State Elimination (from Pinterest + Strava)
+**What:** On first visit/signup, ask users which VGC formats they play (Reg G, Reg H, etc.), which Pokemon they use, and what they're looking for (team ideas, EV spreads, matchup analysis). Use this to seed a personalized feed immediately.
+**Why:** Pinterest's 5-topic onboarding eliminates cold-start empty states — users see relevant content instantly. Strava's data-first approach (sync existing data) avoids blank screens. Empty states cause bounce.
+**Implementation:**
+- Step 1: "What format do you play?" (multi-select)
+- Step 2: "Pick Pokemon you're interested in" (visual grid of popular picks)
+- Step 3: Immediately show a populated feed filtered to those preferences
+- For creators: "Import from Pokepaste" one-click to avoid empty "create" state
 
-### Web Share API with Fallback
-- Feature-detect `navigator.share` and `navigator.canShare`
-- Primary: native share sheet (mobile)
-- Fallback 1: Copy link to clipboard (desktop/unsupported)
-- Fallback 2: Direct share buttons for Discord, Twitter/X, Reddit (VGC community platforms)
+### Pattern 5: One-Click Remix/Duplicate (from Figma Community)
+**What:** Every published team report has a "Use This Team" button that duplicates it into the user's workspace for modification — changing EVs, swapping one Pokemon, adjusting moves.
+**Why:** Figma's one-click duplicate is their highest-engagement action. It lowers the barrier from "admire" to "use" — converting passive viewers into active builders. For VGC, most players adapt existing teams rather than building from scratch.
+**Implementation:**
+- "Use This Team" button on every report detail page
+- Creates a draft copy in user's account with all data pre-filled
+- User can modify and publish as a variant (attribution: "Based on [original]")
+- Remix count visible on original (social proof + flattery for creator)
+- "Variants" section showing all public remixes of a team
+
+### Pattern 6: Creator Attribution & Social Proof Cascade (from Behance + Strava)
+**What:** Every team report prominently shows creator identity, their tournament results, and engagement metrics (views, GGs, remixes, tournament placements using this team).
+**Why:** Behance's featured badge and view counters establish credibility. Strava's leaderboards create aspiration. In VGC, a team used by a Worlds qualifier carries inherent social proof that drives adoption.
+**Implementation:**
+- Creator card: avatar, name, highest placement, total teams published
+- Report metrics: views, GGs, remixes, tournament results tagged to this team
+- "Featured" or "Staff Pick" badges for exceptional reports
+- Tournament result tags: "Top 8 Regionals" / "Day 2 Worlds" badges on teams
+
+### Pattern 7: Deep Link Share-to-View with Rich Previews (from all four)
+**What:** Every team report URL generates a rich preview (OG image + description) optimized for X, Discord embeds, Reddit, and messaging apps.
+**Why:** All four apps invest heavily in making shared links look compelling in external contexts. A rich Discord embed with Pokemon sprites drives more clicks than a plain URL.
+**Implementation:**
+- Dynamic OG images per team report (Pokemon sprites + format + creator)
+- Twitter Card large image format
+- Discord embed with structured fields (Format, Pokemon, Creator, Record)
+- Clean URL structure: `pokemonvgcteamreport.com/team/[slug]`
+- No login wall for viewing — shared links open directly to content
+
+---
+
+## Priority Matrix
+
+| Pattern | Impact | Effort | Priority |
+|---------|--------|--------|----------|
+| Auto-Generated Share Cards | High | Medium | P0 |
+| Rich Link Previews (OG) | High | Low | P0 |
+| Kudos/GG System | High | Medium | P1 |
+| Masonry Discovery Feed | High | High | P1 |
+| One-Click Remix | Medium | Medium | P2 |
+| Interest-Seeded Onboarding | Medium | Medium | P2 |
+| Creator Attribution | Medium | Low | P2 |
+
+---
+
+## Key Takeaways
+
+1. **Visual sharing assets are non-negotiable.** Strava's entire viral loop depends on auto-generated images that users proudly share. VGC Team Report needs equivalent "team cards" that look good on X/Discord without any user effort.
+
+2. **Low-friction engagement signals drive retention.** Strava (kudos) and Behance (appreciations) prove that one-tap reactions create reciprocal engagement loops. A "GG" button is trivial to implement but compounds over time.
+
+3. **Eliminate empty states through personalization.** Pinterest and Strava both avoid showing blank screens to new users. Asking format preference on first visit and showing relevant teams immediately is the fastest path to engagement.
+
+4. **Remix culture fits VGC perfectly.** Figma's duplicate model maps directly to how VGC players actually use teams — they adapt existing teams, not build from zero. Making this a first-class feature (with attribution) serves both creators and consumers.
+
+5. **Rich previews are the cheapest high-impact investment.** Every platform invests in making shared URLs look compelling in external contexts. For VGC Team Report, a Discord embed showing 6 Pokemon sprites + format + results would dramatically increase click-through from the channels where VGC discussion actually happens.
 
 ---
 
 ## Sources
 
-- [Strava Deep Linking with Branch](https://www.branch.io/resources/blog/how-strava-unifies-in-app-experiences-with-deep-links-mobile-user-acquisition-engagement/)
-- [Strava Activity Sharing Support](https://support.strava.com/hc/en-us/articles/221089587-Sharing-Your-Strava-Activities)
-- [Strava Sticker Stats (Spring 2025)](https://www.bikeradar.com/news/strava-sticker-stats-spring-2025-updates)
-- [Strava Custom Cards for Social Media](https://www.bikeradar.com/news/now-you-can-create-custom-strava-cards-for-social-media)
-- [Pinterest Mobile Deep Links](https://help.pinterest.com/en/business/article/mobile-deep-links)
-- [Pinterest Direct Links Expansion](https://www.socialmediatoday.com/news/pinterest-expands-direct-links-more-ad-campaign-types/701044/)
-- [Pinterest Rich Pins Reference](https://developers.pinterest.com/docs/rich-pins/reference/)
-- [Open Graph Tags Ultimate Guide](https://offshoremarketers.com/open-graph/)
-- [Behance Social Media Sharing Guide](https://help.behance.net/hc/en-us/articles/204485084-Guide-Share-Your-Work-With-Social-Media)
-- [Behance Social Media Thumbnails](https://help.behance.net/hc/en-us/articles/360034073754-Guide-Social-Media-Thumbnails)
-- [Figma Share Files and Prototypes](https://help.figma.com/hc/en-us/articles/360040531773-Share-files-and-prototypes)
-- [Figma Community File Thumbnails](https://help.figma.com/hc/en-us/articles/23510169950871-Design-a-file-thumbnail)
-- [Figma Duplicate Community Files](https://help.figma.com/hc/en-us/articles/360038510873)
-- [Linktree Strategy Guide](https://www.decktopus.com/blog/linktree-strategy)
-- [Linktree Mobile Engagement](https://reviewsbeacon.com/maximize-mobile-engagement-linktree/)
-- [Web Share API in React](https://www.brannen.dev/posts/using-the-web-share-api-in-react)
-- [Next.js OG Image Generation](https://nextjs.org/docs/app/getting-started/metadata-and-og-images)
-- [Vercel OG Image Generation](https://vercel.com/docs/og-image-generation)
-- [Mobile App Conversion Rate Benchmarks 2026](https://uxcam.com/blog/mobile-app-conversion-rate/)
-- [Mobile UX Best Practices 2026](https://www.brandvm.com/post/mobile-ux-best-practices)
+- [Strava Sharing Support](https://support.strava.com/hc/en-us/articles/221089587-Sharing-Your-Strava-Activities)
+- [Strava Stats Stickers](https://communityhub.strava.com/what-s-new-10/use-strava-stats-stickers-on-ig-stories-ios-android-9344)
+- [Strava Engagement & Gamification (StriveCloud)](https://www.strivecloud.io/blog/app-engagement-strava)
+- [Strava Marketing Strategy (NoGood)](https://nogood.io/blog/strava-marketing-strategy/)
+- [Strava Animated Onboarding (Medium)](https://medium.com/strava-design/creating-an-animated-onboarding-experience-19b0363a1326)
+- [Pinterest UX Analysis (UX Collective)](https://uxdesign.cc/pinterests-patterns-and-user-flows-e5e2de836275)
+- [Pinterest Endless Scroll UX](https://en.incarabia.com/inside-pinterest-ux-endless-scroll-endless-engagement-768866.html)
+- [Pinterest Visual Discovery (Passionate Agency)](https://passionates.com/pinterest-visual-discovery-social-commerce-giant/)
+- [Pinterest UI/UX Review (CreateBytes)](https://createbytes.com/insights/pinterest-ui-ux-review-boom-or-bloom)
+- [Behance: How to Stand Out](https://www.behance.net/blog/how-to-stand-out-on-behance)
+- [Behance Project Boost](https://www.behance.net/blog/project-boost)
+- [Behance Intro Guide](https://help.behance.net/hc/en-us/articles/204483894-Guide-Intro-to-Behance)
+- [Figma Community Guide](https://help.figma.com/hc/en-us/articles/360038510693--Guide-to-Figma-Community)
+- [Figma Duplicate Community Files](https://help.figma.com/hc/en-us/articles/360038510873-Duplicate-Community-files)
+- [Empty State UX (Mobbin)](https://mobbin.com/glossary/empty-state)
+- [Empty State Design (Setproduct)](https://www.setproduct.com/blog/empty-state-ui-design)
+- [Apps with Great Onboarding 2026 (UXCam)](https://uxcam.com/blog/10-apps-with-great-user-onboarding/)

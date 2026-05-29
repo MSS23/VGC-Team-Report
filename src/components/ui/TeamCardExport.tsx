@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { getHtml2Canvas } from "@/lib/dynamic-imports/html2canvas";
 
 interface TeamCardExportProps {
   teamName: string;
@@ -9,6 +10,12 @@ interface TeamCardExportProps {
   teamSpecies: string[]; // max 6
   format?: string;
   onExported?: () => void;
+  /**
+   * When true, renders only a scaled-down visual preview of the team card
+   * (no off-screen capture node, no download button). Useful for showing the
+   * card at the top of the ShareModal so users see what they're about to share.
+   */
+  compact?: boolean;
 }
 
 export function TeamCardExport({
@@ -18,6 +25,7 @@ export function TeamCardExport({
   teamSpecies,
   format,
   onExported,
+  compact = false,
 }: TeamCardExportProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -28,7 +36,7 @@ export function TeamCardExport({
     setExportError(null);
     setExporting(true);
     try {
-      const { default: html2canvas } = await import("html2canvas-pro");
+      const html2canvas = await getHtml2Canvas();
       const canvas = await html2canvas(cardRef.current, {
         useCORS: true,
         scale: 2,
@@ -53,7 +61,8 @@ export function TeamCardExport({
 
   return (
     <>
-      {/* Hidden card positioned off-screen for capture */}
+      {/* Hidden card positioned off-screen for capture (full mode only) */}
+      {!compact && (
       <div
         ref={cardRef}
         className="absolute -left-[9999px] top-0 w-[600px] h-[338px] rounded-2xl overflow-hidden"
@@ -181,13 +190,158 @@ export function TeamCardExport({
           pokemonvgcteamreport.com
         </div>
       </div>
+      )}
 
-      {/* Error message */}
-      {exportError && (
+      {/* Compact visible preview — shown in-flow at ~280px wide.
+          Uses CSS transform-scale on the full 600px card so layout stays
+          identical to the exported image. No download button. */}
+      {compact && (
+        <div
+          className="mx-auto"
+          style={{ width: "280px", height: "158px" }}
+          aria-label={`${teamName} team card preview`}
+        >
+          <div
+            style={{
+              width: "600px",
+              height: "338px",
+              borderRadius: "16px",
+              overflow: "hidden",
+              transform: "scale(0.4667)",
+              transformOrigin: "top left",
+              background:
+                "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+              position: "relative",
+            }}
+          >
+            {/* Header */}
+            <div style={{ padding: "24px 32px 12px" }}>
+              <div
+                style={{
+                  color: "rgba(255,255,255,0.5)",
+                  fontSize: "10px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.2em",
+                  fontWeight: 700,
+                }}
+              >
+                VGC Team Report
+              </div>
+              {playerName && (
+                <div
+                  style={{
+                    color: "#fff",
+                    fontSize: "20px",
+                    fontWeight: 800,
+                    marginTop: "2px",
+                  }}
+                >
+                  {playerName}
+                </div>
+              )}
+              {tournamentName && (
+                <div
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: "14px",
+                    marginTop: "2px",
+                  }}
+                >
+                  {tournamentName}
+                </div>
+              )}
+              {format && (
+                <div
+                  style={{
+                    display: "inline-block",
+                    marginTop: "6px",
+                    padding: "2px 8px",
+                    borderRadius: "9999px",
+                    background: "rgba(255,255,255,0.1)",
+                    color: "rgba(255,255,255,0.8)",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  {format}
+                </div>
+              )}
+            </div>
+
+            {/* Pokémon sprites */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                padding: "8px 24px",
+              }}
+            >
+              {teamSpecies.slice(0, 6).map((species, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/api/sprite?species=${encodeURIComponent(species)}`}
+                    alt={species}
+                    width={88}
+                    height={88}
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                  <span
+                    style={{
+                      color: "rgba(255,255,255,0.7)",
+                      fontSize: "9px",
+                      fontWeight: 700,
+                      textTransform: "capitalize",
+                      textAlign: "center",
+                      lineHeight: 1.2,
+                      maxWidth: "80px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {species.replace(/-/g, " ")}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer watermark */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "12px",
+                right: "20px",
+                color: "rgba(255,255,255,0.3)",
+                fontSize: "9px",
+                fontWeight: 500,
+              }}
+            >
+              pokemonvgcteamreport.com
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error message (only relevant when download button is rendered) */}
+      {!compact && exportError && (
         <p role="alert" className="text-xs text-red-500 mb-2 px-1">{exportError}</p>
       )}
 
-      {/* Export button — rendered in-flow */}
+      {/* Export button — rendered in-flow (hidden in compact mode) */}
+      {!compact && (
       <button
         type="button"
         onClick={handleExport}
@@ -235,6 +389,7 @@ export function TeamCardExport({
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
       </button>
+      )}
     </>
   );
 }

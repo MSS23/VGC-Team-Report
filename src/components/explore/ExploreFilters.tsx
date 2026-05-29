@@ -35,58 +35,52 @@ interface ExploreFiltersProps {
   onHasRentalChange: (v: boolean) => void;
 }
 
-const CATEGORIES: { value: SearchCategory; label: string; icon: React.ReactNode }[] = [
-  {
-    value: "all",
-    label: "All",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-      </svg>
-    ),
-  },
-  {
-    value: "pokemon",
-    label: "Pokemon",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" /><line x1="2" y1="12" x2="9" y2="12" /><line x1="15" y1="12" x2="22" y2="12" />
-      </svg>
-    ),
-  },
-  {
-    value: "tournament",
-    label: "Tournament",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="6" y="2" width="12" height="10" rx="2" /><path d="M12 12v4" /><path d="M8 20h8" /><path d="M9 16h6" />
-      </svg>
-    ),
-  },
-  {
-    value: "creator",
-    label: "Creator",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
-      </svg>
-    ),
-  },
-];
+const CATEGORY_ICONS: Record<SearchCategory, React.ReactNode> = {
+  all: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  ),
+  pokemon: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" /><line x1="2" y1="12" x2="9" y2="12" /><line x1="15" y1="12" x2="22" y2="12" />
+    </svg>
+  ),
+  tournament: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="6" y="2" width="12" height="10" rx="2" /><path d="M12 12v4" /><path d="M8 20h8" /><path d="M9 16h6" />
+    </svg>
+  ),
+  creator: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
+    </svg>
+  ),
+};
 
-const SORT_OPTIONS: { value: string; label: string }[] = [
-  { value: "popular", label: "Popular" },
-  { value: "newest", label: "Newest" },
-  { value: "views", label: "Views" },
-  { value: "updated", label: "Updated" },
-];
+const CATEGORY_KEYS: SearchCategory[] = ["all", "pokemon", "tournament", "creator"];
+const CATEGORY_I18N: Record<SearchCategory, string> = {
+  all: "filterCatAll",
+  pokemon: "filterCatPokemon",
+  tournament: "filterCatTournament",
+  creator: "filterCatCreator",
+};
 
-const PLACEMENTS = [
-  { value: "1st", label: "1st" },
-  { value: "Top 4", label: "Top 4" },
-  { value: "Top 8", label: "Top 8" },
-  { value: "Top 16", label: "Top 16" },
-];
+const SORT_KEYS = ["popular", "newest", "views", "updated"] as const;
+const SORT_I18N: Record<string, string> = {
+  popular: "filterSortPopular",
+  newest: "filterSortNewest",
+  views: "filterSortViews",
+  updated: "filterSortUpdated",
+};
+
+const PLACEMENT_KEYS = ["1st", "Top 4", "Top 8", "Top 16"] as const;
+const PLACEMENT_I18N: Record<string, string> = {
+  "1st": "filterPlace1st",
+  "Top 4": "filterPlaceTop4",
+  "Top 8": "filterPlaceTop8",
+  "Top 16": "filterPlaceTop16",
+};
 
 export function ExploreFilters({
   query,
@@ -232,6 +226,7 @@ export function ExploreFilters({
             type="text"
             value={localQuery}
             onChange={(e) => setLocalQuery(e.target.value)}
+            aria-label="Search team reports"
             placeholder={
               searchCategory === "pokemon"
                 ? "Search by Pokemon..."
@@ -262,10 +257,11 @@ export function ExploreFilters({
           <select
             value={sort}
             onChange={(e) => onSortChange(e.target.value as "newest" | "updated" | "popular" | "views")}
+            aria-label="Sort reports by"
             className="pl-3 pr-7 py-2 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all appearance-none cursor-pointer"
           >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{sortLabel[o.value] ?? o.label}</option>
+            {SORT_KEYS.map((key) => (
+              <option key={key} value={key}>{sortLabel[key] ?? key}</option>
             ))}
           </select>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none">
@@ -283,21 +279,21 @@ export function ExploreFilters({
       {/* ------------------------------------------------------------------ */}
       <div className="flex items-center gap-1.5 mt-2 flex-wrap">
         {/* Search category chips */}
-        {CATEGORIES.map((cat) => (
+        {CATEGORY_KEYS.map((key) => (
           <button
-            key={cat.value}
+            key={key}
             type="button"
-            onClick={() => onSearchCategoryChange(cat.value)}
-            aria-label={`Filter by ${catLabel[cat.value] ?? cat.label}`}
-            aria-pressed={searchCategory === cat.value}
+            onClick={() => onSearchCategoryChange(key)}
+            aria-label={`Filter by ${catLabel[key] ?? key}`}
+            aria-pressed={searchCategory === key}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap ${
-              searchCategory === cat.value
+              searchCategory === key
                 ? "bg-accent text-white shadow-sm"
                 : "bg-surface-alt/60 text-text-tertiary hover:text-text-secondary hover:bg-surface-alt"
             }`}
           >
-            <span aria-hidden="true">{cat.icon}</span>
-            {catLabel[cat.value] ?? cat.label}
+            <span aria-hidden="true">{CATEGORY_ICONS[key]}</span>
+            {catLabel[key] ?? key}
           </button>
         ))}
 
@@ -324,18 +320,18 @@ export function ExploreFilters({
         <div className="w-px h-5 bg-border/60 flex-shrink-0 mx-0.5" />
 
         {/* Placement quick-select chips */}
-        {PLACEMENTS.map((p) => (
+        {PLACEMENT_KEYS.map((key) => (
           <button
-            key={p.value}
+            key={key}
             type="button"
-            onClick={() => onPlacementChange(placement === p.value ? "" : p.value)}
+            onClick={() => onPlacementChange(placement === key ? "" : key)}
             className={`px-2.5 py-1.5 text-[11px] font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap ${
-              placement === p.value
+              placement === key
                 ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30"
                 : "bg-surface-alt/40 text-text-tertiary hover:text-text-secondary hover:bg-surface-alt/70"
             }`}
           >
-            {placementLabel[p.value] ?? p.label}
+            {placementLabel[key] ?? key}
           </button>
         ))}
       </div>
@@ -423,34 +419,24 @@ export function ExploreFilters({
           >
             <div className="pt-3 pb-1 space-y-3">
 
-              {/* Pokemon include/exclude inputs */}
+              {/* Pokemon include/exclude chip pickers */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <div>
-                  <label htmlFor="filter-species" className={`text-[11px] font-bold uppercase tracking-wide mb-1 block ${species ? "text-accent" : "text-text-tertiary"}`}>
-                    Include Pokemon
-                  </label>
-                  <input
-                    id="filter-species"
-                    type="text"
-                    value={species}
-                    onChange={(e) => onSpeciesChange(e.target.value)}
-                    placeholder="e.g. Flutter Mane, Incineroar"
-                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="filter-exclude" className={`text-[11px] font-bold uppercase tracking-wide mb-1 block ${excludeSpecies ? "text-red-400" : "text-text-tertiary"}`}>
-                    Exclude Pokemon
-                  </label>
-                  <input
-                    id="filter-exclude"
-                    type="text"
-                    value={excludeSpecies}
-                    onChange={(e) => onExcludeSpeciesChange(e.target.value)}
-                    placeholder="e.g. Urshifu, Calyrex"
-                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-red-400/40 focus:border-red-400 transition-all"
-                  />
-                </div>
+                <SpeciesChipPicker
+                  id="filter-species"
+                  label="Include Pokemon"
+                  value={species}
+                  onChange={onSpeciesChange}
+                  placeholder="e.g. Flutter Mane, Incineroar"
+                  variant="include"
+                />
+                <SpeciesChipPicker
+                  id="filter-exclude"
+                  label="Exclude Pokemon"
+                  value={excludeSpecies}
+                  onChange={onExcludeSpeciesChange}
+                  placeholder="e.g. Urshifu, Calyrex"
+                  variant="exclude"
+                />
               </div>
 
               {/* Event type dropdown */}
@@ -566,6 +552,168 @@ export function ExploreFilters({
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* SpeciesChipPicker                                                          */
+/* -------------------------------------------------------------------------- */
+/* Chip-based input that stores its value as a comma-separated string so it   */
+/* drops into the existing onSpeciesChange / onExcludeSpeciesChange API       */
+/* without touching ExploreContent.tsx or the /api/explore route.             */
+
+const MAX_CHIPS = 10;
+
+interface SpeciesChipPickerProps {
+  id: string;
+  label: string;
+  value: string; // comma-separated
+  onChange: (next: string) => void;
+  placeholder: string;
+  variant: "include" | "exclude";
+}
+
+function parseChips(value: string): string[] {
+  return value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function serializeChips(chips: string[]): string {
+  return chips.join(",");
+}
+
+function SpeciesChipPicker({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+  variant,
+}: SpeciesChipPickerProps) {
+  const [draft, setDraft] = useState("");
+  const chips = parseChips(value);
+  const atMax = chips.length >= MAX_CHIPS;
+
+  const accentText = variant === "include" ? "text-accent" : "text-red-400";
+  const chipClass =
+    variant === "include"
+      ? "bg-accent/10 text-accent ring-1 ring-accent/20"
+      : "bg-red-500/10 text-red-500 ring-1 ring-red-500/20";
+  const focusRing =
+    variant === "include"
+      ? "focus-within:ring-accent/40 focus-within:border-accent"
+      : "focus-within:ring-red-400/40 focus-within:border-red-400";
+
+  const commitTokens = (raw: string) => {
+    const incoming = parseChips(raw);
+    if (incoming.length === 0) return;
+    const existing = new Set(chips.map((c) => c.toLowerCase()));
+    const merged = [...chips];
+    for (const tok of incoming) {
+      if (merged.length >= MAX_CHIPS) break;
+      const key = tok.toLowerCase();
+      if (!existing.has(key)) {
+        merged.push(tok);
+        existing.add(key);
+      }
+    }
+    onChange(serializeChips(merged));
+    setDraft("");
+  };
+
+  const removeChip = (name: string) => {
+    const next = chips.filter((c) => c !== name);
+    onChange(serializeChips(next));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const trimmed = draft.trim();
+      if (trimmed) commitTokens(trimmed);
+    } else if (e.key === "Backspace" && draft === "" && chips.length > 0) {
+      e.preventDefault();
+      const next = chips.slice(0, -1);
+      onChange(serializeChips(next));
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData("text");
+    if (text.includes(",")) {
+      e.preventDefault();
+      commitTokens(text);
+    }
+  };
+
+  const handleBlur = () => {
+    const trimmed = draft.trim();
+    if (trimmed) commitTokens(trimmed);
+  };
+
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className={`text-[11px] font-bold uppercase tracking-wide mb-1 block ${
+          value ? accentText : "text-text-tertiary"
+        }`}
+      >
+        {label}
+      </label>
+      <div
+        className={`flex flex-wrap items-center gap-1 w-full px-2 py-1.5 bg-surface border border-border rounded-lg transition-all focus-within:outline-none focus-within:ring-2 ${focusRing}`}
+      >
+        {chips.map((chip) => (
+          <button
+            key={chip}
+            type="button"
+            onClick={() => removeChip(chip)}
+            aria-label={`Remove ${chip}`}
+            className={`inline-flex items-center gap-1 min-h-[24px] px-2 py-0.5 text-[11px] font-bold rounded-md transition-all active:scale-[0.95] cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-surface ${
+              variant === "include" ? "focus:ring-accent/50" : "focus:ring-red-400/50"
+            } ${chipClass}`}
+          >
+            <span>{chip}</span>
+            <svg
+              width="8"
+              height="8"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        ))}
+        <input
+          id={id}
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          onBlur={handleBlur}
+          disabled={atMax}
+          placeholder={
+            atMax
+              ? `Max ${MAX_CHIPS} reached`
+              : chips.length === 0
+              ? placeholder
+              : "Add another..."
+          }
+          aria-label={label}
+          className="flex-1 min-w-[120px] bg-transparent border-0 px-1.5 py-1 text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none disabled:opacity-50"
+        />
+      </div>
     </div>
   );
 }

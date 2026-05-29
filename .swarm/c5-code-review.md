@@ -1,10 +1,28 @@
 # C5 Code Review — Last 20 Commits (26-05-26)
 
-Reviewed: `03c1547` through `850e91c` (20 commits on `origin/main`).
+**Date:** 2026-05-25  
+**Range:** `03c1547..850e91c` (20 commits)  
+**Reviewer:** Claude (automated audit)
 
 ---
 
-## CRITICAL: XSS in Comment Notification Email (src/lib/email.ts)
+## Commit Overview
+
+| SHA | Summary | Risk |
+|-----|---------|------|
+| 850e91c | Delete ShareDock + FloatingReactionDock; persist CTA dismissal | Low |
+| 3ace051 | Instagram-style dock + double-tap-to-like + owner pencil | Medium |
+| b1af62f | Streamline mobile shared-view UX (auto-present, swipe fix) | Medium |
+| 767ef07 | Swarm nightly 20-05-26 (10 sub-commits) | Medium |
+| 52437b8 | Remove newsletter signup | Low |
+| 6f1e552 | Swarm nightly 19-05-26 (9 sub-commits) | Medium |
+| b1e95df–90c57c2 | Swarm nightlies 16-18 May | Low–Medium |
+| 83295c1 | posthog?.capture optional chain fix | Low |
+| 09c073c | PWA engagement-triggered install prompt | Medium |
+| 282aef1 | VGC-182: Champions meta aggregation into SQL | High |
+| 03c1547 | VGC-137: Speed tier Yours/Meta badges + Mega matching | Low |
+| 761a10d | Fix dead exports + implicit-any TypeScript | Low |
+| de7466b | Onboarding UX — ExploreEmpty + PasteInput hint | Low |
 
 **Commit**: `b1e95df` (swarm 18-05-26, VGC-125 welcome email + comment notifications)
 **File**: `src/lib/email.ts`, lines 89-136
@@ -18,170 +36,162 @@ The `buildCommentNotificationHtml()` function interpolates `commenterName`, `com
 <p ...>${commentBody}</p>
 ```
 
-An attacker can set their Clerk display name or submit a comment containing `<script>` or `<img onerror=...>` tags. While most modern email clients strip scripts, many still render arbitrary HTML, enabling phishing links disguised as UI elements, form injection, and CSS-based data exfiltration.
+## Critical Findings
 
-The weekly-digest cron (`src/app/api/cron/weekly-digest/route.ts`) has its own local `escapeHtml()` (added in `6f1e552`), but `src/lib/email.ts` has **no** escape function at all. The `buildWelcomeEmailHtml()` function (same file, line 219) also interpolates `firstName` raw.
+### 1. WASTED CHURN — ShareDock/FloatingReactionDock/useTouchIdleHide (b1af62f → 3ace051 → 850e91c)
 
-**Fix**: Add `escapeHtml()` to `src/lib/email.ts` and apply it to all user-controlled interpolations in `buildCommentNotificationHtml()` and `buildWelcomeEmailHtml()`. Consider extracting the helper to a shared `src/lib/utils/escape-html.ts` to avoid the duplicate in weekly-digest.
+**Severity:** Tech-debt / process issue  
+**Files:** `src/components/ui/ShareDock.tsx`, `src/components/social/FloatingReactionDock.tsx`, `src/hooks/useTouchIdleHide.ts`
 
-**Follow-up ticket**: YES — P0 security fix.
+Three consecutive commits over a single day:
+- b1af62f: **Adds** useTouchIdleHide (92 lines), modifies ShareDock (+56), FloatingReactionDock (+80)
+- 3ace051: **Rewrites** useTouchIdleHide (169 lines), modifies ShareDock (+26), FloatingReactionDock (+22), adds DoubleTapLikeOverlay (345 lines)
+- 850e91c: **Deletes** all three of useTouchIdleHide, ShareDock, and FloatingReactionDock entirely
+
+This is 543 lines added in 3ace051 where ~450 were dead within hours. The churn indicates lack of design consensus before implementation. Not a code bug, but a costly pattern if it repeats.
+
+**Follow-up ticket:** Establish lightweight UX sign-off process before implementing disposable UI components.
 
 ---
 
-## HIGH: Navbar Save Effect Missing Abort/Cancellation (src/components/layout/Navbar.tsx)
+### 2. MISSING PWA SCREENSHOTS — manifest.json references non-existent files (09c073c)
 
-**Commit**: `850e91c` (delete share + reaction docks)
-**File**: `src/components/layout/Navbar.tsx`, lines 197-208
-**Risk**: Race condition — stale setState on unmount
+**Severity:** Bug (functionality gap)  
+**File:** `public/manifest.json`
 
-The `useEffect` that fetches `/api/user/saved` on mount has no cancellation mechanism:
+The manifest references four screenshot paths:
+- `/screenshots/desktop-team-report.png`
+- `/screenshots/desktop-explore.png`
+- `/screenshots/mobile-team-report.png`
+- `/screenshots/mobile-explore.png`
 
-```ts
+The directory `public/screenshots/` does not exist. Chrome's enhanced install dialog requires these assets to show the "richer install UI" — without them, the enhanced dialog silently falls back to the basic prompt. This is noted in the commit message ("actual PNGs to be captured") but has sat unresolved for 10 days.
+
+**Follow-up ticket:** Capture and commit the 4 PWA screenshots to `public/screenshots/`.
+
+---
+
+### 3. SQL AGGREGATION — Regex divergence risk between Postgres and JS (282aef1)
+
+**Severity:** Medium (potential data correctness)  
+**File:** `src/app/api/champions/meta/route.ts`
+
+The SQL CTEs replicate `extractSpecies()` logic (gender strip, nickname detection, item suffix). But this is a re-implementation in Postgres regex rather than calling the canonical JS function. Divergence risks:
+
+1. **Gender regex:** SQL uses `E'\\s+\\([MF]\\)\\s*$'` — only matches uppercase M/F. If pastes ever contain lowercase `(m)` or `(f)`, SQL won't strip them but the JS would.
+2. **Item split:** `split_part(first_line, ' @ ', 1)` splits on first occurrence. If a nickname contains " @ " (unlikely but legal in Showdown exports), it truncates.
+3. **No test parity:** There's no integration test verifying the SQL output matches the JS `extractSpecies()` for the same input set. A regression here silently corrupts the meta page.
+
+**Follow-up ticket:** Add integration test comparing SQL CTE output vs JS `extractSpecies()` on a corpus of 50+ real pastes.
+
+---
+
+### 4. NAVBAR SAVE TOGGLE — Fetch fires without abort on unmount (850e91c)
+
+**Severity:** Low–Medium (race condition)  
+**File:** `src/components/layout/Navbar.tsx` (lines 197–208)
+
+```typescript
 useEffect(() => {
   if (!canSave || !activeShareId) return;
   fetch("/api/user/saved")
     .then((r) => (r.ok ? r.json() : null))
     .then((data) => {
-      if (data?.reports?.some(...)) { setSaved(true); }
-      else { setSaved(false); }
+      if (data?.reports?.some((r: { id: string }) => r.id === activeShareId)) {
+        setSaved(true);
+      } else {
+        setSaved(false);
+      }
     })
     .catch(() => {});
 }, [canSave, activeShareId]);
 ```
 
-If the user navigates away (changing `activeShareId`) before the fetch resolves, the `.then` will call `setSaved` with stale data for the previous share. In React 18+ strict mode this also fires twice in development.
+Issues:
+- No `AbortController` — if `activeShareId` changes rapidly (user clicking through reports), stale responses can set the wrong `saved` state for the current report.
+- `canSave` depends on `isSignedIn` which flickers during Clerk hydration. The effect may fire with `canSave = false` initially, then `true` after auth loads, creating a visible flash from "Save" button being hidden to shown.
+- No cleanup return. The component can unmount while the fetch is inflight, calling `setSaved` on an unmounted component (React 19 suppresses the warning but it's still wasted work).
 
-**Fix**: Add an AbortController or a `cancelled` flag pattern (as used correctly in `DoubleTapLikeOverlay.tsx` line 141).
-
----
-
-## HIGH: Manifest Screenshots Reference Non-Existent Files (public/manifest.json)
-
-**Commit**: `09c073c` (PWA engagement-triggered install prompt)
-**File**: `public/manifest.json`, lines 82-108
-**Risk**: Broken PWA enhanced install dialog on Chrome
-
-The manifest references 4 screenshot paths (`/screenshots/desktop-team-report.png`, etc.) but the `public/screenshots/` directory does not exist. Chrome's enhanced install dialog silently degrades, but Lighthouse PWA audits will flag the broken references.
-
-The commit message acknowledged this ("actual PNGs to be captured and placed there"), but no follow-up ticket was created.
-
-**Fix**: Either capture and add the screenshots, or revert the manifest entries to prevent broken references. File a ticket.
-
-**Follow-up ticket**: YES — capture PWA screenshots.
+**Follow-up ticket:** Add `AbortController` to Navbar saved-state effect, gate on `isLoaded` to avoid hydration flicker.
 
 ---
 
-## MEDIUM: Share INSERT Column Mismatch Shipped to Prod (src/app/api/share/route.ts)
+### 5. iOS INSTALL PROMPT — Scroll gate can deadlock on short pages (09c073c)
 
-**Commits**: `90c57c2` introduced the bug (swarm 17-05-26), `b1e95df` fixed it (swarm 18-05-26)
-**File**: `src/app/api/share/route.ts`
-**Risk**: Data corruption — ownership corruption on shares created between these commits
+**Severity:** Low–Medium (functionality gap)  
+**File:** `src/components/ui/InstallPrompt.tsx` (lines 60–78)
 
-The VGC-190 unlisted tier commit added `is_unlisted` to the INSERT VALUES but not the column list, shifting `owner_id` to receive a boolean. This was live for approximately 24 hours. The commit message in `b1e95df` mentions a repair draft at `.swarm/drafts/vgc195-db-repair.sql`.
+The iOS path requires `scrollFired` to be true before showing the prompt. On pages where the viewport is taller than the content (e.g., an iPad in landscape showing only a single team card), `window.scrollY` can never reach 200px because there's nothing to scroll. The current deployed code (line 67-68) does include a `pageIsShort` fallback check, but this was added after the commit shown in the diff — need to verify it's in HEAD.
 
-**Question**: Was the repair SQL actually run against production? If shares were created during that window, ownership is corrupted. This needs confirmation.
+Confirmed at HEAD (lines 67-68): there is a `pageIsShort` check. This is resolved. However, the `promptReady` flag in the Android path is never set for iOS Safari (no `beforeinstallprompt` event fires on iOS), meaning `maybeReveal()` can never succeed on that path — the iOS logic correctly bypasses `maybeReveal()` and uses its own timer. This is fine.
 
-**Follow-up ticket**: YES — verify VGC-195 DB repair was executed.
-
----
-
-## MEDIUM: Churned Components — 3 Build/Delete Cycles in One Day (multiple commits)
-
-**Commits**: `b1af62f` (create), `3ace051` (rewrite), `850e91c` (delete)
-**Files**: `ShareDock.tsx`, `FloatingReactionDock.tsx`, `useTouchIdleHide.ts`
-**Risk**: Wasted build minutes and review effort
-
-Three components were created, rewritten with new UX patterns, and then fully deleted — all within the same day (May 20). While the final state is clean, this represents 3 separate commits that each modified `page.tsx` and `Navbar.tsx`. If these had been pushed individually, that would have been 3 Vercel builds for features that ended up deleted.
-
-**Lesson**: For experimental UI, prototype locally before committing. The current batching strategy (commit locally, push once) mitigated the build cost, but the commit history is noisy.
+**Status:** Resolved in HEAD. No follow-up needed.
 
 ---
 
-## MEDIUM: page.tsx is 1,881 Lines (src/app/page.tsx)
+### 6. DoubleTapLikeOverlay — Inline `<style>` tag renders on every mount (3ace051)
 
-**Multiple commits**: Nearly every feature commit touches this file
-**Risk**: Merge conflicts, readability, maintainability
+**Severity:** Low (performance)  
+**File:** `src/components/social/DoubleTapLikeOverlay.tsx`
 
-`page.tsx` has grown to 1,881 lines as a single "use client" component (`HomeContent`). It contains presentation mode logic, share flow, CTA persistence, view tracking, fork flow, version comparison, tour system, and more. Every UI feature commit has to modify this file, creating a constant merge-conflict hotspot.
+The component injects a `<style>` block with keyframe definitions into the DOM every time it mounts. On React re-renders that unmount/remount this dynamic import, duplicate `<style>` tags accumulate (though the browser deduplicates identical keyframe names). This is a minor perf concern but not standard practice.
 
-**Fix**: Extract logical sections into custom hooks or sub-components:
-- Share/fork CTA logic -> `useShareCta.ts`
-- View tracking -> `useViewTracking.ts`
-- Presentation mode orchestration -> `usePresentationMode.ts`
-
-**Follow-up ticket**: YES — refactor page.tsx into composable pieces.
+**Follow-up ticket:** Move keyframes to a global CSS file or use Tailwind's `@keyframes` extension in the CSS layer.
 
 ---
 
-## MEDIUM: i18n Stubs Are Empty Strings (6 language files)
+### 7. Weekly Digest Batch — No error isolation per email (767ef07)
 
-**Commit**: `b1e95df` (VGC-121: ShareModal i18n)
-**Files**: `src/lib/i18n/translations/{fr,es,it,ja,ko,zh}.ts`
-**Risk**: Broken UI for non-English users
+**Severity:** Low–Medium (reliability)  
+**File:** `src/app/api/cron/weekly-digest/route.ts`
 
-All 6 non-English translation files have empty-string stubs for the ~26 ShareModal keys added in VGC-121. The `ShareModal.tsx` uses a `Proxy` that falls back to English when the value is empty (`""`), which is clever but fragile — if the Proxy pattern is removed or if a key is missing entirely (not just empty), users will see blank buttons and labels.
-
-Additionally, the ExploreFilters i18n keys added in `6f1e552` (VGC-199) also have empty stubs in non-English files.
-
-**Fix**: At minimum, copy the English strings as placeholders into all translation files. Better: use a typed i18n system that enforces key completeness at build time.
-
-**Follow-up ticket**: YES — translate or copy English fallbacks for ShareModal + ExploreFilters keys.
-
----
-
-## LOW: DoubleTapLikeOverlay Inline `<style>` on Every Render (src/components/social/DoubleTapLikeOverlay.tsx)
-
-**Commit**: `3ace051` (Instagram-style dock UX)
-**File**: `src/components/social/DoubleTapLikeOverlay.tsx`, lines 291-300
-**Risk**: Minor performance — repeated style injection
-
-The component injects a `<style>` block with `@keyframes` on every render cycle. Since this is a fixed-position overlay that is always mounted on shared views, the styles are re-injected on every heart spawn/despawn state change.
-
-**Fix**: Move the keyframe definitions to `globals.css` or use a `useEffect`-based style injection that runs once on mount.
-
----
-
-## LOW: InstallPrompt localStorage Access Without Try/Catch (src/components/ui/InstallPrompt.tsx)
-
-**Commit**: `09c073c` (PWA engagement prompt)
-**File**: `src/components/ui/InstallPrompt.tsx`, lines 20-21
-**Risk**: Crash in private browsing on older Safari
-
-```ts
-const dismissedAt = localStorage.getItem(DISMISS_KEY);
+The parallel batch email sending:
+```typescript
+const results = await Promise.all(chunk.map((job) => sendEmail(job).catch(() => null)));
 ```
 
-This is called at the top of a `useEffect` without a try/catch. In older Safari private browsing, `localStorage` throws on access. The CTA persistence code in `page.tsx` (line 637) correctly wraps localStorage in try/catch — this should too.
+The `.catch(() => null)` swallows all error details — you can't tell which emails failed or why from the logs. Only the count (`errors++`) is tracked. If Resend returns a rate-limit (429) on one email, the code doesn't back off for subsequent emails in the same chunk. A burst of 15 parallel sends hitting a rate limit would fail all 15.
+
+**Follow-up ticket:** Add exponential backoff on 429 responses in email batch sender; log failed recipient addresses (not content) for debugging.
 
 ---
 
-## LOW: Weekly Digest Send Errors Silently Swallowed (src/app/api/cron/weekly-digest/route.ts)
+### 8. AUTO-PRESENT for shared views — No escape hatch for direct-link viewers (b1af62f)
 
-**Commit**: `767ef07` (VGC-201: batch Clerk getUserList)
-**File**: `src/app/api/cron/weekly-digest/route.ts`, lines 352-357
-**Risk**: Silent email delivery failures
+**Severity:** Low (UX concern, not a bug)  
+**File:** `src/hooks/useHomePage.ts` (lines 558–574)
 
-The parallel batch sending catches failures via `.catch(() => null)` and increments the `errors` counter, but the actual error is swallowed. If Resend rate-limits the batch or rejects emails, there is no logged reason.
+When a viewer opens a shared report link, they're immediately put into presentation mode. The only way to exit is finding and clicking the "Exit" button in the Navbar. On mobile, this may confuse users who expect a normal scrollable page — especially if they arrive from a search engine result or a shared link on Discord where the expectation is "I want to read the team details."
 
-**Fix**: Log the error in the catch: `.catch((e) => { console.error('Email send failed:', e); return null; })`.
+The `editKeyFromUrl` check helps owners, but regular viewers have no URL parameter to opt out. This is a deliberate UX decision, but worth monitoring in analytics for bounce-rate impact.
 
----
-
-## INFORMATIONAL: Dead Code Already Cleaned Well
-
-Across commits `761a10d`, `767ef07`, and `90c57c2`, approximately 17 dead exports and 3 unused imports were systematically removed. The codebase is notably clean of dead code as of HEAD. Good hygiene.
+**Follow-up ticket:** Track exit-presentation-mode events in PostHog; if >30% of shared-view users exit within 5s, add a "View as page" link.
 
 ---
 
-## Summary of Follow-Up Tickets Recommended
+## Conflict-Risk Files Assessment
 
-| Priority | Issue | File(s) |
-|----------|-------|---------|
-| P0 | XSS in comment notification email — add escapeHtml | `src/lib/email.ts` |
-| P1 | Verify VGC-195 DB repair was executed | `src/app/api/share/route.ts` |
-| P2 | Navbar save effect missing abort controller | `src/components/layout/Navbar.tsx` |
-| P2 | Capture PWA screenshots or revert manifest | `public/manifest.json` |
-| P2 | Translate or backfill i18n empty stubs | `src/lib/i18n/translations/*.ts` |
-| P3 | Refactor page.tsx (1,881 lines) | `src/app/page.tsx` |
-| P3 | InstallPrompt localStorage try/catch | `src/components/ui/InstallPrompt.tsx` |
-| P3 | Weekly digest error logging | `src/app/api/cron/weekly-digest/route.ts` |
+| File | Commits touching it (last 20) | Risk |
+|------|-------------------------------|------|
+| `src/app/page.tsx` | 4 (850e91c, 3ace051, b1af62f, 52437b8) | **HIGH** — 1881 lines, god-component |
+| `src/components/layout/Navbar.tsx` | 2 (850e91c, 3ace051) | Medium — 872 lines, growing |
+| `src/app/changelog/ChangelogContent.tsx` | 3 (767ef07, 6f1e552, 52437b8) | Low — append-only |
+| `src/components/ui/ShareModal.tsx` | 1 (767ef07) | Low — stable |
+
+**Key concern:** `page.tsx` at 1881 lines is the single biggest merge-conflict risk. It contains routing logic, state management, all conditional rendering, and keeps growing. Any two developers touching this file simultaneously will conflict.
+
+**Follow-up ticket:** Extract shared-view logic (CTA, reactions, save) from `page.tsx` into a `SharedViewProvider` or dedicated sub-component.
+
+---
+
+## Summary of Recommended Follow-Up Tickets
+
+| # | Title | Priority |
+|---|-------|----------|
+| 1 | Capture PWA screenshots for enhanced Chrome install dialog | P2 |
+| 2 | Integration test: SQL meta CTE vs JS extractSpecies() parity | P2 |
+| 3 | AbortController + auth-gate on Navbar saved-reports effect | P3 |
+| 4 | Extract shared-view concerns from page.tsx (1881 lines) | P2 |
+| 5 | Email batch sender: log failures, add rate-limit backoff | P3 |
+| 6 | Move DoubleTapLikeOverlay keyframes to global CSS | P4 |
+| 7 | Track auto-present bounce rate for shared views | P3 |

@@ -284,7 +284,160 @@ The tool was found indexed across multiple competitive Pokemon resource sites:
 
 ### Medium-Priority
 
-7. **Damage calc integration**: Pre-populated calcs from within the report.
-8. **View analytics**: Show report authors how many times their team was viewed/copied/shared.
-9. **Source attribution**: "Based on [Player's] team from [Event]" field. Credit is a significant community value.
-10. **Indy Regionals timing push**: Engage r/VGC and r/stunfisk during the post-Indy window (June 1-5) when team report sharing peaks.
+---
+
+## 11. May 25, 2026 Refresh — Latest Signals
+
+*Research session: 2026-05-25*
+*Note: PostHog data unavailable for this run. Reddit direct scraping still blocked (robots.txt). Findings sourced from web search, GitHub, Smogon, community tool sites, and App Store reviews.*
+
+### PokePaste Decline Accelerating
+
+PokePaste's position as the de facto standard is weakening under multiple pressures:
+
+1. **Smogon integration being deprecated**: Evidence from Smogon threads confirms PokePaste is being "phased out as an uploading option on Pokémon Showdown." The round-trip workflow (build in Showdown → share via PokePaste → import back) is breaking at the export step.
+
+2. **GitHub maintenance frozen**: The 155+ open issues remain. No meaningful new development. The maintainer is a single developer (felixphew) with no stated plans for improvement. The project is effectively in maintenance mode at best.
+
+3. **"Tickable setting to put true stats" request rejected**: Smogon forums show the maintainer actively rejecting community feature requests — confirming the tool will not evolve to meet new needs.
+
+4. **crob.at gaining visibility**: crob.at now appears prominently in multiple search results for "pokepaste alternative." Its zero-friction UX (paste URL → visual render instantly, no account) is capturing casual sharing traffic. However, it has NO context/report layer — purely visual paste rendering.
+
+### New Competitors & Tool Updates (2026)
+
+| Tool | Update | Significance |
+|------|--------|-------------|
+| crob.at | Now accepts pokepaste URLs directly (not just raw text) | Reducing friction to switch from pokepast.es |
+| VR Pastes (vrpastes.com) | Password-protected pastes + Open Team List support | First tool addressing privacy/tournament prep needs |
+| PokeStrat (pokestratbuilder.com) | "Build and Optimize" positioning with weakness analysis | Another AI-assisted builder entering the space |
+| PokéTeamBuilder (poketeambuilder.app) | GPT-4.1 integration for AI team generation | AI-generated teams are now a serious feature category |
+| Porygon Labs (porygonlabs.com) | Pokemon Champions damage calc + Mega Evolution support | Mobile-first, actively updated for 2026 meta |
+| My Pokemon Team (mypokemonteam.com) | Gen 1 through SV + Hisui support, Showdown import/export | Broad format coverage but no VGC-specific features |
+
+### Community Ecosystem Map (Current State)
+
+The VGC tooling ecosystem in May 2026 consists of:
+
+**Data & Stats**: Pikalytics (dominant), MunchStats (faster updates)
+**Team Building**: Pokémon Showdown (still gold standard), VGC.tools, Falinks, PokéTeamBuilder (AI)
+**Paste Sharing**: pokepast.es (declining), crob.at (rising visual alternative), VR Pastes (privacy-first)
+**Damage Calcs**: Pikalytics calc, Porygon Labs (mobile-first), Nimbasa City Post calc
+**Team Reports**: Victory Road (curated, gatekept), VGC with Hats (personal blog), DevonCorp (articles), pokemonvgcteamreport.com (structured, self-service)
+**Replay Analysis**: Reportworm (auto-generates calcs from replays), PASRS (Bauerdad)
+**Tournament Data**: Limitless VGC, Top Cut Explorer (Stalruth)
+**Curated Collections**: VGCPastes (Twitter/Falinks), VGCpedia, DevonCorp resources
+
+**Critical gap confirmed again**: No single tool unifies team report creation + pokepaste import + structured matchups + damage calcs + searchable discovery + rental/replica code linking. VGC Team Report remains the only product attempting this full integration.
+
+### Smogon Forums Confirm Feature Demand
+
+From the PokePaste thread (Page 2) and related Smogon programming discussions:
+
+1. **Source link field**: Users want a dedicated field to link back to the RMT post, tournament page, or original creator. The notes box is the only current option and its URLs are not selectable/clickable without inspect element.
+
+2. **HOME sprite migration**: Recurring request. Every new Pokémon release triggers a fresh wave of missing-sprite complaints. The community-built Pokepastefix extension is actively maintained (updated for Legends Z-A Mega forms as of 2026).
+
+3. **Format tagging**: Users want to specify VGC/OU/UU format when creating pastes manually (without Showdown export). Not implemented.
+
+4. **Team iteration/versioning**: Implied by the Smogon VGC analysis format discussion thread and the "iterative teambuilding" cultural pattern documented in VGC with Hats reports.
+
+### VGC Helper App — Confirmed Abandoned (App Store Reviews)
+
+Direct quotes from App Store reviews confirm the abandonment narrative:
+- "The only major issue is the lack of updates"
+- "Last update was over a year ago in April of 2024"
+- "If you're looking for anything relevant to team building in 2025, you're in the wrong place"
+- Despite this, the app maintains a 4.85/5 rating — confirming strong underlying demand for a comprehensive mobile VGC tool
+
+This represents a market opportunity: the audience for an all-in-one VGC tool on mobile EXISTS and is PROVEN (470 reviews, near-perfect rating) but the product serving them has been abandoned.
+
+### Pokemon Champions 2026 Meta Context
+
+- Regulation I (Seasons 30-33): May 1 - August 31, 2025 format data visible in Pikalytics
+- VGC competitions officially transitioned to Pokemon Champions (Nintendo Life, March 2026)
+- The format reset means all existing team archives are partially obsolete — players need NEW resources for the new format
+- Open Team List requirement continues to increase structural demand for clean team documentation tools
+
+### Confirmed r/stunfisk as Active Feedback Channel
+
+The PokePaste maintainer confirmed receiving feedback from "Smogon VGC Discord and /r/stunfisk" — confirming r/stunfisk is where competitive players discuss tool quality and feature gaps. However, direct Reddit scraping remains blocked by robots.txt for automated research tools.
+
+### Key New Insight: AI Team Generation Is Now a Category
+
+Multiple tools (PokéTeamBuilder with GPT-4.1, PokeStrat with AI optimization, Pokepaste MCP Server for AI integration) confirm that AI-generated/AI-optimized teams are becoming an expected feature. The VGC community is entering a phase where:
+- Players expect tools to suggest/optimize, not just document
+- AI calcs and matchup analysis are table stakes for modern team builders
+- The "Pokepaste MCP Server" (skywork.ai) signals developers want programmatic access to team data
+
+### Recommendations Update (May 2026)
+
+1. **The Pokemon Champions reset window is NOW**: VGCPastes has minimal Regulation I content. New Champions players have no habits. This is the moment to establish VGC Team Report as canonical.
+
+2. **crob.at is not a threat — it's a complement**: crob.at solves visual sharing but has zero report/context layer. VGC Team Report should integrate crob.at-style visual rendering within reports (sprites, items, moves displayed beautifully) while providing the matchup/calc context that crob.at cannot.
+
+3. **PokePaste's Showdown deprecation is an opportunity**: As pokepast.es loses its Showdown integration, players will need a new default paste destination. If VGC Team Report captures the "paste your team here" workflow with a better UX, it captures the top of the funnel.
+
+4. **AI features are now expected**: Consider adding AI-assisted matchup suggestions or spread analysis. The community already has tools doing this (VGC Team Helper for grading, PokéTeamBuilder for generation). Structured team report data is a natural input for AI analysis.
+
+5. **Mobile gap is still wide open**: VGC Helper abandoned at 4.85/5 stars with 470 reviews proves the demand. Porygon Labs is mobile-first but only covers damage calcs. A mobile-responsive team report creator/browser would be differentiated.
+
+---
+
+## Sources
+
+- [PokePaste GitHub Issues](https://github.com/felixphew/pokepaste/issues)
+- [PokePaste Issue #313 — Invalid paste error Feb 2026](https://github.com/felixphew/pokepaste/issues/313)
+- [PokePaste Issue #99 — No/invalid paste error](https://github.com/felixphew/pokepaste/issues/99)
+- [PokePaste GitHub repository](https://github.com/felixphew/pokepaste)
+- [VGC.tools community team builder](https://vgc.tools/)
+- [VGC Team Share (archived)](https://github.com/phinocio/vgcteamshare)
+- [VGCPastes Twitter account](https://x.com/VGCPastes)
+- [Victory Road VGC Team Reports](https://victoryroad.pro/sv-reports/)
+- [Limitless VGC Teams](https://limitlessvgc.com/teams)
+- [Smogon VGC Team Bazaar](https://www.smogon.com/forums/threads/vgc-team-bazaar.3678459/)
+- [Smogon PokePaste thread](https://www.smogon.com/forums/threads/pokepaste-a-pokemon-pastebin.3601073/)
+- [Smogon image fix thread](https://www.smogon.com/forums/threads/pokepaste-image-fix.3733096/)
+- [Reportworm](https://reportworm.com/)
+- [Falinks VGC Pastes](https://www.falinks-teambuilder.com/pastes/vgc/)
+- [VGC Helper App Store](https://apps.apple.com/us/app/vgc-helper/id1598784937)
+- [DevonCorp team reports](https://devoncorp.press/team-reports-and-war-stories)
+- [Aaron Traylor Regionals 2024 Team Report (Medium)](https://attraylor.medium.com/miraidons-big-day-indianapolis-regionals-2024-top-8-team-report-9e25996d6641)
+- [VGC with Hats — Vancouver 2024 team report](https://vgcwithhats.ca/2024/04/04/the-porygon2-crew-vancouver-top-4-team-report-a-regulation-f-retrospective-and-a-case-for-iterative-teambuilding/)
+- [Pikalytics VGC team builder](https://pikalytics.com/team)
+- [Best Team Builders 2025 — PokeTeamBuilder blog](https://blog.poketeambuilder.app/best-team-builders-2025)
+- [VGCPedia Resources](https://www.vgcpedia.com/resources/)
+- [VGCPastes Regulation I tweet](https://x.com/VGCPastes/status/1910793869333324457)
+- [crob.at pokepaste alternative](https://crob.at/pokepaste)
+- [Pokepastefix Chrome extension](https://chromewebstore.google.com/detail/pokepastefix/ekceaboabpgkgbpigacngnjagcdhdkmn)
+- [Pokepastefix GitHub repo](https://github.com/afnleaf/pokepastefix)
+- [PokePaste Exporter Chrome extension](https://chromewebstore.google.com/detail/pokepaste-exporter/eehioifimidcjcdlaehajhdeaekmmdne)
+- [MunchStats](https://munchstats.com/)
+- [MunchStats GitHub](https://github.com/PizzaTimeJoshua/munchstats)
+- [VGC Helper App (last update April 2024)](https://apps.apple.com/us/app/vgc-helper/id1598784937)
+- [Pikalytics App Store reviews](https://apps.apple.com/us/app/pikalytics-battle-strategy/id1511370166)
+- [Pokemon Champions launch backlash — Nintendo Life](https://www.nintendolife.com/news/2026/04/feels-like-a-fleshed-out-beta-fans-are-unhappy-with-pokemon-champions-at-launch)
+- [Pokemon Champions backlash — Game8](https://game8.co/articles/latest/pokemon-champions-launch-met-with-backlash-over-performance-issues-and-missing-features)
+- [Pokemon Champions missing features — GameFragger](https://gamefragger.com/nintendo/pokemon-champions-faces-early-criticism-over-limited-pokdex-performance-issues-and-cut-items-a28205)
+- [PikaChampions team builder](https://pikachampions.com/)
+- [Porygon Labs damage calc](https://www.porygonlabs.com/)
+- [VGenC top teams pastes](https://vgenc.net/top-teams)
+- [Top Cut Explorer](https://cut-explorer.stalruth.dev/)
+- [VGC-Bench research paper (arxiv, 2026)](https://arxiv.org/html/2506.10326v2)
+- [VGC Smogon analysis format discussion](https://www.smogon.com/forums/threads/vgc-analysis-format-discussion.3761710/)
+- [Smogon VGC Regulation F 2.0 sample teams](https://www.smogon.com/forums/threads/vgc-regulation-f-2-0-sample-teams.3777032/)
+- [crob.at — PokePaste Alternative](https://crob.at/pokepaste)
+- [Best Pokémon Team Builders 2025 — PokeTeamBuilder Blog](https://blog.poketeambuilder.app/best-team-builders-2025)
+- [PokeStrat Builder](https://pokestratbuilder.com/)
+- [My Pokemon Team builder](https://mypokemonteam.com/)
+- [VR Pastes](https://www.vrpastes.com/)
+- [Smogon PokePaste thread Page 2](https://www.smogon.com/forums/threads/pokepaste-a-pokemon-pastebin.3601073/page-2)
+- [Smogon "Tickable setting to put true stats" rejected](https://www.smogon.com/forums/threads/tickable-setting-to-put-true-stats-in-pokepaste-upload.3774674/)
+- [Three Island extension — Smogon](https://www.smogon.com/forums/threads/three-island-an-extension-for-a-seamless-pokepaste-experience.3692887/)
+- [PokePaste Feature Request: Import through URL — GitHub Issue #94](https://github.com/felixphew/pokepaste/issues/94)
+- [DevonCorp VGC Resources](https://devoncorp.press/resources/up-to-date-vgc-resources)
+- [Victory Road VGC Resources](https://victoryroad.pro/resources/)
+- [VGC-Bench research paper v3 (arxiv, May 2026)](https://arxiv.org/html/2506.10326v3)
+- [Pokepaste MCP Server (AI integration)](https://skywork.ai/skypage/en/pokepaste-mcp-server-ai-weapon/1981562891157999616)
+- [Pokemon Champions official transition — Nintendo Life](https://www.nintendolife.com/news/2026/03/pokemon-vgc-competitions-officially-transition-to-pokemon-champions)
+- [Pikalytics damage calculator VGC 2026](https://www.pikalytics.com/damage-calculator)
+- [VS Recorder replay analyzer — GitHub](https://github.com/Pocolip/vs-recorder)

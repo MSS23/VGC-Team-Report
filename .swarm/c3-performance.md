@@ -1,138 +1,184 @@
-# C3 Performance Benchmark Report
+# Bundle Performance Analysis — VGC Team Report
 
-**Date:** 2026-05-26
-**Build tool:** Next.js 16.2.6 (Turbopack)
-**Build time:** 37.4s compile + 16.8s TypeScript
+_Analyzed: 2026-05-25 (full production build via `npm run build`)_
 
 ---
 
-## 1. Build Output Summary
+## Build Summary
 
-The build completes successfully (with non-fatal DB connection warnings during SSG for `/champions/[pokemon]` pages due to missing `DATABASE_URL` in the CI environment).
-
-**Route breakdown:**
-- **Static (SSG):** `/`, `/champions`, `/changelog`, `/compare`, `/dashboard`, `/explore`, `/faq`, `/feedback`, `/privacy`, `/terms`, `/tournaments`, `/sitemap.xml`
-- **SSG with params:** `/champions/[pokemon]` (58 paths, revalidate 1h)
-- **Dynamic (server-rendered):** 44 API routes, `/s/[id]`, `/creator/[name]`, `/embed/[id]`, etc.
-
-**Total client-side JS in `.next/static`:** ~11 MB (Turbopack output; does not report per-route First Load JS like Webpack builds do).
+- **Next.js 16.2.6** with Turbopack
+- **Total client JS**: 10.3 MB across 79 chunks (uncompressed; gzipped ~3-4 MB)
+- **Build time**: ~34s compile + 13s TypeScript + 1.8s SSG (106 pages)
+- **Static pages**: 106 (with ISR for `/champions/[pokemon]`)
 
 ---
 
-## 2. Top 5 Largest Client Components
+## 1. Largest Client-Side Bundles
 
-### 2.1 `InlinePokemonEditor.tsx` — imports `@pkmn/dex` directly (client-side)
-- **File:** `src/components/report/InlinePokemonEditor.tsx` (231 lines, `"use client"`)
-- **Issue:** Imports `{ Dex } from "@pkmn/dex"` at module scope. `@pkmn/dex` is **52 MB on disk** (index.mjs alone is 2.3 MB, learnsets 4.9 MB). Even though `InlinePokemonEditor` is dynamically imported via `next/dynamic` in `PokemonCard.tsx`, the entire `@pkmn/dex` dataset (including learnsets for every Pokemon across all generations) ships in the client chunk.
-- **Evidence:** The 3.1 MB client chunk contains learnset data: `missingno:{learnset:{blizzard:["1M"],...}}`, `bulbasaur:{learnset:{...}}` — the entire Showdown learnset database.
-- **Impact:** ~6.7 MB of client JS from `@pkmn/dex` chunks alone (3.1 MB + 1.8 MB + 1.8 MB).
+| # | Chunk | Size | Content |
+|---|-------|------|---------|
+| 1 | `0cwh-y-4wc.-9.js` | **3.1 MB** | `@pkmn/dex` learnset data (every Pokemon's full movelist across all gens) |
+| 2 | `0o3vusbk0tbvm.js` | **1.8 MB** | `@pkmn/dex` abilities/species descriptions (gen 3-9 ability text) |
+| 3 | `0ksojg.n~4u.h.js` | **1.8 MB** | `@pkmn/dex` abilities/species data (duplicate/split chunk) |
+| 4 | `0cxvus.lx94w7.js` | **476 KB** | Styled-jsx runtime + PostHog SDK |
+| 5 | `0xr012s5lag5a.js` | **412 KB** | jsPDF (Worker-based PDF generation) |
+| 6 | `0i4g9_wngqb2c.js` | **224 KB** | html2canvas-pro (DOM-to-canvas rendering) |
+| 7 | `0rwwge57xnfls.js` | **200 KB** | React runtime / scheduler |
+| 8 | `10-qc793i1~os.js` | **196 KB** | Clerk auth SDK |
+| 9 | `0xpu3x~vtd_5z.js` | **196 KB** | `@pkmn/dex` species index data |
 
-### 2.2 `pokemon.ts` + `pkmn-dex-fallback.ts` — 3,330 lines of inline Pokemon data
-- **File:** `src/lib/data/pokemon.ts` (3,330 lines) + `src/lib/data/pkmn-dex-fallback.ts`
-- **Issue:** `pokemon.ts` contains a massive `POKEMON_DATA` record with ~500 Pokemon entries hard-coded as inline objects, AND imports `lookupPokemonFromDex` from `pkmn-dex-fallback.ts` which also imports `@pkmn/dex`. This file is imported by client components (`SpeedTierChart`, `PokemonDetailSlide`, `PokemonCard`, `CompareContent`) — pulling the entire chain into client bundles.
-- **Impact:** ~3,330 lines of static data + the `@pkmn/dex` fallback all bundled client-side.
-
-### 2.3 `moves.ts` — 4,183 lines of inline move data
-- **File:** `src/lib/data/moves.ts` (4,183 lines)
-- **Issue:** Contains the full `MOVES` record with every competitive move's type, category, power, and flags. Imported by `OffensiveCoverageChart` (dynamically loaded), `move-type-style.ts`, and `stat-relevance.ts` — the latter two are likely bundled into client code. The entire 4,183-line file ships even when only a few move lookups are needed.
-- **Impact:** Large static data payload in client bundle.
-
-### 2.4 `ChangelogContent.tsx` — 1,133 lines / 96 KB of inline changelog data
-- **File:** `src/app/changelog/ChangelogContent.tsx` (1,133 lines, 96 KB, `"use client"`)
-- **Issue:** Contains the entire changelog history as a massive inline array of objects (`ENTRIES`). Every version entry with all its text descriptions ships in the client bundle. Also imports `motion/react` for animations. This data should be loaded from a JSON file or API endpoint and paginated.
-- **Impact:** ~96 KB of raw source text in the client bundle, growing with every release.
-
-### 2.5 `page.tsx` (Home) — 1,881 lines, imports 30+ modules
-- **File:** `src/app/page.tsx` (1,881 lines, `"use client"`)
-- **Issue:** This is the main app page and it's entirely a client component. It imports ~30 modules including `TeamReport`, `TournamentMode`, `PasteInput`, `Navbar`, Clerk auth, and various utilities. While some heavy components are dynamically imported (ShareModal, CommentSection, OTSSheetModal, PrintableReport), core components like `TeamReport`, `PasteInput`, `Navbar`, `SlideNavControls` are statically imported. The file also imports `CHAMPIONS_SAMPLE_TEAMS` data.
-- **Impact:** Massive initial JS bundle for the homepage; every visitor downloads all this code before hydration.
+**Critical finding**: Chunks 1-3 + 9 = **6.9 MB** (67% of total bundle) all come from `@pkmn/dex`. This library provides the full Pokemon Showdown dataset (1200+ species, learnsets, abilities) which ships to the client because `pokemon.ts` has a **static import** of `pkmn-dex-fallback.ts`.
 
 ---
 
-## 3. Oversized npm Dependencies
+## 2. Oversized npm Dependencies
 
-| Package | `node_modules` size | Client-side? | Notes |
-|---------|-------------------|-------------|-------|
-| `posthog-js` | **55 MB** | Yes (deferred) | Dynamically imported via `requestIdleCallback` — well-optimized |
-| `@pkmn/dex` | **52 MB** | **Yes (eagerly)** | Ships learnsets + species data for every gen to client |
-| `@sentry/nextjs` | **51 MB** | Yes | Client config is minimal but SDK is large |
-| `jspdf` | **29 MB** | Deferred | Dynamically imported in `export-report.ts` |
-| `@clerk/nextjs` | **16 MB** | Yes | Auth SDK, unavoidable |
-| `html2canvas-pro` | **6.1 MB** | Deferred | Dynamically imported on export action |
-| `zod` | **6.2 MB** | Mixed | Used in API routes and some client validation |
-| `axios` | **3 MB** | Potentially | Should use native `fetch` in Next.js |
-
----
-
-## 4. Performance Anti-Patterns Found
-
-### 4.1 `@pkmn/dex` ships full dataset to client (CRITICAL)
-- `InlinePokemonEditor.tsx` does `import { Dex } from "@pkmn/dex"` in a `"use client"` component
-- `pkmn-dex-fallback.ts` (no directive, but imported by `pokemon.ts` which is used in client components) also imports `{ Dex } from "@pkmn/dex"`
-- The result: **~6.7 MB of minified @pkmn/dex data** ships to every client, including learnsets, abilities, and species data for all 9 generations
-- `@pkmn/dex` is NOT in `optimizePackageImports` (only `motion/react` is listed)
-
-### 4.2 Zero usage of `next/image` (MODERATE)
-- The entire codebase uses raw `<img>` tags — there are **zero imports of `next/image`** anywhere in `src/`
-- Components using `<img>`: `TeamCardExport`, `OTSSheetModal`, `CollaboratorPanel`, `ChampionsContent`, `MegaLandingContent`, `CreatorProfile`, `ItemIcon`, `PokemonSprite`, `ReportCard`, `Navbar`, `TeamOverview`, `PasteInput`, `ExploreEmpty`, `SpotlightCard`, `DashboardContent`, `profile/page`
-- **Note:** Some of these (`TeamCardExport`, `OTSSheetModal`) use `<img>` intentionally because `html2canvas` cannot capture `<Image>` components. But the majority (sprites, avatars, logos) would benefit from `next/image` optimization (WebP/AVIF, responsive sizing, lazy loading, blur placeholders).
-
-### 4.3 Large inline data arrays in client components (MODERATE)
-- `pokemon.ts`: 3,330 lines of Pokemon data — all bundled client-side via import chain
-- `moves.ts`: 4,183 lines of move data — partially bundled client-side
-- `pokemon-types-map.ts`: 1,336 lines — but only used in a server API route (good)
-- `ChangelogContent.tsx`: 96 KB of changelog entries as inline array — grows unboundedly
-- `champions-sample-teams.ts`: 220 lines imported into the homepage
-
-### 4.4 Missing dynamic imports for heavy components (LOW-MODERATE)
-- `PokemonDetailSlide` is statically imported in `TeamReport.tsx` (line 10) while `SpeedTierChart`, `OffensiveCoverageChart`, `DefensiveCoverageChart`, `MatchupPlanSlide`, and `MatchupSheet` are correctly dynamically imported
-- `MegaLandingContent` is statically imported in the Champions page (but this page is server-rendered SSG, so it's less impactful)
-- `TournamentMode` is statically imported in `page.tsx` but is only shown conditionally
-
-### 4.5 Missing Suspense boundaries (LOW)
-- The main `page.tsx` wraps only the `PostHogPageView` in Suspense
-- Most dynamically imported components in `page.tsx` provide loading skeletons via `dynamic()`'s `loading` option, which is good
-- The `/explore` and `/dashboard` pages have loading.tsx files for streaming — well done
-- However, the `/changelog` page (96 KB client component) has no loading skeleton or Suspense boundary
-
-### 4.6 `axios` dependency is unnecessary (LOW)
-- `axios` (3 MB) is a dependency but Next.js has built-in `fetch` with caching, revalidation, and streaming. Could be replaced to remove a dependency.
+| Package | node_modules size | Client impact | Verdict |
+|---------|-------------------|---------------|---------|
+| `@pkmn/dex` | 52 MB | **~6.9 MB client JS** (learnsets + abilities + species) | CRITICAL — tree-shaking not effective; full dataset bundled |
+| `posthog-js` | 55 MB | ~100 KB (lazy-loaded via `requestIdleCallback`) | OK — properly deferred |
+| `@sentry/nextjs` | 51 MB | Minimal client (only in `global-error.tsx`) | OK |
+| `jspdf` | 29 MB | ~412 KB (lazy via `import()` in `export-report.ts`) | OK — properly code-split |
+| `@clerk/nextjs` | 16 MB | ~196 KB shared auth chunk | Acceptable |
+| `html2canvas-pro` | 6.1 MB | ~224 KB (lazy via `import()`) | OK — properly code-split |
+| `motion` | 728 KB | ~50-80 KB (tree-shaken via `optimizePackageImports`) | OK |
+| `axios` | — | Could be replaced by native `fetch` | Minor — eliminate dependency |
 
 ---
 
-## 5. Priority Recommendations
+## 3. Client Components That Could Be Server Components
 
-### P0 — Critical: Fence `@pkmn/dex` from client bundles (~6.7 MB savings)
-1. **Move `InlinePokemonEditor`'s species search to a server action or API route.** The component currently calls `Dex.species.all()` on the client to build a search index. This should be a server endpoint (`/api/species-search?q=...`) that returns the filtered results. The component stays lightweight; the 52 MB Dex stays server-side.
-2. **Lazy-load `pkmn-dex-fallback.ts` with dynamic `import()`** instead of static import in `pokemon.ts`, or split `lookupPokemon` into a client-safe version (static data only) and a server-enriched version.
-3. **Add `@pkmn/dex` to `optimizePackageImports`** in `next.config.ts` as an interim measure.
+Files with `"use client"` that appear to need no client interactivity:
 
-### P1 — High: Externalize inline data files (~200 KB savings)
-1. Move `ChangelogContent.tsx` entries to a JSON file loaded via `fetch` or a server component, with client-side pagination.
-2. Consider moving `POKEMON_DATA` and `MOVES` to server-only modules or use `server-only` package marker, exposing only a lookup API to client components.
+| File | Reason `"use client"` may be unnecessary |
+|------|------------------------------------------|
+| `src/components/layout/PageFooter.tsx` | Pure JSX — no hooks, no event handlers, only renders links and text |
+| `src/app/not-found.tsx` | Uses `useTranslation()` hook but only for static text — could SSR with server-side i18n |
+| `src/components/report/ItemIcon.tsx` | Uses `useState`/`useRef` for fallback detection only — could use CSS-based fallback |
+| `src/components/ui/DisplayTogglePill.tsx` | Likely small interactive toggle — verify if state is truly needed on client |
 
-### P2 — Medium: Adopt `next/image` for sprites and avatars
-1. Replace `<img>` with `<Image>` in `PokemonSprite`, `Navbar`, `ReportCard`, `ExploreEmpty`, `SpotlightCard`, `CreatorProfile`, `DashboardContent` — anywhere that doesn't need `html2canvas` compatibility.
-2. Benefits: automatic WebP/AVIF, responsive `srcset`, lazy loading, blur placeholders, and CLS prevention.
-
-### P3 — Medium: Dynamic import remaining heavy components
-1. Make `PokemonDetailSlide` dynamic in `TeamReport.tsx` (it's already the pattern for siblings).
-2. Make `TournamentMode` dynamic in `page.tsx` (only rendered conditionally).
-
-### P4 — Low: Remove `axios`, use native `fetch`
-1. Replace any `axios` calls with `fetch` to drop the 3 MB dependency.
+**Total "use client" files**: 96 (many are legitimately interactive — team builder, form inputs, animations).
 
 ---
 
-## 6. Estimated Impact
+## 4. Image Optimization
 
-| Optimization | Est. Client JS Savings | Effort |
-|-------------|----------------------|--------|
-| Fence @pkmn/dex from client | ~6.7 MB | Medium (API route + refactor) |
-| Externalize changelog data | ~100 KB | Low (JSON file + fetch) |
-| Externalize pokemon/moves data | ~100 KB | Medium (server-only pattern) |
-| Adopt next/image | Indirect (bandwidth) | Low-Medium |
-| Dynamic import remaining components | ~50-100 KB | Low |
-| Remove axios | ~3 MB (node_modules) | Low |
+### Current approach
+- **No `next/image` usage** — all sprites use raw `<img>` tags
+- **External CDN**: All Pokemon sprites load from `play.pokemonshowdown.com`
+- **Fallback chain**: `PokemonSprite` component cascades through multiple sprite URLs on error
+- **Lazy loading**: Applied via `loading="lazy"` on non-priority sprites
+- **Priority hints**: LCP sprites get `fetchPriority="high"` + `loading="eager"`
 
-**Total potential client JS reduction: ~7 MB+ (primarily from @pkmn/dex)**
+### Issues
+1. **Cannot use `next/image`** for external Showdown CDN sprites (no CORS headers from Showdown, sprites are .gif/.png from external domain without ACAO headers). The existing `/api/sprite` proxy exists only for print/export mode.
+2. **No WebP/AVIF conversion** — sprites served as PNG/GIF from Showdown with no format optimization
+3. **No size optimization** — sprites are served at full resolution even at small display sizes
+4. **Public images are fine** — only 24KB icon + small SVGs; not a bottleneck
+
+### Recommendation
+The sprite situation is acceptable given the external CDN constraint. The proxy-on-demand approach for print mode is correct. A potential improvement: implement a CDN caching layer (e.g., Vercel Image Optimization or Cloudflare) that proxies, resizes, and converts sprites to WebP.
+
+---
+
+## 5. Dynamic Import Analysis
+
+### Properly code-split (good)
+- `html2canvas-pro` — lazy `import()` in `TeamCardExport.tsx`, `OTSSheetModal.tsx`, `export-report.ts`
+- `jspdf` — lazy `import()` in `export-report.ts`
+- `posthog-js` — deferred via `requestIdleCallback` in `PostHogProvider.tsx`
+- `qrcode` — lazy `import()` in `OTSSheetModal.tsx` and `TeamOverview.tsx`
+- `SpeedTierChart`, `OffensiveCoverageChart`, `DefensiveCoverageChart`, `MatchupPlanSlide`, `MatchupSheet` — all `next/dynamic` in `TeamReport.tsx`
+- `ShareModal`, `CommentSection`, `OTSSheetModal`, `PrintableReport`, `DiffNavigator`, `CollaboratorPanel`, `EditChangelog` — all `next/dynamic` in `page.tsx`
+- `InlinePokemonEditor` — `next/dynamic` in `PokemonCard.tsx`
+- `WhatsNewModal` — `next/dynamic` in `PasteInput.tsx`
+
+### NOT code-split (opportunities)
+
+| Component/Module | Where imported | Size estimate | Recommendation |
+|------------------|---------------|---------------|----------------|
+| `@pkmn/dex` via `pkmn-dex-fallback.ts` | Static import in `pokemon.ts` → used everywhere | **6.9 MB** | CRITICAL: Dynamic import the fallback |
+| `MatchTracker` | Static import in `DashboardContent.tsx` | ~518 lines, moderate | Use `next/dynamic` — only visible in dashboard tab |
+| `CompareContent` | Static import in `compare/page.tsx` | ~537 lines (+ pulls @pkmn/dex) | Already a page-level component; the @pkmn/dex is the issue |
+| `ClarityProvider` | Eager in `layout.tsx` | Small but Clarity SDK loads eagerly | Defer to after consent like PostHog |
+| `motion/react` in 12 files | Static import | ~50-80 KB shared | `optimizePackageImports` is configured — acceptable |
+
+---
+
+## 6. next.config.ts Performance Config
+
+### Currently configured
+- `optimizePackageImports: ["motion/react"]` — good for motion tree-shaking
+- `images.minimumCacheTTL: 2592000` (30 days) — good
+- `images.remotePatterns: []` — empty (no `next/image` used for remote)
+
+### Missing configurations
+- `@pkmn/dex` not in `optimizePackageImports` (won't help — the issue is the data blobs, not named exports)
+- No `experimental.optimizeCss` configured
+- No bundle analyzer configured for ongoing monitoring
+- No `serverExternalPackages` to keep `@pkmn/dex` server-side only
+
+---
+
+## 7. Critical Recommendations (Priority Order)
+
+### P0: Lazy-load @pkmn/dex fallback (~6.9 MB savings on initial load)
+
+The `pkmn-dex-fallback.ts` module is statically imported in `pokemon.ts`. Since 95%+ of lookups hit the hand-maintained `POKEMON_DATA` map directly, the `@pkmn/dex` import only fires on cache miss.
+
+**Fix**: Convert `lookupPokemonFromDex` to a dynamic import:
+
+```typescript
+// In pokemon.ts — change from:
+import { lookupPokemonFromDex } from "./pkmn-dex-fallback";
+
+// To:
+export async function lookupPokemon(species: string): Promise<PokemonData | null> {
+  // ... existing static lookups ...
+  // Dynamic fallback (lazy-loads @pkmn/dex only when needed)
+  const { lookupPokemonFromDex } = await import("./pkmn-dex-fallback");
+  return lookupPokemonFromDex(species);
+}
+```
+
+Or alternatively, use `serverExternalPackages` in next.config.ts to exclude @pkmn/dex from client bundles entirely, and use a thin API route for the rare fallback case.
+
+**Impact**: Removes 6.9 MB from client bundle (67% reduction). Most users will never need the fallback since common Pokemon are in the static map.
+
+### P1: Dynamic import MatchTracker in DashboardContent
+
+```typescript
+const MatchTracker = dynamic(() => import("@/components/match-tracker/MatchTracker")
+  .then(m => ({ default: m.MatchTracker })), { ssr: false });
+```
+
+**Impact**: ~20-30 KB off dashboard initial load.
+
+### P2: Defer ClarityProvider like PostHog
+
+Load Microsoft Clarity via `requestIdleCallback` after consent, matching the PostHog pattern.
+
+### P3: Convert PageFooter to server component
+
+Remove `"use client"` — it has no hooks or interactivity. This removes it from the client bundle entirely.
+
+### P4: Add sprite CDN caching proxy
+
+Consider a Cloudflare Worker or Vercel Edge function that caches + converts Showdown sprites to WebP format, reducing repeated bandwidth for returning visitors.
+
+---
+
+## 8. Bundle Size Budget Recommendation
+
+| Metric | Current | Target |
+|--------|---------|--------|
+| Total client JS (uncompressed) | 10.3 MB | < 4 MB |
+| Largest single chunk | 3.1 MB | < 500 KB |
+| Initial page load JS | ~8-9 MB (includes @pkmn/dex) | < 2 MB |
+| Time to Interactive (estimated) | Poor on 3G | Under 3s on 4G |
+
+---
+
+## Summary
+
+The project is **well-architected for code-splitting** in most areas (jsPDF, html2canvas, PostHog, qrcode all lazy-loaded). The single critical issue is `@pkmn/dex` shipping its entire 6.9 MB dataset to every client because of a static import chain: `pokemon.ts` -> `pkmn-dex-fallback.ts` -> `@pkmn/dex`. Fixing this one import reduces client bundle by 67%.

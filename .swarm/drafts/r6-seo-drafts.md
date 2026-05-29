@@ -1,97 +1,81 @@
-# SEO Implementation Drafts — VGC Team Report (May 26, 2026)
+# R6 SEO Drafts — Metadata & Content Changes
+**Generated:** 2026-05-25
+**Source audit:** `.swarm/r6-seo-audit.md`
 
-**Status:** DRAFT ONLY — Do not implement without review.
+These are DRAFTS ONLY. Do not implement without explicit user approval.
 
 ---
 
-## Draft 1: Root Layout Keywords Meta
+## DRAFT 1: Homepage Title Fix (Under 60 chars)
+**File:** `/src/app/layout.tsx` line 39-42
+**Target keywords:** VGC Team Report, Pokemon VGC Teams, Pokemon Champions 2026
+**Issue:** Current title is 73 chars, gets truncated in SERPs.
 
-**File:** `src/app/layout.tsx`
-**Action:** Add `keywords` array to the existing `metadata` export.
+```ts
+// Current:
+title: {
+  default: "VGC Team Report — Build & Share Pokémon VGC Teams | Pokemon Champions 2026",
+  template: "%s | VGC Team Report",
+},
 
-```typescript
-// Add inside the existing metadata export, after the robots field:
-keywords: [
-  "VGC team report",
-  "VGC team builder",
-  "Pokemon team sharing",
-  "VGC team analysis",
-  "Pokemon Champions team report",
-  "Mega Evolution VGC",
-  "competitive Pokemon teams",
-  "VGC 2026",
-  "Regulation M-A teams",
-  "open team sheet generator",
-  "VGC damage calculator",
-  "VGC speed tiers",
-  "SP spread builder",
-  "PokePaste import",
-  "Pokemon matchup planner",
-],
+// PROPOSED (58 chars — fits in SERP):
+title: {
+  default: "VGC Team Report — Build & Share Pokemon VGC Teams 2026",
+  template: "%s | VGC Team Report",
+},
+```
+
+**Alternative (if "Pokemon Champions" is more important):**
+```ts
+title: {
+  default: "VGC Team Report — Pokemon Champions Team Reports 2026",
+  template: "%s | VGC Team Report",
+},
 ```
 
 ---
 
-## Draft 2: Homepage H1 Tag
-
-**File:** `src/app/page.tsx`
-**Action:** Add a visible or sr-only `<h1>` near the top of the rendered content.
+## DRAFT 2: Add BreadcrumbList Schema to /explore
+**File:** `/src/app/explore/page.tsx`
+**Impact:** Breadcrumb rich results in SERPs for explore queries
 
 ```tsx
-{/* Add as first child inside the main content area, before PasteInput */}
-<h1 className="sr-only">
-  VGC Team Report — Build & Share Competitive Pokemon VGC Teams
-</h1>
-```
-
-Alternative (visible H1 if there's a hero section):
-```tsx
-<h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-  Build & Share Your VGC Team Report
-</h1>
-<p className="text-muted text-lg mb-8">
-  The free tool for competitive Pokemon VGC team breakdowns — matchup plans, damage calcs, speed tiers, and one-click sharing.
-</p>
-```
-
----
-
-## Draft 3: Compare Page Metadata Fix
-
-**File:** `src/app/compare/page.tsx`
-**Action:** Replace "EV spreads" with "SP spreads" in title, description, and OG tags.
-
-```typescript
-export const metadata: Metadata = {
-  title: "Compare VGC Teams | VGC Team Report",
-  description:
-    "Compare two VGC team reports side by side — see differences in Pokemon, movesets, items, and SP spreads.",
-  alternates: { canonical: "https://pokemonvgcteamreport.com/compare" },
-  openGraph: {
-    title: "Compare VGC Teams | VGC Team Report",
-    description:
-      "Compare two VGC team reports side by side — see differences in Pokemon, movesets, items, and SP spreads.",
-    type: "website",
-    siteName: "VGC Team Report",
-    url: "https://pokemonvgcteamreport.com/compare",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Compare VGC Teams | VGC Team Report",
-    description:
-      "Compare two VGC team reports side by side — see differences in Pokemon, movesets, items, and SP spreads.",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
-  },
-};
+// Add inside ExplorePage() alongside existing JsonLd:
+<JsonLd
+  data={{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "VGC Team Report",
+        item: "https://pokemonvgcteamreport.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Explore Teams",
+        item: "https://pokemonvgcteamreport.com/explore",
+      },
+    ],
+  }}
+/>
 ```
 
 ---
 
-## Draft 4: BreadcrumbList Schema Component
+## DRAFT 3: Add BreadcrumbList Schema to /faq
+**File:** `/src/app/faq/page.tsx`
+# R6 SEO Drafts — Wave 2 Implementation Targets
 
-**File:** `src/components/seo/JsonLd.tsx`
-**Action:** Add a reusable BreadcrumbJsonLd component.
+Generated: 2026-05-23. Each block is a drop-in ready edit. Do NOT apply during Wave 1 — these are drafts only.
+
+---
+
+## DRAFT 1 — BreadcrumbList JSON-LD (add to `src/components/seo/JsonLd.tsx`)
+
+Currently missing across the whole site. Google uses BreadcrumbList to show breadcrumb trails in SERPs (CTR uplift ~10-20%) and as the primary signal for hierarchical site understanding. Add the helper:
 
 ```tsx
 export interface BreadcrumbItem {
@@ -100,6 +84,7 @@ export interface BreadcrumbItem {
 }
 
 export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
+  if (items.length === 0) return null;
   return (
     <JsonLd
       data={{
@@ -117,294 +102,560 @@ export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
 }
 ```
 
-**Usage on /explore page:**
-```tsx
-<BreadcrumbJsonLd items={[
-  { name: "Home", url: "https://pokemonvgcteamreport.com" },
-  { name: "Explore VGC Teams", url: "https://pokemonvgcteamreport.com/explore" },
-]} />
-```
-
-**Usage on /faq page:**
-```tsx
-<BreadcrumbJsonLd items={[
-  { name: "Home", url: "https://pokemonvgcteamreport.com" },
-  { name: "FAQ", url: "https://pokemonvgcteamreport.com/faq" },
-]} />
-```
-
-**Usage on /tournaments page:**
-```tsx
-<BreadcrumbJsonLd items={[
-  { name: "Home", url: "https://pokemonvgcteamreport.com" },
-  { name: "Tournaments", url: "https://pokemonvgcteamreport.com/tournaments" },
-]} />
-```
-
-**Usage on /champions page:**
-```tsx
-<BreadcrumbJsonLd items={[
-  { name: "Home", url: "https://pokemonvgcteamreport.com" },
-  { name: "Pokemon Champions", url: "https://pokemonvgcteamreport.com/champions" },
-]} />
-```
+Then add to each non-home page:
+- `/explore` → `[{name:"Home",url:".../"}, {name:"Explore",url:".../explore"}]`
+- `/champions` → `[{name:"Home",url:".../"}, {name:"Champions",url:".../champions"}]`
+- `/champions/[pokemon]` → 3-level with the Pokémon name
+- `/tournaments` → similar
+- `/s/[id]` → `[Home > Explore > {team name or species}]`
 
 ---
 
-## Draft 5: ItemList Schema for Explore Page
+## DRAFT 2 — Root metadata.keywords (add to `src/app/layout.tsx`)
 
-**File:** `src/components/seo/JsonLd.tsx`
-**Action:** Add ItemList schema component.
-
-```tsx
-export interface ItemListEntry {
-  name: string;
-  url: string;
-  position: number;
-}
-
-export function ItemListJsonLd({ name, items }: { name: string; items: ItemListEntry[] }) {
-  return (
-    <JsonLd
-      data={{
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        name,
-        numberOfItems: items.length,
-        itemListElement: items.map((item) => ({
-          "@type": "ListItem",
-          position: item.position,
-          name: item.name,
-          url: item.url,
-        })),
-      }}
-    />
-  );
-}
-```
-
-**Usage on explore page (server component wrapper needed):**
-```tsx
-<ItemListJsonLd
-  name="VGC Team Reports"
-  items={topTeams.map((team, i) => ({
-    name: team.title || "VGC Team Report",
-    url: `https://pokemonvgcteamreport.com/s/${team.id}`,
-    position: i + 1,
-  }))}
-/>
-```
-
----
-
-## Draft 6: Sitemap lastModified Fix
-
-**File:** `src/app/sitemap.ts`
-**Action:** Replace `new Date().toISOString()` with a fixed build date constant.
+Currently the root metadata has NO `keywords` field. While Google ignores it, Bing and several AI crawlers still parse it. Add:
 
 ```typescript
-// At the top of the file, define a build-time constant:
-const BUILD_DATE = new Date().toISOString(); // frozen at build time for SSG
-
-// For static pages, use specific dates or the build date:
-const CONTENT_DATES: Record<string, string> = {
-  "/": "2026-05-26T00:00:00Z",
-  "/explore": BUILD_DATE,
-  "/champions": "2026-05-20T00:00:00Z",
-  "/faq": "2026-05-15T00:00:00Z",
-  "/feedback": "2026-04-01T00:00:00Z",
-  "/tournaments": BUILD_DATE,
-  "/changelog": "2026-05-20T00:00:00Z",
-  "/privacy": "2026-04-01T00:00:00Z",
-  "/terms": "2026-04-01T00:00:00Z",
-};
-
-// In the staticPages array, use:
-{ url: BASE, changeFrequency: "weekly", priority: 1.0, lastModified: CONTENT_DATES["/"] },
-// etc.
+keywords: [
+  "VGC team builder",
+  "Pokemon VGC team report",
+  "Pokemon Champions team builder",
+  "Regulation M-A team builder",
+  "VGC 2026",
+  "Pokemon damage calculator",
+  "VGC speed tiers",
+  "open team sheet generator",
+  "OTS Pokemon VGC",
+  "PokePaste viewer",
+  "Pokemon Showdown team analyzer",
+  "competitive Pokemon teams",
+  "Mega Evolution VGC",
+  "VGC matchup planner",
+],
 ```
 
-Note: If the sitemap is regenerated at build time (SSG), `new Date()` is actually frozen at build time and is acceptable. But if it's an ISR/SSR route, the timestamp changes on every request, which is the real issue. Verify which rendering mode the sitemap uses.
+Also bump title to lead with the highest-volume query:
+```
+"VGC Team Builder & Report Maker — Pokémon Champions Reg M-A | VGC Team Report"
+```
+(keeps "VGC Team Builder" first — that's the #1 query gap.)
 
 ---
 
-## Draft 7: Standalone Tool Landing Page — Speed Tiers
+## DRAFT 3 — SoftwareApplication aggregateRating + review
 
-**File:** `src/app/tools/speed-tiers/page.tsx` (NEW FILE)
-**Action:** Create a lightweight landing page that wraps the existing speed tier component.
+Currently the SoftwareApplication JSON-LD in `layout.tsx` has `offers` but no `aggregateRating`. Google rich snippets for SoftwareApplication require it. Once we have >5 real reviews/likes in the DB, add:
 
 ```typescript
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "VGC Speed Tiers — Pokemon Champions Regulation M-A | VGC Team Report",
-  description:
-    "Free VGC speed tier calculator for Pokemon Champions Regulation M-A. Compare speed stats, find optimal SP spreads, and see who outspeeds who in the current meta.",
-  alternates: { canonical: "https://pokemonvgcteamreport.com/tools/speed-tiers" },
-  keywords: [
-    "VGC speed tiers",
-    "Pokemon Champions speed tiers",
-    "VGC speed calculator",
-    "Regulation M-A speed tiers",
-    "who outspeeds VGC",
-    "Pokemon speed comparison",
-    "SP spread speed VGC",
-    "VGC 2026 speed tiers",
-  ],
-  openGraph: {
-    title: "VGC Speed Tiers — Pokemon Champions Regulation M-A",
-    description:
-      "Free speed tier calculator for VGC. Compare speed stats and find optimal SP spreads for Regulation M-A.",
-    type: "website",
-    siteName: "VGC Team Report",
-    url: "https://pokemonvgcteamreport.com/tools/speed-tiers",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Speed Tiers" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "VGC Speed Tiers — Pokemon Champions Regulation M-A",
-    description: "Free speed tier calculator for VGC 2026. Compare speeds and find optimal SP spreads.",
-  },
-};
+aggregateRating: {
+  "@type": "AggregateRating",
+  ratingValue: "4.8",        // pull from /api/stats once available
+  reviewCount: 142,           // pull live from DB
+  bestRating: "5",
+  worstRating: "1",
+},
 ```
 
-Page content structure:
-```tsx
-export default function SpeedTiersPage() {
-  return (
-    <main className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-4">VGC Speed Tiers — Regulation M-A</h1>
-      <p className="text-muted mb-8">
-        Compare speed stats for all Pokemon in the current VGC format.
-        Find the optimal SP spread to outspeed key threats, or check
-        if your team's speed benchmarks hold up against the meta.
-      </p>
-
-      {/* Existing speed tier component goes here */}
-
-      {/* FAQ section for long-tail keywords */}
-      <section className="mt-16">
-        <h2 className="text-2xl font-bold mb-4">Speed Tiers FAQ</h2>
-        {/* Q&A items with FAQPage schema */}
-      </section>
-    </main>
-  );
-}
-```
+Until live, omit (Google penalizes fake ratings). Wave 2 should add a `/api/seo/stats` endpoint returning aggregate likes/comments → render server-side in layout.
 
 ---
 
-## Draft 8: Standalone Tool Landing Page — Damage Calculator
+## DRAFT 4 — `/champions/[pokemon]` enriched JSON-LD (CreativeWork + ItemList of teams)
 
-**File:** `src/app/tools/damage-calculator/page.tsx` (NEW FILE)
-
-```typescript
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "VGC Damage Calculator — Pokemon Champions 2026 | VGC Team Report",
-  description:
-    "Free Pokemon VGC damage calculator for Regulation M-A. Calculate damage ranges with Mega Evolution, Stat Points, abilities, items, and field conditions. Updated for 2026.",
-  alternates: { canonical: "https://pokemonvgcteamreport.com/tools/damage-calculator" },
-  keywords: [
-    "VGC damage calculator",
-    "Pokemon Champions damage calc",
-    "damage calculator Regulation M-A",
-    "Pokemon damage range calculator",
-    "VGC 2026 damage calc",
-    "Mega Evolution damage calculator",
-    "competitive Pokemon damage calc",
-  ],
-  openGraph: {
-    title: "VGC Damage Calculator — Pokemon Champions 2026",
-    description:
-      "Free VGC damage calculator with Mega Evolution and SP support for Regulation M-A.",
-    type: "website",
-    siteName: "VGC Team Report",
-    url: "https://pokemonvgcteamreport.com/tools/damage-calculator",
-  },
-};
-```
-
----
-
-## Draft 9: Person Schema for Creator Pages
-
-**File:** `src/app/creator/[name]/page.tsx`
-**Action:** Add Person schema to the page render.
+Currently champions/[pokemon] only has metadata. Add to that page:
 
 ```tsx
-import { JsonLd } from "@/components/seo/JsonLd";
-
-// Inside the page component render:
 <JsonLd
   data={{
     "@context": "https://schema.org",
-    "@type": "Person",
-    name: creator,
-    url: `https://pokemonvgcteamreport.com/creator/${encodeURIComponent(creator)}`,
-    description: `Competitive Pokemon VGC player. View ${creator}'s team reports, open team sheets, and tournament results.`,
-    mainEntityOfPage: {
-      "@type": "CollectionPage",
-      name: `${creator}'s VGC Team Reports`,
+    "@type": "Article",
+    headline: `${mega.displayName} VGC Guide — SP Spreads, Movesets & Sample Teams`,
+    description: `Complete ${mega.displayName} guide for Pokemon Champions Regulation M-A.`,
+    about: {
+      "@type": "Thing",
+      name: mega.displayName,
+      sameAs: `https://bulbapedia.bulbagarden.net/wiki/${mega.baseName}`,
     },
+    keywords: [`${mega.displayName} VGC`, `${mega.displayName} EV spread`, `${mega.displayName} moveset`],
+    author: { "@type": "Organization", name: "VGC Team Report" },
+    datePublished: "2026-01-01",
+    dateModified: new Date().toISOString().slice(0, 10),
+    publisher: {
+      "@type": "Organization",
+      name: "VGC Team Report",
+      logo: { "@type": "ImageObject", url: "https://pokemonvgcteamreport.com/icon-512.png" },
+    },
+    mainEntityOfPage: `https://pokemonvgcteamreport.com/champions/${mega.slug}`,
+  }}
+/>
+{teams.length > 0 && (
+  <JsonLd
+    data={{
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: `Top ${mega.displayName} VGC teams`,
+      numberOfItems: teams.length,
+      itemListElement: teams.slice(0, 10).map((t, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `https://pokemonvgcteamreport.com/s/${t.id}`,
+        name: t.teamName || t.tournamentName || `${mega.displayName} team`,
+      })),
+    }}
+  />
+)}
+```
+
+---
+
+## DRAFT 5 — Per-share VideoObject + SportsTeam JSON-LD (`/s/[id]`)
+
+The biggest competitive gap. Limitless VGC and Pikalytics do NOT use SportsTeam schema — we can own this entity. For each public share, emit:
+
+```tsx
+<JsonLd
+  data={{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "VGC Team Report",
+        item: "https://pokemonvgcteamreport.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "FAQ",
+        item: "https://pokemonvgcteamreport.com/faq",
+      },
+    ],
   }}
 />
 ```
 
 ---
 
-## Draft 10: /compare and /tools/* Added to Sitemap
+## DRAFT 4: Add BreadcrumbList Schema to /tournaments
+**File:** `/src/app/tournaments/page.tsx`
+    "@type": "SportsTeam",
+    name: teamName || `${creatorName}'s VGC Team`,
+    sport: "Pokémon Video Game Championship (VGC)",
+    url: `https://pokemonvgcteamreport.com/s/${id}`,
+    member: pokemon.map((p) => ({
+      "@type": "Person",   // schema.org doesn't have GameCharacter; Person is the closest indexable type
+      name: p.species,
+    })),
+    ...(tournamentName ? {
+      memberOf: {
+        "@type": "SportsEvent",
+        name: tournamentName,
+        ...(placement ? { award: `Top ${placement}` } : {}),
+      },
+    } : {}),
+    coach: creatorName ? { "@type": "Person", name: creatorName } : undefined,
+  }}
+/>
+```
 
-**File:** `src/app/sitemap.ts`
-**Action:** Add missing public tool pages.
+Plus a CreativeWork wrapper so it ranks as content (not just an app):
 
-```typescript
-// Add to staticPages array:
-{ url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.6, lastModified: now },
-// Future tool pages:
-// { url: `${BASE}/tools/speed-tiers`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
-// { url: `${BASE}/tools/damage-calculator`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
+```tsx
+<JsonLd
+  data={{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "VGC Team Report",
+        item: "https://pokemonvgcteamreport.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Tournaments",
+        item: "https://pokemonvgcteamreport.com/tournaments",
+      },
+    ],
+  }}
+/>
 ```
 
 ---
 
-## Draft 11: Internal Linking on Explore Page
+## DRAFT 5: Fix Sitemap lastModified for Static Pages
+**File:** `/src/app/sitemap.ts`
+**Issue:** Using `new Date().toISOString()` signals false freshness on every crawl.
 
-**Action:** Add a "Popular Categories" section at the top of the explore page with links to filtered views.
+```ts
+// Current:
+const now = new Date().toISOString();
+
+// PROPOSED — use a build-time date that only changes when actually deployed:
+const BUILD_DATE = "2026-05-25T00:00:00.000Z"; // Update on each deploy
+const staticPages: MetadataRoute.Sitemap = [
+  { url: BASE, changeFrequency: "weekly", priority: 1.0, lastModified: BUILD_DATE },
+  { url: `${BASE}/explore`, changeFrequency: "daily", priority: 0.9, lastModified: BUILD_DATE },
+  // ... etc
+];
+```
+
+**Alternative (dynamic but stable):** Use `process.env.VERCEL_GIT_COMMIT_SHA` timestamp or a `lastmod.json` file generated at build time.
+
+---
+
+## DRAFT 6: Add twitter:site Handle
+**File:** `/src/app/layout.tsx`
+
+```ts
+// Add to the twitter section of metadata:
+twitter: {
+  card: "summary_large_image",
+  site: "@VGCTeamReport", // or whatever the actual handle is
+  title: "VGC Team Report — Build, Share & Discover Pokemon Teams",
+  description: "...",
+  images: [...],
+},
+```
+
+---
+
+## DRAFT 7: /explore Page — Add Server-Rendered Intro Text
+**File:** `/src/app/explore/page.tsx`
+**Issue:** /explore has no visible text content for crawlers — just the CollectionPage schema and dynamic client components.
 
 ```tsx
-<section className="mb-8">
-  <h2 className="text-xl font-bold mb-3">Popular Categories</h2>
-  <div className="flex flex-wrap gap-2">
-    <Link href="/explore?q=mega+charizard" className="chip">Mega Charizard Teams</Link>
-    <Link href="/explore?q=mega+garchomp" className="chip">Mega Garchomp Teams</Link>
-    <Link href="/explore?q=mega+kangaskhan" className="chip">Mega Kangaskhan Teams</Link>
-    <Link href="/explore?q=incineroar" className="chip">Incineroar Teams</Link>
-    <Link href="/explore?q=sneasler" className="chip">Sneasler Teams</Link>
-    <Link href="/champions" className="chip">Champions Format</Link>
-  </div>
+// Add between <JsonLd> and <ExploreContent />:
+<section className="max-w-5xl mx-auto px-4 pt-6 pb-2">
+  <h1 className="text-2xl font-bold text-text-primary">
+    Explore VGC Team Reports
+  </h1>
+  <p className="text-sm text-text-secondary mt-2 max-w-2xl">
+    Browse competitive Pokemon VGC team reports shared by players from tournaments around the world.
+    Find Pokemon Champions Regulation M-A team builds, open team sheets, matchup plans, and 
+    SP spreads from Regional Championships, International Championships, and online ladders.
+  </p>
 </section>
 ```
 
 ---
 
-## Draft 12: FAQ Page SP-Related Questions
+## DRAFT 8: /open-team-sheet Landing Page (New Page)
+**File:** `/src/app/open-team-sheet/page.tsx` (new)
+**Target keywords:** "VGC open team sheet", "OTS generator Pokemon", "open team sheet VGC 2026"
+**Competition:** LOW — no dominant competitor owns this query
 
-**File:** `src/app/faq/page.tsx`
-**Action:** Add these Q&A entries to the FAQ_ITEMS array and the JSON-LD schema.
+```tsx
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/JsonLd";
 
-```typescript
+export const metadata: Metadata = {
+  title: "VGC Open Team Sheet Generator — Pokemon Champions OTS 2026",
+  description:
+    "Generate and share VGC open team sheets (OTS) for Pokemon Champions Regulation M-A. Create tournament-ready OTS from your Showdown paste — free, instant, no sign-up required.",
+  alternates: { canonical: "https://pokemonvgcteamreport.com/open-team-sheet" },
+  openGraph: {
+    title: "VGC Open Team Sheet Generator — Pokemon Champions OTS 2026",
+    description:
+      "Generate and share VGC open team sheets (OTS) for Pokemon Champions Regulation M-A. Create tournament-ready OTS from your Showdown paste.",
+    type: "website",
+    siteName: "VGC Team Report",
+    url: "https://pokemonvgcteamreport.com/open-team-sheet",
+  },
+  keywords: [
+    "VGC open team sheet",
+    "OTS generator",
+    "Pokemon Champions OTS",
+    "open team sheet VGC 2026",
+    "tournament team sheet",
+    "OTS Pokemon",
+    "VGC team sheet maker",
+    "Regulation M-A open team sheet",
+  ],
+};
+
+export default function OpenTeamSheetPage() {
+  return (
+    <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "VGC Team Report", item: "https://pokemonvgcteamreport.com" },
+            { "@type": "ListItem", position: 2, name: "Open Team Sheet Generator", item: "https://pokemonvgcteamreport.com/open-team-sheet" },
+          ],
+        }}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "VGC Open Team Sheet Generator",
+          applicationCategory: "GameApplication",
+          operatingSystem: "Any",
+          description: "Generate tournament-ready VGC open team sheets (OTS) for Pokemon Champions. Paste your team, get a shareable OTS — no sign-up required.",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+          url: "https://pokemonvgcteamreport.com/open-team-sheet",
+        }}
+      />
+      {/* Page content: intro + CTA to paste a team + FAQ about OTS */}
+      <main className="min-h-screen max-w-5xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold">VGC Open Team Sheet Generator</h1>
+        <p className="text-text-secondary mt-3 max-w-2xl">
+          Generate tournament-ready open team sheets for Pokemon Champions VGC (Regulation M-A).
+          Paste your Showdown export or PokePaste URL below to instantly create a shareable OTS
+          with your team&apos;s Pokemon, moves, items, and abilities — no EVs, IVs, or nature visible to opponents.
+        </p>
+        {/* TODO: Paste input component + OTS preview */}
+      </main>
+    </>
+  );
+}
+```
+
+---
+
+## DRAFT 9: /guides/how-to-write-a-vgc-team-report (New Page)
+**File:** `/src/app/guides/how-to-write-a-vgc-team-report/page.tsx` (new)
+**Target keywords:** "how to write a VGC team report", "VGC team report template", "team report guide"
+**Competition:** LOW — no dominant competitor
+
+```tsx
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/JsonLd";
+
+export const metadata: Metadata = {
+  title: "How to Write a VGC Team Report — Complete Guide 2026",
+  description:
+    "Step-by-step guide to writing a competitive VGC team report for Pokemon Champions. Includes team report template, matchup plan format, damage calc documentation, and SP spread notation.",
+  alternates: { canonical: "https://pokemonvgcteamreport.com/guides/how-to-write-a-vgc-team-report" },
+  openGraph: {
+    title: "How to Write a VGC Team Report — Complete Guide 2026",
+    description: "Step-by-step guide to writing a competitive VGC team report for Pokemon Champions.",
+    type: "article",
+    siteName: "VGC Team Report",
+    url: "https://pokemonvgcteamreport.com/guides/how-to-write-a-vgc-team-report",
+  },
+  keywords: [
+    "how to write a VGC team report",
+    "VGC team report template",
+    "team report guide",
+    "competitive Pokemon team report",
+    "VGC report format",
+    "matchup plan template",
+    "Pokemon Champions team report",
+  ],
+};
+
+// Page should include:
+// - Article schema with datePublished, dateModified, author
+// - HowTo schema with detailed steps
+// - FAQPage schema for "how long should a report be", "do I need tournament results"
+// - BreadcrumbList: Home > Guides > How to Write a VGC Team Report
+// - ~2,000-3,000 words of editorial content
+// - Internal links to /explore (examples), / (CTA to build), /champions (format info)
+```
+
+---
+
+## DRAFT 10: /speed-tiers Page (New — Highest ROI)
+**File:** `/src/app/speed-tiers/page.tsx` (new)
+**Target keywords:** "VGC speed tiers 2026", "Pokemon Champions speed tiers", "Regulation M-A speed chart"
+**Competition:** MEDIUM — Pikalytics + Turnadus own this but from a calculator angle, not a reference guide angle
+
+```tsx
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Pokemon Champions VGC Speed Tiers — Regulation M-A 2026",
+  description:
+    "Complete speed tier reference for Pokemon Champions VGC (Regulation M-A). Every Mega Pokemon speed stat, key SP investment benchmarks, Tailwind values, and Trick Room tiers.",
+  alternates: { canonical: "https://pokemonvgcteamreport.com/speed-tiers" },
+  openGraph: {
+    title: "Pokemon Champions VGC Speed Tiers — Regulation M-A 2026",
+    description: "Complete speed tier reference for VGC 2026. All Mega Pokemon speeds + benchmarks.",
+    type: "website",
+    siteName: "VGC Team Report",
+    url: "https://pokemonvgcteamreport.com/speed-tiers",
+  },
+  keywords: [
+    "VGC speed tiers 2026",
+    "Pokemon Champions speed tiers",
+    "Regulation M-A speed chart",
+    "Mega Pokemon speed stats",
+    "VGC speed calculator",
+    "Tailwind speed tiers VGC",
+    "Trick Room speed tiers",
+  ],
+};
+
+// Page should:
+// - Be server-rendered (SSG) from pokemon data already in codebase
+// - Include BreadcrumbList + FAQPage schema
+// - Table sorted by speed stat (descending)
+// - Columns: Pokemon | Base Speed | 0 SP | 16 SP | 32 SP | Tailwind
+// - Key benchmarks highlighted (e.g., "outspeeds max Speed Sneasler")
+// - Internal links to each /champions/[pokemon] page
+// - ~800-1200 words of editorial content above/below the data table
+```
+
+---
+
+## DRAFT 11: /teams Programmatic Top Teams Page (New)
+**File:** `/src/app/teams/page.tsx` (new)
+**Target keywords:** "best VGC teams 2026", "top Pokemon Champions teams", "VGC tournament teams"
+**Competition:** MEDIUM — VGenC and Pikalytics rank but from tournament database angle
+
+```tsx
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Top VGC Teams 2026 — Pokemon Champions Team Reports",
+  description:
+    "Browse the most popular Pokemon Champions VGC team reports. Top-performing Regulation M-A teams ranked by community views, with full team breakdowns, matchup plans, and SP spreads.",
+  alternates: { canonical: "https://pokemonvgcteamreport.com/teams" },
+  openGraph: {
+    title: "Top VGC Teams 2026 — Pokemon Champions Team Reports",
+    description: "Most popular VGC team reports from the Pokemon Champions competitive community.",
+    type: "website",
+    siteName: "VGC Team Report",
+    url: "https://pokemonvgcteamreport.com/teams",
+  },
+  keywords: [
+    "best VGC teams 2026",
+    "top Pokemon Champions teams",
+    "VGC tournament teams",
+    "popular VGC team builds",
+    "Pokemon Champions Regulation M-A teams",
+    "VGC team reports ranked",
+  ],
+};
+
+// Page should:
+// - Be ISR (revalidate: 3600) pulling from shares table
+// - Show top 50 public reports by view_count DESC
+// - Include ItemList schema
+// - Filterable by archetype, tournament, Mega Pokemon
+// - Internal links to each /s/[id] share page
+// - Differentiate from /explore: /teams = "best of", /explore = "browse all"
+```
+
+---
+
+## DRAFT 12: Add SP Spread FAQ Items to /faq
+**File:** `/src/app/faq/page.tsx`
+**Target:** "what are SP spreads", "EV vs SP Pokemon Champions"
+
+```ts
+// Add to FAQ_ITEMS array:
 {
-  question: "What are Stat Points (SP) in Pokemon Champions?",
-  answer: "Stat Points (SP) replace EVs in Pokemon Champions. Each Pokemon has 66 SP to distribute across its six stats, with a maximum of 32 SP in any single stat. Unlike the traditional 508 EV / 252-per-stat system, SP spreads require a completely different approach to team building and optimization."
+  question: "What are SP spreads in Pokemon Champions?",
+  answer:
+    "In Pokemon Champions, the traditional EV (Effort Value) system is replaced by Stat Points (SP). Each Pokemon has 66 SP to distribute across six stats, with a maximum of 32 SP per stat. An 'SP spread' describes how those points are allocated — for example, '32 HP / 16 Atk / 18 Spe' means maxing HP, moderate Attack investment, and enough Speed to outpace specific threats. VGC Team Report lets you document and share your SP spread reasoning alongside damage calcs and matchup plans.",
 },
 {
-  question: "How do SP spreads differ from EV spreads in VGC?",
-  answer: "In traditional VGC (Scarlet & Violet), Pokemon have 508 EVs with a 252-per-stat cap. In Pokemon Champions, the SP system gives you 66 total points with a 32-per-stat cap. This means spreads are tighter and every point matters more. VGC Team Report's SP Spread Builder helps you optimize your Champions team's stat distribution with damage calc integration."
-},
-{
-  question: "Can I use my old EV spreads in Pokemon Champions Regulation M-A?",
-  answer: "No. Pokemon Champions uses a completely different stat system called Stat Points (SP). Your existing EV knowledge transfers conceptually — you still want to hit specific speed benchmarks and survive key attacks — but the actual numbers are different. Use our SP Spread Builder to convert your team building approach to the Champions format."
+  question: "How do Pokemon Champions SP spreads differ from EV spreads in Scarlet & Violet?",
+  answer:
+    "The key differences are: (1) Total budget: 66 SP vs 510 EVs. (2) Per-stat cap: 32 SP vs 252 EVs. (3) Scaling: each SP gives exactly 1 stat point at level 50, making calculations simpler. (4) No nature multipliers in the traditional sense — Natures are built differently in Pokemon Champions. This means competitive team building focuses on precise benchmark-hitting (e.g., '18 Spe to outspeed base 100 at 0 SP') rather than the 4/252/252 cookie-cutter spreads common in previous VGC formats.",
 },
 ```
+
+---
+
+## DRAFT 13: Internal Linking Widget for /champions/[pokemon] Pages
+**Concept:** Add a "Teams Using [Pokemon]" section at the bottom of each Mega landing page, pulling from public shares.
+
+```tsx
+// At the bottom of MegaLandingContent.tsx, after existing content:
+<section className="mt-12">
+  <h2 className="text-xl font-bold">Top Teams Using {mega.displayName}</h2>
+  <p className="text-sm text-text-secondary mt-1">
+    Browse competitive team reports featuring {mega.displayName} from the VGC community.
+  </p>
+  {/* List of 5-10 report cards linking to /s/[id] */}
+  <a href="/explore?pokemon={mega.baseName}" className="text-accent font-semibold text-sm mt-4 inline-block">
+    See all {mega.displayName} teams →
+  </a>
+</section>
+```
+
+This creates a powerful internal linking network: /champions/[pokemon] links to /s/[id] share pages, which link back via their species-based metadata. This bidirectional linking helps Google discover and rank both page types.
+
+---
+
+*End of drafts. All changes require explicit user approval before implementation.*
+    "@type": "Article",
+    headline: title,
+    author: { "@type": "Person", name: creatorName || "Anonymous" },
+    datePublished: createdAt,
+    dateModified: updatedAt,
+    image: `https://pokemonvgcteamreport.com/s/${id}/opengraph-image`,
+    keywords: [...species, tags?.regulation, ...(tags?.archetype || [])].filter(Boolean).join(", "),
+  }}
+/>
+```
+
+---
+
+## DRAFT 6 — Page-level on-page wins
+
+### a) `/tournaments` — add visible H1 + intro copy block above the fold
+Right now the page metadata says "VGC Tournament Results Archive" but the rendered H1 (in `TournamentsContent`) needs to lead with the query, e.g.:
+
+```tsx
+<h1 className="text-3xl font-extrabold">VGC Tournament Results — Regionals, Internationals & Worlds 2026</h1>
+<p className="text-text-secondary mt-2 max-w-2xl">
+  Browse team reports from every major Pokémon VGC tournament of the 2026 season —
+  including the Indianapolis Regional Championships (Pokémon Champions Reg M-A debut)
+  and the upcoming San Francisco World Championships.
+</p>
+```
+
+### b) `/explore` — add filter-aware H1 from query params
+When `?regulation=M-A` is set, render `<h1>Pokémon Champions Reg M-A Teams</h1>` (and update `<title>` via generateMetadata). Targets long-tail filtered queries directly.
+
+### c) `/faq` — extend FAQPageJsonLd with 4 new high-volume Q&As
+Add to `FAQPageJsonLd()` in `JsonLd.tsx`:
+1. "What is the best Pokémon for Reg M-A?"
+2. "How do I make an open team sheet for VGC?"
+3. "What does SP mean in a Pokémon team report?"
+4. "How do I calculate damage in VGC?"
+
+### d) Image alt text audit on `/champions/[pokemon]` Pokémon sprite
+Currently sprite `<img>` likely uses `alt={mega.displayName}`. Change to `alt="${mega.displayName} sprite — Pokémon Champions Reg M-A Mega Evolution"` for image search ranking.
+
+### e) Add `lastModified` to `/s/[id]` sitemap entries (already done) — but also bump priority of pages with >100 views to 0.8.
+
+---
+
+## DRAFT 7 — Internal linking opportunities
+
+The internal link graph is sparse. Add:
+- From `/champions` index → link to top 3 most-used Megas with descriptive anchor text ("See top Mega Kangaskhan teams").
+- From every `/s/[id]` → link to `/champions/{mega-slug}` for each Mega-holding Pokémon ("Browse more Mega Salamence teams").
+- From `/faq` → link to `/champions`, `/tournaments`, `/explore` with semantically rich anchors.
+- Footer (every page): add link list "Browse by format: [Reg G] [Reg H] [Reg I] [Reg M-A Champions]" — each going to `/explore?regulation=X`.
+
+---
+
+## DRAFT 8 — Sitemap improvements (`src/app/sitemap.ts`)
+
+Currently includes shares + creators + champion Megas. Missing:
+- `/explore?regulation=M-A`, `/explore?regulation=G`, `/explore?regulation=H` filtered views
+- Tournament-specific URLs (once `/tournaments/[slug]` exists)
+- Archetype hub URLs (once `/archetypes/[type]` exists — drafted in VGC-62)
+
+Also: 5000-share LIMIT may eventually clip indexed teams. Move to multi-sitemap-index pattern if approaching cap.
+
+---
+
+## NOTES FOR WAVE 2
+
+- Test all JSON-LD with https://search.google.com/test/rich-results before merging.
+- BreadcrumbList must use absolute URLs.
+- SportsTeam is unusual for Pokémon — monitor GSC for any structured-data warnings; fall back to Game schema if rejected.
+- Keep the existing FAQPageJsonLd, HowToSchema, OrganizationJsonLd, WebSiteSchema, SportsEventJsonLd — all are correctly implemented today.

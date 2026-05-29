@@ -59,7 +59,7 @@ const PRIMAL_ORB_ITEMS = new Set(["red orb", "blue orb"]);
  * `signals` for diagnostic display (e.g. "detected because Calyrex is
  * a Restricted Legendary").
  */
-export interface RegulationDetection {
+interface RegulationDetection {
   regulation: string | null;
   signals: string[];
 }
@@ -68,7 +68,7 @@ export interface RegulationDetection {
  * Detect regulation with full signal diagnostics. Most callers only
  * need {@link detectRegulation} which returns the tag string.
  */
-export function detectRegulationWithSignals(
+function detectRegulationWithSignals(
   pokemon: AnalyzedPokemon[],
 ): RegulationDetection {
   if (pokemon.length === 0) {

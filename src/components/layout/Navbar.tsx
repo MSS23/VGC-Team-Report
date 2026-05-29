@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
@@ -129,6 +129,11 @@ function WarningPopover({ warnings, label }: { warnings: string[]; label: string
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  const renderedWarnings = useMemo(
+    () => warnings.map((w) => ({ w, fix: getWarningFix(w) })),
+    [warnings]
+  );
+
   return (
     <div className="relative hidden sm:inline-block" ref={ref}>
       <button
@@ -140,18 +145,15 @@ function WarningPopover({ warnings, label }: { warnings: string[]; label: string
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1.5 z-50 w-72 rounded-lg border border-border bg-surface shadow-lg p-3 space-y-2.5">
-          {warnings.map((w, i) => {
-            const fix = getWarningFix(w);
-            return (
-              <div key={i} className="text-xs">
-                <div className="flex items-start gap-1.5">
-                  <span className="text-warning shrink-0 mt-px">&#9888;</span>
-                  <span className="font-semibold text-text-primary">{w}</span>
-                </div>
-                <p className="text-text-tertiary mt-0.5 ml-5">{fix}</p>
+          {renderedWarnings.map(({ w, fix }, i) => (
+            <div key={i} className="text-xs">
+              <div className="flex items-start gap-1.5">
+                <span className="text-warning shrink-0 mt-px">&#9888;</span>
+                <span className="font-semibold text-text-primary">{w}</span>
               </div>
-            );
-          })}
+              <p className="text-text-tertiary mt-0.5 ml-5">{fix}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -189,16 +191,28 @@ export function Navbar(props: NavbarProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   // ── Save toggle for shared-view non-owner menu item ───────────────
-  // Replaces the deleted FloatingReactionDock's bookmark control. Lives
-  // in the overflow menu so the report content is never overlaid.
+  // Replaces the deleted FloatingReactionDock's bookmark control AND the
+  // duplicate <SaveButton> that previously lived inline near the
+  // comments section. Single source of truth so /api/user/saved fires
+  // at most once per share view.
   const [saved, setSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  // True once the user has manually toggled — blocks the initial fetch's
+  // .then() from racing in afterwards and overwriting the optimistic state.
+  const savedTouchedRef = useRef(false);
   const canSave = isSharedView && !isOwner && isSignedIn && !!activeShareId;
   useEffect(() => {
     if (!canSave || !activeShareId) return;
-    fetch("/api/user/saved")
+    // Reset the touched guard for each new share view.
+    savedTouchedRef.current = false;
+    const ac = new AbortController();
+    fetch("/api/user/saved", { signal: ac.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
+        // If the user has already toggled (or we unmounted) drop the
+        // late initial-fetch result — it would otherwise overwrite the
+        // optimistic state with stale data.
+        if (savedTouchedRef.current || ac.signal.aborted) return;
         if (data?.reports?.some((r: { id: string }) => r.id === activeShareId)) {
           setSaved(true);
         } else {
@@ -206,9 +220,11 @@ export function Navbar(props: NavbarProps) {
         }
       })
       .catch(() => {});
+    return () => ac.abort();
   }, [canSave, activeShareId]);
   const toggleSaved = async () => {
     if (saveLoading || !activeShareId) return;
+    savedTouchedRef.current = true;
     setSaveLoading(true);
     const wasSaved = saved;
     // Optimistic — rollback on failure.
@@ -512,6 +528,8 @@ export function Navbar(props: NavbarProps) {
               onClick={() => setMenuOpen(!menuOpen)}
               className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Settings"
+              aria-expanded={menuOpen}
+              aria-haspopup="menu"
             >
               {showUser ? (
                 <div className="w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center text-accent">
@@ -527,7 +545,7 @@ export function Navbar(props: NavbarProps) {
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl py-2 min-w-[240px] z-50 animate-fade-in">
+              <div role="menu" className="absolute right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl py-2 min-w-[240px] z-50 animate-fade-in">
                 {/* Account section */}
                 {showUser && (
                   <>

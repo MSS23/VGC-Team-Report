@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Dex } from "@pkmn/dex";
+import { allSpecies } from "@/lib/data/dex-subset";
 import { PokemonSprite } from "./PokemonSprite";
 
 interface InlinePokemonEditorProps {
@@ -19,23 +19,23 @@ interface SpeciesSuggestion {
   baseStatTotal: number;
 }
 
-// Build the searchable index once per module load. @pkmn/dex.species.all()
-// returns ~1200+ entries — fine to iterate per keystroke since we filter
-// down to a tiny prefix list, but caching the full list avoids the .all()
-// allocation cost on every search.
+// Build the searchable index once per module load from the pre-extracted dex
+// subset (see scripts/build-dex-subset.mjs). 1500+ entries — fine to iterate
+// per keystroke since we filter down to a tiny prefix list, but caching the
+// full list avoids the rebuild cost on every search.
 let SPECIES_INDEX: SpeciesSuggestion[] | null = null;
 function getSpeciesIndex(): SpeciesSuggestion[] {
   if (SPECIES_INDEX) return SPECIES_INDEX;
   const out: SpeciesSuggestion[] = [];
-  for (const entry of Dex.species.all()) {
-    // Skip CAP, illegal, or non-existent forms; keep only species with stats
-    if (!entry.exists) continue;
-    if (!entry.baseStats || (entry.baseStats.hp === 0 && entry.baseStats.atk === 0)) continue;
+  for (const entry of allSpecies()) {
+    // The subset generator already filters non-existent / zero-stat entries.
+    // We still apply the "Past"-only nonstandard filter here so CAP/Future
+    // species don't appear in the picker.
     if (entry.isNonstandard && entry.isNonstandard !== "Past") continue;
     const stats = entry.baseStats;
     out.push({
       name: entry.name,
-      types: entry.types as string[],
+      types: entry.types,
       baseStatTotal: stats.hp + stats.atk + stats.def + stats.spa + stats.spd + stats.spe,
     });
   }

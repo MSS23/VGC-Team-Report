@@ -1,74 +1,85 @@
-# Swarm Research Synthesis — 10-05-26
+# Research Synthesis — Swarm Run 25-05-26
 
-Synthesised from 13 Wave 1 agent reports (R1–R8, C1–C5).
+## Wave 1 Agent Results Summary
+
+### Agents Completed (13/13)
+- R1: Pikalytics + PokePaste competitor teardown ✓
+- R2: VGCpastes + Limitless + Trainer Hill teardown ✓
+- R3: Reddit/community sentiment ✓
+- R4: Twitter/X VGC creator sentiment ✓
+- R5: Mobile UX sharing patterns ✓
+- R6: SEO audit ✓
+- R7: AI citation / AEO strategy ✓
+- R8: Accessibility audit ✓
+- C1: Dead code scan ✓
+- C2: TypeScript strictness audit ✓
+- C3: Performance/bundle analysis ✓
+- C4: Security audit ✓
+- C5: Code review (last 20 commits) ✓
 
 ---
 
 ## Top 5 Highest-Leverage Opportunities
 
-### 1. SEO: Add default OG image + "Pokemon Champions 2026" to homepage title
-**Confidence: Very High | Impact: High**
-R6 found Twitter card is `summary_large_image` but NO default image set — every homepage share is a blank link. Root title still missing "Pokemon Champions 2026". Six new competitor tools launched in 2026. Fix is pure metadata, ~30 min. Also: /explore and /creator title templates need year+format keywords.
+1. **@pkmn/dex lazy-loading (C3)** — The entire 6.9 MB Pokemon Showdown dataset ships to EVERY client because `pkmn-dex-fallback.ts` is statically imported. 95%+ of lookups hit the static `POKEMON_DATA` map. Dynamic import on cache miss would cut 67% of client JS.
 
-### 2. Accessibility: ShareModal missing dialog semantics + focus trap
-**Confidence: Very High | Impact: High**
-R8 found ShareModal has no `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, or focus trap. Keyboard users Tab behind the overlay. ~20 line fix in ShareModal.tsx. Also affects ExportThemePicker modal. Touch targets sub-44px on undo/redo and modal close buttons.
+2. **Anonymous quick-share / zero-friction entry (R1/R2/R3)** — PokePaste's biggest moat is zero-login sharing but it's dying (155+ issues, broken sprites). Adding a guest quick-share (paste → URL, no login, auth upsell post-share) directly attacks this weakness at highest intent.
 
-### 3. Security: HogQL injection + missing fetch timeouts
-**Confidence: High | Impact: High**
-C4 found HogQL query injection in `/api/webhooks/posthog/route.ts:33-34` — string interpolation with naive quote-stripping. Plus CSP `unsafe-eval` in next.config.ts. Multiple API routes call external services with no AbortController/timeout.
+3. **Programmatic /teams page for SEO (R6)** — 3,000-5,000 monthly searches for "best VGC teams 2026" with no competitor dominating. Site already has 5,000+ public shares — aggregate most-viewed into a ranked page.
 
-### 4. Performance: posthog-js statically imported at root
-**Confidence: High | Impact: Medium**
-C3 found posthog-js (~100-266KB) imported statically in root, landing in every visitor's bundle. Should defer to first user interaction via usePostHog() hook. Also: root page.tsx is `'use client'` — forces full-page hydration.
+4. **Auto-generated visual share cards (R4/R5)** — Strava's entire viral loop is built on auto-generated cards. VGC needs image cards for Discord/X embeds. The Satori OG image is built but suppressed — move off edge runtime with CDN caching.
 
-### 5. AEO/GEO: Add Organization + FAQPage JSON-LD to homepage (code change)
-**Confidence: High | Impact: Medium-High**
-R7 confirmed VGC Team Report absent from all community resource pages that AI citation engines use as anchors. Adding `Organization` + `FAQPage` schema is a purely technical code change (no outreach) and has documented 3.2× AI citation lift.
+5. **Fix applicationCategory + upgrade /s/[id] schema to Article (R7)** — applicationCategory was "GameApplication" (FIXED this run). Share pages use weak CreativeWork — upgrading to Article schema turns 1000+ public reports into individually-citable AI training documents.
 
 ---
 
-## Top 5 Quick-Win Bugs / Code Issues
+## Top 5 Quick-Win Bugs / Issues (Implemented This Run)
 
-1. **SEO meta tags**: Missing OG image, wrong title template (no "2026"/"Pokemon Champions")
-2. **ShareModal accessibility**: No role="dialog", no focus trap — WCAG A failure
-3. **HogQL injection**: naive quote-strip in posthog webhook, should use parameterized queries
-4. **CSP unsafe-eval**: Defeats XSS protection; should be removed from next.config.ts
-5. **Touch targets**: Undo/redo buttons 28×28px, modal close 24×24px — below 44px min
-
----
-
-## Tonight's Implementable Ticket List
-
-From Linear Backlog (no `no-claude`, no external service deps, scoped for swarm):
-
-| Ticket | Title | Priority | Scope |
-|--------|-------|----------|-------|
-| VGC-112 | Embeddable team report widget | High | Embed snippet in ShareModal + docs |
-| VGC-77 | Pre-built Champions sample teams | Urgent | Data seed + UI on champions page |
-| VGC-128 | Notification preferences page | High | New /dashboard/notifications page (UI) |
-| VGC-91 | Tournament results archive | High | New /tournaments page |
-| VGC-84 | Import from rental code UX | Low | UX addition to import flow |
-
-**Skipped (too large/risky):** VGC-120 (i18n scaffold — touches 50+ files), VGC-5 (Stripe), VGC-48 (real-time collab), VGC-79 (@smogon/calc dep needed).
-**Outreach tickets (drafts only):** VGC-67, VGC-70, VGC-85, VGC-86, VGC-88, VGC-113.
+1. **Linear webhook handler broken** — wrong env var name, wrong header name, missing force-dynamic. FIXED ✓
+2. **applicationCategory mismatch** — layout.tsx "GameApplication" vs JsonLd.tsx "SportsApplication". FIXED ✓
+3. **ExploreFilters i18n wiring incomplete** — translation keys existed but constants weren't using them. FIXED ✓
+4. **Navbar overflow menu missing ARIA** — no aria-expanded/aria-haspopup. FIXED ✓
+5. **Timing-unsafe secret comparison** — cleanup + migrate routes used ===. FIXED ✓
 
 ---
 
-## Wave 2 Blockers
-- None for code fixes (F1–F4) or ticket implementations
-- VGC-77 sample teams: need valid PokePaste data — agent will generate synthetic valid data
-- VGC-91 tournament archive: new page with static data initially, no external data source needed
+## Additional Quick Wins Implemented
+
+- /compare added to XML sitemap
+- FAQ page keywords metadata added
+- PokemonCard role input aria-label added
+- SlideNavControls hide/show aria-label added
+- PokemonDetailSlide collapsible calc aria-expanded added
+- Dead useScrollHide hook removed
+- Unused axios dependency removed
+- Broken PWA manifest screenshots references removed
 
 ---
 
-## New Linear Backlog Tickets to File (from Research)
+## Blockers / Items Requiring Human Action
 
-1. **Add default OG fallback image** — R6, technical, urgent
-2. **FAQPage + Organization JSON-LD AEO/GEO improvements** — R7, technical, documented 3.2× citation lift
-3. **Lazy-load posthog-js + defer analytics init** — C3, performance, ~100KB saved
-4. **Decompose PokemonDetailSlide (962 lines)** — C5, architecture, maintainability
-5. **Champions dex drift CI guard** — C5, data integrity, prevent regression
-6. **Add fetch AbortController timeouts to API routes** — C4 security, medium severity
-7. **Add unit tests for redact-paste.ts regex** — C5, test coverage
-8. **Root page.tsx Server Component refactor** — C3, ~200KB JS reduction
+- LINEAR_WEBHOOK_SIGNING_SECRET — human must verify Vercel env var matches Linear config
+- PWA screenshots — need real app screenshots for Chrome enhanced install dialog
+- @pkmn/dex lazy-loading — large refactor, needs feature branch
+- page.tsx is 1881 lines — needs decomposition (feature branch recommended)
+
+---
+
+## High-Conflict Risk Files
+From .swarm/main-changed-files.md: src/app/changelog/ChangelogContent.tsx, src/components/layout/Navbar.tsx, 
+src/components/ui/ShareModal.tsx are all conflict-risk. Changes to Navbar.tsx this run were minimal (2 attributes added).
+
+---
+
+## Tickets to File from Research
+
+1. [PERF] Lazy-load @pkmn/dex — dynamic import on cache miss (P1, High impact)
+2. [SEO] Create /teams ranked page from existing public shares (P2, Medium)
+3. [SEO] Create /speed-tiers standalone reference page (P2, Medium)
+4. [SEO] Create /open-team-sheet landing page (P2, Medium)
+5. [SEO] "How to Write a VGC Team Report" guide page (P3, Low effort)
+6. [SEO] Add BreadcrumbList schema to /explore, /faq, /tournaments (P3, Quick)
+7. [UX] Anonymous quick-share flow — paste → URL without login (P1, Large)
+8. [UX] Re-enable OG image generation off edge runtime (P2, Medium)
+9. [PERF] Lazy-load MatchTracker in dashboard via next/dynamic (P3, Quick)
+10. [PERF] Defer ClarityProvider like PostHog (requestIdleCallback) (P3, Quick)

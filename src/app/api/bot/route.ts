@@ -1,3 +1,4 @@
+import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { getDb } from "@/lib/db";
 import { sendWeeklySummary, buildWeeklySummaryHtml } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
@@ -54,16 +55,8 @@ export async function GET(request: NextRequest) {
   const action = request.nextUrl.searchParams.get("action");
 
   // Require CRON_SECRET via Authorization: Bearer header to avoid logging secrets in access logs.
-  // Fail closed when CRON_SECRET is unset; use timing-safe comparison to prevent timing oracles.
-  const authHeader = request.headers.get("authorization") ?? "";
-  const expectedSecret = process.env.CRON_SECRET;
-  if (!expectedSecret) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const expected = `Bearer ${expectedSecret}`;
-  const { timingSafeEqual } = await import("crypto");
-  const aLen = Math.max(authHeader.length, expected.length);
-  if (!timingSafeEqual(Buffer.from(authHeader.padEnd(aLen)), Buffer.from(expected.padEnd(aLen))) || authHeader.length !== expected.length) {
+  // Fail closed when CRON_SECRET is unset; uses timing-safe comparison via verifyBearer.
+  if (!verifyBearer(request, "CRON_SECRET")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

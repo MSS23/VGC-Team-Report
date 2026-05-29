@@ -33,7 +33,7 @@ function writeBool(key: string, value: boolean): void {
   }
 }
 
-export function useGlobalDisplayPrefs() {
+export function useGlobalDisplayPrefs(): { hasSeenPill: boolean; markPillSeen: () => void } {
   // First-run discovery pulse on the floating pill — only fires once ever
   const [hasSeenPill, setHasSeenPillState] = useState<boolean>(true);
 

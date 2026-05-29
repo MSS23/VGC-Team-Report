@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ChangelogContent } from "./ChangelogContent";
-import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Changelog — VGC Team Report",
@@ -24,10 +24,12 @@ export const metadata: Metadata = {
 export default function ChangelogPage() {
   return (
     <>
-      <BreadcrumbJsonLd items={[
-        { name: "Home", url: "https://pokemonvgcteamreport.com" },
-        { name: "Changelog", url: "https://pokemonvgcteamreport.com/changelog" },
-      ]} />
+      <BreadcrumbListJsonLd
+        items={[
+          { name: "Home", url: "https://pokemonvgcteamreport.com" },
+          { name: "Changelog", url: "https://pokemonvgcteamreport.com/changelog" },
+        ]}
+      />
       <ChangelogContent />
     </>
   );
