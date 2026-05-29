@@ -1,5 +1,11 @@
 ---recent changes on main---
 
+.swarm/c1-dead-code-19-05-26.md
+.swarm/c1-dead-code-20-05-26.md
+.swarm/c3-performance-19-05-26.md
+.swarm/c4-security-19-05-26.md
+.swarm/c5-review-18-05-26.md
+.swarm/conflicts.md
 .swarm/c1-dead-code-17-05-26.md
 .swarm/c1-dead-code-19-05-26.md
 .swarm/c1-dead-code-20-05-26.md
@@ -21,7 +27,6 @@
 .swarm/l0-triage-17-05-26.json
 .swarm/l0-triage-19-05-26.json
 .swarm/main-changed-files.md
-.swarm/posthog-insights-17-05-26.md
 .swarm/posthog-insights-18-05-26.md
 .swarm/posthog-insights.md
 .swarm/r-clerk-webhook-18-05-26.md
@@ -41,6 +46,9 @@
 .swarm/research-synthesis-19-05-26.md
 .swarm/research-synthesis-20-05-26.md
 .swarm/run-meta.md
+package-lock.json
+src/app/api/cron/weekly-digest/route.ts
+src/app/api/newsletter/route.ts
 .swarm/vgc152-design-17-05-26.md
 .swarm/vgc190-design-17-05-26.md
 package-lock.json
@@ -50,10 +58,13 @@ src/app/api/newsletter/route.ts
 src/app/api/share/[id]/route.ts
 src/app/api/share/route.ts
 src/app/api/user/notifications/route.ts
-src/app/api/user/reports/[shareId]/route.ts
-src/app/api/user/reports/route.ts
 src/app/api/webhooks/clerk/route.ts
 src/app/champions/ChampionsContent.tsx
+src/app/changelog/ChangelogContent.tsx
+src/app/dashboard/notifications/page.tsx
+src/app/dashboard/privacy/layout.tsx
+src/app/dashboard/profile/layout.tsx
+src/app/feedback/page.tsx
 src/app/champions/page.tsx
 src/app/changelog/ChangelogContent.tsx
 src/app/dashboard/DashboardContent.tsx
@@ -81,6 +92,10 @@ src/app/notifications/NotificationsContent.tsx
 src/app/notifications/page.tsx
 src/app/page.tsx
 src/app/sitemap.ts
+src/components/explore/ExploreFilters.tsx
+src/components/layout/Navbar.tsx
+src/components/social/DoubleTapLikeOverlay.tsx
+src/components/social/FloatingReactionDock.tsx
 src/app/tournaments/page.tsx
 src/components/explore/ExploreFilters.tsx
 src/components/layout/Navbar.tsx
@@ -101,6 +116,11 @@ src/components/ui/NotificationBell.tsx
 src/components/ui/ShareDock.tsx
 src/components/ui/ShareModal.tsx
 src/components/ui/TeamCardExport.tsx
+src/hooks/useHomePage.ts
+src/hooks/useNotifications.ts
+src/hooks/useSwipeNavigation.ts
+src/hooks/useTouchIdleHide.ts
+src/lib/analysis/stat-calculator.ts
 src/hooks/useExploreUrlSync.ts
 src/hooks/useHomePage.ts
 src/hooks/useNotifications.ts
@@ -126,6 +146,7 @@ src/lib/i18n/translations/it.ts
 src/lib/i18n/translations/ja.ts
 src/lib/i18n/translations/ko.ts
 src/lib/i18n/translations/zh.ts
+src/lib/utils/multi-import.ts
 src/lib/linear.ts
 src/lib/security/input-validation.ts
 src/lib/utils/diff-state.ts

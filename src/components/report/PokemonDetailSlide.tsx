@@ -269,6 +269,7 @@ function CollapsibleCalcGroup({
     <div>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={effectiveOpen}
         className="flex items-center gap-2 w-full mb-1 group/header cursor-pointer"
       >
         <span className="text-sm">{cfg.icon}</span>

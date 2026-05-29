@@ -78,36 +78,6 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshots/desktop-team-report.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "VGC Team Report — Build and analyze competitive Pokemon team reports with EV spreads and damage calcs"
-    },
-    {
-      "src": "/screenshots/desktop-explore.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Explore community team reports and World Championship winning teams"
-    },
-    {
-      "src": "/screenshots/mobile-team-report.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "VGC Team Report — Build and share competitive Pokemon teams on mobile"
-    },
-    {
-      "src": "/screenshots/mobile-explore.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Browse and compare VGC team reports on the go"
-    }
-  ],
   "share_target": {
     "action": "/",
     "method": "GET",

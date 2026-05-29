@@ -371,6 +371,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               value={role ?? ""}
               onChange={(e) => onRoleChange(e.target.value)}
               placeholder={t.rolePlaceholder}
+              aria-label="Pokemon role or archetype"
               maxLength={40}
               className="mt-1.5 sm:mt-2.5 w-full text-[11px] sm:text-xs font-semibold px-2 sm:px-3 py-1 sm:py-1.5 bg-surface-alt/60 border-2 border-border-subtle rounded-lg text-text-primary placeholder:text-text-tertiary/60 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50 transition-all"
             />

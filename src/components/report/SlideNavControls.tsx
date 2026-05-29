@@ -391,6 +391,7 @@ export function SlideNavControls({
                   : "text-text-tertiary hover:text-text-secondary hover:bg-surface-alt"
               }`}
               title={isCurrentHidden ? t.hiddenSlideTooltip : t.hideSlideTooltip}
+              aria-label={isCurrentHidden ? t.hiddenSlideTooltip : t.hideSlideTooltip}
             >
               {isCurrentHidden ? (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

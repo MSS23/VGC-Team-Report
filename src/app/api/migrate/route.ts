@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { getDb } from "@/lib/db";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
@@ -27,6 +28,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
+    const { secret } = await request.json().catch(() => ({ secret: "" }));
+    const expected = process.env.MIGRATE_SECRET;
+    if (!secret || !expected || secret.length !== expected.length ||
+      !timingSafeEqual(Buffer.from(secret), Buffer.from(expected))) {
     // Auth check — require secret to prevent abuse.
     // Use timing-safe comparison to prevent timing oracles; length-check first to
     // avoid timingSafeEqual throwing on mismatched-length buffers.

@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
@@ -99,6 +100,10 @@ export async function GET(request: NextRequest) {
  *   Authorization: Bearer <CLEANUP_SECRET>
  */
 export async function DELETE(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const expected = `Bearer ${CLEANUP_SECRET}`;
+  if (!CLEANUP_SECRET || !authHeader || authHeader.length !== expected.length ||
+    !timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))) {
   // Verify authorization (constant-time bearer compare)
   const authHeader = request.headers.get("authorization") ?? "";
   if (!CLEANUP_SECRET) {

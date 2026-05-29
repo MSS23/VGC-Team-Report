@@ -1,178 +1,171 @@
-# TypeScript Quality Audit — VGC Team Report
+# TypeScript Strictness Audit
 
-**Audited:** 2026-05-07  
-**Scope:** src/lib/, src/app/api/, src/components/report/  
-**Files:** 272 TypeScript files in src/  
-**tsconfig:** `strict: true`, `skipLibCheck: true`, no `noImplicitReturns`, no `noUncheckedIndexedAccess`, no `exactOptionalPropertyTypes`
-
----
-
-## 1. `any` Type Usage
-
-No raw `@ts-ignore` or `@ts-expect-error` suppressions found. All `any` usages are explicitly suppressed with `eslint-disable-next-line @typescript-eslint/no-explicit-any`.
-
-### 1a. `Record<string, any>` type aliases (src/lib/)
-
-| File | Line | Issue |
-|------|------|-------|
-| `src/lib/utils/diff-state.ts` | 7 | `type AnyState = Record<string, any>` — used as both parameter and field access type |
-| `src/lib/utils/normalize-report.ts` | 8 | `type AnyRecord = Record<string, any>` — used as parameter AND return type of `normalizeReportData` |
-
-**Problem:** `normalizeReportData(data: AnyRecord): AnyRecord` completely erases all type information from its output. Callers in `src/app/api/share/[id]/route.ts` (lines 127, 168, 215) spread the result directly into API response objects with no further validation. The actual shape is well-known and could be represented as a proper interface.
-
-### 1b. `any[]` parameters in internal functions
-
-| File | Lines | Issue |
-|------|-------|-------|
-| `src/lib/utils/diff-state.ts` | 87, 90, 94 | `matchupPlansChanged(oldPlans: any[], newPlans: any[])` and `normalize = (p: any)` |
-| `src/lib/utils/version-diff.ts` | 154, 160 | `normalizePlan = (p: any)` — but `p` comes from `SerializedMatchupPlan[]` (typed) |
-
-**Worst offender:** `version-diff.ts:154` — `normalizePlan` is called on `currentPlans` which is typed as `SerializedMatchupPlan[]` (from `ShareableState`). The `p: any` annotation is unnecessary and silently permits accessing nonexistent fields. This should be `p: SerializedMatchupPlan`.
-
-### 1c. `as Record<string, any>` cast in API route
-
-| File | Line | Issue |
-|------|------|-------|
-| `src/app/api/migrate/route.ts` | 50 | `row.data as Record<string, any>` before passing to `normalizeReportData` |
-
-This is partially justified (DB rows are untyped), but the downstream `normalizeReportData` return type is also `AnyRecord`, compounding the loss of type safety.
+**Audited:** 2026-05-25  
+**Scope:** `src/lib/`, `src/app/api/`, `src/hooks/`  
+**tsconfig:** `strict: true` enabled (good baseline)
 
 ---
 
-## 2. `as unknown as X` Double Casts (Unsound)
+## 1. Uses of `any`
 
-| File | Lines | Issue |
-|------|-------|-------|
-| `src/hooks/useHomePage.ts` | 264, 437 | `t as unknown as Record<string, string>` |
-| `src/hooks/useSlideNavigation.ts` | 46 | `document as unknown as { startViewTransition: ... }` |
+Only **1 explicit `any`** found across the entire scoped codebase:
 
-### 2a. `t as unknown as Record<string, string>` — structurally unsound
+| File | Line | Code | Justified? |
+|------|------|------|------------|
+| `src/app/api/migrate/route.ts` | 50 | `row.data as Record<string, any>` | **Partially** — the migrate route normalizes arbitrary legacy JSONB blobs that may have unknown shapes. Using `Record<string, unknown>` with runtime checks would be safer but require more verbose narrowing. Has an eslint-disable comment acknowledging the decision. |
 
-`t` is typed as `TranslationKeys` (which is `{ [K in keyof typeof en]: string }` — a mapped type equivalent to `Record<keyof en, string>`). `useShareFlow` accepts `t: Record<string, string>`, which is a wider type. The double cast bypasses the structural compatibility check. The real fix is to widen `useShareFlow`'s `t` parameter to `Record<string, string>` or use `TranslationKeys` directly, eliminating the need for any cast.
-
-### 2b. `document as unknown as { startViewTransition: ... }` — justified but fragile
-
-This accesses the View Transitions API which TypeScript's DOM lib doesn't yet include. The inline type definition is reasonable, but the cast silently fails if the method signature changes. A declared ambient type or `lib.dom.d.ts` augmentation would be safer.
+**Verdict:** Excellent discipline. The single `any` is in a migration script with an eslint acknowledgement.
 
 ---
 
-## 3. Missing Return Types on Exported Functions (src/lib/)
+## 2. Missing Return Types on Exported Functions
 
-Functions where the return type is inferred rather than declared:
+### API Route Handlers: **0 of 72 have explicit return types**
 
-| File | Function | Inferred Return |
-|------|----------|-----------------|
-| `src/lib/db.ts:3` | `getDb()` | Inferred `NeonQueryFunction` (complex type) |
-| `src/lib/db.ts:9` | `ensureTable()` | `Promise<void>` (should be explicit) |
-| `src/lib/discord-webhook.ts:15` | `postToBuildsChannel(embed)` | `Promise<void>` |
-| `src/lib/discord-webhook.ts:31` | `postToFeedbackChannel(embed)` | `Promise<void>` |
-| `src/lib/notifications.ts:9` | `createNotification(...)` | `Promise<void>` |
-| `src/lib/notifications.ts:30` | `notifyFollowers(...)` | `Promise<void>` |
-| `src/lib/posthog-server.ts:24` | `captureServerEvent(...)` | `void` (inferred) |
-| `src/lib/contexts/VersionDiffContext.tsx:23` | `useVersionDiff()` | Inferred context value type |
-| `src/lib/hooks/useGlobalDisplayPrefs.ts:41` | `useGlobalDisplayPrefs()` | Inferred hook return shape |
-| `src/lib/i18n/index.ts:47` | `I18nProvider(...)` | `JSX.Element` |
-| `src/lib/i18n/index.ts:82` | `useTranslation()` | Inferred `I18nContextValue` |
-| `src/lib/utils/haptics.ts:2,9,16` | `hapticLight/Medium/Success()` | `void` |
+All 72 exported API route handlers (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`) across `src/app/api/` lack explicit return type annotations. Examples:
 
-**Priority:** `getDb()` is the most impactful — it returns a complex neon SQL function type. Without an explicit return type, callers get no IDE contract and type changes in `@neondatabase/serverless` would silently break at runtime.
+```typescript
+// src/app/api/explore/route.ts:11
+export async function GET(request: Request) {  // no `: Promise<NextResponse>`
 
-**Also missing:** All Next.js API route handlers (`GET`, `POST`, `PUT`, `DELETE`) across `src/app/api/` lack explicit `Promise<NextResponse>` return type annotations (20+ functions). While Next.js infers these, explicit typing would catch incorrect response shape bugs at compile time.
+// src/app/api/share/route.ts:63
+export async function POST(request: Request) {  // no return type
+
+// src/app/api/feedback/route.ts:78
+export async function POST(request: Request) {  // no return type
+```
+
+**Impact:** Medium. Next.js infers these correctly at build time, but explicit types would catch accidental non-Response returns at authoring time and improve documentation. This is standard for Next.js App Router conventions where the framework enforces the shape.
+
+### src/lib/ — Good coverage with notable gaps:
+
+| File | Function | Missing Return Type |
+|------|----------|-------------------|
+| `src/lib/discord-webhook.ts:15` | `postToBuildsChannel` | No return type (returns `Promise<void>` implicitly) |
+| `src/lib/notifications.ts:9` | `createNotification` | No return type (returns `Promise<void>` implicitly) |
+| `src/lib/notifications.ts:30` | `notifyFollowers` | No return type (returns `Promise<void>` implicitly) |
+| `src/lib/db.ts:3` | `getDb` | No return type (inferred from neon()) |
+| `src/lib/db.ts:9` | `ensureTable` | No return type (returns `Promise<void>`) |
+
+Most other `src/lib/` exports have proper return type annotations.
 
 ---
 
-## 4. Unsound Generic Usage
+## 3. Unsound Generics
 
-### 4a. `cacheGet<T>` — unconstrained T, no runtime validation
+### `cacheGet<T>` — Unchecked cast when no schema provided
 
-```
-src/lib/cache.ts:22
-export async function cacheGet<T>(key: string): Promise<T | null>
-```
-
-`T` is entirely unconstrained. The function returns `r.get<T>(key)` which is Upstash's own generic — also unconstrained. Callers assert the shape without any runtime guard:
-
-- `cacheGet<string>(rateKey)` — `src/app/api/user/export/route.ts:15`
-- `cacheGet<Record<string, unknown>>(CacheKeys.share(id))` — `src/app/api/share/[id]/route.ts:196`
-- `cacheGet<{ reports: unknown[]; nextCursor: string | null }>(cacheKey)` — `src/app/api/explore/route.ts:38`
-
-If Redis contains stale data from a previous schema, `T` is a lie — the actual value may differ from the asserted type with no runtime error. This is a classic unsound generic pattern: the generic parameter is used only to widen the return, not enforce any constraint.
-
-### 4b. `Partial<StatSpread> as StatSpread` — technically unsound but safe in practice
-
-```
-src/lib/analysis/stat-calculator.ts:58, 74
+```typescript
+// src/lib/cache.ts:29
+export async function cacheGet<T>(key: string, schema?: ZodType<T>): Promise<T | null> {
+  // ...
+  if (!schema) return raw as T;  // ← UNSOUND: T is unconstrained, no runtime validation
 ```
 
-`calculateAllStats` and `calculateAllChampionsStats` build a `Partial<StatSpread>`, iterate all 6 stat keys (`["hp", "atk", "def", "spa", "spd", "spe"]`), then cast to `StatSpread`. TypeScript cannot verify that all keys are set; the cast is required to satisfy callers. This is safe in practice since the loop covers all keys, but the type system does not enforce it.
+**Impact:** High. When callers omit the `schema` parameter, the cached value is blindly cast to `T`. A stale Redis entry with the wrong shape silently becomes a type lie. The comment on line 27 acknowledges this (`unchecked cast (VGC-146)`).
+
+**Recommendation:** Require the schema parameter or deprecate the schema-less overload. Alternatively, constrain `T extends Record<string, unknown>` at minimum.
+
+### `paginate<T>` — Acceptable
+
+```typescript
+// src/app/api/user/export/route.ts:97
+function paginate<T>(rows: T[]): { data: T[]; truncated: boolean }
+```
+
+This is a simple utility generic — unconstrained `T` is fine here since it just slices arrays.
 
 ---
 
-## 5. Other Unsafe Patterns
+## 4. Type Assertions (`as`) — 95+ occurrences
 
-### 5a. `redis!` non-null assertion in rate-limit.ts
+### Pattern A: Database row casting (SYSTEMIC — ~60 occurrences)
 
-```
-src/lib/rate-limit.ts:24
-redis: redis!,
-```
+The most prevalent pattern across all API routes:
 
-`redis` is `Redis | null`. The `!` assertion is inside `getUpstashLimiter`, which is only called from within the `if (redis)` branch in `isRateLimitedAsync`. However, `getUpstashLimiter` is not itself guarded and could theoretically be called directly with `redis === null`, making the `!` latently unsafe. A safer approach is to pass `redis` explicitly as a parameter.
-
-### 5b. `JSON.parse(...) as ShareableState` without runtime validation
-
-```
-src/lib/sharing/url-codec.ts:128
-return JSON.parse(json) as ShareableState;
+```typescript
+const data = row.data as Record<string, unknown>;
+(row.created_at as Date).toISOString();
+(row.view_count as number)
 ```
 
-URL-decoded state is cast directly to `ShareableState` without schema validation. If the URL is malformed or from an old schema version, this silently produces a structurally invalid object that matches the type only at compile time.
+**Impact:** Medium-High. The neon serverless driver returns `Record<string, unknown>` rows. Every property access requires a cast. This is a systemic weakness — if column types change or a query is modified, these casts silently produce incorrect types.
 
-### 5c. `localStorage.getItem(STORAGE_KEY) as LanguageCode | null`
+**Recommendation:** Define typed row interfaces per query, or use a typed query builder (e.g., Drizzle, Kysely) that maps SQL schema to TypeScript types.
 
-```
-src/lib/i18n/index.ts:53
-```
+### Pattern B: @pkmn/dex library casting (~10 occurrences)
 
-Any arbitrary string stored in localStorage is cast to `LanguageCode`. If someone stores an unexpected value, the `as` cast succeeds but `LANGUAGES.find(l => l.code === saved)` will return `undefined`, which is then used to set language state.
-
-### 5d. `row.data as Record<string, unknown>` before `normalizeReportData`
-
-```
-src/app/api/share/[id]/route.ts:54, 127, 168, 215
+```typescript
+// src/lib/data/pkmn-dex-fallback.ts:57
+const baseStats = entry.baseStats as StatSpread;
+const types = entry.types as PokemonType[];
+const ms = item.megaStone as Record<string, string> | undefined;
 ```
 
-DB rows have `data: unknown` from neon; each call site independently casts it to `Record<string, unknown>` before passing to `normalizeReportData`. This is structurally consistent but repeated 4 times with no shared validation helper.
+**Impact:** Medium. The `@pkmn/dex` library has its own type system that doesn't perfectly align with the app's domain types. These casts bridge the two type worlds. Validated by subsequent null/existence checks in most cases.
+
+### Pattern C: Webhook/external data casting (~5 occurrences)
+
+```typescript
+// src/app/api/webhooks/clerk/route.ts:46
+const data = event.data as unknown as ClerkUserCreatedData;
+
+// src/app/api/webhooks/posthog/route.ts:64
+properties: typeof r[2] === "string" ? JSON.parse(r[2]) : (r[2] as Record<string, unknown>) ?? {},
+```
+
+**Impact:** Medium. The double-cast in the Clerk webhook (`as unknown as`) fully bypasses type safety. If Clerk's API changes the event shape, this would silently produce wrong types.
+
+### Pattern D: URL params/localStorage casting (~5 occurrences)
+
+```typescript
+// src/hooks/useExploreUrlSync.ts:55
+const sort = params.get("sort") as FilterState["sort"];
+
+// src/hooks/useShareUrl.ts:202
+settle(state as ShareableState, editable);
+```
+
+**Impact:** Low-Medium. The `useExploreUrlSync` cast is immediately validated on the next line (`includes()` check). The `useShareUrl` cast is after stripping internal flags, which is reasonable.
+
+### Pattern E: Explore route multi-query destructuring
+
+```typescript
+// src/app/api/explore/route.ts:248
+const [likeRows, commentRows, collabRows, verifiedRows] = await Promise.all(queries) as [
+  Array<Record<string, unknown>>,
+  Array<Record<string, unknown>>,
+  Array<Record<string, unknown>>,
+  Array<Record<string, unknown>>?,
+];
+```
+
+**Impact:** Medium. Casting `Promise.all` results to a specific tuple. If the queries array ordering changes, the types silently become incorrect. A typed wrapper would be safer.
 
 ---
 
-## 6. Missing tsconfig Strictness Flags
+## 5. Non-null Assertions (`!`)
 
-The following beneficial flags are absent from `tsconfig.json`:
+Only **3 non-null assertions** found:
 
-| Flag | Effect |
-|------|--------|
-| `noImplicitReturns` | Catches functions that don't return on all code paths |
-| `noUncheckedIndexedAccess` | `arr[i]` and `obj[key]` return `T | undefined` instead of `T` |
-| `exactOptionalPropertyTypes` | Distinguishes `key?: T` from `key: T | undefined` |
-| `noUnusedLocals` | Catches dead local variables |
-| `noUnusedParameters` | Catches unused function parameters |
+| File | Line | Code | Risk |
+|------|------|------|------|
+| `src/lib/db.ts` | 4 | `process.env.DATABASE_URL!` | **Low** — app cannot function without this; crashes immediately if missing. Acceptable for required env vars. |
+| `src/lib/rate-limit.ts` | 24 | `redis: redis!` | **Medium** — this code path is only reached when `redis` is truthy (checked on line 72: `if (redis)`), but the assertion is inside `getUpstashLimiter` which doesn't itself verify. If called directly, could NPE. |
+| `src/hooks/useCollaborativeSync.ts` | 72 | `key: editKey!` | **Low** — guarded by `if (!enabled || !shareId || !editKey)` early return on line 57. The assertion is inside the `connect()` closure that only runs after the guard. |
 
-`noUncheckedIndexedAccess` would catch the most real bugs given the number of `speciesKeys[i]`, `arr[idx]`, and `Record<string, ...>` index lookups across the codebase.
+**Verdict:** Minimal non-null assertion usage. The `redis!` in rate-limit.ts is the only one with any real risk.
 
 ---
 
-## Summary of Severity
+## Summary of Priorities
 
-| Severity | Issue |
-|----------|-------|
-| **High** | `cacheGet<T>` — unconstrained generic with no runtime validation; stale Redis data produces typed lies |
-| **High** | `normalizeReportData` returns `AnyRecord` — erases types across 4 API call sites |
-| **High** | `version-diff.ts:154` — `normalizePlan: (p: any)` when `p` is `SerializedMatchupPlan` (has a proper type) |
-| **Medium** | `t as unknown as Record<string, string>` double cast — `useShareFlow` should accept `TranslationKeys` |
-| **Medium** | `getDb()` missing return type — complex inferred type creates invisible contract for callers |
-| **Medium** | `JSON.parse(json) as ShareableState` — no runtime schema validation on URL-decoded state |
-| **Medium** | Missing `noUncheckedIndexedAccess` in tsconfig — index operations silently return `T` instead of `T | undefined` |
-| **Low** | `Partial<StatSpread> as StatSpread` — functionally safe but type assertion papers over compiler limitation |
-| **Low** | `redis!` — safe within call graph but assertion is not enforced by structure |
-| **Low** | 20+ API route handlers missing `Promise<NextResponse>` return type |
+| Priority | Issue | Count | Recommended Fix |
+|----------|-------|-------|----------------|
+| **High** | `cacheGet<T>` unchecked cast | 1 | Require Zod schema or split into typed/untyped variants |
+| **High** | DB row `as` casts without validation | ~60 | Introduce typed query helpers or row interfaces |
+| **Medium** | API route handlers missing return types | 72 | Add `Promise<NextResponse>` (low urgency for Next.js) |
+| **Medium** | Double-cast in Clerk webhook | 1 | Use Zod schema to validate event.data |
+| **Medium** | Explore route Promise.all tuple cast | 1 | Type the queries array or use named results |
+| **Low** | @pkmn/dex bridge casts | ~10 | Acceptable given library boundary |
+| **Low** | lib functions missing void return type | 5 | Minor docs improvement |

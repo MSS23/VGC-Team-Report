@@ -28,6 +28,17 @@ const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
     version: "5.20",
+    title: "Webhook Fix, SEO, Security & Accessibility",
+    emoji: "🔧",
+    highlight: false,
+    items: [
+      { type: "fixed", text: "Linear webhook handler fixed — corrected the signing secret env var name (LINEAR_WEBHOOK_SIGNING_SECRET), header name (linear-signature), added force-dynamic export, and graceful handling of empty body payloads." },
+      { type: "improved", text: "SEO: /compare page added to XML sitemap; /faq page now has keyword metadata for long-tail VGC queries; applicationCategory corrected from GameApplication to SportsApplication for consistent schema.org signals." },
+      { type: "improved", text: "i18n: Explore page filter labels (All/Pokemon/Tournament/Creator category chips, Popular/Newest/Views/Updated sort options, 1st/Top 4/Top 8/Top 16 placement chips) now fully wired through the translation system." },
+      { type: "improved", text: "Accessibility: Navbar overflow menu now has aria-expanded and aria-haspopup attributes; dropdown panel uses role=menu. PokemonCard role input has aria-label. SlideNavControls hide/show toggle has aria-label on mobile. Calc section collapse buttons have aria-expanded." },
+      { type: "fixed", text: "Security: /api/cleanup DELETE and /api/migrate POST routes now use crypto.timingSafeEqual for secret comparison — defence-in-depth against timing side-channel attacks." },
+      { type: "improved", text: "PWA: Removed broken screenshot references from manifest.json that pointed to non-existent files. Chrome's install prompt now degrades gracefully instead of silently failing." },
+      { type: "improved", text: "Removed dead code: useScrollHide hook (zero imports) and axios dependency (project uses native fetch). Combined ~150 lines of unused code eliminated." },
     title: "Webhook Fix, Email XSS Hardening, Share Preview & i18n Fallback",
     emoji: "🛡️",
     highlight: true,
