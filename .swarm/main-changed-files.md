@@ -34,7 +34,6 @@ src/app/dashboard/profile/layout.tsx
 src/app/embed/[id]/page.tsx
 src/app/faq/page.tsx
 src/app/feedback/page.tsx
-src/app/globals.css
 src/app/layout.tsx
 src/app/notifications/NotificationsContent.tsx
 src/app/notifications/page.tsx
@@ -50,9 +49,7 @@ src/components/layout/Navbar.tsx
 src/components/match-tracker/MatchTracker.tsx
 src/components/providers/PostHogProvider.tsx
 src/components/report/PokemonCard.tsx
-src/components/report/PokemonSprite.tsx
 src/components/report/SpeedTierChart.tsx
-src/components/report/TeamOverview.tsx
 src/components/seo/JsonLd.tsx
 src/components/social/DoubleTapLikeOverlay.tsx
 src/components/social/FloatingReactionDock.tsx
@@ -62,9 +59,7 @@ src/components/ui/NewsletterSignup.tsx
 src/components/ui/NotificationBell.tsx
 src/components/ui/ShareDock.tsx
 src/components/ui/ShareModal.tsx
-src/components/ui/ShortcutHintOverlay.tsx
 src/components/ui/TeamCardExport.tsx
-src/components/ui/Toggle.tsx
 src/hooks/useExploreUrlSync.ts
 src/hooks/useHomePage.ts
 src/hooks/useNotifications.ts
@@ -80,7 +75,6 @@ src/lib/data/tags.ts
 src/lib/db/migrations/add-species-column.sql
 src/lib/db/migrations/add-unlisted-column.sql
 src/lib/discord-bot.ts
-src/lib/discord-webhook.ts
 src/lib/email.ts
 src/lib/i18n/translations/en.ts
 src/lib/i18n/translations/es.ts
@@ -97,6 +91,6 @@ src/lib/utils/mega-detect.ts
 src/lib/utils/multi-import.ts
 src/lib/utils/normalize-report.ts
 src/lib/utils/pokepaste.ts
-src/lib/utils/version-diff.ts
 tsconfig.json
 vercel.json
+--- last 7 days file changes on main ---

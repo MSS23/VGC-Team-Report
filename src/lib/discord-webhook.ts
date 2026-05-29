@@ -12,7 +12,7 @@ interface DiscordEmbed {
   timestamp?: string;
 }
 
-export async function postToBuildsChannel(embed: DiscordEmbed) {
+export async function postToBuildsChannel(embed: DiscordEmbed): Promise<void> {
   const url = process.env.DISCORD_BUILDS_WEBHOOK;
   if (!url) {
     console.warn("DISCORD_BUILDS_WEBHOOK not set, skipping notification");

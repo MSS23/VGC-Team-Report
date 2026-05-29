@@ -18,7 +18,6 @@ import { SwipeHint } from "@/components/ui/SwipeHint";
 import { EditFab } from "@/components/ui/EditFab";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { Navbar } from "@/components/layout/Navbar";
-import { SaveButton } from "@/components/social/SaveButton";
 const DoubleTapLikeOverlay = dynamic(() => import("@/components/social/DoubleTapLikeOverlay").then(m => ({ default: m.DoubleTapLikeOverlay })), { ssr: false });
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
@@ -1401,7 +1400,10 @@ function HomeContent() {
                 </SignInButton>
               )
             )}
-            {!isOwner && <SaveButton shareId={activeShareId} />}
+            {/* Save toggle lives in the Navbar overflow menu (single source
+                of truth) — having two copies fired /api/user/saved twice on
+                mount and the late initial fetch could overwrite the user's
+                optimistic toggle. */}
           </div>
           {allowComments ? (
             <CommentSection shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
@@ -1582,6 +1584,7 @@ function HomeContent() {
           publicUrl={lastShareResult.publicUrl}
           teamSpecies={teamSpecies}
           showdownPaste={analysis ? teamToShowdown(analysis.pokemon.map((p) => p.parsed)) : undefined}
+          rentalCode={rentalCode}
           teamName={teamName}
           tournamentName={tournamentName}
           creatorName={creatorName}

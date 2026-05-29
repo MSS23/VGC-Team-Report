@@ -320,13 +320,15 @@ Examples:
                 key={cat}
                 type="button"
                 onClick={() => setCalcCategory(cat)}
+                aria-label={catLabelMap[cfg.label] ?? cfg.label}
+                aria-pressed={isActive}
                 className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-[32px] ${
                   isActive
                     ? `${cfg.tagBg} ${cfg.tagText} border ${cfg.borderClass}`
                     : "bg-surface border border-border text-text-tertiary hover:text-text-secondary"
                 }`}
               >
-                <span>{cfg.icon}</span>
+                <span aria-hidden="true">{cfg.icon}</span>
                 <span className="hidden sm:inline">{catLabelMap[cfg.label] ?? cfg.label}</span>
               </button>
             );

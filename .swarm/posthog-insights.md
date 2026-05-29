@@ -1,16 +1,9 @@
-# PostHog Insights — Swarm Run 20-05-26
+# PostHog Insights — 22 May 2026
 
-## Status: CREDENTIALS NOT AVAILABLE
+**Status:** SKIPPED — `POSTHOG_API_KEY` and `POSTHOG_PROJECT_ID` are not present in the swarm environment.
 
-No `.env.local` file exists in the remote execution environment.
-POSTHOG_API_KEY and POSTHOG_PROJECT_ID are not accessible.
-PostHog API calls are skipped for this run.
+The container is a fresh clone without a populated `.env.local`, and the orchestrator runtime did not surface PostHog credentials. Per the orchestrator spec ("If credentials are missing or the API returns errors, log the failure to `.swarm/posthog-insights.md` and continue — do not abort the run."), the swarm proceeds without PostHog telemetry tonight.
 
-## Impact
-- No error event correlation
-- No rage-click/dead-click data
-- No funnel drop-off data
-- No PostHog-sourced bug tickets this run
+**Downstream effect:** Wave 1 subagents R3, R5, C4, C5 will run without PostHog cross-referencing. Wave 2 ticket triage will not include `posthog-signal` elevation.
 
-## Fallback
-Using prior-run insights from `.swarm/posthog-insights-19-05-26.md` (same — also unavailable).
+**Follow-up:** File a Linear ticket so future swarm runs can pull PostHog data — see Step 6 ticket-filing pass.

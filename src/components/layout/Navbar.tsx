@@ -191,16 +191,28 @@ export function Navbar(props: NavbarProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   // ── Save toggle for shared-view non-owner menu item ───────────────
-  // Replaces the deleted FloatingReactionDock's bookmark control. Lives
-  // in the overflow menu so the report content is never overlaid.
+  // Replaces the deleted FloatingReactionDock's bookmark control AND the
+  // duplicate <SaveButton> that previously lived inline near the
+  // comments section. Single source of truth so /api/user/saved fires
+  // at most once per share view.
   const [saved, setSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  // True once the user has manually toggled — blocks the initial fetch's
+  // .then() from racing in afterwards and overwriting the optimistic state.
+  const savedTouchedRef = useRef(false);
   const canSave = isSharedView && !isOwner && isSignedIn && !!activeShareId;
   useEffect(() => {
     if (!canSave || !activeShareId) return;
-    fetch("/api/user/saved")
+    // Reset the touched guard for each new share view.
+    savedTouchedRef.current = false;
+    const ac = new AbortController();
+    fetch("/api/user/saved", { signal: ac.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
+        // If the user has already toggled (or we unmounted) drop the
+        // late initial-fetch result — it would otherwise overwrite the
+        // optimistic state with stale data.
+        if (savedTouchedRef.current || ac.signal.aborted) return;
         if (data?.reports?.some((r: { id: string }) => r.id === activeShareId)) {
           setSaved(true);
         } else {
@@ -208,9 +220,11 @@ export function Navbar(props: NavbarProps) {
         }
       })
       .catch(() => {});
+    return () => ac.abort();
   }, [canSave, activeShareId]);
   const toggleSaved = async () => {
     if (saveLoading || !activeShareId) return;
+    savedTouchedRef.current = true;
     setSaveLoading(true);
     const wasSaved = saved;
     // Optimistic — rollback on failure.
