@@ -20,6 +20,6 @@ const VersionDiffContext = createContext<VersionDiffState>({
 
 export const VersionDiffProvider = VersionDiffContext.Provider;
 
-export function useVersionDiff() {
+export function useVersionDiff(): VersionDiffState {
   return useContext(VersionDiffContext);
 }

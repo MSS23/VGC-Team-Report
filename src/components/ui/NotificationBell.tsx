@@ -134,6 +134,7 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
               <button
                 type="button"
                 onClick={() => { markAllRead(); }}
+                aria-label="Mark all notifications as read"
                 className="text-[10px] font-bold text-accent hover:underline cursor-pointer"
               >
                 Mark all read

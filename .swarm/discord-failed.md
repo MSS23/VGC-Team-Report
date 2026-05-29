@@ -1,85 +1,45 @@
-# Discord Notification — UNSENT (no .env.local)
+# Discord Notification — NOT SENT — 22 May 2026
 
-**Run:** 13-05-26
-**Target channel:** #builds (ID: 1487202217298493493)
-**Reason:** DISCORD_BUILDS_WEBHOOK not set (no .env.local in environment)
+**Reason:** Neither `DISCORD_WEBHOOK_URL` nor `DISCORD_BOT_TOKEN` is present in the swarm container environment. The container is a fresh clone without a populated `.env.local`. Per the orchestrator spec ("If both methods fail: Save the full payload to `.swarm/discord-failed.md`. Do NOT silently skip."), the payload is preserved below for a manual send by the user.
 
-## Payload that should be sent
+**Channel:** `1487202217298493493` (#builds)
 
-```
-🤖 Swarm 13-05-26 landed — 11 commits → claude-dev
+**Payload (Discord webhook JSON):**
 
-🔒 Security: JSON-LD XSS fix + timing-safe CRON_SECRET auth
-⚡ Reliability: AbortController on all external fetches; champions meta capped
-🎯 UX: Match Tracker delete entries + Share modal Copy Paste button
-📈 SEO: Homepage/Champions/Explore titles + og:image on 4 pages (VGC-156)
-🧪 Tests: 43 new tests (33 redact-paste + 10 dex drift guard)
-
-PR: https://github.com/MSS23/VGC-Team-Report/pull/27
-```
-
-## To send manually after adding DISCORD_BUILDS_WEBHOOK to .env.local
-
-source .claude/scripts/linear.sh && discord_notify_build "swarm-13-05-26" "Swarm 13-05-26: Security + Match Tracker + SEO + Tests"
-
----
-
-# Discord Notification — UNSENT (no .env.local)
-
-**Run:** 14-05-26 (Wave 2 overnight swarm)
-**Target channel:** #builds (ID: 1487202217298493493)
-**Reason:** DISCORD_BUILDS_WEBHOOK and DISCORD_BOT_TOKEN not set (no .env.local in swarm environment)
-
-## Payload that should be sent
-
-```
-🌙 Swarm 14-05-26 (Wave 2) landed — claude-dev → PR #28
-
-♿ A11y: WCAG AA contrast fix cascading ~470 usages; Toggle/ReactionBar/Navbar aria fixes; invalid label→div fix
-🔒 Security: timingSafeEqual for CRON_SECRET + PostHog webhook token; AbortController on bot/route.ts
-📈 SEO: noindex on dashboard+embed; EV→SP in Champions (6 locations); FAQ anchor IDs + SP/Champions entries
-🏷️ TypeScript: any→proper types in diff-state, useShareFlow, useSlideSystem; removed DocumentWithViewTransition interface
-⚡ Perf: fetchpriority="high" on first LCP sprite via PokemonSprite priority prop
-🔗 UX: Damage calc deep-link button on PokemonCard
-🧹 Dead code: postBuildNotification, postToFeedbackChannel, sanitizeInput, containsInjection removed
-
-Tickets → In Review: VGC-176, VGC-177, VGC-178, VGC-179, VGC-180
-New backlog: VGC-181, VGC-182, VGC-183, VGC-184, VGC-185
-
-PR: https://github.com/MSS23/VGC-Team-Report/pull/28
+```json
+{
+  "embeds": [{
+    "title": "🤖 Nightly Swarm — 22 May 2026",
+    "color": 5763719,
+    "fields": [
+      { "name": "Branch", "value": "swarm-nightly-2026-05-22", "inline": true },
+      { "name": "Commits pushed", "value": "13", "inline": true },
+      { "name": "Build status", "value": "✅ Passing", "inline": true },
+      { "name": "Linear webhook", "value": "🔧 fixed in commit f2121c3 — human must verify delivery + re-enable in Linear settings if auto-disabled", "inline": false },
+      { "name": "Linear tickets implemented", "value": "VGC-208 (rental code in ShareModal), VGC-211 (Pikalytics dead code), VGC-WEBHOOK (signature handler). VGC-210 + VGC-212 were already implemented in 5.19 but never closed — will be closed via Linear MCP.", "inline": false },
+      { "name": "PostHog signals acted on", "value": "None — POSTHOG_API_KEY not set in container", "inline": false },
+      { "name": "Updates page", "value": "10 entries added to May 2026 section as v5.20", "inline": false },
+      { "name": "Merge conflicts", "value": "None — branch was 0/0 vs main at start and push", "inline": false },
+      { "name": "Rejected changes", "value": "None — all 12 code commits passed tsc + build", "inline": false },
+      { "name": "PR", "value": "https://github.com/MSS23/VGC-Team-Report/pull/36", "inline": false },
+      { "name": "What was pushed", "value": "Webhook signature fix; rental code copy block in ShareModal (VGC-208); Pikalytics dead code cleanup (VGC-211); weekly-digest cross-product stats fix; Save-toggle dedup + race fix; noindex collab ?key= URLs; 44x44 px touch targets; aria-labels on damage-calc + Explore controls; GraphQL teamId bound via variables; type-soundness on 7 helpers; 311 lines of dead exports removed.", "inline": false }
+    ],
+    "footer": { "text": "vgc-overnight-swarm • channel 1487202217298493493 • Review and merge to main when ready" }
+  }]
+}
 ```
 
-## To send manually after adding DISCORD_BUILDS_WEBHOOK to .env.local
+**To send manually after the next deploy populates `.env.local` (or in any env that has the secrets):**
 
-source .claude/scripts/linear.sh && discord_notify_build "swarm-14-05-26" "Swarm 14-05-26 Wave 2: A11y + Security + SEO + TypeScript + Perf + Dead Code"
+```bash
+# Either via webhook (preferred):
+curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+  -H "Content-Type: application/json" \
+  --data-binary @.swarm/discord-failed.json   # extract the JSON block above
 
----
-
-# Discord Notification — UNSENT (no .env.local)
-
-**Run:** 16-05-26 (Wave 2 overnight swarm)
-**Target channel:** #builds (ID: 1487202217298493493)
-**Reason:** DISCORD_BUILDS_WEBHOOK and DISCORD_BOT_TOKEN not set (no .env.local in swarm environment)
-
-## Payload that should be sent
-
+# Or via bot token:
+curl -s -X POST "https://discord.com/api/v10/channels/1487202217298493493/messages" \
+  -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+  -H "Content-Type: application/json" \
+  --data-binary @.swarm/discord-failed.json
 ```
-🌙 Swarm 16-05-26 landed — 8 commits → claude-dev → PR #29
-
-🎯 UX: 3-card archetype sample picker on homepage (VGC-188)
-🗄️ DB: species[] materialised column + GIN index migration (VGC-189)
-🔒 Security: isCronAuthorized on keep-alive; Linear webhook fail-closed; Zod on notifications PATCH
-📈 SEO/AEO: llms.txt + llms-full.txt; SportsEvent JSON-LD on /tournaments
-♿ A11y: aria-pressed on Win/Loss/Tie; 44px touch targets on ShareDock + MatchTracker; role=alert + aria-label on paste input
-🐛 Bugs: totalReports denominator fix (inflated % fixed); /?sample broken link; posthog?.capture TS error
-✅ VGC-174 closed as already Done (Web Share API already shipped)
-
-Tickets → Done: VGC-188, VGC-189, VGC-174
-New backlog: VGC-190 (unlisted tier), VGC-191 (Next.js upgrade URGENT), VGC-192 (dead code), VGC-193 (iOS PWA), VGC-194 (MatchTracker a11y)
-
-PR: https://github.com/MSS23/VGC-Team-Report/pull/29
-```
-
-## To send manually after adding DISCORD_BUILDS_WEBHOOK to .env.local
-
-source .claude/scripts/linear.sh && discord_notify_build "swarm-16-05-26" "Swarm 16-05-26: Sample Picker + species[] column + Security + SEO/AEO + A11y + Bug Fixes"

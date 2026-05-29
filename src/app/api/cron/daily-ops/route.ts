@@ -81,7 +81,8 @@ async function runStaleTicketCheck() {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: apiKey },
       body: JSON.stringify({
-        query: `{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title updatedAt } } } }`,
+        query: `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title updatedAt } } } }`,
+        variables: { teamId },
       }),
       signal: staleController.signal,
     }).finally(() => clearTimeout(staleTimeout));

@@ -84,7 +84,7 @@ export async function sendCommentNotificationEmail(opts: {
       subject: `New comment on "${opts.reportTitle}"`,
       html,
     });
-  } catch (e) {
+  } catch (e: unknown) {
     console.warn("Failed to send comment notification email:", e);
   }
 }
@@ -184,7 +184,7 @@ export async function sendWelcomeEmail(opts: {
       subject: "Welcome to VGC Team Report!",
       html,
     });
-  } catch (e) {
+  } catch (e: unknown) {
     console.warn("Failed to send welcome email:", e);
   }
 }

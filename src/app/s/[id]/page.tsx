@@ -6,10 +6,19 @@ import { JsonLd } from "@/components/seo/JsonLd";
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ key?: string | string[] }>;
 }): Promise<Metadata> {
   const { id } = await params;
+  const { key } = await searchParams;
+  // Collaborator edit links carry the secret edit token as ?key=...; if
+  // a creator ever pastes such a URL in Discord/X/Reddit Google will
+  // crawl + cache it, leaking the edit token in SERP snippets. Force
+  // noindex/nofollow whenever a key is present, regardless of share
+  // visibility.
+  const hasEditKey = Boolean(key && (Array.isArray(key) ? key.length > 0 : key.trim() !== ""));
 
   try {
     const sql = getDb();
@@ -84,8 +93,9 @@ export async function generateMetadata({
     }
 
     // Private / unlisted shares must not be indexed — thin content with no
-    // discovery value. Noindex/nofollow prevents search engines from crawling.
-    const robotsMeta = isPublic
+    // discovery value. Collaborator edit URLs (?key=…) must also be noindexed
+    // so a leaked share doesn't leak the edit token via Google's snippet cache.
+    const robotsMeta = isPublic && !hasEditKey
       ? undefined
       : { index: false as const, follow: false as const };
 

@@ -19,7 +19,7 @@ export async function createNotification(
       INSERT INTO notifications (user_id, type, source_share_id, source_user_name, message)
       VALUES (${userId}, ${type}, ${sourceShareId}, ${sourceUserName}, ${message})
     `;
-  } catch (e) {
+  } catch (e: unknown) {
     console.warn("Failed to create notification:", e);
   }
 }
@@ -43,7 +43,7 @@ export async function notifyFollowers(
       if (uid === excludeUserId) continue;
       await createNotification(uid, "new_report", shareId, creatorName, message);
     }
-  } catch (e) {
+  } catch (e: unknown) {
     console.warn("Failed to notify followers:", e);
   }
 }

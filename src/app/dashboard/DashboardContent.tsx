@@ -1090,6 +1090,7 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Collection name"
+            aria-label="Collection name"
             className="flex-1 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-alt border border-border rounded-lg text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
           <input
@@ -1097,11 +1098,13 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
             placeholder="Description (optional)"
+            aria-label="Collection description"
             className="flex-1 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-alt border border-border rounded-lg text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
           <select
             value={newReg}
             onChange={(e) => setNewReg(e.target.value)}
+            aria-label="Collection regulation"
             className="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-alt border border-border rounded-lg text-xs sm:text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40"
           >
             <option value="">Regulation</option>

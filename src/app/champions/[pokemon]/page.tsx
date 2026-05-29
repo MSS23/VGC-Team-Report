@@ -50,11 +50,13 @@ export async function generateMetadata({
       type: "website",
       siteName: "VGC Team Report",
       url: `https://pokemonvgcteamreport.com/champions/${mega.slug}`,
+      images: [{ url: `/champions/${mega.slug}/opengraph-image`, width: 1200, height: 630, alt: `${mega.displayName} VGC guide` }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [{ url: `/champions/${mega.slug}/opengraph-image`, width: 1200, height: 630, alt: `${mega.displayName} VGC guide` }],
     },
     keywords: [
       mega.displayName,

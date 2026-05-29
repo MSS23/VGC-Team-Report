@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { createPortal } from "react-dom";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 import type { MatchupPlan } from "@/hooks/useMatchupPlans";
 import type { CalcEntry } from "@/hooks/useDamageCalcs";
@@ -41,29 +39,6 @@ export interface PdfExportProps {
   plans: MatchupPlan[];
   getSpriteConfig?: (key: string) => SpriteConfig;
   exportMode?: ExportMode;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Download / PDF icon                                                */
-/* ------------------------------------------------------------------ */
-
-function DownloadIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -201,54 +176,3 @@ export function PrintableReport({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  PdfExportButton – the trigger button + hidden print container      */
-/* ------------------------------------------------------------------ */
-
-export function PdfExportButton(props: PdfExportProps) {
-  const [isPrinting, setIsPrinting] = useState(false);
-
-  const handlePrint = useCallback(() => {
-    setIsPrinting(true);
-  }, []);
-
-  // Once the print container has rendered, trigger window.print()
-  useEffect(() => {
-    if (!isPrinting) return;
-
-    // Give React a frame to paint the print container
-    const raf = requestAnimationFrame(() => {
-      window.print();
-      // Reset after the print dialog closes (sync call)
-      setIsPrinting(false);
-    });
-
-    return () => cancelAnimationFrame(raf);
-  }, [isPrinting]);
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={handlePrint}
-        className="w-9 h-9 flex items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
-        title="Export PDF"
-        aria-label="Export report as PDF"
-      >
-        <DownloadIcon />
-      </button>
-
-      {/* Portal print container to body so CSS selector body > *:not(#print-container) works */}
-      {isPrinting && createPortal(
-        <div
-          id="print-container"
-          className="hidden print:block"
-          aria-hidden="true"
-        >
-          <PrintableReport {...props} />
-        </div>,
-        document.body
-      )}
-    </>
-  );
-}

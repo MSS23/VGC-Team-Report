@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import type { ShareableState } from "@/lib/sharing/url-codec";
+import type { TeamAnalysis } from "@/lib/types/analysis";
 
 const DRAFT_ID_KEY = "vgc-draft-id";
 const DRAFT_DEBOUNCE_MS = 5000;
 
 interface AutoDraftOptions {
   isSignedIn: boolean;
-  analysis: unknown | null;
+  analysis: TeamAnalysis | null;
   isSampleTeam: boolean;
   isSharedView: boolean;
   buildShareState: () => ShareableState;

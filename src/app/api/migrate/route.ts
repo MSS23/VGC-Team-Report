@@ -23,6 +23,24 @@ export async function POST(request: Request) {
   if (!verifyBearer(request, "MIGRATE_SECRET")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  try {
+    // Auth check — require secret to prevent abuse.
+    // Use timing-safe comparison to prevent timing oracles; length-check first to
+    // avoid timingSafeEqual throwing on mismatched-length buffers.
+    const { secret } = await request.json().catch(() => ({ secret: "" }));
+    const expectedSecret = process.env.MIGRATE_SECRET;
+    if (!expectedSecret || typeof secret !== "string") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { timingSafeEqual } = await import("crypto");
+    const providedBuf = Buffer.from(secret);
+    const expectedBuf = Buffer.from(expectedSecret);
+    if (
+      providedBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(providedBuf, expectedBuf)
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
   try {
     const sql = getDb();
@@ -47,8 +65,7 @@ export async function POST(request: Request) {
       for (const row of rows) {
         stats.total++;
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = row.data as Record<string, any>;
+          const data = row.data as Record<string, unknown>;
           const normalized = normalizeReportData(data);
           const changed = JSON.stringify(data) !== JSON.stringify(normalized);
 
