@@ -5,6 +5,13 @@ import { cacheDel, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
+// Validate request bodies for add/remove collaborator handlers.
+// The client sends { userId: string } — keep that contract.
+const collaboratorBodySchema = z.object({
+  userId: z.string().min(1).max(100),
+});
 
 /**
  * GET  /api/share/{id}/collaborators — list collaborators
@@ -78,11 +85,15 @@ export async function POST(
       return NextResponse.json({ error: "Only the owner can add collaborators" }, { status: 403 });
     }
 
-    const body = await request.json();
-    const targetUserId = body.userId as string;
-    if (!targetUserId || typeof targetUserId !== "string") {
-      return NextResponse.json({ error: "userId is required" }, { status: 400 });
+    const rawBody = await request.json().catch(() => null);
+    const parsed = collaboratorBodySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
+    const targetUserId = parsed.data.userId;
 
     // Prevent self-add
     if (targetUserId === userId) {
@@ -183,11 +194,15 @@ export async function DELETE(
       return NextResponse.json({ error: "Only the owner can remove collaborators" }, { status: 403 });
     }
 
-    const body = await request.json();
-    const targetUserId = body.userId as string;
-    if (!targetUserId) {
-      return NextResponse.json({ error: "userId is required" }, { status: 400 });
+    const rawBody = await request.json().catch(() => null);
+    const parsed = collaboratorBodySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
+    const targetUserId = parsed.data.userId;
 
     const sql = getDb();
     await sql`DELETE FROM collaborators WHERE share_id = ${shareId} AND user_id = ${targetUserId}`;
