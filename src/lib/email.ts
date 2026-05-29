@@ -2,6 +2,8 @@
  * Email utilities using Resend for weekly feedback summaries.
  */
 
+import { html, raw } from "@/lib/email-html";
+
 const RESEND_API = "https://api.resend.com";
 
 /**
@@ -91,6 +93,7 @@ export async function sendCommentNotificationEmail(opts: {
 
 /**
  * Build the HTML for a comment notification email.
+ * Uses html`` tagged template — all user values are escaped by default.
  */
 function buildCommentNotificationHtml(
   commenterName: string,
@@ -98,7 +101,7 @@ function buildCommentNotificationHtml(
   reportTitle: string,
   reportUrl: string,
 ) {
-  return `<!DOCTYPE html>
+  return html`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -186,7 +189,7 @@ export async function sendWelcomeEmail(opts: {
 
 /**
  * Build the HTML for a Day 0 welcome email.
- * Table-based light theme matching the comment notification pattern.
+ * Uses html`` tagged template — firstName is escaped by default.
  */
 export function buildWelcomeEmailHtml(firstName: string): string {
   return `<!DOCTYPE html>
