@@ -682,6 +682,7 @@ function GamePlanSection({
                     value={gamePlan.notes}
                     onChange={(e) => onNotesChange(e.target.value)}
                     placeholder={t.gamePlanNotesPlaceholder}
+                    aria-label={t.gamePlanNotesPlaceholder}
                     className="w-full min-h-[7rem] sm:min-h-[6rem] p-3 sm:p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
                     spellCheck={false}
                   />
@@ -751,6 +752,7 @@ function GamePlanSection({
                           }
                         }}
                         placeholder={t.pasteReplayPlaceholder}
+                        aria-label={t.pasteReplayPlaceholder}
                         className="flex-1 min-w-0 px-3 py-2.5 bg-surface-alt border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
                       />
                       <button
