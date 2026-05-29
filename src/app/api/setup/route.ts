@@ -1,10 +1,14 @@
+import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { ensureTable } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization") ?? "";
-  const secret = process.env.MIGRATE_SECRET ?? process.env.CRON_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
+  // Accept either MIGRATE_SECRET (preferred) or CRON_SECRET as a fallback,
+  // matching prior behaviour. Both env-var names are preserved.
+  if (
+    !verifyBearer(request, "MIGRATE_SECRET") &&
+    !verifyBearer(request, "CRON_SECRET")
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

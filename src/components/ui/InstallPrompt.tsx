@@ -31,7 +31,12 @@ export function InstallPrompt() {
     let promptReady = false;
 
     const maybeReveal = () => {
-      if (timerFired && scrollFired && promptReady) setDismissed(false);
+      // Short-page rescue: non-scrolling pages can never satisfy scrollFired
+      // (mirrors the iOS path rescue — same 200px threshold). Without this,
+      // desktop Chrome users on the home page or other short routes get the
+      // beforeinstallprompt event but never see the bottom sheet.
+      const pageIsShort = document.documentElement.scrollHeight - window.innerHeight < 200;
+      if (timerFired && (scrollFired || pageIsShort) && promptReady) setDismissed(false);
     };
 
     const onScroll = () => {
