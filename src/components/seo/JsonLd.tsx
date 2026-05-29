@@ -140,6 +140,65 @@ export function SportsEventJsonLd({ events }: { events: SportsEventData[] }) {
   return <JsonLd data={schemaData as Record<string, unknown>} />;
 }
 
+export interface ArticleJsonLdProps {
+  headline: string;
+  description: string;
+  url: string;
+  datePublished: string;
+  dateModified: string;
+  authorName?: string;
+}
+
+export function ArticleJsonLd(props: ArticleJsonLdProps) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: props.headline,
+        description: props.description,
+        url: props.url,
+        datePublished: props.datePublished,
+        dateModified: props.dateModified,
+        ...(props.authorName && { author: { "@type": "Person", name: props.authorName } }),
+        publisher: {
+          "@type": "Organization",
+          name: "VGC Team Report",
+          url: "https://pokemonvgcteamreport.com",
+          logo: {
+            "@type": "ImageObject",
+            url: "https://pokemonvgcteamreport.com/icon-512.png",
+          },
+        },
+      }}
+    />
+  );
+}
+
+export function SportsTeamJsonLd({
+  teamName,
+  species,
+  url,
+}: {
+  teamName: string;
+  species: string[];
+  url: string;
+}) {
+  if (species.length === 0) return null;
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "SportsTeam",
+        name: teamName,
+        sport: "Pokémon Video Game Championship (VGC)",
+        url,
+        member: species.map((name) => ({ "@type": "Person", name })),
+      }}
+    />
+  );
+}
+
 export function FAQPageJsonLd() {
   return (
     <JsonLd

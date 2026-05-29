@@ -25,6 +25,18 @@ const DEFAULT_PREFS: NotificationPrefs = {
   productUpdates: true,
 };
 
+async function syncDigestPref(unsubscribed: boolean) {
+  try {
+    await fetch("/api/user/preferences", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ digestUnsubscribed: unsubscribed }),
+    });
+  } catch {
+    // Non-fatal — localStorage still reflects user intent
+  }
+}
+
 export function NotificationsContent() {
   return (
     <I18nProvider>
@@ -51,18 +63,21 @@ function NotificationsInner() {
     } catch { /* silent — use defaults */ }
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
     setSaved(false);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+      // Sync the weekly digest opt-out to Clerk publicMetadata so the cron
+      // respects it server-side (CAN-SPAM compliance).
+      await syncDigestPref(!prefs.weeklyDigest);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch { /* silent */ }
     finally { setSaving(false); }
   };
 
-  const handleUnsubAll = () => {
+  const handleUnsubAll = async () => {
     const allOff: NotificationPrefs = {
       welcomeSeries: false,
       weeklyDigest: false,
@@ -72,6 +87,7 @@ function NotificationsInner() {
     setPrefs(allOff);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(allOff));
+      await syncDigestPref(true);
     } catch { /* silent */ }
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);

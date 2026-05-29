@@ -410,16 +410,40 @@ function HomeContent() {
   const [pendingExportMode, setPendingExportMode] = useState<ExportMode | null>(null);
   const exportThemeDialogRef = useRef<HTMLDivElement>(null);
 
-  // Move focus into the export theme modal when it opens so keyboard users
-  // and screen readers start inside the dialog (WCAG 2.1 AA — focus management).
+  // Full focus trap for the Export Theme modal (WCAG 2.1 AA).
   useEffect(() => {
     if (!showExportThemePicker) return;
     const dialog = exportThemeDialogRef.current;
     if (!dialog) return;
-    const firstFocusable = dialog.querySelector<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
+
+    const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const firstFocusable = dialog.querySelector<HTMLElement>(FOCUSABLE);
     firstFocusable?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowExportThemePicker(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previouslyFocused?.focus();
+    };
   }, [showExportThemePicker]);
 
   const handleExportTeam = useCallback(() => {
@@ -1612,6 +1636,8 @@ function HomeContent() {
           shareUrl={activeShareId ? `${typeof window !== "undefined" ? window.location.origin : "https://pokemonvgcteamreport.com"}/s/${activeShareId}` : undefined}
           tournamentName={tournamentName}
           teamName={teamName}
+          regulation={tags?.regulation}
+          eventType={tags?.eventType}
           onClose={() => setShowOTSSheet(false)}
         />
       )}
