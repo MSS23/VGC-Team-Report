@@ -26,7 +26,6 @@
     "@sentry/nextjs": "^10.45.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
-    "axios": "^1.16.0",
     "html2canvas-pro": "^2.0.2",
     "jspdf": "^4.2.1",
     "motion": "^12.35.2",

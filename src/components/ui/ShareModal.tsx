@@ -710,9 +710,9 @@ export function ShareModal({
             who's just sharing someone else's report. */}
         {!viewerMode && (
         <div className="px-6 py-4 border-t border-border">
-          <p className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-3">{t.shareModalVisibilityLabel}</p>
+          <p id="share-visibility-label" className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-3">{t.shareModalVisibilityLabel}</p>
           {/* 3-state picker: Private | Unlisted | Public */}
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Report visibility">
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="share-visibility-label">
             {/* Private */}
             <button
               type="button"

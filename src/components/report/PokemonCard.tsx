@@ -187,6 +187,10 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const spriteSizeLg = creatorMode ? 120 : 104;
   const natureData = NATURES[parsed.nature];
   const relevantStats = getRelevantStats(parsed);
+  const visibleStats = useMemo(
+    () => (["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)),
+    [relevantStats]
+  );
 
   // Reg M-A (Champions) has no Tera mechanic and forces IVs to 31 — hide both.
   const isChampions = regulation === "Reg M-A";
@@ -476,7 +480,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
           )}
 
           <div className="space-y-1 sm:space-y-1.5 stagger-stats" role="list" aria-label={`${displaySpecies} stats`}>
-            {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map((stat) => {
+            {visibleStats.map((stat) => {
               const value = displayStats[stat];
               const ev = parsed.evs[stat];
               const sp = spSpread[stat];

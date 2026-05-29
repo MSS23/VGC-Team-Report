@@ -18,9 +18,21 @@ import { NextResponse } from "next/server";
  */
 export async function POST(request: Request) {
   try {
-    // Auth check — require secret to prevent abuse
+    // Auth check — require secret to prevent abuse.
+    // Use timing-safe comparison to prevent timing oracles; length-check first to
+    // avoid timingSafeEqual throwing on mismatched-length buffers.
     const { secret } = await request.json().catch(() => ({ secret: "" }));
-    if (!secret || secret !== process.env.MIGRATE_SECRET) {
+    const expectedSecret = process.env.MIGRATE_SECRET;
+    if (!expectedSecret || typeof secret !== "string") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { timingSafeEqual } = await import("crypto");
+    const providedBuf = Buffer.from(secret);
+    const expectedBuf = Buffer.from(expectedSecret);
+    if (
+      providedBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(providedBuf, expectedBuf)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

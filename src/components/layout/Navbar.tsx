@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
@@ -129,6 +129,11 @@ function WarningPopover({ warnings, label }: { warnings: string[]; label: string
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  const renderedWarnings = useMemo(
+    () => warnings.map((w) => ({ w, fix: getWarningFix(w) })),
+    [warnings]
+  );
+
   return (
     <div className="relative hidden sm:inline-block" ref={ref}>
       <button
@@ -140,18 +145,15 @@ function WarningPopover({ warnings, label }: { warnings: string[]; label: string
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1.5 z-50 w-72 rounded-lg border border-border bg-surface shadow-lg p-3 space-y-2.5">
-          {warnings.map((w, i) => {
-            const fix = getWarningFix(w);
-            return (
-              <div key={i} className="text-xs">
-                <div className="flex items-start gap-1.5">
-                  <span className="text-warning shrink-0 mt-px">&#9888;</span>
-                  <span className="font-semibold text-text-primary">{w}</span>
-                </div>
-                <p className="text-text-tertiary mt-0.5 ml-5">{fix}</p>
+          {renderedWarnings.map(({ w, fix }, i) => (
+            <div key={i} className="text-xs">
+              <div className="flex items-start gap-1.5">
+                <span className="text-warning shrink-0 mt-px">&#9888;</span>
+                <span className="font-semibold text-text-primary">{w}</span>
               </div>
-            );
-          })}
+              <p className="text-text-tertiary mt-0.5 ml-5">{fix}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>

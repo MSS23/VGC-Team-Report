@@ -2,45 +2,47 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 /**
  * POST /api/webhooks/linear
  *
- * Receives Linear webhook events. Verifies HMAC signature over the raw
- * request body before processing. Unknown event types are acknowledged
- * with 200 so Linear stops retrying.
+ * Receives Linear webhook events. Verifies the HMAC-SHA256 signature
+ * Linear sends in the `linear-signature` header against the raw request
+ * body using the LINEAR_WEBHOOK_SIGNING_SECRET (legacy name
+ * LINEAR_WEBHOOK_SECRET still accepted to avoid breaking existing Vercel
+ * env configuration). Returns 200 for valid signatures (including unknown
+ * event types), 401 for invalid or missing signatures, 400 for missing
+ * body, 500 for unexpected errors.
  */
 export async function POST(request: Request) {
-  let rawBody: string;
-  try {
-    rawBody = await request.text();
-  } catch {
-    return NextResponse.json({ error: "Failed to read body" }, { status: 400 });
-  }
-
   const webhookSecret =
     process.env.LINEAR_WEBHOOK_SIGNING_SECRET ||
     process.env.LINEAR_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.error("Linear webhook: signing secret env var not set");
-    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+    console.error("Linear webhook: signing secret not configured");
+    return NextResponse.json(
+      { error: "Webhook not configured" },
+      { status: 500 },
+    );
   }
 
-  // Linear sends the signature in the `linear-signature` header (lowercased
-  // by Node's HTTP layer). Older code read `x-linear-signature` which never
-  // matches — preserve compatibility by checking both.
+  let rawBody: string;
+  try {
+    rawBody = await request.text();
+  } catch {
+    return NextResponse.json({ error: "Unable to read body" }, { status: 400 });
+  }
+
+  if (!rawBody) {
+    return NextResponse.json({ error: "Empty body" }, { status: 400 });
+  }
+
   const signature =
     request.headers.get("linear-signature") ||
     request.headers.get("x-linear-signature");
   if (!signature) {
     return NextResponse.json({ error: "Missing signature" }, { status: 401 });
-  }
-
-  if (!rawBody) {
-    // Linear's setup verification ping may arrive with an empty body. We've
-    // already validated the secret is configured; acknowledge so registration
-    // succeeds.
-    return NextResponse.json({ ok: true });
   }
 
   const expected = createHmac("sha256", webhookSecret)
@@ -55,14 +57,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  // Acknowledge unknown / future event types so Linear does not retry.
+  let body: Record<string, unknown>;
   try {
-    const body = JSON.parse(rawBody);
-    if (body?.type === "url_verification" && typeof body.challenge === "string") {
-      return NextResponse.json({ challenge: body.challenge });
-    }
-    return NextResponse.json({ ok: true });
+    body = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ ok: true });
   }
+
+  if (body && body.type === "url_verification" && typeof body.challenge === "string") {
+    return NextResponse.json({ challenge: body.challenge });
+  }
+
+  return NextResponse.json({ ok: true });
 }
