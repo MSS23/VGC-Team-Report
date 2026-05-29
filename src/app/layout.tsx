@@ -36,14 +36,14 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "VGC Team Report — Build & Share Pokémon VGC Teams | Pokemon Champions 2026",
+    default: "VGC Team Report - Build and Share Pokemon VGC Teams",
     template: "%s | VGC Team Report",
   },
-  description: "The free VGC team report builder — share your VGC team with notes, matchup plans, and damage calcs. Supports Pokémon Champions, Mega Evolution, and all VGC team builder formats.",
+  description: "The free VGC team report builder. Build and share Pokemon VGC team reports with notes, matchup plans, damage calcs, and speed tiers. Supports Pokemon Champions 2026, Mega Evolution, and all VGC formats.",
   metadataBase: new URL("https://pokemonvgcteamreport.com"),
   openGraph: {
-    title: "VGC Team Report — Build, Share & Discover Pokemon Teams",
-    description: "The home for competitive Pokemon VGC team reports. Build, share, and explore team breakdowns from players around the world.",
+    title: "VGC Team Report - Build and Share Pokemon VGC Teams",
+    description: "Build and share Pokemon VGC team reports with notes, matchup plans, damage calcs, and speed tiers. The home for competitive Pokemon VGC team breakdowns.",
     type: "website",
     siteName: "VGC Team Report",
     url: "https://pokemonvgcteamreport.com",
@@ -54,8 +54,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "VGC Team Report — Build, Share & Discover Pokemon Teams",
-    description: "The home for competitive Pokemon VGC team reports. Build, share, and explore team breakdowns from players around the world.",
+    title: "VGC Team Report - Build and Share Pokemon VGC Teams",
+    description: "Build and share Pokemon VGC team reports with notes, matchup plans, damage calcs, and speed tiers. The home for competitive Pokemon VGC team breakdowns.",
     images: [
       { url: "https://pokemonvgcteamreport.com/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" },
       { url: "https://pokemonvgcteamreport.com/og-default.png", width: 1200, height: 630, alt: "VGC Team Report" },

@@ -66,7 +66,6 @@ export function OrganizationJsonLd() {
         name: "VGC Team Report",
         url: "https://pokemonvgcteamreport.com",
         description: "The team report builder for VGC Pokemon players",
-        applicationCategory: "SportsApplication",
         logo: {
           "@type": "ImageObject",
           url: "https://pokemonvgcteamreport.com/icon-512.png",
@@ -152,6 +151,24 @@ export interface BreadcrumbItem {
  *    { name: "Explore", url: "https://pokemonvgcteamreport.com/explore" }]
  */
 export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: items.map((item, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: item.name,
+          item: item.url,
+        })),
+      }}
+    />
+  );
+}
+
+/**
  * BreadcrumbList JSON-LD for SERP breadcrumb display.
  * Pass items in order from root → current page (e.g. [Home, Explore]).
  */
@@ -173,7 +190,6 @@ export function BreadcrumbListJsonLd({ items }: { items: BreadcrumbItem[] }) {
   );
 }
 
-export function FAQPageJsonLd() {
 export interface FAQItem {
   question: string;
   answer: string;

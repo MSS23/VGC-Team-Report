@@ -4,19 +4,14 @@
 
 import { escapeHtml } from "@/lib/utils/sanitize";
 
-const RESEND_API = "https://api.resend.com";
+// Re-export the shared HTML-escape helper so existing importers (e.g. the
+// weekly-digest cron route) that do `import { escapeHtml } from "@/lib/email"`
+// keep resolving against the single canonical implementation in
+// @/lib/utils/sanitize. All user-controlled values must be escaped before
+// being interpolated into an email HTML template.
+export { escapeHtml };
 
-// HTML-escape any user-controlled value before embedding in an email template.
-// Email clients render unescaped <img>, <script>, and event handlers — without this
-// every interpolated firstName / comment / report-title is a stored-XSS vector.
-export function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+const RESEND_API = "https://api.resend.com";
 
 /**
  * From address — uses RESEND_FROM_EMAIL env var.
@@ -91,10 +86,12 @@ export async function sendCommentNotificationEmail(opts: {
   try {
     const reportUrl = `${APP_URL}/report/${opts.shareId}`;
     const html = buildCommentNotificationHtml(opts.commenterName, opts.commentBody, opts.reportTitle, reportUrl);
-    const safeReportTitle = opts.reportTitle.replace(/[\r\n"]/g, "");
+    // Strip CR/LF and quotes from the user-controlled report title to prevent
+    // header injection / quote-breaking in the subject line.
+    const safeSubject = `New comment on "${opts.reportTitle.replace(/[\r\n"]/g, "")}"`;
     await sendEmail({
       to: opts.ownerEmail,
-      subject: `New comment on "${safeReportTitle}"`,
+      subject: safeSubject,
       html,
     });
   } catch (e: unknown) {
@@ -104,21 +101,14 @@ export async function sendCommentNotificationEmail(opts: {
 
 /**
  * Build the HTML for a comment notification email.
+ * All user-controlled fields are HTML-escaped before interpolation.
  */
 function buildCommentNotificationHtml(
-  commenterNameRaw: string,
-  commentBodyRaw: string,
-  reportTitleRaw: string,
+  commenterName: string,
+  commentBody: string,
+  reportTitle: string,
   reportUrl: string,
 ) {
-  const commenterName = escapeHtml(commenterNameRaw);
-  const commentBody = escapeHtml(commentBodyRaw);
-  const reportTitle = escapeHtml(reportTitleRaw);
-  // Escape all user-controlled values before embedding in HTML to prevent stored XSS.
-  const safeCommenterName = escapeHtml(commenterName);
-  const safeCommentBody = escapeHtml(commentBody);
-  const safeReportTitle = escapeHtml(reportTitle);
-  const safeReportUrl = escapeHtml(reportUrl);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -154,17 +144,17 @@ function buildCommentNotificationHtml(
           <div style="background:#FFFFFF;border-radius:16px;border:1px solid #E5E7EB;padding:28px;">
             <h1 style="font-size:18px;font-weight:700;color:#111827;margin:0 0 8px;">New comment on your report</h1>
             <p style="font-size:14px;color:#6B7280;margin:0 0 20px;">
-              <strong>${safeCommenterName}</strong> commented on <strong>${safeReportTitle}</strong>
+              <strong>${escapeHtml(commenterName)}</strong> commented on <strong>${escapeHtml(reportTitle)}</strong>
             </p>
 
             <!-- Comment body -->
             <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:16px;margin-bottom:24px;">
-              <p style="font-size:14px;color:#374151;margin:0;line-height:1.5;white-space:pre-wrap;">${safeCommentBody}</p>
+              <p style="font-size:14px;color:#374151;margin:0;line-height:1.5;white-space:pre-wrap;">${escapeHtml(commentBody)}</p>
             </div>
 
             <!-- CTA -->
             <div style="text-align:center;">
-              <a href="${safeReportUrl}" style="display:inline-block;padding:12px 24px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">View Report</a>
+              <a href="${escapeHtml(reportUrl)}" style="display:inline-block;padding:12px 24px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">View Report</a>
             </div>
           </div>
         </td></tr>
@@ -208,12 +198,9 @@ export async function sendWelcomeEmail(opts: {
 /**
  * Build the HTML for a Day 0 welcome email.
  * Table-based light theme matching the comment notification pattern.
+ * The user-controlled Clerk firstName is HTML-escaped before interpolation.
  */
-function buildWelcomeEmailHtml(firstNameRaw: string): string {
-  const firstName = escapeHtml(firstNameRaw);
 function buildWelcomeEmailHtml(firstName: string): string {
-  // Escape user-controlled name (Clerk firstName) before embedding in HTML to prevent stored XSS.
-  const safeFirstName = escapeHtml(firstName);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -247,7 +234,7 @@ function buildWelcomeEmailHtml(firstName: string): string {
         <!-- Main card -->
         <tr><td>
           <div style="background:#FFFFFF;border-radius:16px;border:1px solid #E5E7EB;padding:28px;">
-            <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 8px;">Welcome to VGC Team Report, ${safeFirstName}!</h1>
+            <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 8px;">Welcome to VGC Team Report, ${escapeHtml(firstName)}!</h1>
             <p style="font-size:14px;color:#6B7280;margin:0 0 24px;">You're ready to build and share your VGC team reports.</p>
 
             <!-- Quick-start steps -->

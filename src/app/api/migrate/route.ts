@@ -1,8 +1,6 @@
-import { timingSafeEqual } from "crypto";
 import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { getDb } from "@/lib/db";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
-import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -23,40 +21,11 @@ export const dynamic = "force-dynamic";
  * Safe to run multiple times (idempotent).
  */
 export async function POST(request: Request) {
-  // Auth check — require bearer token to prevent abuse
+  // Auth check — require bearer token to prevent abuse.
+  // verifyBearer uses crypto.timingSafeEqual to prevent timing oracles.
   if (!verifyBearer(request, "MIGRATE_SECRET")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  try {
-    const { secret } = await request.json().catch(() => ({ secret: "" }));
-    const expected = process.env.MIGRATE_SECRET;
-    if (!secret || !expected || secret.length !== expected.length ||
-      !timingSafeEqual(Buffer.from(secret), Buffer.from(expected))) {
-    // Auth check — require secret to prevent abuse.
-    // Use timing-safe comparison to prevent timing oracles; length-check first to
-    // avoid timingSafeEqual throwing on mismatched-length buffers.
-    const { secret } = await request.json().catch(() => ({ secret: "" }));
-    const expectedSecret = process.env.MIGRATE_SECRET;
-    if (!secret || !expectedSecret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const receivedBuf = Buffer.from(String(secret));
-    const expectedBuf = Buffer.from(expectedSecret);
-    if (
-      receivedBuf.length !== expectedBuf.length ||
-      !timingSafeEqual(receivedBuf, expectedBuf)
-    if (!expectedSecret || typeof secret !== "string") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { timingSafeEqual } = await import("crypto");
-    const providedBuf = Buffer.from(secret);
-    const expectedBuf = Buffer.from(expectedSecret);
-    if (
-      providedBuf.length !== expectedBuf.length ||
-      !timingSafeEqual(providedBuf, expectedBuf)
-    ) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
   try {
     const sql = getDb();
@@ -139,4 +108,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Migration failed" }, { status: 500 });
   }
 }
-

@@ -1,303 +1,376 @@
-# R6 SEO Audit: VGC Team Report — Full Competitive Landscape Review
-**Date:** 2026-05-25 (Wave 4 — supersedes all previous)
+# SEO Audit: VGC Team Report — Full Competitive Landscape Review
+**Date:** 2026-05-28 (Wave 4 — supersedes 2026-05-13 Wave 3)
 **Site:** https://pokemonvgcteamreport.com
-# R6 SEO Audit — 2026-05-24
-
-**Scope:** technical SEO posture of pokemonvgcteamreport.com vs pikalytics, pokepast.es, limitlesstcg, victoryroaddev, vgcpastes.
-**Method:** repo grep (sitemap, layout, champions/[pokemon], s/[id], JsonLd component, robots.txt, llms.txt) + WebSearch for competitor URL structure (direct WebFetch returned 403/ECONNREFUSED for every competitor host — cached prior teardowns at `.swarm/r1-competitor-pikalytics-pokepaste.md` and `.swarm/r2-competitor-vgcpastes-limitless.md` supplied the qualitative deltas).
-
-## State of play
-
-pokemonvgcteamreport.com has the strongest structured data implementation in the VGC tooling space (WebApplication, Organization, WebSite+SearchAction, HowTo, FAQPage, SportsEvent, ItemList, CollectionPage, CreativeWork, ProfilePage+Person). The site owns its brand query "VGC team report" (#1) and ranks well for "Pokemon Champions VGC team reports." However, there are 10 high-value keyword clusters worth 20,000+ combined monthly searches where the site has relevant features but no dedicated landing page.
-
-The competitive landscape has intensified since April 2026 with Pokemon Champions launching: Pikalytics remains dominant for data/tools, 6+ new builders entered (Champions Lab, Champions Builder, Porygon Labs, VGC Lite, PokéBase, VGC Coach), and editorial competitors (Victory Road, MetaVGC) target guide content. VGC Team Report's unique positioning as a team *report* platform (not just builder/paste) remains defensible but needs content pages to capture informational queries feeding the top of funnel.
-We are already strong on foundations: `src/app/layout.tsx` ships `WebSite`+`SearchAction`, `Organization`, and a `WebApplication`/`SoftwareApplication` JSON-LD block; `src/app/champions/[pokemon]/page.tsx` ships per-page `BreadcrumbList` + `FAQPage`; `src/app/s/[id]/page.tsx` ships `CreativeWork` with author/contributor and noindexes private shares; `src/app/sitemap.ts` dynamically emits all public `/s/[id]` and `/creator/[name]` URLs; `public/robots.txt` opens the door to GPTBot/ClaudeBot/PerplexityBot. Pikalytics URL pattern `pikalytics.com/pokedex/{format}/{Species}` (e.g. `/pokedex/gen9vgc2026regi/Volcarona`) shows the canonical pattern competitors win on: **format-segmented species pages**. We only ship `/champions/[megaSlug]` (Reg M-A only) — every other regulation is a gap.
-
-## 3 SEO quick wins (each <2hr)
-
-## 1. Competitive SERP Landscape (May 2026)
-
-### Observed Rankings
-
-| Query | #1 | #2-3 | VGC Team Report Position |
-|-------|-----|------|--------------------------|
-| "VGC team builder" | Pikalytics | PokemonBuilder, Champions Builder | Not in top 7 |
-| "VGC team report" | pokemonvgcteamreport.com | Victory Road, MetaGame | **#1** |
-| "Pokemon Champions team report" | pokemonvgcteamreport.com | — | **#1** |
-| "Pokemon VGC team sharing" | Pikalytics | VGC Helper, Game8 | Not in top 7 |
-| "VGC team analysis" | Pikalytics | VGC Lite, VGC Coach | Not in top 7 |
-| "Pokemon Champions team builder" | PokéBase | Champions Lab, Game8 | Not in top 7 |
-| "VGC damage calculator" | Pikalytics | Porygon Labs, MetaVGC | Not ranking |
-| "VGC speed tiers" | Pikalytics | MetaVGC, Turnadus | Not ranking |
-| "VGC top teams 2026" | VGenC | Pikalytics, Pokémon Zone | Not ranking |
-| "Mega Evolution VGC tier list" | GameRant | Game8, Pokémon Zone | Not ranking |
-| "Pokemon Champions rental teams" | VGenC | Victory Road, Devon Corp | Not ranking |
-| "how to write VGC team report" | Victory Road | — | Not ranking |
-| "VGC open team sheet" | No clear leader | — | Not ranking |
-| "Pokemon Champions SP spread" | PokeStats.cc | Game8 | Not ranking |
-
-### Key Competitors
-
-| Competitor | Strengths | Weakness vs VGC Team Report |
-|-----------|-----------|---------------------------|
-| **Pikalytics** | Usage stats, damage calc, speed tiers, top teams. BreadcrumbList + Dataset + FAQPage schema. Has llms-full.txt. | No team reports/write-ups, no matchup plans, no creator profiles |
-| **Victory Road** | Editorial team reports from top players, rental teams, excellent internal linking | Not user-generated, no tool features, no damage calc integration |
-| **VGenC** | 2,649 tournament pastes, strongest for "top teams" queries | No report annotations, no matchup plans, no community features |
-| **MetaVGC** | Guides + damage calculator + teams. Article schema on guides | Smaller community, less comprehensive tool feature set |
-| **Champions Builder** | SP calculator, damage calc, Showdown export, free | No reports, no sharing, no community content |
-| **VGC Lite** | Beginner-friendly, speed tiers, threat analysis | Smaller scope, no team report features |
-| **Pokémon Zone** | Comprehensive meta stats, tier lists, team cores | No report tool, primarily database |
-
-| Keyword | VGC Team Report Position | Top Ranker |
-|---------|--------------------------|------------|
-| "VGC team builder" | **Not in top 10** | Pikalytics (#1), Pokestats.gg, Game8, VGC.tools |
-| "VGC team report" | **#1-2** (homepage + champions) | Victory Road (sv-reports page) competes |
-| "Pokemon team sharing" | **Not visible** | Pikalytics, VGC Helper, VGC.tools |
-| "VGC Reg H teams" | **Not visible** | Smogon, Nimbasa City Post, Limitless VGC |
-| "Pokemon Champions team report" | **~#5** (champions page appears) | VGCCoach.pro, Pikalytics dominate |
-
-## 2. Current SEO Implementation Assessment
-
-### Strengths (Already Better Than Most Competitors)
-
-1. **Structured Data** — Most comprehensive in the niche:
-   - WebApplication + SoftwareApplication (root)
-   - Organization with logo + sameAs (root)
-   - WebSite + SearchAction for Sitelinks Searchbox (root)
-   - HowTo with 5 steps (homepage)
-   - FAQPage with 5 rich Q&As (homepage + /faq)
-   - ItemList for all 59 Mega Pokemon (/champions)
-   - CollectionPage (/explore)
-   - SportsEvent for tournaments (/tournaments)
-   - CreativeWork with author/dates (/s/[id])
-   - ProfilePage + Person (/creator/[name])
-   - BreadcrumbList (/champions/[pokemon])
-
-2. **Dynamic Share Page Metadata** — Each /s/ page has unique title (tournament + placement + species), description with team summary, and proper noindex for private shares. This is a massive differentiator for long-tail SEO.
-
-3. **Sitemap** — Includes static pages, up to 5,000 public shares, and all creator profile pages. Properly prioritized.
-
-4. **AI Crawler Strategy** — robots.txt allows GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot. Has llms.txt and llms-full.txt for AI indexing.
-
-5. **OG Images** — Dynamic generation for /champions/[pokemon], /explore, share pages.
-
-6. **Canonical URLs** — Set on all key pages.
-
-### Weaknesses
-
-1. **Homepage is `"use client"`** — Client-rendered content means Google must execute JS to see the FAQ, HowTo steps, and landing page text. Other crawlers and AI bots may see an empty shell.
-
-2. **No internal linking strategy** — Champion pages, share pages, explore page, and creator pages don't cross-link programmatically. Internal links drive crawl depth and PageRank distribution.
-
-3. **Missing BreadcrumbList** on /explore, /faq, /tournaments — only present on /champions/[pokemon].
-
-4. **Homepage title is 73 chars** — Gets truncated in SERPs. Should be under 60 chars.
-
-5. **Sitemap `lastModified: now`** for static pages signals constant change, reducing crawl efficiency.
-
-6. **Only 2 pages indexed in Google site:search** — Indicates either very new indexing or crawl depth issues.
 
 ---
 
-## 3. Top 10 Keyword Gaps
+## Executive Summary
 
-High-intent, rankable queries where VGC Team Report has feature relevance but no dedicated landing page.
+Google is indexing only **2 pages** from the entire site (homepage + /champions). This is the single most critical SEO issue. The site has 10+ static pages, ~59 individual Mega Pokemon guides, thousands of public share pages, and creator profile pages — none of which appear in Google's index. The homepage (`page.tsx`) is a `"use client"` component, meaning its H1, FAQPage JSON-LD, and HowTo JSON-LD are only rendered after JavaScript execution — invisible to crawlers that don't execute JS. The previous audit's quick wins (SP spread terminology, homepage title, ItemList, SportsEvent, dashboard noindex, embed noindex) have been implemented. The competitive landscape has intensified: Reportworm, ChampionsMeta, ChampTeams.gg, and PikaChampions are all gaining search visibility. VGC Team Report ranks #1-3 for its branded query "VGC team report" but is absent from all high-volume generic queries.
 
-| # | Keyword Cluster | Est. Monthly Volume | Competition | Opportunity |
-|---|----------------|---------------------|-------------|-------------|
-| 1 | "Pokemon Champions best teams" / "top VGC teams 2026" | 3,000-5,000 | Medium | Create /teams programmatic page from public share data (ranked by views/likes) |
-| 2 | "VGC speed tiers 2026" / "Pokemon Champions speed tiers" | 2,000-3,000 | Medium | Standalone /speed-tiers page (feature exists, needs its own URL) |
-| 3 | "Mega Evolution VGC tier list" / "best mega Pokemon VGC" | 4,000-6,000 | Medium | Add tier-list section to /champions with usage data |
-| 4 | "how to write a VGC team report" / "team report template" | 500-1,000 | Low | Create /guides/how-to-write guide page with Article schema |
-| 5 | "VGC open team sheet" / "OTS generator Pokemon" | 1,500-2,500 | Low | Create /open-team-sheet landing page (no dominant competitor) |
-| 6 | "Pokemon Champions SP spread" / "stat point spread VGC" | 2,000-3,000 | Medium | Update all Champions page copy from "EV spread" to "SP spread" |
-| 7 | "Pokemon Champions rental teams" / "VGC rental codes" | 3,000-5,000 | Medium | Surface rental codes from shares in a /rentals or /rental-codes collection |
-| 8 | "VGC matchup chart" / "Pokemon VGC type coverage" | 1,500-2,500 | Low | Matchup plan feature deserves a /matchups guide page |
-| 9 | "Regulation M-A VGC guide" / "Pokemon Champions format" | 1,500-2,000 | Medium | Dedicated /regulation-m-a format guide page |
-| 10 | "[Mega Pokemon] team VGC" (e.g., "Mega Charizard Y team") | 500-1,000 per mega | Low | Enhance /champions/[pokemon] with featured community teams section |
-
-**Combined addressable search volume: ~22,000-35,000 monthly searches**
-
-### Tier 1 Competitors (Dominant SEO Presence)
-
-| Competitor | Strengths | Why They Outrank Us |
-|------------|-----------|---------------------|
-| **Pikalytics** | Usage stats, team builder, damage calc, top teams | Massive content depth — individual Pokemon pages, format-specific URLs, daily-updated data |
-| **Victory Road** | Tournament reports, rental teams, format guides | 10+ years of content, strong backlink profile, editorial authority |
-| **Limitless VGC** | Tournament database, team pastes, rankings | Community submissions = constant fresh content, tournament-specific URLs |
-| **Smogon** | Viability rankings, sample teams, forums | Domain authority 80+, user-generated discussion threads rank for long-tail |
-
-### Tier 2 Competitors (Rising Fast)
-
-| Competitor | Threat Level | Key SEO Strategy |
-|------------|-------------|------------------|
-| **VGCCoach.pro** | HIGH | AI-powered team analysis, rich article content targeting "best VGC teams", "VGC tier list", guide-style long-form content |
-| **VGC.tools** | MEDIUM | Community team library, clean URLs per team, good internal linking |
-| **ChampTeams.gg** | MEDIUM | All-in-one tool positioning (builder + calc + tiers), targeting "Champions" keywords |
-| **Porygon Labs** | MEDIUM | Damage calc + team builder, Champions-specific |
-| **Pokemon Zone** | HIGH | Full metagame stats, tier lists, format-specific content hubs |
-| **ShowdownTier** | MEDIUM | Daily-updated viability tier lists per regulation set |
-| **VGenC (vgenc.net)** | MEDIUM | 2,649 tournament pastes for Reg M-A, high volume of indexable team pages |
-| **PokemonBuilder.com** | MEDIUM | Targeting "Pokemon Champions meta" with tier list content |
-
-## 4. Structured Data Comparison vs Competitors
-
-| Schema Type | VGC Team Report | Pikalytics | Victory Road | MetaVGC | Game8 |
-|-------------|----------------|-----------|-------------|---------|-------|
-| WebApplication | Yes | No | No | No | No |
-| Organization | Yes | Yes | No | No | Yes |
-| WebSite+SearchAction | Yes | Yes | No | No | Yes |
-| FAQPage | Yes | Yes | No | No | Yes |
-| HowTo | Yes | No | No | No | No |
-| ItemList | Yes | No | No | No | Yes |
-| SportsEvent | Yes | No | No | No | No |
-| CollectionPage | Yes | No | No | No | No |
-| CreativeWork | Yes (shares) | No | No | No | No |
-| Person/ProfilePage | Yes (creators) | No | Yes (authors) | No | No |
-| BreadcrumbList | Partial | Yes | Yes | No | Yes |
-| Dataset | No | Yes | No | No | No |
-| Article/BlogPosting | No | No | Yes | Yes | Yes |
-| AggregateRating | No | No | No | No | Yes |
-
-**Verdict:** VGC Team Report has the most comprehensive structured data of any VGC tool. Main gaps are BreadcrumbList consistency and Article schema (needs guide content first).
+### Changes Since Last Audit (May 13)
+- **FIXED**: Homepage title now includes "Pokemon Champions 2026"
+- **FIXED**: `/champions/[pokemon]` titles use "SP Spreads" instead of "EV Spreads"
+- **FIXED**: `/champions` has `ItemList` JSON-LD
+- **FIXED**: `/tournaments` has `SportsEvent` JSON-LD
+- **FIXED**: `/dashboard` has `robots: { index: false }`
+- **FIXED**: `/embed/[id]` has `noindex, nofollow`
+- **STILL OPEN**: No `twitter:site` handle
+- **STILL OPEN**: Homepage is `"use client"` — body content not server-rendered
+- **STILL OPEN**: No standalone content pages (speed tiers, Reg M-A guide, how-to guide)
+- **STILL OPEN**: No blog/editorial section for content marketing
+- **NEW FINDING**: Only 2 pages indexed by Google (critical)
+- **NEW FINDING**: Bot detection blocks GPTBot in middleware but robots.txt allows it (contradictory)
+- **NEW FINDING**: `/faq` and `/tournaments` missing from middleware public routes (dead code, no impact)
+- **NEW FINDING**: Explore page title still lacks "Pokemon Champions 2026"
 
 ---
 
-## 5. Content Accuracy Issue (Critical for Champions Pages)
+## 1. Google Index Coverage (CRITICAL)
 
-Pokemon Champions (April 2026) replaced EVs with Stat Points (SP). The /champions/[pokemon] pages previously used "EV Spreads" in titles/descriptions. Based on the current code, these have already been updated to "SP Spreads" — verify this is reflected in all FAQ answer text and description templates.
+### site:pokemonvgcteamreport.com results (May 28, 2026): **2 pages**
 
-Key check: Search queries are shifting from "EV spread" (legacy SV) to "SP spread" (Champions). Both terms should appear in descriptions for a transitional period: "SP spreads (stat points)" captures new-format users while remaining findable for players searching legacy terms.
+| Page | Indexed? |
+|------|----------|
+| `/` (homepage) | YES |
+| `/champions` (hub) | YES |
+| `/champions/mega-aggron` (sample) | YES (1 seen) |
+| `/explore` | NO |
+| `/faq` | NO |
+| `/tournaments` | NO |
+| `/compare` | NO |
+| `/changelog` | NO |
+| `/s/[id]` (share pages) | NO |
+| `/creator/[name]` (profiles) | NO |
 
----
+### Likely Causes
 
-## 6. Gaming/Esports SEO Best Practices (2026)
+1. **Site age**: Domain is relatively new; Google crawls and indexes new sites slowly.
+2. **Thin crawl budget**: With only 2 pages indexed, Googlebot may not be discovering internal links efficiently. The homepage is fully client-rendered — if Googlebot doesn't execute JS (or times out), it sees no internal links.
+3. **Client-side homepage**: The homepage (`page.tsx`) is `"use client"` — no server-rendered HTML body. Google's renderer may not be extracting internal links from the SPA shell.
+4. **Sitemap discovery**: The sitemap is dynamically generated (`src/app/sitemap.ts`) and may contain thousands of URLs. Need to verify it's accessible to crawlers.
+5. **No Google Search Console verified**: Need to submit sitemap manually.
 
-Based on current best practices for gaming tool sites:
+### Recommended Actions
 
-1. **JSON-LD is king** — Preferred over microdata/RDFa. Must accurately reflect visible content.
-2. **Schema drives AI Overview citations** — In 2025 controlled experiments, only pages with valid schema appeared in AI Overviews.
-3. **GameApplication + SoftwareApplication** — Correct for tool sites (already implemented).
-4. **Programmatic SEO** — Data-rich sites should generate landing pages from their database (Pikalytics does this for every Pokemon; VGC Team Report should do this for top teams, archetypes, tournaments).
-5. **Freshness signals** — Gaming meta changes weekly. Pages with recent `dateModified` and up-to-date content rank better for "[game] 2026" queries.
-6. **Video content** — YouTube embeds with VideoObject schema create rich snippets in gaming SERPs. Consider embedding VGC content creator videos on guide pages.
-7. **Community-generated content** — UGC (user team reports) creates long-tail keyword diversity that no editorial site can match at scale. VGC Team Report's 5,000+ public shares are a massive latent SEO asset.
-
-**Likely causes:**
-- Share pages (`/s/[id]`) are SSR with DB calls — crawl budget may be exhausted before Google reaches them
-- No internal links from indexed pages to deep content (share pages, creator pages)
-- `lastModified` on sitemap is set to `now` for static pages — Google may see this as unreliable
-- Champion slug pages may not be prerendered if `generateStaticParams` has issues
-
-**Fixes needed:**
-1. Add an "internal links" section to explore/champions pages linking to popular shares
-2. Use real `lastModified` dates in sitemap rather than `new Date().toISOString()`
-3. Submit sitemap manually in Google Search Console
-4. Check GSC for crawl errors and coverage reports
-
-### 4.2 Homepage Has No Visible H1 Tag
-
-The homepage (`page.tsx`) is a client component with no `<h1>` tag containing target keywords. The page title in metadata is good, but Google weighs the on-page `<h1>` heavily for understanding page topic.
-
-**Fix:** Add a visible or sr-only `<h1>` tag with primary keyword: "VGC Team Report — Build & Share Pokemon VGC Teams"
-
-## 7. Technical Issues
-
-### High Priority
-- **Client-rendered homepage** — FAQ and HowTo content hidden behind JS execution
-- **Only 2 pages in Google site:search** — May indicate indexing depth issues
-- **Missing BreadcrumbList** on /explore, /faq, /tournaments
-
-### Medium Priority
-- **Homepage title too long** (73 chars, truncated in SERPs)
-- **Static page lastModified = now** — Signals false freshness
-- **No `twitter:site` handle** in root metadata
-- **No `article:published_time`** on share pages
-
-### Low Priority
-- **Meta keywords tag** — Ignored by Google since 2009 (keep for Bing minor signal)
-- **No hreflang** — English-only site, not needed yet
-- **Dashboard/embed pages not noindexed** — Thin pages in index
+1. **Submit sitemap.xml in Google Search Console** immediately.
+2. **Request indexing** for key pages: `/explore`, `/faq`, `/tournaments`, `/champions/[pokemon]`.
+3. **Add a server-rendered internal link section** to the homepage layout (not inside the client component) so crawlers can discover all pages without JS.
+4. **Move `FAQPageJsonLd` and `HowToSchema` from `page.tsx` to `layout.tsx`** or a server component wrapper — currently they're client-only.
 
 ---
 
-## 8. Priority Action Plan
+## 2. SERP Visibility Snapshot (May 28, 2026)
 
-### Immediate Wins (No new pages, <1 day)
+| Query | VGC Team Report Position | Top Rankers |
+|-------|--------------------------|-------------|
+| "VGC team report" | **#1** | pokemonvgcteamreport.com, Victory Road, Smogon |
+| "pokemon vgc team report" | **#1-2** | pokemonvgcteamreport.com, vgc-team-report.vercel.app |
+| "best vgc team builder 2026" | **NOT RANKING** | PokemonBuilder, Pikalytics, VGC Trainer, Champions Lab |
+| "pokepaste alternative" | **NOT RANKING** | crob.at, pokepastefix extension |
+| "share vgc team" | **NOT RANKING** | Pikalytics, Victory Road |
+| "best vgc teams 2026" | **NOT RANKING** | Showdown Tier, VGC Trainer, Pikalytics |
+| "vgc damage calculator" | **NOT RANKING** | Porygon Labs, VGC Helper, Pikalytics |
+| "vgc speed tiers 2026" | **NOT RANKING** | Turnadus, Pikalytics |
+| "pokemon champions regulation MA teams" | **NOT RANKING** | Showdown Tier, Pokemon Zone, ChampTeams.gg, ChampionsMeta |
+| "pokemon open team sheet OTS maker" | **NOT RANKING** | VGC OTS extension, Team List Generator |
+| "vgc matchup plan builder" | **NOT RANKING** | DevonCorp, PikaChampions |
+| "reportworm vgc" | **NOT RANKING** (competitor rising) | reportworm.com |
 
-1. Add BreadcrumbList schema to /explore, /faq, /tournaments
-2. Shorten homepage title to <60 chars: "VGC Team Report — Build & Share Pokemon VGC Teams"
-3. Fix static page lastModified in sitemap (use build date, not `new Date()`)
-4. Add intro paragraph text to /explore page (server-rendered for crawler visibility)
-5. Add `twitter:site` handle to root metadata
-
-### Short-term (1-2 weeks)
-
-6. Create /open-team-sheet landing page (lowest competition keyword gap)
-7. Create /guides/how-to-write-a-vgc-team-report with Article + HowTo schema
-8. Add "Mega Tier List" ranked section to /champions page
-9. Add internal linking widgets to /champions/[pokemon] pages ("Teams using this Pokemon")
-10. Create /speed-tiers standalone page
-
-### Medium-term (1 month)
-
-11. Create /teams programmatic top-teams page from public share database
-12. Create /rental-codes collection page surfacing shares with rental codes
-13. Create tournament-specific landing pages (/tournaments/indianapolis-2026)
-14. Build visible breadcrumb navigation component across all pages
-15. Consider server-rendering critical homepage content (FAQ, feature list)
+### Key Observation
+VGC Team Report dominates branded queries but has **zero presence** in generic high-intent queries. The site is invisible for the most searched VGC tool queries.
 
 ---
 
-## 9. Link Building Opportunities
+## 3. Competitor Landscape Update (May 28, 2026)
 
-1. **VGCpedia** (vgcpedia.com) — Resource listing page. Submit for inclusion.
-2. **Smogon Forums** — Post team reports linking to shared reports on the platform.
-3. **Reddit r/VGC, r/PokemonChampions** — Team report posts with deep links.
-4. **Victory Road** — Potential partnership for "publish your team report" CTAs.
-5. **YouTube VGC creators** — Offer embed integration for their team breakdowns.
-6. **Game8, Pokémon Zone** — Submit as a resource/tool for their Pokemon Champions guides.
-7. **Discord community servers** — VGC-focused servers often maintain resource channels.
+### Tier 1 — Dominant Authority
+| Site | Keyword Ownership | Threat Level |
+|------|-------------------|--------------|
+| **Pikalytics** | Usage stats, team builder, damage calc, speed tiers, top teams | HIGH — owns the most high-volume queries |
+| **Victory Road** | Team reports (editorial), replica teams, regulations guide | HIGH — direct competitor for "VGC team report" |
+
+### Tier 2 — Growing Fast
+| Site | Keyword Ownership | Threat Level |
+|------|-------------------|--------------|
+| **ChampionsMeta.io** | Reg M-A meta, tournaments, usage rankings | MEDIUM-HIGH — 201 tournaments, 14K teams indexed |
+| **ChampTeams.gg** | Tier list, meta cores, team browse | MEDIUM |
+| **Reportworm** | Replay analysis, auto-generated team reports | MEDIUM — direct feature overlap |
+| **VGC Trainer** | Reg I meta guide, competitive data | MEDIUM |
+
+### Tier 3 — Niche
+| Site | Keyword Ownership |
+|------|-------------------|
+| Porygon Labs | Damage calculator for Champions |
+| Champions Lab | Simulator + team builder |
+| PikaChampions | Free team builder + matchup analysis |
+| Champions Builder | SP calculator + damage calc |
+| crob.at | PokePaste alternative with previews |
+| VGC.tools | Community team builder + library |
+| Showdown Tier | Tier lists, viability rankings |
+| NuzTools | Team sheet generator |
+
+### New Since Last Audit
+- **ChampionsMeta.io**: Rapidly growing; 201 tournaments tracked, tournament-specific URLs indexed
+- **Reportworm Standings**: Separate standings subdomain (standings.reportworm.com) with teamsheets from major events
+- **VGC Team Helper** (vgcteamhelper.com): New entrant
 
 ---
 
-## 10. AI Search Optimization (GEO/AEO)
+## 4. Top 10 Keyword Gaps
 
-Already well-positioned with llms.txt + AI bot access + comprehensive structured data.
-
-Additional recommendations:
-1. Add `speakable` schema to FAQ answers for voice search
-2. Consider an `/about` page with comprehensive tool description for AI context building
-3. Add more `sameAs` links to Organization schema (social profiles, community presences)
-4. Ensure FAQ content exactly matches natural language queries ("How do I share a VGC team?")
-5. The combination of structured data + AI-friendly robots.txt + llms.txt makes this site highly citable by AI answer engines (Perplexity, Google AI Overviews, ChatGPT search)
+| # | Keyword Cluster | Monthly Search Intent | Top Rankers | What VGC Team Report Needs |
+|---|----------------|----------------------|-------------|---------------------------|
+| 1 | `pokepaste alternative` / `pokepaste with sprites` | High — tool query | crob.at, sitelike.org | Dedicated comparison page or FAQ entry targeting this; site IS a PokePaste alternative but doesn't target the query |
+| 2 | `VGC speed tiers 2026` / `Pokemon Champions speed tiers` | High | Turnadus, Pikalytics | Standalone `/speed-tiers` page with SSG content |
+| 3 | `VGC damage calculator` / `Pokemon Champions damage calc` | Very high | Pikalytics, Porygon Labs, VGC Helper | Feature exists in-app but no SEO-targeting landing page |
+| 4 | `Regulation M-A VGC guide` / `Pokemon Champions format guide` | High informational | Pikalytics, ChampionsMeta, Pokemon Zone | No dedicated `/regulation-m-a` guide page |
+| 5 | `how to write a VGC team report` / `VGC team report template` | Mid — high-intent, low competition | No clear owner | Obvious authority opportunity; needs a blog/guide page |
+| 6 | `best VGC teams 2026` / `top VGC tournament teams` | Very high | Pikalytics, VGC Trainer, ChampionsMeta | `/explore` page targets this but isn't indexed by Google |
+| 7 | `VGC matchup plan` / `VGC matchup chart` | Mid | DevonCorp (SPAMS), PikaChampions | Core feature; no standalone page |
+| 8 | `Pokemon open team sheet generator` / `OTS generator VGC` | Mid — tool query | VGC OTS extension, Team List Generator, NuzTools | Feature exists; no dedicated landing page |
+| 9 | `Indianapolis Regionals 2026 teams` / `VGC Worlds 2026 teams` | High seasonal | Limitless, Bulbagarden, ChampionsMeta | No tournament-specific pages (`/tournaments/indianapolis-2026`) |
+| 10 | `Pokemon Champions metagame` / `Regulation M-A tier list` | High | Showdown Tier, ChampionsMeta, Pokemon Zone | No metagame content; entire site is tool-focused |
 
 ---
 
-*Draft metadata/content changes: `.swarm/drafts/r6-seo-drafts.md`*
-1. **Add a grounded "counters" FAQ entry on Mega landing pages** — extend the `faqItems` array in `src/app/champions/[pokemon]/page.tsx` around lines 198–225 with a 7th item: `"What counters {Mega} in VGC?"` answered from `pokemonData.types` against the type chart (weaknesses + speed tier baseline). Pure content/JSON-LD change, no new route. Captures the "{Pokemon} counters VGC" query Pikalytics owns. ~30 min.
-2. **Make `/s/[id]` titles length-aware** (`src/app/s/[id]/page.tsx` lines 38–51). Current pattern `"${tournamentName} — ${placement} | VGC Team Report"` regularly exceeds 60 chars and Google truncates the brand. Reorder to lead with species (highest CTR signal) and drop the brand suffix when the core would push past ~55 chars. Adds ~10 lines of `length`-aware logic; no schema or data changes. ~45 min.
-3. **Add `BreadcrumbList` JSON-LD to `/explore`, `/tournaments`, `/creator/[name]`** — extend `src/components/seo/JsonLd.tsx` with a `BreadcrumbJsonLd` helper (~12 lines), then a 3-line insertion per page. Currently only `/champions/[pokemon]` and `/s/[id]` ship breadcrumbs — Google's site-links treatment needs the helper on every L2 page. ~45 min.
+## 5. Current Site Metadata Assessment
 
-## Keyword gap list (10)
+### Homepage (`/`)
+| Element | Current Value | Status |
+|---------|---------------|--------|
+| `<title>` | "VGC Team Report — Build & Share Pokemon VGC Teams \| Pokemon Champions 2026" | GOOD (updated since last audit) |
+| Meta description | "The free VGC team report builder — share your VGC team with notes, matchup plans, and damage calcs..." | GOOD |
+| OG title | "VGC Team Report — Build, Share & Discover Pokemon Teams" | WEAK — doesn't match page title, no "2026" or "Champions" |
+| H1 | "VGC Team Report" (client-rendered) | ISSUE — not in initial HTML |
+| JSON-LD (layout) | WebApplication + Organization + WebSite (SearchAction) | GOOD — server-rendered |
+| JSON-LD (page) | FAQPage + HowTo | ISSUE — client-rendered, invisible to crawlers |
+| Canonical | pokemonvgcteamreport.com | GOOD |
+| `twitter:site` | NOT SET | MISSING |
 
-Queries competitors rank for that we do not target in any `keywords`, h1, or URL:
+### `/explore`
+| Element | Current Value | Status |
+|---------|---------------|--------|
+| Title | "Explore VGC Teams \| VGC Team Report" | WEAK — no "Pokemon Champions", no "2026" |
+| Description | Good — mentions Champions, Mega Evolution | OK |
+| JSON-LD | CollectionPage | OK |
+| Indexing | NOT INDEXED BY GOOGLE | CRITICAL |
 
-1. **"VGC {Pokemon} counters"** — Pikalytics owns. We have no counters surface.
-2. **"VGC {Pokemon} EV spread"** — we use "SP spread" (our coinage). Add "EV spread" as a synonym in titles + h1s; "EV" volume is roughly 30–50× "SP".
-3. **"Pokemon Champions team builder"** — Pikalytics, PikaChampions, VGC Coach all rank. Our homepage title says "Build & Share", not "team builder".
-4. **"VGC 2026 Regulation I teams"** — Pikalytics has `/pokedex/gen9vgc2026regi/`. We only ship a Reg M-A surface.
-5. **"VGC Regulation H sample teams"** — VGCpastes owns. Our `/tournaments` page does not segment by regulation.
-6. **"pokepaste alternative"** / **"pokepaste with notes"** — zero on-page targeting; our llms.txt mentions it, our `<title>` chain does not.
-7. **"VGC speed tiers Regulation M-A"** — we have speed-tier UI, no dedicated indexable `/speed-tiers/[regulation]` page.
-8. **"{Tournament name} VGC top cut teams"** (e.g. "Indianapolis Regionals 2026 teams") — Limitless ranks. We have the data via `tournamentName` on shares but no `/tournaments/[slug]` aggregate landing page.
-9. **"{Player name} VGC team"** — Limitless player pages own. Our `/creator/[name]` exists but is not in `keywords` and the h1 is generic.
-10. **"VGC team report template"** / **"how to write a VGC team report"** — pure top-of-funnel content gap; we own the category name but rank for nothing.
+### `/champions`
+| Element | Current Value | Status |
+|---------|---------------|--------|
+| Title | "Pokemon Champions Format \| Mega Evolution Teams — VGC Team Report" | GOOD |
+| JSON-LD | ItemList (all Megas) | GOOD (added since last audit) |
+| Indexing | INDEXED | OK |
 
-## Medium-term recommendations
+### `/champions/[pokemon]`
+| Element | Current Value | Status |
+|---------|---------------|--------|
+| Title | "${displayName} VGC Guide — SP Spreads, Movesets & Teams" | GOOD (SP fixed) |
+| JSON-LD | WebPage + BreadcrumbList + FAQ | GOOD |
+| Keywords | 15+ per page | OK (Google ignores but consistent) |
+| Indexing | Only 1 page seen (mega-aggron) | POOR — 59 pages should be indexed |
 
-1. **Ship `/regulation/[code]` hub pages** (`/regulation/m-a`, `/h`, `/i`, `/g`, `/f`) mirroring Pikalytics' `/pokedex/{format}` pattern. Each page: top-20 species cards, "browse teams in this format" CTA, breadcrumbs, `CollectionPage` JSON-LD. Pulls from the existing share DB filtered by `data->>'regulation'`. Single new route, ~6 indexable pages, addresses gaps #4 + #5 + #7.
-2. **Build a `/tournaments/[slug]` aggregate** (Indianapolis 2026, Worlds 2025, etc.) emitting `SportsEvent` JSON-LD per tournament with a `subEvent`/`workFeatured` list of teams. We already emit two static SportsEvent nodes on `/tournaments` — promote them to indexable pages. Addresses gap #8 and converts Limitless backlink intent.
-3. **Promote `/creator/[name]` to a real player profile**: add `ProfilePage`+`Person` JSON-LD, an h1 of `"{name} — VGC Teams & Tournament Reports"`, and a structured tournament-history block. Currently it's a generic feed, so it competes with Limitless player pages on weak signals. Addresses gap #9 and converts pre-existing sitemap entries into rank-worthy pages.
+### `/s/[id]` share pages
+| Element | Current Value | Status |
+|---------|---------------|--------|
+| Title | Dynamic: tournament + species based | GOOD |
+| OG image | Intentionally empty (unfurl issues) | KNOWN LIMITATION |
+| JSON-LD | CreativeWork with author | GOOD |
+| Canonical | Per-share canonical | GOOD |
+| Noindex for private | YES | GOOD |
+| Indexing | NONE INDEXED | CRITICAL — thousands of public shares invisible |
 
-Drafts of all proposed metadata strings are at `/home/user/VGC-Team-Report/.swarm/drafts/r6-metadata-changes.md`. Nothing has been published.
+### `/faq`
+| Element | Current Value | Status |
+|---------|---------------|--------|
+| Title | "VGC Team Report FAQ — Common Questions Answered" | GOOD |
+| FAQPage JSON-LD | 12 questions including SP, Reg M-A, OTS | GOOD |
+| Content | Rich, well-written answers | EXCELLENT for featured snippets |
+| Indexing | NOT INDEXED | CRITICAL — missing featured snippet opportunity |
+
+### `/tournaments`
+| Element | Current Value | Status |
+|---------|---------------|--------|
+| Title | "VGC Tournament Results Archive \| Team Reports 2026" | GOOD |
+| SportsEvent JSON-LD | Indianapolis Regionals + Worlds 2026 | GOOD (added since last audit) |
+| Indexing | NOT INDEXED | CRITICAL |
+
+---
+
+## 6. Structured Data Audit
+
+### Currently Implemented (all correct)
+| Schema Type | Location | Status |
+|-------------|----------|--------|
+| WebApplication + SoftwareApplication | Root layout | GOOD |
+| WebSite + SearchAction | Root layout | GOOD |
+| Organization + logo + sameAs | Root layout | GOOD |
+| FAQPage | Root page (client) + /faq (server) | MIXED — /faq is good, root is client-only |
+| HowTo (5 steps) | Root page (client) | ISSUE — client-only |
+| ItemList (Megas) | /champions | GOOD |
+| BreadcrumbList | /champions/[pokemon] | GOOD |
+| SportsEvent | /tournaments | GOOD |
+| CollectionPage | /explore | GOOD |
+| ProfilePage + Person | /creator/[name] | GOOD |
+| CreativeWork | /s/[id] | GOOD |
+
+### Missing / Recommended
+1. **Move FAQPageJsonLd and HowToSchema to a server component** — currently client-only on homepage
+2. **BreadcrumbList on /explore, /tournaments, /faq** — only /champions/[pokemon] has it
+3. **Article schema** for any future guide/blog pages
+4. **Add `sameAs` social links** to Organization schema (Twitter/X, Discord invite)
+
+---
+
+## 7. Technical SEO Checklist
+
+| Item | Status | Notes |
+|------|--------|-------|
+| robots.txt | GOOD | Allows all bots, disallows /api/, declares sitemap |
+| Sitemap | GOOD (dynamic) | Includes static + share + creator pages |
+| Canonical tags | GOOD | All pages have canonical in alternates |
+| `lang="en"` | GOOD | On root html element |
+| metadataBase | GOOD | Set to pokemonvgcteamreport.com |
+| OG image (root) | GOOD | opengraph-image.tsx present |
+| Twitter card | GOOD | summary_large_image on most pages |
+| `twitter:site` | **MISSING** | Easy fix |
+| noindex on private pages | GOOD | Dashboard + embed both noindexed |
+| Breadcrumbs | PARTIAL | Only on /champions/[pokemon] |
+| Vercel domain redirect | GOOD | 301 from vercel.app to canonical domain |
+| Mobile viewport | GOOD | width=device-width, user-scalable=true |
+| PWA manifest | GOOD | Comprehensive with screenshots |
+| HSTS | GOOD | max-age=63072000 |
+| Image lazy loading | GOOD | Sprites use loading="lazy" |
+| CSP | GOOD | Comprehensive but not SEO-relevant |
+| Homepage rendering | **CRITICAL ISSUE** | `"use client"` — body not server-rendered |
+| Core Web Vitals | UNTESTED | Cannot test from codebase; needs PageSpeed Insights |
+
+### Bot Detection Contradiction
+- `robots.txt` ALLOWS GPTBot and ClaudeBot
+- `bot-detection.ts` BLOCKS GPTBot and anthropic-ai/claude-web at middleware level
+- **Result**: AI crawlers are told "you're allowed" by robots.txt but get 403'd by middleware
+- **Fix**: Either remove AI bots from robots.txt Allow rules or remove them from BLOCKED_BOT_PATTERNS
+
+---
+
+## 8. Mobile-Friendliness Signals
+
+| Signal | Status | Details |
+|--------|--------|---------|
+| Viewport meta tag | GOOD | `width=device-width, initialScale=1, maximumScale=5, userScalable=true` |
+| Touch targets | GOOD | min 44x44px per UI/UX standards |
+| Font sizes | GOOD | Base text readable, responsive scaling |
+| PWA support | GOOD | Full manifest, service worker, install prompt |
+| Responsive layout | GOOD | Tailwind responsive classes throughout |
+| Swipe navigation | GOOD | `useSwipeNavigation` hook for mobile report viewing |
+| Skip to content link | GOOD | Accessible keyboard navigation |
+| viewportFit: cover | GOOD | Handles notch/safe areas |
+
+---
+
+## 9. Quick-Win SEO Improvements
+
+### Priority 1 — Fix Indexing (HIGHEST IMPACT)
+
+**QW-1: Submit sitemap to Google Search Console (5 min)**
+- Log into https://search.google.com/search-console
+- Add property for pokemonvgcteamreport.com
+- Submit sitemap.xml
+- Request indexing for /explore, /faq, /tournaments, /champions/[pokemon] pages
+- This is THE most impactful action. Everything else is secondary.
+
+**QW-2: Move client-only JSON-LD to server component (30 min)**
+- The `FAQPageJsonLd` and `HowToSchema` components in `src/app/page.tsx` are inside a `"use client"` boundary
+- Move them to `layout.tsx` or create a server-component wrapper that renders them in the initial HTML
+- Files: `src/app/page.tsx` lines 80-81, `src/app/layout.tsx`
+
+**QW-3: Add server-rendered internal links to layout (20 min)**
+- Add a minimal footer or nav section in `layout.tsx` (server component) with links to /explore, /champions, /faq, /tournaments
+- Currently the PersistentNavbar may be client-rendered; confirm it renders nav links in initial HTML
+- This ensures crawlers discover all pages even without JS execution
+
+### Priority 2 — Metadata Gaps (30 min total)
+
+**QW-4: Update `/explore` title to include "Pokemon Champions 2026" (5 min)**
+- Current: `"Explore VGC Teams | VGC Team Report"`
+- Proposed: `"Explore VGC Teams | Pokemon Champions 2026 Team Reports"`
+- File: `/src/app/explore/page.tsx` line 6
+
+**QW-5: Align OG title with page title on homepage (5 min)**
+- Current OG: "VGC Team Report — Build, Share & Discover Pokemon Teams"
+- Proposed: "VGC Team Report — Pokemon Champions Team Reports 2026"
+- File: `/src/app/layout.tsx` line 46
+
+**QW-6: Add `twitter:site` handle (5 min)**
+- Add `twitter: { site: "@VGCTeamReport" }` (or actual handle) to root metadata
+- File: `/src/app/layout.tsx`
+
+**QW-7: Fix bot detection / robots.txt contradiction (10 min)**
+- Either remove GPTBot/ClaudeBot from `robots.txt` Allow rules
+- OR remove `gptbot`, `anthropic-ai`, `claude-web` from `BLOCKED_BOT_PATTERNS` in `src/lib/security/bot-detection.ts`
+- Recommended: Keep blocking AI training scrapers at middleware level AND remove the misleading Allow rules from robots.txt
+- Files: `public/robots.txt`, `src/lib/security/bot-detection.ts`
+
+### Priority 3 — Content Pages for Keyword Gaps (1-3 days each)
+
+**NP-1: `/speed-tiers` standalone page (HIGHEST ROI content page)**
+- Target: "VGC speed tiers 2026", "Pokemon Champions speed tiers"
+- Content: Static SSG page with key speed benchmarks for all Mega forms
+- Internal links to all `/champions/[pokemon]` pages
+
+**NP-2: `/guides/how-to-write-a-vgc-team-report` editorial guide**
+- Target: "how to write a VGC team report", "VGC team report template"
+- No competitor owns this — VGC Team Report is the obvious authority
+
+**NP-3: `/regulation-m-a` format guide landing page**
+- Target: "Regulation M-A VGC guide", "Pokemon Champions format"
+- Content: Legal Pokemon, rules overview, tournament schedule, link to champions hub
+
+**NP-4: Blog section (`/blog/`) for editorial content**
+- Tournament recaps, meta analysis, team-building guides
+- Captures informational queries that tools alone cannot
+- Differentiator vs. pure-tool competitors like Pikalytics
+
+### Priority 4 — Structured Data Additions (15 min each)
+
+**QW-8: Add BreadcrumbList to /explore, /faq, /tournaments**
+- Simple Home > PageName breadcrumb
+- Enables breadcrumb rich results in SERPs
+
+**QW-9: Add `sameAs` social links to Organization JSON-LD**
+- GitHub (already present), Twitter/X, Discord
+
+---
+
+## 10. Competitor Keyword Coverage Matrix (May 28, 2026)
+
+| Keyword | Pikalytics | Victory Road | Limitless | ChampionsMeta | Reportworm | VGC Team Report |
+|---------|-----------|-------------|-----------|---------------|------------|----------------|
+| VGC 2026 / Pokemon Champions | Y | Y | Y | Y | Y | Y (in title now) |
+| team report / write-up | N | Y | N | N | Y (auto) | **Y (core)** |
+| SP spread / stat points | Y | N | N | Y | N | Y (fixed) |
+| damage calculator | Y | N | N | N | Y | N (feature only) |
+| speed tiers | Y | N | N | N | N | N (feature only) |
+| Regulation M-A guide | Y | Y | N | Y | N | N |
+| Mega Evolution VGC 2026 | Y | Y | N | Y | N | Y (/champions) |
+| matchup plan VGC | N | N | N | N | Y | N (feature only) |
+| OTS generator VGC | N | N | N | N | N | N (feature only) |
+| tournament results VGC | Y | Y | Y | Y | Y | Partial (/tournaments) |
+| pokepaste alternative | N | N | N | N | N | N |
+| VGC team builder | Y | N | N | Y | N | N |
+
+---
+
+## 11. Backlink Opportunities
+
+1. **Limitless VGC**: Tournament team pages could link to VGC Team Report creator profiles
+2. **Reddit r/VGC, r/stunfisk**: Community posts sharing team reports
+3. **Smogon Forums**: Team report threads referencing the tool
+4. **Victory Road**: Partnership or cross-link opportunity (different product angles)
+5. **DevonCorp**: Resource page already lists VGC tools — get listed
+6. **VGCGuide.com**: Comprehensive resource list
+
+---
+
+*Content change drafts saved to: `.swarm/drafts/r6-seo-drafts.md`*

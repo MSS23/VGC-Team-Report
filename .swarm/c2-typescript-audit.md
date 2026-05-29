@@ -1,171 +1,188 @@
 # TypeScript Strictness Audit
 
-**Audited:** 2026-05-25  
-**Scope:** `src/lib/`, `src/app/api/`, `src/hooks/`  
-**tsconfig:** `strict: true` enabled (good baseline)
+**Date:** 2026-05-28
+**Scope:** `src/lib/` and `src/app/api/` (prioritized), full `src/` secondary
+**tsconfig:** `strict: true` is enabled -- good baseline
 
 ---
 
-## 1. Uses of `any`
+## Executive Summary
 
-Only **1 explicit `any`** found across the entire scoped codebase:
-
-| File | Line | Code | Justified? |
-|------|------|------|------------|
-| `src/app/api/migrate/route.ts` | 50 | `row.data as Record<string, any>` | **Partially** — the migrate route normalizes arbitrary legacy JSONB blobs that may have unknown shapes. Using `Record<string, unknown>` with runtime checks would be safer but require more verbose narrowing. Has an eslint-disable comment acknowledging the decision. |
-
-**Verdict:** Excellent discipline. The single `any` is in a migration script with an eslint acknowledgement.
+The codebase is generally well-typed with `strict: true` enabled and Zod validation at API boundaries. However, there are systemic patterns that undermine type safety: **55+ unnarrowed `catch (e)` blocks** across API routes, **pervasive `as` assertions on database row fields** (zero runtime validation), and **untyped `fetch().json()` return values** in core library files. The most critical risk area is the database layer, where every query result is accessed via unchecked `as` casts.
 
 ---
 
-## 2. Missing Return Types on Exported Functions
+## Category 1: Explicit `any` Usage
 
-### API Route Handlers: **0 of 72 have explicit return types**
+### Finding 1.1 -- `Record<string, any>` in migrate route
+- **File:** `src/app/api/migrate/route.ts:50`
+- **Code:** `const data = row.data as Record<string, any>;`
+- **Severity:** Medium
+- **Impact:** The only explicit `any` annotation in production code (has an eslint-disable comment). Data from every share row passes through this unchecked. Should use `Record<string, unknown>` and let `normalizeReportData` narrow the fields, which it already does.
+- **Fix:** Change to `Record<string, unknown>` -- `normalizeReportData` already accepts this type.
 
-All 72 exported API route handlers (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`) across `src/app/api/` lack explicit return type annotations. Examples:
-
-```typescript
-// src/app/api/explore/route.ts:11
-export async function GET(request: Request) {  // no `: Promise<NextResponse>`
-
-// src/app/api/share/route.ts:63
-export async function POST(request: Request) {  // no return type
-
-// src/app/api/feedback/route.ts:78
-export async function POST(request: Request) {  // no return type
-```
-
-**Impact:** Medium. Next.js infers these correctly at build time, but explicit types would catch accidental non-Response returns at authoring time and improve documentation. This is standard for Next.js App Router conventions where the framework enforces the shape.
-
-### src/lib/ — Good coverage with notable gaps:
-
-| File | Function | Missing Return Type |
-|------|----------|-------------------|
-| `src/lib/discord-webhook.ts:15` | `postToBuildsChannel` | No return type (returns `Promise<void>` implicitly) |
-| `src/lib/notifications.ts:9` | `createNotification` | No return type (returns `Promise<void>` implicitly) |
-| `src/lib/notifications.ts:30` | `notifyFollowers` | No return type (returns `Promise<void>` implicitly) |
-| `src/lib/db.ts:3` | `getDb` | No return type (inferred from neon()) |
-| `src/lib/db.ts:9` | `ensureTable` | No return type (returns `Promise<void>`) |
-
-Most other `src/lib/` exports have proper return type annotations.
+### Finding 1.2 -- `AnyObject` from `@pkmn/dex` leaking into local code
+- **File:** `node_modules/@pkmn/dex/build/index.d.ts`
+- **Severity:** Low (third-party, cannot directly fix)
+- **Impact:** `@pkmn/dex` internally uses `AnyObject = { [k: string]: any }` in constructors. The typed API surface (`.baseStats`, `.types`, `.abilities`, `.megaStone`) is well-typed, but some properties like `megaStone` on Items have specialized branded types that don't match the project's own types, requiring `as` casts. Not actionable beyond the existing pattern.
 
 ---
 
-## 3. Unsound Generics
+## Category 2: Unsafe `as` Type Assertions (43+ instances)
 
-### `cacheGet<T>` — Unchecked cast when no schema provided
+### Finding 2.1 -- Database row field casts (CRITICAL, systemic)
+- **Files:** Every API route that reads from the database
+- **Severity:** High
+- **Pattern:** `row.data as Record<string, unknown>`, `row.id as string`, `row.created_at as Date`, `row.view_count as number`, `(data.paste as string)`, etc.
+- **Examples:**
+  - `src/app/api/user/collaborations/route.ts:33-47` -- 15 casts in one handler
+  - `src/app/api/user/feed/route.ts:30-39` -- 10 casts
+  - `src/app/api/user/drafts/route.ts:76-104` -- 14 casts
+  - `src/app/api/spotlight/route.ts:26-53` -- 10 casts
+  - `src/app/api/team-graphic/route.tsx:101-107` -- 7 casts
+- **Impact:** The `@neondatabase/serverless` `neon()` tagged template returns rows typed as `Record<string, unknown>`, so every field access requires a cast. The codebase universally uses `as` casts with zero runtime validation. A schema change or migration bug would silently produce wrong data or runtime crashes.
+- **Fix:** Define typed row interfaces (e.g., `ShareRow`, `DraftRow`) and create a thin query wrapper that validates row shape, or use Zod schemas for DB row validation. Example:
+  ```typescript
+  const ShareRowSchema = z.object({
+    id: z.string(),
+    data: z.record(z.unknown()),
+    created_at: z.coerce.date(),
+    view_count: z.number(),
+    is_public: z.boolean(),
+  });
+  ```
 
-```typescript
-// src/lib/cache.ts:29
-export async function cacheGet<T>(key: string, schema?: ZodType<T>): Promise<T | null> {
-  // ...
-  if (!schema) return raw as T;  // ← UNSOUND: T is unconstrained, no runtime validation
-```
+### Finding 2.2 -- `@pkmn/dex` field casts
+- **File:** `src/lib/data/pkmn-dex-fallback.ts`
+- **Severity:** Medium
+- **Instances:**
+  - Line 57: `entry.baseStats as StatSpread` -- `@pkmn/dex` `StatsTable<number>` is structurally identical to `StatSpread`. Safe but brittle.
+  - Line 66: `entry.types as PokemonType[]` -- `@pkmn/dex` uses `TypeName` (branded string), project uses `PokemonType` (string union). Structurally compatible but the cast silences potential mismatches.
+  - Line 75: `Object.values(entry.abilities) as string[]` -- strips brand. Safe.
+  - Lines 111, 119, 130, 157-158: `item.megaStone as Record<string, string>` -- `megaStone` is typed as `{ [megaEvolves: SpeciesName]: SpeciesName }` in `@pkmn/dex`. The cast drops the brand.
+- **Fix:** Create a mapping utility `function toPokemonType(t: TypeName): PokemonType | null` that validates membership in the `PokemonType` union.
 
-**Impact:** High. When callers omit the `schema` parameter, the cached value is blindly cast to `T`. A stale Redis entry with the wrong shape silently becomes a type lie. The comment on line 27 acknowledges this (`unchecked cast (VGC-146)`).
+### Finding 2.3 -- Partial-to-full StatSpread cast
+- **File:** `src/lib/analysis/stat-calculator.ts:58,74`
+- **Code:** `return result as StatSpread;`
+- **Severity:** Medium
+- **Impact:** `result` is `Partial<StatSpread>` built by iterating over all 6 stat names. The loop guarantees all keys are set, but TypeScript cannot verify this. Fragile if `StatName` is extended.
+- **Fix:** Initialize as full `StatSpread` with zeros, or use `Object.fromEntries`.
 
-**Recommendation:** Require the schema parameter or deprecate the schema-less overload. Alternatively, constrain `T extends Record<string, unknown>` at minimum.
+### Finding 2.4 -- `bytes.buffer as ArrayBuffer`
+- **File:** `src/lib/sharing/url-codec.ts:188`
+- **Severity:** Low
+- **Impact:** `Uint8Array.buffer` returns `ArrayBufferLike`, not `ArrayBuffer`. Technically unsound but works in all JS engines.
 
-### `paginate<T>` — Acceptable
-
-```typescript
-// src/app/api/user/export/route.ts:97
-function paginate<T>(rows: T[]): { data: T[]; truncated: boolean }
-```
-
-This is a simple utility generic — unconstrained `T` is fine here since it just slices arrays.
-
----
-
-## 4. Type Assertions (`as`) — 95+ occurrences
-
-### Pattern A: Database row casting (SYSTEMIC — ~60 occurrences)
-
-The most prevalent pattern across all API routes:
-
-```typescript
-const data = row.data as Record<string, unknown>;
-(row.created_at as Date).toISOString();
-(row.view_count as number)
-```
-
-**Impact:** Medium-High. The neon serverless driver returns `Record<string, unknown>` rows. Every property access requires a cast. This is a systemic weakness — if column types change or a query is modified, these casts silently produce incorrect types.
-
-**Recommendation:** Define typed row interfaces per query, or use a typed query builder (e.g., Drizzle, Kysely) that maps SQL schema to TypeScript types.
-
-### Pattern B: @pkmn/dex library casting (~10 occurrences)
-
-```typescript
-// src/lib/data/pkmn-dex-fallback.ts:57
-const baseStats = entry.baseStats as StatSpread;
-const types = entry.types as PokemonType[];
-const ms = item.megaStone as Record<string, string> | undefined;
-```
-
-**Impact:** Medium. The `@pkmn/dex` library has its own type system that doesn't perfectly align with the app's domain types. These casts bridge the two type worlds. Validated by subsequent null/existence checks in most cases.
-
-### Pattern C: Webhook/external data casting (~5 occurrences)
-
-```typescript
-// src/app/api/webhooks/clerk/route.ts:46
-const data = event.data as unknown as ClerkUserCreatedData;
-
-// src/app/api/webhooks/posthog/route.ts:64
-properties: typeof r[2] === "string" ? JSON.parse(r[2]) : (r[2] as Record<string, unknown>) ?? {},
-```
-
-**Impact:** Medium. The double-cast in the Clerk webhook (`as unknown as`) fully bypasses type safety. If Clerk's API changes the event shape, this would silently produce wrong types.
-
-### Pattern D: URL params/localStorage casting (~5 occurrences)
-
-```typescript
-// src/hooks/useExploreUrlSync.ts:55
-const sort = params.get("sort") as FilterState["sort"];
-
-// src/hooks/useShareUrl.ts:202
-settle(state as ShareableState, editable);
-```
-
-**Impact:** Low-Medium. The `useExploreUrlSync` cast is immediately validated on the next line (`includes()` check). The `useShareUrl` cast is after stripping internal flags, which is reasonable.
-
-### Pattern E: Explore route multi-query destructuring
-
-```typescript
-// src/app/api/explore/route.ts:248
-const [likeRows, commentRows, collabRows, verifiedRows] = await Promise.all(queries) as [
-  Array<Record<string, unknown>>,
-  Array<Record<string, unknown>>,
-  Array<Record<string, unknown>>,
-  Array<Record<string, unknown>>?,
-];
-```
-
-**Impact:** Medium. Casting `Promise.all` results to a specific tuple. If the queries array ordering changes, the types silently become incorrect. A typed wrapper would be safer.
+### Finding 2.5 -- `localStorage` value cast
+- **File:** `src/lib/i18n/index.ts:53`
+- **Code:** `localStorage.getItem(STORAGE_KEY) as LanguageCode | null`
+- **Severity:** Medium
+- **Impact:** Corrupted localStorage value could crash downstream. Should validate against known language codes.
+- **Fix:** `LANGUAGES.find(l => l === raw) ?? DEFAULT_LANGUAGE`
 
 ---
 
-## 5. Non-null Assertions (`!`)
+## Category 3: Unnarrowed `catch (e)` Blocks (55+ instances)
 
-Only **3 non-null assertions** found:
-
-| File | Line | Code | Risk |
-|------|------|------|------|
-| `src/lib/db.ts` | 4 | `process.env.DATABASE_URL!` | **Low** — app cannot function without this; crashes immediately if missing. Acceptable for required env vars. |
-| `src/lib/rate-limit.ts` | 24 | `redis: redis!` | **Medium** — this code path is only reached when `redis` is truthy (checked on line 72: `if (redis)`), but the assertion is inside `getUpstashLimiter` which doesn't itself verify. If called directly, could NPE. |
-| `src/hooks/useCollaborativeSync.ts` | 72 | `key: editKey!` | **Low** — guarded by `if (!enabled || !shareId || !editKey)` early return on line 57. The assertion is inside the `connect()` closure that only runs after the guard. |
-
-**Verdict:** Minimal non-null assertion usage. The `redis!` in rate-limit.ts is the only one with any real risk.
+### Finding 3.1 -- API routes universally use `catch (e)` without narrowing
+- **Severity:** Medium-High (systemic)
+- **Pattern:** `try { ... } catch (e) { console.error("...", e); return NextResponse.json(...); }`
+- **Good example:** `src/app/api/cron/posthog-errors/route.ts:297` -- uses `e instanceof Error ? e.message : "Unknown error"`
+- **Impact:** 55+ routes pass raw `unknown` to `console.error` without narrowing. Functionally harmless for basic logging but prevents structured error reporting.
+- **Affected:** All 50+ API routes, plus `src/lib/db.ts:12`, `src/lib/email.ts:81,176`, `src/lib/notifications.ts:22,46`
+- **Fix:** Create a shared error handler:
+  ```typescript
+  export function logError(context: string, e: unknown): string {
+    const message = e instanceof Error ? e.message : String(e);
+    console.error(`${context}:`, e instanceof Error ? e : message);
+    return message;
+  }
+  ```
 
 ---
 
-## Summary of Priorities
+## Category 4: Missing Return Types on Exported Functions
 
-| Priority | Issue | Count | Recommended Fix |
-|----------|-------|-------|----------------|
-| **High** | `cacheGet<T>` unchecked cast | 1 | Require Zod schema or split into typed/untyped variants |
-| **High** | DB row `as` casts without validation | ~60 | Introduce typed query helpers or row interfaces |
-| **Medium** | API route handlers missing return types | 72 | Add `Promise<NextResponse>` (low urgency for Next.js) |
-| **Medium** | Double-cast in Clerk webhook | 1 | Use Zod schema to validate event.data |
-| **Medium** | Explore route Promise.all tuple cast | 1 | Type the queries array or use named results |
-| **Low** | @pkmn/dex bridge casts | ~10 | Acceptable given library boundary |
-| **Low** | lib functions missing void return type | 5 | Minor docs improvement |
+### Finding 4.1 -- Core library functions missing explicit return types
+- **Severity:** Medium
+- **Instances:**
+  - `src/lib/db.ts:3` -- `getDb()` returns inferred neon query function
+  - `src/lib/db.ts:9` -- `ensureTable()` returns inferred `Promise<void>`
+  - `src/lib/notifications.ts:9,30` -- `createNotification`, `notifyFollowers`
+  - `src/lib/discord-webhook.ts:15` -- `postToBuildsChannel`
+  - `src/lib/discord-bot.ts:60` -- `postFeedbackEmbed`
+  - `src/lib/email.ts:23` -- `sendEmail` returns `Promise<any>` (from `res.json()`)
+  - `src/lib/posthog-server.ts:24` -- `captureServerEvent`
+- **Impact:** Without explicit return types on exported functions, internal refactors can silently change the public API. `sendEmail` is worst -- returns raw `res.json()` which is `Promise<any>`.
+
+---
+
+## Category 5: Unsound Generic / Schema Gaps
+
+### Finding 5.1 -- `CalcEntrySchema` is `z.unknown()`
+- **File:** `src/lib/sharing/url-codec.ts:7`
+- **Severity:** Medium
+- **Impact:** The `ShareableStateSchema` validates everything except calc entries, which pass through as `unknown`. Malformed calc data in shared URLs is never validated.
+
+### Finding 5.2 -- `cacheGet<T>` unchecked cast path
+- **File:** `src/lib/cache.ts:35`
+- **Code:** `if (!schema) return raw as T;`
+- **Severity:** Medium
+- **Impact:** When called without a Zod schema (common case), cached values are returned with an unchecked cast. Stale or corrupted cache entries propagate silently.
+
+---
+
+## Category 6: Missing Null/Undefined Checks
+
+### Finding 6.1 -- `process.env.DATABASE_URL!` non-null assertion
+- **File:** `src/lib/db.ts:4`
+- **Severity:** Medium
+- **Impact:** Only `!` assertion on an env var in the codebase. Every other env var is checked gracefully. Crashes with unhelpful error if unset.
+
+### Finding 6.2 -- `redis!` non-null assertion
+- **File:** `src/lib/rate-limit.ts:24`
+- **Severity:** Low
+- **Impact:** Sound (guarded by `if (redis)` in caller) but non-obvious.
+
+---
+
+## Category 7: Untyped External API Responses
+
+### Finding 7.1 -- `res.json()` returns implicit `any`
+- **Files:**
+  - `src/lib/linear.ts:32` -- `const data = await res.json();` then `data.data`, `data.errors` accessed untyped
+  - `src/lib/discord-bot.ts:33` -- `return res.json();` -- return type is `Promise<any>`
+  - `src/lib/email.ts:56` -- `return res.json();` -- return type is `Promise<any>`
+  - `src/lib/utils/pokepaste.ts:19,22,44,47` -- accessing `.error`, `.paste`, `.title`, `.url` on untyped response
+- **Severity:** Medium
+- **Fix:** Define response interfaces and validate or cast at the boundary.
+
+---
+
+## Metrics Summary
+
+| Category | Count | Severity |
+|----------|-------|----------|
+| Explicit `any` usage | 1 | Medium |
+| Unsafe `as` assertions | 43+ | High (DB rows), Medium (others) |
+| Unnarrowed `catch (e)` | 55+ | Medium |
+| Missing return types (exported) | 10+ | Medium |
+| Schema/validation gaps | 2 | Medium |
+| Missing null checks | 2 | Medium |
+| Untyped API responses | 6+ | Medium |
+
+---
+
+## Top 10 Recommended Fixes (by impact)
+
+1. **Create typed DB row interfaces + validation** -- Eliminates 43+ `as` casts across all API routes. Single highest-impact change.
+2. **Shared error handler for catch blocks** -- Eliminates 55+ unnarrowed catch patterns in one utility.
+3. **Type the `linearQuery` / `discordFetch` / `sendEmail` return values** -- Stops `any` from `res.json()` propagating through the lib layer.
+4. **Add Zod schema to `CalcEntrySchema`** -- Closes the validation gap in shared URL decoding.
+5. **Replace `process.env.DATABASE_URL!` with a checked accessor** -- Prevents cryptic runtime crash on missing env var.
+6. **Pass Zod schemas to `cacheGet` calls** -- Validates cached data matches expected shape.
+7. **Add explicit return types to all exported functions in `src/lib/`** -- Prevents silent API drift.
+8. **Validate localStorage values** (`i18n/index.ts`) -- Prevents corrupted stored preference from crashing.
+9. **Create `toPokemonType()` bridge for `@pkmn/dex`** -- Type-safe boundary between external and internal type systems.
+10. **Change `Record<string, any>` to `Record<string, unknown>` in migrate route** -- Eliminates the only explicit `any` in production code.

@@ -87,7 +87,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
 
             <button
               onClick={onToggleDarkMode}
-              className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all cursor-pointer"
               aria-label="Toggle dark mode"
             >
               {darkMode ? (

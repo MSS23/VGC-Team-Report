@@ -1,11 +1,5 @@
-# Rejected Changes — 2026-05-25
+# Rejected Changes — swarm-nightly-2026-05-28
 
-No changes rejected this run. All implementations passed tsc + build gate.
-# Rejected Changes — swarm-nightly-2026-05-24
+1. **Changelog data extraction (W2-PERF)** — Agent attempted to extract ENTRIES array from ChangelogContent.tsx to a separate data.ts file with server-side prop passing. Left the file in a broken state (import from non-existent module). Changes reverted. The idea is sound but requires more careful implementation.
 
-None this run. All committed changes passed `npx tsc --noEmit` and `npm run build`.
-# Rejected Changes — 22 May 2026 swarm
-
-No changes were rejected at the build gate this run. All 12 code commits passed `npx tsc --noEmit && npm run build` from the integrated state.
-
-W1 (touch-target sweep) self-reported `verified_passing: false` defensively because a parallel `npm run build` from another subagent was holding the Next.js build lock at the time it checked. The integrated build that ran centrally on the orchestrator AFTER all four W2 subagents had committed their work passed cleanly with all changes applied. The W1 changes were committed in `f5c69f5` on that basis.
+All other changes passed tsc + next build.

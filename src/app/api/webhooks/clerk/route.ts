@@ -67,6 +67,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("Clerk webhook handler error:", e);
-    return NextResponse.json({ ok: false, error: "handler_error" });
+    // Return HTTP 200 even on internal/handler errors so Clerk does not
+    // auto-disable the webhook or retry (which would cause duplicate welcome
+    // emails). Signature verification failures above still return 4xx.
+    return NextResponse.json({ ok: false, error: "handler_error" }, { status: 200 });
   }
 }

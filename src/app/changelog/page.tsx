@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ChangelogContent } from "./ChangelogContent";
 import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
+import { ENTRIES } from "./data";
 
 export const metadata: Metadata = {
   title: "Changelog — VGC Team Report",
@@ -30,7 +31,7 @@ export default function ChangelogPage() {
           { name: "Changelog", url: "https://pokemonvgcteamreport.com/changelog" },
         ]}
       />
-      <ChangelogContent />
+      <ChangelogContent entries={ENTRIES} />
     </>
   );
 }

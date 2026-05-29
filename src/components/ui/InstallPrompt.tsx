@@ -29,14 +29,16 @@ export function InstallPrompt() {
     let timerFired = false;
     let scrollFired = false;
     let promptReady = false;
+    let isIOSSafari = false;
 
     const maybeReveal = () => {
-      // Short-page rescue: non-scrolling pages can never satisfy scrollFired
-      // (mirrors the iOS path rescue — same 200px threshold). Without this,
-      // desktop Chrome users on the home page or other short routes get the
-      // beforeinstallprompt event but never see the bottom sheet.
-      const pageIsShort = document.documentElement.scrollHeight - window.innerHeight < 200;
-      if (timerFired && (scrollFired || pageIsShort) && promptReady) setDismissed(false);
+      // The engagement timer below treats a short (non-scrolling) page as
+      // having satisfied the scroll gate, so this single check works for both
+      // Android/Chrome (beforeinstallprompt) and iOS Safari short pages.
+      if (timerFired && scrollFired && promptReady) {
+        if (isIOSSafari) setShowIOSPrompt(true);
+        setDismissed(false);
+      }
     };
 
     const onScroll = () => {
@@ -50,6 +52,14 @@ export function InstallPrompt() {
 
     const engagementTimer = setTimeout(() => {
       timerFired = true;
+      // If the page is too short to scroll 200px (e.g. iPad full-viewport,
+      // short content pages), treat the scroll gate as satisfied so the
+      // prompt isn't blocked forever on both Android and iOS paths.
+      const pageIsShort = document.documentElement.scrollHeight - window.innerHeight < 200;
+      if (pageIsShort && !scrollFired) {
+        scrollFired = true;
+        window.removeEventListener("scroll", onScroll);
+      }
       maybeReveal();
     }, 60000);
 
@@ -62,25 +72,15 @@ export function InstallPrompt() {
     };
     window.addEventListener("beforeinstallprompt", handler);
 
-    // iOS Safari: show manual instructions after engagement gates
+    // iOS Safari: show manual instructions after engagement gates.
+    // iOS never fires beforeinstallprompt, so we mark promptReady and use
+    // setShowIOSPrompt in maybeReveal. The shared engagement timer (above)
+    // already handles the pageIsShort bypass for the scroll gate.
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
     const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
     if (isIOS && isSafari) {
-      const iosTimer = setTimeout(() => {
-        // Show if user scrolled OR if the page has insufficient scroll height
-        // (non-scrolling pages like iPad full-viewport, content shorter than 200px)
-        const pageIsShort = document.documentElement.scrollHeight - window.innerHeight < 200;
-        if (scrollFired || pageIsShort) {
-          setShowIOSPrompt(true);
-          setDismissed(false);
-        }
-      }, 60000);
-      return () => {
-        clearTimeout(engagementTimer);
-        clearTimeout(iosTimer);
-        window.removeEventListener("scroll", onScroll);
-        window.removeEventListener("beforeinstallprompt", handler);
-      };
+      isIOSSafari = true;
+      promptReady = true;
     }
 
     return () => {

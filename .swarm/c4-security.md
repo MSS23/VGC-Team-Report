@@ -1,315 +1,222 @@
-# Security Audit — VGC Team Report
-**Date:** 2026-05-25  
-**Auditor:** Claude Code (Security Engineer role)  
-**Scope:** Full codebase at `/home/user/VGC-Team-Report`
+# C4 Security Audit — VGC Team Report
+**Date:** 2026-05-14
+**Scope:** src/app/api/, src/lib/
 
 ---
 
-## 1. npm audit Summary
+## FINDING 1 — VGC-173 RESOLVED: HogQL Injection Already Patched
 
-| Severity | Count |
-|----------|-------|
-| Critical | 0 |
-| High | 2 |
-| Moderate | 10 |
-| Low | 0 |
-# C4 Security Audit — 2026-05-24
+**Severity:** INFO (previously HIGH — now fixed)
+**File:** `src/app/api/webhooks/posthog/route.ts`
 
-**Repo:** `/home/user/VGC-Team-Report`
-**Auditor:** C4 (overnight swarm)
-**Scope:** npm audit, hardcoded secrets sweep, API route auth/SSRF/SQLi/CSRF/rate-limiting, middleware, security headers.
+Linear ticket VGC-173 described a HogQL injection at lines 33-34 using string interpolation and a naive `replace(/'/g, '')` quote-strip. **This vulnerability is NOT present in the current codebase.** The code was already patched.
 
-### High-Severity Vulnerabilities
-
-1. **js-cookie <= 3.0.5** (GHSA-qjx8-664m-686j, CVSS 7.5)
-   - Prototype hijack in `assign()` enables cookie-attribute injection
-   - Via: `@clerk/shared` → `js-cookie`
-   - Fix available: update `@clerk/shared` to latest
-
-2. **@clerk/shared** (indirect via js-cookie)
-   - Affected range: `0.18.0-mytag.691991c` through `4.13.1-canary.v20260522193509`
-   - Fix available: `npm update @clerk/shared`
-
-### Notable Moderate
-
-- **postcss < 8.5.10**: XSS via unescaped `</style>` in stringify output (via `next`)
-- **brace-expansion 5.0.2–5.0.5**: DoS via large numeric ranges
-- **uuid** (via `@cypress/request`, `@sentry/webpack-plugin`): dev dependency, no prod impact
-
-### MODERATE highlights:
-- `postcss < 8.5.10` -- XSS via unescaped `</style>` in CSS stringify output (Next.js transitive)
-- `brace-expansion 5.0.2-5.0.5` -- DoS via large numeric ranges
-- `uuid` (via `@cypress/request`, `@sentry/webpack-plugin`) -- various issues
-
-## 2. Hardcoded Secrets Scan
-
-### P1 — Hardcoded Discord Application Public Key
-
-**File:** `src/app/api/discord/route.ts:6`
-```ts
-const DISCORD_PUBLIC_KEY = "44b2cb02932ad5b5eae681352246314ffb23ecd299c2490d7875d5883e5596ae";
+**Current (safe) implementation (lines 46-52):**
+```typescript
+query:
+  "SELECT event, timestamp, properties FROM events WHERE properties.$session_id = {session_id} AND timestamp <= {before_ts} ORDER BY timestamp DESC LIMIT 15",
+values: { session_id: sessionId, before_ts: beforeTimestamp },
 ```
 
-**Severity: LOW (not a secret)**  
-This is the Discord application's **public** key used to verify incoming interaction signatures (Ed25519). It is intentionally public — Discord's documentation instructs developers to use this in request validation. It is NOT a token, API key, or signing secret. It grants no access. **Not a P0.**
-
-### Scan Results
-
-- No `sk-*`, `ghp_*`, `xoxb-*`, `AKIA*`, `whsec_*`, `sk_live_*`, `pk_live_*`, or `AIza*` patterns found in source
-- No Discord/Slack webhook URLs hardcoded in source
-- No hardcoded passwords, tokens, or API keys
-- All secrets properly loaded via `process.env.*`
-
-**Verdict: PASS — No hardcoded secrets found.**
-
----
-
-## 3. OWASP Top 10 — API Route Review
-
-### 3.1 SQL Injection
-
-**Status: PASS**
-
-All database queries use parameterized tagged template literals via the `postgres` library (`sql\`...\``). Values are bound as parameters, never interpolated.
-
-One instance of string interpolation in a **GraphQL** query (not SQL):
-- `src/app/api/cron/daily-ops/route.ts:84` — `teamId` interpolated into Linear GraphQL query string
-- **Risk: Low** — `teamId` comes from `process.env.LINEAR_TEAM_ID` (server-controlled), not user input. No injection vector.
-
-### 3.2 XSS
-
-**Status: PASS**
-
-- User input is sanitized with `escapeHtml()` before storage (feedback, comments, profiles)
-- Word filter applied to user-generated content
-- Responses are JSON (not HTML), so reflected XSS is not applicable
-- CSP is comprehensive (see section 5)
-
-### 3.3 SSRF
-
-**Status: PASS**
-
-- `/api/pokepaste` — URL validated with Zod `.url()` + hostname restricted to `pokepast.es` only
-- `/api/sprite` — Strict allowlist: only `play.pokemonshowdown.com` host + `/sprites/` path prefix
-- PostHog webhook — `sessionId` validated as UUID before use in API call; host is server-controlled env var
-- No user-controlled fetch URLs without validation
-
-### 3.4 Authentication / Authorization
-
-**Status: PASS (mostly)**
-
-| Route | Auth | Notes |
-|-------|------|-------|
-| `/api/share` (POST) | Clerk `auth()` | Required for create + update |
-| `/api/feedback` (POST) | Clerk `auth()` | Required |
-| `/api/comments` (POST) | `apiGuard` only | No auth required — anonymous commenting allowed by design (session-based) |
-| `/api/user/*` | Clerk `auth()` | All user routes require auth |
-| `/api/match-log` | Clerk `auth()` | Required |
-| `/api/webhooks/clerk` | `verifyWebhook()` signature | Proper |
-| `/api/webhooks/linear` | HMAC SHA-256 + `timingSafeEqual` | Proper |
-| `/api/webhooks/posthog` | Token + `timingSafeEqual` | Proper |
-| `/api/cron/*` | `isCronAuthorized()` with `timingSafeEqual` | Proper |
-| `/api/bot` | `CRON_SECRET` bearer + `timingSafeEqual` | Proper |
-| `/api/discord` | Ed25519 signature verification | Proper |
-| `/api/migrate` | `MIGRATE_SECRET` body comparison | **Finding below** |
-| `/api/cleanup` (DELETE) | Bearer token comparison | **Finding below** |
-
-#### Finding: Non-timing-safe comparison in `/api/cleanup` DELETE handler
-
-**File:** `src/app/api/cleanup/route.ts:100`
-```ts
-if (!CLEANUP_SECRET || authHeader !== `Bearer ${CLEANUP_SECRET}`) {
+Variables are bound via PostHog's `values` parameter map — never interpolated into the query string. Additionally, `sessionId` is validated against a strict UUID regex before use (lines 28-29):
+```typescript
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+if (!UUID_RE.test(sessionId)) return [];
 ```
 
-**Severity: LOW** — Uses simple `!==` instead of `timingSafeEqual`. Theoretical timing oracle, but impractical over network. The GET handler correctly uses `isCronAuthorized()` with timing-safe comparison.
+No remediation needed.
 
-#### Finding: Non-timing-safe comparison in `/api/migrate`
+---
 
-**File:** `src/app/api/migrate/route.ts:23`
-```ts
-if (!secret || secret !== process.env.MIGRATE_SECRET) {
+## FINDING 2 — GraphQL String Interpolation in Cron Routes (LOW-MEDIUM)
+
+**Severity:** LOW-MEDIUM
+**Files:**
+- `src/app/api/cron/daily-ops/route.ts:84`
+- `src/app/api/cron/weekly-report/route.ts:30-32`
+
+Several cron routes build Linear GraphQL queries via template literal interpolation of environment-sourced values:
+
+**daily-ops/route.ts line 84:**
+```typescript
+query: `{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title updatedAt } } } }`,
 ```
 
-**Severity: LOW** — Same pattern. Admin-only endpoint, practical risk is negligible.
+**weekly-report/route.ts lines 30-32:**
+```typescript
+const completed = await query(`{ team(id: "${teamId}") { issues(filter: { state: { type: { eq: "completed" } }, completedAt: { gte: "${oneWeekAgo}" } }, first: 50) { nodes { identifier title } } } }`);
+const inProgress = await query(`{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title } } } }`);
+const inReview   = await query(`{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Review" } } }, first: 50) { nodes { identifier title } } } }`);
+```
 
-### 3.5 Rate Limiting
+**Risk assessment:** `teamId` and `oneWeekAgo` are both sourced exclusively from `process.env` and `new Date()` — not from user input. Exploitability is low in the current threat model. However, the pattern is fragile: if a future refactor passes `teamId` from a request parameter, injection becomes possible.
 
-**Status: PASS**
+**Contrast:** `getOrCreateOpsLabel()` in `daily-ops/route.ts` (lines 173, 183-188) correctly uses GraphQL `$variables` for the same Linear API — inconsistent pattern within the same file.
 
-All public-facing endpoints use `apiGuard()` with `isRateLimitedAsync()` (Upstash-backed distributed rate limiting):
-- Explore: 30/min
-- Share: 20/min
-- Comments read: 60/min, write: 5/min
-- Pokepaste: 20/min
-- Views: 60/min
-- Feedback: 3/min (per userId)
-- Match log: 60/min
-- Profile: 30/min read, 10/min write
+**Proposed fix — use GraphQL variables consistently:**
+```typescript
+// Instead of:
+body: JSON.stringify({
+  query: `{ team(id: "${teamId}") { ... } }`,
+})
 
-### 3.6 Insecure Direct Object References (IDOR)
-
-**Status: PASS**
-
-- Share updates require valid `editToken` (64-char hex, cryptographically random)
-- Match log delete verifies `user_id = ${userId}` (ownership check)
-- User routes scoped to authenticated user's own data
-- Report visibility changes enforce owner-only check
-
-### 3.4 Rate Limiting -- PASS (with note)
-
-## 4. Input Validation
-
-**Status: PASS**
-
-Zod is used extensively across all API routes:
-- `src/app/api/share/route.ts` — `ShareBodySchema`
-- `src/app/api/feedback/route.ts` — `FeedbackBody`
-- `src/app/api/comments/[shareId]/route.ts` — `CommentBody`
-- `src/app/api/pokepaste/route.ts` — `PokePasteCreateSchema`, `PokePasteUrlSchema`
-- `src/app/api/match-log/route.ts` — `MatchLogBody`
-- `src/app/api/user/profile/route.ts` — `ProfileBody`
-- `src/app/api/views/[shareId]/route.ts` — `ViewBody`
-
-Share ID validated with regex (`/^[a-zA-Z0-9_-]{6,16}$/`). UUID validation on delete params.
+// Use:
+body: JSON.stringify({
+  query: `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title updatedAt } } } }`,
+  variables: { teamId },
+})
+```
 
 ---
 
-## 5. CORS / CSP / Security Headers
+## FINDING 3 — VGC-174 CONFIRMED: Timing-Safe Bot Auth Applied Correctly
 
-### CORS (`src/lib/security/cors.ts` + `src/middleware.ts`)
+**Severity:** INFO (fix verified)
+**File:** `src/app/api/bot/route.ts:44-47`
 
-**Status: PASS**
+The bot route uses `crypto.timingSafeEqual` correctly to prevent timing oracle attacks on the CRON_SECRET:
+```typescript
+const { timingSafeEqual } = await import("crypto");
+const aLen = Math.max(authHeader.length, expected.length);
+if (!timingSafeEqual(Buffer.from(authHeader.padEnd(aLen)), Buffer.from(expected.padEnd(aLen))) || authHeader.length !== expected.length) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
 
-- Strict origin allowlist (production domain, Vercel preview deploys)
-- Cross-origin API requests from unknown origins blocked at middleware level
-- CORS headers only reflect allowed origins
-- Webhooks/Discord exempted (server-to-server, no browser origin)
+The padding + length check combination is sound — constant-time compare on padded buffers, then explicit length check to reject wrong-length inputs that would pass the padded comparison.
 
-### CSP (`next.config.ts`)
+**Secondary finding — `isCronAuthorized()` uses naive string comparison (LOW):**
 
-**Status: PASS — Comprehensive**
+`src/lib/cron-auth.ts:10` uses a simple `===` comparison:
+```typescript
+return authHeader === `Bearer ${cronSecret}`;
+```
 
-- `default-src 'self'`
-- `script-src` allows: self, inline (needed for Next.js), Clerk, Vercel, Sentry, PostHog, Cloudflare
-- `object-src 'none'`
-- `frame-ancestors 'none'`
-- `upgrade-insecure-requests`
-- `form-action` restricted to self + Clerk OAuth
+This function is used by `daily-ops`, `weekly-report`, `posthog-errors`, and `cleanup` cron routes. The bot route correctly does its own timing-safe check and does NOT use `isCronAuthorized()`. The cron routes using `isCronAuthorized()` are only callable by Vercel's cron infrastructure (reducing practical exploitability), but the inconsistency is a hazard.
 
-**Note:** `'unsafe-inline'` in `script-src` weakens CSP but is required by Next.js. This is standard.
+**Proposed fix for `src/lib/cron-auth.ts`:**
+```typescript
+import { timingSafeEqual } from "crypto";
 
-### Additional Headers
+export function isCronAuthorized(request: Request): boolean {
+  const authHeader = request.headers.get("authorization") ?? "";
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) return false;
 
-- `X-Frame-Options: DENY`
-- `X-Content-Type-Options: nosniff`
-- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Permissions-Policy` blocks camera, mic, geo, payment, USB, sensors
-- `Cross-Origin-Opener-Policy: unsafe-none` (required for Clerk OAuth popups)
-
-### CSRF Protection (`src/middleware.ts` + `src/lib/security/csrf.ts`)
-
-- Double-submit cookie pattern
-- Enforced on cross-origin state-changing requests
-- Same-origin requests (no Origin header) pass through (safe by CORS)
-
-### Bot Detection (`src/middleware.ts`)
-
-- Known scraper user-agents blocked
-- Suspicious request heuristics on API routes
-- Cron/webhook routes exempted (authenticated by secrets)
+  const expected = `Bearer ${cronSecret}`;
+  if (authHeader.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected));
+}
+```
 
 ---
 
-## 6. Summary of Findings
+## FINDING 4 — Hardcoded Linear Label UUIDs (INFO)
 
-| ID | Severity | Finding | Recommendation |
-|----|----------|---------|----------------|
-| S1 | HIGH | `js-cookie` prototype pollution via `@clerk/shared` | Run `npm update @clerk/shared` or pin `js-cookie >= 3.0.6` |
-| S2 | LOW | Non-timing-safe secret comparison in `/api/cleanup` DELETE | Replace `!==` with `timingSafeEqual` (match GET handler pattern) |
-| S3 | LOW | Non-timing-safe secret comparison in `/api/migrate` | Replace `!==` with `timingSafeEqual` |
-| S4 | INFO | `teamId` interpolated in GraphQL string (daily-ops cron) | Use GraphQL variables for consistency (no exploitability — env-only value) |
-| S5 | INFO | `unsafe-inline` in CSP `script-src` | Standard for Next.js; consider nonce-based CSP if feasible in future |
+**Severity:** INFO
+**Files:**
+- `src/app/api/webhooks/posthog/route.ts:407-413`
+- `src/app/api/cron/posthog-errors/route.ts:25-27`
 
----
+Linear label IDs are hardcoded as UUIDs in both files:
+```typescript
+const LABELS = {
+  bug: "bbd03f4e-be6f-4617-ad7d-b9fdc596ce5c",
+  improvement: "06d28974-98c3-457a-bbab-ab85456e51f0",
+  webApp: "1f355942-6143-47a8-93be-4a5cbe0de0b0",
+  mobile: "5389312c-66f8-4ced-a840-ff3cd46b68aa",
+  analytics: "a13703f8-0865-4a6d-b74c-56a7abc2f563",
+  infrastructure: "a0e2ddf6-557d-4164-b049-a4ee36ee342f",
+};
+```
 
-## 7. Positive Security Patterns Observed
-
-- Webhook signature verification uses `timingSafeEqual` throughout (Clerk, Linear, PostHog)
-- Distributed rate limiting via Upstash (survives Lambda cold starts)
-- SSRF mitigated via strict host/path allowlists
-- SQL injection impossible via tagged template parameterization
-- Proper auth boundaries (owner-only visibility changes, IDOR prevention)
-- Deduplication on PostHog webhook prevents ticket flooding
-- AbortController timeouts on all external fetches (3-8s)
-- Comprehensive CSP with `frame-ancestors 'none'` and `upgrade-insecure-requests`
-## Hardcoded-Secret Findings — None (P0 clean)
-
-No webhook secrets, API keys, bearer tokens, AWS keys, or private keys are committed in `src/` or config files. All sensitive material is read from `process.env`. The one literal that looks like a secret is the **Discord Ed25519 public key** in `src/app/api/discord/route.ts:6` — that is correctly a public value (used by `nacl.sign.detached.verify` to verify Discord-signed interactions), and is the value Discord publishes for the application. Not a finding.
-
-Searched patterns: `LINEAR_WEBHOOK_*_SECRET` literals, `lin_api*`, `sk_live`, `sk_test`, `AKIA*`, `ghp_/gho_/ghs_/github_pat_`, `xoxb-`, `BEGIN RSA/PRIVATE KEY`, `password = "…"`, `secret = "…"`, `Bearer <literal>`. All hits resolved to `process.env.*` references.
+These are Linear workspace-internal label IDs — not secrets (no auth capability, no token). Safe to commit. No remediation needed.
 
 ---
 
-## Top 5 Findings (ordered by severity)
+## FINDING 5 — No Hardcoded API Keys or Secrets Found
 
-### 1. `src/app/api/migrate/route.ts:23` — MIGRATE_SECRET compared with `!==` (timing side-channel) — **MEDIUM**
-The migrate POST handler uses `secret !== process.env.MIGRATE_SECRET`. A naive string `!==` short-circuits character-by-character, leaking the secret one byte at a time over many requests. The route triggers a full table rewrite (`UPDATE shares`) — high blast radius if guessed.
-**Fix:** Use the same `timingSafeEqual(Buffer.from(...), Buffer.from(...))` pattern already in `src/lib/cron-auth.ts`. While there, also accept the secret via `Authorization: Bearer` header instead of in the JSON body so it doesn't end up in request-body logs.
+**Severity:** INFO (pass)
 
-### 2. `src/app/api/setup/route.ts:7` and `src/app/api/cleanup/route.ts:100` — `!==` bearer comparison — **MEDIUM**
-Same class of issue: `authHeader !== \`Bearer ${secret}\`` is non-constant-time. Both routes are destructive (table init / mass delete).
-**Fix:** Replace both with `isCronAuthorized(request)` or an inline `timingSafeEqual` call.
-
-### 3. `src/app/api/bot/route.ts:64-66` — tangled custom timing-safe compare — **LOW (defence-in-depth)**
-Pads to equal length before `timingSafeEqual` then trails a `|| authHeader.length !== expected.length` check. Functionally safe (the pads prevent the throw path; the length check rejects matching-prefix attacks), but unnecessarily clever. **Fix:** rewrite using the simple pattern in `src/lib/cron-auth.ts` (length check first, then `timingSafeEqual`).
-
-### 4. `src/app/api/comments/flag/route.ts:14` — client-supplied `sessionId` lets attackers brigade-hide comments — **LOW**
-The flag endpoint dedups on `(comment_id, session_id)` where `session_id` is taken from the request body. 3 unique flags auto-deletes a comment. An attacker rotating sessionIds (rate limited 10/min per IP, but trivially distributable) can hide any comment.
-**Fix:** derive the flagger identity server-side — hash `(ip + UA + day)` or require Clerk auth for flagging.
-
-### 5. `src/app/api/views/[shareId]/route.ts:18` — missing `shareId` format validation — **LOW**
-Unlike `comments/[shareId]` (which checks `SHARE_ID_RE`), the `views`, `reactions`, `changelog`, and `team-graphic` routes pass the raw `shareId` straight into SQL params and Upstash keys (`view:${shareId}:…`). SQL is safe (parameterised), but a 10 KB shareId would burn Upstash storage and request size, and yields 200 OKs on garbage input.
-**Fix:** add `if (!/^[A-Za-z0-9_-]{6,16}$/.test(shareId)) return 400` at the top of all four routes.
+A scan of all files in `src/lib/` and `src/app/api/` found no hardcoded API keys, tokens, passwords, or secrets. All sensitive values are correctly read from `process.env`. No remediation needed.
 
 ---
 
-## npm audit summary
+## FINDING 6 — SSRF: Sprite and PokePaste Proxies Are Properly Allow-Listed
 
-| severity | count |
-|----------|-------|
-| critical | 0 |
-| **high** | **2** |
-| moderate | 10 |
-| low | 0 |
-| **total** | **12** |
+**Severity:** INFO (pass)
+**Files:** `src/app/api/sprite/route.ts`, `src/app/api/pokepaste/route.ts`
 
-High-severity advisories:
-- **`@clerk/shared`** (transitive via Clerk) — pulled in by an older Clerk version; upgrading the top-level Clerk SDK clears it.
-- **`js-cookie`** — GHSA covering "per-instance prototype hijack in `assign()` enables cookie-attribute injection". `fixAvailable: true` per the audit JSON.
+The sprite proxy enforces host and path allow-lists before fetching:
+```typescript
+const ALLOWED_HOSTS = new Set(["play.pokemonshowdown.com"]);
+if (!ALLOWED_HOSTS.has(target.hostname)) return new NextResponse("Host not allowed", { status: 400 });
+if (!target.pathname.startsWith("/sprites/")) return new NextResponse("Path not allowed", { status: 400 });
+```
 
-Moderate cluster includes `qs` (DoS via null/undefined in `qs.stringify` comma-format) and `uuid <11.1.1` (buffer bounds check). Both ship via `@cypress/request` (dev-only) and `@sentry/webpack-plugin` — not exposed in the production runtime path.
-
-**Action:** `npm audit fix` clears the moderates without major bumps. The two highs need `npm i @clerk/nextjs@latest` (verify Clerk middleware still works — review `src/middleware.ts:42`).
+The PokePaste proxy enforces `hostname === "pokepast.es"` via Zod schema validation. No SSRF risk.
 
 ---
 
-## What's already good (don't regress)
+## FINDING 7 — XSS: JSON-LD Script Injection Properly Mitigated
 
-- **CSP** in `next.config.ts:81-113` is comprehensive: explicit `default-src 'self'`, `object-src 'none'`, `frame-ancestors 'none'`, `base-uri 'self'`, `upgrade-insecure-requests`. Only weak spot is `script-src 'unsafe-inline'` (required by Clerk + the theme-bootstrap inline script in `src/app/layout.tsx:102`).
-- **HSTS** at 2-year preload, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Permissions-Policy` locking down sensors — all set.
-- **Cron auth** (`src/lib/cron-auth.ts`) uses `timingSafeEqual` correctly. All cron routes and `keep-alive`/`cleanup GET` route through it.
-- **SSRF closed**: `sprite/route.ts:40-45` enforces host *and* path allowlist (Showdown only); `pokepaste/route.ts:12-21` requires hostname === `pokepast.es` via Zod refine. No reflective fetch of user-controlled URLs elsewhere.
-- **SQLi closed**: every `getDb()` call uses tagged-template parameter binding (Neon serverless driver). No `sql.unsafe` / `sql.raw` / string-concat queries found.
-- **Webhook signature verification**: Discord uses Ed25519 via `tweetnacl` (`src/app/api/discord/route.ts:45`), Linear uses HMAC-SHA256 + `timingSafeEqual` (`src/app/api/webhooks/linear/route.ts:20-30`), Clerk uses `@clerk/nextjs/webhooks` `verifyWebhook` (`src/app/api/webhooks/clerk/route.ts:38`).
-- **Middleware** (`src/middleware.ts`) enforces CORS allowlist, CSRF double-submit for true-cross-origin state-changing requests, bot/suspicious-UA blocking, and canonical-host redirect — layered defence is in place.
-- **JsonLd** (`src/components/seo/JsonLd.tsx:5`) escapes `</script>` before `dangerouslySetInnerHTML` to neutralise the obvious break-out vector.
-- **Feedback / comments** apply `escapeHtml` to user strings before persisting, and `containsBlockedWords` runs against raw content.
+**Severity:** INFO (pass)
+**File:** `src/components/seo/JsonLd.tsx`
+
+`dangerouslySetInnerHTML` is used to inject JSON-LD but the output is escaped:
+```typescript
+const safe = JSON.stringify(data).replace(/<\/script>/gi, "<\\/script>");
+```
+
+This prevents `</script>` tag injection. Commit `58b5c7a` (VGC-174) applied this fix. Valid mitigation.
 
 ---
 
-## Systemic Recommendations
+## FINDING 8 — PostHog Webhook: Non-Timing-Safe Token Comparison (LOW)
 
-1. **Centralise bearer-token auth.** Three routes (`migrate`, `setup`, `cleanup DELETE`) re-implement bearer-token comparison with `!==`. Promote `isCronAuthorized` to a generic `verifyBearer(request, envVarName)` helper and switch all four privileged routes to it. Removes a recurring timing-side-channel bug class.
-2. **Adopt a shared `shareId` validator.** Half the `[shareId]` routes validate format, half don't. Add `assertValidShareId(shareId)` (regex `/^[A-Za-z0-9_-]{6,16}$/`, throws → 400) and apply uniformly in `views`, `reactions`, `changelog`, `team-graphic`. Closes the cache-bloat and 404-storm vectors.
-3. **Quarterly dependency hygiene.** With 2 high + 10 moderate advisories pending, schedule `/security-audit` as a Friday cron (it already exists per `CLAUDE.md` slash commands). Lift Sentry + Cypress + Clerk minor versions in one batched push so it's one Vercel build, not many.
+**Severity:** LOW
+**File:** `src/app/api/webhooks/posthog/route.ts:170-172`
+
+The PostHog webhook verifies the shared token using direct string equality:
+```typescript
+const token = request.headers.get("x-posthog-token");
+if (!process.env.POSTHOG_WEBHOOK_SECRET || token !== process.env.POSTHOG_WEBHOOK_SECRET) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+
+Susceptible to timing oracle attacks. Practical exploitability is low (network jitter dominates timing), but the fix is trivial given that `bot/route.ts` already sets the pattern.
+
+**Proposed fix:**
+```typescript
+import { timingSafeEqual } from "crypto";
+
+const token = request.headers.get("x-posthog-token") ?? "";
+const secret = process.env.POSTHOG_WEBHOOK_SECRET;
+if (!secret) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+if (token.length !== secret.length || !timingSafeEqual(Buffer.from(token), Buffer.from(secret))) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+
+---
+
+## Summary Table
+
+| # | Finding | Severity | Status | File |
+|---|---------|----------|--------|------|
+| 1 | VGC-173 HogQL injection | ~~HIGH~~ INFO | Fixed | webhooks/posthog/route.ts |
+| 2 | GraphQL string interpolation in cron (env-only values) | LOW-MEDIUM | Open | cron/daily-ops:84, cron/weekly-report:30-32 |
+| 3 | VGC-174 timing-safe bot auth | INFO | Verified ✓ | api/bot/route.ts:44-47 |
+| 3b | `isCronAuthorized()` naive `===` compare | LOW | Open | lib/cron-auth.ts:10 |
+| 4 | Hardcoded Linear label UUIDs | INFO | Acceptable | webhooks/posthog, cron/posthog-errors |
+| 5 | Hardcoded API keys/secrets | INFO | None found ✓ | All |
+| 6 | SSRF via sprite/pokepaste proxy | INFO | Mitigated ✓ | api/sprite, api/pokepaste |
+| 7 | XSS via JSON-LD injection | INFO | Fixed ✓ | components/seo/JsonLd.tsx |
+| 8 | PostHog webhook non-timing-safe compare | LOW | Open | webhooks/posthog/route.ts:170-172 |
+
+## Recommended Actions (Prioritized)
+
+1. **Update `src/lib/cron-auth.ts`** to use `timingSafeEqual` — 5-minute fix affecting 4 cron routes.
+2. **Update PostHog webhook token check** (`webhooks/posthog/route.ts:170-172`) to use `timingSafeEqual`.
+3. **Refactor cron GraphQL queries** to use `$variables` pattern consistently (daily-ops:84, weekly-report:30-32) — eliminates injection risk entirely if env vars are ever replaced with request-derived data.
