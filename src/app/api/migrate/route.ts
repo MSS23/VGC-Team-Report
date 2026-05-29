@@ -1,13 +1,18 @@
 import { timingSafeEqual } from "crypto";
+import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { getDb } from "@/lib/db";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 /**
  * POST /api/migrate
  *
  * Batch-migrates all reports in the database to the latest data format.
- * Protected by MIGRATE_SECRET environment variable.
+ * Protected by MIGRATE_SECRET environment variable — pass it as
+ * `Authorization: Bearer <MIGRATE_SECRET>` (no longer accepted in the JSON body).
  *
  * What it does:
  * 1. Normalizes matchupPlans from legacy planA/planB/selectedIndices → gamePlans[]
@@ -18,14 +23,42 @@ import { NextResponse } from "next/server";
  * Safe to run multiple times (idempotent).
  */
 export async function POST(request: Request) {
+  // Auth check — require bearer token to prevent abuse
+  if (!verifyBearer(request, "MIGRATE_SECRET")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { secret } = await request.json().catch(() => ({ secret: "" }));
     const expected = process.env.MIGRATE_SECRET;
     if (!secret || !expected || secret.length !== expected.length ||
       !timingSafeEqual(Buffer.from(secret), Buffer.from(expected))) {
+    // Auth check — require secret to prevent abuse.
+    // Use timing-safe comparison to prevent timing oracles; length-check first to
+    // avoid timingSafeEqual throwing on mismatched-length buffers.
+    const { secret } = await request.json().catch(() => ({ secret: "" }));
+    const expectedSecret = process.env.MIGRATE_SECRET;
+    if (!secret || !expectedSecret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const receivedBuf = Buffer.from(String(secret));
+    const expectedBuf = Buffer.from(expectedSecret);
+    if (
+      receivedBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(receivedBuf, expectedBuf)
+    if (!expectedSecret || typeof secret !== "string") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { timingSafeEqual } = await import("crypto");
+    const providedBuf = Buffer.from(secret);
+    const expectedBuf = Buffer.from(expectedSecret);
+    if (
+      providedBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(providedBuf, expectedBuf)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+  try {
     const sql = getDb();
     const stats = { total: 0, migrated: 0, searchVectorBackfilled: 0, errors: 0 };
 
@@ -48,8 +81,7 @@ export async function POST(request: Request) {
       for (const row of rows) {
         stats.total++;
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = row.data as Record<string, any>;
+          const data = row.data as Record<string, unknown>;
           const normalized = normalizeReportData(data);
           const changed = JSON.stringify(data) !== JSON.stringify(normalized);
 

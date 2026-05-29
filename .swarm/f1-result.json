@@ -1,0 +1,11 @@
+{
+  "ticket_id": "R5-W1",
+  "files_changed": [
+    "src/components/ui/TeamCardExport.tsx",
+    "src/components/ui/ShareModal.tsx"
+  ],
+  "summary": "Added optional `compact` prop to TeamCardExport that renders a scaled-down (~280px wide) visible preview of the team card without the off-screen capture node or download button. Mounted <TeamCardExport compact /> at the top of ShareModal (above the URL display row) so users see what they're sharing before any URL/social actions. Kept the full TeamCardExport with its download button in the existing social grid so the PNG export is still one tap away. All other modal pieces (visibility 3-state picker, comments toggle, public-confirm prompt, bookmark warning, growth footer) are untouched.",
+  "verified_passing": true,
+  "updates_entry": "R5-W1 (F1): ShareModal now shows a team card preview at the top before URL + social tiles; TeamCardExport gained a `compact` prop. Files: src/components/ui/TeamCardExport.tsx, src/components/ui/ShareModal.tsx. tsc + next build pass.",
+  "conflict_risk": false
+}

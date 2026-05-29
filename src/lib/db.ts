@@ -1,15 +1,15 @@
-import { neon } from "@neondatabase/serverless";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
-export function getDb() {
+export function getDb(): NeonQueryFunction<false, false> {
   const sql = neon(process.env.DATABASE_URL!);
   return sql;
 }
 
 /** Run once to create tables and indexes. Each statement is independent so one failure doesn't block others. */
-export async function ensureTable() {
+export async function ensureTable(): Promise<void> {
   const sql = getDb();
   const run = async (query: ReturnType<typeof sql>) => {
-    try { await query; } catch (e) { console.warn("Migration statement skipped:", e); }
+    try { await query; } catch (e: unknown) { console.warn("Migration statement skipped:", e); }
   };
 
   await run(sql`

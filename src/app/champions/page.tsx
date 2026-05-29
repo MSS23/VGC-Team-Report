@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ChampionsContent } from "./ChampionsContent";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { JsonLd, BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 import { getRegMAMegas } from "@/lib/data/mega-pokemon";
 
 export const metadata: Metadata = {
@@ -54,6 +54,12 @@ export default function ChampionsPage() {
 
   return (
     <>
+      <BreadcrumbListJsonLd
+        items={[
+          { name: "Home", url: "https://pokemonvgcteamreport.com" },
+          { name: "Champions", url: "https://pokemonvgcteamreport.com/champions" },
+        ]}
+      />
       <JsonLd data={itemListSchema} />
       <ChampionsContent />
     </>

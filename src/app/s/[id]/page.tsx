@@ -6,10 +6,19 @@ import { JsonLd } from "@/components/seo/JsonLd";
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ key?: string | string[] }>;
 }): Promise<Metadata> {
   const { id } = await params;
+  const { key } = await searchParams;
+  // Collaborator edit links carry the secret edit token as ?key=...; if
+  // a creator ever pastes such a URL in Discord/X/Reddit Google will
+  // crawl + cache it, leaking the edit token in SERP snippets. Force
+  // noindex/nofollow whenever a key is present, regardless of share
+  // visibility.
+  const hasEditKey = Boolean(key && (Array.isArray(key) ? key.length > 0 : key.trim() !== ""));
 
   try {
     const sql = getDb();
@@ -84,8 +93,9 @@ export async function generateMetadata({
     }
 
     // Private / unlisted shares must not be indexed — thin content with no
-    // discovery value. Noindex/nofollow prevents search engines from crawling.
-    const robotsMeta = isPublic
+    // discovery value. Collaborator edit URLs (?key=…) must also be noindexed
+    // so a leaked share doesn't leak the edit token via Google's snippet cache.
+    const robotsMeta = isPublic && !hasEditKey
       ? undefined
       : { index: false as const, follow: false as const };
 
@@ -140,8 +150,12 @@ export default async function SharePage({
     ? `?s=${encodeURIComponent(id)}&key=${encodeURIComponent(key)}`
     : `?s=${encodeURIComponent(id)}`;
 
-  // Build JSON-LD from DB (best-effort)
+  // Build JSON-LD from DB (best-effort). We also derive a heading string
+  // here that gets handed to the redirect client so its visually-hidden
+  // <h1> can carry meaningful context for screen readers and crawlers,
+  // instead of always falling back to the generic site name.
   let jsonLd: Record<string, unknown> | null = null;
+  let heading = "VGC Team Report";
   try {
     const sql = getDb();
     const [shareRows, jsonLdCollabRows] = await Promise.all([
@@ -154,6 +168,14 @@ export default async function SharePage({
       const ldCreatorName = (data.creatorName as string) || undefined;
       const tournamentName = (data.tournamentName as string) || undefined;
       const ldCollabNames = jsonLdCollabRows.map((r) => r.user_name as string);
+
+      // Heading priority matches the spec: teamName → tournamentName →
+      // species line → site name. teamName isn't currently a top-level
+      // field on every share's data blob, but we read it defensively in
+      // case future shares (or older imports) carry it.
+      const teamName = (data.teamName as string) || "";
+      const speciesLine = species.length > 0 ? species.join(" / ") : "";
+      heading = teamName || tournamentName || speciesLine || "VGC Team Report";
 
       const primaryAuthor = ldCreatorName
         ? { "@type": "Person", name: ldCreatorName }
@@ -194,7 +216,7 @@ export default async function SharePage({
       {jsonLd && (
         <JsonLd data={jsonLd} />
       )}
-      <ShareRedirectClient to={`/${qs}`} />
+      <ShareRedirectClient to={`/${qs}`} heading={heading} />
     </>
   );
 }

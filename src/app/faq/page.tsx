@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { BreadcrumbListJsonLd, FAQPageJsonLd, HowToSchema } from "@/components/seo/JsonLd";
 import { PageFooter } from "@/components/layout/PageFooter";
 
 export const metadata: Metadata = {
@@ -104,23 +104,42 @@ const FAQ_ITEMS = [
   },
 ] as const;
 
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: FAQ_ITEMS.map((item) => ({
-    "@type": "Question",
-    name: item.question,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: item.answer,
-    },
-  })),
-};
+// "How to share a VGC team" — wired from .swarm/drafts/r7-content-brief-share-vgc-team-howto.md.
+// HowTo schema is the highest-yield AEO win per R7 audit; steps must match the FAQ answer.
+const SHARE_VGC_TEAM_HOW_TO_STEPS = [
+  {
+    name: "Export your team from Pokémon Showdown",
+    text: "Open Pokémon Showdown's team builder, select the team you want to share, and click Export. Copy the resulting Showdown-format text, or copy a pokepast.es URL if your team is already uploaded there.",
+  },
+  {
+    name: "Paste your team into VGC Team Report",
+    text: "Go to pokemonvgcteamreport.com and paste your Showdown export or pokepast.es link into the input box. The tool automatically parses your six Pokémon, including moves, items, abilities, EVs, IVs, natures, and Tera types.",
+  },
+  {
+    name: "Add matchup notes, damage calcs, and speed tiers",
+    text: "Fill in the team overview, per-Pokémon role notes, key damage calculations, and speed tier comparisons. These sections turn a raw paste into a full team report that explains why each build choice was made.",
+  },
+  {
+    name: "Click Share to generate a permanent link",
+    text: "Click the Share button in the top navigation. Choose Publish to list the report on the Explore page, or Copy Link for a direct share. Every published report gets a permanent URL at pokemonvgcteamreport.com/s/[id].",
+  },
+  {
+    name: "Embed in Discord or any website",
+    text: "Paste the /s/[id] link into Discord to get an automatic rich Open Graph preview, or use the Embed option to copy an iframe snippet for embedding the report in any website, tournament page, or CMS.",
+  },
+];
 
 export default function FAQPage() {
   return (
     <div className="min-h-screen bg-background">
-      <JsonLd data={faqJsonLd} />
+      <BreadcrumbListJsonLd
+        items={[
+          { name: "Home", url: "https://pokemonvgcteamreport.com" },
+          { name: "FAQ", url: "https://pokemonvgcteamreport.com/faq" },
+        ]}
+      />
+      <FAQPageJsonLd items={[...FAQ_ITEMS]} />
+      <HowToSchema steps={SHARE_VGC_TEAM_HOW_TO_STEPS} />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         {/* Breadcrumb */}

@@ -153,7 +153,7 @@ function EditableCalcEntry({
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commitEdit(); }
             if (e.key === "Escape") { setEditText(entry.text); setEditing(false); }
           }}
-          className="flex-1 text-sm sm:text-base text-text-primary leading-relaxed bg-transparent border-none outline-none resize-none min-h-[1.5em]"
+          className="flex-1 text-sm sm:text-base text-text-primary leading-relaxed bg-transparent border-none resize-none min-h-[1.5em] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface rounded-sm"
           rows={1}
           spellCheck={false}
         />
@@ -193,7 +193,7 @@ function EditableCalcEntry({
                     aria-label={`${t.changeCategory}: ${label}`}
                     aria-pressed={isActive}
                     title={label}
-                    className={`inline-flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-md text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-surface ${
+                    className={`inline-flex items-center justify-center h-11 w-11 sm:h-9 sm:w-9 rounded-md text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-surface ${
                       isActive
                         ? `${catCfg.tagBg} ${catCfg.tagText} border ${catCfg.borderClass} shadow-sm`
                         : "text-text-tertiary hover:text-text-primary hover:bg-surface active:scale-95"
@@ -216,7 +216,7 @@ function EditableCalcEntry({
             onClick={onRemove}
             aria-label={t.removeCalc}
             title={t.removeCalc}
-            className="inline-flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 active:scale-95 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
+            className="inline-flex items-center justify-center h-11 w-11 sm:h-9 sm:w-9 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 active:scale-95 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
           >
             <svg
               className="h-4 w-4"
@@ -587,7 +587,7 @@ export function PokemonDetailSlide({
             <button
               type="button"
               onClick={onToggleMega}
-              className={`inline-flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-md text-sm font-extrabold transition-all duration-200 ${
+              className={`inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md text-sm font-extrabold transition-all duration-200 ${
                 showMega
                   ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-sm shadow-purple-500/30"
                   : "bg-surface-alt text-text-tertiary hover:text-purple-500 hover:bg-purple-500/10 border border-border-subtle"

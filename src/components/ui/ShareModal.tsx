@@ -12,6 +12,12 @@ interface ShareModalProps {
   teamSpecies: string[];
   /** Raw Showdown-format paste text for the "Copy Paste" action. */
   showdownPaste?: string;
+  /**
+   * Optional in-game rental code. When non-empty, the modal surfaces a
+   * prominent "Rental code" copy block so viewers can grab the team in
+   * Play! Pokémon's official rental system alongside the paste.
+   */
+  rentalCode?: string;
   teamName?: string;
   tournamentName?: string;
   creatorName?: string;
@@ -45,6 +51,7 @@ export function ShareModal({
   publicUrl,
   teamSpecies,
   showdownPaste,
+  rentalCode,
   teamName,
   tournamentName,
   creatorName,
@@ -76,6 +83,7 @@ export function ShareModal({
   const [discordCopied, setDiscordCopied] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
   const [pasteCopied, setPasteCopied] = useState(false);
+  const [rentalCopied, setRentalCopied] = useState(false);
   const [publicConfirmDismissed, setPublicConfirmDismissed] = useState(false);
   const [tagError, setTagError] = useState(false);
   const [creatorError, setCreatorError] = useState(false);
@@ -203,18 +211,20 @@ export function ShareModal({
 
   const speciesText = teamSpecies.join(" / ");
 
-  // Build share text variants (only useful with short URLs)
-  const twitterText = tournamentName
-    ? `Check out my ${tournamentName}${placement ? ` (${placement})` : ""} VGC team report: ${speciesText}\n\n${publicUrl}\n\n#PokemonChampions #VGC2026\nMade with @VGCTeamReport`
-    : `Check out my VGC team report: ${speciesText}\n\n${publicUrl}\n\n#PokemonChampions #VGC2026\nMade with @VGCTeamReport`;
+  const achievementHeadline = (() => {
+    if (placement && tournamentName) return `${placement} at ${tournamentName} with ${speciesText}`;
+    if (tournamentName) return `${tournamentName}: ${speciesText}`;
+    if (placement) return `${placement} — ${speciesText}`;
+    return speciesText;
+  })();
+
+  const twitterText = `${achievementHeadline}\n\n${publicUrl}\n\n#PokemonChampions #VGC2026\nMade with @VGCTeamReport`;
 
   const redditTitle = tournamentName
     ? `[Team Report] ${tournamentName}${placement ? ` - ${placement}` : ""}: ${speciesText}`
     : `[Team Report] ${speciesText}`;
 
-  const discordText = tournamentName
-    ? `**${tournamentName}**${placement ? ` (${placement})` : ""}${creatorName ? ` by ${creatorName}` : ""}\n${speciesText}\n${publicUrl}`
-    : `**VGC Team Report**${creatorName ? ` by ${creatorName}` : ""}\n${speciesText}\n${publicUrl}`;
+  const discordText = `**${achievementHeadline}**${creatorName ? `\nby ${creatorName}` : ""}\n${publicUrl}`;
 
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(twitterText)}`;
   const redditUrl = `https://www.reddit.com/r/VGC/submit?type=link&title=${encodeURIComponent(redditTitle)}&url=${encodeURIComponent(publicUrl)}`;
@@ -251,6 +261,22 @@ export function ShareModal({
       posthog?.capture("share_paste_copied", { has_tournament: !!tournamentName });
     } catch {
       // Clipboard unavailable (non-HTTPS or permission denied) — no-op.
+    }
+  };
+
+  const trimmedRentalCode = rentalCode?.trim() ?? "";
+  const hasRentalCode = trimmedRentalCode.length > 0;
+
+  const handleCopyRental = async () => {
+    if (!hasRentalCode) return;
+    try {
+      await navigator.clipboard.writeText(trimmedRentalCode);
+      setRentalCopied(true);
+      setTimeout(() => setRentalCopied(false), 2000);
+      posthog?.capture("share_rental_code_copied", { has_tournament: !!tournamentName });
+    } catch {
+      // Clipboard unavailable (non-HTTPS or permission denied) — code is
+      // visible and selectable in the row above.
     }
   };
 
@@ -349,6 +375,21 @@ export function ShareModal({
           </div>
         )}
 
+        {/* Team card preview — shown FIRST so users see what they're sharing
+            before any URL/social actions. Download button stays in the social
+            grid below (full TeamCardExport with capture node). */}
+        {teamSpecies.length > 0 && (
+          <div className="px-6 pb-4">
+            <TeamCardExport
+              compact
+              teamName={teamName || tournamentName || "vgc-team"}
+              playerName={creatorName}
+              tournamentName={tournamentName}
+              teamSpecies={teamSpecies}
+            />
+          </div>
+        )}
+
         {/* URL display */}
         <div className="px-6 pb-4">
           <div
@@ -377,6 +418,46 @@ export function ShareModal({
             </p>
           )}
         </div>
+
+        {/* Rental code — surfaced prominently when present; the most viral
+            sharing mechanic in VGC (paste + rental code together = instant
+            Play! Pokémon use). Shown above all social/share actions. */}
+        {hasRentalCode && (
+          <div className="px-6 pb-4">
+            <div className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent p-3.5">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400" aria-hidden="true">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-extrabold uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-0.5">
+                    Rental code
+                  </p>
+                  <p className="text-base font-mono font-bold text-text-primary tracking-wide break-all">
+                    {trimmedRentalCode}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyRental}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 active:scale-95 transition-all cursor-pointer flex-shrink-0 px-3"
+                  aria-label={rentalCopied ? "Rental code copied" : "Copy rental code"}
+                >
+                  {rentalCopied ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  ) : (
+                    <span>Copy</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Native share — PRIMARY action on mobile (shown first, full-width, above all other options) */}
         {canNativeShare && (
@@ -646,9 +727,9 @@ export function ShareModal({
             who's just sharing someone else's report. */}
         {!viewerMode && (
         <div className="px-6 py-4 border-t border-border">
-          <p className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-3">{t.shareModalVisibilityLabel}</p>
+          <p id="share-visibility-label" className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-3">{t.shareModalVisibilityLabel}</p>
           {/* 3-state picker: Private | Unlisted | Public */}
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Report visibility">
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="share-visibility-label">
             {/* Private */}
             <button
               type="button"

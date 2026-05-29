@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CreatorProfileWrapper } from "@/components/social/CreatorProfile";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
 
 export async function generateMetadata({
   params,
@@ -53,6 +53,16 @@ export default async function CreatorPage({
   const creator = decodeURIComponent(name);
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "https://pokemonvgcteamreport.com" },
+          { name: "Explore", url: "https://pokemonvgcteamreport.com/explore" },
+          {
+            name: creator,
+            url: `https://pokemonvgcteamreport.com/creator/${encodeURIComponent(creator)}`,
+          },
+        ]}
+      />
       <JsonLd
         data={{
           "@context": "https://schema.org",

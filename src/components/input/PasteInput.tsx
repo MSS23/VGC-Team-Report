@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
-import { detectImportSource } from "@/lib/utils/multi-import";
 import { useTranslation } from "@/lib/i18n";
 
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
@@ -205,8 +204,6 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
   const isUrl = isPokePasteUrl(paste);
   const hasContent = paste.trim().length > 0;
-  const importSource = hasContent ? detectImportSource(paste) : "unknown";
-  const isPikalyticsUrl = importSource === "pikalytics";
 
   const handleAnalyze = () => {
     if (paste.trim() && !isUrl && !looksLikeShowdownPaste(paste)) {
@@ -425,13 +422,13 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           className="relative w-full h-40 sm:h-56 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none focus:border-accent/50 transition-all duration-300"
           spellCheck={false}
         />
-        {(isUrl || isPikalyticsUrl) && (
+        {isUrl && (
           <motion.span
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="absolute top-3 right-3 px-2.5 py-1 bg-accent text-white text-[10px] font-extrabold rounded-md uppercase tracking-widest shadow-sm"
           >
-            {isPikalyticsUrl ? "Pikalytics" : t.pokePaste}
+            {t.pokePaste}
           </motion.span>
         )}
       </motion.div>

@@ -221,8 +221,20 @@ export function WalkthroughOverlay({
 
   return createPortal(
     <>
-      {/* Backdrop — tap to dismiss the tour at any step, including first run. */}
-      <div style={{ position: "fixed", inset: 0, zIndex: 9998 }} onClick={onSkip} />
+      {/* Backdrop — tap or Enter to dismiss the tour at any step, including first run. */}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="Close walkthrough"
+        style={{ position: "fixed", inset: 0, zIndex: 9998 }}
+        onClick={onSkip}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSkip();
+          }
+        }}
+      />
 
       {/* Spotlight */}
       <div
