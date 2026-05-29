@@ -1,7 +1,10 @@
 import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { getDb } from "@/lib/db";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 /**
  * POST /api/migrate
@@ -29,6 +32,14 @@ export async function POST(request: Request) {
     // avoid timingSafeEqual throwing on mismatched-length buffers.
     const { secret } = await request.json().catch(() => ({ secret: "" }));
     const expectedSecret = process.env.MIGRATE_SECRET;
+    if (!secret || !expectedSecret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const receivedBuf = Buffer.from(String(secret));
+    const expectedBuf = Buffer.from(expectedSecret);
+    if (
+      receivedBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(receivedBuf, expectedBuf)
     if (!expectedSecret || typeof secret !== "string") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

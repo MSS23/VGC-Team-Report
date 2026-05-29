@@ -146,7 +146,19 @@ export function VersionHistoryPanel({
   return (
     <>
       {/* Scrim */}
-      <div className="fixed inset-0 z-[70] bg-black/20 backdrop-blur-[1px] sm:bg-transparent sm:backdrop-blur-none" onClick={onClose} />
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="Close version history"
+        className="fixed inset-0 z-[70] bg-black/20 backdrop-blur-[1px] sm:bg-transparent sm:backdrop-blur-none"
+        onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClose();
+          }
+        }}
+      />
 
       {/* Panel */}
       <div

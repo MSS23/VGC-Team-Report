@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { TournamentsContent } from "./TournamentsContent";
+import { BreadcrumbJsonLd, SportsEventJsonLd } from "@/components/seo/JsonLd";
 import { SportsEventJsonLd, BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
@@ -55,6 +56,7 @@ const UPCOMING_TOURNAMENTS = [
 export default function TournamentsPage() {
   return (
     <>
+      <BreadcrumbJsonLd
       <BreadcrumbListJsonLd
         items={[
           { name: "Home", url: "https://pokemonvgcteamreport.com" },

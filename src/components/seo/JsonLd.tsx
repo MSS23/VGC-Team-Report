@@ -146,6 +146,12 @@ export interface BreadcrumbItem {
 }
 
 /**
+ * Emits a schema.org BreadcrumbList JSON-LD script.
+ * Pass items in order from root to current page, e.g.:
+ *   [{ name: "Home", url: "https://pokemonvgcteamreport.com" },
+ *    { name: "Explore", url: "https://pokemonvgcteamreport.com/explore" }]
+ */
+export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
  * BreadcrumbList JSON-LD for SERP breadcrumb display.
  * Pass items in order from root → current page (e.g. [Home, Explore]).
  */
@@ -167,6 +173,7 @@ export function BreadcrumbListJsonLd({ items }: { items: BreadcrumbItem[] }) {
   );
 }
 
+export function FAQPageJsonLd() {
 export interface FAQItem {
   question: string;
   answer: string;

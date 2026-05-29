@@ -1,3 +1,19 @@
+{
+  "embeds": [{
+    "title": "🤖 Nightly Swarm — 24 May 2026",
+    "color": 5763719,
+    "fields": [
+      { "name": "Branch", "value": "swarm-nightly-2026-05-24", "inline": true },
+      { "name": "Commits pushed", "value": "13", "inline": true },
+      { "name": "Build status", "value": "✅ Passing (tsc + next build clean)", "inline": true },
+      { "name": "Linear webhook", "value": "🔧 fixed in commit c1c1201 — header `linear-signature`, env-var fallback, force-dynamic. Re-enable in Linear settings after deploy.", "inline": false },
+      { "name": "Linear tickets closed", "value": "VGC-209 (Pokemon filter chips on /explore) — ready for review", "inline": false },
+      { "name": "PostHog signals acted on", "value": "None — .env.local not present in this sandbox (PostHog API key missing).", "inline": false },
+      { "name": "Updates page", "value": "v5.20 added to May 2026 section (12 entries)", "inline": false },
+      { "name": "Merge conflicts", "value": "None (branch cut fresh from main tonight)", "inline": false },
+      { "name": "Rejected changes", "value": "None — every commit passed the build gate", "inline": false },
+      { "name": "PR", "value": "https://github.com/MSS23/VGC-Team-Report/pull/38", "inline": false },
+      { "name": "What was pushed", "value": "• Webhook fix: header name + env-var fallback\n• SECURITY: escape HTML in welcome + comment emails\n• SECURITY: timing-safe bearer compare on migrate/setup/cleanup\n• Bug: preserve is_unlisted on share re-POST dedup\n• i18n: fallback to English on empty translation stubs\n• VGC-209: Pokemon filter chips on /explore\n• ShareModal: team card preview at top\n• ShareModal: achievement-led share text\n• a11y: focus rings, aria-labels, 44px targets, kbd backdrops\n• SEO: BreadcrumbList JSON-LD on /explore /tournaments /creator\n• Cleanup: deleted useScrollHide + ReactionBar", "inline": false }
 # Discord Notification — NOT SENT — 22 May 2026
 
 **Reason:** Neither `DISCORD_WEBHOOK_URL` nor `DISCORD_BOT_TOKEN` is present in the swarm container environment. The container is a fresh clone without a populated `.env.local`. Per the orchestrator spec ("If both methods fail: Save the full payload to `.swarm/discord-failed.md`. Do NOT silently skip."), the payload is preserved below for a manual send by the user.

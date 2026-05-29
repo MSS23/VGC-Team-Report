@@ -1,96 +1,78 @@
-# Dead Code Scan Report - VGC Team Report
+# C1 Dead-Code Scan - 2026-05-24
 
-**Date:** 2026-05-13  
-**Codebase:** `/home/user/VGC-Team-Report/src/`  
-**Scope:** All TypeScript/React files (280 files scanned)
+Tech: Next.js 16, React 19, TypeScript. Method: grep cross-references for every exported symbol across `src/`, ignoring tests; reconciled against the conflict-risk list in `.swarm/main-changed-files.md`.
 
 ---
 
-## Findings Summary
+## 1. Confirmed dead exports (zero call sites)
 
-After comprehensive grep-based analysis across the entire codebase, **only 1 confirmed dead export** was found:
+Ranked highest-confidence first. "Internal only" means exported but only the file's own siblings reference it - make it private rather than delete the logic.
 
-### Confirmed Dead Code
+| # | File | Symbol | Status | Notes |
+|---|------|--------|--------|-------|
+| 1 | `src/lib/utils/export-paste.ts` | `pokemonToOpenSheet` | DELETE | Zero production refs. Used only by `teamToOpenSheet` in same file. |
+| 2 | `src/lib/utils/export-paste.ts` | `pokemonToShowdown` | UN-EXPORT | Used by sibling `teamToShowdown` and tests; no other module imports it. |
+| 3 | `src/lib/utils/paste-edit.ts` | `replaceSpeciesInBlock` | UN-EXPORT | Only `replacePokemonSpecies` (same file) calls it. |
+| 4 | `src/lib/analysis/detect-regulation.ts` | `detectRegulationWithSignals` | UN-EXPORT | Wrapped by `detectRegulation`. No external callers. |
+| 5 | `src/lib/analysis/detect-regulation.ts` | `RegulationDetection` (interface) | UN-EXPORT | Only the return type of the (also internal) `detectRegulationWithSignals`. |
+| 6 | `src/lib/security/cors.ts` | `isDynamicAllowedOrigin` | UN-EXPORT | Used twice in same file (`getCorsHeaders`, `isAllowedOrigin`); never imported elsewhere. |
+| 7 | `src/lib/sharing/redact-paste.ts` | `PrivateField` (type) | UN-EXPORT | Only referenced inside `redact-paste.ts`. |
+| 8 | `src/lib/sharing/url-codec.ts` | `SerializedGamePlanSchema` | UN-EXPORT | Composed into `ShareableStateSchema`; no other consumer. |
+| 9 | `src/lib/sharing/url-codec.ts` | `SerializedMatchupPlanSchema` | UN-EXPORT | Same as above. |
+| 10 | `src/lib/sharing/url-codec.ts` | `ShareableStateSchema` | UN-EXPORT | Internal validator inside `decodeShareState`. |
+| 11 | `src/hooks/useScrollHide.ts` | `useScrollHide` | DELETE (whole file) | No imports anywhere in `src/` or `cypress/`. Entire hook orphaned. |
+| 12 | `src/components/social/ReactionBar.tsx` | `ReactionBar` | DELETE (whole file) | Only mounting point was `FloatingReactionDock`, which Navbar comments confirm was deleted. |
 
-#### 1. PdfExportButton Component
-- **File:** `/home/user/VGC-Team-Report/src/components/ui/PdfExport.tsx`
-- **Export:** `export function PdfExportButton(props: PdfExportProps)`
-- **Line:** 208-254 (~46 lines)
-- **Confidence:** HIGH
-- **Evidence:** 
-  ```
-  grep "PdfExportButton" --include="*.ts" --include="*.tsx"
-  # Result: Only appears in definition file, never imported elsewhere
-  ```
-- **Notes:** The sibling export `PrintableReport` in the same file IS actively used (imported with dynamic() in src/app/page.tsx). Only `PdfExportButton` is unused.
-
-#### 2. sanitizeInput Function
-- **File:** `/home/user/VGC-Team-Report/src/lib/security/input-validation.ts`
-- **Export:** `export function sanitizeInput(str: string): string`
-- **Lines:** 6-8 (~3 lines)
-- **Confidence:** HIGH
-- **Evidence:**
-  ```
-  grep -r "sanitizeInput" --include="*.ts" --include="*.tsx"
-  # Result: Only the export definition appears, zero external imports
-  ```
-- **Notes:** Four other functions in the same file (containsInjection, isValidIp, getClientIp, hasValidContentType) ARE used. Only sanitizeInput is dead code.
+(`migrateCalcEntries` in `normalize-report.ts` looks dead but is called by `normalizeReportData` in the same file - keep, simply un-export if desired. Excluded to stay under 15.)
 
 ---
 
-## Comprehensive Scan Results
+## 2. Components / files safe to delete (whole-file removals)
 
-### Categories Analyzed
+Limit 5; only two qualify with high confidence:
 
-1. **Exported Functions in src/lib/** (211 exports)
-   - ✓ All actively used except sanitizeInput
-   - Notable usage: Data accessors, API utilities, parsing functions all have >1 import
+1. `src/hooks/useScrollHide.ts` - entire file, zero importers.
+2. `src/components/social/ReactionBar.tsx` - its only mounting point (`FloatingReactionDock`) was already deleted; remaining string matches are changelog/Navbar comments.
 
-2. **React Components in src/components/** (50+ components)
-   - ✓ All actively used except PdfExportButton
-   - Verified: Navbar, ThemePicker, CommentSection, MatchupSheet all imported
+No other component in `src/components/` or file in `src/lib/` returned zero imports after manual verification - every other 1-count match resolved to a real consumer (e.g. `MatchTracker` <- `DashboardContent`, `DisplayTogglePill` <- `app/page.tsx`, all `PageFooter`/`PageNavbar`/`PersistentNavbar` paths active).
 
-3. **Hooks in src/hooks/** (25+ custom hooks)
-   - ✓ All actively used in other components
-   - Examples: useSlideSystem → 1 import (used in page.tsx), useTeamReport → 1 import, etc.
-
-4. **API Routes in src/app/api/** (47 routes)
-   - ✓ All routed API endpoints are called from frontend or internal cron jobs
-   - /api/setup, /api/keep-alive, /api/migrate: Used in middleware or cron tasks
-
-5. **Type Definitions**
-   - ✓ All exported types are used either internally or by imports
-   - Examples: MoveData, NatureData, EventType all referenced in analysis code
-
-6. **Utility Exports**
-   - ✓ All major utilities used (version-diff, word-filter, diff-state, multi-import)
+No orphaned `src/app/` routes detected. Routes not linked from `src/components/layout/Navbar.tsx` (`/champions`, `/explore`, `/compare`, `/changelog`, `/faq`, `/notifications`, `/tournaments`, `/privacy`, `/terms`, `/s/[id]`, `/embed/[id]`, `/creator/[name]`) are all reachable via SEO/sitemap/share flows - not dead.
 
 ---
 
-## Safe Deletions
+## 3. Conflict-risk skips (recently touched on main)
 
-### Quick Wins (~50 lines total)
-1. Remove `PdfExportButton` function from `src/components/ui/PdfExport.tsx` (46 lines)
-2. Remove `sanitizeInput` function from `src/lib/security/input-validation.ts` (3 lines)
+Do NOT delete or refactor - main has live edits per `.swarm/main-changed-files.md`:
 
-These deletions are safe because:
-- No imports of these symbols exist anywhere in the codebase
-- No grep-able string references (no dynamic calls)
-- Sibling/related exports remain intact and functional
+- `src/lib/analysis/stat-calculator.ts` (`evsToSp`/`spToEv` already removed in prior pass; leave the rest)
+- `src/lib/utils/multi-import.ts` (`ImportSource`, `detectImportSource` are used by `TeamOverview` and `PasteInput`; file recently changed)
+- `src/lib/utils/normalize-report.ts` (`migrateCalcEntries`)
+- `src/components/match-tracker/MatchTracker.tsx`
 
----
-
-## Notes
-
-- **Conservative approach:** Used grep to confirm zero imports. This catches direct usage but may miss:
-  - Indirect dynamic imports via string interpolation
-  - Metaprogramming patterns
-  - Comments that appear to reference code
-- **API routes:** All routes are either called from frontend, used in cron/webhook handlers, or explicitly whitelisted (setup, migrate)
-- **No orphaned pages:** All route segments in src/app/ are reachable
-- **Type exports:** Many types are only used in their defining file (common pattern for internal types)
+For items #1-#10 above, none of the listed files appear in `main-changed-files.md`, so the un-export/delete operations are conflict-safe.
 
 ---
 
-**Estimated LOC for safe deletion:** ~50 lines  
-**Risk level:** VERY LOW (confirmed unused with zero external references)
+## 4. ESLint summary
+
+`npx eslint . --quiet`: **54 errors, 0 warnings**.
+
+Rule breakdown:
+- 26 x `react-hooks/set-state-in-effect`
+- 11 x `@next/next/no-html-link-for-pages`
+- 7 x `react-hooks/refs`
+- 6 x `prefer-const`
+- 2 x `react-hooks/preserve-manual-memoization`
+- 2 x misc
+
+**`no-unused-vars` / `unused-imports`: 0** - the project's lint config does not surface those rules (suppressed or fixed). No corroborating signal from ESLint for this audit; relied entirely on grep cross-referencing.
+
+---
+
+## 5. False-positive risks
+
+- **Zod schemas** (`SerializedGamePlanSchema`, `SerializedMatchupPlanSchema`, `ShareableStateSchema`) may need to remain exported if a future API route or share-decode test plans to validate input directly. Verify with the share/codec ticket owner before un-exporting.
+- **`detectRegulationWithSignals`** returns richer data than `detectRegulation` (regulation + reasoning). Un-export is safe, but do not inline / delete the logic - it is a likely future UI hook.
+- **`ReactionBar`** - although its only direct importer was deleted, double-check Storybook stories / Cypress fixtures (none found in this scan) before removing the file.
+- **`useScrollHide`** - name is generic; possible future scroll-driven UX could re-use it. Single commit author history, never imported - safe to delete, but worth a final author-history glance.
+- **All "un-export" items** - dropping `export` will fail TypeScript only if a deep dynamic-import path uses them; `tsc --noEmit` after the change is sufficient verification.

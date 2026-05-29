@@ -1,3 +1,6 @@
+# Rejected Changes — swarm-nightly-2026-05-24
+
+None this run. All committed changes passed `npx tsc --noEmit` and `npm run build`.
 # Rejected Changes — 22 May 2026 swarm
 
 No changes were rejected at the build gate this run. All 12 code commits passed `npx tsc --noEmit && npm run build` from the integrated state.

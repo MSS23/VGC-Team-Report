@@ -38,6 +38,7 @@ export async function POST(request: Request) {
     if (!webhookSecret) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const signature = request.headers.get("linear-signature");
 
     const signature =
       request.headers.get("linear-signature") ||
@@ -63,6 +64,12 @@ export async function POST(request: Request) {
     }
 
     let body: { type?: string; challenge?: string } = {};
+    if (rawBody) {
+      try {
+        body = JSON.parse(rawBody);
+      } catch {
+        return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+      }
     try {
       body = JSON.parse(rawBody);
     } catch {
@@ -105,6 +112,9 @@ export async function POST(request: Request) {
     body = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("Linear webhook error:", e);
+    return NextResponse.json({ ok: true, handled: false });
   }
 
   if (body && body.type === "url_verification" && typeof body.challenge === "string") {
