@@ -36,7 +36,10 @@
 - **brace-expansion 5.0.2–5.0.5**: DoS via large numeric ranges
 - **uuid** (via `@cypress/request`, `@sentry/webpack-plugin`): dev dependency, no prod impact
 
----
+### MODERATE highlights:
+- `postcss < 8.5.10` -- XSS via unescaped `</style>` in CSS stringify output (Next.js transitive)
+- `brace-expansion 5.0.2-5.0.5` -- DoS via large numeric ranges
+- `uuid` (via `@cypress/request`, `@sentry/webpack-plugin`) -- various issues
 
 ## 2. Hardcoded Secrets Scan
 
@@ -152,7 +155,7 @@ All public-facing endpoints use `apiGuard()` with `isRateLimitedAsync()` (Upstas
 - User routes scoped to authenticated user's own data
 - Report visibility changes enforce owner-only check
 
----
+### 3.4 Rate Limiting -- PASS (with note)
 
 ## 4. Input Validation
 

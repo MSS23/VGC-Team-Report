@@ -1,6 +1,8 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 // ── Session timeline enrichment ──────────────────────────────────────────────
 // On every webhook, query PostHog for the user's last ~15 events leading up to
 // the exception. The webhook fires once per Linear ticket, so this is a single
@@ -303,7 +305,7 @@ export async function POST(request: Request) {
     });
   } catch (e) {
     console.error("PostHog webhook error:", e);
-    return NextResponse.json({ error: "Webhook failed" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "internal" });
   }
 }
 
@@ -452,4 +454,11 @@ function inferLabels(event: string, properties: Record<string, unknown>): string
   labels.push(LABELS.analytics);
 
   return labels;
+}
+
+export function GET() {
+  return NextResponse.json(
+    { error: "Method not allowed. This endpoint accepts POST requests only." },
+    { status: 405, headers: { Allow: "POST" } }
+  );
 }

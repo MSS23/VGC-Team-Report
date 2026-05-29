@@ -18,7 +18,7 @@ function NotFoundContent() {
     <main className="min-h-dvh min-h-screen flex items-center justify-center p-6 safe-bottom safe-top">
       <div className="flex flex-col items-center gap-5 text-center animate-fade-in max-w-xs">
         <div className="w-20 h-20 rounded-2xl bg-surface-alt flex items-center justify-center">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary">
+          <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary">
             <circle cx="12" cy="12" r="10" />
             <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
             <line x1="9" y1="9" x2="9.01" y2="9" />
@@ -31,6 +31,7 @@ function NotFoundContent() {
         </p>
         <Link
           href="/"
+          aria-label="Go back to home page"
           className="mt-1 px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold hover:brightness-110 active:scale-[0.97] transition-all shadow-sm shadow-accent/20"
         >
           {t.goHome}

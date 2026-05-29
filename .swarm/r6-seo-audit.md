@@ -48,7 +48,13 @@ We are already strong on foundations: `src/app/layout.tsx` ships `WebSite`+`Sear
 | **VGC Lite** | Beginner-friendly, speed tiers, threat analysis | Smaller scope, no team report features |
 | **Pokémon Zone** | Comprehensive meta stats, tier lists, team cores | No report tool, primarily database |
 
----
+| Keyword | VGC Team Report Position | Top Ranker |
+|---------|--------------------------|------------|
+| "VGC team builder" | **Not in top 10** | Pikalytics (#1), Pokestats.gg, Game8, VGC.tools |
+| "VGC team report" | **#1-2** (homepage + champions) | Victory Road (sv-reports page) competes |
+| "Pokemon team sharing" | **Not visible** | Pikalytics, VGC Helper, VGC.tools |
+| "VGC Reg H teams" | **Not visible** | Smogon, Nimbasa City Post, Limitless VGC |
+| "Pokemon Champions team report" | **~#5** (champions page appears) | VGCCoach.pro, Pikalytics dominate |
 
 ## 2. Current SEO Implementation Assessment
 
@@ -112,7 +118,27 @@ High-intent, rankable queries where VGC Team Report has feature relevance but no
 
 **Combined addressable search volume: ~22,000-35,000 monthly searches**
 
----
+### Tier 1 Competitors (Dominant SEO Presence)
+
+| Competitor | Strengths | Why They Outrank Us |
+|------------|-----------|---------------------|
+| **Pikalytics** | Usage stats, team builder, damage calc, top teams | Massive content depth — individual Pokemon pages, format-specific URLs, daily-updated data |
+| **Victory Road** | Tournament reports, rental teams, format guides | 10+ years of content, strong backlink profile, editorial authority |
+| **Limitless VGC** | Tournament database, team pastes, rankings | Community submissions = constant fresh content, tournament-specific URLs |
+| **Smogon** | Viability rankings, sample teams, forums | Domain authority 80+, user-generated discussion threads rank for long-tail |
+
+### Tier 2 Competitors (Rising Fast)
+
+| Competitor | Threat Level | Key SEO Strategy |
+|------------|-------------|------------------|
+| **VGCCoach.pro** | HIGH | AI-powered team analysis, rich article content targeting "best VGC teams", "VGC tier list", guide-style long-form content |
+| **VGC.tools** | MEDIUM | Community team library, clean URLs per team, good internal linking |
+| **ChampTeams.gg** | MEDIUM | All-in-one tool positioning (builder + calc + tiers), targeting "Champions" keywords |
+| **Porygon Labs** | MEDIUM | Damage calc + team builder, Champions-specific |
+| **Pokemon Zone** | HIGH | Full metagame stats, tier lists, format-specific content hubs |
+| **ShowdownTier** | MEDIUM | Daily-updated viability tier lists per regulation set |
+| **VGenC (vgenc.net)** | MEDIUM | 2,649 tournament pastes for Reg M-A, high volume of indexable team pages |
+| **PokemonBuilder.com** | MEDIUM | Targeting "Pokemon Champions meta" with tier list content |
 
 ## 4. Structured Data Comparison vs Competitors
 
@@ -157,7 +183,23 @@ Based on current best practices for gaming tool sites:
 6. **Video content** — YouTube embeds with VideoObject schema create rich snippets in gaming SERPs. Consider embedding VGC content creator videos on guide pages.
 7. **Community-generated content** — UGC (user team reports) creates long-tail keyword diversity that no editorial site can match at scale. VGC Team Report's 5,000+ public shares are a massive latent SEO asset.
 
----
+**Likely causes:**
+- Share pages (`/s/[id]`) are SSR with DB calls — crawl budget may be exhausted before Google reaches them
+- No internal links from indexed pages to deep content (share pages, creator pages)
+- `lastModified` on sitemap is set to `now` for static pages — Google may see this as unreliable
+- Champion slug pages may not be prerendered if `generateStaticParams` has issues
+
+**Fixes needed:**
+1. Add an "internal links" section to explore/champions pages linking to popular shares
+2. Use real `lastModified` dates in sitemap rather than `new Date().toISOString()`
+3. Submit sitemap manually in Google Search Console
+4. Check GSC for crawl errors and coverage reports
+
+### 4.2 Homepage Has No Visible H1 Tag
+
+The homepage (`page.tsx`) is a client component with no `<h1>` tag containing target keywords. The page title in metadata is good, but Google weighs the on-page `<h1>` heavily for understanding page topic.
+
+**Fix:** Add a visible or sr-only `<h1>` tag with primary keyword: "VGC Team Report — Build & Share Pokemon VGC Teams"
 
 ## 7. Technical Issues
 

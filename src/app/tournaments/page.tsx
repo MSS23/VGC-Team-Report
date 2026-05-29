@@ -64,6 +64,10 @@ export default function TournamentsPage() {
         ]}
       />
       <SportsEventJsonLd events={UPCOMING_TOURNAMENTS} />
+      <BreadcrumbJsonLd items={[
+        { name: "Home", url: "https://pokemonvgcteamreport.com" },
+        { name: "Tournaments", url: "https://pokemonvgcteamreport.com/tournaments" },
+      ]} />
       <TournamentsContent />
     </>
   );

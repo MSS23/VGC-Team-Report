@@ -1,4 +1,4 @@
-# Code Review — Last 20 Commits (main)
+# C5 Code Review — Last 20 Commits (26-05-26)
 
 **Date:** 2026-05-25  
 **Range:** `03c1547..850e91c` (20 commits)  
@@ -24,7 +24,17 @@
 | 761a10d | Fix dead exports + implicit-any TypeScript | Low |
 | de7466b | Onboarding UX — ExploreEmpty + PasteInput hint | Low |
 
----
+**Commit**: `b1e95df` (swarm 18-05-26, VGC-125 welcome email + comment notifications)
+**File**: `src/lib/email.ts`, lines 89-136
+**Risk**: HIGH — stored XSS via email injection
+
+The `buildCommentNotificationHtml()` function interpolates `commenterName`, `commentBody`, and `reportTitle` directly into HTML template literals with **zero escaping**:
+
+```ts
+<strong>${commenterName}</strong> commented on <strong>${reportTitle}</strong>
+...
+<p ...>${commentBody}</p>
+```
 
 ## Critical Findings
 
