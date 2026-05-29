@@ -2,7 +2,6 @@ import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { notifyFollowers } from "@/lib/notifications";
 import { detectChangedSections } from "@/lib/utils/diff-state";
-import { extractSpecies } from "@/lib/utils/extract-species";
 import { cacheInvalidatePrefix, cacheDel, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, currentUser } from "@clerk/nextjs/server";
@@ -139,18 +138,29 @@ export async function POST(request: Request) {
           const editorName = user?.firstName
             ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
             : user?.username ?? null;
-          sql`
-            INSERT INTO share_versions (share_id, version, data, editor_id, editor_name)
-            VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb, ${userId ?? null}, ${editorName})
-            ON CONFLICT (share_id, version) DO NOTHING
-          `.catch(() => { /* version snapshot is non-critical */ });
+          // Awaited so the snapshot actually completes before the Vercel lambda freezes
+          // after responding (bare .catch() on Neon HTTP queries can be cancelled).
+          // Non-fatal — log on failure but don't break the main update.
+          try {
+            await sql`
+              INSERT INTO share_versions (share_id, version, data, editor_id, editor_name)
+              VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb, ${userId ?? null}, ${editorName})
+              ON CONFLICT (share_id, version) DO NOTHING
+            `;
+          } catch (err) {
+            console.error("share_versions snapshot failed (with editor):", err);
+          }
         } catch {
           // Auth not available — snapshot without editor info
-          sql`
-            INSERT INTO share_versions (share_id, version, data)
-            VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb)
-            ON CONFLICT (share_id, version) DO NOTHING
-          `.catch(() => {});
+          try {
+            await sql`
+              INSERT INTO share_versions (share_id, version, data)
+              VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb)
+              ON CONFLICT (share_id, version) DO NOTHING
+            `;
+          } catch (err) {
+            console.error("share_versions snapshot failed (anon):", err);
+          }
         }
       }
 
@@ -200,7 +210,6 @@ export async function POST(request: Request) {
             version = COALESCE(version, 1) + ${hasDataChanges ? 1 : 0},
             is_public = ${effectiveIsPublic},
             is_unlisted = ${effectiveIsUnlisted},
-            species = ${extractSpecies(state.paste)},
             search_vector =
               setweight(to_tsvector('english', ${searchCreator}), 'A') ||
               setweight(to_tsvector('english', ${searchTournament}), 'A') ||
@@ -210,7 +219,9 @@ export async function POST(request: Request) {
         RETURNING id, COALESCE(version, 1) AS version, is_public, is_unlisted
       `;
       if (rows.length > 0) {
-        // Record changelog entry (fire-and-forget, only for authenticated users)
+        // Record changelog entry — awaited so it actually completes on Vercel/Neon HTTP
+        // (a bare .catch() promise can be cancelled when the lambda freezes after responding).
+        // Failure is non-fatal: log and continue.
         if (hasDataChanges) {
           try {
             const { userId } = await auth();
@@ -219,10 +230,14 @@ export async function POST(request: Request) {
               const editorName = user?.firstName
                 ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
                 : user?.username ?? "Unknown";
-              sql`
-                INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
-                VALUES (${existingId}, ${rows[0].version}, ${userId}, ${editorName}, ${JSON.stringify(sections)}::jsonb, ${isPublish ?? false})
-              `.catch(() => { /* changelog insert is non-critical */ });
+              try {
+                await sql`
+                  INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
+                  VALUES (${existingId}, ${rows[0].version}, ${userId}, ${editorName}, ${JSON.stringify(sections)}::jsonb, ${isPublish ?? false})
+                `;
+              } catch (err) {
+                console.error("edit_changelog insert failed (update path):", err);
+              }
             }
           } catch { /* not authenticated — skip changelog */ }
         }
@@ -290,7 +305,6 @@ export async function POST(request: Request) {
             version = COALESCE(version, 1) + 1,
             is_public = ${effectiveIsPublic},
             is_unlisted = ${effectiveIsUnlistedDup},
-            species = ${extractSpecies(state.paste)},
             search_vector =
               setweight(to_tsvector('english', ${searchCreator}), 'A') ||
               setweight(to_tsvector('english', ${searchTournament}), 'A') ||
@@ -314,41 +328,54 @@ export async function POST(request: Request) {
 
     const id = generateId();
     const newEditToken = generateEditToken();
-    const parsedSpecies = extractSpecies(state.paste);
 
     await sql`
-      INSERT INTO shares (id, edit_token, data, version, is_public, is_unlisted, owner_id, search_vector, species)
+      INSERT INTO shares (id, edit_token, data, version, is_public, is_unlisted, owner_id, search_vector)
       VALUES (
         ${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${isUnlisted ?? false}, ${ownerId},
         setweight(to_tsvector('english', ${searchCreator}), 'A') ||
         setweight(to_tsvector('english', ${searchTournament}), 'A') ||
         setweight(to_tsvector('english', ${searchPaste}), 'B') ||
-        setweight(to_tsvector('english', ${searchSummary}), 'C'),
-        ${parsedSpecies.length > 0 ? sql`${parsedSpecies}::text[]` : sql`NULL`}
+        setweight(to_tsvector('english', ${searchSummary}), 'C')
       )
     `;
 
-    // Record initial changelog entry
+    // Record initial changelog entry — awaited so it completes before lambda freezes.
+    // Non-fatal: log on failure but don't break the share creation response.
     if (ownerId) {
       try {
         const user = await currentUser();
         const editorName = user?.firstName
           ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
           : user?.username ?? "Unknown";
-        sql`
-          INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
-          VALUES (${id}, 1, ${ownerId}, ${editorName}, ${JSON.stringify(["Created report"])}::jsonb, TRUE)
-        `.catch(() => {});
+        try {
+          await sql`
+            INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
+            VALUES (${id}, 1, ${ownerId}, ${editorName}, ${JSON.stringify(["Created report"])}::jsonb, TRUE)
+          `;
+        } catch (err) {
+          console.error("edit_changelog insert failed (create path):", err);
+        }
       } catch { /* skip */ }
     }
 
-    // Clean up any drafts for this user (fire-and-forget — the real share replaces the draft)
+    // Clean up any drafts for this user — awaited so the cleanup actually runs
+    // (the real share replaces the draft; a leftover draft confuses the UI).
     if (ownerId) {
-      sql`DELETE FROM shares WHERE owner_id = ${ownerId} AND is_draft = TRUE`.catch(() => {});
+      try {
+        await sql`DELETE FROM shares WHERE owner_id = ${ownerId} AND is_draft = TRUE`;
+      } catch (err) {
+        console.error("draft cleanup failed:", err);
+      }
     }
 
-    // Invalidate explore cache on new share
-    cacheInvalidatePrefix("explore:");
+    // Invalidate explore cache on new share — awaited so it actually flushes
+    // before the lambda freezes (was previously fire-and-forget).
+    try {
+      await cacheInvalidatePrefix("explore:");
+    } catch (err) {
+      console.error("explore cache invalidate failed:", err);
+    }
 
     // Notify followers when a new public (non-unlisted) report is created (fire-and-forget)
     if (isPublic && !isUnlisted && state.creatorName) {

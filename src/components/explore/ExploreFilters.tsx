@@ -232,6 +232,7 @@ export function ExploreFilters({
             type="text"
             value={localQuery}
             onChange={(e) => setLocalQuery(e.target.value)}
+            aria-label="Search team reports"
             placeholder={
               searchCategory === "pokemon"
                 ? "Search by Pokemon..."
@@ -262,6 +263,7 @@ export function ExploreFilters({
           <select
             value={sort}
             onChange={(e) => onSortChange(e.target.value as "newest" | "updated" | "popular" | "views")}
+            aria-label="Sort reports by"
             className="pl-3 pr-7 py-2 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all appearance-none cursor-pointer"
           >
             {SORT_OPTIONS.map((o) => (

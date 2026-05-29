@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ExploreContent } from "@/components/explore/ExploreContent";
 import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
+import { JsonLd, BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Explore VGC Teams | VGC Team Report",
@@ -43,6 +44,7 @@ export default function ExplorePage() {
   return (
     <>
       <BreadcrumbJsonLd
+      <BreadcrumbListJsonLd
         items={[
           { name: "Home", url: "https://pokemonvgcteamreport.com" },
           { name: "Explore", url: "https://pokemonvgcteamreport.com/explore" },

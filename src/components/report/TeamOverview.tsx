@@ -117,7 +117,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
     setError("");
 
     const source = detectImportSource(trimmed);
-    if (source === "pokepaste" || source === "pikalytics") {
+    if (source === "pokepaste") {
       setLoading(true);
       try {
         const result = await fetchPokePaste(trimmed);
@@ -140,7 +140,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
       setInput("");
       setOpen(false);
     } else {
-      setError("Paste a Showdown export, PokePaste URL, or Pikalytics URL");
+      setError("Paste a Showdown export or PokePaste URL");
     }
   };
 
@@ -170,7 +170,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
       <textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder={"Paste a PokePaste URL, Pikalytics URL, or Showdown export...\n\npokepast.es/abc123\npikalytics.com/team/...\nOr paste the full Showdown text"}
+        placeholder={"Paste a PokePaste URL or Showdown export...\n\npokepast.es/abc123\n\nOr paste the full Showdown text"}
         className="w-full min-h-[4rem] sm:min-h-[5rem] p-2.5 bg-surface-alt border border-border-subtle rounded-lg text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary/50 resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 leading-relaxed"
         spellCheck={false}
         autoFocus

@@ -146,34 +146,6 @@ function fromBase64Url(str: string): Uint8Array {
   return bytes;
 }
 
-export async function encodeShareState(state: ShareableState): Promise<string> {
-  const json = JSON.stringify(state);
-  const encoded = new TextEncoder().encode(json);
-
-  const cs = new CompressionStream("deflate-raw");
-  const writer = cs.writable.getWriter();
-  writer.write(encoded);
-  writer.close();
-
-  const reader = cs.readable.getReader();
-  const chunks: Uint8Array[] = [];
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-  }
-
-  const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  return "1:" + toBase64Url(result);
-}
-
 export async function decodeShareState(encoded: string): Promise<ShareableState | null> {
   try {
     // Strip version prefix if present; legacy URLs have no prefix

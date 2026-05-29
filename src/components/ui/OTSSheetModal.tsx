@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { teamToOpenSheet } from "@/lib/utils/export-paste";
 import { resolveSlug, getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { getHtml2Canvas } from "@/lib/dynamic-imports/html2canvas";
 
 interface OTSSheetModalProps {
   pokemon: ParsedPokemon[];
@@ -106,7 +107,7 @@ export function OTSSheetModal({ pokemon, shareUrl, tournamentName, teamName, onC
     if (!sheetRef.current) return;
     setDownloading(true);
     try {
-      const { default: html2canvas } = await import("html2canvas-pro");
+      const html2canvas = await getHtml2Canvas();
       const canvas = await html2canvas(sheetRef.current, {
         useCORS: true,
         allowTaint: false,

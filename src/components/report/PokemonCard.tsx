@@ -187,6 +187,10 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const spriteSizeLg = creatorMode ? 120 : 104;
   const natureData = NATURES[parsed.nature];
   const relevantStats = getRelevantStats(parsed);
+  const visibleStats = useMemo(
+    () => (["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)),
+    [relevantStats]
+  );
 
   // Reg M-A (Champions) has no Tera mechanic and forces IVs to 31 — hide both.
   const isChampions = regulation === "Reg M-A";
@@ -245,7 +249,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               <button
                 type="button"
                 onClick={onToggleMega}
-                className={`inline-flex items-center justify-center w-7 h-7 sm:w-6 sm:h-6 rounded-md text-xs sm:text-xs font-extrabold transition-all duration-200 ${
+                className={`inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md text-xs sm:text-xs font-extrabold transition-all duration-200 ${
                   showMega
                     ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-sm shadow-purple-500/30"
                     : "bg-surface-alt text-text-tertiary hover:text-purple-500 hover:bg-purple-500/10 border border-border-subtle"
@@ -269,7 +273,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => posthog?.capture("calc_opened", { pokemon_name: showMega && megaEntry ? megaEntry.displayName : parsed.species })}
-                className="p-2 rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200"
+                className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200"
                 title="Open damage calculator"
                 aria-label={`Open damage calculator for ${showMega && megaEntry ? megaEntry.displayName : parsed.species}`}
               >
@@ -295,7 +299,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="ml-auto p-2 rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200 cursor-pointer"
+                className="ml-auto min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200 cursor-pointer"
                 title="Replace this Pokemon"
                 aria-label={`Replace ${displaySpecies}`}
               >
@@ -310,7 +314,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               <button
                 type="button"
                 onClick={onToggleMvp}
-                className={`${canReplace ? "" : "ml-auto"} p-2 rounded-lg transition-all duration-200 ${
+                className={`${canReplace ? "" : "ml-auto"} min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg transition-all duration-200 ${
                   isMvp
                     ? "text-amber-500 bg-amber-500/10"
                     : "text-text-tertiary/40 hover:text-amber-400 hover:bg-amber-400/5"
@@ -476,7 +480,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
           )}
 
           <div className="space-y-1 sm:space-y-1.5 stagger-stats" role="list" aria-label={`${displaySpecies} stats`}>
-            {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map((stat) => {
+            {visibleStats.map((stat) => {
               const value = displayStats[stat];
               const ev = parsed.evs[stat];
               const sp = spSpread[stat];

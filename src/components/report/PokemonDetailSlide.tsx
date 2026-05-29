@@ -586,7 +586,7 @@ export function PokemonDetailSlide({
             <button
               type="button"
               onClick={onToggleMega}
-              className={`inline-flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 rounded-md text-sm font-extrabold transition-all duration-200 ${
+              className={`inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md text-sm font-extrabold transition-all duration-200 ${
                 showMega
                   ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-sm shadow-purple-500/30"
                   : "bg-surface-alt text-text-tertiary hover:text-purple-500 hover:bg-purple-500/10 border border-border-subtle"

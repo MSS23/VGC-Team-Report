@@ -1,3 +1,4 @@
+import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
 import { timingSafeEqual } from "crypto";
@@ -109,6 +110,8 @@ export async function DELETE(request: NextRequest) {
     expectedBuf.length !== actualBuf.length ||
     !timingSafeEqual(expectedBuf, actualBuf)
   ) {
+  // Verify authorization
+  if (!verifyBearer(request, "CLEANUP_SECRET")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

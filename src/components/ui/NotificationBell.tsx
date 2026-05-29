@@ -47,6 +47,8 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
   const { notifications, unreadCount, markAllRead } = useNotifications(enabled);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Close on outside click
   useEffect(() => {
@@ -58,11 +60,48 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
+  // Close on Escape and return focus to trigger
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open]);
+
+  // Manage focus on open/close: move into panel when opening, restore to trigger when closing
+  const wasOpenRef = useRef(false);
+  useEffect(() => {
+    if (open) {
+      // Defer to next paint so the panel is in the DOM
+      const id = requestAnimationFrame(() => {
+        const panel = panelRef.current;
+        if (!panel) return;
+        const focusable = panel.querySelector<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        (focusable ?? panel).focus();
+      });
+      wasOpenRef.current = true;
+      return () => cancelAnimationFrame(id);
+    }
+    if (wasOpenRef.current) {
+      // Closing transition — restore focus to the trigger
+      triggerRef.current?.focus();
+      wasOpenRef.current = false;
+    }
+  }, [open]);
+
   if (!enabled) return null;
 
   return (
     <div ref={ref} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
@@ -83,9 +122,11 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
 
       {open && (
         <div
+          ref={panelRef}
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 top-full mt-2 w-80 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in"
+          tabIndex={-1}
+          className="absolute right-0 top-full mt-2 w-80 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in focus:outline-none"
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h3 className="text-sm font-bold text-text-primary">Notifications</h3>
@@ -93,6 +134,7 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
               <button
                 type="button"
                 onClick={() => { markAllRead(); }}
+                aria-label="Mark all notifications as read"
                 className="text-[10px] font-bold text-accent hover:underline cursor-pointer"
               >
                 Mark all read

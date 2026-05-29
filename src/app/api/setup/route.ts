@@ -1,3 +1,4 @@
+import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { ensureTable } from "@/lib/db";
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
@@ -15,6 +16,11 @@ export async function GET(request: Request) {
   if (
     expectedBuf.length !== actualBuf.length ||
     !timingSafeEqual(expectedBuf, actualBuf)
+  // Accept either MIGRATE_SECRET (preferred) or CRON_SECRET as a fallback,
+  // matching prior behaviour. Both env-var names are preserved.
+  if (
+    !verifyBearer(request, "MIGRATE_SECRET") &&
+    !verifyBearer(request, "CRON_SECRET")
   ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

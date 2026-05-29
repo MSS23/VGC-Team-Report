@@ -60,6 +60,21 @@ src/app/dashboard/DashboardContent.tsx
 src/app/dashboard/notifications/page.tsx
 src/app/dashboard/privacy/layout.tsx
 src/app/dashboard/profile/layout.tsx
+src/app/api/webhooks/linear/route.ts
+src/app/api/webhooks/posthog/route.ts
+src/app/champions/ChampionsContent.tsx
+src/app/champions/[pokemon]/MegaLandingContent.tsx
+src/app/champions/[pokemon]/page.tsx
+src/app/champions/page.tsx
+src/app/changelog/ChangelogContent.tsx
+src/app/changelog/page.tsx
+src/app/dashboard/DashboardContent.tsx
+src/app/dashboard/notifications/page.tsx
+src/app/dashboard/page.tsx
+src/app/dashboard/privacy/layout.tsx
+src/app/dashboard/profile/layout.tsx
+src/app/embed/[id]/page.tsx
+src/app/faq/page.tsx
 src/app/feedback/page.tsx
 src/app/layout.tsx
 src/app/notifications/NotificationsContent.tsx
@@ -73,6 +88,13 @@ src/components/match-tracker/MatchTracker.tsx
 src/components/seo/JsonLd.tsx
 src/components/social/DoubleTapLikeOverlay.tsx
 src/components/social/FloatingReactionDock.tsx
+src/components/providers/PostHogProvider.tsx
+src/components/report/PokemonCard.tsx
+src/components/report/SpeedTierChart.tsx
+src/components/seo/JsonLd.tsx
+src/components/social/DoubleTapLikeOverlay.tsx
+src/components/social/FloatingReactionDock.tsx
+src/components/social/ReactionBar.tsx
 src/components/ui/InstallPrompt.tsx
 src/components/ui/NewsletterSignup.tsx
 src/components/ui/NotificationBell.tsx
@@ -87,8 +109,15 @@ src/hooks/useShareUrl.ts
 src/hooks/useSwipeNavigation.ts
 src/hooks/useTouchIdleHide.ts
 src/lib/analysis/stat-calculator.ts
+src/hooks/useSlideNavigation.ts
+src/hooks/useSlideSystem.ts
+src/hooks/useSwipeNavigation.ts
+src/hooks/useTouchIdleHide.ts
+src/lib/analysis/stat-calculator.ts
+src/lib/cron-auth.ts
 src/lib/data/tags.ts
 src/lib/db/migrations/add-unlisted-column.sql
+src/lib/discord-bot.ts
 src/lib/email.ts
 src/lib/i18n/translations/en.ts
 src/lib/i18n/translations/es.ts
@@ -98,6 +127,8 @@ src/lib/i18n/translations/ja.ts
 src/lib/i18n/translations/ko.ts
 src/lib/i18n/translations/zh.ts
 src/lib/linear.ts
+src/lib/security/input-validation.ts
+src/lib/utils/diff-state.ts
 src/lib/utils/game-plan-helpers.tsx
 src/lib/utils/mega-detect.ts
 src/lib/utils/multi-import.ts
@@ -105,3 +136,4 @@ src/lib/utils/normalize-report.ts
 src/lib/utils/pokepaste.ts
 tsconfig.json
 vercel.json
+--- last 7 days file changes on main ---

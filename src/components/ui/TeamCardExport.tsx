@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { getHtml2Canvas } from "@/lib/dynamic-imports/html2canvas";
 
 interface TeamCardExportProps {
   teamName: string;
@@ -35,7 +36,7 @@ export function TeamCardExport({
     setExportError(null);
     setExporting(true);
     try {
-      const { default: html2canvas } = await import("html2canvas-pro");
+      const html2canvas = await getHtml2Canvas();
       const canvas = await html2canvas(cardRef.current, {
         useCORS: true,
         scale: 2,

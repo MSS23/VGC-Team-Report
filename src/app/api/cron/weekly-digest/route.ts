@@ -304,17 +304,31 @@ export async function GET(request: Request) {
 
       const firstName = user.firstName ?? null;
 
-      // c. Query engagement stats — includes total_shares to avoid a second query
+      // c. Query engagement stats.
+      // SUM(view_count) and COUNT(shares) must NOT cross-join with comments
+      // and reactions — the cross-product inflates both by 1+commentsCount
+      // * 1+reactionsCount per share. Aggregate share-level stats in their
+      // own row, then add separate scalar subqueries for the comment and
+      // reaction windows. COUNT(DISTINCT) on the comment/reaction ids
+      // happens to mask the inflation for those two counts but not for
+      // SUM or plain COUNT, so we keep the comment / reaction counts as
+      // dedicated subqueries too for symmetry.
       const [stats] = await sql`
         SELECT
-          COUNT(DISTINCT r.id) FILTER (WHERE r.created_at > NOW() - INTERVAL '7 days') AS new_reports,
+          COUNT(*) FILTER (WHERE r.created_at > NOW() - INTERVAL '7 days') AS new_reports,
           COALESCE(SUM(r.view_count), 0) AS total_views,
-          COUNT(DISTINCT c.id) AS new_comments,
-          COUNT(DISTINCT rc.id) AS new_reactions,
-          COUNT(r.id) AS total_shares
+          COUNT(*) AS total_shares,
+          (
+            SELECT COUNT(*) FROM comments c
+            WHERE c.share_id IN (SELECT id FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL)
+              AND c.created_at > NOW() - INTERVAL '7 days'
+          ) AS new_comments,
+          (
+            SELECT COUNT(*) FROM reactions rc
+            WHERE rc.share_id IN (SELECT id FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL)
+              AND rc.created_at > NOW() - INTERVAL '7 days'
+          ) AS new_reactions
         FROM shares r
-        LEFT JOIN comments c ON c.share_id = r.id AND c.created_at > NOW() - INTERVAL '7 days'
-        LEFT JOIN reactions rc ON rc.share_id = r.id AND rc.created_at > NOW() - INTERVAL '7 days'
         WHERE r.owner_id = ${userId} AND r.deleted_at IS NULL
       `;
 
