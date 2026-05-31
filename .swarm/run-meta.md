@@ -4,7 +4,7 @@
 - Branch created fresh from `main` at SHA: `1a30839392f00203b6f0ea26a902797c2cf9a76c`
 - Ahead/behind `origin/main` at start: 0/0 (clean cut)
 - Files touched on `main` in last 7 days: ~175 entries (see `.swarm/main-changed-files.md`)
-- Existing PR for tonight's branch: NONE (verified via GitHub MCP) — will create one in Step 5.
+- Existing PR for tonight's branch: NONE at run start. Created in Step 5: **https://github.com/MSS23/VGC-Team-Report/pull/50** (draft).
 
 ## Environment availability snapshot
 
