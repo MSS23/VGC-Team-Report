@@ -4,7 +4,9 @@ import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 import { ENTRIES } from "./data";
 
 export const metadata: Metadata = {
-  title: "Changelog — VGC Team Report",
+  // `absolute` opts out of the `%s | VGC Team Report` layout template so the
+  // self-branded title doesn't render with a duplicate brand suffix.
+  title: { absolute: "Changelog — VGC Team Report" },
   description: "Full version history of VGC Team Report — new features, bug fixes, and improvements.",
   alternates: { canonical: "https://pokemonvgcteamreport.com/changelog" },
   openGraph: {

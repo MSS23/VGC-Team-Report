@@ -4,7 +4,9 @@ import { JsonLd, BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 import { getRegMAMegas } from "@/lib/data/mega-pokemon";
 
 export const metadata: Metadata = {
-  title: "Pokemon Champions Format | Mega Evolution Teams — VGC Team Report",
+  // `absolute` opts out of the `%s | VGC Team Report` layout template so the
+  // self-branded title doesn't render as "...— VGC Team Report | VGC Team Report".
+  title: { absolute: "Pokemon Champions Format | Mega Evolution Teams — VGC Team Report" },
   description:
     "Explore Pokemon Champions (Regulation M-A) team reports. Mega Evolution builds, matchup analysis, and team breakdowns from the competitive community.",
   alternates: { canonical: "https://pokemonvgcteamreport.com/champions" },
