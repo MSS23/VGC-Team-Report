@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
@@ -8,9 +9,20 @@ import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
 import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
-import { NotificationBell } from "@/components/ui/NotificationBell";
-import { VersionHistoryPanel } from "@/components/social/VersionHistoryPanel";
 import { hapticLight } from "@/lib/utils/haptics";
+
+// Both panels render conditionally (NotificationBell only when signed in,
+// VersionHistoryPanel only when canShowVersionHistory) but a static import
+// pulls them into the Navbar chunk that loads on every page. Lazy import
+// keeps the per-page chunk lean — see .swarm/c3-performance-31-05-26.md.
+const NotificationBell = dynamic(
+  () => import("@/components/ui/NotificationBell").then((m) => m.NotificationBell),
+  { ssr: false },
+);
+const VersionHistoryPanel = dynamic(
+  () => import("@/components/social/VersionHistoryPanel").then((m) => m.VersionHistoryPanel),
+  { ssr: false },
+);
 
 interface NavbarProps {
   // Mode flags
