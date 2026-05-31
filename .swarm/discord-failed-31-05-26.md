@@ -38,7 +38,7 @@ The full JSON body is in `.swarm/discord-payload-31-05-26.json`. Reproduced inli
       { "name": "Updates page", "value": "12 entries added under v5.23 in the May 2026 section of /changelog", "inline": false },
       { "name": "Merge conflicts", "value": "Mid-run agent stash incident — recovered cleanly via stash pop. See .swarm/conflicts.md.", "inline": false },
       { "name": "Rejected changes", "value": "None at the build gate. 5 items deliberately deferred (see .swarm/rejected.md).", "inline": false },
-      { "name": "PR", "value": "<filled by Step 5 after gh pr create>", "inline": false },
+      { "name": "PR", "value": "https://github.com/MSS23/VGC-Team-Report/pull/50", "inline": false },
       { "name": "What was pushed", "value": "• Linear webhook catch-path error logging\n• InstallPrompt localStorage guard (Safari private mode)\n• Changelog v5.22 text cleanup\n• De-export internal helpers\n• Bot-detection empty-UA + indexing-file exemption\n• Sitemap 1h ISR + duplicate /compare removal\n• /champions and /changelog title double-suffix fix\n• tsc + next build CI gate\n• Weekly digest N+1 → single GROUP BY query\n• qrcode dynamic-import singleton\n• NotificationBell + VersionHistoryPanel via next/dynamic", "inline": false }
     ],
     "footer": { "text": "vgc-overnight-swarm • channel 1487202217298493493 • Review and merge to main when ready" }
