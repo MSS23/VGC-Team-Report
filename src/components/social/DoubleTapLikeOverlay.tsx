@@ -45,19 +45,6 @@ const INTERACTIVE_SELECTOR = [
   "[contenteditable='true']",
 ].join(",");
 
-/** Selectors for the floating Share / Reactions docks. We never want a
- *  double-tap inside those pills to spawn a heart-burst — viewers are
- *  interacting with the dock controls, not the report content. The dock
- *  wrappers tag themselves with `data-vgc-dock` so we can match the bare
- *  container background even when the user taps between buttons. */
-const DOCK_SELECTOR = [
-  "[data-vgc-dock]",
-  '[role="region"][aria-label*="Share" i]',
-  '[aria-label*="reaction" i]',
-  '[aria-label*="Show share" i]',
-  '[aria-label*="Hide share" i]',
-].join(",");
-
 /** Big red SVG heart used for the burst. Filled, ~80px, no stroke. */
 function HeartBurstIcon() {
   return (
@@ -229,20 +216,6 @@ export function DoubleTapLikeOverlay({
       const target = e.target as Element | null;
       if (target && typeof target.closest === "function") {
         if (target.closest(INTERACTIVE_SELECTOR)) return;
-        if (target.closest(DOCK_SELECTOR)) return;
-      }
-
-      // composedPath() catches elements inside shadow DOM and event-retargeted
-      // hosts that closest() might miss.
-      const path =
-        typeof e.composedPath === "function" ? e.composedPath() : [];
-      for (const node of path) {
-        if (!(node instanceof Element)) continue;
-        if (node.hasAttribute?.("data-vgc-dock")) return;
-        const aria = node.getAttribute?.("aria-label") ?? "";
-        if (/share/i.test(aria) || /reaction/i.test(aria)) {
-          return;
-        }
       }
 
       const now = e.timeStamp || Date.now();
