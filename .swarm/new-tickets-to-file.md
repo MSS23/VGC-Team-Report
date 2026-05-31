@@ -1,61 +1,157 @@
-# New Linear Tickets to File After Run
+# New Linear tickets to file — 2026-05-31
 
-## P0 / Webhook follow-up (carry forward)
-1. **[INFRA] Standardise Linear webhook signing secret to LINEAR_WEBHOOK_SIGNING_SECRET (drop legacy LINEAR_WEBHOOK_SECRET fallback)**
-   Priority: High (2)
-   Description: VGC-WEBHOOK fix in this run accepts both LINEAR_WEBHOOK_SIGNING_SECRET (preferred) and the legacy LINEAR_WEBHOOK_SECRET to be safe. Once the user has confirmed via Vercel that the env var is set under the SIGNING_SECRET name (and Linear's webhook config matches), remove the legacy fallback in src/app/api/webhooks/linear/route.ts.
-   Source: webhook-investigation.md
+The Linear API key is not available in this container, so the swarm cannot
+file these tickets directly. Please paste each as a new Linear ticket in the
+backlog with the `auto-research` (or `posthog-signal` for telemetry-sourced
+items) label.
 
-2. **[INFRA] Verify Linear webhook delivery succeeds end-to-end after handler fix**
-   Priority: High (2)
-   Description: This run's first commit (VGC-WEBHOOK) fixed the header name (linear-signature vs x-linear-signature), added env-var fallback, force-dynamic, and 200 on unknown event types. Once deployed, re-enable the webhook in Linear settings and confirm a test delivery returns 200. Webhook URL: https://pokemonvgcteamreport.com/api/webhooks/linear.
+---
 
-## P0 Security (from C5)
-3. **Bug: Clerk webhook has no svix-id idempotency — duplicate welcome emails on retry**
-   Priority: Urgent (1)
-   Description: src/app/api/webhooks/clerk/route.ts only validates the Svix signature; Clerk retries on 5xx, causing duplicate welcome emails. Add a 5-min TTL cache keyed by svix-id to short-circuit duplicates. Source: c5-commit-review.md finding 4.
+## P0 — Infrastructure / SEO
 
-4. **Bug: Weekly digest unsubscribe footer references UI that does not exist (CAN-SPAM gap)**
-   Priority: High (2)
-   Description: The weekly digest email says "unsubscribe via notification preferences" but no toggle exists in /dashboard/notifications that writes publicMetadata.digestUnsubscribed. Add the toggle, or include a signed one-click unsubscribe link per CAN-SPAM §316.5. Source: c5-commit-review.md finding 3.
+### 1. `[INFRA] Verify Linear webhook signing secret in Vercel matches Linear config`
 
-## Features from R3 community sentiment (each <8hr)
-5. **Source / Credit field with auto-linkify on team reports**
-   Priority: High (2)
-   Description: Add separate sourceUrl + creditPlayer columns on the report. Renders as "Based on [Player]'s team from [Event]" line. Solves PokePaste's long-running pain about un-selectable URLs buried in notes.
-   Source: r3-community-sentiment.md unmet need #1 secondary.
+**Priority:** P0 (Urgent)
+**Labels:** `infra`, `auto-research`
+**Source:** `.swarm/webhook-investigation.md`
 
-6. **Sprite-fallback CDN proxy: wrap pokepaste-derived sprites with a Pokemon HOME / Showdown fallback**
-   Priority: High (2)
-   Description: PokePaste sprites are broken for many DLC formes (Zygarde-10%, Sirfetch'd, Ash-Greninja). When our viewer renders a pokepast.es-derived team, route through our existing /api/sprite proxy and substitute a Pokemon HOME / Showdown sprite on 404. Effectively builds the community pokepastefix Chrome extension into our app, which also fixes iOS Safari users.
-   Source: r3-community-sentiment.md pain point #1.
+Linear has warned the `/api/webhooks/linear` webhook will auto-disable due to repeated delivery failures. The handler code in `src/app/api/webhooks/linear/route.ts` has been audited and is correct (signature header, raw body HMAC, force-dynamic, empty-body handling, 200-on-transient-error are all in place — verified line by line in `webhook-investigation.md`). The remaining failure mode is env-var configuration:
 
-7. **Open Team Sheet (OTS) PDF export from any report**
-   Priority: High (2)
-   Description: VGC 2026 mandates OTS at tournaments. Generate a print-friendly, regulation-compliant team sheet (Pokemon, item, ability, moves, Tera type) directly from any report page. Daily-use utility tied to mandatory tournament format.
-   Source: r3-community-sentiment.md ticket idea #5.
+- `LINEAR_WEBHOOK_SIGNING_SECRET` may be missing from Vercel Production env, OR
+- Its value does not match the secret configured in Linear's webhook settings.
 
-## Tech debt
-8. **Refactor email HTML builders behind a tagged-template helper that escapes by default**
-   Priority: Medium (3)
-   Description: Two XSS regressions in two weeks (digest in 19-05 swarm, welcome+comment fixed today). Move all email templates into an html`...` tagged-template helper that escapes interpolations by default with a raw() opt-out. One audit point, no foot-guns.
-   Source: c5-commit-review.md architectural rec #1.
+Both produce 401 from the handler. Action required:
 
-9. **Integration test for shares INSERT/UPDATE flow against test schema**
-   Priority: Medium (3)
-   Description: 17-05 INSERT column-mismatch bug and today's unlisted-demotion bug both passed tsc + build cleanly. A 30-line vitest creating → reading → updating → reading a share through getDb() against a test schema catches column-list bugs at CI. Currently only extractSpecies has unit coverage.
-   Source: c5-commit-review.md architectural rec #2.
+1. Vercel → VGC Team Report → Settings → Environment Variables → confirm `LINEAR_WEBHOOK_SIGNING_SECRET` exists for **Production**.
+2. Linear → Settings → API → Webhooks → VGC webhook → copy signing secret.
+3. Verify they match exactly. If env var was changed, trigger a redeploy.
+4. Re-enable the webhook in Linear if it was auto-disabled.
+5. Test by triggering an issue event in Linear; watch Vercel function logs for a 200.
 
-10. **DoubleTapLikeOverlay: strip dead dock selectors after ShareDock removal**
-    Priority: Low (4)
-    Description: DoubleTapLikeOverlay still has 50+ lines guarding against [data-vgc-dock], aria-label*="share", aria-label*="reaction" elements that were removed in commit 850e91c. Also: ChangelogContent.tsx:274 still advertises "Persistent ShareDock on every shared report" — strip both. Source: c5-commit-review.md architectural rec #3.
+Close this ticket once a test delivery returns 200 and the webhook stays enabled for 24h.
 
-## SEO (from R6)
-11. **SEO: ship per-species EV-spread landing pages at /champions/[species]/spreads (largest keyword gap vs Pikalytics)**
-    Priority: High (2)
-    Already filed as VGC-217 — confirm still on backlog, do not re-file.
+---
 
-12. **SEO: BreadcrumbList JSON-LD on /explore, /tournaments, /creator/[name]**
-    Priority: Medium (3)
-    Implemented this run by F5 if applicable — only file if F5 reports it could not complete.
+### 2. `[SEO P0] /s/[id] must server-render the team, not client-redirect to /?s=<id>`
 
+**Priority:** P0 (Urgent)
+**Labels:** `seo`, `auto-research`
+**Source:** `.swarm/r6-seo-indexation-31-05-26.md` finding #1
+**Estimated effort:** 1–2 days
+
+R6 deep-dive identified this as the single largest cause of "only ~2 pages indexed despite a sitemap of thousands." Every shared-report URL (`/s/[id]`) currently renders `<ShareRedirectClient>`, a `'use client'` component whose entire job is `router.replace('/?s=<id>')`. Google sees a near-empty document that JS-redirects to `/`, folds all ~5000 share URLs into the single canonical `/`, and drops the rest as "Page with redirect" or "Alternate page with proper canonical tag."
+
+**Fix:** Convert `src/app/s/[id]/page.tsx` to a true server component that renders `<TeamReport>` inline using the DB row already fetched at line ~159. Hydrate interactive bits (presentation mode, `?key=` edit unlock) as a `'use client'` island. Add `export const revalidate = 300` (5-min ISR) to bound Vercel function invocations.
+
+---
+
+### 3. `[SEO P0] Split homepage into server shell + client island so / has real prerendered HTML`
+
+**Priority:** P0 (Urgent)
+**Labels:** `seo`, `auto-research`
+**Source:** `.swarm/r6-seo-indexation-31-05-26.md` finding #2
+**Estimated effort:** 4–6 hours
+
+`src/app/page.tsx` is `'use client'`, so Next.js does not prerender `.next/server/app/page.html` (build verified — file is missing). When Google follows the `/s/[id]` redirect to `/`, it lands on an empty React shell. Soft-404 territory.
+
+**Fix:** Split into `page.tsx` (server) that renders the static landing copy, hero, sample team cards, FAQ links, JSON-LD; and a `<HomeInteractive>` client child that handles paste input, analysis state, share flow. Same pattern `/explore` should adopt.
+
+This and ticket #2 above are the only two changes that will move the GSC "Pages indexed" count meaningfully in the next 30 days.
+
+---
+
+## P1 — Performance / Quality
+
+### 4. `[PERF] Stop double-bundling dex-subset.json across / and /compare`
+
+**Priority:** P1
+**Labels:** `performance`, `auto-research`
+**Source:** `.swarm/c3-performance-31-05-26.md` finding #1
+**Estimated effort:** Small (~1h)
+
+`src/lib/data/dex-subset.ts` does a top-level JSON import of `dex-subset.json` (~340 KB raw / ~40 KB gzipped). The webpack manifest inlines it into BOTH the `/` and `/compare` client bundles. Convert to a lazy `import()` or `fetch('/dex-subset.json')` so the data is fetched on first need and cached by the browser instead of duplicated across route bundles.
+
+---
+
+### 5. `[PERF] Replace motion library with Tailwind CSS transitions where possible`
+
+**Priority:** P1
+**Labels:** `performance`, `auto-research`
+**Source:** `.swarm/c3-performance-31-05-26.md` finding #3
+**Estimated effort:** Medium (~half day)
+
+`motion` ships 118 KB on the shared chunk. The library has 12 client import sites; most are trivial fades/slides that can be replaced by `transition-all duration-200 ease-out` Tailwind utilities. Audit each site; replace simple cases; keep `motion` only for the animations that genuinely need its spring physics or layout-animation features. Goal: drop the shared chunk by ~80 KB raw.
+
+---
+
+### 6. `[SEO] Per-route server-fetch first page of results on /explore, /changelog, /champions, /creator/[name]`
+
+**Priority:** P2
+**Labels:** `seo`, `auto-research`
+**Source:** `.swarm/r6-seo-indexation-31-05-26.md` finding #8
+**Estimated effort:** Half-day per page
+
+`/explore`, `/changelog`, `/champions`, `/creator/[name]` are server-component shells (good — they DO prerender HTML) but the heavy content components mount as client islands and fetch via `/api/*` after hydration. Initial HTML has zero individual entries. Pass first-page data as props from the server component to thicken the initial paint.
+
+---
+
+### 7. `[SECURITY] Upgrade js-cookie + tmp to resolve high-severity npm advisories`
+
+**Priority:** P2
+**Labels:** `security`, `auto-research`
+**Source:** `.swarm/c4-security-31-05-26.md`
+
+`npm audit` reports two high-severity advisories tonight:
+
+- **js-cookie ≤3.0.5** (CVSS 7.5 prototype-hijack via crafted `assign()`). Comes in via `@clerk/nextjs` → `@clerk/shared` 4.10.1. Requires upgrading `@clerk/nextjs` to whichever release pulls in `@clerk/shared ≥ 4.13.2`. Validate Clerk SDK migration notes before bumping; Clerk auth touches every page.
+- **tmp <0.2.6** (path-traversal). Transitive via `cypress` only — dev dependency, low real-world risk. `npm update tmp` may resolve.
+
+Run `npm audit` after upgrade to confirm `high` count drops to 0.
+
+---
+
+## P2 — Code quality follow-ups
+
+### 8. `[TYPE] Replace Clerk webhook 'as unknown as' double-cast with Zod validation`
+
+**Priority:** P2
+**Labels:** `code-quality`, `auto-research`
+**Source:** `.swarm/c2-typescript-31-05-26.md` finding #1
+**File:** `src/app/api/webhooks/clerk/route.ts:46`
+
+The `event.data as unknown as ClerkUserCreatedData` pattern bypasses type-narrowing in a security-boundary handler. Replace with a Zod `safeParse()` so malformed payloads fail loudly instead of accessing nonexistent fields at runtime.
+
+---
+
+### 9. `[INFRA] Set up Linear API key in container env so future swarm runs can drain the board`
+
+**Priority:** P2
+**Labels:** `infra`, `auto-research`
+**Source:** `.swarm/run-meta.md`
+
+Each nightly swarm is supposed to read the In Progress Linear board, work through tickets, and update statuses. This container has no `.env.local` and no `LINEAR_API_KEY` in env, so the L0 triage step is non-functional. Per `CLAUDE.md`, the helper at `.claude/scripts/linear.sh` reads `LINEAR_API_KEY` from `.env.local`.
+
+Options:
+- Add `LINEAR_API_KEY` (and `DISCORD_BUILDS_WEBHOOK`, `POSTHOG_API_KEY`) to the remote-container environment provisioning step.
+- Or: bind these as secrets at session start so they appear in env.
+- Or: have the playbook fall back to Linear MCP OAuth on the first swarm run of a new container.
+
+Without this, swarm runs can only act on prior research artifacts and the in-flight code state, not current Linear ticket priorities.
+
+---
+
+## Done in this run (no ticket needed)
+
+The following items from prior swarm research were implemented tonight without filing new tickets — see PR commit list:
+
+- VGC-WEBHOOK: error-logging on webhook handler catch path
+- VGC-SEO: bot-detection empty-UA + indexing-file exemption (sitemap.xml etc.)
+- VGC-SEO: sitemap ISR + duplicate /compare removal
+- VGC-SEO: title double-suffix on /champions and /changelog
+- VGC-CI: tsc + build CI gate
+- VGC-DIGEST: weekly-digest N+1 → single pre-aggregation
+- VGC-PERF: qrcode dynamic-import singleton
+- VGC-PERF: NotificationBell + VersionHistoryPanel via next/dynamic in Navbar
+- Code hygiene: replaceSpeciesInBlock + isDynamicAllowedOrigin de-exported
+- PWA: InstallPrompt localStorage guard
+- Changelog text cleanup
