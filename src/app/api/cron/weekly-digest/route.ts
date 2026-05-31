@@ -277,6 +277,72 @@ export async function GET(request: Request) {
     }
   }
 
+  // Pre-aggregate engagement stats for every user in ONE query.
+  // The old code ran this per-user inside the loop (~500x sequential round
+  // trips to Neon). A single GROUP BY owner_id collapses that to one query
+  // and an O(1) Map lookup inside the loop.
+  //
+  // SUM(view_count) and COUNT(shares) must NOT cross-join with comments
+  // and reactions — the cross-product inflates both by 1+commentsCount
+  // * 1+reactionsCount per share. We aggregate share-level stats in the
+  // outer query, then LEFT JOIN two pre-grouped subqueries (one per
+  // child table) keyed on owner_id. Each child row points to exactly one
+  // share, so grouping the children by owner_id before the join keeps
+  // the math identical to the original scalar-subquery version.
+  type StatsRow = {
+    new_reports: number;
+    total_views: number;
+    total_shares: number;
+    new_comments: number;
+    new_reactions: number;
+  };
+  const statsByUser = new Map<string, StatsRow>();
+  try {
+    const rows = await sql`
+      SELECT
+        s.owner_id,
+        COUNT(*) FILTER (WHERE s.created_at > NOW() - INTERVAL '7 days') AS new_reports,
+        COALESCE(SUM(s.view_count), 0) AS total_views,
+        COUNT(*) AS total_shares,
+        COALESCE(MAX(cc.cnt), 0) AS new_comments,
+        COALESCE(MAX(rr.cnt), 0) AS new_reactions
+      FROM shares s
+      LEFT JOIN (
+        SELECT sh.owner_id, COUNT(*) AS cnt
+        FROM comments c
+        JOIN shares sh ON sh.id = c.share_id
+        WHERE sh.owner_id = ANY(${userIds})
+          AND sh.deleted_at IS NULL
+          AND c.created_at > NOW() - INTERVAL '7 days'
+        GROUP BY sh.owner_id
+      ) cc ON cc.owner_id = s.owner_id
+      LEFT JOIN (
+        SELECT sh.owner_id, COUNT(*) AS cnt
+        FROM reactions r
+        JOIN shares sh ON sh.id = r.share_id
+        WHERE sh.owner_id = ANY(${userIds})
+          AND sh.deleted_at IS NULL
+          AND r.created_at > NOW() - INTERVAL '7 days'
+        GROUP BY sh.owner_id
+      ) rr ON rr.owner_id = s.owner_id
+      WHERE s.owner_id = ANY(${userIds})
+        AND s.deleted_at IS NULL
+      GROUP BY s.owner_id
+    `;
+    for (const row of rows) {
+      statsByUser.set(row.owner_id as string, {
+        new_reports: Number(row.new_reports ?? 0),
+        total_views: Number(row.total_views ?? 0),
+        total_shares: Number(row.total_shares ?? 0),
+        new_comments: Number(row.new_comments ?? 0),
+        new_reactions: Number(row.new_reactions ?? 0),
+      });
+    }
+  } catch (e) {
+    console.error("[weekly-digest] Failed to pre-aggregate stats:", e);
+    return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
+  }
+
   // 4. Collect email jobs first, then send in parallel batches
   type EmailJob = { to: string; subject: string; html: string };
   const emailJobs: EmailJob[] = [];
@@ -304,39 +370,22 @@ export async function GET(request: Request) {
 
       const firstName = user.firstName ?? null;
 
-      // c. Query engagement stats.
-      // SUM(view_count) and COUNT(shares) must NOT cross-join with comments
-      // and reactions — the cross-product inflates both by 1+commentsCount
-      // * 1+reactionsCount per share. Aggregate share-level stats in their
-      // own row, then add separate scalar subqueries for the comment and
-      // reaction windows. COUNT(DISTINCT) on the comment/reaction ids
-      // happens to mask the inflation for those two counts but not for
-      // SUM or plain COUNT, so we keep the comment / reaction counts as
-      // dedicated subqueries too for symmetry.
-      const [stats] = await sql`
-        SELECT
-          COUNT(*) FILTER (WHERE r.created_at > NOW() - INTERVAL '7 days') AS new_reports,
-          COALESCE(SUM(r.view_count), 0) AS total_views,
-          COUNT(*) AS total_shares,
-          (
-            SELECT COUNT(*) FROM comments c
-            WHERE c.share_id IN (SELECT id FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL)
-              AND c.created_at > NOW() - INTERVAL '7 days'
-          ) AS new_comments,
-          (
-            SELECT COUNT(*) FROM reactions rc
-            WHERE rc.share_id IN (SELECT id FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL)
-              AND rc.created_at > NOW() - INTERVAL '7 days'
-          ) AS new_reactions
-        FROM shares r
-        WHERE r.owner_id = ${userId} AND r.deleted_at IS NULL
-      `;
+      // c. O(1) lookup from the pre-aggregated Map. Default to zeros if a
+      // user somehow has no row (shouldn't happen given userIds came from
+      // the same shares table, but be defensive).
+      const stats = statsByUser.get(userId) ?? {
+        new_reports: 0,
+        total_views: 0,
+        total_shares: 0,
+        new_comments: 0,
+        new_reactions: 0,
+      };
 
-      const newReports = Number(stats.new_reports ?? 0);
-      const totalViews = Number(stats.total_views ?? 0);
-      const newComments = Number(stats.new_comments ?? 0);
-      const newReactions = Number(stats.new_reactions ?? 0);
-      const totalShares = Number(stats.total_shares ?? 0);
+      const newReports = stats.new_reports;
+      const totalViews = stats.total_views;
+      const newComments = stats.new_comments;
+      const newReactions = stats.new_reactions;
+      const totalShares = stats.total_shares;
 
       const hasActivity = newReports > 0 || newComments > 0 || newReactions > 0 || totalViews > 0;
       const sendTrending = totalShares === 0 && !hasActivity;
