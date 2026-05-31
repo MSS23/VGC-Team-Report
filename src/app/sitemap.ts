@@ -2,6 +2,12 @@ import type { MetadataRoute } from "next";
 import { getDb } from "@/lib/db";
 import { getRegMAMegasWithSprites } from "@/lib/data/mega-pokemon";
 
+// Sitemap is regenerated at most once per hour via ISR. Sitemap freshness of
+// 1h is well within Google's typical recrawl cadence and bounds the DB cost
+// (two SELECTs over ~5k rows each) so Googlebot can never timeout the route
+// during a cold start.
+export const revalidate = 3600;
+
 const BASE = "https://pokemonvgcteamreport.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -15,7 +21,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/tournaments`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
     { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.6, lastModified: now },
     { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3, lastModified: now },
-    { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.5, lastModified: now },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
     { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
     ...getRegMAMegasWithSprites().map((m) => ({
