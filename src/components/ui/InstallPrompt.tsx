@@ -16,8 +16,14 @@ export function InstallPrompt() {
   const [dismissed, setDismissed] = useState(true); // start hidden, reveal after checks
 
   useEffect(() => {
-    // Don't show if already dismissed recently
-    const dismissedAt = localStorage.getItem(DISMISS_KEY);
+    // Don't show if already dismissed recently. Safari private mode and some
+    // embedded webviews throw on localStorage access, so guard the read.
+    let dismissedAt: string | null = null;
+    try {
+      dismissedAt = localStorage.getItem(DISMISS_KEY);
+    } catch {
+      dismissedAt = null;
+    }
     if (dismissedAt && Date.now() - Number(dismissedAt) < DISMISS_COOLDOWN) return;
 
     // Don't show if already installed
