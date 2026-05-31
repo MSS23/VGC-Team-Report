@@ -17,6 +17,27 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "May 2026",
+    version: "5.23",
+    title: "SEO Indexation Push, Bundle Trim & Webhook Hardening",
+    emoji: "🔎",
+    highlight: true,
+    items: [
+      { type: "improved", text: "SEO: sitemap.xml now regenerates at most once per hour (1h ISR) instead of running two LIMIT 5000 Postgres queries on every Googlebot fetch, eliminating the cold-start timeout risk that was silently failing indexation." },
+      { type: "fixed", text: "SEO: duplicate /compare entry in the sitemap removed — the lower-priority second entry was silently overriding the first." },
+      { type: "improved", text: "SEO: bot-detection no longer 403s empty-User-Agent requests, and /sitemap.xml, /robots.txt, /llms.txt, /llms-full.txt are exempt from bot detection entirely — header-probing crawlers (Discord embed regen, Google structured-data tester, CDN HEAD checks) no longer read as 'do not index'." },
+      { type: "fixed", text: "SEO: /champions and /changelog page titles no longer render with a duplicated brand suffix ('… — VGC Team Report | VGC Team Report'). Both pages now use title.absolute to opt out of the layout-level title template." },
+      { type: "improved", text: "Performance: weekly digest cron pre-aggregates per-user engagement stats in a single GROUP BY owner_id query instead of running one SQL round-trip per user — eliminates the N+1 pattern and keeps the route safely under the Vercel function timeout for 500+ users." },
+      { type: "improved", text: "Performance: qrcode dynamic import deduped via a singleton wrapper (src/lib/dynamic-imports/qrcode.ts) so the two call sites (OTS modal share QR + team-overview rental code QR) share one chunk instead of two." },
+      { type: "improved", text: "Performance: NotificationBell and VersionHistoryPanel are now next/dynamic imports in Navbar — both render conditionally but were previously bundled into the per-page Navbar chunk that loads on every page." },
+      { type: "improved", text: "Resilience: Linear webhook handler now logs errors from the catch-all path (without exposing raw body, signature, or secrets) instead of swallowing them silently — restores observability without changing the 200-response policy that keeps Linear from auto-disabling." },
+      { type: "fixed", text: "PWA: InstallPrompt no longer throws in Safari private browsing — localStorage reads are wrapped in try/catch so the prompt falls through gracefully when storage access is denied." },
+      { type: "improved", text: "CI: GitHub Actions workflow now runs tsc + next build on every pull_request and push to main, preventing the corruption-on-merge scenario that required a 'repair corrupted main' commit two days ago." },
+      { type: "improved", text: "Code hygiene: dropped unused export keywords on replaceSpeciesInBlock and isDynamicAllowedOrigin — both helpers have zero callers outside their own module." },
+      { type: "fixed", text: "Changelog v5.22 entry text cleaned up — the previous entry mentioning 'please merge!' was meta-process bleed and has been replaced with a user-facing description." },
+    ],
+  },
+  {
+    date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
     emoji: "🛡️",
