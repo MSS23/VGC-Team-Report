@@ -83,7 +83,12 @@ const ALLOWED_BOT_PATTERNS = [
  * Returns true if the user-agent should be BLOCKED.
  */
 export function isBlockedBot(userAgent: string): boolean {
-  if (!userAgent) return true; // Empty user-agent is suspicious
+  // Many legitimate clients omit the User-Agent header: link validators
+  // (Discord embed regeneration, Slack debug tool), Google's structured-data
+  // testing tool intermittently, CDN/monitoring HEAD probes, etc. A 403 on a
+  // sitemap-listed URL with empty UA reads as "do not index" to Google, so
+  // we allow empty UA through and let downstream auth handle abuse.
+  if (!userAgent) return false;
 
   // Allow known legitimate bots first
   if (ALLOWED_BOT_PATTERNS.some((pattern) => pattern.test(userAgent))) {

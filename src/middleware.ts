@@ -61,9 +61,13 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
   }
 
   // ── Bot detection: block known scrapers and suspicious requests ──
-  // Skip for cron/webhook routes (authenticated by secrets, not browsers)
+  // Skip for cron/webhook routes (authenticated by secrets, not browsers).
+  // Also skip for indexing-related public files (sitemap.xml, robots.txt,
+  // llms.txt) — a 403 on these to a header-probing crawler reads as
+  // "do not index" to Google.
   const isCronOrWebhook = pathname.startsWith('/api/cron') || pathname.startsWith('/api/webhooks') || pathname === '/api/keep-alive' || pathname === '/api/setup';
-  if (!isCronOrWebhook) {
+  const isIndexingFile = pathname === '/sitemap.xml' || pathname === '/robots.txt' || pathname === '/llms.txt' || pathname === '/llms-full.txt';
+  if (!isCronOrWebhook && !isIndexingFile) {
     const userAgent = request.headers.get('user-agent') ?? '';
     if (isBlockedBot(userAgent)) {
       return NextResponse.json(
