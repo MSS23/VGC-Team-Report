@@ -65,7 +65,12 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    // Log without exposing raw body, signature, or secrets — observability for
+    // the catch-all path that previously failed silently.
+    console.error("linear webhook handler error", {
+      message: err instanceof Error ? err.message : String(err),
+    });
     // Return 200 so Linear does not auto-disable the webhook on a transient error.
     return NextResponse.json({ ok: true });
   }
