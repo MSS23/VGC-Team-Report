@@ -343,7 +343,7 @@ export async function GET(request: Request) {
       emailJobs.push({
         to: email,
         subject,
-        html,
+        html: emailHtml,
         headers: {
           "List-Unsubscribe": `<${UNSUBSCRIBE_URL}>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
