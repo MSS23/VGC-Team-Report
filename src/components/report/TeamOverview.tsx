@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-// QRCode loaded dynamically — only needed when rental code is present
+// QRCode loaded dynamically via singleton wrapper — only needed when rental code is present
+import { getQRCode } from "@/lib/dynamic-imports/qrcode";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { PokemonCard } from "./PokemonCard";
@@ -373,8 +374,8 @@ export function TeamOverview({
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!rentalCode) { setQrDataUrl(null); return; }
-    import("qrcode").then(QRCode =>
-      QRCode.default.toDataURL(rentalCode, { width: 80, margin: 1, color: { dark: "#000000", light: "#ffffff" } })
+    getQRCode().then(QRCode =>
+      QRCode.toDataURL(rentalCode, { width: 80, margin: 1, color: { dark: "#000000", light: "#ffffff" } })
         .then(setQrDataUrl)
         .catch(() => setQrDataUrl(null))
     ).catch(() => setQrDataUrl(null));

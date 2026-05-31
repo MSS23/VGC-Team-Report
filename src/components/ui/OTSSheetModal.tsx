@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { teamToOpenSheet } from "@/lib/utils/export-paste";
 import { resolveSlug, getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { getQRCode } from "@/lib/dynamic-imports/qrcode";
 import { getHtml2Canvas } from "@/lib/dynamic-imports/html2canvas";
 
 interface OTSSheetModalProps {
@@ -88,8 +89,8 @@ export function OTSSheetModal({ pokemon, shareUrl, tournamentName, teamName, onC
   // Generate QR code for the share URL
   useEffect(() => {
     if (!shareUrl) return;
-    import("qrcode").then((QRCode) =>
-      QRCode.default.toDataURL(shareUrl, {
+    getQRCode().then((QRCode) =>
+      QRCode.toDataURL(shareUrl, {
         width: 128,
         margin: 1,
         color: { dark: "#000000", light: "#ffffff" },
