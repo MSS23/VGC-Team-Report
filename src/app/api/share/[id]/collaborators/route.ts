@@ -30,6 +30,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const guard = await apiGuard(request, { rateLimit: { key: "collab-read", max: 30 } });
+    if (guard) return guard;
+
     const { id: shareId } = await params;
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
