@@ -1,5 +1,7 @@
-# Rejected Changes — swarm-nightly-2026-05-28
+# Rejected Changes — swarm-nightly-2026-06-01
 
-1. **Changelog data extraction (W2-PERF)** — Agent attempted to extract ENTRIES array from ChangelogContent.tsx to a separate data.ts file with server-side prop passing. Left the file in a broken state (import from non-existent module). Changes reverted. The idea is sound but requires more careful implementation.
+No changes were rejected this run.
 
-All other changes passed tsc + next build.
+All 10 Wave 2 implementation subagents (F1–F10) returned `verified_passing: true`
+and the integrated `npx tsc --noEmit && npm run build` was green before per-ticket
+commits.
