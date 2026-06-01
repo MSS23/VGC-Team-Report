@@ -199,6 +199,8 @@ function FeedbackInner() {
                   key={t.value}
                   type="button"
                   onClick={() => setType(t.value)}
+                  aria-label={t.label}
+                  aria-pressed={type === t.value}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 + i * 0.05, duration: 0.35 }}
@@ -215,7 +217,7 @@ function FeedbackInner() {
                       <path d={t.icon} />
                     </svg>
                   </div>
-                  <span className={`text-xs font-bold transition-colors ${type === t.value ? "text-text-primary" : "text-text-secondary"}`}>
+                  <span className={`text-xs font-bold transition-colors text-center ${type === t.value ? "text-text-primary" : "text-text-secondary"}`}>
                     {t.label}
                   </span>
                 </motion.button>
