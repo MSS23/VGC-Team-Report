@@ -25,7 +25,7 @@ Channel ID (fixed): `1487202217298493493` (#builds)
       { "name": "Updates page", "value": "11 entries added to a new June 2026 section (v5.23)", "inline": false },
       { "name": "Merge conflicts", "value": "None", "inline": false },
       { "name": "Rejected changes", "value": "None — all 10 wave-2 changes built green", "inline": false },
-      { "name": "PR", "value": "<URL will be added once PR is created via GitHub MCP>", "inline": false },
+      { "name": "PR", "value": "https://github.com/MSS23/VGC-Team-Report/pull/52", "inline": false },
       { "name": "What was pushed", "value": "• /speed-tiers SEO landing page\n• /guides/how-to-write-a-vgc-team-report (7-step guide + HowTo schema)\n• Sentry session-replay removed (~97KB/route)\n• Microsoft Clarity lazy-loaded behind consent (~30-60KB)\n• Root metadata: 'Free VGC Team Builder, Damage Calcs & Speed Tiers (2026)' + PokePaste alternative\n• Sitemap: /compare deduped, Mega champion lastModified added\n• ShareModal a11y: role=alert errors + disambiguated visibility radio labels\n• Feedback type buttons: visible text labels (WCAG 1.4.1)\n• /api/share/[id]/collaborators GET: apiGuard rate-limit added\n• Webhook console.error on catch (linear/posthog/clerk observability)\n• Dead code: ConsentGate.tsx deleted", "inline": false }
     ],
     "footer": { "text": "vgc-overnight-swarm • channel 1487202217298493493 • Review and merge to main when ready" }

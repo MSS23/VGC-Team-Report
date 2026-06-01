@@ -21,3 +21,12 @@
 - GitHub MCP available (scoped to `mss23/vgc-team-report`) — PR creation goes through it.
 
 These constraints are documented in the PR body so the human knows what to verify and what to action.
+
+## Final outputs
+- PR opened: https://github.com/MSS23/VGC-Team-Report/pull/52 (draft, nightly → main)
+- Commits on branch: 16
+- Wave 1 agents: 8 (C1, C2, C3, C4, C5, R1, R6, R8)
+- Wave 2 agents: 10 (F1–F10), all `verified_passing: true`
+- Subagent budget used: 18 / 25
+- Discord notification: ❌ no webhook URL — payload saved to `.swarm/discord-failed-01-06-26.md`
+- Linear updates: ❌ MCP requires OAuth — drafts saved to `.swarm/drafts/linear-tickets-to-file.md`
