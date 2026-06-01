@@ -735,6 +735,7 @@ export function ShareModal({
               type="button"
               role="radio"
               aria-checked={!isPublic && !isUnlisted}
+              aria-label="Private — only you, hidden from Explore"
               disabled={!isOwner}
               onClick={() => {
                 if (!isOwner) return;
@@ -758,6 +759,7 @@ export function ShareModal({
               type="button"
               role="radio"
               aria-checked={isUnlisted && !isPublic}
+              aria-label="Unlisted — link only, hidden from Explore"
               disabled={!isOwner}
               onClick={() => {
                 if (!isOwner) return;
@@ -781,6 +783,7 @@ export function ShareModal({
               type="button"
               role="radio"
               aria-checked={isPublic}
+              aria-label="Public — appears on Explore"
               disabled={!isOwner || hasWarnings}
               onClick={() => {
                 if (!isOwner || hasWarnings) return;
@@ -820,7 +823,7 @@ export function ShareModal({
 
           {/* Creator name error message */}
           {creatorError && (
-            <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
+            <div role="alert" aria-live="assertive" aria-atomic="true" className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 flex-shrink-0 mt-0.5">
                 <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                 <line x1="12" y1="9" x2="12" y2="13" />
@@ -834,7 +837,7 @@ export function ShareModal({
 
           {/* Tag error message */}
           {tagError && (
-            <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
+            <div role="alert" aria-live="assertive" aria-atomic="true" className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 flex-shrink-0 mt-0.5">
                 <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                 <line x1="12" y1="9" x2="12" y2="13" />
@@ -848,7 +851,7 @@ export function ShareModal({
 
           {/* Server-side publish error (e.g. 403 owner mismatch, 500, network) */}
           {publishError && (
-            <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
+            <div role="alert" aria-live="assertive" aria-atomic="true" className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 flex-shrink-0 mt-0.5">
                 <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                 <line x1="12" y1="9" x2="12" y2="13" />
