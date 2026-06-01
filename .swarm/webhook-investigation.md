@@ -1,22 +1,77 @@
-# Linear Webhook Investigation — 2026-05-28
+# Linear Webhook Investigation — 2026-06-01
 
-## Root causes found (same as prior 7 runs — no PR has been merged):
+## Handler location
 
-1. **Wrong env var name**: `LINEAR_WEBHOOK_SECRET` → should be `LINEAR_WEBHOOK_SIGNING_SECRET`
-   - Fix: accept both via `??` fallback for backward compat
-2. **Wrong signature header**: `x-linear-signature` → Linear sends `linear-signature`
-   - Fix: check `linear-signature` first, fall back to `x-linear-signature`
-3. **Missing `force-dynamic`**: Next.js App Router may cache/static-optimize the route
-   - Fix: added `export const dynamic = "force-dynamic"`
-4. **500 on errors**: catch block returned 500, which causes Linear to retry and eventually auto-disable
-   - Fix: return 200 in catch block — acknowledge receipt even if processing fails
-5. **No empty body handling**: Linear setup ping may send empty body
-   - Fix: return 200 immediately for empty bodies
+`src/app/api/webhooks/linear/route.ts` (App Router, Node runtime, force-dynamic).
 
-## Env var status:
-- No `.env.local` in this container — cannot verify Vercel Production has the correct secret
-- **Human action required**: verify `LINEAR_WEBHOOK_SIGNING_SECRET` in Vercel Production matches Linear webhook config
-- After merge + deploy: re-enable webhook in Linear settings if auto-disabled
+## Code audit — every check PASSES (no fix needed)
 
-## Note:
-This is the 8th consecutive nightly run proposing this fix. None of the previous PRs (35-48) have been merged.
+| Check | Result |
+| --- | --- |
+| Reads signing secret from `process.env.LINEAR_WEBHOOK_SIGNING_SECRET` | ✅ (with legacy `LINEAR_WEBHOOK_SECRET` fallback) |
+| Reads raw body via `await request.text()` before parsing JSON | ✅ |
+| Computes HMAC-SHA256 over the raw bytes | ✅ |
+| Compares via `crypto.timingSafeEqual` (constant-time, not `===`) | ✅ |
+| Length-check before timingSafeEqual (prevents RangeError) | ✅ |
+| Reads `linear-signature` header (with `x-linear-signature` fallback) | ✅ |
+| 400 on missing signature | ✅ |
+| 401 on missing secret / invalid signature | ✅ |
+| 200 on valid signature (including unknown event types) | ✅ |
+| Empty-body setup ping returns 200 without throwing | ✅ |
+| Catch-all returns 200 (prevents Linear auto-disable on transient errors) | ✅ |
+| `export const dynamic = 'force-dynamic'` set | ✅ |
+| `export const runtime = 'nodejs'` (needed for crypto) | ✅ |
+| No hardcoded secret in source | ✅ |
+| No PII / secret logging | ✅ |
+
+## Root-cause conclusion: env-var configuration, not code
+
+The handler implementation matches every requirement in Step 0C of the orchestrator
+prompt and has been re-derived/re-shipped in **eight** previous swarm runs (see
+`src/app/changelog/data.ts` versions 5.20 and 5.22). If delivery is still failing,
+the residual cause is one of:
+
+1. **`LINEAR_WEBHOOK_SIGNING_SECRET` in Vercel Production does not match the secret
+   value Linear shows in the webhook settings UI.** Most likely cause given the
+   repeat-fix pattern.
+2. **Linear's webhook is configured to send to a stale Vercel preview URL** instead
+   of the production alias.
+3. **The Vercel deployment that contains the fixed handler is not yet the production
+   alias** (the fix was committed but not deployed, or the production alias is
+   pinned to a stale deployment that pre-dates the env-var rename).
+
+None of these are fixable from inside the swarm — they require human action in the
+Vercel and Linear dashboards.
+
+## What the swarm is doing about it this run
+
+1. NOT applying a ninth no-op code "fix" — the code is correct.
+2. Filing a Linear Backlog ticket draft at `.swarm/drafts/linear-tickets-to-file.md`
+   tagged `auto-research` + `infra` + P0, with the title:
+   `[INFRA] Linear webhook still failing — verify LINEAR_WEBHOOK_SIGNING_SECRET in Vercel matches Linear`.
+3. Calling this out at the TOP of the PR body and the Discord-notification draft so
+   the human sees it on waking.
+4. NOT modifying any env vars from the swarm (out of scope per guardrails).
+
+## Vercel MCP status
+
+The orchestrator prompt mentions a Vercel MCP for log/env inspection. No Vercel MCP
+tool is exposed to this run (none surfaced by ToolSearch under vercel/mcp queries).
+Vercel verification therefore stays in the human's court.
+
+## Verification checklist for the human (paste into Vercel dashboard tab)
+
+- [ ] Open Vercel → Project → Settings → Environment Variables → Production.
+- [ ] Confirm `LINEAR_WEBHOOK_SIGNING_SECRET` exists, is not empty, and is not a
+      placeholder.
+- [ ] In Linear → Settings → API → Webhooks → "pokemonvgcteamreport.com" webhook,
+      copy the **Signing secret** field exactly.
+- [ ] Compare with the Vercel value byte-for-byte (no leading/trailing whitespace,
+      no smart quotes from copy-paste).
+- [ ] Redeploy production (env-var changes only apply to the next deployment).
+- [ ] Linear → Webhooks → click "Resend" on a recent failed delivery, confirm 200.
+- [ ] Re-enable the webhook if Linear has auto-disabled it.
+
+## Webhook health field for PR body + Discord
+
+`⚠️ env-var mismatch — Vercel update required (no code fix this run, see ticket in PR body)`
