@@ -16,6 +16,26 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "Bundle Diet, SEO Push & A11y Polish",
+    emoji: "⚡",
+    highlight: true,
+    items: [
+      { type: "new", text: "New /speed-tiers landing page targeting 'VGC speed tiers 2026' (Regulation I) — static intro + CTA to the in-app speed tier tool. Full interactive engine to follow." },
+      { type: "new", text: "New /guides/how-to-write-a-vgc-team-report guide page with a 7-step walkthrough (paste → lead matrix → win conditions → EV justifications → tough matchups → replays → share). HowTo JSON-LD schema included." },
+      { type: "improved", text: "Performance: removed Sentry session-replay integration (~97KB raw saved on every client route). PostHog already records sessions so we don't double up." },
+      { type: "improved", text: "Performance + privacy: Microsoft Clarity is now dynamically imported and only initialised after analytics consent is granted (~30-60KB deferred off the cold client bundle)." },
+      { type: "improved", text: "SEO: root metadata title + description rewritten to front-load 'Free VGC Team Builder, Damage Calcs & Speed Tiers (2026)' and 'PokePaste alternative'. WebApplication featureList expanded with PokePaste Alternative, Damage Calculator, OTS Generator, Rental Code Sharing." },
+      { type: "improved", text: "SEO: sitemap deduped the /compare entry and added lastModified to every Mega champion URL." },
+      { type: "improved", text: "Accessibility: ShareModal validation errors now use role=alert + aria-live=assertive so screen readers announce them. Visibility radio buttons (Private/Unlisted/Public) carry per-option aria-labels that disambiguate the option meaning." },
+      { type: "improved", text: "Accessibility: feedback type buttons (Feature/Bug/Improvement/Other) now show visible text labels alongside the colour-coded icons — fixes WCAG 1.4.1 (Use of Color)." },
+      { type: "improved", text: "Security: /api/share/[id]/collaborators GET now goes through the standard apiGuard rate-limit + bot-detection layer, matching every other API route." },
+      { type: "improved", text: "Observability: Linear/PostHog/Clerk webhook routes now console.error inside the catch block so failures appear in Vercel function logs. Still return 200 so upstream services don't auto-disable." },
+      { type: "improved", text: "Removed dead code: ConsentGate.tsx (37 lines, zero imports across the codebase)." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
