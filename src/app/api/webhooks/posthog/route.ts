@@ -303,8 +303,8 @@ export async function POST(request: Request) {
       ok: true,
       issue: { identifier: issue.identifier, url: issue.url },
     });
-  } catch (e) {
-    console.error("PostHog webhook error:", e);
+  } catch (error) {
+    console.error("[webhook:posthog] handler error:", error);
     // Return 200 even on internal errors so PostHog doesn't auto-disable the
     // webhook destination after repeated non-2xx responses.
     return NextResponse.json({ ok: false, error: "internal" }, { status: 200 });
