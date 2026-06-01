@@ -36,10 +36,10 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "VGC Team Report - Build and Share Pokemon VGC Teams",
-    template: "%s | VGC Team Report",
+    default: "Free VGC Team Builder, Damage Calcs & Speed Tiers (2026) — VGC Team Report",
+    template: "%s · VGC Team Report",
   },
-  description: "The free VGC team report builder. Build and share Pokemon VGC team reports with notes, matchup plans, damage calcs, and speed tiers. Supports Pokemon Champions 2026, Mega Evolution, and all VGC formats.",
+  description: "Build Pokemon VGC teams, run damage calcs, browse speed tiers, and share polished team reports. Free, no login required. PokePaste alternative with built-in team writeups. Reg I + Champions ready.",
   metadataBase: new URL("https://pokemonvgcteamreport.com"),
   openGraph: {
     title: "VGC Team Report - Build and Share Pokemon VGC Teams",
@@ -120,10 +120,14 @@ export default function RootLayout({
             operatingSystem: "Any",
             featureList: [
               "PokePaste Import",
+              "PokePaste Alternative",
               "VGC Speed Tiers",
+              "VGC Damage Calculator",
               "SP Spread Builder",
               "Matchup Plans",
               "Team Sharing",
+              "Open Team Sheet (OTS) Generator",
+              "Rental Code Sharing",
               "Champions Format Support",
             ],
             offers: {
