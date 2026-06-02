@@ -6,17 +6,27 @@
 
 type AnyRecord = Record<string, unknown>;
 
+/** Safely coerce an unknown value to Record<string, unknown> or null */
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
 /** Migrate old calc entries that may be stored as plain strings to {text, category} objects */
 export function migrateCalcEntries(rawCalcs: unknown): Record<string, Array<{ text: string; category: string }>> {
-  if (!rawCalcs || typeof rawCalcs !== "object") return {};
+  const rec = asRecord(rawCalcs);
+  if (!rec) return {};
   const result: Record<string, Array<{ text: string; category: string }>> = {};
-  for (const [key, entries] of Object.entries(rawCalcs as AnyRecord)) {
+  for (const [key, entries] of Object.entries(rec)) {
     if (!Array.isArray(entries)) continue;
     result[key] = entries.map((entry: unknown) => {
       if (typeof entry === "string") return { text: entry, category: "offensive" };
-      if (entry && typeof entry === "object" && "text" in entry) {
-        const e = entry as { text?: string; category?: string };
-        return { text: e.text ?? "", category: e.category ?? "offensive" };
+      const entryRec = asRecord(entry);
+      if (entryRec && "text" in entryRec) {
+        const text = typeof entryRec.text === "string" ? entryRec.text : "";
+        const category = typeof entryRec.category === "string" ? entryRec.category : "offensive";
+        return { text, category };
       }
       return { text: String(entry), category: "offensive" };
     });
