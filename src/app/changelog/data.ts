@@ -16,11 +16,30 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "Mobile UX, Accessibility & Code Hygiene",
+    emoji: "📱",
+    highlight: true,
+    items: [
+      { type: "improved", text: "Mobile UX: Explore card like and bookmark buttons now meet the 44x44px tap-target minimum on mobile while preserving the compact desktop layout." },
+      { type: "fixed", text: "Mobile UX: ShareModal now locks background scroll while open, preventing iOS Safari scroll chaining under the modal sheet." },
+      { type: "improved", text: "Mobile UX: Explore search input now sets inputMode='search' and disables autocorrect, surfacing the native search action key on mobile keyboards." },
+      { type: "improved", text: "Accessibility: champion banner dismiss button now meets the 44x44px tap-target minimum (was ~20x20px)." },
+      { type: "improved", text: "Accessibility: team-update textarea now has an aria-label announcing its purpose to screen readers." },
+      { type: "improved", text: "Accessibility: dashboard sort dropdown now has an aria-label for screen readers." },
+      { type: "improved", text: "Code clarity: InstallPrompt engagement gates (scroll threshold + dwell timer) extracted to named constants." },
+      { type: "improved", text: "Code clarity: Linear webhook handler header strings ('linear-signature', legacy fallback) extracted to named constants." },
+      { type: "improved", text: "Type safety: cast-after-guard patterns in normalize-report.ts replaced with a typed asRecord helper — runtime behaviour preserved, compile-time safety improved." },
+      { type: "improved", text: "Removed dead code: orphaned ConsentGate provider component (37 lines, zero call sites)." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
     emoji: "🛡️",
-    highlight: true,
+    highlight: false,
     items: [
       { type: "fixed", text: "Linear webhook handler: corrected signature header name (linear-signature), env var (LINEAR_WEBHOOK_SIGNING_SECRET), added force-dynamic and empty body handling. 8th consecutive fix proposal — please merge!" },
       { type: "fixed", text: "Security: all user-controlled fields in comment notification, welcome, and weekly summary emails are now HTML-escaped to prevent XSS. Subject lines stripped of CR/LF/quotes." },
