@@ -1,7 +1,8 @@
-# Swarm Run Meta
-- Branch: swarm-nightly-2026-05-28
-- Created: 2026-05-28 (UK time)
-- Status: In progress
-- Existing PR for this branch: None
-- No .env.local — PostHog, Linear API, Discord webhook credentials unavailable
-- Will work from code audits and prior run findings
+# Swarm Run Metadata
+
+- Run date: 2026-06-02 (Europe/London)
+- Branch: swarm-nightly-2026-06-02
+- Cut from: main @ 1a30839
+- Existing PR: none (will create one in Step 5)
+- Subagent budget: 25 dispatches max
+
