@@ -182,6 +182,17 @@ export function ShareModal({
     };
   }, [onClose]);
 
+  // Lock background scroll while the modal is open. Without this, iOS Safari
+  // lets the page behind the modal scroll under taps near the edges, which
+  // looks broken and can hijack tap targets inside the modal sheet.
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   // Extract share ID for embed snippet (only available for short /s/ URLs)
   const shareIdMatch = publicUrl.match(/\/s\/([^/?#]+)/);
   const shareId = shareIdMatch ? shareIdMatch[1] : null;

@@ -316,7 +316,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                 onClick={toggleLike}
                 aria-label={liked ? "Unlike report" : "Like report"}
                 aria-pressed={liked}
-                className="inline-flex items-center gap-1 min-h-[32px] px-1 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                className="inline-flex items-center gap-1 min-h-[44px] sm:min-h-[32px] px-2 sm:px-1 sm:-mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={liked ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"} aria-hidden="true">
                   <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -330,7 +330,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   aria-label="Like report (sign in required)"
                   aria-pressed={false}
-                  className="inline-flex items-center gap-1 min-h-[32px] px-1 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                  className="inline-flex items-center gap-1 min-h-[44px] sm:min-h-[32px] px-2 sm:px-1 sm:-mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill={likeCount > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={likeCount > 0 ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"} aria-hidden="true">
                     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -345,7 +345,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   type="button"
                   onClick={toggleBookmark}
                   disabled={bookmarkLoading}
-                  className="inline-flex items-center gap-0.5 min-h-[32px] px-1 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                  className="inline-flex items-center gap-1 min-h-[44px] sm:min-h-[32px] px-2 sm:px-1 sm:-mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                   aria-label={bookmarked ? "Unsave report" : "Save report"}
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={bookmarked ? "text-accent" : "text-text-tertiary hover:text-accent transition-colors"} aria-hidden="true">
@@ -357,7 +357,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   <button
                     type="button"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                    className="inline-flex items-center gap-0.5 min-h-[32px] px-1 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                    className="inline-flex items-center gap-1 min-h-[44px] sm:min-h-[32px] px-2 sm:px-1 sm:-mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                     aria-label="Save report"
                   >
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary hover:text-accent transition-colors" aria-hidden="true">

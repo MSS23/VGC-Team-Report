@@ -227,6 +227,9 @@ export function ExploreFilters({
             value={localQuery}
             onChange={(e) => setLocalQuery(e.target.value)}
             aria-label="Search team reports"
+            inputMode="search"
+            spellCheck={false}
+            autoCorrect="off"
             placeholder={
               searchCategory === "pokemon"
                 ? "Search by Pokemon..."
