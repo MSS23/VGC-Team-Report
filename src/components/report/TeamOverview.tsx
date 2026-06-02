@@ -171,6 +171,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder={"Paste a PokePaste URL or Showdown export...\n\npokepast.es/abc123\n\nOr paste the full Showdown text"}
+        aria-label="Paste a PokePaste URL or Showdown export"
         className="w-full min-h-[4rem] sm:min-h-[5rem] p-2.5 bg-surface-alt border border-border-subtle rounded-lg text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary/50 resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 leading-relaxed"
         spellCheck={false}
         autoFocus

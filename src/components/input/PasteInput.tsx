@@ -317,7 +317,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           <button
             type="button"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); dismissChampionsBanner(); }}
-            className="absolute top-2 right-2 p-1 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+            className="absolute top-2 right-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
             aria-label="Dismiss"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
