@@ -5,6 +5,9 @@ export const dynamic = "force-dynamic";
 
 export const runtime = "nodejs";
 
+const LINEAR_SIGNATURE_HEADER = "linear-signature";
+const LINEAR_SIGNATURE_HEADER_LEGACY = "x-linear-signature";
+
 /**
  * POST /api/webhooks/linear
  *
@@ -37,8 +40,8 @@ export async function POST(request: Request) {
     }
 
     const signature =
-      request.headers.get("linear-signature") ??
-      request.headers.get("x-linear-signature");
+      request.headers.get(LINEAR_SIGNATURE_HEADER) ??
+      request.headers.get(LINEAR_SIGNATURE_HEADER_LEGACY);
     if (!signature) {
       return NextResponse.json(
         { error: "Missing signature" },

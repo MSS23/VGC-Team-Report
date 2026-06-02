@@ -9,6 +9,8 @@ interface BeforeInstallPromptEvent extends Event {
 
 const DISMISS_KEY = "vgc-install-dismissed";
 const DISMISS_COOLDOWN = 14 * 24 * 60 * 60 * 1000; // 14 days
+const SCROLL_ENGAGEMENT_THRESHOLD_PX = 200;
+const ENGAGEMENT_TIMER_MS = 60_000;
 
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -42,7 +44,7 @@ export function InstallPrompt() {
     };
 
     const onScroll = () => {
-      if (!scrollFired && window.scrollY >= 200) {
+      if (!scrollFired && window.scrollY >= SCROLL_ENGAGEMENT_THRESHOLD_PX) {
         scrollFired = true;
         window.removeEventListener("scroll", onScroll);
         maybeReveal();
@@ -55,13 +57,13 @@ export function InstallPrompt() {
       // If the page is too short to scroll 200px (e.g. iPad full-viewport,
       // short content pages), treat the scroll gate as satisfied so the
       // prompt isn't blocked forever on both Android and iOS paths.
-      const pageIsShort = document.documentElement.scrollHeight - window.innerHeight < 200;
+      const pageIsShort = document.documentElement.scrollHeight - window.innerHeight < SCROLL_ENGAGEMENT_THRESHOLD_PX;
       if (pageIsShort && !scrollFired) {
         scrollFired = true;
         window.removeEventListener("scroll", onScroll);
       }
       maybeReveal();
-    }, 60000);
+    }, ENGAGEMENT_TIMER_MS);
 
     // Android/Chrome: capture the beforeinstallprompt event
     const handler = (e: Event) => {
