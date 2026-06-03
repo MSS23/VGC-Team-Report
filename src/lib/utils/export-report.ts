@@ -1,11 +1,5 @@
 import { getHtml2Canvas } from "@/lib/dynamic-imports/html2canvas";
 
-/** Lazy-load jsPDF (avoids bundling ~300KB on initial page load) */
-async function getJsPDF() {
-  const mod = await import("jspdf");
-  return mod.jsPDF;
-}
-
 /** Resolve the actual background color, respecting dark mode */
 function resolveBackground(element: HTMLElement): string {
   // Try the element's own background first
@@ -89,27 +83,3 @@ export async function exportAsImage(
   link.click();
 }
 
-/**
- * Export a DOM element as a PDF document and trigger download.
- */
-export async function exportAsPdf(
-  element: HTMLElement,
-  filename: string = "vgc-team-report"
-): Promise<void> {
-  const canvas = await captureWithRetry(element);
-  const dataUrl = canvas.toDataURL("image/png", 0.95);
-
-  // Calculate PDF dimensions (A4 width, proportional height)
-  const pdfWidth = 210; // A4 width in mm
-  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-  const JsPDF = await getJsPDF();
-  const pdf = new JsPDF({
-    orientation: pdfHeight > pdfWidth ? "portrait" : "landscape",
-    unit: "mm",
-    format: [pdfWidth, pdfHeight],
-  });
-
-  pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
-  pdf.save(`${filename}.pdf`);
-}
