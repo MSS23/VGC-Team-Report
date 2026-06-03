@@ -16,6 +16,17 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "Accessibility Polish & Bundle Trim",
+    emoji: "🎯",
+    items: [
+      { type: "improved", text: "Accessibility: dashboard, compare, and creator profile sort/select controls now have descriptive aria-labels (WCAG 4.1.2 Name, Role, Value)." },
+      { type: "improved", text: "Performance: global error boundary imports captureException by name from @sentry/nextjs instead of the full namespace, helping bundlers tree-shake unused exports." },
+      { type: "improved", text: "Code hygiene: removed unreachable exportAsPdf helper (~22 lines) and its unused jsPDF lazy-loader. The jspdf package can be removed in a follow-up dependency cleanup." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
