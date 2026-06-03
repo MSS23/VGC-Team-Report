@@ -3,8 +3,9 @@
 - Branch: swarm-nightly-2026-06-03
 - Created: 2026-06-03 (UK time)
 - Cut from: main @ 1a30839 (Merge swarm-nightly PRs #48/#49)
-- Status: In progress
-- Existing PR for this branch: None
+- Status: Completed
+- PR: https://github.com/MSS23/VGC-Team-Report/pull/54 (draft)
+- Existing PR for this branch at start: None
 
 ## Container env constraints (recorded — unchanged from prior 8 runs)
 
