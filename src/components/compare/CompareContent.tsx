@@ -82,6 +82,7 @@ function ReportDropdown({
       <select
         className={`w-full px-3 py-2 bg-surface border-2 border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 ${focusClasses} cursor-pointer`}
         defaultValue=""
+        aria-label="Select team report to compare"
         onChange={(e) => {
           if (e.target.value) onSelect(e.target.value);
           e.target.value = "";
