@@ -190,8 +190,10 @@ export async function GET(
           if (sinceVersion && Number(sinceVersion) >= Number(ownerRows[0].version)) {
             return new Response(null, { status: 304 });
           }
-          const collabNameRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`;
-          const forkedFromId = await loadForkedFromId(sql, id);
+          const [collabNameRows, forkedFromId] = await Promise.all([
+            sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
+            loadForkedFromId(sql, id),
+          ]);
           const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
           return NextResponse.json({
             ...normalizeReportData(ownerRows[0].data as Record<string, unknown>),
@@ -235,11 +237,12 @@ export async function GET(
       return new Response(null, { status: 304 });
     }
 
-    // Fetch accepted collaborator names for public display
-    const collabRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`;
+    // Fetch accepted collaborator names + fork lineage in parallel.
+    const [collabRows, forkedFromId] = await Promise.all([
+      sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
+      loadForkedFromId(sql, id),
+    ]);
     const collaboratorNames = collabRows.map((r) => r.user_name as string);
-
-    const forkedFromId = await loadForkedFromId(sql, id);
     const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
 
     const normalized = normalizeReportData(rows[0].data as Record<string, unknown>);

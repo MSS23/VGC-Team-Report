@@ -236,16 +236,30 @@ export async function GET(request: Request) {
     // appears in the feed. Best-effort — column may not exist on older envs.
     const forkedFromCreatorMap: Record<string, string> = {};
     if (shareIds.length > 0) {
+      // Fork lineage join — wrapped in a Promise that swallows errors because
+      // forked_from_id is a recent column and may be absent on older env clones.
+      // The rest of the payload still works even if this query fails.
+      const forkLineageQuery: Promise<Array<Record<string, unknown>>> = sql`
+        SELECT s.id AS fork_id, src.data->>'creatorName' AS source_creator
+        FROM shares s
+        JOIN shares src ON src.id = s.forked_from_id
+        WHERE s.id = ANY(${shareIds})
+          AND src.deleted_at IS NULL
+          AND COALESCE(src.data->>'creatorName', '') <> ''
+      `.then((r) => r as Array<Record<string, unknown>>).catch(() => []);
+
       const queries: Promise<unknown>[] = [
         sql`SELECT share_id, COUNT(*)::int as count FROM reactions WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
         sql`SELECT share_id, COUNT(*)::int as count FROM comments WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
         sql`SELECT share_id, user_name FROM collaborators WHERE share_id = ANY(${shareIds}) AND COALESCE(status, 'accepted') = 'accepted'`,
+        forkLineageQuery,
       ];
       if (creatorNames.length > 0) {
         queries.push(sql`SELECT name FROM verified_creators WHERE LOWER(name) = ANY(${creatorNames.map((n) => n.toLowerCase())})`);
       }
 
-      const [likeRows, commentRows, collabRows, verifiedRows] = await Promise.all(queries) as [
+      const [likeRows, commentRows, collabRows, forkRows, verifiedRows] = await Promise.all(queries) as [
+        Array<Record<string, unknown>>,
         Array<Record<string, unknown>>,
         Array<Record<string, unknown>>,
         Array<Record<string, unknown>>,
@@ -264,28 +278,11 @@ export async function GET(request: Request) {
         if (!collabMap[sid]) collabMap[sid] = [];
         collabMap[sid].push(c.user_name as string);
       }
+      for (const r of forkRows) {
+        forkedFromCreatorMap[r.fork_id as string] = r.source_creator as string;
+      }
       if (verifiedRows) {
         verifiedSet = new Set(verifiedRows.map((r) => (r.name as string).toLowerCase()));
-      }
-
-      // Fork lineage join — single self-join over forked_from_id so the
-      // explore card can credit the original creator on duplicated teams.
-      // Wrapped in try because forked_from_id is a recent column and may
-      // be absent on older env clones; the rest of the payload still works.
-      try {
-        const forkRows = await sql`
-          SELECT s.id AS fork_id, src.data->>'creatorName' AS source_creator
-          FROM shares s
-          JOIN shares src ON src.id = s.forked_from_id
-          WHERE s.id = ANY(${shareIds})
-            AND src.deleted_at IS NULL
-            AND COALESCE(src.data->>'creatorName', '') <> ''
-        ` as Array<Record<string, unknown>>;
-        for (const r of forkRows) {
-          forkedFromCreatorMap[r.fork_id as string] = r.source_creator as string;
-        }
-      } catch {
-        // forked_from_id column missing — feature degrades silently
       }
     }
 
