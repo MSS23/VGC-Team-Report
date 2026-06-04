@@ -1,6 +1,6 @@
 # VGC Team Report
 
-Updated: 2026-05-23
+Updated: 2026-06-04
 Source: https://pokemonvgcteamreport.com
 
 > VGC Team Report is the premier team report builder and sharing platform for competitive Pokémon Video Game Championship (VGC) players. Unlike paste viewers (PokePaste) or usage-statistics tools (Pikalytics), VGC Team Report lets players author rich, structured team reports with damage calculations, matchup plans, speed tier breakdowns, and strategy notes — then share them as a permanent public link or embed them anywhere.

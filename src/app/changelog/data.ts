@@ -16,6 +16,22 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "6.1",
+    title: "SEO, Performance & Dead-Code Cleanup",
+    emoji: "🧹",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "SEO: removed duplicate /compare entry from the XML sitemap (was listed twice with conflicting priorities 0.6 and 0.5) — wasted crawl budget eliminated." },
+      { type: "fixed", text: "SEO: /compare page now has a canonical URL and a coherent robots directive (noindex+nofollow). Previously it was noindex+follow which is contradictory — non-indexable pages should not be followed for outbound link discovery." },
+      { type: "improved", text: "SEO: BreadcrumbList JSON-LD added to /compare, /feedback, /privacy, and /terms so Google can render breadcrumb chips in SERPs alongside the existing /changelog, /faq, /tournaments coverage." },
+      { type: "improved", text: "SEO: public/robots.txt now Disallows /dashboard/ for defense-in-depth alongside the existing per-page noindex on every authenticated dashboard route." },
+      { type: "improved", text: "Performance: /api/share/[id] now runs the collaborator-name lookup and the fork-lineage lookup in parallel via Promise.all in both the signed-in-owner and the public-read code paths. Expected saving: 40–100ms per GET on cold paths." },
+      { type: "improved", text: "Performance: /api/explore folds the forked_from_id self-join into the existing Promise.all batch instead of awaiting it sequentially after the reactions/comments/collaborators/verified-creators queries. One fewer round trip per /explore page load." },
+      { type: "improved", text: "Dead code: deleted src/components/providers/ConsentGate.tsx — exported but zero call sites across the codebase. Cookie consent is driven entirely by CookieBanner + consent.ts helpers." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
