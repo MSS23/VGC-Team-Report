@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FeedbackContent } from "./FeedbackContent";
+import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Feedback | VGC Team Report",
@@ -22,5 +23,15 @@ export const metadata: Metadata = {
 };
 
 export default function FeedbackPage() {
-  return <FeedbackContent />;
+  return (
+    <>
+      <BreadcrumbListJsonLd
+        items={[
+          { name: "Home", url: "https://pokemonvgcteamreport.com" },
+          { name: "Feedback", url: "https://pokemonvgcteamreport.com/feedback" },
+        ]}
+      />
+      <FeedbackContent />
+    </>
+  );
 }

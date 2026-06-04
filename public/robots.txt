@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /dashboard/
 
 # Explicitly allow major search engine bots
 User-agent: Googlebot

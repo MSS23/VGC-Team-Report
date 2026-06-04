@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageFooter } from "@/components/layout/PageFooter";
+import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -10,6 +11,12 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background">
+      <BreadcrumbListJsonLd
+        items={[
+          { name: "Home", url: "https://pokemonvgcteamreport.com" },
+          { name: "Privacy Policy", url: "https://pokemonvgcteamreport.com/privacy" },
+        ]}
+      />
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight mb-2">Privacy Policy</h1>
         <p className="text-sm text-text-tertiary mb-10">Last updated: April 2026</p>
