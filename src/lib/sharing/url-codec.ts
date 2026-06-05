@@ -8,14 +8,14 @@ const CalcEntrySchema = z.unknown();
 
 const NullableIndex = z.number().int().nullable();
 
-export const SerializedGamePlanSchema = z.object({
+const SerializedGamePlanSchema = z.object({
   bring: z.tuple([NullableIndex, NullableIndex, NullableIndex, NullableIndex]),
   notes: z.string(),
   replays: z.array(z.string()).optional(),
   result: z.enum(["W", "L", "T"]).nullable().optional(),
 });
 
-export const SerializedMatchupPlanSchema = z.object({
+const SerializedMatchupPlanSchema = z.object({
   opponentPaste: z.string(),
   opponentLabel: z.string(),
   showSlide: z.boolean().optional(),
@@ -36,7 +36,7 @@ export const SerializedMatchupPlanSchema = z.object({
     .optional(),
 });
 
-export const ShareableStateSchema = z.object({
+const ShareableStateSchema = z.object({
   paste: z.string(),
   notes: z.record(z.string(), z.string()),
   calcs: z.record(z.string(), z.array(CalcEntrySchema)).optional(),

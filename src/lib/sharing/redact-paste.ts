@@ -18,7 +18,7 @@
  * tidy.
  */
 
-export type PrivateField = "evs" | "ivs" | "nature" | "item";
+type PrivateField = "evs" | "ivs" | "nature" | "item";
 
 const VALID_FIELDS: ReadonlySet<string> = new Set(["evs", "ivs", "nature", "item"]);
 
