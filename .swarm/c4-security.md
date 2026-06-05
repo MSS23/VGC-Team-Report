@@ -1,222 +1,47 @@
-# C4 Security Audit — VGC Team Report
-**Date:** 2026-05-14
-**Scope:** src/app/api/, src/lib/
+# C4 Security Audit — 2026-06-05
 
----
+## npm audit
 
-## FINDING 1 — VGC-173 RESOLVED: HogQL Injection Already Patched
+**Critical: 0 | High: 3 | Moderate: 10 | Low: 0**
 
-**Severity:** INFO (previously HIGH — now fixed)
-**File:** `src/app/api/webhooks/posthog/route.ts`
+Top 3 High:
+1. `js-cookie <=3.0.5` — prototype hijack in `assign()`, cookie-attribute injection (GHSA-qjx8-664m-686j, CVSS 7.5). Transitive via `@clerk/shared`. `fixAvailable: true`.
+2. `@clerk/shared` — high via js-cookie. Fix: bump `@clerk/nextjs`.
+3. `tmp` — high (transitive). Fix available.
 
-Linear ticket VGC-173 described a HogQL injection at lines 33-34 using string interpolation and a naive `replace(/'/g, '')` quote-strip. **This vulnerability is NOT present in the current codebase.** The code was already patched.
+Moderate noteworthy: `postcss <8.5.10` XSS (via next), `brace-expansion` DoS, `@sentry/nextjs`, cypress chain. Next.js fix requires `@sentry/nextjs` semver-major upgrade.
 
-**Current (safe) implementation (lines 46-52):**
-```typescript
-query:
-  "SELECT event, timestamp, properties FROM events WHERE properties.$session_id = {session_id} AND timestamp <= {before_ts} ORDER BY timestamp DESC LIMIT 15",
-values: { session_id: sessionId, before_ts: beforeTimestamp },
-```
+## Hardcoded Secrets
 
-Variables are bound via PostHog's `values` parameter map — never interpolated into the query string. Additionally, `sessionId` is validated against a strict UUID regex before use (lines 28-29):
-```typescript
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-if (!UUID_RE.test(sessionId)) return [];
-```
+**None found.** Scanned for `sk_live_`, `lin_api_`, `LINEAR_API_KEY=` literals, `DISCORD_WEBHOOK`, `DATABASE_URL=`, `SIGNING_SECRET = "..."`, `password/secret = "..."`.
 
-No remediation needed.
+- Only hit: `.env.example:15 LINEAR_API_KEY=lin_api_xxxx...` — placeholder, safe.
+- Webhook signing secrets all properly read from `process.env.*_SIGNING_SECRET` (clerk:28, linear:33).
+- `DISCORD_PUBLIC_KEY` hardcoded in `src/app/api/discord/route.ts:6` — Discord's app *public* key, intentionally public; not a finding.
 
----
+**No P0 hardcoded secret.**
 
-## FINDING 2 — GraphQL String Interpolation in Cron Routes (LOW-MEDIUM)
+## OWASP — Top 5 Findings
 
-**Severity:** LOW-MEDIUM
-**Files:**
-- `src/app/api/cron/daily-ops/route.ts:84`
-- `src/app/api/cron/weekly-report/route.ts:30-32`
+1. **A01 Broken Access Control — `src/app/api/comments/flag/route.ts:24`** (Medium). `sessionId` taken from request body, not server-bound. A single attacker can submit 3 flags with different `sessionId`s and auto-delete any comment (FLAG_THRESHOLD=3 at line 7, auto-delete at line 44). **Fix:** key flags on Clerk `userId` (or hashed IP) server-side, not client-supplied sessionId.
 
-Several cron routes build Linear GraphQL queries via template literal interpolation of environment-sourced values:
+2. **A03 Injection / Stored XSS — `src/app/api/user/profile/route.ts:79-95`** (Medium). `twitter`, `discord`, `youtube`, `avatarUrl` written to DB without HTML escape or URL scheme allowlist beyond `https://` prefix on avatar. If rendered as `href` elsewhere, `javascript:` payloads in social handles could fire. Only `bio` is escapeHtml'd. **Fix:** validate handles with strict regex; reject any non-http(s) avatar URL and hostname-allowlist it.
 
-**daily-ops/route.ts line 84:**
-```typescript
-query: `{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title updatedAt } } } }`,
-```
+3. **A05 Misconfiguration — `src/app/api/webhooks/linear/route.ts:68-71`** (Low). `catch` swallows all errors and returns 200, hiding signature/parse failures from monitoring. **Fix:** log with `console.error`, still return 200.
 
-**weekly-report/route.ts lines 30-32:**
-```typescript
-const completed = await query(`{ team(id: "${teamId}") { issues(filter: { state: { type: { eq: "completed" } }, completedAt: { gte: "${oneWeekAgo}" } }, first: 50) { nodes { identifier title } } } }`);
-const inProgress = await query(`{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title } } } }`);
-const inReview   = await query(`{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Review" } } }, first: 50) { nodes { identifier title } } } }`);
-```
+4. **A09 Logging/Error Exposure — `src/app/api/feedback/route.ts:93`** (Low). Returns full Zod `error.flatten().fieldErrors` to client, revealing schema internals. **Fix:** return generic `"Invalid submission"`, log details server-side.
 
-**Risk assessment:** `teamId` and `oneWeekAgo` are both sourced exclusively from `process.env` and `new Date()` — not from user input. Exploitability is low in the current threat model. However, the pattern is fragile: if a future refactor passes `teamId` from a request parameter, injection becomes possible.
+5. **A10 SSRF (mitigated, verify) — `src/app/api/pokepaste/route.ts:13-21`** (Info). Hostname allowlist only checks `=== "pokepast.es"`; no subdomain attack vector. OK; no fix needed, noted for completeness.
 
-**Contrast:** `getOrCreateOpsLabel()` in `daily-ops/route.ts` (lines 173, 183-188) correctly uses GraphQL `$variables` for the same Linear API — inconsistent pattern within the same file.
+## Cross-reference with main-changed-files.md
 
-**Proposed fix — use GraphQL variables consistently:**
-```typescript
-// Instead of:
-body: JSON.stringify({
-  query: `{ team(id: "${teamId}") { ... } }`,
-})
+Recently changed routes (`bot`, `cleanup`, `migrate`, `setup`, `share/[id]/collaborators`, `share`, `views`, all 3 webhooks) reviewed — none introduce new findings beyond above. `verify-bearer.ts` and `bot-detection.ts` look correct. `apiGuard` wraps most POST routes with rate-limit + body-size guards.
 
-// Use:
-body: JSON.stringify({
-  query: `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title updatedAt } } } }`,
-  variables: { teamId },
-})
-```
+## RECOMMENDED IMPLEMENTATION TICKET (< 4h, highest impact)
 
----
-
-## FINDING 3 — VGC-174 CONFIRMED: Timing-Safe Bot Auth Applied Correctly
-
-**Severity:** INFO (fix verified)
-**File:** `src/app/api/bot/route.ts:44-47`
-
-The bot route uses `crypto.timingSafeEqual` correctly to prevent timing oracle attacks on the CRON_SECRET:
-```typescript
-const { timingSafeEqual } = await import("crypto");
-const aLen = Math.max(authHeader.length, expected.length);
-if (!timingSafeEqual(Buffer.from(authHeader.padEnd(aLen)), Buffer.from(expected.padEnd(aLen))) || authHeader.length !== expected.length) {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
-```
-
-The padding + length check combination is sound — constant-time compare on padded buffers, then explicit length check to reject wrong-length inputs that would pass the padded comparison.
-
-**Secondary finding — `isCronAuthorized()` uses naive string comparison (LOW):**
-
-`src/lib/cron-auth.ts:10` uses a simple `===` comparison:
-```typescript
-return authHeader === `Bearer ${cronSecret}`;
-```
-
-This function is used by `daily-ops`, `weekly-report`, `posthog-errors`, and `cleanup` cron routes. The bot route correctly does its own timing-safe check and does NOT use `isCronAuthorized()`. The cron routes using `isCronAuthorized()` are only callable by Vercel's cron infrastructure (reducing practical exploitability), but the inconsistency is a hazard.
-
-**Proposed fix for `src/lib/cron-auth.ts`:**
-```typescript
-import { timingSafeEqual } from "crypto";
-
-export function isCronAuthorized(request: Request): boolean {
-  const authHeader = request.headers.get("authorization") ?? "";
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) return false;
-
-  const expected = `Bearer ${cronSecret}`;
-  if (authHeader.length !== expected.length) return false;
-  return timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected));
-}
-```
-
----
-
-## FINDING 4 — Hardcoded Linear Label UUIDs (INFO)
-
-**Severity:** INFO
-**Files:**
-- `src/app/api/webhooks/posthog/route.ts:407-413`
-- `src/app/api/cron/posthog-errors/route.ts:25-27`
-
-Linear label IDs are hardcoded as UUIDs in both files:
-```typescript
-const LABELS = {
-  bug: "bbd03f4e-be6f-4617-ad7d-b9fdc596ce5c",
-  improvement: "06d28974-98c3-457a-bbab-ab85456e51f0",
-  webApp: "1f355942-6143-47a8-93be-4a5cbe0de0b0",
-  mobile: "5389312c-66f8-4ced-a840-ff3cd46b68aa",
-  analytics: "a13703f8-0865-4a6d-b74c-56a7abc2f563",
-  infrastructure: "a0e2ddf6-557d-4164-b049-a4ee36ee342f",
-};
-```
-
-These are Linear workspace-internal label IDs — not secrets (no auth capability, no token). Safe to commit. No remediation needed.
-
----
-
-## FINDING 5 — No Hardcoded API Keys or Secrets Found
-
-**Severity:** INFO (pass)
-
-A scan of all files in `src/lib/` and `src/app/api/` found no hardcoded API keys, tokens, passwords, or secrets. All sensitive values are correctly read from `process.env`. No remediation needed.
-
----
-
-## FINDING 6 — SSRF: Sprite and PokePaste Proxies Are Properly Allow-Listed
-
-**Severity:** INFO (pass)
-**Files:** `src/app/api/sprite/route.ts`, `src/app/api/pokepaste/route.ts`
-
-The sprite proxy enforces host and path allow-lists before fetching:
-```typescript
-const ALLOWED_HOSTS = new Set(["play.pokemonshowdown.com"]);
-if (!ALLOWED_HOSTS.has(target.hostname)) return new NextResponse("Host not allowed", { status: 400 });
-if (!target.pathname.startsWith("/sprites/")) return new NextResponse("Path not allowed", { status: 400 });
-```
-
-The PokePaste proxy enforces `hostname === "pokepast.es"` via Zod schema validation. No SSRF risk.
-
----
-
-## FINDING 7 — XSS: JSON-LD Script Injection Properly Mitigated
-
-**Severity:** INFO (pass)
-**File:** `src/components/seo/JsonLd.tsx`
-
-`dangerouslySetInnerHTML` is used to inject JSON-LD but the output is escaped:
-```typescript
-const safe = JSON.stringify(data).replace(/<\/script>/gi, "<\\/script>");
-```
-
-This prevents `</script>` tag injection. Commit `58b5c7a` (VGC-174) applied this fix. Valid mitigation.
-
----
-
-## FINDING 8 — PostHog Webhook: Non-Timing-Safe Token Comparison (LOW)
-
-**Severity:** LOW
-**File:** `src/app/api/webhooks/posthog/route.ts:170-172`
-
-The PostHog webhook verifies the shared token using direct string equality:
-```typescript
-const token = request.headers.get("x-posthog-token");
-if (!process.env.POSTHOG_WEBHOOK_SECRET || token !== process.env.POSTHOG_WEBHOOK_SECRET) {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
-```
-
-Susceptible to timing oracle attacks. Practical exploitability is low (network jitter dominates timing), but the fix is trivial given that `bot/route.ts` already sets the pattern.
-
-**Proposed fix:**
-```typescript
-import { timingSafeEqual } from "crypto";
-
-const token = request.headers.get("x-posthog-token") ?? "";
-const secret = process.env.POSTHOG_WEBHOOK_SECRET;
-if (!secret) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-if (token.length !== secret.length || !timingSafeEqual(Buffer.from(token), Buffer.from(secret))) {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
-```
-
----
-
-## Summary Table
-
-| # | Finding | Severity | Status | File |
-|---|---------|----------|--------|------|
-| 1 | VGC-173 HogQL injection | ~~HIGH~~ INFO | Fixed | webhooks/posthog/route.ts |
-| 2 | GraphQL string interpolation in cron (env-only values) | LOW-MEDIUM | Open | cron/daily-ops:84, cron/weekly-report:30-32 |
-| 3 | VGC-174 timing-safe bot auth | INFO | Verified ✓ | api/bot/route.ts:44-47 |
-| 3b | `isCronAuthorized()` naive `===` compare | LOW | Open | lib/cron-auth.ts:10 |
-| 4 | Hardcoded Linear label UUIDs | INFO | Acceptable | webhooks/posthog, cron/posthog-errors |
-| 5 | Hardcoded API keys/secrets | INFO | None found ✓ | All |
-| 6 | SSRF via sprite/pokepaste proxy | INFO | Mitigated ✓ | api/sprite, api/pokepaste |
-| 7 | XSS via JSON-LD injection | INFO | Fixed ✓ | components/seo/JsonLd.tsx |
-| 8 | PostHog webhook non-timing-safe compare | LOW | Open | webhooks/posthog/route.ts:170-172 |
-
-## Recommended Actions (Prioritized)
-
-1. **Update `src/lib/cron-auth.ts`** to use `timingSafeEqual` — 5-minute fix affecting 4 cron routes.
-2. **Update PostHog webhook token check** (`webhooks/posthog/route.ts:170-172`) to use `timingSafeEqual`.
-3. **Refactor cron GraphQL queries** to use `$variables` pattern consistently (daily-ops:84, weekly-report:30-32) — eliminates injection risk entirely if env vars are ever replaced with request-derived data.
+**Title:** `VGC-SEC1: Server-bind comment flag throttling + validate profile social URLs`
+**Why:** Two real authz/XSS issues, both small. Eliminates the only practical comment-takedown abuse vector and shuts off `javascript:`-URL XSS via profile handles.
+**Scope:**
+- `api/comments/flag/route.ts`: replace body `sessionId` with `auth().userId` (require login) or hashed IP. Add unique constraint `(comment_id, voter_id)`.
+- `api/user/profile/route.ts`: regex-validate twitter/discord/youtube to handle chars only (`/^[A-Za-z0-9_.-]{1,50}$/`); reject avatarUrl unless scheme is `https:` *and* hostname matches allowlist (`img.clerk.com`, `cdn.discordapp.com`, `pbs.twimg.com`).
+- Tests + build gate.
