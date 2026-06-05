@@ -16,6 +16,23 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "PokePaste Import, Security Hardening, SEO & Accessibility",
+    emoji: "🔗",
+    highlight: true,
+    items: [
+      { type: "new", text: "Feature: paste a pokepast.es URL directly into the team-paste box — we'll server-fetch the raw Showdown text from pokepast.es and import it into a new report automatically. Every pokepaste link in Discord/Reddit/Twitter is now a one-step import." },
+      { type: "fixed", text: "Security: comment flagging now binds the flag identity to Clerk userId (signed-in) or hashed IP (anonymous) — previously the client-supplied sessionId allowed a single attacker to spoof the threshold and auto-delete comments." },
+      { type: "fixed", text: "Security: profile API now strict-validates social handles via regex and avatarUrl via an https-only hostname allowlist — closes the javascript:-URL XSS vector via profile fields and returns a generic 'Invalid profile data' instead of leaking the Zod schema." },
+      { type: "fixed", text: "Webhooks: Linear handler now logs exceptions via console.error before returning 200, restoring observability without losing the auto-disable protection. PostHog and Clerk handlers were already logging." },
+      { type: "improved", text: "SEO: homepage <title> now leads with 'VGC Team Builder & Report Maker 2026' — previously brand-first, which buried the high-intent 'VGC team builder' keyword we don't rank for despite serving exactly that use case." },
+      { type: "improved", text: "Accessibility (WCAG 2.4.7): visible focus rings on PageNavbar Links + Toggle switch — previously relied on the UA default outline only." },
+      { type: "improved", text: "TypeScript: tightened types in normalize-report, diff-state, and pokepaste utilities — zod-validated PokePaste response parse, per-item shape guard in diff-state.asArray, and explicit RawReportData/NormalizedReportData interfaces replace the previous AnyRecord alias." },
+      { type: "improved", text: "Code cleanup: removed dead `export` keywords from 4 internal share-codec schemas (SerializedGamePlanSchema, SerializedMatchupPlanSchema, ShareableStateSchema, PrivateField type) — module's public API is now exactly what callers use." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
