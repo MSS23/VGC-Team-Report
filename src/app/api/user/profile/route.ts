@@ -8,19 +8,97 @@ import { escapeHtml } from "@/lib/utils/sanitize";
 
 const VALID_THEMES = ["rose", "ocean", "emerald", "amber", "violet", "sunset"];
 
+// Allowlist of hostnames permitted for avatarUrl. Must align with CSP img-src
+// in next.config.ts and the set of OAuth providers we support via Clerk.
+// Prevents javascript:/data: URL XSS, SSRF to internal hosts, and tracking
+// pixels from arbitrary domains.
+const AVATAR_HOSTNAME_ALLOWLIST = new Set<string>([
+  "img.clerk.com",
+  "images.clerk.dev",
+  "cdn.discordapp.com",
+  "pbs.twimg.com",
+  "lh3.googleusercontent.com",
+]);
+
+// Social handle regex: alphanumerics, underscore, dot, hyphen — 1..50 chars.
+// Storage convention is the @handle WITHOUT the URL prefix.
+const HANDLE_REGEX = /^[A-Za-z0-9_.-]{1,50}$/;
+
+// Known URL prefixes we'll silently strip if a user pastes a full profile URL,
+// then re-validate the trailing handle. Anything else → reject.
+const HANDLE_URL_PREFIXES: Record<"twitter" | "discord" | "youtube", string[]> = {
+  twitter: [
+    "https://twitter.com/",
+    "https://www.twitter.com/",
+    "https://x.com/",
+    "https://www.x.com/",
+  ],
+  discord: [
+    "https://discord.com/users/",
+    "https://discordapp.com/users/",
+  ],
+  youtube: [
+    "https://youtube.com/@",
+    "https://www.youtube.com/@",
+    "https://youtube.com/",
+    "https://www.youtube.com/",
+  ],
+};
+
+function normalizeHandle(
+  value: string,
+  field: "twitter" | "discord" | "youtube",
+): string {
+  let v = value.trim();
+  if (v === "") return v;
+  for (const prefix of HANDLE_URL_PREFIXES[field]) {
+    if (v.toLowerCase().startsWith(prefix.toLowerCase())) {
+      v = v.slice(prefix.length);
+      break;
+    }
+  }
+  // Strip a leading "@" if user typed it — we store the bare handle.
+  if (v.startsWith("@")) v = v.slice(1);
+  // Strip a trailing slash if the URL had one.
+  if (v.endsWith("/")) v = v.slice(0, -1);
+  return v;
+}
+
+function handleSchema(field: "twitter" | "discord" | "youtube") {
+  return z
+    .string()
+    .max(200)
+    .optional()
+    .transform((v) => (v === undefined ? v : normalizeHandle(v, field)))
+    .refine(
+      (v) => v === undefined || v === "" || HANDLE_REGEX.test(v),
+      { message: "Invalid handle format" },
+    );
+}
+
 const ProfileBody = z.object({
   bio: z.string().max(500).optional(),
-  twitter: z.string().max(100).optional(),
-  discord: z.string().max(100).optional(),
-  youtube: z.string().max(100).optional(),
+  twitter: handleSchema("twitter"),
+  discord: handleSchema("discord"),
+  youtube: handleSchema("youtube"),
   isPublic: z.boolean().optional(),
   accentTheme: z.string().max(20).optional().refine(
     (v) => !v || VALID_THEMES.includes(v),
     { message: "Invalid theme" }
   ),
   avatarUrl: z.string().max(500).optional().refine(
-    (v) => !v || v.startsWith("https://"),
-    { message: "Avatar URL must be HTTPS" }
+    (v) => {
+      if (!v) return true;
+      let url: URL;
+      try {
+        url = new URL(v);
+      } catch {
+        return false;
+      }
+      if (url.protocol !== "https:") return false;
+      return AVATAR_HOSTNAME_ALLOWLIST.has(url.hostname);
+    },
+    { message: "Avatar URL must be HTTPS and from an allowed host" }
   ),
 });
 
@@ -74,7 +152,9 @@ export async function PUT(request: Request) {
 
     const raw = await request.json();
     const parsed = ProfileBody.safeParse(raw);
-    if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid profile data" }, { status: 400 });
+    }
 
     const { bio, twitter, discord, youtube, isPublic, accentTheme, avatarUrl } = parsed.data;
     const isPublicValue = isPublic !== undefined ? isPublic : true;
