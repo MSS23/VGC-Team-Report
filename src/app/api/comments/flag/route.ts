@@ -1,6 +1,8 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { auth } from "@clerk/nextjs/server";
+import { createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -8,8 +10,11 @@ const FLAG_THRESHOLD = 3; // Auto-hide after this many unique flags
 
 const FlagBody = z.object({
   commentId: z.number(),
-  sessionId: z.string().min(1),
 });
+
+function hashIp(ip: string): string {
+  return createHash("sha256").update(ip).digest("hex");
+}
 
 export async function POST(request: Request) {
   try {
@@ -21,14 +26,30 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }
-    const { commentId, sessionId } = parsed.data;
+    const { commentId } = parsed.data;
+
+    // Derive a server-trusted voter identity:
+    //   - Clerk userId when signed in
+    //   - Hashed IP fallback for anonymous flaggers
+    // This prevents a single attacker from spoofing many client-supplied
+    // sessionIds to drive a comment over FLAG_THRESHOLD and auto-delete it.
+    const { userId } = await auth();
+    let voterId: string;
+    if (userId) {
+      voterId = `user:${userId}`;
+    } else {
+      const forwardedFor = request.headers.get("x-forwarded-for");
+      const ip = forwardedFor?.split(",")[0]?.trim() || "unknown";
+      voterId = `ip:${hashIp(ip)}`;
+    }
 
     const sql = getDb();
 
-    // Insert flag (unique per comment+session)
+    // Insert flag (unique per comment+voter). We reuse the existing
+    // session_id column to avoid a schema migration in this commit.
     await sql`
       INSERT INTO comment_flags (comment_id, session_id)
-      VALUES (${commentId}, ${sessionId})
+      VALUES (${commentId}, ${voterId})
       ON CONFLICT (comment_id, session_id) DO NOTHING
     `;
 
@@ -44,7 +65,7 @@ export async function POST(request: Request) {
       await sql`DELETE FROM comments WHERE id = ${commentId}`;
       await sql`DELETE FROM comment_flags WHERE comment_id = ${commentId}`;
 
-      captureServerEvent(sessionId, "comment_auto_removed", {
+      captureServerEvent(voterId, "comment_auto_removed", {
         comment_id: commentId,
         flag_count: count,
       });
@@ -52,7 +73,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ flagged: true, autoRemoved: true });
     }
 
-    captureServerEvent(sessionId, "comment_flagged", {
+    captureServerEvent(voterId, "comment_flagged", {
       comment_id: commentId,
       flag_count: count,
     });
