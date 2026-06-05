@@ -1,69 +1,35 @@
-# C5 Commit Review — Last 25 commits (May 14–20, 2026)
+# C5 Commit Review — last 20 commits on origin/main (29-05-26)
 
-**Reviewer:** C5
-**Window:** 850e91c → b50656f (Wed 20 May 19:32 → Wed 14 May)
-**Files cross-referenced:** `.swarm/main-changed-files.md` (last 7 days)
-**Time budget:** 20 min
+**Window:** `1a30839` → `9c644f5` (mostly nightly-swarm PRs #46/#47/#48/#49, three feature commits, plus the 1a30839 corruption-repair merge).
+**Cross-ref:** `.swarm/main-changed-files.md` — files repeatedly touched listed at end.
 
----
+## Concerning patterns
 
-## P0 / P1 bugs spotted in recent code
+- **Re-proposed fix loop.** The Linear-webhook patch (`linear-signature` header + env-var rename) was re-applied in PRs #35, #36, #37, #46, #47 and finally squashed in `1a30839`. Merge body says "8 consecutive runs without landing". This is real engineering waste.
+- **Pre-existing main corruption.** `1a30839` repaired fused doc/JSX blocks and duplicate imports in `cleanup/route.ts`, `JsonLd.tsx`, `explore/page.tsx`, `tournaments/page.tsx` — files that didn't compile yet had been on `main`. A pre-push `tsc` gate would have caught all four.
+- **Silent error-swallowing for webhook health.** Linear/PostHog/Clerk all now return 200 in catch blocks. Good for avoiding auto-disable, bad for observability — none of them log the error first.
+- **Legacy fallbacks accumulating.** `LINEAR_WEBHOOK_SIGNING_SECRET ?? LINEAR_WEBHOOK_SECRET` and `linear-signature ?? x-linear-signature` are explicitly TODO'd in commit bodies but no ticket exists.
 
-### P0 — Welcome email HTML XSS (regression of the bug "fixed" in 19-05-26 swarm)
-**File:** `src/lib/email.ts` line 219
-The 19-05-26 swarm explicitly fixed the same XSS class in the weekly digest builder (escapeHtml added for `tournamentName`, `creatorName`, `firstName`). But the welcome email added in 18-05-26 (`buildWelcomeEmailHtml`) injects `${firstName}` **raw** into the `<h1>` — no escape. A user with first-name `<img src=x onerror=…>` in Clerk lands an HTML payload in every welcome email. Same pattern.
-**Also affected:** `buildCommentNotificationHtml` (lines 130, 135) — `commenterName`, `commentBody`, `reportTitle` are all interpolated raw into the HTML body. `commentBody` is the most dangerous (user-controlled text). This has been broken since before the swarm window.
-**Fix:** Pull `escapeHtml` out of `weekly-digest/route.ts` into `src/lib/email.ts`, wrap every `${…}` interpolation. Reuse for subject lines too (`subject: \`New comment on "${opts.reportTitle}"\`` — escape there as well; Resend escapes header-values, but unescaped quotes can still break subject rendering).
+## Follow-up tickets to file in Backlog
 
-### P1 — Re-sharing an unlisted report silently demotes it to private
-**File:** `src/app/api/share/route.ts` lines 269–298 (dedup branch)
-The dedup `SELECT` only fetches `(id, edit_token, version, is_public)` — `is_unlisted` is NOT selected. Then `effectiveIsUnlistedDup = isUnlisted ?? false` falls back to `false` whenever the client doesn't explicitly send `isUnlisted`. Result: a user with an unlisted share, when the autosave/save flow re-POSTs the same paste without an explicit `isUnlisted`, gets the `is_unlisted` column flipped to `false` — quietly converting unlisted → private.
-**Fix:** Add `is_unlisted` to the SELECT, then `effectiveIsUnlistedDup = isUnlisted ?? !!dup.is_unlisted`.
+1. **VGC-WEBHOOK-CLEANUP: drop legacy `LINEAR_WEBHOOK_SECRET` + `x-linear-signature` fallbacks** (P2). `src/app/api/webhooks/linear/route.ts:32-41` carries `??` fallbacks every nightly commit body flags as follow-up. Standardise the Vercel env var name and delete both legacy lookups in one PR.
 
-### P1 — Weekly digest cron tells users to "unsubscribe via notification preferences" — UI doesn't exist
-**Files:** `src/app/api/cron/weekly-digest/route.ts` line 303–307, line 111/204 (footer text)
-The cron checks `user.publicMetadata.digestUnsubscribed === true`, but there is **no UI** anywhere in the app that writes that key (no occurrences in `src/` outside the cron). The email footer says "To unsubscribe from weekly digests, visit your notification preferences." — clicking through `/dashboard/notifications` doesn't expose this control. CAN-SPAM compliance gap; users have no opt-out. Once the cron actually fires Monday 9am, every user gets a mail with no way out except blocking the sender.
-**Fix:** Either (a) add a digest opt-out toggle in `/dashboard/notifications` that writes `publicMetadata.digestUnsubscribed`, or (b) include a one-click unsubscribe link (signed token route) in every email per CAN-SPAM §316.5.
+2. **VGC-WEBHOOK-OBSERVABILITY: log before returning 200 from webhook catch blocks** (P1). `linear/route.ts:68-71`, `posthog/route.ts`, `clerk/route.ts` all swallow exceptions silently. Add `console.error` with sanitised context — keeps the auto-disable protection but restores visibility into real bugs.
 
-### P1 — Clerk webhook has no idempotency / replay protection
-**File:** `src/app/api/webhooks/clerk/route.ts`
-`verifyWebhook()` from `@clerk/nextjs/webhooks` validates the Svix signature but does NOT dedupe events. Clerk retries on 5xx; if `sendWelcomeEmail` is slow / Resend is briefly slow, Clerk retries the same `user.created` event and the user gets multiple welcome emails. Also `sendWelcomeEmail` swallows errors (`console.warn`), so we return 200 even when the email never sent — no retry path.
-**Fix:** Either store seen `svix_id` headers in a TTL'd cache (5 min) and short-circuit, or accept duplicate-email risk and document it. Prefer the former.
+3. **VGC-NIGHTLY-GUARD: pre-flight diff against `main` in swarm runs** (P1). Five+ nightly PRs re-shipped the same Linear webhook diff. Before opening a PR, the swarm should check whether the proposed change already exists on `main` and skip. Also recommend a mandatory `npx tsc --noEmit` on the resulting branch before push — would have prevented the 4 corrupted files repaired in `1a30839`.
 
-### P2 — i18n stubs are empty strings; non-English users see blank ShareModal
-**Files:** `src/lib/i18n/translations/{fr,es,it,ja,ko,zh}.ts` (shareModal namespace), `src/lib/i18n/index.ts`
-VGC-121 added 26 `shareModal*` keys to all 7 language files but the 6 non-English ones contain literal `""` placeholders. The provider in `src/lib/i18n/index.ts` does NOT fall back to English on empty values — `t.shareModal.shareModalTitleViewer` simply renders as an empty string. Every non-English user who opens the share modal sees blank labels (no copy button text, no modal title, etc.).
-**Fix:** In `useTranslation()`, wrap the returned object with a Proxy/get that returns `en[key]` whenever the localized value is `""` or undefined. Cheap. Or backfill the translations now.
+4. **VGC-SAVE-PROBE-ENDPOINT: avoid fetching full saved list to derive one boolean** (P2). `Navbar.tsx` (commit 850e91c) `GET /api/user/saved` then scans `reports[].id` for the current shareId. Adds latency + N×bandwidth on every shared view. Replace with `HEAD /api/user/saved/:shareId` or accept a `?shareId=` filter.
 
----
+5. **VGC-MIGRATION-DOWN: add rollback for `drop-species-column.sql`** (P3). VGC-218 dropped the column + GIN index `CONCURRENTLY` with no down-migration. If Champions meta later needs the column back, the recreate path is undocumented. Pair every destructive migration with a `.down.sql`.
 
-## Top 5 follow-up tickets
+6. **VGC-DOCK-TELEMETRY-CLEAN: prune analytics events from deleted docks** (P3). `ShareDock` / `FloatingReactionDock` / `useTouchIdleHide` deleted in 850e91c. PostHog dashboards likely still reference `floating_dock_*` events. Audit + delete stale dashboards.
 
-| # | Area / File | What's wrong | Fix | Scope |
-|---|---|---|---|---|
-| 1 | `src/lib/email.ts` (welcome, comment notif) | Raw interpolation of `firstName`, `commenterName`, `commentBody`, `reportTitle` → stored XSS in HTML email clients | Lift `escapeHtml` to a shared util in `src/lib/email.ts`, escape every `${...}` in every HTML builder, escape subject lines too | S (~1 hr) |
-| 2 | `src/app/api/share/route.ts` lines 269–284 (dedup) | Unlisted shares silently flip to private on re-share | Add `is_unlisted` to the dedup SELECT; fall back to `!!dup.is_unlisted` instead of `false` | XS (~15 min) |
-| 3 | `src/app/api/cron/weekly-digest/route.ts` + `/dashboard/notifications` UI | "Unsubscribe via preferences" promised in email but no UI exists; CAN-SPAM gap | Add digest opt-out toggle that writes `publicMetadata.digestUnsubscribed` via Clerk; or signed one-click unsubscribe route | M (~2–4 hrs) |
-| 4 | `src/app/api/webhooks/clerk/route.ts` | No idempotency — Clerk retries cause duplicate welcome emails | Dedupe by `svix-id` header in a 5-min cache (redis or in-memory map); short-circuit on hit | S (~1 hr) |
-| 5 | `src/lib/i18n/index.ts` + 6 non-English `translations/*.ts` | Empty-string stubs render literally; non-English users see blank ShareModal | Proxy-wrap `t` to fall back to `en` on `""`/undefined; OR backfill translations | S–M (proxy is XS, backfill is M) |
+7. **VGC-LINEAR-EVENT-HANDLER: Linear webhook accepts signature then no-ops** (P2). `linear/route.ts:67` returns 200 with no actual event handling for non-`url_verification` types. Either implement the handler (issue→Discord, comment→nudge) or document explicitly that this endpoint exists purely for signature validation.
 
----
+## Top immediate safe fix (< 1 hour)
 
-## Architectural recommendations
+**Add `console.error(e)` to the Linear webhook catch block** at `/home/user/VGC-Team-Report/src/app/api/webhooks/linear/route.ts:68-71`. Currently `catch { return NextResponse.json({ ok: true }); }` — swap to `catch (e) { console.error("Linear webhook error:", e); return NextResponse.json({ ok: true }); }`. One-line change, no behaviour shift, regains observability. Same fix applies to `posthog/route.ts` and `clerk/route.ts` if scope allows. Ships in 5 minutes.
 
-### 1. Consolidate "user-facing HTML/email" templating behind a single escape boundary
-The pattern of raw template literals + `escapeHtml` applied ad-hoc has now produced two XSS regressions in two weeks (digest 19-05-26 swarm, welcome email 18-05-26 still broken). Move all email templates into a thin tagged-template helper (`html\`<h1>${name}</h1>\`` that escapes interpolations by default and offers a `raw()` opt-out). Same for any future Discord embed / Slack message builders. One audit point, no foot-guns.
+## High-conflict-risk files (per main-changed-files.md)
 
-### 2. Add an integration smoke test for the share INSERT/UPDATE pair
-The 17-05-26 INSERT-column-mismatch bug (silently corrupted ownership on every new share, fixed in 18-05-26) and the unlisted-demotion bug (still present) are both column-list bugs that pass `tsc` and `npm run build` cleanly. A 30-line vitest that creates → reads → updates → reads a row through `getDb()` against a test schema would have caught both. Currently the only test for the share flow is the `extractSpecies` unit test. Worth one focused test file given how often this route is touched.
-
-### 3. Codify the swarm's "dock" cleanup — DoubleTapLikeOverlay still encodes dead UI
-After 850e91c removed `ShareDock` and `FloatingReactionDock`, `DoubleTapLikeOverlay` still has 50+ lines guarding against `[data-vgc-dock]`, `aria-label*="share"`, `aria-label*="reaction"` elements that no longer exist. The Navbar overflow bookmark item explicitly mentions in comments that it "replaces FloatingReactionDock". `ChangelogContent.tsx:274` still advertises "Persistent ShareDock on every shared report" as a current feature. Net effect: future devs reading the code will think this UI exists. A 5-minute follow-up pass should strip the dock selectors (keep only the standard `INTERACTIVE_SELECTOR`) and rewrite the stale changelog entry as a removal note.
-
----
-
-## Notes on the swarm cadence
-
-- 4 swarm PRs in 7 days (16/17/18/19/20-05) is high-velocity but the failure mode is now visible: the 17-05 swarm introduced a P0 share-corruption bug, the 18-05 swarm fixed it, the 18-05 swarm introduced a new XSS, the 19-05 swarm fixed *part* of it (digest only, missed welcome+comment), the 20-05 swarm shipped CRLF-injection hardening (good) but didn't audit the sibling templates. Pattern: swarm finds & half-fixes one instance of a class of bug per night, never sweeps the class.
-- Recommendation: when a swarm closes a security ticket (e.g. VGC-202 CRLF, 19-05 XSS), add a follow-up "audit sibling code for same class" sub-issue before closing. Or have C4 (security) always grep for the same anti-pattern across the codebase as part of fix verification.
-- The "Discord-failed-DD-MM-YY.md" files keep accumulating (6 so far). The notification side of the swarm has not worked in a week. Out of scope for this review but worth a Linear ticket if not already filed.
+`src/app/api/webhooks/linear/route.ts`, `src/lib/email.ts`, `src/app/api/share/route.ts`, `src/app/api/cleanup/route.ts`, `src/components/seo/JsonLd.tsx`, `src/components/layout/Navbar.tsx`, `src/app/page.tsx`, `src/components/ui/InstallPrompt.tsx` — all touched by 3+ of the last 20 commits. Any new swarm run modifying these should rebase + tsc-check first.
