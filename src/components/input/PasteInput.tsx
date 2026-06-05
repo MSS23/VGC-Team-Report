@@ -125,6 +125,11 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
   const [isFocused, setIsFocused] = useState(false);
   const [showPasteHint, setShowPasteHint] = useState(false);
   const [pasteHintSeen, setPasteHintSeen] = useState(false);
+  // Tracks the last URL we auto-imported from, so we don't refetch the same URL
+  // (after fetch the textarea is replaced with the raw paste; this also guards
+  // against the user re-pasting the same URL accidentally).
+  const [lastAutoFetchedUrl, setLastAutoFetchedUrl] = useState<string | null>(null);
+  const [showImportedToast, setShowImportedToast] = useState(false);
 
   // Random accent color on landing page
   useEffect(() => { applyRandomAccent(); }, []);
@@ -239,6 +244,41 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       setIsFetching(false);
     }
   };
+
+  // Auto-import: when the textarea contains a pokepast.es URL, debounce briefly
+  // then fetch the raw Showdown text via the SSRF-guarded server proxy and feed
+  // it into the standard parser. This converts every pokepaste link shared in
+  // Discord/Reddit/Twitter into a frictionless inbound import. SSRF + timeout
+  // + size guards are enforced server-side in /api/pokepaste.
+  useEffect(() => {
+    const trimmed = paste.trim();
+    if (!isPokePasteUrl(trimmed)) return;
+    if (trimmed === lastAutoFetchedUrl) return;
+    if (isFetching) return;
+
+    const timer = setTimeout(async () => {
+      // Re-check inside the timer in case state changed during debounce
+      if (!isPokePasteUrl(paste.trim())) return;
+      const url = paste.trim();
+      setLastAutoFetchedUrl(url);
+      setIsFetching(true);
+      setFetchError(null);
+      try {
+        const result = await fetchPokePaste(url);
+        onPasteChange(result.paste);
+        setShowImportedToast(true);
+        setTimeout(() => setShowImportedToast(false), 2500);
+        onAnalyze(result.paste);
+      } catch (err) {
+        setFetchError(err instanceof Error ? err.message : "Failed to fetch PokePaste");
+      } finally {
+        setIsFetching(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paste]);
 
   return (
     <>
@@ -444,6 +484,22 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         >
           Paste your full 6-Pok&eacute;mon Showdown export, or a{" "}
           <span className="font-semibold text-text-primary">pokepast.es</span> URL
+        </motion.p>
+      )}
+
+      {/* Auto-import success toast */}
+      {showImportedToast && !fetchError && (
+        <motion.p
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          aria-live="polite"
+          className="text-xs text-accent font-semibold mt-3 px-1 flex items-center gap-1.5"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          Imported from pokepast.es
         </motion.p>
       )}
 
