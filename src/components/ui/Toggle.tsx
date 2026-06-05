@@ -12,7 +12,7 @@ export function Toggle({ checked, onChange, label }: ToggleProps) {
         aria-checked={checked}
         aria-label={label}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-[24px] w-[42px] items-center rounded-full transition-all duration-300 flex-shrink-0 ${
+        className={`relative inline-flex h-[24px] w-[42px] items-center rounded-full transition-all duration-300 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 ${
           checked ? "bg-accent shadow-md shadow-accent/30" : "bg-border"
         }`}
       >

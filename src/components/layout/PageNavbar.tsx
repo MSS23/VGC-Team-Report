@@ -31,7 +31,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
       <header className="sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 bg-surface/80 border-b border-border/60 shadow-[0_1px_8px_rgba(0,0,0,0.03)] sticky-header-standalone">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-12 sm:h-14 flex items-center justify-between">
           {/* Left: logo */}
-          <Link href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity">
+          <Link href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 rounded">
             <span className="text-text-primary">VGC Team</span>
             <span className="text-accent">Report</span>
           </Link>
@@ -41,7 +41,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
             {/* Create Report CTA — always visible */}
             <Link
               href="/"
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 ${
                 activePage === "home"
                   ? "text-accent bg-accent-surface/50"
                   : "text-accent hover:bg-accent-surface/30"
@@ -54,7 +54,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
               <Link
                 key={link.key}
                 href={link.href}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 ${
                   activePage === link.key
                     ? "text-accent bg-accent-surface/50"
                     : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
@@ -69,14 +69,14 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
           <div className="flex items-center gap-1.5 sm:gap-2">
             {showSignIn && (
               <SignInButton mode="modal">
-                <button className="px-3 py-1.5 text-xs font-bold text-white bg-accent rounded-xl hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/20">
+                <button className="px-3 py-1.5 text-xs font-bold text-white bg-accent rounded-xl hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1">
                   Sign In
                 </button>
               </SignInButton>
             )}
             {showUser && (
               <>
-                <Link href="/dashboard" className="hidden sm:inline px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent hover:bg-surface-alt rounded-lg transition-all">
+                <Link href="/dashboard" className="hidden sm:inline px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent hover:bg-surface-alt rounded-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1">
                   Dashboard
                 </Link>
                 <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
@@ -87,7 +87,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
 
             <button
               onClick={onToggleDarkMode}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1"
               aria-label="Toggle dark mode"
             >
               {darkMode ? (
@@ -113,7 +113,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
               <Link
                 key={link.key}
                 href={link.href}
-                className={`relative flex flex-col items-center gap-0 px-2.5 py-1 rounded-xl transition-all duration-200 min-w-[48px] active:scale-[0.90] active:opacity-70 ${
+                className={`relative flex flex-col items-center gap-0 px-2.5 py-1 rounded-xl transition-all duration-200 min-w-[48px] active:scale-[0.90] active:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 ${
                   isActive
                     ? "text-accent"
                     : "text-text-tertiary"
