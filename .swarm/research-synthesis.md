@@ -1,27 +1,45 @@
-# Research Synthesis — Nightly Swarm 2026-05-28
+# Wave 1 Synthesis — 2026-06-05
 
-## Top 5 Highest-Leverage Opportunities
+## Top 5 highest-leverage opportunities
 
-1. **AI crawlers were being blocked (FIXED THIS RUN)** — GPTBot, ClaudeBot, PerplexityBot blocked by middleware despite robots.txt allowing them. Zero AI citations as a result. Fix landed in commit 737bb02.
+1. **Lazy-load moves.ts + pokemon.ts as JSON (~2h, C3).** 7,500+ lines of literal data parsed eagerly inside slide chunks — single biggest unrealised perf win. (Deferred this run — non-trivial scope.)
+2. **Pokepast.es URL ingestion (~2h, R1).** Accept `pokepast.es/<id>` in the paste box; server-fetch + parse + redirect to /share. Hijacks every existing pokepaste link circulating in Discord/Reddit. SHIPPING TONIGHT.
+3. **Type tightening across normalize-report + diff-state + pokepaste (~2.5h, C2).** lib utilities lose all shape info via AnyRecord; tighten and let TS catch real bugs. SHIPPING TONIGHT.
+4. **Comment-flag authz + profile-URL validation (~3h, C4 SEC1).** Real authz bypass (sessionId is client-supplied; one attacker can auto-delete any comment). Plus javascript:-URL vector in profile fields. SHIPPING TONIGHT.
+5. **SEO: rewrite root title + add H1 (~1h, R6 #1+#2).** Brand-first homepage title means we don't rank for "VGC team builder 2026". SHIPPING TONIGHT (metadata only — H1 deferred to avoid page.tsx conflict).
 
-2. **PokePaste is dying — capture window is NOW** — 156 open issues, broken sprites, community-built browser extension needed. Indianapolis Regionals May 29-31 creates peak tool evaluation. Anonymous quick-paste import would be the highest-impact capture mechanism.
+## Top 5 quick-win bugs/issues
 
-3. **@pkmn/dex ships 6.7 MB to every client** — 52% of homepage JS. Dynamic import on cache miss would halve the bundle instantly. Turbopack duplicates the chunk between homepage and /compare.
+1. **Webhook catch blocks silently swallow errors (C5).** Linear/PostHog/Clerk all `catch { return 200 }` with no log. Tiny diff, restores observability. SHIPPING TONIGHT.
+2. **Dead exports in share-codec (C1 items 1-4).** 4 internal Zod schemas exported with no callers. SHIPPING TONIGHT.
+3. **Focus rings missing on nav + Toggle (R8 QW1).** No focus-visible:ring on PageNavbar Links or Toggle switch. SHIPPING TONIGHT.
+4. **9-10px body text unreadable (R8 QW2).** Codemod min text to 11px. (Deferred — ShareModal/page.tsx conflict risk.)
+5. **Linear webhook — handler is healthy, env-var likely mismatched.** P0 ticket queued for human action via Vercel.
 
-4. **Only 2 pages indexed by Google** — Despite thousands in sitemap. Homepage entirely "use client" so crawlers see empty shell. Server-rendering or hybrid rendering is the structural fix.
+## Blockers for Wave 2
 
-5. **Zero organic community mentions** — Not mentioned in any Reddit/Discord/Twitter thread found by R3/R4. Listed on VGCpedia and DevonCorp but no organic discussion. Getting listed on Victory Road /resources is the highest-leverage free distribution action.
+- Linear API/MCP unavailable in this environment (no .env.local, no token). Linear ticket updates queued to .swarm/linear-pending.md for human action.
+- Discord webhook unavailable. Notification queued to .swarm/discord-failed.md.
+- PostHog API unavailable. No live signal cross-referencing this run.
 
-## Top 5 Quick-Win Bugs/Issues
+## High-conflict-risk files (from .swarm/main-changed-files.md) — recommendations flagged
 
-1. Email XSS in comment/welcome emails (FIXED THIS RUN)
-2. GraphQL injection in cron routes (FIXED THIS RUN)  
-3. Bot detection contradicting robots.txt (FIXED THIS RUN)
-4. Timing-unsafe secret comparison in admin routes (FIXED THIS RUN)
-5. Views API shareId not validated (FIXED THIS RUN)
+- `src/app/page.tsx` (R6 H1 add, R8 #4) — DEFERRED.
+- `src/app/layout.tsx` (R6 metadata) — proceeding cautiously (W6).
+- `src/components/layout/PageNavbar.tsx` (R8 QW1) — proceeding cautiously (W7).
+- `src/components/ui/Toggle.tsx` (R8 QW1) — proceeding cautiously (W7).
+- `src/components/ui/ShareModal.tsx` (R5 toast, R8 #4) — DEFERRED.
+- `src/lib/email.ts` (C2 risky win) — DEFERRED.
 
-## PostHog Data
-Not available — no credentials in this execution environment.
+## Wave 2 plan (8 implementation subagents)
 
-## Conflict Risk Files
-No files overlapped with main — branch was cut fresh from main tonight.
+- **W1.** Webhook observability: console.error in linear+posthog+clerk catch blocks.
+- **W2.** De-export 4 internal schemas (url-codec.ts, redact-paste.ts).
+- **W3.** VGC-TYPE: tighten normalize-report + diff-state + pokepaste return surfaces.
+- **W4.** VGC-SEC1a: server-bind comment-flag throttling.
+- **W5.** VGC-SEC1b: validate profile social URLs + avatarUrl hostname allowlist.
+- **W6.** VGC-SEO1: rewrite root metadata title to lead with intent + year.
+- **W7.** VGC-A11Y-QW1: focus-visible rings on PageNavbar Links + Toggle.
+- **W8.** VGC-FEAT-POKEPASTE: accept pokepast.es URLs in paste input.
+
+Total subagent budget: 9 (Wave 1) + 8 (Wave 2) = 17 of 25.
