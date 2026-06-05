@@ -5,6 +5,11 @@
 
 :root {
   --nav-height: 6rem;
+  /* Height reserved for the fixed bottom slide-nav bar. Mobile uses the
+     two-row segmented bar (~3.5rem); the standalone override below adds the
+     iOS gesture-bar safe area. Consumers read it via
+     var(--bottom-nav-height, 3.5rem). */
+  --bottom-nav-height: 3.5rem;
   --background: #FAF9F6;
   --foreground: #1A1A2E;
   --surface: #FFFFFF;
@@ -148,7 +153,7 @@ body {
   /* Account for safe-area in navbar height so slide content doesn't overlap */
   :root {
     --nav-height: calc(6rem + env(safe-area-inset-top, 0px));
-    --bottom-nav-height: calc(3rem + env(safe-area-inset-bottom, 0px));
+    --bottom-nav-height: calc(3.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   /* Sticky headers extend behind status bar with safe area padding */

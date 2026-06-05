@@ -1,50 +1,17 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { hapticLight } from "@/lib/utils/haptics";
 
-/** Small tooltip that explains what the navigation bar does */
-function NavHelpTooltip() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+/**
+ * Physical slide keys that describe the team as a whole (speed tiers +
+ * coverage). They fold under the "Team" section tab rather than getting
+ * their own — keeps the bottom nav to a clean three tabs.
+ */
+const COVERAGE_KEYS = ["speed-tiers", "offensive-coverage", "defensive-coverage"];
 
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent | TouchEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    document.addEventListener("touchstart", close);
-    return () => {
-      document.removeEventListener("mousedown", close);
-      document.removeEventListener("touchstart", close);
-    };
-  }, [open]);
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-xs font-bold text-text-tertiary hover:text-accent hover:bg-accent/5 transition-all"
-        aria-label="Navigation help"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
-          <line x1="12" y1="17" x2="12.01" y2="17" />
-        </svg>
-      </button>
-      {open && (
-        <div className="absolute bottom-full right-0 mb-2 w-56 px-3 py-2.5 rounded-lg bg-surface-alt border border-border shadow-xl text-xs text-text-secondary leading-relaxed z-50 animate-fade-in">
-          <p className="font-bold text-text-primary mb-1">Slide Navigation</p>
-          <p>Drag the bar or tap anywhere on it to jump between slides. Use arrow keys on desktop. Swipe left/right on mobile.</p>
-        </div>
-      )}
-    </div>
-  );
-}
+type Section = "overview" | "team" | "matchups";
 
 interface SlideNavControlsProps {
   currentSlide: number;
@@ -53,7 +20,9 @@ interface SlideNavControlsProps {
   isLast: boolean;
   onPrev: () => void;
   onNext: () => void;
+  /** Jump to a LOGICAL index into visibleIndices. goToSlide clamps the range. */
   onGoTo: (index: number) => void;
+  /** Labels for the currently-visible slides, index-aligned with currentSlide. */
   slideLabels: string[];
   autoHide?: boolean;
   hiddenStates?: boolean[];
@@ -65,6 +34,19 @@ interface SlideNavControlsProps {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   changedSlides?: Set<number>;
+  /** Physical indices currently shown (slides.visibleIndices). */
+  visibleIndices: number[];
+  /** Full physical key list (slides.allSlideKeys) — key-based jumps survive reordering. */
+  allSlideKeys: string[];
+  /**
+   * Optional Base/Mega display toggle. When present, the bottom-nav overflow
+   * sheet hosts it so shared (/s/) views never need the old floating pill.
+   */
+  displayToggle?: {
+    hasMega: boolean;
+    mode: "base" | "mega";
+    onChange: (mode: "base" | "mega") => void;
+  };
 }
 
 export function SlideNavControls({
@@ -86,379 +68,467 @@ export function SlideNavControls({
   onMoveUp,
   onMoveDown,
   changedSlides,
+  visibleIndices,
+  allSlideKeys,
+  displayToggle,
 }: SlideNavControlsProps) {
   const { t } = useTranslation();
+  const [sheetOpen, setSheetOpen] = useState(false);
   const hiddenCount = hiddenStates?.filter(Boolean).length ?? 0;
 
-  // --- Mobile progress bar state ---
-  const barRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [tooltipLabel, setTooltipLabel] = useState<string | null>(null);
-  const [tooltipX, setTooltipX] = useState(0);
-  const lastSlideRef = useRef(currentSlide);
+  // ── Section model (key-based so it survives any physical reordering) ──
+  const { overviewPhys, firstPokemonPhys, firstMatchupPhys } = useMemo(() => {
+    const ov = allSlideKeys.indexOf("overview");
+    const poke = allSlideKeys.findIndex(
+      (k, i) => i > 0 && !COVERAGE_KEYS.includes(k) && !k.startsWith("matchup-"),
+    );
+    // "matchup-sheet" also starts with "matchup-", so this resolves to the
+    // first matchup PLAN, or the summary sheet when there are no plans.
+    const match = allSlideKeys.findIndex((k) => k.startsWith("matchup-"));
+    return { overviewPhys: ov, firstPokemonPhys: poke, firstMatchupPhys: match };
+  }, [allSlideKeys]);
 
-  const resolveSlideFromX = useCallback(
-    (clientX: number): number => {
-      const bar = barRef.current;
-      if (!bar) return currentSlide;
-      const rect = bar.getBoundingClientRect();
-      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      return Math.min(totalSlides - 1, Math.max(0, Math.round(ratio * (totalSlides - 1))));
-    },
-    [currentSlide, totalSlides],
-  );
+  const sectionOf = useMemo(() => {
+    return (physIdx: number): Section => {
+      const k = allSlideKeys[physIdx] ?? "";
+      if (physIdx === 0 || k === "overview") return "overview";
+      if (k.startsWith("matchup-")) return "matchups";
+      return "team";
+    };
+  }, [allSlideKeys]);
 
-  const handleBarTouchStart = useCallback(
-    (e: React.TouchEvent<HTMLDivElement>) => {
-      const touch = e.touches[0];
-      const idx = resolveSlideFromX(touch.clientX);
-      setIsDragging(true);
-      lastSlideRef.current = idx;
+  const overviewAvail = overviewPhys >= 0 && visibleIndices.indexOf(overviewPhys) >= 0;
+  const teamAvail = firstPokemonPhys >= 0 && visibleIndices.indexOf(firstPokemonPhys) >= 0;
+  const matchupsAvail = firstMatchupPhys >= 0 && visibleIndices.indexOf(firstMatchupPhys) >= 0;
 
-      const bar = barRef.current;
-      if (bar) {
-        const rect = bar.getBoundingClientRect();
-        setTooltipX(touch.clientX - rect.left);
+  const phys = visibleIndices[currentSlide] ?? 0;
+  const activeSection = sectionOf(phys);
+
+  // Position of the current slide within its section (for the progress fill
+  // and the "n/N" sub-label).
+  const { secFirst, secTotal } = useMemo(() => {
+    let first = -1;
+    let count = 0;
+    for (let v = 0; v < visibleIndices.length; v++) {
+      if (sectionOf(visibleIndices[v]) === activeSection) {
+        if (first === -1) first = v;
+        count++;
       }
-      setTooltipLabel(slideLabels[idx] ?? null);
+    }
+    return { secFirst: first, secTotal: count };
+  }, [visibleIndices, activeSection, sectionOf]);
 
-      if (idx !== currentSlide) {
-        hapticLight();
-        onGoTo(idx);
-      }
-    },
-    [resolveSlideFromX, currentSlide, onGoTo, slideLabels],
-  );
+  const sectionPos = secFirst >= 0 ? currentSlide - secFirst : 0; // 0-based
+  const sectionProgress = secTotal <= 1 ? 1 : sectionPos / (secTotal - 1);
 
-  const handleBarTouchMove = useCallback(
-    (e: React.TouchEvent<HTMLDivElement>) => {
-      if (!isDragging) return;
-      const touch = e.touches[0];
-      const idx = resolveSlideFromX(touch.clientX);
+  const jumpToPhysical = (physIdx: number) => {
+    if (physIdx < 0) return;
+    const v = visibleIndices.indexOf(physIdx);
+    if (v < 0) return; // section currently hidden — no-op
+    hapticLight();
+    onGoTo(v);
+  };
 
-      const bar = barRef.current;
-      if (bar) {
-        const rect = bar.getBoundingClientRect();
-        setTooltipX(Math.max(0, Math.min(rect.width, touch.clientX - rect.left)));
-      }
-      setTooltipLabel(slideLabels[idx] ?? null);
+  const tabs: { key: Section; label: string; avail: boolean; target: number }[] = [
+    { key: "overview", label: t.overview, avail: overviewAvail, target: overviewPhys },
+    { key: "team", label: "Team", avail: teamAvail, target: firstPokemonPhys },
+    { key: "matchups", label: t.matchupsLabel, avail: matchupsAvail, target: firstMatchupPhys },
+  ];
 
-      if (idx !== lastSlideRef.current) {
-        lastSlideRef.current = idx;
-        hapticLight();
-        onGoTo(idx);
-      }
-    },
-    [isDragging, resolveSlideFromX, onGoTo, slideLabels],
-  );
+  // ── Overflow availability ──
+  const hasCreatorTools = !!onToggleHide;
+  const hasDisplay = !!displayToggle?.hasMega;
+  const hasSheetMobile = hasCreatorTools || hasDisplay;
+  const hasSheetDesktop = hasSheetMobile || !!onShowShortcuts;
+  const showOverflow = hasSheetMobile || hasSheetDesktop;
 
-  const handleBarTouchEnd = useCallback(() => {
-    setIsDragging(false);
-    setTooltipLabel(null);
-  }, []);
+  // Close the overflow sheet on Escape (the backdrop handles outside clicks).
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSheetOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [sheetOpen]);
 
-  const handleBarClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const idx = resolveSlideFromX(e.clientX);
-      if (idx !== currentSlide) {
-        hapticLight();
-        onGoTo(idx);
-      }
-    },
-    [resolveSlideFromX, currentSlide, onGoTo],
-  );
+  // Auto-close the sheet if everything that fed it disappears (e.g. leaving
+  // creator mode while it's open).
+  useEffect(() => {
+    if (sheetOpen && !showOverflow) setSheetOpen(false);
+  }, [sheetOpen, showOverflow]);
 
-  // The mobile progress bar exposes role="slider" + tabIndex={0} for a11y,
-  // but until now it had no keyboard handlers — so focusing it via a
-  // keyboard-only flow gave you no way to actually navigate. ARIA's
-  // slider pattern expects Left/Right (and Up/Down) to step and Home/End
-  // to jump to the extremes, so we wire exactly those keys and
-  // preventDefault on hits so they don't also scroll the page.
-  const handleBarKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>) => {
-      switch (e.key) {
-        case "ArrowLeft":
-        case "ArrowDown":
-          if (!isFirst) {
-            e.preventDefault();
-            hapticLight();
-            onPrev();
-          }
-          break;
-        case "ArrowRight":
-        case "ArrowUp":
-          if (!isLast) {
-            e.preventDefault();
-            hapticLight();
-            onNext();
-          }
-          break;
-        case "Home":
-          if (currentSlide !== 0) {
-            e.preventDefault();
-            hapticLight();
-            onGoTo(0);
-          }
-          break;
-        case "End": {
-          const last = totalSlides - 1;
-          if (currentSlide !== last && last >= 0) {
-            e.preventDefault();
-            hapticLight();
-            onGoTo(last);
-          }
-          break;
-        }
-      }
-    },
-    [isFirst, isLast, currentSlide, totalSlides, onPrev, onNext, onGoTo],
-  );
-
-  // Progress fraction for the bar
-  const progress = totalSlides <= 1 ? 1 : currentSlide / (totalSlides - 1);
-
-  return (
+  // ── Segmented section tabs ──
+  const renderTabs = (compact = false) => (
     <div
-      role="navigation"
-      aria-label="Slide navigation"
-      data-walkthrough="slide-nav"
-      className={`fixed bottom-0 left-0 right-0 z-50 transition-opacity duration-200 safe-bottom safe-x ${
-        autoHide
-          ? "bg-surface/0 border-transparent opacity-0 hover:opacity-100 hover:bg-surface/95 hover:backdrop-blur-2xl"
-          : "bg-surface/95 backdrop-blur-2xl border-t border-border/60"
+      role="tablist"
+      aria-label="Report sections"
+      className={`flex ${compact ? "" : "w-full"} gap-0.5 rounded-full bg-surface-alt p-0.5`}
+    >
+      {tabs.map((tab) => {
+        const active = activeSection === tab.key;
+        return (
+          <button
+            key={tab.key}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            aria-disabled={!tab.avail}
+            disabled={!tab.avail}
+            onClick={() => jumpToPhysical(tab.target)}
+            className={`${compact ? "px-4" : "flex-1"} min-h-[40px] sm:min-h-0 sm:py-1.5 px-2 rounded-full text-xs font-bold transition-colors active:scale-[0.97] ${
+              active
+                ? "bg-accent text-white shadow-sm shadow-accent/30"
+                : "text-text-secondary hover:text-text-primary"
+            } ${!tab.avail ? "opacity-40 pointer-events-none" : ""}`}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  // ── Prev / Next ──
+  const prevButton = (
+    <button
+      type="button"
+      onClick={() => {
+        hapticLight();
+        onPrev();
+      }}
+      disabled={isFirst}
+      aria-label="Previous slide"
+      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
+    </button>
+  );
+
+  const nextButton = isLast ? (
+    <span
+      aria-label="End of report"
+      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 rounded-full text-accent cursor-default select-none"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </span>
+  ) : (
+    <button
+      type="button"
+      onClick={() => {
+        hapticLight();
+        onNext();
+      }}
+      aria-label="Next slide"
+      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </button>
+  );
+
+  const overflowButton = showOverflow && (
+    <button
+      type="button"
+      data-overflow-trigger
+      onClick={() => setSheetOpen((v) => !v)}
+      aria-haspopup="dialog"
+      aria-expanded={sheetOpen}
+      aria-label="More slide options"
+      className={`relative flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all ${
+        hasSheetMobile ? "flex" : "hidden sm:flex"
       }`}
     >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-1 sm:py-1.5 flex items-center gap-2 sm:gap-3">
-        {/* === LEFT: Home + Prev === */}
-        {currentSlide > 0 && (
-          <button
-            onClick={() => {
-              hapticLight();
-              onGoTo(0);
-            }}
-            aria-label="Back to team overview"
-            title="Back to team overview"
-            className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-text-secondary hover:text-accent hover:bg-accent/5 active:scale-95 transition-all"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1 sm:w-3.5 sm:h-3.5">
-              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-            <span className="hidden sm:inline">Home</span>
-          </button>
-        )}
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+        <circle cx="5" cy="12" r="1.7" />
+        <circle cx="12" cy="12" r="1.7" />
+        <circle cx="19" cy="12" r="1.7" />
+      </svg>
+      {hiddenCount > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] flex items-center justify-center px-0.5 rounded-full bg-amber-500 text-white text-[9px] font-extrabold leading-none">
+          {hiddenCount}
+        </span>
+      )}
+    </button>
+  );
+
+  // ── Overflow sheet body (shared between mobile sheet + desktop popover) ──
+  const overflowBody = (
+    <div className="p-3 space-y-3">
+      {/* Mobile sheet header */}
+      <div className="flex items-center justify-between sm:hidden">
+        <span className="text-[11px] font-extrabold uppercase tracking-widest text-text-tertiary">
+          Slide options
+        </span>
         <button
-          onClick={onPrev}
-          disabled={isFirst}
-          aria-label="Previous slide"
-          className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
+          type="button"
+          onClick={() => setSheetOpen(false)}
+          aria-label="Close slide options"
+          className="min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1 sm:w-3.5 sm:h-3.5">
-            <polyline points="15,18 9,12 15,6" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
-          <span className="hidden sm:inline">{t.prev}</span>
         </button>
+      </div>
 
-        {/* === CENTER: Mobile progress bar / Desktop dots === */}
-        <div className="flex-1 min-w-0 flex items-center justify-center gap-2">
-          {/* --- Mobile: draggable progress bar (< 640px) --- */}
-          <div className="flex sm:hidden flex-1 flex-col items-center gap-0.5">
-            <div
-              ref={barRef}
-              className="relative w-full h-5 flex items-center touch-none cursor-pointer"
-              onTouchStart={handleBarTouchStart}
-              onTouchMove={handleBarTouchMove}
-              onTouchEnd={handleBarTouchEnd}
-              onClick={handleBarClick}
-              onKeyDown={handleBarKeyDown}
-              role="slider"
-              aria-label="Slide progress"
-              aria-valuemin={1}
-              aria-valuemax={totalSlides}
-              aria-valuenow={currentSlide + 1}
-              aria-valuetext={slideLabels[currentSlide]}
-              tabIndex={0}
+      {/* Display: Base / Mega */}
+      {displayToggle?.hasMega && (
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary mb-1.5">
+            Form
+          </div>
+          <div
+            role="radiogroup"
+            aria-label="Mega Evolution form"
+            className="inline-flex w-full h-11 items-center rounded-lg bg-surface-alt border border-border p-0.5 gap-0.5"
+          >
+            <button
+              type="button"
+              role="radio"
+              aria-checked={displayToggle.mode === "base"}
+              onClick={() => displayToggle.onChange("base")}
+              className={`flex-1 h-full rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                displayToggle.mode === "base"
+                  ? "bg-accent text-white shadow-sm"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
             >
-              {/* Tooltip */}
-              {isDragging && tooltipLabel && (
-                <div
-                  className="absolute -top-8 px-2 py-0.5 rounded bg-surface-alt text-text-primary text-[11px] font-semibold shadow-lg whitespace-nowrap pointer-events-none -translate-x-1/2 border border-border/40"
-                  style={{ left: tooltipX }}
-                >
-                  {tooltipLabel}
-                </div>
-              )}
-
-              {/* Track */}
-              <div className="w-full h-1.5 rounded-full bg-text-tertiary/20 relative overflow-hidden">
-                {/* Filled portion */}
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-accent transition-[width] duration-100 ease-out"
-                  style={{ width: `${progress * 100}%` }}
-                />
-              </div>
-
-              {/* Thumb */}
-              <div
-                className={`absolute w-3 h-3 rounded-full bg-accent shadow-sm shadow-accent/30 -translate-x-1/2 pointer-events-none transition-opacity duration-150 ${
-                  isDragging ? "opacity-100 scale-110" : "opacity-70"
-                }`}
-                style={{ left: `${progress * 100}%` }}
-              />
-            </div>
+              Base
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={displayToggle.mode === "mega"}
+              onClick={() => displayToggle.onChange("mega")}
+              className={`flex-1 h-full rounded-md text-xs font-extrabold transition-colors cursor-pointer ${
+                displayToggle.mode === "mega"
+                  ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-sm shadow-purple-500/30"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              Mega
+            </button>
           </div>
-
-          {/* --- Desktop: dot indicators (sm: and above) --- */}
-          <div role="tablist" aria-label="Slides" className="hidden sm:flex items-center gap-[5px] overflow-x-auto scrollbar-none">
-            {Array.from({ length: totalSlides }, (_, i) => {
-              const isHidden = hiddenStates?.[i] ?? false;
-              const isCurrent = i === currentSlide;
-              const hasChanges = changedSlides?.has(i) ?? false;
-              return (
-                <button
-                  key={i}
-                  role="tab"
-                  aria-selected={isCurrent}
-                  onClick={() => onGoTo(i)}
-                  title={`${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}${hasChanges ? " (changed)" : ""}`}
-                  aria-label={`Go to ${slideLabels[i]}`}
-                  className="relative flex items-center justify-center w-5 h-5 flex-shrink-0"
-                >
-                  <span className={`block rounded-full transition-all duration-200 ${
-                    isCurrent
-                      ? isHidden
-                        ? "w-5 h-2 rounded bg-amber-400/70 shadow-sm shadow-amber-400/30"
-                        : hasChanges
-                          ? "w-5 h-2 bg-blue-500 shadow-sm shadow-blue-500/40"
-                          : "w-5 h-2 bg-accent shadow-sm shadow-accent/30"
-                      : isHidden
-                        ? "w-1.5 h-1.5 bg-amber-400/40 hover:bg-amber-400/60"
-                        : hasChanges
-                          ? "w-2 h-2 bg-blue-500/70 hover:bg-blue-500 ring-1 ring-blue-500/30"
-                          : "w-1.5 h-1.5 bg-text-tertiary/30 hover:bg-text-tertiary/60"
-                  }`} />
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Current slide label + counter */}
-          <span className="text-[11px] text-text-tertiary font-semibold tabular-nums flex-shrink-0">
-            <span className="font-bold text-text-secondary">{slideLabels[currentSlide]}</span>
-            <span className="ml-1.5 text-text-tertiary/70">{currentSlide + 1}/{totalSlides}</span>
-          </span>
-          <span className="sr-only" aria-live="polite" aria-atomic="true">
-            Slide {currentSlide + 1} of {totalSlides}: {slideLabels[currentSlide]}
-          </span>
         </div>
+      )}
 
-        {/* === RIGHT: Actions + Next === */}
-        <div className="flex-shrink-0 flex items-center gap-1">
-          {/* Reorder (creator only) */}
-          {(canMoveUp || canMoveDown) && (
-            <span className="hidden sm:flex items-center">
+      {/* Creator tools */}
+      {onToggleHide && (
+        <div className="space-y-1">
+          <div className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary mb-1">
+            Slide tools
+          </div>
+          <button
+            type="button"
+            onClick={onToggleHide}
+            className="w-full flex items-center gap-2.5 min-h-[44px] px-2.5 rounded-lg text-sm font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
+          >
+            {isCurrentHidden ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
+            <span>{isCurrentHidden ? "Hidden from viewers" : "Visible to viewers"}</span>
+            <span className="ml-auto text-[11px] font-extrabold text-accent">
+              {isCurrentHidden ? "Show" : "Hide"}
+            </span>
+          </button>
+
+          {(onMoveUp || onMoveDown) && (
+            <div className="flex gap-1">
               <button
                 type="button"
                 onClick={onMoveUp}
                 disabled={!canMoveUp}
-                className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors disabled:opacity-20 disabled:pointer-events-none"
-                title="Move slide earlier"
-                aria-label="Move slide earlier"
+                className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg text-xs font-bold text-text-secondary hover:bg-surface-alt disabled:opacity-30 disabled:pointer-events-none transition-colors"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15,18 9,12 15,6" /></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="18 15 12 9 6 15" />
+                </svg>
+                Move earlier
               </button>
               <button
                 type="button"
                 onClick={onMoveDown}
                 disabled={!canMoveDown}
-                className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors disabled:opacity-20 disabled:pointer-events-none"
-                title="Move slide later"
-                aria-label="Move slide later"
+                className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg text-xs font-bold text-text-secondary hover:bg-surface-alt disabled:opacity-30 disabled:pointer-events-none transition-colors"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9,18 15,12 9,6" /></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+                Move later
               </button>
-            </span>
+            </div>
           )}
 
-          {/* Hide/Show toggle (creator only) */}
-          {onToggleHide && (
-            <button
-              type="button"
-              onClick={onToggleHide}
-              className={`relative flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-2 sm:py-1.5 rounded-full sm:rounded-lg text-xs font-bold transition-all ${
-                isCurrentHidden
-                  ? "text-amber-500 hover:bg-amber-500/10"
-                  : "text-text-tertiary hover:text-text-secondary hover:bg-surface-alt"
-              }`}
-              title={isCurrentHidden ? t.hiddenSlideTooltip : t.hideSlideTooltip}
-              aria-label={isCurrentHidden ? t.hiddenSlideTooltip : t.hideSlideTooltip}
-            >
-              {isCurrentHidden ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
-                  <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
-                  <line x1="1" y1="1" x2="23" y2="23" />
-                </svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
-              <span className="hidden sm:inline ml-1">{isCurrentHidden ? t.hidden : t.visible}</span>
-              {hiddenCount > 0 && !isCurrentHidden && (
-                <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] flex items-center justify-center px-0.5 rounded-full bg-amber-500 text-white text-[9px] font-extrabold leading-none">
-                  {hiddenCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* Help tooltip — explains the navigation bar */}
-          <NavHelpTooltip />
-
-          {/* Keyboard shortcuts — desktop only */}
-          {onShowShortcuts && (
-            <button
-              type="button"
-              onClick={onShowShortcuts}
-              className="hidden sm:flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg text-text-tertiary hover:text-accent hover:bg-accent/5 transition-colors"
-              aria-label="Keyboard shortcuts"
-              title="Keyboard shortcuts (?)"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="4" width="20" height="16" rx="2" />
-                <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
-              </svg>
-            </button>
-          )}
-
-          {/* Next / End */}
-          {isLast ? (
-            <span
-              aria-label="End of report"
-              className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-accent cursor-default select-none"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:mr-1 sm:w-3.5 sm:h-3.5">
-                <polyline points="20,6 9,17 4,12" />
-              </svg>
-              <span className="hidden sm:inline">End</span>
-            </span>
-          ) : (
-            <button
-              onClick={onNext}
-              disabled={isFirst && totalSlides <= 1}
-              aria-label="Next slide"
-              className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-xs font-bold rounded-full sm:rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
-            >
-              <span className="hidden sm:inline">{t.next}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:ml-1 sm:w-3.5 sm:h-3.5">
-                <polyline points="9,18 15,12 9,6" />
-              </svg>
-            </button>
+          {hiddenCount > 0 && (
+            <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 px-1">
+              {hiddenCount} {hiddenCount === 1 ? "slide" : "slides"} hidden from viewers
+            </p>
           )}
         </div>
-      </div>
+      )}
+
+      {/* Keyboard shortcuts (desktop only — irrelevant on touch) */}
+      {onShowShortcuts && (
+        <button
+          type="button"
+          onClick={() => {
+            onShowShortcuts();
+            setSheetOpen(false);
+          }}
+          className="hidden sm:flex w-full items-center gap-2.5 min-h-[40px] px-2.5 rounded-lg text-sm font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
+          </svg>
+          Keyboard shortcuts
+        </button>
+      )}
     </div>
+  );
+
+  const currentLabel = slideLabels[currentSlide] ?? "";
+
+  return (
+    <>
+      {/* Overflow sheet (mobile) / popover (desktop) */}
+      {sheetOpen && showOverflow && (
+        <>
+          <div
+            aria-hidden
+            onClick={() => setSheetOpen(false)}
+            className="fixed inset-0 z-[55] bg-black/30 sm:bg-transparent animate-fade-in"
+          />
+          <div
+            role="dialog"
+            aria-label="Slide options"
+            className="fixed z-[60] bottom-0 left-0 right-0 rounded-t-2xl border-t border-border bg-surface shadow-2xl pb-[max(0.75rem,env(safe-area-inset-bottom))] animate-fade-in
+                       sm:left-auto sm:right-4 sm:bottom-[calc(var(--bottom-nav-height,3.5rem)+0.75rem)] sm:w-72 sm:rounded-2xl sm:border sm:pb-0"
+          >
+            {overflowBody}
+          </div>
+        </>
+      )}
+
+      <div
+        role="navigation"
+        aria-label="Slide navigation"
+        data-walkthrough="slide-nav"
+        className={`fixed bottom-0 left-0 right-0 z-50 transition-opacity duration-200 safe-bottom safe-x ${
+          autoHide
+            ? "bg-surface/0 border-transparent opacity-0 hover:opacity-100 hover:bg-surface/95 hover:backdrop-blur-2xl"
+            : "bg-surface/95 backdrop-blur-2xl border-t border-border/60"
+        }`}
+      >
+        <div className="max-w-5xl mx-auto px-3 sm:px-6">
+          {/* ── MOBILE (< sm): two-row segmented bar ── */}
+          <div className="sm:hidden">
+            {/* Row 0 — within-section progress */}
+            <div className="h-1 w-full mt-1 rounded-full bg-text-tertiary/15 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-accent transition-[width] duration-150 ease-out"
+                style={{ width: `${sectionProgress * 100}%` }}
+              />
+            </div>
+            {/* Row 1 — chevrons + tabs + overflow */}
+            <div className="flex items-center gap-1.5 py-1">
+              {prevButton}
+              <div className="flex-1 min-w-0 flex flex-col items-center gap-0.5">
+                {renderTabs()}
+                <span className="max-w-full truncate text-[10px] leading-none font-semibold text-text-tertiary">
+                  <span className="text-text-secondary font-bold">{currentLabel}</span>
+                  {secTotal > 1 && (
+                    <span className="ml-1.5 tabular-nums opacity-70">
+                      {sectionPos + 1}/{secTotal}
+                    </span>
+                  )}
+                </span>
+              </div>
+              {nextButton}
+              {overflowButton}
+            </div>
+          </div>
+
+          {/* ── DESKTOP (≥ sm): tabs + dots + counter ── */}
+          <div className="hidden sm:flex items-center gap-3 py-1.5">
+            {prevButton}
+            {renderTabs(true)}
+
+            {/* Dot indicators */}
+            <div
+              role="tablist"
+              aria-label="Slides"
+              className="flex-1 flex items-center justify-center gap-[5px] overflow-x-auto scrollbar-none"
+            >
+              {Array.from({ length: totalSlides }, (_, i) => {
+                const isHidden = hiddenStates?.[i] ?? false;
+                const isCurrent = i === currentSlide;
+                const hasChanges = changedSlides?.has(i) ?? false;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    role="tab"
+                    aria-selected={isCurrent}
+                    onClick={() => onGoTo(i)}
+                    title={`${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}${hasChanges ? " (changed)" : ""}`}
+                    aria-label={`Go to ${slideLabels[i]}`}
+                    className="relative flex items-center justify-center w-5 h-5 flex-shrink-0"
+                  >
+                    <span
+                      className={`block rounded-full transition-all duration-200 ${
+                        isCurrent
+                          ? isHidden
+                            ? "w-5 h-2 rounded bg-amber-400/70 shadow-sm shadow-amber-400/30"
+                            : hasChanges
+                              ? "w-5 h-2 bg-blue-500 shadow-sm shadow-blue-500/40"
+                              : "w-5 h-2 bg-accent shadow-sm shadow-accent/30"
+                          : isHidden
+                            ? "w-1.5 h-1.5 bg-amber-400/40 hover:bg-amber-400/60"
+                            : hasChanges
+                              ? "w-2 h-2 bg-blue-500/70 hover:bg-blue-500 ring-1 ring-blue-500/30"
+                              : "w-1.5 h-1.5 bg-text-tertiary/30 hover:bg-text-tertiary/60"
+                      }`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Current label + counter */}
+            <span className="text-[11px] text-text-tertiary font-semibold tabular-nums flex-shrink-0 max-w-[180px] truncate">
+              <span className="font-bold text-text-secondary">{currentLabel}</span>
+              <span className="ml-1.5 text-text-tertiary/70">
+                {currentSlide + 1}/{totalSlides}
+              </span>
+            </span>
+
+            {nextButton}
+            {overflowButton}
+          </div>
+        </div>
+
+        {/* Screen-reader live region — announces slide changes */}
+        <span className="sr-only" aria-live="polite" aria-atomic="true">
+          Slide {currentSlide + 1} of {totalSlides}: {currentLabel}
+        </span>
+      </div>
+    </>
   );
 }

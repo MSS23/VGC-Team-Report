@@ -808,6 +808,8 @@ export function useHomePage() {
     slideHiddenStates: slides.slideHiddenStates,
     isSlideHiddenAt: slides.isSlideHiddenAt,
     handleToggleCurrentSlide: slides.handleToggleCurrentSlide,
+    visibleIndices: slides.visibleIndices,
+    allSlideKeys: slides.allSlideKeys,
 
     // Walkthrough
     walkthroughActive, walkthroughStep, walkthroughStepIndex,

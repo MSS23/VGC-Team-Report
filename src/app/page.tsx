@@ -46,8 +46,6 @@ const CommentSection = dynamic(() => import("@/components/social/CommentSection"
 const PrintableReport = dynamic(() => import("@/components/ui/PdfExport").then(m => ({ default: m.PrintableReport })));
 import type { ExportMode } from "@/components/ui/PdfExport";
 const OTSSheetModal = dynamic(() => import("@/components/ui/OTSSheetModal").then(m => ({ default: m.OTSSheetModal })), { ssr: false });
-import { DisplayTogglePill } from "@/components/display/DisplayTogglePill";
-import { useGlobalDisplayPrefs } from "@/lib/hooks/useGlobalDisplayPrefs";
 import { detectMegaFromItem } from "@/lib/utils/mega-detect";
 
 const HOW_TO_STEPS = [
@@ -180,7 +178,6 @@ function HomeContent() {
     globalMegaDefault,
     setGlobalMegaDefaultAndReset,
     effectiveMega,
-    hasMegaOverrides,
     plans,
     addPlan,
     removePlan,
@@ -205,6 +202,8 @@ function HomeContent() {
     slideHiddenStates,
     isSlideHiddenAt,
     handleToggleCurrentSlide,
+    visibleIndices,
+    allSlideKeys,
     walkthroughActive,
     walkthroughStep,
     walkthroughStepIndex,
@@ -248,11 +247,6 @@ function HomeContent() {
   // Tracks whether the end-of-report contextual CTA (shown on the last slide)
   // has been dismissed by the viewer.
   const [endOfReportCtaDismissed, setEndOfReportCtaDismissed] = useState(false);
-
-  // ── Global display prefs ─────────────────────────────────────────
-  // First-run discovery pulse for the floating Display pill. Mega default
-  // lives on the team meta itself so it travels with shared reports.
-  const { hasSeenPill, markPillSeen } = useGlobalDisplayPrefs();
 
   // Resolve effective Mega state for every Pokemon index up front so the
   // existing TeamReport / TeamOverview / PokemonCard chain doesn't need
@@ -1123,7 +1117,7 @@ function HomeContent() {
       <VersionDiffProvider value={versionDiffContextValue}>
       <div
         ref={swipeRef}
-        className={`max-w-5xl mx-auto slide-content safe-bottom overflow-x-hidden sm:h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3rem))] sm:overflow-y-auto sm:scrollbar-thin pb-44 sm:pb-16 ${
+        className={`max-w-5xl mx-auto slide-content safe-bottom overflow-x-hidden sm:h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:overflow-y-auto sm:scrollbar-thin pb-28 sm:pb-16 ${
           isPresentationStyle
             ? "px-3 sm:px-8 py-2 sm:py-4"
             : "px-2 sm:px-6 lg:px-8 py-2 sm:py-6 creator:px-8 creator:py-6"
@@ -1503,33 +1497,23 @@ function HomeContent() {
           onMoveUp={handleMoveSlideUp}
           onMoveDown={handleMoveSlideDown}
           changedSlides={versionDiff?.changedSlides}
+          visibleIndices={visibleIndices}
+          allSlideKeys={allSlideKeys}
+          // Mega (Base/Mega) display toggle now lives inside the bottom-nav
+          // overflow sheet instead of a standing floating pill, so shared
+          // (/s/) views carry zero permanent overlays. Only surfaced when the
+          // team has a Mega-capable Pokemon and we're not in a focused mode.
+          displayToggle={
+            hasMegaCapable && !isPresentationStyle && !tournamentMode && !isPdfPrinting
+              ? {
+                  hasMega: true,
+                  mode: (globalMegaDefault ?? true) ? "mega" : "base",
+                  onChange: (m) => setGlobalMegaDefaultAndReset(m === "mega"),
+                }
+              : undefined
+          }
         />
       )}
-
-      {/* Floating display options pill — global Mega toggle.
-          Visibility gates inside the component itself, but we still skip
-          rendering during tournament/print/presentation modes since those
-          have their own focused layouts. */}
-      <DisplayTogglePill
-        hasMegaCapable={hasMegaCapable}
-        globalMegaDefault={globalMegaDefault}
-        // Use the combined handler so tapping Base/Mega on the pill
-        // always normalizes the team by clearing per-card overrides.
-        onGlobalMegaChange={setGlobalMegaDefaultAndReset}
-        hasMegaOverrides={hasMegaOverrides}
-        hasSeenPill={hasSeenPill}
-        onMarkSeen={markPillSeen}
-        hidden={isPresentationStyle || tournamentMode || isPdfPrinting}
-        // Lift above the read-only viewer CTA so the pill doesn't
-        // cover the "Create yours" button. Must mirror the exact
-        // visibility condition of <ShareViewCTA> above.
-        liftAboveCta={
-          isSharedView &&
-          !isEditingUnlocked &&
-          !isPresentationStyle &&
-          !shareCtaDismissed
-        }
-      />
 
       {/* Edit mode FAB for mobile (shared views with edit access) */}
       <EditFab
