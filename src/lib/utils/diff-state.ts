@@ -91,9 +91,27 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
   return undefined;
 }
 
-/** Safely coerce an unknown value to an array or empty array */
+/**
+ * Minimal structural shape we require of a matchup-plan-like item before we
+ * trust it as `SerializedMatchupPlan`. `gamePlans` is the only field
+ * `matchupPlansChanged` actually iterates into; the rest are read via `??`
+ * fallbacks, so an object with the right `gamePlans` shape is sufficient.
+ */
+type SerializedMatchupPlanLike = SerializedMatchupPlan;
+
+function isMatchupPlanLike(item: unknown): item is SerializedMatchupPlanLike {
+  if (item === null || typeof item !== "object") return false;
+  const candidate = item as { gamePlans?: unknown };
+  if (candidate.gamePlans !== undefined && !Array.isArray(candidate.gamePlans)) {
+    return false;
+  }
+  return true;
+}
+
+/** Safely coerce an unknown value to a typed array, filtering non-matching items */
 function asArray(value: unknown): SerializedMatchupPlan[] {
-  return Array.isArray(value) ? (value as SerializedMatchupPlan[]) : [];
+  if (!Array.isArray(value)) return [];
+  return value.filter(isMatchupPlanLike);
 }
 
 /** Compare matchup plans by user-editable content only (ignores structural fields like IDs, showSlide) */
