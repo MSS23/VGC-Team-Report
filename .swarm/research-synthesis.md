@@ -1,27 +1,34 @@
-# Research Synthesis — Nightly Swarm 2026-05-28
+# Research Synthesis — Swarm Run 06-06-26
 
-## Top 5 Highest-Leverage Opportunities
+## Wave 1 outcomes
+- **C1 dead code:** 1 high-confidence (`asPokemonTypes`), 2 medium (`replaceSpeciesInBlock`, `migratePlan`). All applied.
+- **C2 TypeScript:** zero `any`s, just missing return types on 3-5 async exports. All applied.
+- **C3 bundle:** 3 quick wins. Wave 2 applied lazy-CookieBanner (~15KB gzip).
+- **C4 security:** 3 P0 / 6 P1 / 6 P2. Comments/flag P0 fixed. Dependency CVEs blocked by network policy — backlog ticket needed.
+- **C5 commits review:** orphaned DisplayTogglePill + useGlobalDisplayPrefs (318 LOC) — deleted. console.error in webhook catch — added. verify-bearer tests — added (9 tests passing).
+- **R6 SEO:** sitemap dup `/compare` fixed, mega pages got `lastModified`, robots.txt hardened (`/embed/`, `/dashboard/`, `/notifications`, `/*?key=`).
+- **R8 a11y:** InstallPrompt full focus-trap + aria + Escape added. CalcInput textarea/input aria-labels added. CollaboratorPanel search aria-label added.
+- **R-UX:** highest-leverage idea — per-team OG image — out of scope tonight, file as ticket.
 
-1. **AI crawlers were being blocked (FIXED THIS RUN)** — GPTBot, ClaudeBot, PerplexityBot blocked by middleware despite robots.txt allowing them. Zero AI citations as a result. Fix landed in commit 737bb02.
+## Top 5 highest-leverage opportunities (carry forward as Backlog tickets)
+1. Per-team OG image at `/s/[id]/opengraph-image` — biggest virality lever (R-UX, R6).
+2. `/embed/[id]` unframeable in production due to global X-Frame-Options DENY — needs `next.config.ts` override for `/embed/(.*)` (C4 P0).
+3. `js-cookie` CVE GHSA-qjx8-664m-686j blocked by `@clerk/shared` — `npm audit fix` blocked here by Cypress binary download policy, but trivial locally (C4 P0).
+4. Async-import `dex-subset.json` (340KB raw, ~50-80KB gzip win) — refactor `pkmn-dex-fallback` (C3).
+5. Programmatic `/pokemon/[species]` route from `@pkmn/dex` + share aggregations — closes Calyrex/Garchomp keyword gaps (R6).
 
-2. **PokePaste is dying — capture window is NOW** — 156 open issues, broken sprites, community-built browser extension needed. Indianapolis Regionals May 29-31 creates peak tool evaluation. Anonymous quick-paste import would be the highest-impact capture mechanism.
+## Top 5 quick-win bugs / issues (ALL applied this run)
+1. Comments/flag mass-deletion vulnerability — Clerk auth required, userId dedup.
+2. Sitemap `/compare` emitted twice with conflicting priority — deduped, mega pages got `lastModified`.
+3. Orphan DisplayTogglePill + useGlobalDisplayPrefs (318 LOC) — deleted.
+4. Linear webhook catch block had no telemetry — `console.error` added.
+5. verify-bearer security primitive untested — 9 vitest cases added.
 
-3. **@pkmn/dex ships 6.7 MB to every client** — 52% of homepage JS. Dynamic import on cache miss would halve the bundle instantly. Turbopack duplicates the chunk between homepage and /compare.
+## Blockers / out-of-scope tonight
+- Linear MCP needs interactive OAuth → could not push Linear ticket updates from this run. All ticket actions filed in `.swarm/linear-pending.md` for human follow-up.
+- PostHog credentials not in this environment → cross-reference with telemetry deferred.
+- Discord webhook URL not in this environment → notification payload saved to `.swarm/discord-failed.md`.
+- `npm audit fix` blocked by Cypress binary download (HTTP 403 in remote env).
 
-4. **Only 2 pages indexed by Google** — Despite thousands in sitemap. Homepage entirely "use client" so crawlers see empty shell. Server-rendering or hybrid rendering is the structural fix.
-
-5. **Zero organic community mentions** — Not mentioned in any Reddit/Discord/Twitter thread found by R3/R4. Listed on VGCpedia and DevonCorp but no organic discussion. Getting listed on Victory Road /resources is the highest-leverage free distribution action.
-
-## Top 5 Quick-Win Bugs/Issues
-
-1. Email XSS in comment/welcome emails (FIXED THIS RUN)
-2. GraphQL injection in cron routes (FIXED THIS RUN)  
-3. Bot detection contradicting robots.txt (FIXED THIS RUN)
-4. Timing-unsafe secret comparison in admin routes (FIXED THIS RUN)
-5. Views API shareId not validated (FIXED THIS RUN)
-
-## PostHog Data
-Not available — no credentials in this execution environment.
-
-## Conflict Risk Files
-No files overlapped with main — branch was cut fresh from main tonight.
+## Conflict-risk overlap with main-changed-files
+None of the applied changes touch files in `.swarm/main-changed-files.md` (page.tsx, SlideNavControls.tsx, useHomePage.ts, SwipeHint.tsx, globals.css, sw.js). Recommendations that DO overlap (e.g. `summarizeChangedFields` import in page.tsx) were deferred.
