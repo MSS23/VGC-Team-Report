@@ -16,6 +16,26 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "6.1",
+    title: "Security Hardening, A11y Modal Polish & Bundle Trim",
+    emoji: "🛡️",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Security: /api/comments/flag now requires Clerk auth and keys dedup by userId — previously any client could rotate sessionIds and hit the 3-flag auto-delete threshold to wipe arbitrary comments." },
+      { type: "fixed", text: "Linear webhook handler catch block now logs handler errors via console.error so legitimate failures stay visible (still returns 200 to prevent webhook auto-disable)." },
+      { type: "fixed", text: "Sitemap deduped: /compare was emitted twice with conflicting priorities (0.5 and 0.6). Mega Pokemon pages now also carry an explicit lastModified timestamp." },
+      { type: "improved", text: "Accessibility: InstallPrompt bottom sheet now has role='dialog', aria-modal, aria-labelledby, full keyboard focus trap, Escape-to-dismiss, and focus restore on close." },
+      { type: "improved", text: "Accessibility: damage-calc textarea and inline calc input gained explicit aria-labels (offensive/defensive/speed-control variants). CollaboratorPanel user-search input gained an aria-label." },
+      { type: "improved", text: "Performance: CookieBanner (vanilla-cookieconsent + CSS, ~15KB gzip) is now lazy-loaded via next/dynamic — removed from the root layout's eager client bundle." },
+      { type: "improved", text: "robots.txt hardened: disallow crawling of /embed/, /dashboard/, /notifications, and any URL carrying a ?key= collaborator-token query string." },
+      { type: "improved", text: "TypeScript: explicit Promise<void> return types added to createNotification, notifyFollowers, and sendWelcomeEmail." },
+      { type: "improved", text: "Tests: added 9 vitest cases for verifyBearer (missing header, wrong scheme, unset secret, empty secret, wrong length, prefix-only match, exact match, header-case insensitivity) — was previously untested despite guarding /api/migrate, /api/setup, /api/cleanup, /api/bot." },
+      { type: "improved", text: "Backfilled .env.example with all 17 env vars actually read by the codebase (LINEAR_WEBHOOK_SIGNING_SECRET, CLERK_WEBHOOK_SIGNING_SECRET, POSTHOG_*, RESEND_FROM_EMAIL, DISCORD_BOT_TOKEN, UPSTASH_*, MIGRATE_SECRET, etc.) — new-contributor onboarding was silently broken." },
+      { type: "improved", text: "Removed dead code: DisplayTogglePill component (267 lines) + useGlobalDisplayPrefs hook (51 lines) orphaned by the report bottom-nav redesign; asPokemonTypes export and the unused migratePlan re-export; narrowed replaceSpeciesInBlock to internal." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
