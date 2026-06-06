@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
+import dynamic from "next/dynamic";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
 import { ChunkErrorReloader } from "@/components/ui/ChunkErrorReloader";
@@ -7,10 +8,15 @@ import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import { ConnectivityStatus } from "@/components/ui/ConnectivityStatus";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ClarityProvider } from "@/components/providers/ClarityProvider";
-import { CookieBanner } from "@/components/providers/CookieBanner";
 import { JsonLd, OrganizationJsonLd, WebSiteSchema } from "@/components/seo/JsonLd";
 import { PersistentNavbar } from "@/components/layout/PersistentNavbar";
 import "./globals.css";
+
+// CookieBanner pulls in vanilla-cookieconsent (~15KB gzip) and its CSS.
+// Lazy-load post-hydration so it does not block the layout's critical path.
+const CookieBanner = dynamic(
+  () => import("@/components/providers/CookieBanner").then((m) => m.CookieBanner),
+);
 
 const sora = Sora({
   variable: "--font-sora",
