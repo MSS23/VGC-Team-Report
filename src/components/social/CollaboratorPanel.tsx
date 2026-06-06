@@ -213,6 +213,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  aria-label="Search users to invite as collaborators"
                   placeholder="Search users to invite..."
                   className="w-full pl-8 pr-3 py-2 text-xs bg-surface-alt border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
                 />

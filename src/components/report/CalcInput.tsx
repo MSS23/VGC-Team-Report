@@ -216,6 +216,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
           ref={textareaRef}
           value={pasteInput}
           onChange={(e) => handlePasteChange(e.target.value)}
+          aria-label="Paste damage calculator output (offensive and defensive)"
           placeholder={`Paste one or many calcs — offensive and defensive, mixed together.
 
 Examples:
@@ -360,6 +361,13 @@ Examples:
           type="text"
           value={calcInput}
           onChange={(e) => setCalcInput(e.target.value)}
+          aria-label={
+            calcCategory === "offensive"
+              ? "Add an offensive damage calc"
+              : calcCategory === "defensive"
+                ? "Add a defensive damage calc"
+                : "Add a speed control note"
+          }
           placeholder={
             calcCategory === "offensive"
               ? "e.g. 252+ Atk Flare Blitz vs 252 HP Rillaboom: 81-96%"
