@@ -90,8 +90,6 @@ function migratePlan(plan: LegacyPlan): MatchupPlan {
   };
 }
 
-export { migratePlan };
-
 // v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
 function buildPlanKey(speciesKeys: string[]): string {
   const sorted = [...speciesKeys].sort();
