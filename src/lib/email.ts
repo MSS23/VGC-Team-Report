@@ -181,7 +181,7 @@ function buildCommentNotificationHtml(
 export async function sendWelcomeEmail(opts: {
   to: string;
   firstName: string | null;
-}) {
+}): Promise<void> {
   try {
     const displayName = opts.firstName || "there";
     const html = buildWelcomeEmailHtml(displayName);
