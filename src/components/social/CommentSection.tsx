@@ -139,7 +139,7 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
       const res = await fetch("/api/comments/flag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ commentId, sessionId }),
+        body: JSON.stringify({ commentId }),
       });
       if (res.ok) {
         const data = await res.json();

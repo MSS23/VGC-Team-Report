@@ -65,8 +65,10 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
     // Return 200 so Linear does not auto-disable the webhook on a transient error.
+    // Log message only (no payload, no signature) so we keep visibility on legitimate failures.
+    console.error("linear webhook handler error:", err instanceof Error ? err.message : err);
     return NextResponse.json({ ok: true });
   }
 }
