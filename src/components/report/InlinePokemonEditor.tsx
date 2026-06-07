@@ -130,6 +130,7 @@ export function InlinePokemonEditor({
       className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center bg-black/50 backdrop-blur-sm pt-16 sm:pt-0"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       role="dialog"
+      aria-modal="true"
       aria-label="Replace Pokemon"
     >
       <div className="bg-surface border border-border rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-fade-in">

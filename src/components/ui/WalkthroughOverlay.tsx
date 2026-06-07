@@ -257,6 +257,7 @@ export function WalkthroughOverlay({
       <div
         ref={tooltipRef}
         role="dialog"
+        aria-modal="true"
         aria-label="Walkthrough"
         style={{
           position: "fixed",

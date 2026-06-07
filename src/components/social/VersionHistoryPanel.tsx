@@ -165,6 +165,7 @@ export function VersionHistoryPanel({
         ref={panelRef}
         className="fixed top-0 right-0 z-[71] h-full w-full sm:w-[340px] bg-surface border-l border-border shadow-[-8px_0_32px_rgba(0,0,0,0.1)] flex flex-col animate-slide-in-right"
         role="dialog"
+        aria-modal="true"
         aria-label="Version history"
       >
         {/* Header */}
