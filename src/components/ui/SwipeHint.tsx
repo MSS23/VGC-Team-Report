@@ -41,7 +41,8 @@ export function SwipeHint() {
   return (
     <div
       onClick={dismiss}
-      className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 sm:hidden animate-fade-in"
+      className="fixed left-1/2 -translate-x-1/2 z-50 sm:hidden animate-fade-in"
+      style={{ bottom: "calc(var(--bottom-nav-height, 3.5rem) + 1rem)" }}
     >
       <div className="flex items-center gap-2.5 px-4 py-2.5 bg-surface/95 backdrop-blur-lg border border-border rounded-full shadow-lg">
         {/* Left arrow */}
