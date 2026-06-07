@@ -127,15 +127,6 @@ export function useHomePage() {
     [megaStates, globalMegaDefault, speciesKeys],
   );
 
-  // Only count overrides that actually apply to the current team. Legacy
-  // numeric-keyed entries or stale species keys from previous teams are
-  // ignored here so the "X per-card overrides" indicator in the pill
-  // never shows a phantom count.
-  const hasMegaOverrides = useMemo(
-    () => !!megaStates && speciesKeys.some((k) => megaStates[k] !== undefined),
-    [megaStates, speciesKeys],
-  );
-
   // Combined handler for the floating Display pill: tapping Base/Mega on
   // the team-wide control also clears any per-card overrides, so a single
   // tap always normalizes the whole team to one form. Without this, the
@@ -787,7 +778,7 @@ export function useHomePage() {
     megaStates, toggleMega,
     globalMegaDefault, setGlobalMegaDefault, resetMegaOverrides,
     setGlobalMegaDefaultAndReset,
-    effectiveMega, hasMegaOverrides,
+    effectiveMega,
 
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
     updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,
