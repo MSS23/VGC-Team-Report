@@ -240,8 +240,9 @@ export function ExploreFilters({
           />
           {localQuery && (
             <button
+              type="button"
               onClick={() => setLocalQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded text-text-tertiary hover:text-text-primary transition-colors"
+              className="absolute right-0 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-text-tertiary hover:text-text-primary transition-colors"
               aria-label="Clear search"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
