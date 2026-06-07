@@ -16,6 +16,25 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "Bottom Nav Bug Fixes, Accessibility & Dead Code Cleanup",
+    emoji: "🔧",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Bottom nav 'Team' tab no longer goes dead when the creator hides the lead Pokemon — section availability and the tab-jump target now key off the first VISIBLE slide in each section instead of the canonical first index. Same fix applies to the Overview and Matchups tabs." },
+      { type: "fixed", text: "Bottom nav overflow sheet now sets aria-modal='true', traps focus inside the sheet on open, and restores focus to the overflow trigger on close — matching the OTSSheetModal hardening from v5.22." },
+      { type: "fixed", text: "Base/Mega radio in the new bottom-nav sheet no longer destroys the 'auto' (item-detect) display state on a tap that agrees with the currently-active mode — same-mode taps are now a no-op so auto-detect survives until the user actually flips the mode." },
+      { type: "fixed", text: "Delete-account confirmation modal is now properly accessible: role='dialog' aria-modal aria-labelledby aria-describedby, focus moves to the Cancel button on open, focus restores to the trigger on close, Escape and backdrop-click both dismiss (no-op while a delete is in-flight), and the DELETE-to-confirm input has an explicit aria-label." },
+      { type: "improved", text: "Accessibility: added aria-modal='true' to three more dialog overlays (InlinePokemonEditor, VersionHistoryPanel, WalkthroughOverlay) so screen readers correctly treat them as modal regions." },
+      { type: "improved", text: "Explore page 'clear search' x button bumped from 24x24 to 44x44 to meet WCAG 2.5.5 minimum touch target — flush against the input right edge so the larger hitbox doesn't overflow." },
+      { type: "improved", text: "Linear webhook handler now logs errors via console.error before returning 200, so silent handler failures stop hiding in Vercel logs (200 is still returned to prevent Linear auto-disabling). JSON.parse body also narrowed to {type?, challenge?} so 'any' stops leaking across the handler." },
+      { type: "fixed", text: "Security defense-in-depth: /api/explore 'q' search parameter is now capped at 100 characters before reaching the FTS / ILIKE predicates, preventing a 10KB query string from triggering a slow seq scan across the shares JSONB column." },
+      { type: "improved", text: "SwipeHint vertical offset is now derived from var(--bottom-nav-height) instead of hardcoded bottom-24, so it tracks the bottom nav by construction the next time the nav height changes." },
+      { type: "improved", text: "Removed dead code: DisplayTogglePill component (267 lines) and useGlobalDisplayPrefs hook (52 lines), both orphaned by the v5.22 bottom-nav redesign which folded the floating Display pill into the SlideNavControls overflow sheet. Drops the hasMegaOverrides export from useHomePage too. -328 lines net." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
