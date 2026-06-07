@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const cursor = url.searchParams.get("cursor");
     const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") ?? "12", 10) || 12, 1), 50);
-    const q = url.searchParams.get("q")?.trim() ?? "";
+    const q = (url.searchParams.get("q")?.trim() ?? "").slice(0, 100);
     const sortParam = url.searchParams.get("sort") ?? "popular";
     const sort = ["newest", "updated", "views"].includes(sortParam) ? sortParam : "popular";
     const searchType = url.searchParams.get("searchType") ?? "all";
