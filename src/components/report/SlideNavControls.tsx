@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { hapticLight } from "@/lib/utils/haptics";
 
@@ -74,20 +74,11 @@ export function SlideNavControls({
 }: SlideNavControlsProps) {
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const hiddenCount = hiddenStates?.filter(Boolean).length ?? 0;
 
   // ── Section model (key-based so it survives any physical reordering) ──
-  const { overviewPhys, firstPokemonPhys, firstMatchupPhys } = useMemo(() => {
-    const ov = allSlideKeys.indexOf("overview");
-    const poke = allSlideKeys.findIndex(
-      (k, i) => i > 0 && !COVERAGE_KEYS.includes(k) && !k.startsWith("matchup-"),
-    );
-    // "matchup-sheet" also starts with "matchup-", so this resolves to the
-    // first matchup PLAN, or the summary sheet when there are no plans.
-    const match = allSlideKeys.findIndex((k) => k.startsWith("matchup-"));
-    return { overviewPhys: ov, firstPokemonPhys: poke, firstMatchupPhys: match };
-  }, [allSlideKeys]);
-
   const sectionOf = useMemo(() => {
     return (physIdx: number): Section => {
       const k = allSlideKeys[physIdx] ?? "";
@@ -97,9 +88,27 @@ export function SlideNavControls({
     };
   }, [allSlideKeys]);
 
-  const overviewAvail = overviewPhys >= 0 && visibleIndices.indexOf(overviewPhys) >= 0;
-  const teamAvail = firstPokemonPhys >= 0 && visibleIndices.indexOf(firstPokemonPhys) >= 0;
-  const matchupsAvail = firstMatchupPhys >= 0 && visibleIndices.indexOf(firstMatchupPhys) >= 0;
+  // Compute the *first visible* physical index per section. A section is
+  // available iff at least one of its slides is visible — using the canonical
+  // first index (e.g. the lead Pokémon for "team") would gray out the whole tab
+  // if the creator hid that single slide.
+  const { overviewTarget, teamTarget, matchupsTarget } = useMemo(() => {
+    let ov = -1;
+    let team = -1;
+    let match = -1;
+    for (const phys of visibleIndices) {
+      const sec = sectionOf(phys);
+      if (sec === "overview" && ov === -1) ov = phys;
+      else if (sec === "team" && team === -1) team = phys;
+      else if (sec === "matchups" && match === -1) match = phys;
+      if (ov !== -1 && team !== -1 && match !== -1) break;
+    }
+    return { overviewTarget: ov, teamTarget: team, matchupsTarget: match };
+  }, [visibleIndices, sectionOf]);
+
+  const overviewAvail = overviewTarget >= 0;
+  const teamAvail = teamTarget >= 0;
+  const matchupsAvail = matchupsTarget >= 0;
 
   const phys = visibleIndices[currentSlide] ?? 0;
   const activeSection = sectionOf(phys);
@@ -130,9 +139,9 @@ export function SlideNavControls({
   };
 
   const tabs: { key: Section; label: string; avail: boolean; target: number }[] = [
-    { key: "overview", label: t.overview, avail: overviewAvail, target: overviewPhys },
-    { key: "team", label: "Team", avail: teamAvail, target: firstPokemonPhys },
-    { key: "matchups", label: t.matchupsLabel, avail: matchupsAvail, target: firstMatchupPhys },
+    { key: "overview", label: t.overview, avail: overviewAvail, target: overviewTarget },
+    { key: "team", label: "Team", avail: teamAvail, target: teamTarget },
+    { key: "matchups", label: t.matchupsLabel, avail: matchupsAvail, target: matchupsTarget },
   ];
 
   // ── Overflow availability ──
@@ -150,6 +159,27 @@ export function SlideNavControls({
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
+  }, [sheetOpen]);
+
+  // Dialog focus management: store the trigger, focus the first control in the
+  // sheet on open, restore focus on close. Matches the OTSSheetModal pattern
+  // hardened in the v5.22 changelog.
+  useEffect(() => {
+    if (!sheetOpen) return;
+    previouslyFocusedRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    // next frame so the sheet has mounted
+    const raf = requestAnimationFrame(() => {
+      const first = sheetRef.current?.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      first?.focus();
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      previouslyFocusedRef.current?.focus();
+      previouslyFocusedRef.current = null;
+    };
   }, [sheetOpen]);
 
   // Auto-close the sheet if everything that fed it disappears (e.g. leaving
@@ -293,7 +323,12 @@ export function SlideNavControls({
               type="button"
               role="radio"
               aria-checked={displayToggle.mode === "base"}
-              onClick={() => displayToggle.onChange("base")}
+              onClick={() => {
+                // Tap on the already-active mode is a no-op so an "auto" (null)
+                // upstream state isn't silently overwritten by an agreement tap.
+                if (displayToggle.mode === "base") return;
+                displayToggle.onChange("base");
+              }}
               className={`flex-1 h-full rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                 displayToggle.mode === "base"
                   ? "bg-accent text-white shadow-sm"
@@ -306,7 +341,10 @@ export function SlideNavControls({
               type="button"
               role="radio"
               aria-checked={displayToggle.mode === "mega"}
-              onClick={() => displayToggle.onChange("mega")}
+              onClick={() => {
+                if (displayToggle.mode === "mega") return;
+                displayToggle.onChange("mega");
+              }}
               className={`flex-1 h-full rounded-md text-xs font-extrabold transition-colors cursor-pointer ${
                 displayToggle.mode === "mega"
                   ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-sm shadow-purple-500/30"
@@ -416,7 +454,9 @@ export function SlideNavControls({
             className="fixed inset-0 z-[55] bg-black/30 sm:bg-transparent animate-fade-in"
           />
           <div
+            ref={sheetRef}
             role="dialog"
+            aria-modal="true"
             aria-label="Slide options"
             className="fixed z-[60] bottom-0 left-0 right-0 rounded-t-2xl border-t border-border bg-surface shadow-2xl pb-[max(0.75rem,env(safe-area-inset-bottom))] animate-fade-in
                        sm:left-auto sm:right-4 sm:bottom-[calc(var(--bottom-nav-height,3.5rem)+0.75rem)] sm:w-72 sm:rounded-2xl sm:border sm:pb-0"
