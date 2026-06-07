@@ -58,14 +58,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    const body = JSON.parse(rawBody);
+    const body = JSON.parse(rawBody) as {
+      type?: string;
+      challenge?: string;
+    };
 
     if (body.type === "url_verification") {
       return NextResponse.json({ challenge: body.challenge });
     }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (e) {
+    // Log so handler errors are not silently swallowed (Linear webhook had a
+    // history of staying silently broken because the catch had no binding).
+    console.error("Linear webhook handler error:", e);
     // Return 200 so Linear does not auto-disable the webhook on a transient error.
     return NextResponse.json({ ok: true });
   }
