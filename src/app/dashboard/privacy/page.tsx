@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { I18nProvider } from "@/lib/i18n";
 
 import { applyRandomAccent } from "@/lib/utils/random-accent";
@@ -29,6 +29,33 @@ function PrivacyDashboardInner() {
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deleteTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // Modal a11y: trap focus, ESC-to-close, restore focus on close. This modal
+  // controls an irreversible destructive action, so screen-reader users need
+  // to know it has opened and keyboard users need a reliable Cancel path.
+  useEffect(() => {
+    if (!modalOpen) return;
+    previouslyFocusedRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const raf = requestAnimationFrame(() => cancelButtonRef.current?.focus());
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !deleting) {
+        setModalOpen(false);
+        setDeleteInput("");
+        setDeleteError(null);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener("keydown", onKey);
+      previouslyFocusedRef.current?.focus();
+      previouslyFocusedRef.current = null;
+    };
+  }, [modalOpen, deleting]);
 
   async function handleDownload() {
     setDownloading(true);
@@ -124,6 +151,7 @@ function PrivacyDashboardInner() {
               This permanently deletes all your teams, notes, follows, reactions, and your account. This action cannot be undone.
             </p>
             <button
+              ref={deleteTriggerRef}
               onClick={() => setModalOpen(true)}
               className="px-5 py-2.5 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 active:scale-[0.97] transition-all cursor-pointer"
             >
@@ -133,10 +161,25 @@ function PrivacyDashboardInner() {
 
           {/* Confirmation Modal */}
           {modalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-              <div className="bg-surface rounded-2xl p-6 w-full max-w-md shadow-2xl">
-                <h3 className="text-lg font-bold mb-3">Permanently delete your account?</h3>
-                <p className="text-sm text-text-secondary">
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+              onClick={() => {
+                if (deleting) return;
+                setModalOpen(false);
+                setDeleteInput("");
+                setDeleteError(null);
+              }}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="delete-modal-title"
+                aria-describedby="delete-modal-desc"
+                onClick={(e) => e.stopPropagation()}
+                className="bg-surface rounded-2xl p-6 w-full max-w-md shadow-2xl"
+              >
+                <h3 id="delete-modal-title" className="text-lg font-bold mb-3">Permanently delete your account?</h3>
+                <p id="delete-modal-desc" className="text-sm text-text-secondary">
                   This will erase all your teams, notes, follows, reactions, and your account login. Type <strong>DELETE</strong> to confirm.
                 </p>
                 <input
@@ -144,10 +187,12 @@ function PrivacyDashboardInner() {
                   value={deleteInput}
                   onChange={(e) => setDeleteInput(e.target.value)}
                   placeholder="Type DELETE to confirm"
+                  aria-label="Type DELETE to confirm account deletion"
                   className="w-full mt-4 px-3 py-2 text-sm border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
                 <div className="flex gap-3 mt-6 justify-end">
                   <button
+                    ref={cancelButtonRef}
                     onClick={() => { setModalOpen(false); setDeleteInput(""); setDeleteError(null); }}
                     className="px-4 py-2 text-sm font-bold text-text-secondary border border-border rounded-xl hover:bg-surface-alt transition-all cursor-pointer"
                   >
