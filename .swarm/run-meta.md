@@ -9,3 +9,4 @@
 - Discord notification: credentials unavailable in this execution env; payload saved to `discord-failed-07-06-26.md`
 - Linear updates: skipped (no LINEAR_API_KEY in env)
 - PostHog data pull: skipped (no POSTHOG_API_KEY in env)
+- PR: https://github.com/MSS23/VGC-Team-Report/pull/58 (draft, base=main)
