@@ -84,7 +84,8 @@ export function ReportCard({ report }: { report: ExploreReport }) {
 
   useEffect(() => {
     if (!sessionId || !report.id) return;
-    fetch(`/api/reactions/${report.id}?sessionId=${encodeURIComponent(sessionId)}`)
+    const ac = new AbortController();
+    fetch(`/api/reactions/${report.id}?sessionId=${encodeURIComponent(sessionId)}`, { signal: ac.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data) {
@@ -94,19 +95,30 @@ export function ReportCard({ report }: { report: ExploreReport }) {
           setLiked((data.userReactions ?? []).length > 0);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (err?.name !== "AbortError") {
+          // swallow — existing behaviour
+        }
+      });
+    return () => ac.abort();
   }, [report.id, sessionId]);
 
   useEffect(() => {
     if (!user || !report.id) return;
-    fetch("/api/user/saved")
+    const ac = new AbortController();
+    fetch("/api/user/saved", { signal: ac.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.reports?.some((r: { id: string }) => r.id === report.id)) {
           setBookmarked(true);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (err?.name !== "AbortError") {
+          // swallow — existing behaviour
+        }
+      });
+    return () => ac.abort();
   }, [user, report.id]);
 
   const toggleLike = useCallback(async (e: React.MouseEvent) => {
@@ -159,7 +171,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
   return (
     <motion.a
       href={`/s/${report.id}`}
-      className="relative block bg-surface rounded-xl border border-border shadow-sm hover:shadow-md hover:border-accent/30 overflow-hidden group card-hover"
+      className="relative block bg-surface rounded-xl border border-border shadow-sm hover:shadow-md hover:border-accent/30 overflow-hidden group card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       variants={{
         hidden: { opacity: 0, y: 12 },
         visible: { opacity: 1, y: 0 },

@@ -61,38 +61,42 @@ function DashboardInner() {
   useEffect(() => {
     if (!user) return;
     setLoading(true);
+    const ac = new AbortController();
 
     if (tab === "analytics") {
-      fetch("/api/user/analytics")
+      fetch("/api/user/analytics", { signal: ac.signal })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => { if (data) setAnalytics(data); setLoading(false); })
-        .catch(() => setLoading(false));
-      return;
+        .catch((err) => { if (err?.name !== "AbortError") setLoading(false); });
+      return () => ac.abort();
     }
 
     if (tab === "collections") {
-      fetch("/api/user/collections")
+      fetch("/api/user/collections", { signal: ac.signal })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => { if (data?.collections) setCollections(data.collections); setLoading(false); })
-        .catch(() => setLoading(false));
-      return;
+        .catch((err) => { if (err?.name !== "AbortError") setLoading(false); });
+      return () => ac.abort();
     }
 
     // Load collections in background for the "add to collection" dropdown
     if (tab === "my") {
-      fetch("/api/user/collections").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.collections) setCollections(data.collections); }).catch(() => {});
+      fetch("/api/user/collections", { signal: ac.signal })
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => { if (data?.collections) setCollections(data.collections); })
+        .catch((err) => { if (err?.name !== "AbortError") { /* swallow */ } });
     }
 
     if (tab === "drafts") {
-      fetch("/api/user/drafts")
+      fetch("/api/user/drafts", { signal: ac.signal })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => { if (data?.drafts) setDraftReports(data.drafts); setLoading(false); })
-        .catch(() => setLoading(false));
-      return;
+        .catch((err) => { if (err?.name !== "AbortError") setLoading(false); });
+      return () => ac.abort();
     }
 
     const endpoint = tab === "my" ? "/api/user/reports" : tab === "trash" ? "/api/user/reports?trash=1" : tab === "feed" ? "/api/user/feed" : tab === "collab" ? "/api/user/collaborations" : "/api/user/saved";
-    fetch(endpoint)
+    fetch(endpoint, { signal: ac.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.reports) {
@@ -104,7 +108,8 @@ function DashboardInner() {
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => { if (err?.name !== "AbortError") setLoading(false); });
+    return () => ac.abort();
   }, [user, tab]);
 
   return (
