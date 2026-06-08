@@ -15,14 +15,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/tournaments`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
     { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.6, lastModified: now },
     { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3, lastModified: now },
-    { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.5, lastModified: now },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
     { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
     ...getRegMAMegasWithSprites().map((m) => ({
       url: `${BASE}/champions/${m.slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.8,
+      lastModified: now,
     })),
+    // Long-tail filtered Explore landing URLs (R6 #9)
+    { url: `${BASE}/explore?species=Incineroar`, changeFrequency: "weekly", priority: 0.5, lastModified: now },
+    { url: `${BASE}/explore?species=Calyrex-Ice`, changeFrequency: "weekly", priority: 0.5, lastModified: now },
+    { url: `${BASE}/explore?species=Miraidon`, changeFrequency: "weekly", priority: 0.5, lastModified: now },
+    { url: `${BASE}/explore?species=Koraidon`, changeFrequency: "weekly", priority: 0.5, lastModified: now },
+    { url: `${BASE}/explore?regulation=Reg+H`, changeFrequency: "weekly", priority: 0.5, lastModified: now },
+    { url: `${BASE}/explore?regulation=Reg+I`, changeFrequency: "weekly", priority: 0.5, lastModified: now },
+    { url: `${BASE}/explore?regulation=Reg+M-A`, changeFrequency: "weekly", priority: 0.5, lastModified: now },
+    { url: `${BASE}/explore?eventType=Worlds`, changeFrequency: "weekly", priority: 0.5, lastModified: now },
+    { url: `${BASE}/explore?eventType=Regional`, changeFrequency: "weekly", priority: 0.5, lastModified: now },
+    { url: `${BASE}/explore?eventType=International`, changeFrequency: "weekly", priority: 0.5, lastModified: now },
   ];
 
   try {
@@ -48,6 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${BASE}/creator/${encodeURIComponent(row.name as string)}`,
       changeFrequency: "weekly" as const,
       priority: 0.6,
+      lastModified: now,
     }));
     return [...staticPages, ...sharePages, ...creatorPages];
   } catch (e) {

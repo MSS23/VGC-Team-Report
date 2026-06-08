@@ -1,6 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /dashboard/
+Disallow: /notifications
+Disallow: /embed/
 
 # Explicitly allow major search engine bots
 User-agent: Googlebot
@@ -20,6 +23,37 @@ User-agent: PerplexityBot
 Allow: /
 
 User-agent: OAI-SearchBot
+Allow: /
+
+# Modern AI / SERP crawlers (R6 #4)
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: DuckAssistBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Diffbot
 Allow: /
 
 Sitemap: https://pokemonvgcteamreport.com/sitemap.xml
