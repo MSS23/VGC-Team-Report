@@ -74,7 +74,7 @@ export function ChampionsContent() {
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19" />
@@ -84,7 +84,7 @@ export function ChampionsContent() {
               </Link>
               <Link
                 href="/explore?regulation=Reg+M-A"
-                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-text-secondary hover:text-text-primary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-text-secondary hover:text-text-primary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 Explore Champions Teams
               </Link>
@@ -156,7 +156,7 @@ export function ChampionsContent() {
                 <Link
                   key={mon.name}
                   href={`/champions/${mon.slug}`}
-                  className="rounded-xl border border-border bg-surface p-4 hover:border-accent/30 transition-colors group"
+                  className="rounded-xl border border-border bg-surface p-4 hover:border-accent/30 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <h3 className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">{mon.name}</h3>
                   <p className="text-xs text-text-tertiary mt-0.5">{mon.ability}</p>
@@ -207,7 +207,7 @@ export function ChampionsContent() {
                 </div>
                 <Link
                   href={`/?sample=${team.id}`}
-                  className="mt-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-accent-surface text-accent text-xs font-bold rounded-lg hover:bg-accent hover:text-white transition-colors"
+                  className="mt-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-accent-surface text-accent text-xs font-bold rounded-lg hover:bg-accent hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <polygon points="5 3 19 12 5 21 5 3" />
@@ -241,7 +241,7 @@ export function ChampionsContent() {
               href="https://play.limitlesstcg.com/tournaments"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent underline underline-offset-2 hover:opacity-80 transition-opacity"
+              className="text-accent underline underline-offset-2 hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
             >
               Limitless TCG
             </a>{" "}
@@ -312,7 +312,7 @@ export function ChampionsContent() {
                           href={entry.limitlessUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
                           aria-label={`View ${entry.player} team on Limitless`}
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -337,7 +337,7 @@ export function ChampionsContent() {
               href="https://play.limitlesstcg.com/tournaments"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent underline underline-offset-2 hover:opacity-80 transition-opacity"
+              className="text-accent underline underline-offset-2 hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
             >
               play.limitlesstcg.com/tournaments
             </a>
@@ -406,7 +406,7 @@ export function ChampionsContent() {
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-8 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
+            className="inline-flex items-center gap-2 px-8 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Start Building
           </Link>

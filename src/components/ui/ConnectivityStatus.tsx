@@ -81,7 +81,11 @@ export function ConnectivityStatus() {
             visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
           }`}
         >
-          <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl shadow-lg text-sm font-bold backdrop-blur-xl ${
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl shadow-lg text-sm font-bold backdrop-blur-xl ${
             status === "offline"
               ? "bg-red-950/90 text-red-200 border border-red-500/30"
               : "bg-emerald-950/90 text-emerald-200 border border-emerald-500/30"
@@ -113,7 +117,12 @@ export function ConnectivityStatus() {
       {/* Persistent cached-version banner for share pages viewed offline */}
       {showCachedBanner && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[80] safe-bottom animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl shadow-lg text-xs font-semibold backdrop-blur-xl bg-amber-950/90 text-amber-200 border border-amber-500/30">
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl shadow-lg text-xs font-semibold backdrop-blur-xl bg-amber-950/90 text-amber-200 border border-amber-500/30"
+          >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>

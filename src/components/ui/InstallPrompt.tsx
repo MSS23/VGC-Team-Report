@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -14,6 +14,8 @@ export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOSPrompt, setShowIOSPrompt] = useState(false);
   const [dismissed, setDismissed] = useState(true); // start hidden, reveal after checks
+  const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     // Don't show if already dismissed recently
@@ -107,7 +109,31 @@ export function InstallPrompt() {
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
   }, []);
 
-  if (dismissed || (!deferredPrompt && !showIOSPrompt)) return null;
+  const isOpen = !dismissed && (!!deferredPrompt || showIOSPrompt);
+
+  // Capture previously focused element, focus the primary button on open,
+  // and restore focus on close. Also wire up Escape-to-dismiss.
+  useEffect(() => {
+    if (!isOpen) return;
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    primaryButtonRef.current?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        handleDismiss();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      // Restore focus to the previously focused element on close
+      previouslyFocusedRef.current?.focus?.();
+    };
+  }, [isOpen, handleDismiss]);
+
+  if (!isOpen) return null;
 
   return (
     <>
@@ -119,7 +145,12 @@ export function InstallPrompt() {
       />
 
       {/* Bottom sheet */}
-      <div className="fixed bottom-0 left-0 right-0 z-[61] safe-bottom animate-sheet-up">
+      <div
+        className="fixed bottom-0 left-0 right-0 z-[61] safe-bottom animate-sheet-up"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="install-prompt-title"
+      >
         <div className="mx-auto max-w-lg">
           <div className="bg-surface rounded-t-3xl shadow-[0_-8px_40px_rgba(0,0,0,0.12)] border-t border-x border-border/50 px-6 pt-3 pb-6">
             {/* Handle bar */}
@@ -141,7 +172,7 @@ export function InstallPrompt() {
               <div className="flex-1 min-w-0">
                 {deferredPrompt ? (
                   <>
-                    <p className="text-base font-bold text-text-primary leading-tight">
+                    <p id="install-prompt-title" className="text-base font-bold text-text-primary leading-tight">
                       Install VGC Team Report
                     </p>
                     <p className="text-sm text-text-secondary mt-1 leading-relaxed">
@@ -150,7 +181,7 @@ export function InstallPrompt() {
                   </>
                 ) : (
                   <>
-                    <p className="text-base font-bold text-text-primary leading-tight">
+                    <p id="install-prompt-title" className="text-base font-bold text-text-primary leading-tight">
                       Add to Home Screen
                     </p>
                     <p className="text-sm text-text-secondary mt-1 leading-relaxed">
@@ -174,6 +205,7 @@ export function InstallPrompt() {
               {deferredPrompt ? (
                 <>
                   <button
+                    ref={primaryButtonRef}
                     type="button"
                     onClick={handleInstall}
                     className="w-full py-3 bg-accent text-white text-sm font-bold rounded-2xl hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-accent/20"
@@ -190,6 +222,7 @@ export function InstallPrompt() {
                 </>
               ) : (
                 <button
+                  ref={primaryButtonRef}
                   type="button"
                   onClick={handleDismiss}
                   className="w-full py-3 text-sm font-semibold text-text-secondary hover:text-text-primary bg-surface-alt rounded-2xl transition-all cursor-pointer active:scale-[0.98]"
