@@ -1,0 +1,18 @@
+{
+  "agent": "W2A",
+  "files_changed": [
+    "src/components/display/DisplayTogglePill.tsx (deleted)",
+    "src/lib/hooks/useGlobalDisplayPrefs.ts (deleted)",
+    "src/components/social/CreatorLink.tsx",
+    "src/components/report/PokemonDropdown.tsx",
+    "src/hooks/useDarkMode.ts",
+    "src/hooks/useTheme.ts",
+    "src/app/faq/page.tsx"
+  ],
+  "verified_passing": true,
+  "skipped": [
+    "src/hooks/useShareFlow.ts clearPublishError useCallback: kept as-is. The useCallback provides stable identity that is consumed by useHomePage.ts and page.tsx (both in DO NOT TOUCH list) and passed as onClearPublishError prop. Removing the wrapper would change the function identity each render and could destabilize memoized children/dependencies. Per instructions, skipped to avoid risk."
+  ],
+  "updates_entry": "Removed orphan DisplayTogglePill / useGlobalDisplayPrefs, dropped 'use client' from CreatorLink, fixed PokemonDropdown reorder key, hardened useDarkMode toggle (stable closure), tidied FAQ keys.",
+  "summary": "Wave 2A mechanical cleanups landed: (1) git rm of two orphan files plus the now-empty src/components/display/ directory (auto-removed by git rm). (2) Stripped redundant 'use client' from CreatorLink.tsx since it uses no hooks/events/browser APIs. (3) Replaced key={index} with key={`${mon.parsed.species}-${index}`} on PokemonDropdown's reorderable list. (4) Replaced stale-read pattern in useDarkMode toggle with !getSnapshot() (functional-update spirit; setDarkModeValue accepts boolean only, so used the store's getter). (5) Dropped the no-op useCallback wrapper in useTheme.ts — exported setTheme directly as setGenTheme, and removed the now-unused useCallback import. (6) Changed FAQ_ITEMS.map key from index to item.question (unique by data). (7) Skipped clearPublishError in useShareFlow.ts because it sits behind a prop boundary into DO NOT TOUCH files; removing useCallback would break memoization stability. tsc --noEmit clean, npm run build exited 0. No commit performed per instructions."
+}

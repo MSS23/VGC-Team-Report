@@ -1,0 +1,13 @@
+{
+  "agent": "W2G",
+  "files_changed": [
+    "src/components/ui/InstallPrompt.tsx",
+    "src/components/ui/ConnectivityStatus.tsx",
+    "src/components/explore/ReportCard.tsx",
+    "src/components/explore/SpotlightCard.tsx",
+    "src/app/champions/ChampionsContent.tsx"
+  ],
+  "verified_passing": true,
+  "updates_entry": "Accessibility: InstallPrompt now behaves as a real modal (role=dialog, aria-modal, Escape-to-close, focus trap + restore); offline/online ConnectivityStatus toasts now announce to screen readers; card-link focus rings restored on Explore ReportCard, SpotlightCard, and Champions CTAs.",
+  "summary": "Implemented R8 top-3 a11y fixes. (1) InstallPrompt: added role=dialog, aria-modal=true, aria-labelledby=install-prompt-title (on the heading text), Escape-to-dismiss keydown listener, focus the primary button on open via useRef, and restore focus to document.activeElement on close. (2) ConnectivityStatus: added role=status, aria-live=polite, aria-atomic=true to both the transient offline/online toast pill and the persistent cached-version banner. (3) Focus rings: added focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background to the ReportCard motion.a, SpotlightCard motion.a, and all 8 Champions page CTAs (hero Build/Explore, Mega card Link, Sample team Link, both Limitless TCG anchors, table View link, and final Start Building). tsc and npm run build both pass."
+}
