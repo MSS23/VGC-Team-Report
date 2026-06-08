@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { apiGuard } from "@/lib/security/api-guard";
 import nacl from "tweetnacl";
 
 const LINEAR_API = "https://api.linear.app/graphql";
@@ -51,6 +52,11 @@ export async function POST(request: NextRequest) {
   if (!isValid) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
+
+  // Defence-in-depth rate limit (M5): caps command throughput even if a valid
+  // Discord signature is replayed or the bot key is compromised.
+  const rl = await apiGuard(request, { rateLimit: { key: "discord-bot", max: 60 } });
+  if (rl) return rl;
 
   const body = JSON.parse(rawBody);
 

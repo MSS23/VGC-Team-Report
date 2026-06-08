@@ -158,6 +158,9 @@ export async function PATCH(
 ) {
   try {
     const { id: shareId } = await params;
+    const guard = await apiGuard(request, { rateLimit: { key: "collab-patch", max: 10 } });
+    if (guard) return guard;
+
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
 
