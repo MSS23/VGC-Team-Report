@@ -1,14 +1,13 @@
 import { getDb } from "@/lib/db";
-import { apiGuard } from "@/lib/security/api-guard";
+import { apiGuard, MAX_SHARE_BODY_SIZE } from "@/lib/security/api-guard";
 import { notifyFollowers } from "@/lib/notifications";
 import { detectChangedSections } from "@/lib/utils/diff-state";
+import { isSampleTeamPaste } from "@/lib/utils/sample-team";
 import { cacheInvalidatePrefix, cacheDel, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-
-const MAX_BODY_SIZE = 512_000; // 500 KB
 
 const ShareBodySchema = z.object({
   state: z.object({
@@ -62,7 +61,7 @@ function generateEditToken(): string {
 export async function POST(request: Request) {
   try {
     // Rate limit + body size guard
-    const guard = await apiGuard(request, { rateLimit: { key: "share", max: 20 }, maxBodySize: MAX_BODY_SIZE });
+    const guard = await apiGuard(request, { rateLimit: { key: "share", max: 20 }, maxBodySize: MAX_SHARE_BODY_SIZE });
     if (guard) return guard;
 
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
@@ -95,7 +94,7 @@ export async function POST(request: Request) {
     }
 
     // Never save sample teams
-    if (state.paste.trimStart().startsWith("Kangaskhan-Mega @ Kangaskhanite\nAbility: Parental Bond")) {
+    if (isSampleTeamPaste(state.paste)) {
       return NextResponse.json({ error: "Sample teams cannot be saved" }, { status: 400 });
     }
 

@@ -10,6 +10,12 @@ import { NextResponse } from "next/server";
 import { isRateLimitedAsync } from "@/lib/rate-limit";
 import { getClientIp, hasValidContentType } from "./input-validation";
 
+/**
+ * Shared body-size cap for share + draft saves (500 KB). Centralized so the
+ * share and drafts routes can't drift apart on a future bump.
+ */
+export const MAX_SHARE_BODY_SIZE = 512_000;
+
 interface ApiGuardOptions {
   rateLimit?: {
     key: string;

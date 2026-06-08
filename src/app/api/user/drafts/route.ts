@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
-import { apiGuard } from "@/lib/security/api-guard";
+import { isSampleTeamPaste } from "@/lib/utils/sample-team";
+import { apiGuard, MAX_SHARE_BODY_SIZE } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -114,7 +115,7 @@ export async function GET(request: NextRequest) {
 
 /** POST /api/user/drafts — create or update a draft */
 export async function POST(request: NextRequest) {
-  const guard = await apiGuard(request, { rateLimit: { key: "user-drafts-save", max: 60 }, maxBodySize: 512_000 });
+  const guard = await apiGuard(request, { rateLimit: { key: "user-drafts-save", max: 60 }, maxBodySize: MAX_SHARE_BODY_SIZE });
   if (guard) return guard;
 
   try {
@@ -131,8 +132,8 @@ export async function POST(request: NextRequest) {
 
     const { state, draftId } = parsed.data;
 
-    // Never save sample teams — reject any paste that starts with the sample identifier
-    if (state.paste.trimStart().startsWith("Kangaskhan-Mega @ Kangaskhanite\nAbility: Parental Bond")) {
+    // Never save sample teams — reject any paste matching a built-in sample
+    if (isSampleTeamPaste(state.paste)) {
       return NextResponse.json({ error: "Sample teams cannot be saved as drafts" }, { status: 400 });
     }
 
