@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { ShareRedirectClient } from "./redirect";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { JsonLd, BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 
 export async function generateMetadata({
   params,
@@ -156,6 +156,10 @@ export default async function SharePage({
   // instead of always falling back to the generic site name.
   let jsonLd: Record<string, unknown> | null = null;
   let heading = "VGC Team Report";
+  // Leaf label for the BreadcrumbList JSON-LD — same priority as `heading`
+  // but kept separately so future tweaks to the visible <h1> don't drift
+  // the schema. Defaults to a generic label when DB lookup fails.
+  let breadcrumbLeaf = "Shared Team";
   try {
     const sql = getDb();
     const [shareRows, jsonLdCollabRows] = await Promise.all([
@@ -176,6 +180,7 @@ export default async function SharePage({
       const teamName = (data.teamName as string) || "";
       const speciesLine = species.length > 0 ? species.join(" / ") : "";
       heading = teamName || tournamentName || speciesLine || "VGC Team Report";
+      breadcrumbLeaf = teamName || tournamentName || speciesLine || "Shared Team";
 
       const primaryAuthor = ldCreatorName
         ? { "@type": "Person", name: ldCreatorName }
@@ -216,7 +221,32 @@ export default async function SharePage({
       {jsonLd && (
         <JsonLd data={jsonLd} />
       )}
+      {/* SERP breadcrumb: Home → Explore → (this share). Emitted server-side
+          so Google can pick it up before the client redirect hands off to the
+          renderer at /?s=<id>. */}
+      <BreadcrumbListJsonLd
+        items={[
+          { name: "Home", url: "https://pokemonvgcteamreport.com" },
+          { name: "Explore", url: "https://pokemonvgcteamreport.com/explore" },
+          { name: breadcrumbLeaf, url: `https://pokemonvgcteamreport.com/s/${id}` },
+        ]}
+      />
       <ShareRedirectClient to={`/${qs}`} heading={heading} />
+      {/* Server-rendered crawlable footer. The client redirect above mounts
+          the SPA at /?s=<id>, but crawlers that don't execute JS still see
+          this <footer> in the initial HTML — it distributes internal
+          PageRank from the highest-traffic route type (share pages) back
+          to the core sections. Intentionally minimal styling so it isn't a
+          visual focal point during the brief redirect flash. */}
+      <footer className="border-t border-border/40 mt-8 py-6 px-4 text-xs text-text-secondary">
+        <nav aria-label="Site footer" className="max-w-5xl mx-auto flex flex-wrap gap-x-4 gap-y-2 justify-center">
+          <a href="/" className="hover:text-text-primary transition-colors">Home</a>
+          <a href="/explore" className="hover:text-text-primary transition-colors">Explore</a>
+          <a href="/champions" className="hover:text-text-primary transition-colors">Champions</a>
+          <a href="/tournaments" className="hover:text-text-primary transition-colors">Tournaments</a>
+          <a href="/faq" className="hover:text-text-primary transition-colors">FAQ</a>
+        </nav>
+      </footer>
     </>
   );
 }

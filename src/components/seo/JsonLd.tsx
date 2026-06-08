@@ -74,6 +74,7 @@ export function OrganizationJsonLd() {
         },
         sameAs: [
           "https://github.com/MSS23/VGC-Team-Report",
+          "https://x.com/Manny64Official",
         ],
       }}
     />
