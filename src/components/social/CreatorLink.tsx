@@ -1,5 +1,3 @@
-"use client";
-
 interface CreatorLinkProps {
   name: string;
   className?: string;

@@ -130,7 +130,7 @@ export function PokemonDropdown({
             const isDisabled = isTaken || isSelected;
             return (
               <button
-                key={index}
+                key={`${mon.parsed.species}-${index}`}
                 type="button"
                 disabled={isDisabled}
                 onClick={() => {

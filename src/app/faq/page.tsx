@@ -166,8 +166,8 @@ export default function FAQPage() {
 
         {/* FAQ list */}
         <div className="space-y-0 divide-y divide-border/50">
-          {FAQ_ITEMS.map((item, index) => (
-            <div key={index} className="py-6 first:pt-0">
+          {FAQ_ITEMS.map((item) => (
+            <div key={item.question} className="py-6 first:pt-0">
               <h2 id={slugify(item.question)} className="text-base sm:text-lg font-semibold text-text-primary mb-3 leading-snug">
                 {item.question}
               </h2>

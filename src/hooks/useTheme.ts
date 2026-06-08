@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 
 export type GenTheme = "gen1" | "gen2" | "gen3" | "gen4" | "gen5" | "gen6" | "gen7" | "gen8" | "gen9";
 
@@ -193,6 +193,5 @@ if (typeof window !== "undefined") {
 
 export function useTheme() {
   const genTheme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const setGenTheme = useCallback((theme: GenTheme) => setTheme(theme), []);
-  return { genTheme, setGenTheme };
+  return { genTheme, setGenTheme: setTheme };
 }

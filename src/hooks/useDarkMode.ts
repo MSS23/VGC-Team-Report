@@ -57,6 +57,6 @@ function setDarkModeValue(dark: boolean) {
 export function useDarkMode() {
   const darkMode = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const setDarkMode = useCallback((dark: boolean) => setDarkModeValue(dark), []);
-  const toggleDarkMode = useCallback(() => setDarkModeValue(!darkModeValue), []);
+  const toggleDarkMode = useCallback(() => setDarkModeValue(!getSnapshot()), []);
   return { darkMode, setDarkMode, toggleDarkMode };
 }
