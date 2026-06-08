@@ -4,7 +4,26 @@ import { PageFooter } from "@/components/layout/PageFooter";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
+  description:
+    "VGC Team Report Privacy Policy. How we handle your data under GDPR and CCPA: cookies, analytics, retention, third-party processors, and your data rights.",
   alternates: { canonical: "https://pokemonvgcteamreport.com/privacy" },
+  robots: { index: true, follow: true },
+  openGraph: {
+    title: "Privacy Policy — VGC Team Report",
+    description:
+      "How VGC Team Report handles your data under GDPR and CCPA: cookies, analytics, retention periods, third-party processors, and your data rights.",
+    type: "website",
+    url: "https://pokemonvgcteamreport.com/privacy",
+    siteName: "VGC Team Report",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Privacy Policy — VGC Team Report",
+    description:
+      "How VGC Team Report handles your data under GDPR and CCPA: cookies, analytics, retention, processors, and your data rights.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
+  },
 };
 
 export default function PrivacyPage() {

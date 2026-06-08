@@ -5,7 +5,7 @@ import { SportsEventJsonLd, BreadcrumbListJsonLd } from "@/components/seo/JsonLd
 export const metadata: Metadata = {
   title: "VGC Tournament Results Archive | Team Reports 2026",
   description:
-    "Find team reports from top finishers at VGC Regionals, Internationals, and World Championships. Browse winning strategies and Pokémon usage from every major competitive event.",
+    "Team reports from top finishers at VGC Regionals, Internationals, and World Championships. Browse winning strategies from every major competitive event.",
   alternates: { canonical: "https://pokemonvgcteamreport.com/tournaments" },
   openGraph: {
     title: "VGC Tournament Results Archive | Team Reports 2026",
