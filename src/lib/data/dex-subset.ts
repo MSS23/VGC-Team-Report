@@ -119,7 +119,13 @@ export function getMegaStone(name: string): DexSubsetMegaStone | null {
   return ensureMegaStoneIndex().get(toId(name)) ?? null;
 }
 
-/** Narrow a string[] of types to the typed PokemonType union. */
+const VALID_POKEMON_TYPES = new Set<PokemonType>([
+  "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
+  "Fighting", "Poison", "Ground", "Flying", "Psychic", "Bug",
+  "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
+]);
+
+/** Narrow a string[] of types to the typed PokemonType union, dropping any unknown entries. */
 export function asPokemonTypes(types: string[]): PokemonType[] {
-  return types as PokemonType[];
+  return types.filter((t): t is PokemonType => VALID_POKEMON_TYPES.has(t as PokemonType));
 }

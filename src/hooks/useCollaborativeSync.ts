@@ -84,7 +84,11 @@ export function useCollaborativeSync({
         if (isSaving.current) return;
 
         try {
-          const { version, state } = JSON.parse(e.data);
+          const parsed: unknown = JSON.parse(e.data);
+          if (!parsed || typeof parsed !== "object") return;
+          const { version, state } = parsed as { version?: unknown; state?: unknown };
+          if (typeof version !== "number" || !Number.isFinite(version)) return;
+          if (!state || typeof state !== "object") return;
           if (version > versionRef.current) {
             versionRef.current = version;
             setSyncStatus("syncing");

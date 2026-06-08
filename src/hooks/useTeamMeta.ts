@@ -64,6 +64,30 @@ function buildTeamKey(speciesKeys: string[]): string {
 
 const EMPTY_META: TeamMeta = { roles: {}, summary: "" };
 
+/**
+ * Minimal runtime guard for localStorage-loaded TeamMeta. Validates the
+ * required-field shape (object with a `roles` object) so a malformed/legacy
+ * payload from before the v1→v2 migration doesn't get force-fitted into
+ * TeamMeta and crash downstream `meta.roles[species]` reads.
+ */
+function parseTeamMeta(stored: string): TeamMeta {
+  try {
+    const parsed: unknown = JSON.parse(stored);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      "roles" in parsed &&
+      typeof (parsed as { roles: unknown }).roles === "object" &&
+      (parsed as { roles: unknown }).roles !== null
+    ) {
+      return parsed as TeamMeta;
+    }
+  } catch {
+    // fall through to EMPTY_META
+  }
+  return EMPTY_META;
+}
+
 export function useTeamMeta(speciesKeys: string[], persist = true) {
   const teamKey = buildTeamKey(speciesKeys);
   const prevTeamKey = useRef(teamKey);
@@ -72,7 +96,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
     if (!persist || speciesKeys.length === 0) return EMPTY_META;
     try {
       const stored = localStorage.getItem(teamKey);
-      return stored ? JSON.parse(stored) : EMPTY_META;
+      return stored ? parseTeamMeta(stored) : EMPTY_META;
     } catch {
       return EMPTY_META;
     }
@@ -92,7 +116,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
 
     try {
       const stored = localStorage.getItem(teamKey);
-      setMeta(stored ? JSON.parse(stored) : EMPTY_META);
+      setMeta(stored ? parseTeamMeta(stored) : EMPTY_META);
     } catch {
       setMeta(EMPTY_META);
     }
