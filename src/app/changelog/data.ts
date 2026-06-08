@@ -16,6 +16,27 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "Cleanups, SEO Depth & A11y Polish",
+    emoji: "🧹",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Sample-team save guard now covers all three built-in samples (Groudon, Kyogre, and Kangaskhan) via a shared isSampleTeamPaste helper — previously Groudon and Kyogre could be saved as user reports." },
+      { type: "fixed", text: "PokemonDropdown reorderable list now uses a species-scoped key instead of the raw index, eliminating stale DOM state on team reorder/swap." },
+      { type: "fixed", text: "useDarkMode toggle hardened against the functional-updater stale-closure foot-gun." },
+      { type: "fixed", text: "TypeScript: asPokemonTypes() now actually narrows with a Set-backed filter; localStorage and SSE JSON payloads in useTeamMeta and useCollaborativeSync are runtime-guarded before being committed to React state." },
+      { type: "improved", text: "Security: defence-in-depth rate limits added to /api/discord POST (after Ed25519 verify) and /api/share/[id]/collaborators PATCH (edit-token regen)." },
+      { type: "improved", text: "Security: MAX_SHARE_BODY_SIZE constant centralised so /api/share and /api/user/drafts can't drift apart on the 512 KB cap." },
+      { type: "improved", text: "Stale-state guard: DashboardContent per-tab fetches and ExploreCard inline fetches now abort on unmount / tab-switch, preventing late responses from clobbering current state." },
+      { type: "improved", text: "Accessibility: InstallPrompt now behaves as a real modal (role=dialog, aria-modal, Escape-to-close, focus trap + restore); offline/online ConnectivityStatus toasts announce to screen readers; card-link focus rings restored on Explore ReportCard, SpotlightCard, and Champions CTAs." },
+      { type: "improved", text: "SEO: /privacy and /terms now ship full metadata + social embeds; over-length titles + descriptions on /explore, /tournaments, /champions and root layout trimmed below SERP truncation limits; OrganizationJsonLd sameAs expanded." },
+      { type: "improved", text: "SEO: sitemap deduped (/compare), gained lastModified on dynamic entries, and now indexes 10 high-intent long-tail explore filter URLs (species / regulation / event); robots.txt explicitly opts in to Google-Extended, Applebot-Extended, CCBot, Bytespider and other modern crawlers, and disallows /dashboard, /notifications, /embed." },
+      { type: "improved", text: "SEO: shared report pages (/s/[id]) now emit BreadcrumbList JSON-LD and a server-rendered crawlable footer linking back to core sections — distributes internal PageRank across the highest-traffic route type." },
+      { type: "improved", text: "Removed dead code: orphan DisplayTogglePill component (267 lines) and useGlobalDisplayPrefs hook (51 lines) left behind by the bottom-nav redesign; pointless 'use client' marker on CreatorLink; pointless useCallback wrappers in useTheme; FAQ keys switched from index to question text." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
