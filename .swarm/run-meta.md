@@ -1,47 +1,64 @@
-# Swarm run meta — 2026-06-09
+# Swarm run meta — 2026-06-09 (FINAL)
 
 - Branch: `swarm-nightly-2026-06-09`
 - Branch created fresh from `origin/main` (HEAD: 8eb39cc)
 - UK local date: 2026-06-09 (Tuesday)
-- Existing PR for branch: none
 
-## Environment audit (run start)
+## Final state
 
-- No `.env.local` file exists in this sandbox.
-- `LINEAR_API_KEY` — **MISSING** → Linear MCP requires OAuth (can't authenticate unattended); Linear API script also can't read key. **All Linear API calls skipped this run.**
-- `DISCORD_BUILDS_WEBHOOK` / `DISCORD_WEBHOOK_URL` / `DISCORD_BOT_TOKEN` — **MISSING** → Discord notification will be saved to `.swarm/discord-failed.md` per fallback in spec.
-- `POSTHOG_API_KEY` / `POSTHOG_PROJECT_ID` — **MISSING** → PostHog data pull skipped.
-- Vercel MCP — not available in this session.
+- ✅ Branch pushed to `origin/swarm-nightly-2026-06-09`
+- ✅ Integrated `npx tsc --noEmit` green
+- ✅ Integrated `npm run build` green
+- ✅ Changelog v5.23 (June 2026) entry added with 9 items
+- ⚠️ Linear API: NOT REACHABLE — no `LINEAR_API_KEY` in sandbox. Linear comments / state moves / Backlog ticket creation all skipped. See `.swarm/linear-failed.md`.
+- ⚠️ Discord webhook: NOT REACHABLE — no `DISCORD_BUILDS_WEBHOOK`. Payload saved to `.swarm/discord-failed.md`.
+- ⚠️ PostHog: not pulled. See `.swarm/posthog-insights.md`.
+- ⚠️ Linear webhook health: handler CODE is correct (audit summary in `.swarm/run-meta.md` above this final version). Production failure is Vercel env-var config — HUMAN ACTION REQUIRED.
 
-This matches the historical pattern (previous commits include `swarm: Discord notification payload (unsent — no .env.local)`). The swarm proceeds with code-side work and logs all external-API gaps.
+## Subagent budget
 
-## Step 0B — conflict prevention
+- Wave 1: 7 agents dispatched, 7 returned
+  - C1 dead code, C2 TS strictness, C3 perf, C4 security, C5 commit review, R6 SEO, R8 a11y
+- Wave 2: 11 agents dispatched
+  - W2-1 to W2-11 (delete orphans, jspdf, i18n keys, ExploreFilters, TS strictness, collections security, versions security, a11y batch, SEO batch, dynamic VersionHistoryPanel, weekly-digest telemetry)
+- TOTAL dispatched: 18 (within budget of 25)
 
-- Branch cut fresh from `main` → 0 commits behind.
-- Files changed on `main` in last 7 days (6 files in `.swarm/main-changed-files.md`).
-- Working tree clean. No stash needed.
-- Conflict risk for this run: **low**.
+## Wave 2 integration note
 
-## Step 0C — Linear webhook health
+Several Wave 2 subagents reported `verified_passing: true` but their working-tree edits did not persist to the main branch (likely due to subagent sandbox behaviour in this execution environment). The orchestrator re-applied the missing changes from each subagent's report. Subagent-confirmed but rolled-back changes that were re-applied by hand:
 
-Static audit of `src/app/api/webhooks/linear/route.ts`:
-- ✅ Reads raw body via `await request.text()` before parsing.
-- ✅ Uses `process.env.LINEAR_WEBHOOK_SIGNING_SECRET` (with legacy `LINEAR_WEBHOOK_SECRET` fallback).
-- ✅ Reads `linear-signature` header (and `x-linear-signature` fallback).
-- ✅ HMAC-SHA256, hex-encoded, length-check + `timingSafeEqual`.
-- ✅ Returns 200 for empty-body setup ping.
-- ✅ Returns 200 in catch block to prevent auto-disable.
-- ✅ `export const dynamic = "force-dynamic"` set.
-- ✅ No hardcoded secrets.
+- W2-1 (deletion of DisplayTogglePill, useGlobalDisplayPrefs, ConsentGate, asPokemonTypes) → re-applied
+- W2-2 (jspdf removal from export-report.ts + package.json + lockfile) → re-applied
+- W2-4 (ExploreFilters dead consts) → re-applied
+- W2-7 (versions accepted-status gating) → re-applied (3 SQL sites in 2 files)
+- W2-9 (sitemap dedup, PageFooter nav, privacy/terms metadata) → re-applied
+- W2-10 (Navbar dynamic VersionHistoryPanel) → re-applied
+- W2-11 (weekly-digest .catch telemetry) → re-applied
 
-**Handler code is correct.** Changelog v5.22 explicitly notes "8th consecutive fix proposal — please merge!" — confirming repeated swarm runs have already fixed and re-fixed this. If webhook delivery still fails in production, the root cause is **env-var configuration in Vercel** (`LINEAR_WEBHOOK_SIGNING_SECRET` missing, empty, or not matching the secret Linear uses to sign). That requires human action via the Vercel dashboard — the swarm never modifies Vercel env vars.
+Subagent edits that DID persist directly:
 
-Status: ⚠️ **env-var issue — human action required**. Logged in PR body and final report.
+- W2-3 (7 i18n locale files)
+- W2-5 (lib/i18n/index.ts, notifications.ts, posthog-server.ts, linear.ts, email.ts)
+- W2-6 (collections/[id]/route.ts security fix)
+- W2-8 (AddOpponentInput, CalcInput, ShortcutHintOverlay, ThemePicker)
 
-## Updates page
+## Conflict report
 
-This project's "Updates page" is `/changelog` (`src/app/changelog/data.ts`). It uses month-grouped entries (`date: "May 2026"`), versioned, with typed items. Latest entry is `5.22`. Tonight's run will append `5.23` under a new `"June 2026"` month section at the top of `ENTRIES`.
+`.swarm/conflicts.md` empty — no merge conflicts. Branch cut fresh from main.
 
-## PostHog insights
+## Rejected changes
 
-Skipped — no credentials in this sandbox. Logged in `.swarm/posthog-insights.md`.
+None — all attempted changes landed. See `.swarm/rejected.md`.
+
+## Commit log on this branch
+
+```
+c8b0878 swarm: Wave 2 batch 2 — security gating, SEO, dynamic VersionHistoryPanel, dead code, changelog
+3881a1a swarm: Wave 2 batch 1 — TS strictness, i18n cleanup, a11y, collections security, jspdf removal
+167a086 swarm: C1 dead code audit report 09-06-26
+a7e74d0 swarm: C3 performance + R8 a11y reports 09-06-26
+d1ac1ae swarm: C4 security audit report 09-06-26
+a8b79e2 swarm: R6 SEO audit report 09-06-26
+f98ce2f swarm: C2 TypeScript strictness audit report 09-06-26
+55f9c71 swarm: scaffolding for nightly run 09-06-26
+```
