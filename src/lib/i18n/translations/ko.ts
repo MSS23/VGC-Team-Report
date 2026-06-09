@@ -226,11 +226,6 @@ const ko: TranslationKeys = {
   pasteTeamToContinue: "팀을 붙여넣어서 계속",
   autoDetected: "자동 감지",
 
-  // Export report
-  exportAsImage: "이미지로 내보내기 (PNG)",
-  exportAsPdf: "PDF로 내보내기",
-  exporting: "내보내는 중...",
-
   // Explore page
   explore: "탐색",
   exploreTitle: "VGC 팀 탐색",

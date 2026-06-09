@@ -221,6 +221,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
 Examples:
 ⚔️  252+ Atk Incineroar Flare Blitz vs. 252 HP / 0 Def Rillaboom: 210-248 (103.4 - 122.1%) -- guaranteed OHKO
 🛡️  252+ SpA Choice Specs Miraidon Electro Drift vs. 252 HP / 4 SpD Amoonguss: 134-158 (62.0 - 73.1%) -- guaranteed 2HKO`}
+          aria-label="Paste damage calcs"
           className="w-full min-h-[7rem] p-3 bg-surface border border-border rounded-xl text-sm font-mono text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
           spellCheck={false}
           autoFocus
@@ -366,6 +367,13 @@ Examples:
               : calcCategory === "defensive"
                 ? "e.g. 252 SpA Moonblast: 42-50% (lives)"
                 : "e.g. 140 Spe outruns max Rillaboom"
+          }
+          aria-label={
+            calcCategory === "offensive"
+              ? "Add offensive calc"
+              : calcCategory === "defensive"
+                ? "Add defensive calc"
+                : "Add speed tier note"
           }
           className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
         />

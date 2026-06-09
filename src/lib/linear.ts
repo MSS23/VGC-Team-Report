@@ -11,7 +11,7 @@ function getConfig() {
   return { apiKey, teamId, configured: !!(apiKey && teamId) };
 }
 
-async function linearQuery(query: string, variables?: Record<string, unknown>) {
+async function linearQuery(query: string, variables?: Record<string, unknown>): Promise<unknown> {
   const { apiKey } = getConfig();
   if (!apiKey) throw new Error("LINEAR_API_KEY not set");
 
@@ -29,7 +29,7 @@ async function linearQuery(query: string, variables?: Record<string, unknown>) {
     throw new Error(`Linear API error ${res.status}: ${text}`);
   }
 
-  const data = await res.json();
+  const data = (await res.json()) as { data?: unknown; errors?: { message: string }[] };
   if (data.errors?.length) {
     throw new Error(`Linear GraphQL error: ${data.errors[0].message}`);
   }
@@ -130,7 +130,7 @@ export async function createLinearIssue(opts: {
           labels { nodes { id name } }
         }
       }
-    `, { teamId });
+    `, { teamId }) as { team: { labels: { nodes: { id: string; name: string }[] } } };
 
     const allLabels: { id: string; name: string }[] = labelsData.team.labels.nodes;
 
@@ -147,7 +147,7 @@ export async function createLinearIssue(opts: {
             issueLabel { id }
           }
         }
-      `, { teamId, name: mapping.label });
+      `, { teamId, name: mapping.label }) as { issueLabelCreate: { issueLabel: { id: string } } };
       labelIds.push(createLabel.issueLabelCreate.issueLabel.id);
     }
 
@@ -174,7 +174,12 @@ export async function createLinearIssue(opts: {
           projects { nodes { id name } }
         }
       }
-    `, { teamId });
+    `, { teamId }) as {
+      team: {
+        states: { nodes: { id: string; name: string; type: string }[] };
+        projects: { nodes: { id: string; name: string }[] };
+      };
+    };
 
     stateId = teamData.team.states.nodes.find(
       (s: { type: string }) => s.type === "backlog"
@@ -214,7 +219,7 @@ export async function createLinearIssue(opts: {
     labelIds: labelIds.length > 0 ? labelIds : [],
     stateId: stateId ?? null,
     projectId: projectId ?? null,
-  });
+  }) as { issueCreate: { issue: { id: string; identifier: string; url: string } } };
 
   return result.issueCreate.issue;
 }

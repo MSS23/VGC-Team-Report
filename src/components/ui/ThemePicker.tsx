@@ -15,9 +15,9 @@ export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePicker
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
+        <div className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
           Accent Theme
-        </label>
+        </div>
         <p className="text-xs text-text-tertiary mb-3">
           Unlock themes by getting views on your public reports.
           {nextTier && (
@@ -46,6 +46,8 @@ export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePicker
                 applyAccentTheme(theme);
               }}
               disabled={!isUnlocked}
+              aria-label={isUnlocked ? theme.name : `${theme.name} (locked — unlock at ${VIEW_TIERS.find((t) => t.unlocks > i)?.views.toLocaleString() ?? "?"} views)`}
+              aria-pressed={isSelected}
               title={isUnlocked ? theme.name : `Unlock at ${VIEW_TIERS.find((t) => t.unlocks > i)?.views.toLocaleString() ?? "?"} views`}
               className={`
                 relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all

@@ -226,11 +226,6 @@ const ja: TranslationKeys = {
   pasteTeamToContinue: "チームを貼り付けて続行",
   autoDetected: "自動検出",
 
-  // Export report
-  exportAsImage: "画像としてエクスポート (PNG)",
-  exportAsPdf: "PDFとしてエクスポート",
-  exporting: "エクスポート中...",
-
   // Explore page
   explore: "探索",
   exploreTitle: "VGCチームを探索",

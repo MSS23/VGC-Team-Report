@@ -226,11 +226,6 @@ const it: TranslationKeys = {
   pasteTeamToContinue: "Incolla una squadra per continuare",
   autoDetected: "Auto-rilevato",
 
-  // Export report
-  exportAsImage: "Esporta come immagine (PNG)",
-  exportAsPdf: "Esporta come PDF",
-  exporting: "Esportazione...",
-
   // Explore page
   explore: "Esplora",
   exploreTitle: "Esplora i team VGC",

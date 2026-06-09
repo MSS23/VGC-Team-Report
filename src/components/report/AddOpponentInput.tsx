@@ -87,6 +87,7 @@ export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           placeholder={parsedResult?.teamName ? `${t.autoDetected}: ${parsedResult.teamName}` : t.opponentLabelPlaceholder}
+          aria-label={t.opponentLabelPlaceholder}
           className="w-full px-4 py-2.5 bg-surface border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
         />
         {/* Quick archetype label buttons */}
@@ -110,6 +111,7 @@ export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
             value={paste}
             onChange={(e) => { setPaste(e.target.value); setFetchError(null); }}
             placeholder={t.pasteOpponentPlaceholder}
+            aria-label={t.pasteOpponentPlaceholder}
             className="w-full h-36 sm:h-40 p-4 bg-surface border border-border rounded-xl text-sm font-mono text-text-primary placeholder:text-text-tertiary resize-none focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             spellCheck={false}
           />

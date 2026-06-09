@@ -32,7 +32,7 @@ const translationLoaders: Record<LanguageCode, () => Promise<{ default: Translat
   zh: () => import("./translations/zh"),
 };
 
-interface I18nContextValue {
+export interface I18nContextValue {
   language: LanguageCode;
   setLanguage: (code: LanguageCode) => void;
   t: TranslationKeys;
@@ -93,6 +93,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   return React.createElement(I18nContext.Provider, { value }, children);
 }
 
-export function useTranslation() {
+export function useTranslation(): I18nContextValue {
   return useContext(I18nContext);
 }

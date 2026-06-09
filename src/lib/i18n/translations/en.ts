@@ -252,11 +252,6 @@ const en = {
   pasteTeamToContinue: "Paste a team to continue",
   autoDetected: "Auto-detected",
 
-  // Export report
-  exportAsImage: "Export as Image (PNG)",
-  exportAsPdf: "Export as PDF",
-  exporting: "Exporting...",
-
   // Explore page
   explore: "Explore",
   exploreTitle: "Explore VGC Teams",

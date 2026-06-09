@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "@/lib/i18n";
 
 interface ShortcutHintOverlayProps {
@@ -11,6 +11,7 @@ interface ShortcutHintOverlayProps {
 
 export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = false }: ShortcutHintOverlayProps) {
   const { t } = useTranslation();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const SHORTCUTS_COMMON = [
     { key: "\u2190 / \u2192", label: t.navigateSlides },
@@ -32,7 +33,7 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
     { key: "H", label: "Hide/show current slide" },
     { key: "[ / ]", label: "Reorder slide up/down" },
   ];
-  // Close on Escape key
+  // Close on Escape key + autofocus close button when opened
   useEffect(() => {
     if (!visible) return;
     const handler = (e: KeyboardEvent) => {
@@ -43,6 +44,7 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
       }
     };
     window.addEventListener("keydown", handler, { capture: true });
+    closeButtonRef.current?.focus();
     return () => window.removeEventListener("keydown", handler, { capture: true });
   }, [visible, onDismiss]);
 
@@ -57,12 +59,15 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in"
       onClick={onDismiss}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="shortcut-hint-title"
     >
       <div
         className="bg-surface/95 border border-border rounded-2xl p-6 shadow-2xl max-w-xs w-full mx-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">
+        <h3 id="shortcut-hint-title" className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">
           {t.keyboardShortcuts}
         </h3>
         <div className="space-y-3">
@@ -81,6 +86,7 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
           </p>
         </div>
         <button
+          ref={closeButtonRef}
           type="button"
           onClick={onDismiss}
           className="mt-4 w-full text-center text-xs text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"

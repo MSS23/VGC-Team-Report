@@ -226,11 +226,6 @@ const es: TranslationKeys = {
   pasteTeamToContinue: "Pega un equipo para continuar",
   autoDetected: "Auto-detectado",
 
-  // Export report
-  exportAsImage: "Exportar como imagen (PNG)",
-  exportAsPdf: "Exportar como PDF",
-  exporting: "Exportando...",
-
   // Explore page
   explore: "Explorar",
   exploreTitle: "Explorar equipos VGC",

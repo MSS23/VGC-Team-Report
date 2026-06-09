@@ -226,11 +226,6 @@ const zh: TranslationKeys = {
   pasteTeamToContinue: "粘贴队伍以继续",
   autoDetected: "自动检测",
 
-  // Export report
-  exportAsImage: "导出为图片 (PNG)",
-  exportAsPdf: "导出为 PDF",
-  exporting: "导出中...",
-
   // Explore page
   explore: "探索",
   exploreTitle: "探索 VGC 队伍",
