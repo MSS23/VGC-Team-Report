@@ -47,7 +47,7 @@ export async function GET(
 
     const isOwner = shareRows[0].owner_id === userId;
     if (!isOwner) {
-      const collabRows = await sql`SELECT 1 FROM collaborators WHERE share_id = ${id} AND user_id = ${userId}`;
+      const collabRows = await sql`SELECT 1 FROM collaborators WHERE share_id = ${id} AND user_id = ${userId} AND COALESCE(status, 'accepted') = 'accepted'`;
       if (collabRows.length === 0) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }

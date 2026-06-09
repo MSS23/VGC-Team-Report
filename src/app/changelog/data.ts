@@ -16,6 +16,24 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "Collections Security, Dead-Code Sweep, A11y & SEO",
+    emoji: "🧹",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Security (HIGH): collections endpoints now enforce per-share access checks and apply private-field redaction on the collection-contents GET — fixes a leak where adding any 8-char shareId to a collection exposed the full team JSON, bypassing private/unlisted/redacted visibility." },
+      { type: "fixed", text: "Security: version revert and version-detail endpoints now require collaborator status='accepted', matching every other share-collaborator route. Pending invitees can no longer revert versions on shares they haven't accepted." },
+      { type: "fixed", text: "Cron telemetry: weekly-digest email send loop now logs per-recipient send failures with the recipient address instead of silently dropping them — restoring visibility into transient Resend failures." },
+      { type: "improved", text: "Accessibility: ShortcutHintOverlay now has full dialog semantics (role=dialog, aria-modal, aria-labelledby, focus management); ConnectivityStatus announces online/offline via aria-live; AddOpponentInput and CalcInput inputs have proper aria-labels; ThemePicker swatches expose names and aria-pressed state to screen readers." },
+      { type: "improved", text: "TypeScript: added explicit return types to useTranslation, createNotification, notifyFollowers, captureServerEvent, linearQuery, and sendEmail — tightening type safety across the i18n, notifications, telemetry, Linear, and email libraries." },
+      { type: "improved", text: "Performance: VersionHistoryPanel (379 lines) is now dynamically imported from the navbar — every route with a navbar previously paid the cost of the panel even though it only renders behind a click on the autosave pill." },
+      { type: "improved", text: "SEO: removed duplicate /compare entries from the sitemap (the page is robots: noindex); added /tournaments and /champions to the footer nav for stronger internal linking; /privacy and /terms now ship full metadata including description, OpenGraph, and Twitter card." },
+      { type: "improved", text: "Removed dead code: DisplayTogglePill component (267 lines), useGlobalDisplayPrefs hook (51 lines), ConsentGate provider (37 lines), asPokemonTypes helper (3 lines), exportAsPdf helper, three unused i18n constant maps in ExploreFilters, and three dead i18n translation keys (exportAsImage, exportAsPdf, exporting) across all locale files." },
+      { type: "improved", text: "Dropped the jspdf npm dependency — the exportAsPdf path had zero callers (only exportAsImage is wired up), trimming ~300KB of lazy-load weight from the bundle." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",

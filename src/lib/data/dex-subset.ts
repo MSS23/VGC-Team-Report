@@ -119,7 +119,3 @@ export function getMegaStone(name: string): DexSubsetMegaStone | null {
   return ensureMegaStoneIndex().get(toId(name)) ?? null;
 }
 
-/** Narrow a string[] of types to the typed PokemonType union. */
-export function asPokemonTypes(types: string[]): PokemonType[] {
-  return types as PokemonType[];
-}

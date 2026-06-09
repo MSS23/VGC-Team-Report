@@ -363,7 +363,7 @@ export async function GET(request: Request) {
   const EMAIL_BATCH = 15;
   for (let i = 0; i < emailJobs.length; i += EMAIL_BATCH) {
     const chunk = emailJobs.slice(i, i + EMAIL_BATCH);
-    const results = await Promise.all(chunk.map((job) => sendEmail(job).catch(() => null)));
+    const results = await Promise.all(chunk.map((job) => sendEmail(job).catch((e) => { console.error(`[weekly-digest] send failed for ${job.to}`, e); return null; })));
     for (const r of results) {
       if (r !== null) sent++;
       else errors++;

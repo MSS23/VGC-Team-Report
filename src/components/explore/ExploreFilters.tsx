@@ -59,28 +59,10 @@ const CATEGORY_ICONS: Record<SearchCategory, React.ReactNode> = {
 };
 
 const CATEGORY_KEYS: SearchCategory[] = ["all", "pokemon", "tournament", "creator"];
-const CATEGORY_I18N: Record<SearchCategory, string> = {
-  all: "filterCatAll",
-  pokemon: "filterCatPokemon",
-  tournament: "filterCatTournament",
-  creator: "filterCatCreator",
-};
 
 const SORT_KEYS = ["popular", "newest", "views", "updated"] as const;
-const SORT_I18N: Record<string, string> = {
-  popular: "filterSortPopular",
-  newest: "filterSortNewest",
-  views: "filterSortViews",
-  updated: "filterSortUpdated",
-};
 
 const PLACEMENT_KEYS = ["1st", "Top 4", "Top 8", "Top 16"] as const;
-const PLACEMENT_I18N: Record<string, string> = {
-  "1st": "filterPlace1st",
-  "Top 4": "filterPlaceTop4",
-  "Top 8": "filterPlaceTop8",
-  "Top 16": "filterPlaceTop16",
-};
 
 export function ExploreFilters({
   query,

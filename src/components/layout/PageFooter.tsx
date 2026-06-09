@@ -7,6 +7,8 @@ interface PageFooterProps {
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/explore", label: "Explore" },
+  { href: "/champions", label: "Champions" },
+  { href: "/tournaments", label: "Tournaments" },
   { href: "/faq", label: "FAQ" },
   { href: "/changelog", label: "Changelog" },
   { href: "/privacy", label: "Privacy" },

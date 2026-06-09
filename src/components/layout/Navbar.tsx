@@ -9,8 +9,13 @@ import { useTranslation } from "@/lib/i18n";
 import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
 import { NotificationBell } from "@/components/ui/NotificationBell";
-import { VersionHistoryPanel } from "@/components/social/VersionHistoryPanel";
+import dynamic from "next/dynamic";
 import { hapticLight } from "@/lib/utils/haptics";
+
+const VersionHistoryPanel = dynamic(
+  () => import("@/components/social/VersionHistoryPanel").then((m) => m.VersionHistoryPanel),
+  { ssr: false, loading: () => null }
+);
 
 interface NavbarProps {
   // Mode flags

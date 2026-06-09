@@ -13,9 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/faq`, changeFrequency: "monthly", priority: 0.8, lastModified: now },
     { url: `${BASE}/feedback`, changeFrequency: "monthly", priority: 0.6, lastModified: now },
     { url: `${BASE}/tournaments`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
-    { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.6, lastModified: now },
     { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3, lastModified: now },
-    { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.5, lastModified: now },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
     { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
     ...getRegMAMegasWithSprites().map((m) => ({
