@@ -7,6 +7,7 @@
 ## Final state
 
 - ✅ Branch pushed to `origin/swarm-nightly-2026-06-09`
+- ✅ PR opened (draft): https://github.com/MSS23/VGC-Team-Report/pull/60
 - ✅ Integrated `npx tsc --noEmit` green
 - ✅ Integrated `npm run build` green
 - ✅ Changelog v5.23 (June 2026) entry added with 9 items
