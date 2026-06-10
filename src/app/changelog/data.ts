@@ -16,6 +16,24 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "Bundle Health, SEO Wins & Accessibility Polish",
+    emoji: "🛠️",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "iOS PWA: Download Team Card error path replaced window.alert() (silently blocked in installed PWAs) with an inline role=\"alert\" banner so the failure message now reaches the user." },
+      { type: "fixed", text: "SEO: removed a duplicate /compare entry from the XML sitemap. The page was listed twice with different priorities (0.6 and 0.5), wasting crawl budget." },
+      { type: "improved", text: "SEO: public /s/[id] team report pages now emit Article JSON-LD alongside the existing BreadcrumbList — adds headline, author, datePublished, dateModified, mainEntityOfPage, and publisher fields for Google rich result eligibility. Suppressed on private/unlisted shares (which are already noindexed)." },
+      { type: "fixed", text: "Security: /api/share/{id}/collaborators PATCH (edit-link revoke) now rate-limited at 5 req/min per IP via apiGuard. Previously unguarded — closes a DoS / enumeration gap on a sensitive token-regenerating route." },
+      { type: "fixed", text: "Security: /api/cron/posthog-errors no longer leaks raw upstream error messages in 500 responses. Full message is logged server-side; clients see a generic 'Internal error'." },
+      { type: "improved", text: "Accessibility: ShareModal copy-link and copy-embed targets are now real <button> elements instead of <div role=\"button\"> with hand-rolled key handlers — the browser handles Enter/Space natively and focus-visible surfaces the accent border." },
+      { type: "improved", text: "Performance: added loading.tsx skeleton screens for /champions, /compare, and /creator/[name]. These three data-heavy routes previously flashed blank on slow networks." },
+      { type: "improved", text: "Code health: removed two orphaned components (ConsentGate, DisplayTogglePill — 304 lines combined, zero importers) and de-exported two internal-only helpers (replaceSpeciesInBlock, migrateCalcEntries) for a cleaner module surface." },
+      { type: "fixed", text: "TypeScript: removed the last non-null assertion in /api/sync/{id} (presence map). Replaced with a local binding so the type is naturally narrowed — no behavior change, just safer." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
