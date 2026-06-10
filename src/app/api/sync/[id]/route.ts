@@ -22,8 +22,12 @@ function cleanPresence(shareId: string) {
 }
 
 function touchPresence(shareId: string, sessionId: string) {
-  if (!presence.has(shareId)) presence.set(shareId, new Map());
-  presence.get(shareId)!.set(sessionId, Date.now());
+  let sessions = presence.get(shareId);
+  if (!sessions) {
+    sessions = new Map();
+    presence.set(shareId, sessions);
+  }
+  sessions.set(sessionId, Date.now());
 }
 
 function getCollaboratorCount(shareId: string): number {
