@@ -155,18 +155,23 @@ export default async function SharePage({
   // <h1> can carry meaningful context for screen readers and crawlers,
   // instead of always falling back to the generic site name.
   let jsonLd: Record<string, unknown> | null = null;
+  let articleJsonLd: Record<string, unknown> | null = null;
   let heading = "VGC Team Report";
   try {
     const sql = getDb();
     const [shareRows, jsonLdCollabRows] = await Promise.all([
-      sql`SELECT data, created_at, updated_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
+      sql`SELECT data, created_at, updated_at, is_public FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
       sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
     ]);
     if (shareRows.length > 0) {
       const data = shareRows[0].data as Record<string, unknown>;
+      const isPublic = (shareRows[0] as Record<string, unknown>).is_public !== false;
       const species = extractSpecies((data.paste as string) ?? "");
       const ldCreatorName = (data.creatorName as string) || undefined;
       const tournamentName = (data.tournamentName as string) || undefined;
+      const placement = (data.placement as string) || "";
+      const teamSummary = (data.teamSummary as string) || "";
+      const ogImage = (data.ogImage as string) || (data.image as string) || "";
       const ldCollabNames = jsonLdCollabRows.map((r) => r.user_name as string);
 
       // Heading priority matches the spec: teamName → tournamentName →
@@ -206,6 +211,64 @@ export default async function SharePage({
           url: "https://pokemonvgcteamreport.com",
         },
       };
+
+      // Article schema: only emit for public shares. Private/unlisted shares
+      // are noindexed in generateMetadata, so JSON-LD on them is wasted bytes
+      // and could mislead crawlers that ignore robots directives.
+      if (isPublic) {
+        // Headline priority mirrors the metadata title: tournament + placement
+        // when both exist, then tournament, then creator-attributed fallback.
+        let headline: string;
+        if (tournamentName && placement) {
+          headline = `${tournamentName} — ${placement}`;
+        } else if (tournamentName) {
+          headline = `${tournamentName} VGC Team Report`;
+        } else if (ldCreatorName) {
+          headline = `${ldCreatorName} — VGC Team Report`;
+        } else {
+          headline = "VGC Team Report";
+        }
+
+        // Description: the user's own teamSummary wins, otherwise auto-compose
+        // a short summary mirroring the metadata description fallback.
+        const speciesBullets = species.length > 0 ? species.join(" · ") : "";
+        let articleDescription: string;
+        if (teamSummary) {
+          articleDescription = teamSummary;
+        } else if (speciesBullets) {
+          const hook = placement && tournamentName
+            ? `${placement} at ${tournamentName}: `
+            : placement
+              ? `${placement}: `
+              : "";
+          const byline = ldCreatorName ? ` VGC team by ${ldCreatorName}.` : "";
+          articleDescription = `${hook}${speciesBullets}.${byline} Full EV spreads, damage calcs, and matchup plans inside.`;
+        } else {
+          articleDescription = "Build, share, and present professional VGC team reports with damage calcs, speed tiers, and matchup plans.";
+        }
+
+        const canonicalUrl = `https://pokemonvgcteamreport.com/s/${id}`;
+
+        articleJsonLd = {
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline,
+          description: articleDescription,
+          ...(primaryAuthor && { author: primaryAuthor }),
+          datePublished: (shareRows[0].created_at as Date).toISOString(),
+          dateModified: (shareRows[0].updated_at as Date).toISOString(),
+          mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": canonicalUrl,
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "Pokemon VGC Team Report",
+            url: "https://pokemonvgcteamreport.com",
+          },
+          ...(ogImage && { image: ogImage }),
+        };
+      }
     }
   } catch {
     // Non-critical — skip JSON-LD
@@ -215,6 +278,9 @@ export default async function SharePage({
     <>
       {jsonLd && (
         <JsonLd data={jsonLd} />
+      )}
+      {articleJsonLd && (
+        <JsonLd data={articleJsonLd} />
       )}
       <ShareRedirectClient to={`/${qs}`} heading={heading} />
     </>
