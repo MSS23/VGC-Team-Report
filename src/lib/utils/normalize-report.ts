@@ -7,7 +7,7 @@
 type AnyRecord = Record<string, unknown>;
 
 /** Migrate old calc entries that may be stored as plain strings to {text, category} objects */
-export function migrateCalcEntries(rawCalcs: unknown): Record<string, Array<{ text: string; category: string }>> {
+function migrateCalcEntries(rawCalcs: unknown): Record<string, Array<{ text: string; category: string }>> {
   if (!rawCalcs || typeof rawCalcs !== "object") return {};
   const result: Record<string, Array<{ text: string; category: string }>> = {};
   for (const [key, entries] of Object.entries(rawCalcs as AnyRecord)) {

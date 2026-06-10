@@ -56,7 +56,7 @@ function joinPaste(header: string | null, blocks: string[]): string {
  *   "Nickname (Species) (F) @ Item"
  *   "Species"               (no item)
  */
-export function replaceSpeciesInBlock(block: string, newSpecies: string): string {
+function replaceSpeciesInBlock(block: string, newSpecies: string): string {
   const lines = block.split("\n");
   if (lines.length === 0) return `${newSpecies}`;
 
