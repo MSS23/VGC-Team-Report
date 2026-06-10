@@ -392,13 +392,11 @@ export function ShareModal({
 
         {/* URL display */}
         <div className="px-6 pb-4">
-          <div
-            className="flex items-center gap-2 bg-surface-alt border border-border rounded-xl px-4 py-2.5 cursor-pointer hover:border-accent/40 transition-colors"
+          <button
+            type="button"
+            className="w-full flex items-center gap-2 bg-surface-alt border border-border rounded-xl px-4 py-2.5 cursor-pointer hover:border-accent/40 focus-visible:border-accent transition-colors text-left"
             onClick={handleCopyLink}
-            role="button"
-            tabIndex={0}
             aria-label="Copy link"
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCopyLink(); } }}
           >
             <span className="text-sm text-text-secondary truncate flex-1 font-[family-name:var(--font-mono)]">
               {displayUrl}
@@ -406,7 +404,7 @@ export function ShareModal({
             <span className="text-xs font-bold text-accent flex-shrink-0">
               {linkCopied ? t.copied : t.copy}
             </span>
-          </div>
+          </button>
           {!isShortUrl && (
             <p className="text-xs text-amber-500 mt-1.5 flex items-center gap-1.5">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
@@ -648,13 +646,11 @@ export function ShareModal({
             <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-2">
               {t.shareModalEmbedLabel}
             </p>
-            <div
-              className="flex items-start gap-2 bg-surface-alt border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-accent/40 transition-colors group"
+            <button
+              type="button"
+              className="w-full flex items-start gap-2 bg-surface-alt border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-accent/40 focus-visible:border-accent transition-colors group text-left"
               onClick={handleCopyEmbed}
-              role="button"
-              tabIndex={0}
               aria-label="Copy embed code"
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCopyEmbed(); } }}
             >
               <code className="text-[11px] text-text-secondary font-[family-name:var(--font-mono)] break-all flex-1 leading-relaxed select-all">
                 {embedSnippet}
@@ -662,7 +658,7 @@ export function ShareModal({
               <span className="text-xs font-bold text-accent flex-shrink-0 group-hover:text-accent/80 transition-colors mt-0.5">
                 {embedCopied ? t.copied : t.copy}
               </span>
-            </div>
+            </button>
             <p className="text-[11px] text-text-tertiary mt-2 leading-relaxed">
               {t.shareModalEmbedNote}
             </p>
