@@ -7,6 +7,7 @@ import { motion } from "motion/react";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 
 import { PageFooter } from "@/components/layout/PageFooter";
+import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 import type { MegaPokemonEntry } from "@/lib/data/mega-pokemon";
@@ -80,13 +81,20 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
 
   return (
     <>
+      <BreadcrumbListJsonLd
+        items={[
+          { name: "Home", url: "https://pokemonvgcteamreport.com" },
+          { name: "Pokemon Champions", url: "https://pokemonvgcteamreport.com/champions" },
+          { name: mega.displayName, url: `https://pokemonvgcteamreport.com/champions/${mega.slug}` },
+        ]}
+      />
       <main className="min-h-screen bg-background pb-24 sm:pb-0">
         {/* Hero */}
         <section className="relative overflow-hidden py-12 sm:py-20 px-4">
           <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-transparent" />
           <div className="relative max-w-5xl mx-auto">
             {/* Breadcrumb */}
-            <nav className="flex items-center gap-1.5 text-xs text-text-tertiary mb-6">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-text-tertiary mb-6">
               <Link href="/champions" className="hover:text-accent transition-colors">Champions</Link>
               <span>/</span>
               <span className="text-text-secondary font-medium">{mega.displayName}</span>

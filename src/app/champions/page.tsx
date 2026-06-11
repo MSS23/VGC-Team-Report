@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ChampionsContent } from "./ChampionsContent";
-import { JsonLd, BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
+import { JsonLd, BreadcrumbListJsonLd, FAQPageJsonLd } from "@/components/seo/JsonLd";
 import { getRegMAMegas } from "@/lib/data/mega-pokemon";
 
 export const metadata: Metadata = {
@@ -52,6 +52,29 @@ export default function ChampionsPage() {
     })),
   };
 
+  const championsFaqItems = [
+    {
+      question: "What is Pokemon Champions (Regulation M-A)?",
+      answer:
+        "Pokemon Champions is the official 2026 competitive VGC platform that replaces Scarlet & Violet. Its first format, Regulation M-A, reintroduces Mega Evolution as the headline mechanic and bans all Legendary and Restricted Pokemon. Players Mega Evolve once per battle from a curated pool of 59 legal Mega forms.",
+    },
+    {
+      question: "Which Megas are legal in Pokemon Champions?",
+      answer:
+        "Regulation M-A legalises 59 curated Mega Evolutions. Notable exclusions are Mega Salamence, Mega Metagross, and Mega Mawile. Check each Pokemon's Champions page on VGC Team Report for the latest legality status, stats, and competitive sets.",
+    },
+    {
+      question: "When does Regulation M-A start?",
+      answer:
+        "Regulation M-A goes live with the Pokemon Champions launch on April 8, 2026. It powers Global Challenge 2026 I (May 1-4), Indianapolis Regionals (May 29-31), NA International Championships (June 12-14), and the 2026 World Championships in San Francisco (August 28-30).",
+    },
+    {
+      question: "How do I build a Pokemon Champions team report?",
+      answer:
+        "Paste a Showdown export or pokepast.es URL into the VGC Team Report homepage. Mega Evolutions are auto-detected and tagged as Reg M-A. Add SP spreads, matchup plans, damage calcs, and one-click share a permanent public link with the community.",
+    },
+  ];
+
   return (
     <>
       <BreadcrumbListJsonLd
@@ -61,6 +84,7 @@ export default function ChampionsPage() {
         ]}
       />
       <JsonLd data={itemListSchema} />
+      <FAQPageJsonLd items={championsFaqItems} />
       <ChampionsContent />
     </>
   );
