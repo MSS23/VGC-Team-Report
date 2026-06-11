@@ -61,7 +61,18 @@ function CardSprite({ species }: { species: string }) {
   );
 }
 
-export function ReportCard({ report }: { report: ExploreReport }) {
+export function ReportCard({
+  report,
+  initialLiked,
+  initialSaved,
+}: {
+  report: ExploreReport;
+  /** Server-truth liked/saved state, resolved by a single batched fetch in
+   *  ExploreContent and passed down — replaces the old per-card GET requests
+   *  (2 serverless invocations per card → ~2 per page load total). */
+  initialLiked?: boolean;
+  initialSaved?: boolean;
+}) {
   const { t } = useTranslation();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
@@ -82,32 +93,13 @@ export function ReportCard({ report }: { report: ExploreReport }) {
     `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() === report.creatorName
   ));
 
+  // Sync from the batched lookups once they resolve (undefined while pending).
   useEffect(() => {
-    if (!sessionId || !report.id) return;
-    fetch(`/api/reactions/${report.id}?sessionId=${encodeURIComponent(sessionId)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) {
-          const total = Object.values(data.counts ?? {}).reduce(
-            (sum: number, c) => sum + (c as number), 0);
-          setLikeCount(total);
-          setLiked((data.userReactions ?? []).length > 0);
-        }
-      })
-      .catch(() => {});
-  }, [report.id, sessionId]);
-
+    if (initialLiked !== undefined) setLiked(initialLiked);
+  }, [initialLiked]);
   useEffect(() => {
-    if (!user || !report.id) return;
-    fetch("/api/user/saved")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.reports?.some((r: { id: string }) => r.id === report.id)) {
-          setBookmarked(true);
-        }
-      })
-      .catch(() => {});
-  }, [user, report.id]);
+    if (initialSaved !== undefined) setBookmarked(initialSaved);
+  }, [initialSaved]);
 
   const toggleLike = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -316,7 +308,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                 onClick={toggleLike}
                 aria-label={liked ? "Unlike report" : "Like report"}
                 aria-pressed={liked}
-                className="inline-flex items-center gap-1 min-h-[32px] px-1 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                className="inline-flex items-center justify-center gap-1 min-h-[44px] min-w-[44px] -my-1.5 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={liked ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"} aria-hidden="true">
                   <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -330,7 +322,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   aria-label="Like report (sign in required)"
                   aria-pressed={false}
-                  className="inline-flex items-center gap-1 min-h-[32px] px-1 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                  className="inline-flex items-center justify-center gap-1 min-h-[44px] min-w-[44px] -my-1.5 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill={likeCount > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={likeCount > 0 ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"} aria-hidden="true">
                     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -345,7 +337,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   type="button"
                   onClick={toggleBookmark}
                   disabled={bookmarkLoading}
-                  className="inline-flex items-center gap-0.5 min-h-[32px] px-1 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                  className="inline-flex items-center justify-center gap-0.5 min-h-[44px] min-w-[44px] -my-1.5 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                   aria-label={bookmarked ? "Unsave report" : "Save report"}
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={bookmarked ? "text-accent" : "text-text-tertiary hover:text-accent transition-colors"} aria-hidden="true">
@@ -357,7 +349,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   <button
                     type="button"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                    className="inline-flex items-center gap-0.5 min-h-[32px] px-1 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                    className="inline-flex items-center justify-center gap-0.5 min-h-[44px] min-w-[44px] -my-1.5 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                     aria-label="Save report"
                   >
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary hover:text-accent transition-colors" aria-hidden="true">

@@ -18,6 +18,16 @@ export async function GET(request: Request) {
     }
 
     const sql = getDb();
+
+    // Lightweight mode for the Explore grid: just the saved share ids, no
+    // JSONB payloads. One cheap query instead of the full join per caller.
+    if (new URL(request.url).searchParams.get("idsOnly")) {
+      const idRows = await sql`
+        SELECT share_id FROM saved_reports WHERE user_id = ${userId}
+      `;
+      return NextResponse.json({ ids: idRows.map((r) => r.share_id as string) });
+    }
+
     const rows = await sql`
       SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
       FROM saved_reports sr

@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "motion/react";
+import { useAuth } from "@clerk/nextjs";
 import { usePostHog } from "@/components/providers/PostHogProvider";
+import { useSessionId } from "@/hooks/useSessionId";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 
 
@@ -32,7 +34,41 @@ function ExploreInner() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const initialLoad = useRef(true);
+
+  // Batched per-viewer state for the visible cards (replaces the old
+  // per-card GET /api/reactions/{id} and GET /api/user/saved N+1 effects).
+  const { isSignedIn } = useAuth();
+  const sessionId = useSessionId();
+  const [likedIds, setLikedIds] = useState<Set<string> | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    if (!sessionId || reports.length === 0) return;
+    let cancelled = false;
+    const ids = reports.map((r) => r.id).join(",");
+    fetch(`/api/reactions?ids=${encodeURIComponent(ids)}&sessionId=${encodeURIComponent(sessionId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setLikedIds(new Set<string>(data.liked ?? []));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [reports, sessionId]);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    let cancelled = false;
+    fetch("/api/user/saved?idsOnly=1")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setSavedIds(new Set<string>(data.ids ?? []));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isSignedIn]);
 
   const {
     query, setQuery,
@@ -80,6 +116,7 @@ function ExploreInner() {
     let cancelled = false;
     const load = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
         const data = await fetchReports();
         if (!cancelled) {
@@ -87,7 +124,10 @@ function ExploreInner() {
           setNextCursor(data.nextCursor);
         }
       } catch {
-        if (!cancelled) setReports([]);
+        if (!cancelled) {
+          setReports([]);
+          setLoadError(true);
+        }
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -99,7 +139,7 @@ function ExploreInner() {
     return () => {
       cancelled = true;
     };
-  }, [fetchReports]);
+  }, [fetchReports, retryKey]);
 
   const loadMore = async () => {
     if (!nextCursor || loadingMore) return;
@@ -168,6 +208,26 @@ function ExploreInner() {
               </div>
             ))}
           </div>
+        ) : loadError ? (
+          <div className="flex flex-col items-center gap-4 py-16 text-center animate-fade-in">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-text-primary">Couldn&apos;t load reports</p>
+              <p className="text-sm text-text-secondary mt-1">Check your connection and try again.</p>
+            </div>
+            <button
+              onClick={() => setRetryKey((k) => k + 1)}
+              className="min-h-[44px] px-6 py-2.5 bg-accent text-white rounded-xl font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
         ) : reports.length === 0 ? (
           <ExploreEmpty
             hasSearch={!!query}
@@ -198,7 +258,12 @@ function ExploreInner() {
               }}
             >
               {reports.map((report) => (
-                <ReportCard key={report.id} report={report} />
+                <ReportCard
+                  key={report.id}
+                  report={report}
+                  initialLiked={likedIds ? likedIds.has(report.id) : undefined}
+                  initialSaved={savedIds ? savedIds.has(report.id) : undefined}
+                />
               ))}
             </motion.div>
 
