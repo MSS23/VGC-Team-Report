@@ -122,15 +122,15 @@ export async function generateMetadata({
         siteName: "VGC Team Report",
         images: [],
       },
-      alternates: {
-        canonical: `https://pokemonvgcteamreport.com/s/${id}`,
-      },
       twitter: {
         card: "summary",
         title,
         description,
         images: [],
       },
+      ...(isPublic && !hasEditKey && {
+        alternates: { canonical: `https://pokemonvgcteamreport.com/s/${id}` },
+      }),
     };
   } catch {
     return { title: "VGC Team Report" };

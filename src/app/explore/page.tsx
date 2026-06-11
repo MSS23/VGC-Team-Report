@@ -3,10 +3,10 @@ import { ExploreContent } from "@/components/explore/ExploreContent";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
-  title: "Best VGC Teams 2026 — Explore Top Team Reports | VGC Team Report",
+  title: "Best VGC Teams 2026 — Regulation H, Champions & Worlds Team Reports",
   alternates: { canonical: "https://pokemonvgcteamreport.com/explore" },
   description:
-    "Discover the best VGC teams for 2026. Browse and share VGC team reports, use our VGC team builder tools, and find top Pokemon Champions teams with Mega Evolution builds and competitive analysis.",
+    "Browse the best VGC teams for 2026 — Regulation H, Pokemon Champions Reg M-A, and Worlds 2026 contenders. Open team sheets, EV spreads, and matchup analysis from top finishers.",
   keywords: [
     "best VGC teams 2026",
     "best VGC teams",
@@ -23,6 +23,10 @@ export const metadata: Metadata = {
     "Regulation M-A teams",
     "Pokemon VGC team report",
     "VGC team analysis",
+    "Regulation H teams 2026",
+    "Reg H VGC teams",
+    "best VGC team",
+    "VGC Worlds 2026 teams",
   ],
   openGraph: {
     title: "Best VGC Teams 2026 — Explore Top Team Reports",
