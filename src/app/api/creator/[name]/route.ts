@@ -10,6 +10,10 @@ export async function GET(
   try {
     const { name } = await params;
     const creatorName = decodeURIComponent(name);
+    // Escape LIKE/ILIKE wildcards (%, _) and the escape char itself (\)
+    // so callers can't enumerate creators or force expensive scans with
+    // input like "%a%". Default PostgreSQL escape character is backslash.
+    const escapedCreatorName = creatorName.replace(/[\\%_]/g, "\\$&");
     const guard = await apiGuard(request, { rateLimit: { key: "creator", max: 30 } });
     if (guard) return guard;
 
@@ -19,14 +23,14 @@ export async function GET(
     const rows = await sql`
       SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count, 'creator' as role
       FROM shares
-      WHERE is_public = TRUE AND deleted_at IS NULL AND data->>'creatorName' ILIKE ${creatorName}
+      WHERE is_public = TRUE AND deleted_at IS NULL AND data->>'creatorName' ILIKE ${escapedCreatorName}
 
       UNION
 
       SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, 'collaborator' as role
       FROM shares s
       JOIN collaborators c ON c.share_id = s.id
-      WHERE s.is_public = TRUE AND s.deleted_at IS NULL AND c.user_name ILIKE ${creatorName}
+      WHERE s.is_public = TRUE AND s.deleted_at IS NULL AND c.user_name ILIKE ${escapedCreatorName}
         AND COALESCE(c.status, 'accepted') = 'accepted'
 
       ORDER BY created_at DESC
