@@ -68,7 +68,7 @@ export async function postFeedbackEmbed(opts: {
   screenSize?: string;
   linearUrl?: string;
   linearIdentifier?: string;
-}) {
+}): Promise<unknown | null> {
   const { channelId, configured } = getConfig();
   if (!configured) return null;
 
