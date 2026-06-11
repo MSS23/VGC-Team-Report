@@ -402,7 +402,7 @@ export function CompareContent() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2 block">Team A</label>
+                <label htmlFor="paste-a" className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2 block">Team A</label>
                 {isSignedIn && (
                   <ReportDropdown
                     reports={reports}
@@ -413,15 +413,16 @@ export function CompareContent() {
                   />
                 )}
                 <textarea
+                  id="paste-a"
                   value={pasteA}
                   onChange={(e) => { setPasteA(e.target.value); setSelectedIdA(null); setCompared(false); }}
                   placeholder={"Incineroar @ Sitrus Berry\nAbility: Intimidate\nEVs: 252 HP / 4 Atk / 252 Spe\n- Fake Out\n...\n\nOr paste a URL:\nhttps://pokepast.es/abc123"}
-                  className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary/40 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 resize-y font-[family-name:var(--font-mono)]"
+                  className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary/70 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 resize-y font-[family-name:var(--font-mono)]"
                   spellCheck={false}
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">Team B</label>
+                <label htmlFor="paste-b" className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">Team B</label>
                 {isSignedIn && (
                   <ReportDropdown
                     reports={reports}
@@ -432,16 +433,17 @@ export function CompareContent() {
                   />
                 )}
                 <textarea
+                  id="paste-b"
                   value={pasteB}
                   onChange={(e) => { setPasteB(e.target.value); setSelectedIdB(null); setCompared(false); }}
                   placeholder={"Flutter Mane @ Choice Specs\nAbility: Protosynthesis\nEVs: 252 SpA / 252 Spe\n- Moonblast\n...\n\nOr paste a URL:\nhttps://pokepast.es/xyz789"}
-                  className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary/40 focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500 resize-y font-[family-name:var(--font-mono)]"
+                  className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary/70 focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500 resize-y font-[family-name:var(--font-mono)]"
                   spellCheck={false}
                 />
               </div>
             </div>
             {fetchError && (
-              <p className="text-sm text-red-500 font-semibold text-center">{fetchError}</p>
+              <p role="alert" className="text-sm text-red-500 font-semibold text-center">{fetchError}</p>
             )}
             <div className="flex justify-center">
               <button
