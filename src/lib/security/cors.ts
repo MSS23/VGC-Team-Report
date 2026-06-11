@@ -15,7 +15,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 /** Also allow Vercel preview deployments (*.vercel.app) */
-export function isDynamicAllowedOrigin(origin: string): boolean {
+function isDynamicAllowedOrigin(origin: string): boolean {
   if (ALLOWED_ORIGINS.has(origin)) return true;
   // Allow all Vercel preview deployments for this project
   if (/^https:\/\/vgc-team-report[a-z0-9-]*\.vercel\.app$/.test(origin)) return true;

@@ -9,7 +9,7 @@ import {
 
 type ShareStatus = "idle" | "copying" | "copied" | "error";
 
-export interface ForkedFromMeta {
+interface ForkedFromMeta {
   id: string;
   creatorName: string | null;
   tournamentName: string | null;

@@ -16,7 +16,7 @@ function buildCalcsKey(speciesKeys: string[]): string {
 }
 
 /** Per-Pokémon array of notable calc entries. */
-export type DamageCalcsMap = Record<string, CalcEntry[]>;
+type DamageCalcsMap = Record<string, CalcEntry[]>;
 
 /** Migrate old calc entries that may be plain strings to CalcEntry objects */
 function migrateCalcs(raw: unknown): DamageCalcsMap {
