@@ -1,4 +1,3 @@
-# PostHog Insights — 2026-05-28
-POSTHOG_API_KEY and POSTHOG_PROJECT_ID not available in this execution environment.
-Cannot pull error events, rage-click data, or funnel metrics.
-Logged as known gap — see prior runs for same limitation.
+# PostHog insights — 2026-06-11
+
+PostHog credentials (POSTHOG_API_KEY, POSTHOG_PROJECT_ID) not available in this sandboxed environment (`.env.local` absent). Skipping PostHog API pull. Subagents will not have PostHog context for this run; downstream code-quality agents will rely on static analysis only.
