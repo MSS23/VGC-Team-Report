@@ -84,6 +84,9 @@ export function ShareModal({
   const [embedCopied, setEmbedCopied] = useState(false);
   const [pasteCopied, setPasteCopied] = useState(false);
   const [rentalCopied, setRentalCopied] = useState(false);
+  // Screen-reader announcement for copy actions — the visual "Copied!" flips
+  // are invisible to assistive tech without a live region.
+  const [copyAnnouncement, setCopyAnnouncement] = useState("");
   const [publicConfirmDismissed, setPublicConfirmDismissed] = useState(false);
   const [tagError, setTagError] = useState(false);
   const [creatorError, setCreatorError] = useState(false);
@@ -195,7 +198,8 @@ export function ShareModal({
     try {
       await navigator.clipboard.writeText(embedSnippet);
       setEmbedCopied(true);
-      setTimeout(() => setEmbedCopied(false), 2000);
+      setCopyAnnouncement("Embed code copied to clipboard");
+      setTimeout(() => { setEmbedCopied(false); setCopyAnnouncement(""); }, 2000);
       posthog?.capture("share_embed_copied", { has_tournament: !!tournamentName });
     } catch {
       // Clipboard unavailable (non-HTTPS or permission denied) — no-op; the
@@ -233,7 +237,8 @@ export function ShareModal({
     try {
       await navigator.clipboard.writeText(publicUrl);
       setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
+      setCopyAnnouncement("Link copied to clipboard");
+      setTimeout(() => { setLinkCopied(false); setCopyAnnouncement(""); }, 2000);
       posthog?.capture("share_link_copied", { is_short_url: isShortUrl });
     } catch {
       // Clipboard unavailable (non-HTTPS or permission denied) — no-op; the
@@ -245,7 +250,8 @@ export function ShareModal({
     try {
       await navigator.clipboard.writeText(discordText);
       setDiscordCopied(true);
-      setTimeout(() => setDiscordCopied(false), 2000);
+      setCopyAnnouncement("Discord message copied to clipboard");
+      setTimeout(() => { setDiscordCopied(false); setCopyAnnouncement(""); }, 2000);
       posthog?.capture("share_discord_copied", { has_tournament: !!tournamentName });
     } catch {
       // Clipboard unavailable (non-HTTPS or permission denied) — no-op.
@@ -257,7 +263,8 @@ export function ShareModal({
     try {
       await navigator.clipboard.writeText(showdownPaste);
       setPasteCopied(true);
-      setTimeout(() => setPasteCopied(false), 2000);
+      setCopyAnnouncement("Team paste copied to clipboard");
+      setTimeout(() => { setPasteCopied(false); setCopyAnnouncement(""); }, 2000);
       posthog?.capture("share_paste_copied", { has_tournament: !!tournamentName });
     } catch {
       // Clipboard unavailable (non-HTTPS or permission denied) — no-op.
@@ -272,7 +279,8 @@ export function ShareModal({
     try {
       await navigator.clipboard.writeText(trimmedRentalCode);
       setRentalCopied(true);
-      setTimeout(() => setRentalCopied(false), 2000);
+      setCopyAnnouncement("Rental code copied to clipboard");
+      setTimeout(() => { setRentalCopied(false); setCopyAnnouncement(""); }, 2000);
       posthog?.capture("share_rental_code_copied", { has_tournament: !!tournamentName });
     } catch {
       // Clipboard unavailable (non-HTTPS or permission denied) — code is
@@ -306,6 +314,9 @@ export function ShareModal({
         aria-labelledby={titleId}
         className="bg-surface border border-border rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full sm:mx-4 animate-[sheet-up_0.3s_ease-out] sm:animate-fade-in overflow-hidden max-h-[90vh] overflow-y-auto"
       >
+        {/* Live region: announces copy confirmations to screen readers */}
+        <div aria-live="polite" aria-atomic="true" className="sr-only">{copyAnnouncement}</div>
+
         {/* Drag handle (mobile only) */}
         <div className="sm:hidden flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-border" />

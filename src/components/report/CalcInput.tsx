@@ -215,6 +215,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
         <textarea
           ref={textareaRef}
           value={pasteInput}
+          aria-label={t.pasteCalcs}
           onChange={(e) => handlePasteChange(e.target.value)}
           placeholder={`Paste one or many calcs — offensive and defensive, mixed together.
 

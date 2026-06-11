@@ -351,6 +351,19 @@ export function Navbar(props: NavbarProps) {
         {/* ── Center: slide info (not presentation) ── */}
         {!isPresentationStyle && (
           <>
+            {/* Persistent live region so screen readers hear autosave
+                outcomes — the visual indicators (desktop pill, mobile
+                spinner/check) carry no accessible text. Must live outside
+                the hidden/md:hidden responsive wrappers (display:none
+                silences live regions) and render whenever editing is
+                unlocked so the region exists before the status changes.
+                Announces only terminal states to avoid chatter from the
+                debounced autosave. */}
+            {isSharedView && isEditingUnlocked && (
+              <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                {autoSaveStatus === "saved" ? "Changes saved" : autoSaveStatus === "error" ? "Save failed" : ""}
+              </span>
+            )}
             {/* Desktop center */}
             <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary min-w-0">
               {tournamentName && (

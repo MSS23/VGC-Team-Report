@@ -176,7 +176,7 @@ export function SlideNavControls({
             aria-disabled={!tab.avail}
             disabled={!tab.avail}
             onClick={() => jumpToPhysical(tab.target)}
-            className={`${compact ? "px-4" : "flex-1"} min-h-[40px] sm:min-h-0 sm:py-1.5 px-2 rounded-full text-xs font-bold transition-colors active:scale-[0.97] ${
+            className={`${compact ? "px-4" : "flex-1"} min-h-[44px] sm:min-h-0 sm:py-1.5 px-2 rounded-full text-xs font-bold transition-colors active:scale-[0.97] ${
               active
                 ? "bg-accent text-white shadow-sm shadow-accent/30"
                 : "text-text-secondary hover:text-text-primary"

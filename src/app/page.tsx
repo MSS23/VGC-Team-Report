@@ -1117,7 +1117,7 @@ function HomeContent() {
       <VersionDiffProvider value={versionDiffContextValue}>
       <div
         ref={swipeRef}
-        className={`max-w-5xl mx-auto slide-content safe-bottom overflow-x-hidden sm:h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:overflow-y-auto sm:scrollbar-thin pb-28 sm:pb-16 ${
+        className={`max-w-5xl mx-auto slide-content overflow-x-hidden sm:h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:overflow-y-auto sm:scrollbar-thin pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:pb-16 ${
           isPresentationStyle
             ? "px-3 sm:px-8 py-2 sm:py-4"
             : "px-2 sm:px-6 lg:px-8 py-2 sm:py-6 creator:px-8 creator:py-6"

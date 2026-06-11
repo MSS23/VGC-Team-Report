@@ -29,7 +29,7 @@ export function ShareViewCTA({
     "px-3.5 py-2 sm:px-5 sm:py-2.5 bg-accent text-white text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer disabled:opacity-60 disabled:cursor-wait";
 
   return (
-    <div className="fixed bottom-14 sm:bottom-12 inset-x-0 z-30 pointer-events-none">
+    <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] sm:bottom-[calc(3rem+env(safe-area-inset-bottom,0px))] inset-x-0 z-30 pointer-events-none">
       <div className="max-w-5xl mx-auto px-2 sm:px-4 pb-1.5 sm:pb-2">
         <div className="pointer-events-auto bg-surface/95 backdrop-blur-xl border border-border rounded-xl sm:rounded-2xl shadow-2xl px-3 py-2.5 sm:px-5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-3 animate-fade-in">
           <div className="min-w-0">

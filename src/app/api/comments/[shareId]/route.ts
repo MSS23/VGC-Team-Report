@@ -100,8 +100,10 @@ export async function POST(
 
     const sql = getDb();
 
-    // Verify share exists, is public, and has comments enabled
-    const shareCheck = await sql`SELECT id, data FROM shares WHERE id = ${shareId} AND is_public = TRUE AND deleted_at IS NULL`;
+    // Verify share exists, is public, and has comments enabled.
+    // owner_id is fetched here too so the notification step below doesn't
+    // need a second lookup of the same row.
+    const shareCheck = await sql`SELECT data, owner_id FROM shares WHERE id = ${shareId} AND is_public = TRUE AND deleted_at IS NULL`;
     if (shareCheck.length === 0) {
       return NextResponse.json({ error: "Report not found or not public" }, { status: 404 });
     }
@@ -117,8 +119,7 @@ export async function POST(
     `;
 
     // Notify report owner about the new comment (fire-and-forget)
-    const ownerRows = await sql`SELECT owner_id FROM shares WHERE id = ${shareId}`;
-    const ownerId = ownerRows[0]?.owner_id as string | undefined;
+    const ownerId = shareCheck[0].owner_id as string | undefined;
     if (ownerId) {
       // Get the commenter's Clerk user ID (if logged in) to avoid self-notification
       const { userId: commenterId } = await auth();
