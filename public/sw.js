@@ -1,6 +1,6 @@
 // Bump version to push updates to all installed PWA users
-const CACHE_NAME = "vgc-team-report-v24";
-const SHARE_CACHE = "vgc-shares-v5";
+const CACHE_NAME = "vgc-team-report-v25";
+const SHARE_CACHE = "vgc-shares-v6";
 const API_CACHE = "vgc-api-v6";
 
 const PRECACHE_URLS = [
@@ -171,19 +171,25 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate: purge all old caches
+// Activate: purge all old caches + enable navigation preload
 self.addEventListener("activate", (event) => {
   const keepCaches = [CACHE_NAME, SHARE_CACHE, API_CACHE];
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
         keys
           .filter((key) => !keepCaches.includes(key))
           .map((key) => caches.delete(key))
-      )
-    )
+      );
+      // Navigation preload lets the browser start the network request in
+      // parallel with SW boot (~50-250ms saved on cold navigations).
+      if (self.registration.navigationPreload) {
+        try { await self.registration.navigationPreload.enable(); } catch {}
+      }
+      await self.clients.claim();
+    })()
   );
-  self.clients.claim();
 });
 
 // Trim a cache to a max number of entries (FIFO)
@@ -213,21 +219,38 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   // ── Share API data ──
-  // Cache-first with background revalidation for offline tournament access
+  // Network-first with cache fallback: online viewers always see current
+  // visibility/redaction/deletion state, while offline tournament access
+  // still works from the last good copy. (Was cache-first, which could pin
+  // a viewer to a stale or deleted report indefinitely.)
   if (url.pathname.match(/^\/api\/share\/[A-Za-z0-9]{8}$/) && !url.searchParams.has("key") && !url.searchParams.has("since")) {
     event.respondWith(
       caches.open(SHARE_CACHE).then((cache) =>
-        cache.match(request).then((cached) => {
-          const fetchPromise = fetch(request).then((response) => {
+        fetch(request)
+          .then((response) => {
             if (response.ok) {
-              cache.put(request, response.clone());
-              trimCache(SHARE_CACHE, 50);
+              // Never cache owner/collaborator variants — they embed the
+              // secret edit token and are auth-specific.
+              const forInspect = response.clone();
+              const forCache = response.clone();
+              forInspect
+                .json()
+                .then((data) => {
+                  if (data && !data._editToken) {
+                    cache.put(request, forCache);
+                    trimCache(SHARE_CACHE, 50);
+                  }
+                })
+                .catch(() => {});
+            } else if (response.status === 404 || response.status === 410) {
+              // Report deleted/gone — evict so offline mode doesn't resurrect it
+              cache.delete(request);
             }
             return response;
-          }).catch(() => cached || Response.error());
-          // Serve cached immediately, update in background
-          return cached || fetchPromise;
-        })
+          })
+          .catch(() =>
+            cache.match(request).then((cached) => cached || Response.error())
+          )
       )
     );
     return;
@@ -276,40 +299,24 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ── Shared team & embed pages (/s/*, /embed/*) — network-first, cache fallback ──
-  if (url.pathname.startsWith("/s/") || url.pathname.startsWith("/embed/")) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() =>
-          caches.match(request).then((cached) =>
-            cached || caches.match("/_offline")
-          )
-        )
-    );
-    return;
-  }
-
-  // ── All other pages — network-first, cache fallback ──
+  // ── Pages (incl. /s/*, /embed/*) — network-first, cache fallback ──
+  // Uses the navigation-preload response when available (started in
+  // parallel with SW boot); falls back to a normal fetch for non-navigation
+  // requests and browsers without preload support.
   event.respondWith(
-    fetch(request)
-      .then((response) => {
+    (async () => {
+      try {
+        const preloaded = await event.preloadResponse;
+        const response = preloaded || (await fetch(request));
         if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
-      })
-      .catch(() =>
-        caches.match(request).then((cached) =>
-          cached || caches.match("/_offline")
-        )
-      )
+      } catch {
+        const cached = await caches.match(request);
+        return cached || (await caches.match("/_offline")) || Response.error();
+      }
+    })()
   );
 });
