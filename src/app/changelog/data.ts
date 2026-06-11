@@ -16,6 +16,26 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "SEO Indexing, AI Discoverability, A11y & Dead Code",
+    emoji: "🔎",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "SEO: /s/[id] shared reports now emit a self-canonical (gated on public + no edit-key). Previously every public share inherited the layout canonical pointing at '/', causing Google to drop shares from the index in favour of the homepage." },
+      { type: "fixed", text: "SEO: removed duplicate /compare entry from sitemap.ts — sitemaps must contain unique URLs and the second entry was undercutting the first's priority." },
+      { type: "improved", text: "SEO: /explore metadata now targets 'Regulation H', 'Worlds 2026', and 'Champions Reg M-A' — the standard SV format for 2026 was previously absent from title, description, and keywords." },
+      { type: "improved", text: "AI discoverability: robots.txt now has explicit Allow blocks for Google-Extended, Applebot-Extended, anthropic-ai, CCBot, Perplexity-User, and cohere-ai. Previously these inherited the wildcard allow; explicit declarations align with AI provider docs." },
+      { type: "improved", text: "SEO: /champions/[pokemon] mega pages now render BreadcrumbList JSON-LD (Home → Pokemon Champions → Pokemon) and add aria-label='Breadcrumb' on the nav. /champions index gains FAQPageJsonLd with four Reg M-A questions for AI-citation surfacing." },
+      { type: "fixed", text: "Security: /api/creator/[name] now escapes %, _, and \\\\ in the decoded creator name before binding it into ILIKE clauses. Closes a creator-enumeration / expensive-ILIKE-scan vector (the Neon driver bound the value as a parameter so this was never SQLi, but unescaped wildcards still let callers force full-table scans)." },
+      { type: "fixed", text: "Accessibility: Compare page labels now wire to their textareas via htmlFor/id (Team A/B), the fetch-error message has role='alert', and sub-AA placeholder contrast ('text-text-tertiary/40' ≈ 2.3:1) is lifted to /70 to clear WCAG AA." },
+      { type: "improved", text: "Accessibility: mobile bottom-tab links in PageNavbar now carry aria-current='page' when active so screen-reader users can identify the current route. Dark-mode toggle label is now state-aware ('Switch to light/dark mode') with aria-pressed conveying toggle state." },
+      { type: "improved", text: "Performance: @microsoft/clarity is now lazy-loaded inside its useEffect instead of imported at module top — small but free saving on every page that mounts the provider. global-error.tsx switches @sentry/nextjs from a star import to a named import for cleaner tree-shaking." },
+      { type: "improved", text: "Code health: 8 exported lib functions in email.ts, notifications.ts, posthog-server.ts, discord-bot.ts, and i18n/index.ts now have explicit return types — stops sendEmail's Promise<any> leak and pins the public type surface so downstream callers cannot silently rely on inferred shapes." },
+      { type: "improved", text: "Removed ~355 LOC of dead code: 3 fully-orphaned files (ConsentGate provider, DisplayTogglePill component, useGlobalDisplayPrefs hook) deleted outright, and 8 internally-only symbols stripped of their 'export' keyword across templates.ts, cors.ts, normalize-report.ts, useMatchupPlans, useWalkthrough, useUndoRedo, useShareUrl, and useDamageCalcs." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
