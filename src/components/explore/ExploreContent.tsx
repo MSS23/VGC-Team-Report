@@ -48,13 +48,30 @@ function ExploreInner() {
   useEffect(() => {
     if (!sessionId || reports.length === 0) return;
     let cancelled = false;
-    const ids = reports.map((r) => r.id).join(",");
-    fetch(`/api/reactions?ids=${encodeURIComponent(ids)}&sessionId=${encodeURIComponent(sessionId)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!cancelled && data) setLikedIds(new Set<string>(data.liked ?? []));
-      })
-      .catch(() => {});
+    // Chunk under the server's per-request cap (MAX_IDS = 60) so likes for
+    // cards beyond position 60 aren't silently dropped as the feed grows.
+    const CHUNK_SIZE = 50;
+    const allIds = reports.map((r) => r.id);
+    const chunks: string[][] = [];
+    for (let i = 0; i < allIds.length; i += CHUNK_SIZE) {
+      chunks.push(allIds.slice(i, i + CHUNK_SIZE));
+    }
+    Promise.all(
+      chunks.map((chunk) =>
+        fetch(
+          `/api/reactions?ids=${encodeURIComponent(chunk.join(","))}&sessionId=${encodeURIComponent(sessionId)}`,
+        )
+          .then((r) => (r.ok ? r.json() : { liked: [] }))
+          .catch(() => ({ liked: [] as string[] })),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      const merged = new Set<string>();
+      for (const data of results) {
+        for (const id of (data?.liked ?? []) as string[]) merged.add(id);
+      }
+      setLikedIds(merged);
+    });
     return () => { cancelled = true; };
   }, [reports, sessionId]);
 
