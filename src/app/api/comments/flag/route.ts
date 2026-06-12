@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -8,12 +9,24 @@ const FLAG_THRESHOLD = 3; // Auto-hide after this many unique flags
 
 const FlagBody = z.object({
   commentId: z.number(),
-  sessionId: z.string().min(1),
 });
 
 export async function POST(request: Request) {
   try {
-    const guard = await apiGuard(request, { rateLimit: { key: "flag", max: 10 } });
+    // Require Clerk auth — anonymous flagging let attackers rotate sessionIds
+    // to clear the per-(comment, session) dedup threshold and auto-delete
+    // legitimate comments. Keying dedup on userId makes that materially harder.
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Authentication required to flag comments" },
+        { status: 401 },
+      );
+    }
+
+    // Rate limit per-user (in addition to the IP key inside apiGuard) so a
+    // single account can't burn through the flag budget across IPs.
+    const guard = await apiGuard(request, { rateLimit: { key: `flag:${userId}`, max: 10 } });
     if (guard) return guard;
 
     const raw = await request.json();
@@ -21,14 +34,16 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }
-    const { commentId, sessionId } = parsed.data;
+    const { commentId } = parsed.data;
 
     const sql = getDb();
 
-    // Insert flag (unique per comment+session)
+    // Dedup key is userId (stored in the existing session_id column to avoid
+    // a schema migration; the UNIQUE(comment_id, session_id) constraint still
+    // enforces one flag per user per comment).
     await sql`
       INSERT INTO comment_flags (comment_id, session_id)
-      VALUES (${commentId}, ${sessionId})
+      VALUES (${commentId}, ${userId})
       ON CONFLICT (comment_id, session_id) DO NOTHING
     `;
 
@@ -44,7 +59,7 @@ export async function POST(request: Request) {
       await sql`DELETE FROM comments WHERE id = ${commentId}`;
       await sql`DELETE FROM comment_flags WHERE comment_id = ${commentId}`;
 
-      captureServerEvent(sessionId, "comment_auto_removed", {
+      captureServerEvent(userId, "comment_auto_removed", {
         comment_id: commentId,
         flag_count: count,
       });
@@ -52,7 +67,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ flagged: true, autoRemoved: true });
     }
 
-    captureServerEvent(sessionId, "comment_flagged", {
+    captureServerEvent(userId, "comment_flagged", {
       comment_id: commentId,
       flag_count: count,
     });
