@@ -2,9 +2,29 @@ import type { Metadata } from "next";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 
+const TERMS_TITLE = "Terms of Service";
+const TERMS_DESCRIPTION =
+  "Terms of service for VGC Team Report — acceptable use, content ownership, liability, account termination, and governing law for the free community VGC tool.";
+const TERMS_URL = "https://pokemonvgcteamreport.com/terms";
+
 export const metadata: Metadata = {
-  title: "Terms of Service",
-  alternates: { canonical: "https://pokemonvgcteamreport.com/terms" },
+  title: TERMS_TITLE,
+  description: TERMS_DESCRIPTION,
+  alternates: { canonical: TERMS_URL },
+  openGraph: {
+    title: TERMS_TITLE,
+    description: TERMS_DESCRIPTION,
+    url: TERMS_URL,
+    siteName: "VGC Team Report",
+    type: "article",
+    images: ["/opengraph-image"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TERMS_TITLE,
+    description: TERMS_DESCRIPTION,
+    images: ["/opengraph-image"],
+  },
 };
 
 export default function TermsPage() {

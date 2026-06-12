@@ -2,9 +2,29 @@ import type { Metadata } from "next";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 
+const PRIVACY_TITLE = "Privacy Policy";
+const PRIVACY_DESCRIPTION =
+  "How VGC Team Report collects, uses, and protects your personal data under GDPR and CCPA — data categories, retention, processors, and your rights.";
+const PRIVACY_URL = "https://pokemonvgcteamreport.com/privacy";
+
 export const metadata: Metadata = {
-  title: "Privacy Policy",
-  alternates: { canonical: "https://pokemonvgcteamreport.com/privacy" },
+  title: PRIVACY_TITLE,
+  description: PRIVACY_DESCRIPTION,
+  alternates: { canonical: PRIVACY_URL },
+  openGraph: {
+    title: PRIVACY_TITLE,
+    description: PRIVACY_DESCRIPTION,
+    url: PRIVACY_URL,
+    siteName: "VGC Team Report",
+    type: "article",
+    images: ["/opengraph-image"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: PRIVACY_TITLE,
+    description: PRIVACY_DESCRIPTION,
+    images: ["/opengraph-image"],
+  },
 };
 
 export default function PrivacyPage() {
