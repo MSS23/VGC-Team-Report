@@ -16,6 +16,24 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "A11y, SEO Cleanup & Quiet Bug Fixes",
+    emoji: "🧹",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Explore feed likes no longer silently disappear for cards beyond position 60. The client now chunks the reactions lookup into batches that fit under the server's per-request cap, then merges results." },
+      { type: "fixed", text: "Security: /api/comments/flag now requires authentication. Previously, an attacker could rotate session IDs to bypass the per-comment dedup threshold and auto-delete comments. Dedup is now keyed on userId." },
+      { type: "fixed", text: "SEO: /compare deduplicated in sitemap (was listed twice with conflicting priorities) and the contradictory noindex removed from the page metadata — sitemap + robots now agree." },
+      { type: "improved", text: "Accessibility: InstallPrompt, WhatsNewModal, and ShortcutHintOverlay now have role=dialog/aria-modal/aria-labelledby, focus trap, Escape-to-close, and focus-restore-on-close." },
+      { type: "improved", text: "Accessibility: light-mode --text-tertiary darkened from #5E5E7A to #4E4E62 — now passes WCAG AA 4.5:1 contrast on #FAF9F6 background." },
+      { type: "improved", text: "SEO: /privacy and /terms now have explicit openGraph + twitter metadata, so legal-page link previews use the correct OG card instead of falling back to the site-wide builder pitch." },
+      { type: "improved", text: "SEO: /creator/[name] pages now emit BreadcrumbList JSON-LD (Home → Creators → name), matching the pattern used on /faq, /tournaments, /explore." },
+      { type: "improved", text: "Code quality: added explicit return types to useTranslation, createNotification, notifyFollowers, sendEmail, sendCommentNotificationEmail, sendWelcomeEmail; replaced two unsafe casts in showdown-parser and i18n with type predicates / single-cast forms." },
+      { type: "improved", text: "Code quality: removed three confirmed-dead files (ConsentGate, DisplayTogglePill, useGlobalDisplayPrefs — ~370 lines total), one orphaned helper (asPokemonTypes), and unexported two internal-only constants. Zero runtime impact." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
