@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "@/lib/i18n";
 
 interface ShortcutHintOverlayProps {
@@ -11,6 +11,9 @@ interface ShortcutHintOverlayProps {
 
 export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = false }: ShortcutHintOverlayProps) {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const titleId = "shortcut-hint-overlay-title";
 
   const SHORTCUTS_COMMON = [
     { key: "\u2190 / \u2192", label: t.navigateSlides },
@@ -46,6 +49,47 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
     return () => window.removeEventListener("keydown", handler, { capture: true });
   }, [visible, onDismiss]);
 
+  // Focus trap + focus capture/restore while the overlay is visible.
+  useEffect(() => {
+    if (!visible) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+
+    const focusableSelectors =
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    const firstFocusable = dialog.querySelector<HTMLElement>(focusableSelectors);
+    firstFocusable?.focus();
+
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelectors));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleTab);
+    const restoreTarget = previouslyFocusedRef.current;
+    return () => {
+      window.removeEventListener("keydown", handleTab);
+      restoreTarget?.focus();
+    };
+  }, [visible]);
+
   if (!visible) return null;
 
   const shortcuts = [
@@ -59,10 +103,14 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
       onClick={onDismiss}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="bg-surface/95 border border-border rounded-2xl p-6 shadow-2xl max-w-xs w-full mx-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">
+        <h3 id={titleId} className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">
           {t.keyboardShortcuts}
         </h3>
         <div className="space-y-3">

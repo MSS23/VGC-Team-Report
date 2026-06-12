@@ -58,6 +58,7 @@ export function WhatsNewModal() {
   const [show, setShow] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const seen = localStorage.getItem(STORAGE_KEY);
@@ -76,6 +77,25 @@ export function WhatsNewModal() {
     setShow(false);
     localStorage.setItem(STORAGE_KEY, "1");
   }, []);
+
+  // Capture previously focused element on open, focus first focusable element,
+  // and restore focus on close. Escape-to-close is handled by handleFocusTrap.
+  useEffect(() => {
+    if (!show) return;
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const dialog = dialogRef.current;
+    if (dialog) {
+      const focusableSelectors =
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      const firstFocusable = dialog.querySelector<HTMLElement>(focusableSelectors);
+      // Fall back to focusing the dialog wrapper itself so Escape on the onKeyDown handler still fires.
+      (firstFocusable ?? dialog).focus();
+    }
+    const restoreTarget = previouslyFocusedRef.current;
+    return () => {
+      restoreTarget?.focus();
+    };
+  }, [show]);
 
   const handleFocusTrap = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {

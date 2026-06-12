@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -14,6 +14,10 @@ export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOSPrompt, setShowIOSPrompt] = useState(false);
   const [dismissed, setDismissed] = useState(true); // start hidden, reveal after checks
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const titleId = "install-prompt-title";
+  const isOpen = !dismissed && (Boolean(deferredPrompt) || showIOSPrompt);
 
   useEffect(() => {
     // Don't show if already dismissed recently
@@ -107,6 +111,57 @@ export function InstallPrompt() {
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
   }, []);
 
+  // Focus trap + Escape handler + focus restore (only while the sheet is open)
+  useEffect(() => {
+    if (!isOpen) return;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+
+    // Remember the element that had focus before the sheet opened
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+
+    const focusableSelectors =
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    // Focus first focusable element on mount
+    const firstFocusable = sheet.querySelector<HTMLElement>(focusableSelectors);
+    firstFocusable?.focus();
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleDismiss();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      const focusable = Array.from(sheet.querySelectorAll<HTMLElement>(focusableSelectors));
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKey);
+    const restoreTarget = previouslyFocusedRef.current;
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      // Restore focus to the element that had focus before the sheet opened
+      restoreTarget?.focus();
+    };
+  }, [isOpen, handleDismiss]);
+
   if (dismissed || (!deferredPrompt && !showIOSPrompt)) return null;
 
   return (
@@ -119,7 +174,13 @@ export function InstallPrompt() {
       />
 
       {/* Bottom sheet */}
-      <div className="fixed bottom-0 left-0 right-0 z-[61] safe-bottom animate-sheet-up">
+      <div
+        ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="fixed bottom-0 left-0 right-0 z-[61] safe-bottom animate-sheet-up"
+      >
         <div className="mx-auto max-w-lg">
           <div className="bg-surface rounded-t-3xl shadow-[0_-8px_40px_rgba(0,0,0,0.12)] border-t border-x border-border/50 px-6 pt-3 pb-6">
             {/* Handle bar */}
@@ -141,7 +202,7 @@ export function InstallPrompt() {
               <div className="flex-1 min-w-0">
                 {deferredPrompt ? (
                   <>
-                    <p className="text-base font-bold text-text-primary leading-tight">
+                    <p id={titleId} className="text-base font-bold text-text-primary leading-tight">
                       Install VGC Team Report
                     </p>
                     <p className="text-sm text-text-secondary mt-1 leading-relaxed">
@@ -150,7 +211,7 @@ export function InstallPrompt() {
                   </>
                 ) : (
                   <>
-                    <p className="text-base font-bold text-text-primary leading-tight">
+                    <p id={titleId} className="text-base font-bold text-text-primary leading-tight">
                       Add to Home Screen
                     </p>
                     <p className="text-sm text-text-secondary mt-1 leading-relaxed">
