@@ -33,7 +33,7 @@ export async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
-}) {
+}): Promise<{ id: string } | null> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn("RESEND_API_KEY not set, skipping email");
@@ -82,7 +82,7 @@ export async function sendCommentNotificationEmail(opts: {
   commentBody: string;
   reportTitle: string;
   shareId: string;
-}) {
+}): Promise<void> {
   try {
     const reportUrl = `${APP_URL}/report/${opts.shareId}`;
     const html = buildCommentNotificationHtml(opts.commenterName, opts.commentBody, opts.reportTitle, reportUrl);
@@ -181,7 +181,7 @@ function buildCommentNotificationHtml(
 export async function sendWelcomeEmail(opts: {
   to: string;
   firstName: string | null;
-}) {
+}): Promise<void> {
   try {
     const displayName = opts.firstName || "there";
     const html = buildWelcomeEmailHtml(displayName);

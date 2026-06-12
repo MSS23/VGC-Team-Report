@@ -6,6 +6,9 @@ const POKEMON_TYPES: PokemonType[] = [
   "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
 ];
 
+const isPokemonType = (t: string): t is PokemonType =>
+  (POKEMON_TYPES as readonly string[]).includes(t);
+
 function defaultEvs(): StatSpread {
   return { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
 }
@@ -111,8 +114,8 @@ function parsePokemonBlock(block: string): { pokemon: ParsedPokemon; warnings: s
       // VGC is always level 50 — ignore any parsed level
     } else if (/^Tera Type:\s*/i.test(cleanLine)) {
       const tt = cleanLine.replace(/^Tera Type:\s*/i, "").trim();
-      if (POKEMON_TYPES.includes(tt as PokemonType)) {
-        teraType = tt as PokemonType;
+      if (isPokemonType(tt)) {
+        teraType = tt;
       }
     } else if (/^Shiny:\s*/i.test(cleanLine)) {
       shiny = cleanLine.replace(/^Shiny:\s*/i, "").trim().toLowerCase() === "yes";

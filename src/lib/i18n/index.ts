@@ -80,7 +80,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       get(target, prop: string) {
         const v = target[prop];
         if (typeof v === "string" && v.length > 0) return v;
-        return (en as unknown as Record<string, string>)[prop];
+        return (en as Record<string, string>)[prop];
       },
     }) as TranslationKeys;
   }, [translations]);
@@ -93,6 +93,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   return React.createElement(I18nContext.Provider, { value }, children);
 }
 
-export function useTranslation() {
+export function useTranslation(): I18nContextValue {
   return useContext(I18nContext);
 }
