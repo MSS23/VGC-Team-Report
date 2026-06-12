@@ -17,7 +17,6 @@
  * client-reachable graph needs to go through this file.
  */
 
-import type { PokemonType } from "@/lib/types/pokemon";
 import rawSubset from "./dex-subset.json";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -117,9 +116,4 @@ export function getSpecies(name: string): DexSubsetSpecies | null {
 /** Look up a mega stone by name. Returns null on miss. */
 export function getMegaStone(name: string): DexSubsetMegaStone | null {
   return ensureMegaStoneIndex().get(toId(name)) ?? null;
-}
-
-/** Narrow a string[] of types to the typed PokemonType union. */
-export function asPokemonTypes(types: string[]): PokemonType[] {
-  return types as PokemonType[];
 }

@@ -3,7 +3,7 @@ import type { PokemonType } from "@/lib/types/pokemon";
 // Effectiveness multiplier: attacker type → defender type → multiplier
 // 2 = super effective, 0.5 = not very effective, 0 = immune, 1 = neutral
 // Only non-1x entries are listed; missing entries default to 1x (neutral).
-export const TYPE_CHART: Record<PokemonType, Partial<Record<PokemonType, number>>> = {
+const TYPE_CHART: Record<PokemonType, Partial<Record<PokemonType, number>>> = {
   Normal: {
     Rock: 0.5,
     Ghost: 0,
