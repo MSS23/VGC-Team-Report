@@ -1,7 +1,6 @@
-# Swarm Run Meta
-- Branch: swarm-nightly-2026-05-28
-- Created: 2026-05-28 (UK time)
+# Swarm Run Meta — 12-06-2026
+- Branch: swarm-nightly-2026-06-12
+- Created: 2026-06-12 (UK time)
 - Status: In progress
-- Existing PR for this branch: None
-- No .env.local — PostHog, Linear API, Discord webhook credentials unavailable
-- Will work from code audits and prior run findings
+- Cut fresh from main at commit 06ef1f5
+- Existing PR for this branch: TBD (checking)

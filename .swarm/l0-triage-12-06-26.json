@@ -1,0 +1,152 @@
+[
+  {
+    "identifier": "VGC-181",
+    "title": "Update Indianapolis Regionals top-cut table with real post-event data",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-181",
+    "scope_estimate": "30min",
+    "priority": 1,
+    "files_likely_to_change": [
+      "src/data/indy-top-cut.ts"
+    ],
+    "conflict_risk": false,
+    "implementation_brief": "Tournament was May 29-31, 2026 — file still has player='TBD' for all 8 placements and limitlessUrl pointing at /tournaments (not the actual event). Pull the Indianapolis Regionals 2026 top-cut from play.limitlesstcg.com/tournaments and replace the eight TBD entries with real player names, countries, exact 6-Pokemon teams, and a real per-player limitlessUrl. Header comment still calls this 'Sample top-8 data' — replace with a real-data note + tournament URL.",
+    "verification_status": "PENDING",
+    "source": "L0 19-05-26"
+  },
+  {
+    "identifier": "AUDIT-A11Y-1",
+    "title": "InstallPrompt missing dialog semantics (role=dialog, aria-modal, focus trap)",
+    "url": "",
+    "scope_estimate": "30min",
+    "priority": 1,
+    "files_likely_to_change": [
+      "src/components/ui/InstallPrompt.tsx"
+    ],
+    "conflict_risk": false,
+    "implementation_brief": "src/components/ui/InstallPrompt.tsx renders a bottom-sheet modal (lines 122-204) but has no role='dialog', no aria-modal, no aria-labelledby, no focus return on dismiss, and no Escape-to-close. Wrap the sheet div with role='dialog' aria-modal='true' aria-labelledby pointing at the title <p>, add a useEffect that captures previously focused element and restores on dismiss, and add Escape keydown to call handleDismiss. OTSSheetModal at lines 190-191 is the existing pattern to mirror.",
+    "verification_status": "PENDING",
+    "source": "R8 26-05-26 (Top 5 quick-wins #10)"
+  },
+  {
+    "identifier": "AUDIT-A11Y-2",
+    "title": "Light-mode text-tertiary contrast fails WCAG 4.5:1 (#5E5E7A on #FAF9F6)",
+    "url": "",
+    "scope_estimate": "30min",
+    "priority": 1,
+    "files_likely_to_change": [
+      "src/app/globals.css"
+    ],
+    "conflict_risk": false,
+    "implementation_brief": "src/app/globals.css line 21 sets --text-tertiary: #5E5E7A in light mode — measured ~4.1:1 on #FAF9F6 background, fails AA. Darken to #4E4E62 (or #4A4A66 to match secondary minus one shade). Update the three other light-mode declarations (lines 302, 314, 717, and the print override at line 794). Leave the dark-mode #9898B8 alone (passes on dark surface). Verify with contrast checker afterward.",
+    "verification_status": "PENDING",
+    "source": "R8 26-05-26 (Top 5 quick-wins #5)"
+  },
+  {
+    "identifier": "AUDIT-SEO-1",
+    "title": "Add OG/Twitter metadata + BreadcrumbList to /privacy and /terms",
+    "url": "",
+    "scope_estimate": "30min",
+    "priority": 2,
+    "files_likely_to_change": [
+      "src/app/privacy/page.tsx",
+      "src/app/terms/page.tsx"
+    ],
+    "conflict_risk": false,
+    "implementation_brief": "Both pages have alternates.canonical (lines 7) but no openGraph or twitter blocks — link previews fall back to the site-wide 'Build & Share Pokemon VGC Teams' card, which is misleading on a legal-page share. Add openGraph: { title, description, images: ['/opengraph-image'], type: 'article' } and twitter: { card: 'summary_large_image' } to each metadata export. Reuse the existing /opengraph-image asset; no new images needed.",
+    "verification_status": "PENDING",
+    "source": "R6 SEO 22-05-26 Win #5"
+  },
+  {
+    "identifier": "AUDIT-SEO-2",
+    "title": "Add BreadcrumbList JSON-LD to /creator/[name] pages",
+    "url": "",
+    "scope_estimate": "30min",
+    "priority": 2,
+    "files_likely_to_change": [
+      "src/app/creator/[name]/page.tsx"
+    ],
+    "conflict_risk": false,
+    "implementation_brief": "Other tier-1 pages (faq, tournaments, explore, changelog) already emit BreadcrumbListJsonLd. /creator/[name] does not — verified via grep. Import BreadcrumbListJsonLd from @/components/seo/JsonLd and add a 3-step crumb: Home -> Creators (-> /explore?searchCategory=creator) -> {name}. Three lines per page, no content changes.",
+    "verification_status": "PENDING",
+    "source": "R6 SEO 22-05-26 Win #4 (residual)"
+  },
+  {
+    "identifier": "AUDIT-SEO-3",
+    "title": "Dedupe /compare in sitemap and fix sitemap entry weight",
+    "url": "",
+    "scope_estimate": "30min",
+    "priority": 3,
+    "files_likely_to_change": [
+      "src/app/sitemap.ts"
+    ],
+    "conflict_risk": false,
+    "implementation_brief": "src/app/sitemap.ts lines 16 and 18 both list /compare — once at priority 0.6 and once at 0.5. Search engines normalize duplicates to the first occurrence, but it looks sloppy and can split signals. Remove the duplicate line (keep the 0.6 entry), and while there, verify the static pages array shape matches Next 16 MetadataRoute.Sitemap typing.",
+    "verification_status": "PENDING",
+    "source": "Codebase scan (sitemap diff)"
+  },
+  {
+    "identifier": "AUDIT-TS-1",
+    "title": "TypeScript trivial strictness: add return types in i18n/notifications/email/showdown-parser",
+    "url": "",
+    "scope_estimate": "1hr",
+    "priority": 2,
+    "files_likely_to_change": [
+      "src/lib/i18n/index.ts",
+      "src/lib/notifications.ts",
+      "src/lib/email.ts",
+      "src/lib/parser/showdown-parser.ts"
+    ],
+    "conflict_risk": false,
+    "implementation_brief": "From C2 audit 12-06-26 — apply the six TRIVIAL fixes: (1) i18n/index.ts:96 add ': I18nContextValue' to useTranslation; (2) notifications.ts:9,30 add ': Promise<void>' to createNotification + notifyFollowers; (3) email.ts:32 type sendEmail return as 'Promise<{ id: string } | null>'; (4) email.ts:79,181 add ': Promise<void>' to sendCommentNotificationEmail + sendWelcomeEmail; (5) showdown-parser.ts:114-115 add isPokemonType type predicate and replace 'tt as PokemonType'; (6) i18n/index.ts:83 collapse 'as unknown as Record' to single cast.",
+    "verification_status": "PENDING",
+    "source": "C2 TypeScript 12-06-26"
+  },
+  {
+    "identifier": "AUDIT-SEO-4",
+    "title": "Per-regulation landing pages (/format/reg-h, /format/reg-i, /format/reg-g, /format/reg-ma)",
+    "url": "",
+    "scope_estimate": "2hr",
+    "priority": 2,
+    "files_likely_to_change": [
+      "src/app/format/[reg]/page.tsx",
+      "src/app/sitemap.ts",
+      "src/components/explore/ExploreContent.tsx"
+    ],
+    "conflict_risk": false,
+    "implementation_brief": "ExploreContent already accepts a regulation URL param. Create src/app/format/[reg]/page.tsx as a thin server component that whitelists reg-h/reg-i/reg-g/reg-ma, sets H1 to 'VGC Regulation X Teams', emits an ItemList JSON-LD of the top 9 public reports for that regulation (query the shares table same way /explore does), adds BreadcrumbList, and renders <ExploreContent regulation={reg} />. Add the four routes to sitemap.ts at priority 0.85. Title pattern: 'VGC Regulation H Teams — Top Reg H Team Reports & Builds'.",
+    "verification_status": "PENDING",
+    "source": "R6 SEO 22-05-26 Gap #2"
+  },
+  {
+    "identifier": "AUDIT-SEO-5",
+    "title": "/ots-generator landing page wrapping OTSSheetModal",
+    "url": "",
+    "scope_estimate": "2hr",
+    "priority": 2,
+    "files_likely_to_change": [
+      "src/app/ots-generator/page.tsx",
+      "src/app/ots-generator/OtsGeneratorContent.tsx",
+      "src/app/sitemap.ts"
+    ],
+    "conflict_risk": false,
+    "implementation_brief": "Search 'VGC OTS generator' returns only forum threads — no real competitor SERP. We have OTSSheetModal (src/components/ui/OTSSheetModal.tsx) but no discoverable URL. Create static /ots-generator page with <h1>Pokemon VGC Open Team Sheet Generator</h1>, a paste-input textarea, and a 'Generate' button that opens the OTSSheetModal pre-loaded with the paste. Emit SoftwareApplication JSON-LD. Add to sitemap at priority 0.8. Link from /faq's existing OTS explanation copy.",
+    "verification_status": "PENDING",
+    "source": "R6 SEO 22-05-26 Gap #3"
+  },
+  {
+    "identifier": "VGC-114",
+    "title": "SEO: VGC team builder + speed tier landing pages",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-114",
+    "scope_estimate": "2hr",
+    "priority": 2,
+    "files_likely_to_change": [
+      "src/app/vgc-team-builder/page.tsx",
+      "src/app/vgc-speed-tiers/page.tsx",
+      "src/app/sitemap.ts"
+    ],
+    "conflict_risk": false,
+    "implementation_brief": "Neither src/app/vgc-team-builder/ nor src/app/vgc-speed-tiers/ exist yet — verified via glob. Create two static landing pages with targeted H1/meta: 'Free VGC Team Builder — Drag-and-Drop Pokemon Team Editor' (CTA -> /) and 'VGC Speed Tiers 2026 — Reg M-A Pokemon Speed Reference' (renders a sortable table from src/lib/data/dex-subset for Reg M-A legal species). Add to sitemap at priority 0.85. Internal-link to /champions and /explore.",
+    "verification_status": "PENDING",
+    "source": "L0 19-05-26"
+  }
+]
