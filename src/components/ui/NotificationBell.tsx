@@ -106,7 +106,7 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-haspopup="true"
-        className="relative p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all"
+        className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all"
         aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
