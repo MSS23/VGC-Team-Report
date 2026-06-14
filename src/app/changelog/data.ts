@@ -16,6 +16,18 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "6.01",
+    title: "Touch target + dead-code cleanup",
+    emoji: "🧹",
+    highlight: false,
+    items: [
+      { type: "improved", text: "Accessibility: Notifications bell button now meets the WCAG 2.5.8 minimum 44x44px touch target on mobile and tablet, matching the rest of the navbar." },
+      { type: "improved", text: "Types: useTranslation hook now has an explicit I18nContextValue return type, so callers get autocomplete and stable signature even when the context shape evolves." },
+      { type: "improved", text: "Dead code: removed the unused ConsentGate provider (37 lines, zero call sites — consent is handled by CookieBanner + PostHogProvider/ClarityProvider directly)." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
