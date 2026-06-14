@@ -93,6 +93,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   return React.createElement(I18nContext.Provider, { value }, children);
 }
 
-export function useTranslation() {
+export function useTranslation(): I18nContextValue {
   return useContext(I18nContext);
 }
