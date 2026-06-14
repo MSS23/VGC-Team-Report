@@ -1,2 +1,20 @@
-# Files changed on main recently
-(Branch cut fresh from main — no divergence. No recent main commits in last 7 days.)
+public/icon-192-maskable.png
+public/icon-512-maskable.png
+public/manifest.json
+public/sw.js
+scripts/generate-maskable-icon.mjs
+src/app/api/comments/[shareId]/route.ts
+src/app/api/reactions/route.ts
+src/app/api/user/saved/route.ts
+src/app/page.tsx
+src/components/explore/ExploreContent.tsx
+src/components/explore/ReportCard.tsx
+src/components/layout/Navbar.tsx
+src/components/report/AddOpponentInput.tsx
+src/components/report/CalcInput.tsx
+src/components/report/SlideNavControls.tsx
+src/components/ui/EditFab.tsx
+src/components/ui/ShareModal.tsx
+src/components/ui/ShareViewCTA.tsx
+src/lib/db.ts
+src/lib/utils/sprite-url.ts
