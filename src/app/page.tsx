@@ -155,6 +155,8 @@ function HomeContent() {
     setRole,
     summary,
     setSummary,
+    commonModes,
+    setCommonModes,
     teamName,
     setTeamName,
     tournamentName,
@@ -184,7 +186,6 @@ function HomeContent() {
     addGamePlan,
     removeGamePlan,
     updateGamePlanNotes,
-    updateGamePlanReplays,
     updateGamePlanBring,
     reorderGamePlanBring,
     updateGamePlanResult,
@@ -353,6 +354,7 @@ function HomeContent() {
         calcs,
         roles,
         teamSummary: summary || undefined,
+        commonModes,
         teamName: teamName || undefined,
         tournamentName: tournamentName || undefined,
         placement: placement || undefined,
@@ -367,7 +369,6 @@ function HomeContent() {
           gamePlans: p.gamePlans?.map((gp) => ({
             bring: gp.bring,
             notes: gp.notes,
-            replays: gp.replays,
             result: gp.result,
           })),
         })),
@@ -389,7 +390,7 @@ function HomeContent() {
     } finally {
       setCompareLoading(false);
     }
-  }, [activeShareId, sessionShareId, paste, notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, tags, analysis, speciesKeys]);
+  }, [activeShareId, sessionShareId, paste, notes, calcs, roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, tags, analysis, speciesKeys]);
 
   const handleClearCompare = useCallback(() => {
     setVersionDiff(null);
@@ -559,8 +560,10 @@ function HomeContent() {
     goToSlide(change.slide);
   }, [goToSlide]);
 
-  // Long-press a Pokemon card in overview → jump to its detail slide
-  const handlePokemonLongPress = useCallback((index: number) => goToSlide(index + 1), [goToSlide]);
+  // Long-press a Pokemon card in overview → jump to its detail slide.
+  // Logical layout (nothing hidden): 0 overview · 1 common-modes ·
+  // 2.. pokemon, so pokemon #index lives at logical index + 2.
+  const handlePokemonLongPress = useCallback((index: number) => goToSlide(index + 2), [goToSlide]);
 
   // Re-import: replace team paste and re-analyze
   const handleUpdatePaste = useCallback((newPaste: string) => {
@@ -680,37 +683,44 @@ function HomeContent() {
   // Slide reorder logic — determine if current slide is a reorderable Pokemon or matchup plan
   const pokemonCount = analysis?.pokemon.length ?? 0;
   const plansCount = plans.length;
-  const isPokemonSlide = physicalSlide >= 1 && physicalSlide <= pokemonCount;
-  const isMatchupPlanSlide = physicalSlide >= pokemonCount + 2 && physicalSlide < pokemonCount + 2 + plansCount;
+  // Physical slide layout (after inserting Common Modes at index 1):
+  //   0 overview · 1 common-modes · 2..pokemonCount+1 pokemon ·
+  //   pokemonCount+2 speed · +3 offensive · +4 defensive ·
+  //   pokemonCount+5..+plans matchup plans · last matchup sheet
+  const firstPokemonPhys = 2;
+  const lastPokemonPhys = pokemonCount + 1;
+  const firstMatchupPhys = pokemonCount + 5;
+  const isPokemonSlide = physicalSlide >= firstPokemonPhys && physicalSlide <= lastPokemonPhys;
+  const isMatchupPlanSlide = physicalSlide >= firstMatchupPhys && physicalSlide < firstMatchupPhys + plansCount;
 
   const canMoveSlideUp = creatorMode && (
-    (isPokemonSlide && physicalSlide > 1) ||
-    (isMatchupPlanSlide && physicalSlide > pokemonCount + 2)
+    (isPokemonSlide && physicalSlide > firstPokemonPhys) ||
+    (isMatchupPlanSlide && physicalSlide > firstMatchupPhys)
   );
   const canMoveSlideDown = creatorMode && (
-    (isPokemonSlide && physicalSlide < pokemonCount) ||
-    (isMatchupPlanSlide && physicalSlide < pokemonCount + 1 + plansCount)
+    (isPokemonSlide && physicalSlide < lastPokemonPhys) ||
+    (isMatchupPlanSlide && physicalSlide < firstMatchupPhys + plansCount - 1)
   );
 
   const handleMoveSlideUp = useCallback(() => {
     if (isPokemonSlide) {
-      const pokemonIdx = physicalSlide - 1;
+      const pokemonIdx = physicalSlide - firstPokemonPhys;
       reorderPokemon(pokemonIdx, pokemonIdx - 1);
     } else if (isMatchupPlanSlide) {
-      const planIdx = physicalSlide - (pokemonCount + 2);
+      const planIdx = physicalSlide - firstMatchupPhys;
       reorderPlans(planIdx, planIdx - 1);
     }
-  }, [isPokemonSlide, isMatchupPlanSlide, physicalSlide, pokemonCount, reorderPokemon, reorderPlans]);
+  }, [isPokemonSlide, isMatchupPlanSlide, physicalSlide, firstPokemonPhys, firstMatchupPhys, reorderPokemon, reorderPlans]);
 
   const handleMoveSlideDown = useCallback(() => {
     if (isPokemonSlide) {
-      const pokemonIdx = physicalSlide - 1;
+      const pokemonIdx = physicalSlide - firstPokemonPhys;
       reorderPokemon(pokemonIdx, pokemonIdx + 1);
     } else if (isMatchupPlanSlide) {
-      const planIdx = physicalSlide - (pokemonCount + 2);
+      const planIdx = physicalSlide - firstMatchupPhys;
       reorderPlans(planIdx, planIdx + 1);
     }
-  }, [isPokemonSlide, isMatchupPlanSlide, physicalSlide, pokemonCount, reorderPokemon, reorderPlans]);
+  }, [isPokemonSlide, isMatchupPlanSlide, physicalSlide, firstPokemonPhys, firstMatchupPhys, reorderPokemon, reorderPlans]);
 
   // Scroll to top of slide content when navigating between slides
   // Skip during walkthrough — the overlay handles its own scroll positioning
@@ -1220,6 +1230,8 @@ function HomeContent() {
           onRoleChange={setRole}
           teamSummary={summary}
           onTeamSummaryChange={setSummary}
+          commonModes={commonModes}
+          onCommonModesChange={isReadOnly ? undefined : setCommonModes}
           teamName={teamName}
           onTeamNameChange={setTeamName}
           tournamentName={tournamentName}
@@ -1240,7 +1252,6 @@ function HomeContent() {
           isPresentationMode={isPresentationStyle}
           plans={plans}
           onGamePlanNotesChange={updateGamePlanNotes}
-          onGamePlanReplaysChange={updateGamePlanReplays}
           onGamePlanBringChange={updateGamePlanBring}
           onReorderGamePlanBring={reorderGamePlanBring}
           onGamePlanResultChange={updateGamePlanResult}

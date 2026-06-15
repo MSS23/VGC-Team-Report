@@ -56,6 +56,11 @@ export function computeVersionDiff(
     changedFields.add("teamSummary");
     changedSlides.add(0);
   }
+  // Common Modes lives on its own slide (physical index 1), inserted after the overview.
+  if (JSON.stringify(current.commonModes ?? {}) !== JSON.stringify(old.commonModes ?? {})) {
+    changedFields.add("commonModes");
+    changedSlides.add(1);
+  }
   if ((current.teamName ?? "") !== (old.teamName ?? "")) {
     changedFields.add("teamName");
     changedSlides.add(0);
@@ -98,7 +103,8 @@ export function computeVersionDiff(
   for (let i = 0; i < pokemonCount; i++) {
     const key = speciesKeys[i];
     if (!key) continue;
-    const slideIndex = i + 1;
+    // +2: overview (0) and common-modes (1) precede the first Pokemon slide.
+    const slideIndex = i + 2;
     let hasChange = false;
 
     // Pokemon paste block changed (stats, moves, item, ability, etc.)
@@ -106,7 +112,7 @@ export function computeVersionDiff(
       changedFields.add(`pokemon:${i}`);
       changedSlides.add(0); // Overview shows pokemon cards
       changedSlides.add(slideIndex);
-      changedSlides.add(pokemonCount + 1); // Speed chart
+      changedSlides.add(pokemonCount + 2); // Speed chart
       hasChange = true;
     }
 
@@ -141,7 +147,7 @@ export function computeVersionDiff(
   if (currentBlocks.length !== oldBlocks.length) {
     changedFields.add("teamComposition");
     changedSlides.add(0);
-    changedSlides.add(pokemonCount + 1); // Speed chart
+    changedSlides.add(pokemonCount + 2); // Speed chart
   }
 
   // --- Matchup plans ---
@@ -158,7 +164,6 @@ export function computeVersionDiff(
           notes: gp.notes ?? "",
           bring: gp.bring ?? [],
           result: gp.result ?? null,
-          replays: gp.replays ?? [],
         }))
       : [],
   });
@@ -171,10 +176,12 @@ export function computeVersionDiff(
 
   if (plansChanged) {
     changedFields.add("matchupPlans");
+    // Matchup plan slides start at pokemonCount + 5 (overview, common-modes,
+    // N Pokemon, speed, offensive, defensive precede them).
     for (let i = 0; i < plansCount; i++) {
-      changedSlides.add(pokemonCount + 2 + i);
+      changedSlides.add(pokemonCount + 5 + i);
     }
-    changedSlides.add(pokemonCount + 2 + plansCount);
+    changedSlides.add(pokemonCount + 5 + plansCount); // matchup sheet
   }
 
   return {
@@ -215,9 +222,11 @@ export function getNavigableChanges(
     let slide = 0;
 
     if (label) {
-      // Overview fields are all on slide 0, except matchupPlans
-      if (field === "matchupPlans") {
-        slide = pokemonCount + 2 + plansCount; // matchup sheet
+      // Overview fields are all on slide 0, except commonModes (own slide) and matchupPlans.
+      if (field === "commonModes") {
+        slide = 1; // Common Modes slide
+      } else if (field === "matchupPlans") {
+        slide = pokemonCount + 5 + plansCount; // matchup sheet
       }
     } else {
       const match = field.match(/^(pokemon|notes|calcs|roles):(.+)$/);
@@ -235,7 +244,8 @@ export function getNavigableChanges(
       const pokemonIndex = speciesKeys.indexOf(key);
       // pokemon paste changes show on the pokemon detail slide
       // roles show on overview but we navigate to the pokemon slide for detail
-      slide = pokemonIndex >= 0 ? pokemonIndex + 1 : 0;
+      // +2: overview (0) and common-modes (1) precede the first Pokemon slide.
+      slide = pokemonIndex >= 0 ? pokemonIndex + 2 : 0;
     }
 
     if (label) {
@@ -251,6 +261,7 @@ export function getNavigableChanges(
 /** Field key labels for human-readable summaries */
 const FIELD_LABELS: Record<string, string> = {
   teamSummary: "Team summary",
+  commonModes: "How to play",
   teamName: "Team name",
   tournamentName: "Tournament name",
   placement: "Placement",

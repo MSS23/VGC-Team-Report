@@ -394,26 +394,35 @@ export function TeamOverview({
         (hasTournamentInfo || rentalCode || hasCreatorInfo) && (
           <FieldDiffHighlight field={["teamName", "tournamentName", "placement", "record", "rentalCode", "creatorName", "tags"]} label="Info changed">
           <div className="flex flex-col gap-2 px-1">
+            {/* The TEAM is the subject. teamName leads as H1; if it's missing
+                the team is still the page identity (the Pokemon grid below) —
+                we never promote a tournament name into the headline slot. */}
             {teamName && (
               <h1 className="text-2xl sm:text-4xl font-black text-text-primary tracking-tight leading-tight presenting:text-5xl">
                 {teamName}
               </h1>
             )}
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              {tournamentName && (
-                <h2 className={`font-extrabold text-text-primary tracking-tight leading-tight ${teamName ? "text-base sm:text-lg text-text-secondary" : "text-xl sm:text-3xl"}`}>
-                  {tournamentName}
-                </h2>
-              )}
-              {placement && (
-                <span className="text-sm font-extrabold text-accent bg-accent-surface px-3.5 py-1.5 rounded-lg border border-accent/20 tracking-wide shadow-sm shadow-accent/10">
-                  {placement}
-                </span>
-              )}
-              {record && (
-                <span className="text-sm text-text-secondary font-semibold">({record})</span>
-              )}
-            </div>
+            {/* Tournament result — attached metadata ABOUT the team, not the
+                report's headline. Framed per-result so the same team could
+                carry multiple results over time. Styled as muted chips. */}
+            {(tournamentName || placement || record) && (
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap text-text-secondary">
+                {placement && (
+                  <span className="text-xs font-extrabold text-accent bg-accent-surface px-2.5 py-1 rounded-md border border-accent/20 tracking-wide">
+                    {placement}
+                  </span>
+                )}
+                {tournamentName && (
+                  <span className="inline-flex items-baseline gap-1 text-xs sm:text-sm font-medium text-text-secondary">
+                    <span className="text-text-tertiary">Used at</span>
+                    <span className="font-bold text-text-primary">{tournamentName}</span>
+                  </span>
+                )}
+                {record && (
+                  <span className="text-xs text-text-tertiary font-semibold">({record})</span>
+                )}
+              </div>
+            )}
             {rentalCode && (
               <div className="flex items-center gap-3 self-start">
                 <button
@@ -488,9 +497,12 @@ export function TeamOverview({
       ) : (
         <FieldDiffHighlight field={["teamName", "tournamentName", "placement", "record", "rentalCode", "creatorName", "tags"]} label="Info changed">
         <div>
-          <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-3" data-walkthrough="tournament-info">
-            {t.tournamentInfo}
+          <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-1" data-walkthrough="tournament-info">
+            Team Details
           </h3>
+          <p className="text-[10px] text-text-tertiary mb-3 font-medium">
+            Name your team. Tournament results are optional metadata you can attach to it.
+          </p>
           <div className="mb-2">
             <input
               type="text"

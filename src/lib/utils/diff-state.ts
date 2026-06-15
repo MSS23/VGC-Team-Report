@@ -106,7 +106,6 @@ function matchupPlansChanged(oldPlans: SerializedMatchupPlan[], newPlans: Serial
       notes: gp.notes ?? "",
       bring: gp.bring ?? [],
       result: gp.result ?? null,
-      replays: gp.replays ?? [],
     })),
   });
   return oldPlans.some((p, i) => normalize(p) !== normalize(newPlans[i]));

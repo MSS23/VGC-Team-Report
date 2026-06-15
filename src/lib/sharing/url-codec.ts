@@ -8,10 +8,13 @@ const CalcEntrySchema = z.unknown();
 
 const NullableIndex = z.number().int().nullable();
 
+// NOTE: `replays` was removed from the schema (feature deleted). z.object()
+// strips unknown keys by default, so old shared links that still carry a
+// `replays` array decode fine — the leftover key is silently dropped during
+// validation rather than failing. Do NOT switch this to `.strict()`.
 export const SerializedGamePlanSchema = z.object({
   bring: z.tuple([NullableIndex, NullableIndex, NullableIndex, NullableIndex]),
   notes: z.string(),
-  replays: z.array(z.string()).optional(),
   result: z.enum(["W", "L", "T"]).nullable().optional(),
 });
 
@@ -42,6 +45,15 @@ export const ShareableStateSchema = z.object({
   calcs: z.record(z.string(), z.array(CalcEntrySchema)).optional(),
   roles: z.record(z.string(), z.string()).optional(),
   teamSummary: z.string().optional(),
+  commonModes: z
+    .object({
+      leads: z.string().optional(),
+      modes: z.string().optional(),
+      strengths: z.string().optional(),
+      weaknesses: z.string().optional(),
+      gameplan: z.string().optional(),
+    })
+    .optional(),
   teamName: z.string().optional(),
   tournamentName: z.string().optional(),
   placement: z.string().optional(),
@@ -83,7 +95,6 @@ export const ShareableStateSchema = z.object({
 export interface SerializedGamePlan {
   bring: [number | null, number | null, number | null, number | null];
   notes: string;
-  replays?: string[];
   result?: "W" | "L" | "T" | null;
 }
 
@@ -104,6 +115,13 @@ export interface ShareableState {
   calcs?: Record<string, CalcEntry[]>;
   roles?: Record<string, string>;
   teamSummary?: string;
+  commonModes?: {
+    leads?: string;
+    modes?: string;
+    strengths?: string;
+    weaknesses?: string;
+    gameplan?: string;
+  };
   teamName?: string;
   tournamentName?: string;
   placement?: string;

@@ -93,7 +93,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     target: "matchup-sheet",
     title: "Matchup Sheet",
     description:
-      "Paste opponent teams to plan your game strategy. Each matchup gets its own slide where you pick your bring-4, write notes, and log replays.",
+      "Paste opponent teams to plan your game strategy. Each matchup gets its own slide where you pick your bring-4 and write notes.",
     placement: "below",
     slide: "matchup-sheet",
   },

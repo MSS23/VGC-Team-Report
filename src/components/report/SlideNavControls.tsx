@@ -11,7 +11,7 @@ import { hapticLight } from "@/lib/utils/haptics";
  */
 const COVERAGE_KEYS = ["speed-tiers", "offensive-coverage", "defensive-coverage"];
 
-type Section = "overview" | "team" | "matchups";
+type Section = "overview" | "modes" | "team" | "matchups";
 
 interface SlideNavControlsProps {
   currentSlide: number;
@@ -77,27 +77,34 @@ export function SlideNavControls({
   const hiddenCount = hiddenStates?.filter(Boolean).length ?? 0;
 
   // ── Section model (key-based so it survives any physical reordering) ──
-  const { overviewPhys, firstPokemonPhys, firstMatchupPhys } = useMemo(() => {
+  const { overviewPhys, modesPhys, firstPokemonPhys, firstMatchupPhys } = useMemo(() => {
     const ov = allSlideKeys.indexOf("overview");
+    const modes = allSlideKeys.indexOf("common-modes");
     const poke = allSlideKeys.findIndex(
-      (k, i) => i > 0 && !COVERAGE_KEYS.includes(k) && !k.startsWith("matchup-"),
+      (k, i) =>
+        i > 0 &&
+        k !== "common-modes" &&
+        !COVERAGE_KEYS.includes(k) &&
+        !k.startsWith("matchup-"),
     );
     // "matchup-sheet" also starts with "matchup-", so this resolves to the
     // first matchup PLAN, or the summary sheet when there are no plans.
     const match = allSlideKeys.findIndex((k) => k.startsWith("matchup-"));
-    return { overviewPhys: ov, firstPokemonPhys: poke, firstMatchupPhys: match };
+    return { overviewPhys: ov, modesPhys: modes, firstPokemonPhys: poke, firstMatchupPhys: match };
   }, [allSlideKeys]);
 
   const sectionOf = useMemo(() => {
     return (physIdx: number): Section => {
       const k = allSlideKeys[physIdx] ?? "";
       if (physIdx === 0 || k === "overview") return "overview";
+      if (k === "common-modes") return "modes";
       if (k.startsWith("matchup-")) return "matchups";
       return "team";
     };
   }, [allSlideKeys]);
 
   const overviewAvail = overviewPhys >= 0 && visibleIndices.indexOf(overviewPhys) >= 0;
+  const modesAvail = modesPhys >= 0 && visibleIndices.indexOf(modesPhys) >= 0;
   const teamAvail = firstPokemonPhys >= 0 && visibleIndices.indexOf(firstPokemonPhys) >= 0;
   const matchupsAvail = firstMatchupPhys >= 0 && visibleIndices.indexOf(firstMatchupPhys) >= 0;
 
@@ -131,6 +138,7 @@ export function SlideNavControls({
 
   const tabs: { key: Section; label: string; avail: boolean; target: number }[] = [
     { key: "overview", label: t.overview, avail: overviewAvail, target: overviewPhys },
+    { key: "modes", label: "Modes", avail: modesAvail, target: modesPhys },
     { key: "team", label: "Team", avail: teamAvail, target: firstPokemonPhys },
     { key: "matchups", label: t.matchupsLabel, avail: matchupsAvail, target: firstMatchupPhys },
   ];

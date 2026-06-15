@@ -8,6 +8,7 @@ import type { SpriteConfig } from "@/lib/types/sprites";
 import type { ReportTags } from "@/lib/data/tags";
 import { TeamOverview } from "./TeamOverview";
 import { PokemonDetailSlide } from "./PokemonDetailSlide";
+import { CommonModesSlide, type CommonModesValue } from "./CommonModesSlide";
 import { useVersionDiff } from "@/lib/contexts/VersionDiffContext";
 
 // Lazy-load heavy analysis and matchup components
@@ -42,6 +43,8 @@ interface TeamReportProps {
   onRoleChange: (speciesKey: string, text: string) => void;
   teamSummary: string;
   onTeamSummaryChange: (text: string) => void;
+  commonModes?: CommonModesValue;
+  onCommonModesChange?: (value: CommonModesValue) => void;
   teamName?: string;
   onTeamNameChange?: (text: string) => void;
   tournamentName?: string;
@@ -62,7 +65,6 @@ interface TeamReportProps {
   isPresentationMode?: boolean;
   plans?: MatchupPlan[];
   onGamePlanNotesChange?: (matchupId: string, gamePlanId: string, notes: string) => void;
-  onGamePlanReplaysChange?: (matchupId: string, gamePlanId: string, replays: string[]) => void;
   onGamePlanBringChange?: (
     matchupId: string,
     gamePlanId: string,
@@ -132,6 +134,8 @@ export function TeamReport({
   onRoleChange,
   teamSummary,
   onTeamSummaryChange,
+  commonModes,
+  onCommonModesChange,
   teamName,
   onTeamNameChange,
   tournamentName,
@@ -152,7 +156,6 @@ export function TeamReport({
   isPresentationMode = false,
   plans = [],
   onGamePlanNotesChange,
-  onGamePlanReplaysChange,
   onGamePlanBringChange,
   onAddGamePlan,
   onRemoveGamePlan,
@@ -237,9 +240,24 @@ export function TeamReport({
     );
   }
 
-  // Slides 1 through pokemonCount: Individual Pokemon detail
-  if (currentSlide >= 1 && currentSlide <= pokemonCount) {
-    const pokemonIndex = currentSlide - 1;
+  // Slide 1: Common Modes ("How to pilot this team")
+  if (currentSlide === 1) {
+    return (
+      <>
+        {redactedNotice}
+        <CommonModesSlide
+          commonModes={commonModes}
+          onChange={onCommonModesChange ?? (() => {})}
+          isReadOnly={isReadOnly}
+          isPresentationMode={isPresentationMode}
+        />
+      </>
+    );
+  }
+
+  // Slides 2 through pokemonCount + 1: Individual Pokemon detail
+  if (currentSlide >= 2 && currentSlide <= pokemonCount + 1) {
+    const pokemonIndex = currentSlide - 2;
     const pokemon = analysis.pokemon[pokemonIndex];
     const key = speciesKeys[pokemonIndex];
 
@@ -266,7 +284,7 @@ export function TeamReport({
   }
 
   // Speed tier chart slide (after all Pokemon)
-  if (currentSlide === pokemonCount + 1) {
+  if (currentSlide === pokemonCount + 2) {
     return (
         <SpeedTierChart
           pokemon={analysis.pokemon}
@@ -279,7 +297,7 @@ export function TeamReport({
   }
 
   // Offensive coverage slide
-  if (currentSlide === pokemonCount + 2) {
+  if (currentSlide === pokemonCount + 3) {
     return (
         <div className="animate-fade-in">
           <OffensiveCoverageChart pokemon={analysis.pokemon} />
@@ -288,7 +306,7 @@ export function TeamReport({
   }
 
   // Defensive coverage slide
-  if (currentSlide === pokemonCount + 3) {
+  if (currentSlide === pokemonCount + 4) {
     return (
         <div className="animate-fade-in">
           <DefensiveCoverageChart pokemon={analysis.pokemon} />
@@ -298,7 +316,7 @@ export function TeamReport({
 
   // Per-matchup plan slides (visibility handled by navigation layer)
   if (plans.length > 0) {
-    const matchupSlideIndex = currentSlide - pokemonCount - 4;
+    const matchupSlideIndex = currentSlide - pokemonCount - 5;
 
     if (matchupSlideIndex >= 0 && matchupSlideIndex < plans.length) {
       const plan = plans[matchupSlideIndex];
@@ -308,7 +326,6 @@ export function TeamReport({
             yourPokemon={analysis.pokemon}
             isReadOnly={isReadOnly}
             onGamePlanNotesChange={onGamePlanNotesChange ?? (() => {})}
-            onGamePlanReplaysChange={onGamePlanReplaysChange ?? (() => {})}
             onGamePlanBringChange={onGamePlanBringChange ?? (() => {})}
             onReorderGamePlanBring={onReorderGamePlanBring ?? (() => {})}
             onGamePlanResultChange={onGamePlanResultChange ?? (() => {})}
@@ -321,7 +338,7 @@ export function TeamReport({
   }
 
   // Last slide: Matchup sheet (always available — expandable rows for game plans)
-  const matchupSheetSlide = pokemonCount + 4 + plans.length;
+  const matchupSheetSlide = pokemonCount + 5 + plans.length;
   if (currentSlide === matchupSheetSlide) {
     return (
         <MatchupSheet

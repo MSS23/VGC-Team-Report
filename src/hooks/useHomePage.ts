@@ -109,8 +109,8 @@ export function useHomePage() {
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
-    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault, privateFields,
-    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
+    roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault, privateFields,
+    setRole, setSummary, setCommonModes, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
   } = useTeamMeta(speciesKeys, shouldPersist);
 
   // Compute the effective Mega-or-base state for a given Pokemon index.
@@ -150,7 +150,7 @@ export function useHomePage() {
   );
   const {
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
-    updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,
+    updateGamePlanNotes, updateGamePlanBring,
     reorderGamePlanBring, updateGamePlanResult, togglePlanSlide, reorderPlans, setPlansFull,
   } = useMatchupPlans(speciesKeys, shouldPersist);
 
@@ -234,6 +234,7 @@ export function useHomePage() {
     calcs,
     roles,
     teamSummary: summary,
+    commonModes,
     teamName: teamName || undefined,
     tournamentName: tournamentName || undefined,
     placement: placement || undefined,
@@ -248,7 +249,6 @@ export function useHomePage() {
       gamePlans: p.gamePlans.map((gp) => ({
         bring: gp.bring,
         notes: gp.notes,
-        replays: gp.replays.length > 0 ? gp.replays : undefined,
         result: gp.result ?? undefined,
       })),
     })),
@@ -259,7 +259,7 @@ export function useHomePage() {
     // Pin viewers to the creator's accent theme so the report appearance
     // stays consistent across devices / incognito / other users.
     genTheme: genTheme || undefined,
-  }), [paste, notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId, privateFields, genTheme]);
+  }), [paste, notes, calcs, roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId, privateFields, genTheme]);
 
   // ── Share flow (extracted) ───────────────────────────────────────
   const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t });
@@ -393,6 +393,7 @@ export function useHomePage() {
     setMetaFull({
       roles: state.roles ?? {},
       summary: state.teamSummary ?? "",
+      commonModes: state.commonModes ?? undefined,
       teamName: state.teamName ?? undefined,
       tournamentName: state.tournamentName ?? undefined,
       placement: state.placement ?? undefined,
@@ -414,7 +415,6 @@ export function useHomePage() {
           id: crypto.randomUUID(),
           bring: gp.bring ?? [null, null, null, null],
           notes: gp.notes ?? "",
-          replays: gp.replays ?? [],
         })),
       })),
     );
@@ -526,6 +526,7 @@ export function useHomePage() {
     setMetaFull({
       roles: share.sharedState.roles ?? {},
       summary: share.sharedState.teamSummary ?? "",
+      commonModes: share.sharedState.commonModes ?? undefined,
       teamName: share.sharedState.teamName ?? undefined,
       tournamentName: share.sharedState.tournamentName ?? undefined,
       placement: share.sharedState.placement ?? undefined,
@@ -547,7 +548,6 @@ export function useHomePage() {
           id: crypto.randomUUID(),
           bring: gp.bring ?? [null, null, null, null],
           notes: gp.notes ?? "",
-          replays: gp.replays ?? [],
         })),
       })),
     );
@@ -661,6 +661,7 @@ export function useHomePage() {
     setMetaFull({
       roles: state.roles ?? {},
       summary: state.teamSummary ?? "",
+      commonModes: state.commonModes ?? undefined,
       teamName: state.teamName ?? undefined,
       tournamentName: state.tournamentName ?? undefined,
       placement: state.placement ?? undefined,
@@ -682,7 +683,6 @@ export function useHomePage() {
           id: crypto.randomUUID(),
           bring: gp.bring ?? [null, null, null, null],
           notes: gp.notes ?? "",
-          replays: gp.replays ?? [],
         })),
       })),
     );
@@ -779,7 +779,7 @@ export function useHomePage() {
 
     // Team content
     notes, setNote, calcs, addCalc, removeCalc, editCalc,
-    roles, setRole, summary, setSummary,
+    roles, setRole, summary, setSummary, commonModes, setCommonModes,
     teamName, setTeamName, tournamentName, setTournamentName, placement, setPlacement,
     record, setRecord, mvpIndex, setMvpIndex,
     rentalCode, setRentalCode, creatorName, setCreatorName, tags, setTags, templateId, setTemplateId,
@@ -790,7 +790,7 @@ export function useHomePage() {
     effectiveMega, hasMegaOverrides,
 
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
-    updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,
+    updateGamePlanNotes, updateGamePlanBring,
     reorderGamePlanBring, updateGamePlanResult, reorderPlans,
 
     getSpriteConfig,

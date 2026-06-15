@@ -187,11 +187,22 @@ const en = {
   notesLabel: "Notes",
   noNotes: "No notes.",
   gamePlanNotesPlaceholder: "Why are you bringing these four? What's the win condition?",
-  replays: "Replays",
-  optional: "optional",
-  pasteReplayPlaceholder: "Paste replay URL...",
   add: "Add",
   delete: "Delete",
+
+  // Common Modes ("How to pilot this team")
+  commonModesTitle: "Common Modes",
+  commonLeads: "Common Leads",
+  commonModesField: "Common Modes",
+  strengths: "Strengths",
+  weaknesses: "Weaknesses",
+  gameplan: "Game Plan",
+  commonModesEmpty: "No pilot notes yet",
+  commonLeadsPlaceholder: "Your go-to opening pairs and when to lead them (e.g. Incineroar + Flutter Mane vs. most teams).",
+  commonModesPlaceholder: "Recurring turn patterns and playstyles — how the team usually wants to flow.",
+  strengthsPlaceholder: "What this team beats and what it does well.",
+  weaknessesPlaceholder: "What gives this team trouble and how to play around it.",
+  gameplanPlaceholder: "How to pilot the team to win — key sequencing, win conditions, and what to prioritize.",
 
   // MatchupSheetRow
   plan: "plan",

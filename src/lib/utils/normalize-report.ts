@@ -33,9 +33,11 @@ function migratePlan(plan: AnyRecord) {
       opponentLabel: plan.opponentLabel ?? "",
       showSlide: plan.showSlide,
       gamePlans: plan.gamePlans.map((gp: AnyRecord) => ({
+        // `replays` is intentionally dropped: the feature was removed. Any
+        // legacy plan that still has a replays array is silently discarded
+        // here by simply not copying the key through.
         bring: Array.isArray(gp.bring) ? gp.bring : [null, null, null, null],
         notes: gp.notes ?? "",
-        replays: Array.isArray(gp.replays) ? gp.replays : [],
         result: gp.result ?? undefined,
       })),
     };
@@ -63,7 +65,6 @@ function migratePlan(plan: AnyRecord) {
     gamePlans: [{
       bring,
       notes: plan.notes ?? "",
-      replays: [],
     }],
   };
 }

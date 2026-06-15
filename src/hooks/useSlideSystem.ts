@@ -43,6 +43,7 @@ export function useSlideSystem(opts: SlideSystemOptions) {
     if (!analysis) return { allSlideKeys: [] as string[], allSlideLabels: [] as string[] };
     const keys: string[] = [
       "overview",
+      "common-modes",
       ...speciesKeys,
       "speed-tiers",
       "offensive-coverage",
@@ -52,6 +53,7 @@ export function useSlideSystem(opts: SlideSystemOptions) {
     ];
     const labels: string[] = [
       t.overview,
+      (t as unknown as Record<string, string | undefined>).commonModesTitle ?? "Common Modes",
       ...analysis.pokemon.map((mon) => mon.parsed.species),
       t.teamAnalysisLabel,
       "Offensive",

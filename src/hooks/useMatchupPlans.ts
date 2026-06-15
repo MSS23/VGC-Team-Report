@@ -8,7 +8,6 @@ export interface GamePlan {
   id: string;
   bring: [number | null, number | null, number | null, number | null];
   notes: string;
-  replays: string[];
   result?: GameResult;
 }
 
@@ -44,7 +43,6 @@ function createGamePlan(): GamePlan {
     id: crypto.randomUUID(),
     bring: [null, null, null, null],
     notes: "",
-    replays: [],
   };
 }
 
@@ -57,8 +55,10 @@ function migratePlan(plan: LegacyPlan): MatchupPlan {
       opponentLabel: plan.opponentLabel,
       showSlide: plan.showSlide,
       gamePlans: plan.gamePlans.map((gp) => ({
-        ...gp,
-        replays: gp.replays ?? [],
+        id: gp.id,
+        bring: gp.bring,
+        notes: gp.notes,
+        result: gp.result,
       })),
     };
   }
@@ -84,7 +84,6 @@ function migratePlan(plan: LegacyPlan): MatchupPlan {
         id: crypto.randomUUID(),
         bring,
         notes: plan.notes ?? "",
-        replays: [],
       },
     ],
   };
@@ -129,7 +128,6 @@ function loadAndMigrate(raw: string): MatchupPlan[] {
     gamePlans: plan.gamePlans.map((gp) => ({
       ...gp,
       bring: deduplicateBring(gp.bring),
-      replays: gp.replays ?? [],
     })),
   }));
 }
@@ -211,23 +209,6 @@ export function useMatchupPlans(speciesKeys: string[], persist = true) {
             ...p,
             gamePlans: p.gamePlans.map((gp) =>
               gp.id === gamePlanId ? { ...gp, notes } : gp
-            ),
-          };
-        })
-      );
-    },
-    []
-  );
-
-  const updateGamePlanReplays = useCallback(
-    (matchupId: string, gamePlanId: string, replays: string[]) => {
-      setPlans((prev) =>
-        prev.map((p) => {
-          if (p.id !== matchupId) return p;
-          return {
-            ...p,
-            gamePlans: p.gamePlans.map((gp) =>
-              gp.id === gamePlanId ? { ...gp, replays } : gp
             ),
           };
         })
@@ -335,7 +316,6 @@ export function useMatchupPlans(speciesKeys: string[], persist = true) {
     addGamePlan,
     removeGamePlan,
     updateGamePlanNotes,
-    updateGamePlanReplays,
     updateGamePlanBring,
     reorderGamePlanBring,
     updateGamePlanResult,

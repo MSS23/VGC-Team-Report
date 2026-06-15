@@ -148,7 +148,6 @@ export function PrintableReport({
             yourPokemon={analysis.pokemon}
             isReadOnly={true}
             onGamePlanNotesChange={noop}
-            onGamePlanReplaysChange={noop}
             onGamePlanBringChange={noop}
             onReorderGamePlanBring={noop}
             onGamePlanResultChange={noop}
