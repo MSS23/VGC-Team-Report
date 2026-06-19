@@ -3,6 +3,8 @@ const en = {
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "Build, share, and discover competitive Pokemon team reports",
+  appMission:
+    "More than a paste viewer — turn any team into a structured report with damage calcs, speed tiers, and matchup plans, so anyone can understand how it works and learn to pilot it.",
   appInputHint: "Import any PokéPaste URL, rental code, or Showdown export to get started",
 
   // Input screen

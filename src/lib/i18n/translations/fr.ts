@@ -4,6 +4,8 @@ const fr: TranslationKeys = {
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "Construisez, partagez et explorez des rapports d'equipe Pokemon competitif",
+  appMission:
+    "Bien plus qu'un visualiseur de paste : transformez n'importe quelle equipe en rapport structure avec calculs de degats, paliers de vitesse et plans de matchup, pour que chacun comprenne son fonctionnement et apprenne a la jouer.",
   appInputHint: "Collez un export Showdown ou une URL PokePaste pour commencer",
 
   loadSample: "Charger un exemple",

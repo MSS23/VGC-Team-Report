@@ -4,6 +4,8 @@ const ja: TranslationKeys = {
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "競技ポケモンのチームレポートを作成・共有・発見",
+  appMission:
+    "単なるペースト閲覧ツールではありません。どんなチームもダメージ計算・素早さライン・対面プランを備えた構造化レポートに変換し、誰もが構築を理解し、使いこなせるようになります。",
   appInputHint: "Showdownのエクスポートまたは PokePaste URLを貼り付けて開始",
 
   loadSample: "サンプルを読み込む",

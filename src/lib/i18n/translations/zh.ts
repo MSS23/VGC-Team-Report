@@ -4,6 +4,8 @@ const zh: TranslationKeys = {
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "创建、分享和发现竞技宝可梦队伍报告",
+  appMission:
+    "不只是粘贴查看器：把任何队伍转化为包含伤害计算、速度线和对战计划的结构化报告，让每个人都能理解队伍构成并学会如何操作。",
   appInputHint: "粘贴 Showdown 导出或 PokePaste 链接以开始",
 
   loadSample: "加载示例",

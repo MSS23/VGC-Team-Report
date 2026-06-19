@@ -4,6 +4,8 @@ const ko: TranslationKeys = {
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "경쟁 포켓몬 팀 리포트를 제작, 공유, 탐색하세요",
+  appMission:
+    "단순한 페이스트 뷰어가 아닙니다. 어떤 팀이든 데미지 계산, 스피드 티어, 매치업 플랜을 갖춘 체계적인 리포트로 만들어 누구나 구성을 이해하고 직접 운영하는 법을 배울 수 있습니다.",
   appInputHint: "Showdown 내보내기 또는 PokePaste URL을 붙여넣어 시작하세요",
 
   loadSample: "샘플 불러오기",

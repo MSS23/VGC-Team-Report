@@ -284,8 +284,11 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           {t.appTitle}
           <span className="text-accent"> {t.appTitleAccent}</span>
         </h1>
-        <p className="text-sm sm:text-base text-text-secondary mt-3 font-medium max-w-md mx-auto">
+        <p className="text-sm sm:text-base text-text-secondary mt-3 font-semibold max-w-md mx-auto">
           {t.appSubtitle}
+        </p>
+        <p className="text-xs sm:text-sm text-text-tertiary mt-2 leading-relaxed max-w-lg mx-auto">
+          {t.appMission}
         </p>
       </motion.div>
 
