@@ -35,8 +35,17 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
   const [revokeConfirm, setRevokeConfirm] = useState(false);
   const [revokeSuccess, setRevokeSuccess] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fetchedRef = useRef(false);
+  const collaboratorsRef = useRef<Collaborator[]>(collaborators);
 
   const isOriginalOwner = userId === ownerId;
+
+  // Keep a ref to the latest collaborators so the search effect can read it
+  // without depending on the array (a new reference every fetch/add/remove
+  // would otherwise retrigger the debounce and churn the UI).
+  useEffect(() => {
+    collaboratorsRef.current = collaborators;
+  }, [collaborators]);
 
   const fetchCollaborators = useCallback(async () => {
     setLoading(true);
@@ -54,9 +63,17 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
     }
   }, [shareId]);
 
+  // Fetch exactly once per open. Guarding on collaborators.length caused a
+  // re-fetch loop for shares with zero collaborators (the GET legitimately
+  // returns []), which flipped `loading` repeatedly and flashed the
+  // spinner ↔ content swap. A ref tracks whether we've already fetched.
   useEffect(() => {
-    if (open && collaborators.length === 0 && !loading) fetchCollaborators();
-  }, [open, collaborators.length, loading, fetchCollaborators]);
+    if (open && !fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchCollaborators();
+    }
+    if (!open) fetchedRef.current = false; // allow a fresh fetch on reopen
+  }, [open, fetchCollaborators]);
 
   // Debounced user search
   useEffect(() => {
@@ -73,7 +90,9 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
         );
         if (res.ok) {
           const data = await res.json();
-          const existingIds = new Set(collaborators.map((c) => c.userId));
+          const existingIds = new Set(
+            collaboratorsRef.current.map((c) => c.userId),
+          );
           setResults(
             (data.users ?? []).filter(
               (u: SearchResult) => !existingIds.has(u.id),
@@ -89,7 +108,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
     return () => {
       if (searchTimer.current) clearTimeout(searchTimer.current);
     };
-  }, [query, collaborators]);
+  }, [query]);
 
   const handleAdd = async (user: SearchResult) => {
     setAdding(user.id);
