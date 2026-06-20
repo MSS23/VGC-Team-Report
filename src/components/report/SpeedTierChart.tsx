@@ -5,7 +5,7 @@ import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { PokemonSprite } from "./PokemonSprite";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
-import { POKEMON_DATA } from "@/lib/data/pokemon";
+import { lookupPokemon } from "@/lib/data/pokemon";
 import { CHAMPIONS_DEX } from "@/lib/data/champions-dex";
 import { calculateStat, calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
@@ -146,7 +146,7 @@ function SideModifierToggle({
 
 export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode, regulation }: SpeedTierChartProps) {
   const META_THREATS = regulation === "Reg M-A"
-    ? META_THREATS_CHAMPIONS.filter(k => POKEMON_DATA[k] && CHAMPIONS_DEX.has(k))
+    ? META_THREATS_CHAMPIONS.filter(k => lookupPokemon(k) && CHAMPIONS_DEX.has(k))
     : META_THREATS_DEFAULT;
   const { t } = useTranslation();
   const [yourModifiers, setYourModifiers] = useState<Set<SpeedModifier>>(new Set());
@@ -217,7 +217,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       const hasMegaStone = !!detectMegaFromItem(mon.parsed.item, mon.parsed.species);
       if (!hasMegaStone) return [];
       return megaKeys.flatMap((megaKey) => {
-        const megaData = POKEMON_DATA[megaKey];
+        const megaData = lookupPokemon(megaKey);
         if (!megaData) return [];
         let megaBaseSpe: number;
         if (isChampions && mon.data) {
@@ -260,7 +260,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     if (!showMetaThreats) return [];
     return META_THREATS
       .map(key => {
-        const data = POKEMON_DATA[key];
+        const data = lookupPokemon(key);
         if (!data) return null;
         const base = data.baseStats.spe;
         const isMA = regulation === "Reg M-A";
