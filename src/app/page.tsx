@@ -1127,7 +1127,7 @@ function HomeContent() {
       <VersionDiffProvider value={versionDiffContextValue}>
       <div
         ref={swipeRef}
-        className={`max-w-5xl mx-auto slide-content overflow-x-hidden sm:h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:overflow-y-auto sm:scrollbar-thin pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:pb-16 ${
+        className={`max-w-5xl mx-auto slide-content overflow-x-hidden min-h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:min-h-0 sm:h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:overflow-y-auto sm:scrollbar-thin pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:pb-16 ${
           isPresentationStyle
             ? "px-3 sm:px-8 py-2 sm:py-4"
             : "px-2 sm:px-6 lg:px-8 py-2 sm:py-6 creator:px-8 creator:py-6"
@@ -1498,7 +1498,12 @@ function HomeContent() {
           onNext={nextSlide}
           onGoTo={goToSlide}
           slideLabels={slideLabels}
-          autoHide={presentationMode}
+          // Bottom nav stays locked + visible at all times (even in
+          // presentation mode). Report navigation is non-obvious, so the tab
+          // bar must always be discoverable — and the old hover-to-reveal
+          // auto-hide was unusable on touch devices anyway (no hover to bring
+          // it back). Keeping it pinned is the safer, clearer default.
+          autoHide={false}
           hiddenStates={creatorMode ? slideHiddenStates : undefined}
           onToggleHide={creatorMode ? handleToggleCurrentSlide : undefined}
           isCurrentHidden={creatorMode ? isSlideHiddenAt(physicalSlide) : false}

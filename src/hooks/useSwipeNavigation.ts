@@ -43,6 +43,17 @@ export function useSwipeNavigation({
   const touchEnd = useRef<{ x: number; y: number } | null>(null);
   const isDragging = useRef(false);
   const ignoreSwipe = useRef(false);
+  // The nearest horizontally-scrollable ancestor under the finger at touch
+  // start (e.g. the coverage-chart heatmap). We DON'T blanket-disable swipe
+  // when one exists — instead we let it consume the gesture only while it has
+  // room to scroll in the swipe direction, then hand off to slide navigation
+  // at its edge. This is the native-carousel behaviour and is what makes
+  // "swipe to the next page" reliably work even on the wide data tables.
+  const innerScroller = useRef<HTMLElement | null>(null);
+  // Locks the gesture to "scroll" (let the inner table scroll) or "nav"
+  // (navigate slides) on the first horizontal-dominant move, so a single
+  // gesture never does both.
+  const gestureMode = useRef<"scroll" | "nav" | null>(null);
   const attachedElRef = useRef<HTMLDivElement | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
 
@@ -69,6 +80,8 @@ export function useSwipeNavigation({
       if (!callbacksRef.current.enabled) return;
       touchEnd.current = null;
       isDragging.current = false;
+      gestureMode.current = null;
+      innerScroller.current = null;
 
       const startX = e.targetTouches[0].clientX;
 
@@ -81,12 +94,14 @@ export function useSwipeNavigation({
         return;
       }
 
-      // Don't hijack swipes that start inside a horizontally scrollable element
-      // (e.g. coverage chart tables with overflow-x-auto)
+      // Record the nearest horizontally-scrollable ancestor (e.g. a coverage
+      // heatmap). We no longer abort the swipe just because one exists —
+      // handleTouchMove decides per-gesture whether the table still has room
+      // to scroll in the swipe direction, and only then yields to it.
       let node = e.target as HTMLElement | null;
       while (node && node !== el) {
         if (node.scrollWidth > node.clientWidth + 1 && getComputedStyle(node).overflowX !== "hidden") {
-          ignoreSwipe.current = true;
+          innerScroller.current = node;
           break;
         }
         node = node.parentElement;
@@ -108,26 +123,49 @@ export function useSwipeNavigation({
       const deltaX = touchStart.current.x - touchEnd.current.x;
       const deltaY = touchStart.current.y - touchEnd.current.y;
 
-      // Only apply visual feedback if horizontal swipe is dominant
-      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-        isDragging.current = true;
-        // Prevent horizontal scroll — swipe should navigate slides, not scroll
-        e.preventDefault();
-        // Clamp drag offset to a subtle range (-20px to 20px) with resistance
-        const offset = Math.max(-20, Math.min(20, -deltaX * 0.15));
-        el.style.transform = `translateX(${offset}px)`;
-        el.style.transition = "none";
+      // Wait until the gesture is clearly horizontal before doing anything.
+      if (Math.abs(deltaX) <= Math.abs(deltaY) || Math.abs(deltaX) <= 10) return;
+
+      // Decide once, on the first horizontal-dominant move, whether this
+      // gesture scrolls the inner table or navigates slides — then lock it so
+      // a single swipe never does both.
+      if (gestureMode.current === null) {
+        const sc = innerScroller.current;
+        if (sc) {
+          const maxScroll = sc.scrollWidth - sc.clientWidth;
+          // deltaX > 0 → finger moving left → "next" → table would scroll right.
+          // deltaX < 0 → finger moving right → "prev" → table would scroll left.
+          const canScrollInDirection =
+            deltaX > 0 ? sc.scrollLeft < maxScroll - 1 : sc.scrollLeft > 1;
+          gestureMode.current = canScrollInDirection ? "scroll" : "nav";
+        } else {
+          gestureMode.current = "nav";
+        }
       }
+
+      // Let the inner table own this gesture — don't preventDefault (so it can
+      // scroll natively) and don't drag the slide.
+      if (gestureMode.current === "scroll") return;
+
+      isDragging.current = true;
+      // Prevent horizontal scroll — swipe should navigate slides, not scroll
+      e.preventDefault();
+      // Clamp drag offset to a subtle range (-20px to 20px) with resistance
+      const offset = Math.max(-20, Math.min(20, -deltaX * 0.15));
+      el.style.transform = `translateX(${offset}px)`;
+      el.style.transition = "none";
     };
 
     const handleTouchEnd = () => {
       const { enabled: en, threshold: thr, onSwipeLeft: swL, onSwipeRight: swR } = callbacksRef.current;
 
-      if (!en || !touchStart.current || !touchEnd.current || ignoreSwipe.current) {
+      if (!en || !touchStart.current || !touchEnd.current || ignoreSwipe.current || gestureMode.current === "scroll") {
         touchStart.current = null;
         touchEnd.current = null;
         isDragging.current = false;
         ignoreSwipe.current = false;
+        gestureMode.current = null;
+        innerScroller.current = null;
         return;
       }
 
@@ -157,6 +195,8 @@ export function useSwipeNavigation({
       touchStart.current = null;
       touchEnd.current = null;
       isDragging.current = false;
+      gestureMode.current = null;
+      innerScroller.current = null;
     };
 
     el.addEventListener("touchstart", handleTouchStart, { passive: true });
