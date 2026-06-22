@@ -106,12 +106,26 @@ export function useExploreUrlSync(): ExploreUrlSyncResult {
     return parseFiltersFromUrl(window.location.search);
   });
 
-  // Sync state -> URL on every filter change
+  // Sync state -> URL on filter change.
+  //
+  // Debounced + de-duped on purpose: this used to call replaceState on every
+  // keystroke in the search box. Browsers cap history.replaceState() at ~100
+  // calls / 30s and throw SecurityError past that — trivially hit by typing a
+  // search query. Coalescing bursts into a single write (and skipping no-op
+  // writes when the URL already matches) keeps us well under the cap while
+  // still landing on the correct shareable URL once the user pauses.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const search = buildUrlSearch(filters);
     const newUrl = search ? `${window.location.pathname}?${search}` : window.location.pathname;
-    window.history.replaceState({}, "", newUrl);
+    if (newUrl === window.location.pathname + window.location.search) return;
+    const id = window.setTimeout(() => {
+      // Re-check at write time — another effect run may have already synced it.
+      if (newUrl !== window.location.pathname + window.location.search) {
+        window.history.replaceState({}, "", newUrl);
+      }
+    }, 300);
+    return () => window.clearTimeout(id);
   }, [filters]);
 
   const setQuery = (v: string) => setFilters((f) => ({ ...f, query: v }));
