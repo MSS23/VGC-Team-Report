@@ -333,7 +333,19 @@ export function Navbar(props: NavbarProps) {
               <span className="text-accent">Report</span>
             </a>
           ) : isPresentationStyle ? (
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 text-sm text-text-secondary">
+              {/* Home — reports open straight into presentation, so this is the
+                  only way back out to the rest of the app from the deck. */}
+              <a
+                href="/"
+                aria-label="Home"
+                title="Home"
+                className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 -ml-1.5 sm:-ml-2 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </a>
               {tournamentName && (
                 <>
                   <span className="font-extrabold text-text-primary truncate tracking-tight">{tournamentName}</span>
