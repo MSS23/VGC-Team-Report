@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { allSpecies } from "@/lib/data/dex-subset";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 import { PokemonSprite } from "./PokemonSprite";
 
 interface InlinePokemonEditorProps {
@@ -88,6 +89,7 @@ export function InlinePokemonEditor({
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -95,6 +97,9 @@ export function InlinePokemonEditor({
     // Autofocus once mounted so the user can start typing immediately
     inputRef.current?.focus();
   }, []);
+
+  // Trap Tab/Shift+Tab inside the dialog while it's mounted (WCAG 2.4.3).
+  useFocusTrap(dialogRef, mounted);
 
   // ESC closes; arrow keys + Enter navigate the list
   const results = useMemo(() => searchSpecies(query, currentSpecies), [query, currentSpecies]);
@@ -127,9 +132,11 @@ export function InlinePokemonEditor({
 
   return createPortal(
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center bg-black/50 backdrop-blur-sm pt-16 sm:pt-0"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       role="dialog"
+      aria-modal="true"
       aria-label="Replace Pokemon"
     >
       <div className="bg-surface border border-border rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-fade-in">
