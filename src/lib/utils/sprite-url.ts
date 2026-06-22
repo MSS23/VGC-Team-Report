@@ -1,4 +1,4 @@
-import { resolveSlug } from "./sprite-slug";
+import { resolveSlug, STATIC_ONLY_SLUGS } from "./sprite-slug";
 
 const BASE_URL = "https://play.pokemonshowdown.com/sprites";
 
@@ -47,7 +47,12 @@ export function getGenThemedSpriteUrls(
   const style = GEN_SPRITE_STYLES[genTheme] ?? GEN_SPRITE_STYLES.gen9;
   const urls: string[] = [];
 
-  if (animated) {
+  // Some species (e.g. the Treasures of Ruin) have no animated GIF on
+  // Showdown — trying one just 404s and flashes a broken image. Force the
+  // static path for those even when animation was requested.
+  const wantAnimated = animated && !STATIC_ONLY_SLUGS.has(slug);
+
+  if (wantAnimated) {
     // 1. Gen-themed animated (e.g., gen5ani for retro themes, ani for modern)
     urls.push(`${BASE_URL}/${shiny ? style.animatedShiny : style.animated}/${slug}.gif`);
     // 2. Fallback to both animated styles (ani has modern, gen5ani has wider coverage)
@@ -76,8 +81,15 @@ export function getGenThemedSpriteUrls(
     if (style.folder !== "gen5") {
       urls.push(`${BASE_URL}/${shiny ? "gen5-shiny" : "gen5"}/${slug}.png`);
     }
-    // 4. Animated fallback
-    urls.push(`${BASE_URL}/${shiny ? "ani-shiny" : "ani"}/${slug}.gif`);
+    if (STATIC_ONLY_SLUGS.has(slug)) {
+      // No animated GIF exists for these, and retro static folders don't
+      // carry gen-9 mons — guarantee the modern HOME PNG so a retro theme
+      // still resolves to the real sprite instead of the substitute doll.
+      urls.push(`${BASE_URL}/${shiny ? "home-shiny" : "home"}/${slug}.png`);
+    } else {
+      // 4. Animated fallback
+      urls.push(`${BASE_URL}/${shiny ? "ani-shiny" : "ani"}/${slug}.gif`);
+    }
   }
 
   // No base-form fallback for Megas — see sprite-slug.ts comment.

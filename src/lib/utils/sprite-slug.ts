@@ -42,6 +42,21 @@ export function resolveSlug(species: string): string {
   return SLUG_MAP[slug] ?? slug;
 }
 
+/**
+ * Resolved slugs that Showdown never produced an animated GIF for, so the
+ * `ani`/`gen5ani` folders 404. The Treasures of Ruin (Chien-Pao, Chi-Yu,
+ * Ting-Lu, Wo-Chien) are the common VGC offenders. For these we skip the
+ * animated attempts entirely and serve the static HOME sprite directly —
+ * otherwise the team preview fires two 404s and flashes a broken image
+ * before falling back. Keyed by the RESOLVED slug (post-SLUG_MAP).
+ */
+export const STATIC_ONLY_SLUGS = new Set<string>([
+  "chienpao",
+  "chiyu",
+  "tinglu",
+  "wochien",
+]);
+
 /** Ordered sprite URLs: animated GIF first, then static PNG fallbacks.
  *
  * No silent base-form fallback for Megas — pretending a base-form
