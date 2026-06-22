@@ -487,7 +487,16 @@ export function Navbar(props: NavbarProps) {
 
           {/* Creator mode toggle — in overflow menu */}
 
-          {/* Exit presentation (only visible in presentation mode) */}
+          {/* Presentation mode — top-right control is role-based, NOT a generic
+              "Exit". A shared report opens straight into presentation, so for a
+              viewer this mode IS the report; "exit to what?" is meaningless.
+              Instead we branch on edit-capability:
+                • can edit (owner or collaborator) → "Edit" (drops out of
+                  presentation and unlocks editing in one tap)
+                • plain viewer (can't edit) → "Build your own", the one action
+                  that matters and the natural way back to the builder.
+              Share + Save stay reachable in-place (viewer Share button above +
+              the overflow menu), so nobody has to leave the deck to act. */}
           {isPresentationStyle && (
             <>
               <button
@@ -500,25 +509,32 @@ export function Navbar(props: NavbarProps) {
                   <rect x="2" y="4" width="20" height="16" rx="2" /><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
                 </svg>
               </button>
-              {/* Owner-only pencil — drops out of presentation mode and unlocks
-                  editing in one tap. Placed before Exit so the primary owner
-                  action is always reachable in the top-right corner. */}
-              {isOwner && isEditingUnlocked && onEditPresentation && (
-                <button
-                  type="button"
-                  onClick={onEditPresentation}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer"
-                  title="Edit this report"
-                  aria-label="Edit this report"
+              {isSharedView && !isEditingUnlocked ? (
+                /* Plain viewer of someone else's shared report — can't edit.
+                   Surface the one action that matters (and the way back to the
+                   builder) instead of a meaningless "Exit". */
+                <a
+                  href="/"
+                  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
-                </button>
+                  {t.buildYourOwn}
+                </a>
+              ) : (
+                /* Owner, collaborator, or the author previewing their own local
+                   draft — all can edit. "Edit" drops out of presentation and
+                   turns editing on in one tap. */
+                onEditPresentation && (
+                  <Button variant="ghost" size="sm" onClick={onEditPresentation} className="gap-1.5">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                    Edit
+                  </Button>
+                )
               )}
-              <Button variant="ghost" size="sm" onClick={() => onSetPresentationMode(false)}>
-                {t.exit}
-              </Button>
             </>
           )}
 
