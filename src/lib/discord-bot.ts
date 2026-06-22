@@ -12,7 +12,7 @@ function getConfig() {
   return { token, channelId, configured: !!(token && channelId) };
 }
 
-async function discordFetch(path: string, options: RequestInit = {}) {
+async function discordFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
   const { token } = getConfig();
   if (!token) throw new Error("DISCORD_BOT_TOKEN not set");
 
@@ -30,7 +30,7 @@ async function discordFetch(path: string, options: RequestInit = {}) {
     throw new Error(`Discord API ${res.status}: ${text}`);
   }
 
-  return res.json();
+  return res.json() as Promise<T>;
 }
 
 const TYPE_COLORS: Record<string, number> = {
@@ -101,7 +101,7 @@ export async function postFeedbackEmbed(opts: {
   }
 
   // Post the embed
-  const message = await discordFetch(`/channels/${channelId}/messages`, {
+  const message = await discordFetch<{ id: string }>(`/channels/${channelId}/messages`, {
     method: "POST",
     body: JSON.stringify({
       embeds: [{

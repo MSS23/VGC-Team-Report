@@ -1,5 +1,12 @@
 const POKEPASTE_REGEX = /^https?:\/\/pokepast\.es\/[a-zA-Z0-9]+\/?(?:raw\/?)?$/;
 
+interface PokePasteResponse {
+  error?: string;
+  paste?: string;
+  title?: string | null;
+  url?: string;
+}
+
 export function isPokePasteUrl(input: string): boolean {
   return POKEPASTE_REGEX.test(input.trim());
 }
@@ -16,11 +23,11 @@ interface PokePasteResult {
 export async function fetchPokePaste(url: string): Promise<PokePasteResult> {
   const res = await fetch(`/api/pokepaste?url=${encodeURIComponent(url.trim())}`);
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as PokePasteResponse;
     throw new Error(data.error ?? `Failed to fetch (${res.status})`);
   }
-  const data = await res.json();
-  return { paste: data.paste, title: data.title ?? null };
+  const data = (await res.json()) as PokePasteResponse;
+  return { paste: data.paste ?? "", title: data.title ?? null };
 }
 
 interface CreatePokePasteInput {
@@ -41,10 +48,10 @@ export async function createPokePaste(input: CreatePokePasteInput): Promise<stri
     body: JSON.stringify(input),
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as PokePasteResponse;
     throw new Error(data.error ?? `Failed to create (${res.status})`);
   }
-  const data = await res.json();
+  const data = (await res.json()) as PokePasteResponse;
   if (!data.url || typeof data.url !== "string") {
     throw new Error("PokéPaste response missing url");
   }
