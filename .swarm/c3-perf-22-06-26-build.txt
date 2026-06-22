@@ -1,0 +1,411 @@
+
+> vgc-team-report@0.1.0 build
+> next build
+
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+▲ Next.js 16.2.6 (Turbopack)
+- Experiments (use with caution):
+  · optimizePackageImports
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 17.7s
+  Running TypeScript ...
+  Finished TypeScript in 13.3s ...
+  Collecting page data using 3 workers ...
+⚠ Using edge runtime on a page currently disables static generation for that page
+  Generating static pages using 3 workers (0/103) ...
+Failed to fetch teams for venusaur-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for banette-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for blastoise-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for tyranitar-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for chimecho-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for garchomp-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for glalie-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for scizor-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for lopunny-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for froslass-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for gyarados-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for emboar-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for alakazam-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for excadrill-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+  Generating static pages using 3 workers (25/103) 
+Failed to fetch teams for chandelure-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for golurk-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for kangaskhan-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for charizard-mega-y Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for charizard-mega-x Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for aerodactyl-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for heracross-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for chesnaught-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for houndoom-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for gengar-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for aggron-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for delphox-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for gardevoir-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for altaria-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for greninja-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for floette-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for lucario-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for absol-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for hawlucha-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for sableye-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for crabominable-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for abomasnow-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for drampa-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for scovillain-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+  Generating static pages using 3 workers (51/103) 
+Failed to fetch teams for gallade-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for audino-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for pinsir-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for slowbro-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for glimmora-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for steelix-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for ampharos-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for beedrill-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for manectric-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for pidgeot-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for clefable-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for victreebel-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for starmie-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for dragonite-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for meganium-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for skarmory-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for feraligatr-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+  Generating static pages using 3 workers (77/103) 
+Failed to fetch teams for medicham-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for sharpedo-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Failed to fetch teams for camerupt-mega Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:14:8522)
+    at <unknown> (.next/server/chunks/ssr/src_lib_db_ts_0pgj1ka._.js:18:376)
+    at q (.next/server/chunks/ssr/src_023zwjy._.js:1:525704)
+    at r (.next/server/chunks/ssr/src_023zwjy._.js:17:1226)
+Sitemap generation error: Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (.next/server/chunks/src_lib_db_ts_0n6r210._.js:14:8522)
+    at tC (.next/server/chunks/src_lib_db_ts_0n6r210._.js:18:289)
+✓ Generating static pages using 3 workers (103/103) in 1096ms
+  Finalizing page optimization ...
+
+Route (app)                              Revalidate  Expire
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/bot
+├ ƒ /api/champions/meta
+├ ƒ /api/changelog/[shareId]
+├ ƒ /api/cleanup
+├ ƒ /api/comments/[shareId]
+├ ƒ /api/comments/[shareId]/[commentId]
+├ ƒ /api/comments/flag
+├ ƒ /api/creator/[name]
+├ ƒ /api/cron/daily-ops
+├ ƒ /api/cron/posthog-errors
+├ ƒ /api/cron/weekly-digest
+├ ƒ /api/cron/weekly-report
+├ ƒ /api/discord
+├ ƒ /api/explore
+├ ƒ /api/feedback
+├ ƒ /api/keep-alive
+├ ƒ /api/match-log
+├ ƒ /api/migrate
+├ ƒ /api/oembed
+├ ƒ /api/pokepaste
+├ ƒ /api/reactions
+├ ƒ /api/reactions/[shareId]
+├ ƒ /api/setup
+├ ƒ /api/share
+├ ƒ /api/share/[id]
+├ ƒ /api/share/[id]/collaborators
+├ ƒ /api/share/[id]/fork
+├ ƒ /api/share/[id]/versions
+├ ƒ /api/share/[id]/versions/[version]
+├ ƒ /api/spotlight
+├ ƒ /api/sprite
+├ ƒ /api/sync/[id]
+├ ƒ /api/team-graphic
+├ ƒ /api/user/analytics
+├ ƒ /api/user/collaborations
+├ ƒ /api/user/collections
+├ ƒ /api/user/collections/[id]
+├ ƒ /api/user/delete
+├ ƒ /api/user/drafts
+├ ƒ /api/user/export
+├ ƒ /api/user/feed
+├ ƒ /api/user/follow
+├ ƒ /api/user/notifications
+├ ƒ /api/user/profile
+├ ƒ /api/user/reports
+├ ƒ /api/user/reports/[shareId]
+├ ƒ /api/user/saved
+├ ƒ /api/user/search
+├ ƒ /api/views/[shareId]
+├ ƒ /api/webhooks/clerk
+├ ƒ /api/webhooks/linear
+├ ƒ /api/webhooks/posthog
+├ ○ /champions
+├ ● /champions/[pokemon]                         1h      1y
+│ ├ /champions/mega-kangaskhan                   1h      1y
+│ ├ /champions/mega-charizard-y                  1h      1y
+│ ├ /champions/mega-charizard-x                  1h      1y
+│ └ [+55 more paths]
+├ ƒ /champions/-/opengraph-image
+├ ƒ /champions/opengraph-image
+├ ○ /changelog
+├ ○ /compare
+├ ƒ /creator/[name]
+├ ○ /dashboard
+├ ƒ /dashboard/notifications
+├ ○ /dashboard/privacy
+├ ○ /dashboard/profile
+├ ƒ /embed/[id]
+├ ○ /explore
+├ ƒ /explore/opengraph-image
+├ ○ /faq
+├ ○ /feedback
+├ ƒ /notifications
+├ ƒ /opengraph-image
+├ ○ /privacy
+├ ƒ /s/[id]
+├ ƒ /s/-/opengraph-image
+├ ○ /sitemap.xml
+├ ○ /terms
+└ ○ /tournaments
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+

@@ -1,2 +1,28 @@
-# Files changed on main recently
-(Branch cut fresh from main — no divergence. No recent main commits in last 7 days.)
+
+src/app/page.tsx
+src/components/input/PasteInput.tsx
+src/components/report/CommonModesSlide.tsx
+src/components/report/MatchupPlanSlide.tsx
+src/components/report/SlideNavControls.tsx
+src/components/report/SpeedTierChart.tsx
+src/components/report/TeamOverview.tsx
+src/components/report/TeamReport.tsx
+src/components/social/CollaboratorPanel.tsx
+src/components/ui/PdfExport.tsx
+src/hooks/useHomePage.ts
+src/hooks/useMatchupPlans.ts
+src/hooks/useSlideSystem.ts
+src/hooks/useTeamMeta.ts
+src/hooks/useWalkthrough.ts
+src/lib/i18n/translations/en.ts
+src/lib/i18n/translations/es.ts
+src/lib/i18n/translations/fr.ts
+src/lib/i18n/translations/it.ts
+src/lib/i18n/translations/ja.ts
+src/lib/i18n/translations/ko.ts
+src/lib/i18n/translations/zh.ts
+src/lib/sharing/url-codec.ts
+src/lib/utils/diff-state.ts
+src/lib/utils/game-plan-helpers.tsx
+src/lib/utils/normalize-report.ts
+src/lib/utils/version-diff.ts

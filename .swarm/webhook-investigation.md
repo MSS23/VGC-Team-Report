@@ -1,22 +1,40 @@
-# Linear Webhook Investigation — 2026-05-28
+# Linear webhook health check — 22 June 2026
 
-## Root causes found (same as prior 7 runs — no PR has been merged):
+## Handler location
+`src/app/api/webhooks/linear/route.ts`
 
-1. **Wrong env var name**: `LINEAR_WEBHOOK_SECRET` → should be `LINEAR_WEBHOOK_SIGNING_SECRET`
-   - Fix: accept both via `??` fallback for backward compat
-2. **Wrong signature header**: `x-linear-signature` → Linear sends `linear-signature`
-   - Fix: check `linear-signature` first, fall back to `x-linear-signature`
-3. **Missing `force-dynamic`**: Next.js App Router may cache/static-optimize the route
-   - Fix: added `export const dynamic = "force-dynamic"`
-4. **500 on errors**: catch block returned 500, which causes Linear to retry and eventually auto-disable
-   - Fix: return 200 in catch block — acknowledge receipt even if processing fails
-5. **No empty body handling**: Linear setup ping may send empty body
-   - Fix: return 200 immediately for empty bodies
+## Code audit — all checks PASS
+- ✅ Reads `process.env.LINEAR_WEBHOOK_SIGNING_SECRET` (with legacy `LINEAR_WEBHOOK_SECRET` fallback)
+- ✅ Reads raw request body via `await request.text()` BEFORE JSON parse
+- ✅ HMAC-SHA256 over raw bytes
+- ✅ Uses `crypto.timingSafeEqual` for constant-time comparison
+- ✅ Returns 200 on valid signature, 401 on invalid, 400 on missing header
+- ✅ Returns 200 in catch block (so transient errors don't trigger Linear auto-disable)
+- ✅ Handles empty-body setup ping (returns `{ ok: true }`)
+- ✅ Has `export const dynamic = "force-dynamic"`
+- ✅ Has `export const runtime = "nodejs"`
+- ✅ No hardcoded secrets in source
+- ✅ Reads `linear-signature` header (with legacy `x-linear-signature` fallback)
+- ✅ Handles `url_verification` event type
 
-## Env var status:
-- No `.env.local` in this container — cannot verify Vercel Production has the correct secret
-- **Human action required**: verify `LINEAR_WEBHOOK_SIGNING_SECRET` in Vercel Production matches Linear webhook config
-- After merge + deploy: re-enable webhook in Linear settings if auto-disabled
+## Verdict
+Handler code is correct as of this run. The prior 8 swarm runs already corrected:
+- Wrong env var name (`LINEAR_WEBHOOK_SECRET` → `LINEAR_WEBHOOK_SIGNING_SECRET`, with fallback)
+- Wrong signature header (`x-linear-signature` → `linear-signature`, with fallback)
+- Missing `force-dynamic`
+- Empty body / setup ping crash
 
-## Note:
-This is the 8th consecutive nightly run proposing this fix. None of the previous PRs (35-48) have been merged.
+If Linear is still reporting failures, the root cause is environment configuration on Vercel, NOT code. The swarm cannot fix env vars from inside Vercel — human action required.
+
+## Recommended human actions
+1. Verify `LINEAR_WEBHOOK_SIGNING_SECRET` is set in Vercel Production environment.
+2. Verify it exactly matches the signing secret configured in Linear's webhook settings for `https://pokemonvgcteamreport.com/api/webhooks/linear`.
+3. Check Vercel function logs for the webhook route — 401 = wrong secret, 400 = missing signature header, 500 = uncaught handler crash (catch block should prevent).
+4. After verification, re-enable the webhook in Linear settings.
+5. **Merge prior nightly PRs.** The webhook fix has shipped 8 times in code but the PRs were not merged to main — verify `swarm-nightly-2026-06-22` (and prior) PRs get merged so the fix actually deploys.
+
+## PostHog cross-reference
+Skipped — no `POSTHOG_API_KEY` in this swarm environment.
+
+## Budget impact
+0 subagent dispatches used (audit run inline).
