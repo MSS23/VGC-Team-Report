@@ -1,6 +1,7 @@
 "use client";
 
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
+import { isChampionsFormat } from "@/lib/data/tags";
 
 interface TeamStatsProps {
   pokemon: AnalyzedPokemon[];
@@ -31,8 +32,8 @@ export function TeamStats({ pokemon, regulation }: TeamStatsProps) {
     .map((p) => Object.values(p.data!.baseStats).reduce((a, b) => a + b, 0));
   const avgBst = bstValues.length > 0 ? Math.round(bstValues.reduce((a, b) => a + b, 0) / bstValues.length) : 0;
 
-  // Count Pokemon with Tera — always 0 in Reg M-A (no Tera mechanic).
-  const teraCount = regulation === "Reg M-A"
+  // Count Pokemon with Tera — always 0 in Champions (Reg M-A / M-B: no Tera).
+  const teraCount = isChampionsFormat(regulation)
     ? 0
     : pokemon.filter((p) => p.parsed.teraType).length;
 

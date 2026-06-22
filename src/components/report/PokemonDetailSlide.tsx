@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { hapticLight } from "@/lib/utils/haptics";
+import { isChampionsFormat } from "@/lib/data/tags";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { CalcEntry, CalcCategory } from "@/hooks/useDamageCalcs";
 import { PokemonSprite } from "./PokemonSprite";
@@ -366,7 +367,7 @@ export function PokemonDetailSlide({
   // require BOTH a Reg M-A regulation (or undefined for legacy reports)
   // AND the Pokemon actually carrying a Mega Stone for its species. Without
   // either, no toggle and no auto-Mega rendering.
-  const isExplicitlyNonMA = !!regulation && regulation !== "Reg M-A";
+  const isExplicitlyNonMA = !!regulation && !isChampionsFormat(regulation);
   const hasMegaStone = useMemo(
     () => !!detectMegaFromItem(parsed.item, parsed.species),
     [parsed.item, parsed.species],
@@ -417,7 +418,7 @@ export function PokemonDetailSlide({
   // Champions format uses SP-based calculation to match the displayStats source.
   const baseStatsForComparison = useMemo(() => {
     if (!showMega || !megaData || !effectiveBaseData) return null;
-    if (regulation === "Reg M-A") {
+    if (isChampionsFormat(regulation)) {
       const sp = convertToChampionsSp(parsed.evs);
       return calculateAllChampionsStats(effectiveBaseData.baseStats, sp, parsed.nature);
     }
@@ -433,7 +434,7 @@ export function PokemonDetailSlide({
   // Champions (Reg M-A) recomputes stats from the SP budget — must run
   // against whichever side (Mega or base) is currently displayed.
   const championsStats = useMemo(() => {
-    if (regulation !== "Reg M-A") return null;
+    if (!isChampionsFormat(regulation)) return null;
     const sourceData = showMega ? megaData : effectiveBaseData;
     if (!sourceData) return null;
     const sp = convertToChampionsSp(parsed.evs);
@@ -476,8 +477,8 @@ export function PokemonDetailSlide({
     spe: t.statSpe,
   } as const;
 
-  // Reg M-A (Champions): no Tera, IVs locked to 31. Gate both displays.
-  const isRegMA = regulation === "Reg M-A";
+  // Champions (Reg M-A / M-B): no Tera, IVs locked to 31. Gate both displays.
+  const isRegMA = isChampionsFormat(regulation);
 
   // Non-default IVs (not 31) — hidden entirely in Reg M-A since IVs are locked.
   const nonDefaultIvs = isRegMA
@@ -671,7 +672,7 @@ export function PokemonDetailSlide({
 
   const renderStats = () => {
     if (!displayData) return null;
-    const isChampions = regulation === "Reg M-A";
+    const isChampions = isChampionsFormat(regulation);
     const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
     const spSpread = convertToChampionsSp(parsed.evs);
     const totalSp = (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + spSpread[s], 0);

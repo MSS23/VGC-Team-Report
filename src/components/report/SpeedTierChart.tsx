@@ -6,7 +6,8 @@ import { PokemonSprite } from "./PokemonSprite";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
 import { lookupPokemon } from "@/lib/data/pokemon";
-import { CHAMPIONS_DEX } from "@/lib/data/champions-dex";
+import { CHAMPIONS_DEX, CHAMPIONS_MB_DEX } from "@/lib/data/champions-dex";
+import { isChampionsFormat } from "@/lib/data/tags";
 import { calculateStat, calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import { detectMegaFromItem } from "@/lib/utils/mega-detect";
@@ -145,14 +146,15 @@ function SideModifierToggle({
 }
 
 export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode, regulation }: SpeedTierChartProps) {
-  const META_THREATS = regulation === "Reg M-A"
-    ? META_THREATS_CHAMPIONS.filter(k => lookupPokemon(k) && CHAMPIONS_DEX.has(k))
+  const championsDex = regulation === "Reg M-B" ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
+  const META_THREATS = isChampionsFormat(regulation)
+    ? META_THREATS_CHAMPIONS.filter(k => lookupPokemon(k) && championsDex.has(k))
     : META_THREATS_DEFAULT;
   const { t } = useTranslation();
   const [yourModifiers, setYourModifiers] = useState<Set<SpeedModifier>>(new Set());
   const [opponentModifiers, setOpponentModifiers] = useState<Set<SpeedModifier>>(new Set());
   const [showMetaThreats, setShowMetaThreats] = useState(false);
-  const [showMegaTiers, setShowMegaTiers] = useState(() => regulation === "Reg M-A");
+  const [showMegaTiers, setShowMegaTiers] = useState(() => isChampionsFormat(regulation));
 
   const hasAnyModifiers = yourModifiers.size > 0 || opponentModifiers.size > 0;
 
@@ -166,7 +168,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   };
 
   // Build your team entries
-  const isChampions = regulation === "Reg M-A";
+  const isChampions = isChampionsFormat(regulation);
   const teamEntries = useMemo(() => pokemon.map((mon, i) => {
     // In Champions (Reg M-A), recompute Speed from the SP budget so the
     // tier matches the card display. calculatedStats uses the standard
@@ -207,7 +209,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     // regulation, never include Mega tier entries even if a stale toggle
     // state lingered from a prior regulation switch.
     if (!showMegaTiers) return [];
-    if (regulation && regulation !== "Reg M-A") return [];
+    if (regulation && !isChampionsFormat(regulation)) return [];
     return pokemon.flatMap((mon, i) => {
       const baseKey = speciesKeys[i];
       const megaKeys = BASE_KEY_TO_MEGA_KEYS.get(baseKey) ?? [];
@@ -263,7 +265,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         const data = lookupPokemon(key);
         if (!data) return null;
         const base = data.baseStats.spe;
-        const isMA = regulation === "Reg M-A";
+        const isMA = isChampionsFormat(regulation);
         return {
           species: data.name,
           speciesKey: key,
@@ -453,7 +455,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             {/* Mega tiers toggle — only meaningful in the Champions format
                 (Reg M-A) since other regulations don't allow Mega Evolution.
                 Hidden entirely for any explicit non-M-A regulation. */}
-            {(!regulation || regulation === "Reg M-A") && (
+            {(!regulation || isChampionsFormat(regulation)) && (
               <button
                 type="button"
                 onClick={() => setShowMegaTiers(!showMegaTiers)}

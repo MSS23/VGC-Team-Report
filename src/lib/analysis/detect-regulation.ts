@@ -41,7 +41,8 @@
  */
 
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
-import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
+import { detectMegaFromItem, isMegaForm, getMegaEntryFromSpecies } from "@/lib/utils/mega-detect";
+import { CHAMPIONS_REG_MB_ONLY_MEGAS } from "@/lib/data/mega-pokemon";
 import {
   RESTRICTED_LEGENDARIES,
   PARADOX_POKEMON,
@@ -76,6 +77,26 @@ function detectRegulationWithSignals(
   }
 
   const signals: string[] = [];
+
+  // ── Signal 0: Reg M-B (Pokémon Champions, newer format) ──────────
+  // M-B is a superset of M-A, so the only unambiguous "this is M-B, not
+  // M-A" signal is a Mega that's exclusive to M-B (Mega Metagross, Mega
+  // Staraptor, etc.). Megas only exist in the Champions formats, and these
+  // specific ones aren't M-A legal — so their presence pins the team to
+  // M-B. Checked across the whole team before the M-A pass so an M-B Mega
+  // in any slot wins. (The new M-B *base* forms — Gholdengo, Annihilape,
+  // etc. — are NOT used as signals: they're also legal in SV Reg F/G/H/I.)
+  for (const p of pokemon) {
+    const megaEntry =
+      (isMegaForm(p.parsed.species) ? getMegaEntryFromSpecies(p.parsed.species) : null) ??
+      detectMegaFromItem(p.parsed.item, p.parsed.species);
+    if (megaEntry && CHAMPIONS_REG_MB_ONLY_MEGAS.has(megaEntry.dataKey)) {
+      return {
+        regulation: "Reg M-B",
+        signals: [`${megaEntry.displayName} is a Reg M-B Mega Evolution (not legal in Reg M-A)`],
+      };
+    }
+  }
 
   // ── Signal 1: Reg M-A (Pokémon Champions) ────────────────────────
   // Any Mega Stone, Mega form, Primal Orb, Primal species, or

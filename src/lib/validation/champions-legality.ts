@@ -17,7 +17,7 @@
  */
 
 import type { ParsedPokemon } from "@/lib/types/pokemon";
-import { CHAMPIONS_DEX } from "@/lib/data/champions-dex";
+import { CHAMPIONS_DEX, CHAMPIONS_MB_DEX } from "@/lib/data/champions-dex";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import {
   CHAMPIONS_TOTAL_SP,
@@ -139,8 +139,16 @@ function getSpeciesClauseKey(species: string): string {
 
 // ── Main validation ─────────────────────────────────────────────────────────
 
-export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult {
+export function validateChampionsTeam(
+  pokemon: ParsedPokemon[],
+  regulation: "Reg M-A" | "Reg M-B" = "Reg M-A",
+): LegalityResult {
   const issues: LegalityIssue[] = [];
+
+  // Reg M-B is a superset of M-A — same rules, wider species pool.
+  const isMb = regulation === "Reg M-B";
+  const dex = isMb ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
+  const regLabel = isMb ? "Reg M-B" : "Reg M-A";
 
   // Team size
   if (pokemon.length < 6) {
@@ -190,16 +198,16 @@ export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult 
   for (const p of pokemon) {
     const key = normalizeSpecies(p.species);
     const base = getRestrictedBase(p.species);
-    const inDex = CHAMPIONS_DEX.has(key);
+    const inDex = dex.has(key);
     const isRestricted = RESTRICTED_BASE_NAMES.has(base);
     // Check if a mega form of this base Pokemon is in the dex
-    const megaInDex = CHAMPIONS_DEX.has(`${key}-mega`) ||
-      CHAMPIONS_DEX.has(`${key}-mega-x`) ||
-      CHAMPIONS_DEX.has(`${key}-mega-y`);
+    const megaInDex = dex.has(`${key}-mega`) ||
+      dex.has(`${key}-mega-x`) ||
+      dex.has(`${key}-mega-y`);
     if (!inDex && !isRestricted && !megaInDex) {
       issues.push({
         severity: "error",
-        message: `${p.species} is not available in Champions format (Reg M-A)`,
+        message: `${p.species} is not available in Champions format (${regLabel})`,
         pokemon: p.species,
       });
     }
@@ -279,7 +287,7 @@ export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult 
       } else if (total > 0 && total < 512) {
         issues.push({
           severity: "info",
-          message: `${p.species}: ${total} EVs allocated — ${512 - total} more available (Reg M-A allows 512 total)`,
+          message: `${p.species}: ${total} EVs allocated — ${512 - total} more available (${regLabel} allows 512 total)`,
           pokemon: p.species,
         });
       }

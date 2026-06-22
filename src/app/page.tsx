@@ -11,6 +11,7 @@ import { TeamReport } from "@/components/report/TeamReport";
 import { TeamCardCTA } from "@/components/report/TeamCardCTA";
 import { TournamentMode } from "@/components/report/TournamentMode";
 import { SlideNavControls } from "@/components/report/SlideNavControls";
+import { isChampionsFormat } from "@/lib/data/tags";
 import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
 import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
 import { ShareViewCTA } from "@/components/ui/ShareViewCTA";
@@ -273,7 +274,7 @@ function HomeContent() {
     // be used, so we hide the global Display pill and any Mega controls
     // entirely. Undefined regulation falls through to the content check
     // so legacy reports without a regulation tag don't lose Mega support.
-    if (tags?.regulation && tags.regulation !== "Reg M-A") return false;
+    if (tags?.regulation && !isChampionsFormat(tags.regulation)) return false;
     // The pill drives the per-card Mega flip — which itself requires an
     // actual Mega Stone equipped. An already-Mega species name without
     // its Stone (e.g. `Kangaskhan-Mega @ Sitrus Berry`) can't flip in

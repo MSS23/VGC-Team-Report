@@ -1800,6 +1800,79 @@ export const POKEMON_DATA: Record<string, PokemonData> = {
     abilities: ["Parental Bond"],
   },
 
+  // ── Regulation M-B Megas (Pokémon Champions) ──────────────────────────
+  // Champions-original Megas newly legal in Reg M-B. (The real Gen 6 Megas
+  // also new to M-B — Sceptile, Blaziken, Swampert, Mawile, Metagross —
+  // already live in POKEMON_DATA above with canonical stats.)
+  // Types / abilities / stats verified against Serebii's Reg M-B page plus
+  // Bulbapedia / PokemonDB / Game8 (cross-referenced June 2026).
+  "raichu-mega-x": {
+    name: "Raichu-Mega-X",
+    types: ["Electric"],
+    baseStats: { hp: 60, atk: 135, def: 95, spa: 90, spd: 95, spe: 110 },
+    abilities: ["Electric Surge"],
+  },
+  "raichu-mega-y": {
+    name: "Raichu-Mega-Y",
+    types: ["Electric"],
+    baseStats: { hp: 60, atk: 100, def: 55, spa: 160, spd: 80, spe: 130 },
+    abilities: ["No Guard"],
+  },
+  "staraptor-mega": {
+    name: "Staraptor-Mega",
+    types: ["Fighting", "Flying"],
+    baseStats: { hp: 85, atk: 140, def: 100, spa: 60, spd: 90, spe: 110 },
+    abilities: ["Contrary"],
+  },
+  "scolipede-mega": {
+    name: "Scolipede-Mega",
+    types: ["Bug", "Poison"],
+    baseStats: { hp: 60, atk: 140, def: 149, spa: 75, spd: 99, spe: 62 },
+    abilities: ["Shell Armor"],
+  },
+  "scrafty-mega": {
+    name: "Scrafty-Mega",
+    types: ["Dark", "Fighting"],
+    baseStats: { hp: 65, atk: 130, def: 135, spa: 55, spd: 135, spe: 68 },
+    abilities: ["Intimidate"],
+  },
+  "eelektross-mega": {
+    name: "Eelektross-Mega",
+    types: ["Electric"],
+    baseStats: { hp: 85, atk: 145, def: 80, spa: 135, spd: 90, spe: 80 },
+    abilities: ["Eelevate"],
+  },
+  "pyroar-mega": {
+    name: "Pyroar-Mega",
+    types: ["Fire", "Normal"],
+    baseStats: { hp: 86, atk: 88, def: 92, spa: 129, spd: 86, spe: 126 },
+    abilities: ["Fire Mane"],
+  },
+  "malamar-mega": {
+    name: "Malamar-Mega",
+    types: ["Dark", "Psychic"],
+    baseStats: { hp: 86, atk: 102, def: 88, spa: 98, spd: 120, spe: 88 },
+    abilities: ["Contrary"],
+  },
+  "barbaracle-mega": {
+    name: "Barbaracle-Mega",
+    types: ["Rock", "Fighting"],
+    baseStats: { hp: 72, atk: 140, def: 130, spa: 64, spd: 106, spe: 88 },
+    abilities: ["Tough Claws"],
+  },
+  "dragalge-mega": {
+    name: "Dragalge-Mega",
+    types: ["Poison", "Dragon"],
+    baseStats: { hp: 65, atk: 85, def: 105, spa: 132, spd: 163, spe: 44 },
+    abilities: ["Regenerator"],
+  },
+  "falinks-mega": {
+    name: "Falinks-Mega",
+    types: ["Fighting"],
+    baseStats: { hp: 65, atk: 135, def: 135, spa: 70, spd: 65, spe: 100 },
+    abilities: ["Defiant"],
+  },
+
   "charizard-mega-x": {
     name: "Charizard-Mega-X",
     types: ["Fire", "Dragon"],

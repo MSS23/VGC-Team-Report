@@ -1,4 +1,4 @@
-import { CHAMPIONS_REG_MA_MEGAS } from "./mega-pokemon";
+import { CHAMPIONS_REG_MA_MEGAS, CHAMPIONS_REG_MB_MEGAS } from "./mega-pokemon";
 
 /**
  * Base-form Pokemon available in the Champions format (Regulation M-A).
@@ -254,4 +254,47 @@ const CHAMPIONS_BASE_DEX = new Set<string>([
 export const CHAMPIONS_DEX = new Set<string>([
   ...CHAMPIONS_BASE_DEX,
   ...CHAMPIONS_REG_MA_MEGAS,
+]);
+
+/**
+ * Base-form Pokemon NEWLY added in Regulation M-B (not legal in Reg M-A).
+ * Source: https://www.serebii.net/pokemonchampions/rankedbattle/regulationm-b.shtml
+ * (cross-referenced June 2026.) All already exist in POKEMON_DATA. The Megas
+ * for these (where they exist) live in CHAMPIONS_REG_MB_MEGAS (mega-pokemon.ts).
+ */
+const CHAMPIONS_MB_BASE_ADDITIONS = new Set<string>([
+  "vileplume",
+  "qwilfish",
+  "sceptile",
+  "blaziken",
+  "swampert",
+  "mawile",
+  "metagross",
+  "staraptor",
+  "musharna",
+  "scolipede",
+  "scrafty",
+  "eelektross",
+  "pyroar",
+  "malamar",
+  "barbaracle",
+  "dragalge",
+  "grimmsnarl",
+  "falinks",
+  "overqwil",
+  "houndstone",
+  "annihilape",
+  "gholdengo",
+]);
+
+/**
+ * Full Champions Regulation M-B dex. Reg M-B is a SUPERSET of Reg M-A: every
+ * M-A species is M-B legal, plus the base additions above and the 16 new M-B
+ * Megas (CHAMPIONS_REG_MB_MEGAS already folds in the M-A Megas). M-A teams are
+ * legal in M-B; M-B-only picks are NOT legal in M-A.
+ */
+export const CHAMPIONS_MB_DEX = new Set<string>([
+  ...CHAMPIONS_DEX,
+  ...CHAMPIONS_MB_BASE_ADDITIONS,
+  ...CHAMPIONS_REG_MB_MEGAS,
 ]);

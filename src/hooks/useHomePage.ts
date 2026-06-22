@@ -10,6 +10,7 @@ import { usePokemonNotes } from "@/hooks/usePokemonNotes";
 import { useDamageCalcs } from "@/hooks/useDamageCalcs";
 import { useMatchupPlans } from "@/hooks/useMatchupPlans";
 import { useHiddenSlides } from "@/hooks/useHiddenSlides";
+import { isChampionsFormat } from "@/lib/data/tags";
 import { useTeamMeta } from "@/hooks/useTeamMeta";
 import { useWalkthrough } from "@/hooks/useWalkthrough";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
@@ -157,7 +158,7 @@ export function useHomePage() {
   // Champions uses stat points (66 SP budget) instead of EVs (510 budget),
   // so the EV total > 510 parser warning is irrelevant.
   const warnings = useMemo(() => {
-    if (tags?.regulation === "Reg M-A") {
+    if (isChampionsFormat(tags?.regulation)) {
       return rawWarnings.filter(w => !w.includes("EV total") || !w.includes("exceeds"));
     }
     return rawWarnings;

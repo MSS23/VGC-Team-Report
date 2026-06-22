@@ -8,6 +8,7 @@ import { PokemonSprite } from "./PokemonSprite";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { TYPE_COLORS } from "@/lib/utils/type-colors";
 import { NATURES } from "@/lib/data/natures";
+import { isChampionsFormat } from "@/lib/data/tags";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
 import type { PokemonType } from "@/lib/types/pokemon";
@@ -214,7 +215,7 @@ function CompactCard({
 export function TournamentMode({ analysis, speciesKeys, getSpriteConfig, regulation }: TournamentModeProps) {
   const [statView, setStatView] = useState<StatView>("evs");
   const pokemon = analysis.pokemon;
-  const hideTera = regulation === "Reg M-A";
+  const hideTera = isChampionsFormat(regulation);
 
   // Sort by speed for the speed tier section
   const speedTiers = [...pokemon]
@@ -325,7 +326,7 @@ export function PrintableTournamentMode({
   statView,
 }: TournamentModeProps & { statView: StatView }) {
   const pokemon = analysis.pokemon;
-  const hideTera = regulation === "Reg M-A";
+  const hideTera = isChampionsFormat(regulation);
 
   const speedTiers = [...pokemon]
     .map((mon, i) => ({ mon, key: speciesKeys[i], speed: mon.calculatedStats.spe }))

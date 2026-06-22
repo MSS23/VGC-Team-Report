@@ -18,6 +18,7 @@ const InlinePokemonEditor = dynamic(
 import { TypeBadge } from "./TypeBadge";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { NATURES } from "@/lib/data/natures";
+import { isChampionsFormat } from "@/lib/data/tags";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
@@ -102,7 +103,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   //   2. The Pokemon must actually carry a Mega Stone matching its
   //      species. Without the stone Mega Evolution can't trigger in
   //      battle, so the toggle would only mislead.
-  const isExplicitlyNonMA = !!regulation && regulation !== "Reg M-A";
+  const isExplicitlyNonMA = !!regulation && !isChampionsFormat(regulation);
   const hasMegaStone = useMemo(
     () => !!detectMegaFromItem(parsed.item, parsed.species),
     [parsed.item, parsed.species],
@@ -146,7 +147,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
 
   // Champions stat recalculation when regulation is M-A
   const championsStats = useMemo(() => {
-    if (regulation !== "Reg M-A") return null;
+    if (!isChampionsFormat(regulation)) return null;
     const sourceData = showMega ? megaData : effectiveBaseData;
     if (!sourceData) return null;
     const sp = convertToChampionsSp(parsed.evs);
@@ -192,8 +193,8 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
     [relevantStats]
   );
 
-  // Reg M-A (Champions) has no Tera mechanic and forces IVs to 31 — hide both.
-  const isChampions = regulation === "Reg M-A";
+  // Champions (Reg M-A / M-B) has no Tera mechanic and forces IVs to 31 — hide both.
+  const isChampions = isChampionsFormat(regulation);
 
   // Non-default IVs (not 31) — hidden entirely in Reg M-A since IVs are locked.
   const nonDefaultIvs = isChampions
@@ -412,7 +413,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
           shipped to mega-pokemon.ts yet). Without this fallback the entire
           spread + EV column disappeared for any unknown species. */}
       {(() => {
-        const isChampions = regulation === "Reg M-A";
+        const isChampions = isChampionsFormat(regulation);
         const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
         const spSpread = convertToChampionsSp(parsed.evs);
         const totalSp = (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + spSpread[s], 0);
