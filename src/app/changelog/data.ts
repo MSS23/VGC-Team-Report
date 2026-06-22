@@ -16,6 +16,18 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "Type tightening, dead code, and focus-trap a11y",
+    emoji: "🧹",
+    highlight: false,
+    items: [
+      { type: "fixed", text: "Accessibility: extracted reusable useFocusTrap hook; InlinePokemonEditor modal now traps focus and exposes role=dialog / aria-modal (WCAG 2.4.3 / 2.1.2)." },
+      { type: "improved", text: "TypeScript: discordFetch is now generic over response type; pokepaste fetch typed via explicit PokePasteResponse interface — tightens types for Discord and PokePaste integrations." },
+      { type: "improved", text: "Removed dead code: useGlobalDisplayPrefs hook (zero call sites) and unexported 3 internal-only helpers (replaceSpeciesInBlock, isDynamicAllowedOrigin, generateCsrfToken) so they no longer leak into the public module surface." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",
