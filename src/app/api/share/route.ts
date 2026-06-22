@@ -18,6 +18,19 @@ const ShareBodySchema = z.object({
     calcs: z.record(z.string(), z.unknown()).optional(),
     roles: z.record(z.string(), z.unknown()).optional(),
     teamSummary: z.string().optional(),
+    // "How to pilot this team" (Common Modes / leads / strengths / etc.).
+    // MUST be listed here — the schema strips unknown keys, so omitting this
+    // silently dropped the entire Modes section on every save (the client
+    // showed "saved" but the DB never stored it).
+    commonModes: z
+      .object({
+        leads: z.string().optional(),
+        modes: z.string().optional(),
+        strengths: z.string().optional(),
+        weaknesses: z.string().optional(),
+        gameplan: z.string().optional(),
+      })
+      .optional(),
     teamName: z.string().optional(),
     tournamentName: z.string().optional(),
     placement: z.string().optional(),
@@ -35,6 +48,10 @@ const ShareBodySchema = z.object({
       regulationAutoDetected: z.boolean().optional(),
     }).optional(),
     templateId: z.string().optional(),
+    // Tiered-publishing per-field visibility flags. Also previously absent
+    // from this schema, so the "hide fields from public viewers" choices were
+    // stripped on save the same way commonModes was.
+    privateFields: z.array(z.string()).optional(),
     genTheme: z.string().optional(),
   }).strip(),
   existingId: z.string().optional(),
@@ -120,7 +137,7 @@ export async function POST(request: Request) {
     if (existingId && editToken) {
       // Fetch old state for changelog diff and version snapshot
       const oldRows = await sql`
-        SELECT data, COALESCE(version, 1) AS version, is_public, owner_id FROM shares WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
+        SELECT data, COALESCE(version, 1) AS version, is_public, is_unlisted, owner_id FROM shares WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
       `;
 
       // Detect actual changes before creating a version
@@ -164,11 +181,18 @@ export async function POST(request: Request) {
         }
       }
 
+      // Preserve the report's current visibility whenever the client doesn't
+      // explicitly send a new value. A bare update (e.g. a collaborator's
+      // content autosave, or any older client) that omits isPublic/isUnlisted
+      // must NOT silently demote a public or unlisted report to private —
+      // that was the cause of "I set it to Unlisted and it reverted to
+      // Private". Only an explicit flag from the owner changes visibility.
+      const currentIsPublic = oldRows.length > 0 ? !!oldRows[0].is_public : false;
+      const currentIsUnlisted = oldRows.length > 0 ? !!oldRows[0].is_unlisted : false;
       // Only the owner can change visibility — collaborators keep the existing value
-      let effectiveIsPublic = isPublic ?? false;
-      const effectiveIsUnlisted = isUnlisted ?? false;
+      let effectiveIsPublic = isPublic ?? currentIsPublic;
+      const effectiveIsUnlisted = isUnlisted ?? currentIsUnlisted;
       if (oldRows.length > 0 && isPublic !== undefined) {
-        const currentIsPublic = !!oldRows[0].is_public;
         if (isPublic !== currentIsPublic) {
           // Visibility is changing — verify caller is the owner
           let callerId: string | null = null;
@@ -204,10 +228,16 @@ export async function POST(request: Request) {
         }
       }
 
+      // Bump the version when visibility changes too, not just on data edits.
+      // Version-based pollers (?since=N) get a 304 when the version is
+      // unchanged — without this, a public→private flip would be invisible to
+      // a client polling for updates and it would keep showing stale content.
+      const visibilityChanged =
+        effectiveIsPublic !== currentIsPublic || effectiveIsUnlisted !== currentIsUnlisted;
       const rows = await sql`
         UPDATE shares
         SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(),
-            version = COALESCE(version, 1) + ${hasDataChanges ? 1 : 0},
+            version = COALESCE(version, 1) + ${hasDataChanges || visibilityChanged ? 1 : 0},
             is_public = ${effectiveIsPublic},
             is_unlisted = ${effectiveIsUnlisted},
             search_vector =

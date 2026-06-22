@@ -13,6 +13,17 @@ const DraftBodySchema = z.object({
     calcs: z.record(z.string(), z.unknown()).optional(),
     roles: z.record(z.string(), z.unknown()).optional(),
     teamSummary: z.string().optional(),
+    // Must be listed — .strip() drops unknown keys, which silently lost the
+    // Modes section on every draft save (same bug as /api/share).
+    commonModes: z
+      .object({
+        leads: z.string().optional(),
+        modes: z.string().optional(),
+        strengths: z.string().optional(),
+        weaknesses: z.string().optional(),
+        gameplan: z.string().optional(),
+      })
+      .optional(),
     teamName: z.string().optional(),
     tournamentName: z.string().optional(),
     placement: z.string().optional(),
@@ -28,6 +39,7 @@ const DraftBodySchema = z.object({
       archetype: z.array(z.string()).optional(),
     }).optional(),
     templateId: z.string().optional(),
+    privateFields: z.array(z.string()).optional(),
     genTheme: z.string().optional(),
   }).strip(),
   draftId: z.string().optional(),
