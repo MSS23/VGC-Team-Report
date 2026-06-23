@@ -23,10 +23,18 @@ export async function generateMetadata({
   try {
     const sql = getDb();
     const [rows, collabRows] = await Promise.all([
-      sql`SELECT data, is_public FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
+      sql`SELECT data, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
       sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
     ]);
     if (rows.length === 0) return { title: "VGC Team Report" };
+
+    // Private reports (neither public nor unlisted) must not leak even their
+    // title/description into <head> — that's the same data we gate at the API.
+    const isPublicRow = (rows[0] as Record<string, unknown>).is_public === true;
+    const isUnlistedRow = (rows[0] as Record<string, unknown>).is_unlisted === true;
+    if (!isPublicRow && !isUnlistedRow) {
+      return { title: "VGC Team Report", robots: { index: false, follow: false } };
+    }
 
     const data = rows[0].data as Record<string, unknown>;
     const isPublic = (rows[0] as Record<string, unknown>).is_public !== false;
@@ -159,10 +167,15 @@ export default async function SharePage({
   try {
     const sql = getDb();
     const [shareRows, jsonLdCollabRows] = await Promise.all([
-      sql`SELECT data, created_at, updated_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
+      sql`SELECT data, is_public, is_unlisted, created_at, updated_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
       sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
     ]);
-    if (shareRows.length > 0) {
+    // Skip JSON-LD entirely for private reports — don't expose their structured
+    // metadata. Unlisted/public still get rich structured data for unfurls/SEO.
+    const visibleForLd =
+      shareRows.length > 0 &&
+      (shareRows[0].is_public === true || shareRows[0].is_unlisted === true);
+    if (visibleForLd) {
       const data = shareRows[0].data as Record<string, unknown>;
       const species = extractSpecies((data.paste as string) ?? "");
       const ldCreatorName = (data.creatorName as string) || undefined;

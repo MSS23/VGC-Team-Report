@@ -16,6 +16,26 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "June 2026",
+    version: "5.23",
+    title: "True Private Reports, Champions Reg M-B & Presentation Polish",
+    emoji: "🔒",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Privacy: Private reports are now genuinely private. A report that is neither Public nor Unlisted returns 404 on its /s/{id} link for anyone who isn't the owner or an accepted collaborator — and it no longer leaks its title, description, or JSON-LD structured data into the page head." },
+      { type: "fixed", text: "Privacy: switching a report from Public to Private now takes effect within ~30 seconds. The edge cache window was previously up to 20 minutes, so a flipped report kept serving its public body for minutes after the change." },
+      { type: "fixed", text: "Dashboard 'All Private' bulk action now also covers Unlisted reports (they were silently skipped before), and toggling a single report's visibility no longer wipes its Unlisted state back to Private." },
+      { type: "fixed", text: "Visibility toggle no longer flickers — rapid Public/Unlisted/Private switches can't be snapped back on screen by a slower in-flight save, and a failed share now surfaces the reason instead of opening the edit-link panel." },
+      { type: "new", text: "Pokémon Champions Regulation M-B support — the new Reg M-B Mega rotation is selectable as a format and auto-detected from team imports, with the correct legal Mega list for the regulation." },
+      { type: "improved", text: "Presentation view now has a Home button on every slide to jump straight back to the team overview, and the generic 'Exit' control was replaced with a role-aware action (owners vs viewers get the right behaviour)." },
+      { type: "fixed", text: "Modes section now saves reliably on shared and draft reports — it was silently failing to persist changes." },
+      { type: "fixed", text: "Explore search no longer crashes from a history.replaceState rate-limit when typing quickly." },
+      { type: "fixed", text: "Chien-Pao and the other Treasures of Ruin (Chi-Yu, Ting-Lu, Wo-Chien) now show their proper sprite in the team preview instead of a flashing/broken image. Pokémon Showdown has no animated sprite for these species, so the high-resolution static art is served directly." },
+      { type: "fixed", text: "Mobile: report swipe navigation fixed and coverage charts now fit the screen. Also removed a hairline horizontal scroll on desktop caused by the scrollbar-gutter width." },
+      { type: "fixed", text: "Shared reports load more reliably on slow networks and Neon cold starts — the load timeout was raised from 5s to 15s, and a one-off timeout no longer locks the viewer on the 'corrupt link' screen permanently." },
+    ],
+  },
+  {
     date: "May 2026",
     version: "5.22",
     title: "Security Hardening, AI Discoverability & Accessibility",

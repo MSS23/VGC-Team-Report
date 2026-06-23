@@ -216,9 +216,9 @@ function DashboardInner() {
                   type="button"
                   onClick={async () => {
                     for (const r of myReports.filter((r) => !r.isPublic && !r.isCollab)) {
-                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: true }) });
+                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: true, isUnlisted: false }) });
                     }
-                    setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: true }));
+                    setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: true, isUnlisted: false }));
                   }}
                   className="px-2 py-1 text-[10px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition-all"
                 >
@@ -227,10 +227,12 @@ function DashboardInner() {
                 <button
                   type="button"
                   onClick={async () => {
-                    for (const r of myReports.filter((r) => r.isPublic && !r.isCollab)) {
-                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: false }) });
+                    // Include Unlisted reports (isPublic === false) — they were
+                    // previously skipped, so "All Private" left them Unlisted.
+                    for (const r of myReports.filter((r) => (r.isPublic || r.isUnlisted) && !r.isCollab)) {
+                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: false, isUnlisted: false }) });
                     }
-                    setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: false }));
+                    setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: false, isUnlisted: false }));
                   }}
                   className="px-2 py-1 text-[10px] font-bold rounded-md bg-surface-alt text-text-tertiary border border-border cursor-pointer hover:bg-surface transition-all"
                 >

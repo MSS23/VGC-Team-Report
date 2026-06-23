@@ -75,10 +75,13 @@
 html {
   /* Belt-and-braces: prevent any descendant from creating a horizontal scroll
      viewport on mobile (PWA / Safari standalone where body overflow alone
-     occasionally fails to clip absolutely-positioned children). */
+     occasionally fails to clip absolutely-positioned children).
+     NOTE: no `max-width: 100vw` — 100vw counts the vertical scrollbar gutter,
+     so on desktop it made the element ~15px wider than the usable content
+     width and produced a hairline left↔right scroll. overflow-x: hidden does
+     the clipping without that side effect. */
   overflow-x: hidden;
   overscroll-behavior-x: none;
-  max-width: 100vw;
 }
 
 body {
@@ -89,7 +92,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   overscroll-behavior-x: none;
-  max-width: 100vw;
+  /* No max-width: 100vw here either — same scrollbar-gutter overflow bug as
+     on <html>. overflow-x: hidden already clips horizontal overflow. */
   /* Use dynamic viewport height for true full-screen on mobile */
   min-height: 100dvh;
 }

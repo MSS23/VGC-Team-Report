@@ -136,6 +136,17 @@ export async function GET(
         return NextResponse.json({ error: "Not found" }, { status: 404 });
       }
 
+      // Enforce real privacy: a wrong/stale ?key= that does not match the
+      // edit token grants no more access than a bare link. If the report is
+      // private (neither public nor unlisted) and the key doesn't match, the
+      // caller is an outsider — return 404 just like the public path below.
+      // A matching key is a legitimate collaborator/edit link, so it stays
+      // allowed even for private reports (that's the whole point of the link).
+      const keyMatchesEditToken = !!rows[0].editable;
+      if (!keyMatchesEditToken && !rows[0].is_public && !rows[0].is_unlisted) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+
       // If polling with ?since=N, return 304 if version hasn't changed
       if (sinceVersion && Number(sinceVersion) >= Number(rows[0].version)) {
         return new Response(null, { status: 304 });
@@ -221,6 +232,15 @@ export async function GET(
     const isPublic = !!rows[0].is_public;
     const isUnlisted = !!rows[0].is_unlisted;
 
+    // Enforce real privacy (VGC: "Private = Only accessible to you"). The
+    // owner and accepted collaborators were already served above with edit
+    // access. Anyone reaching this point is an outsider, so a report that is
+    // neither public nor unlisted must not be viewable via the bare /s/{id}
+    // link — return 404. Unlisted reports remain link-viewable by design.
+    if (!isPublic && !isUnlisted) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     // Check cache for public reads only — unlisted reports skip cache to avoid
     // leaking stale visibility state on public↔private toggles.
     if (isPublic && !sinceVersion) {
@@ -269,12 +289,14 @@ export async function GET(
     // visibility toggles aren't masked by stale CDN entries.
     const res = NextResponse.json(responseData);
     if (isPublic && !sinceVersion) {
-      res.headers.set(
-        "Cache-Control",
-        "public, s-maxage=300, stale-while-revalidate=900",
-      );
-      res.headers.set("CDN-Cache-Control", "public, s-maxage=300");
-      res.headers.set("Vercel-CDN-Cache-Control", "public, s-maxage=300");
+      // Keep the edge window short. cacheDel() invalidates our Redis copy on a
+      // visibility flip, but it cannot purge Vercel's edge CDN — that entry
+      // only expires with s-maxage. A long window (was 300s + 900s SWR ≈ 20m)
+      // meant a public→private flip kept serving the public body for minutes.
+      // 30s caps that stale-serve window while still absorbing view spikes.
+      res.headers.set("Cache-Control", "public, s-maxage=30, must-revalidate");
+      res.headers.set("CDN-Cache-Control", "public, s-maxage=30");
+      res.headers.set("Vercel-CDN-Cache-Control", "public, s-maxage=30");
     }
     return res;
   } catch (e) {

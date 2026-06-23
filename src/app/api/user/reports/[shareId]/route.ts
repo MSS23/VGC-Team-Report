@@ -51,11 +51,14 @@ export async function PATCH(
 
     if (parsed.data.isPublic !== undefined || parsed.data.isUnlisted !== undefined) {
       const newIsPublic = parsed.data.isPublic;
-      const newIsUnlisted = parsed.data.isUnlisted ?? false;
+      // Preserve the existing unlisted flag when the caller doesn't send one,
+      // so flipping only isPublic (e.g. a single visibility toggle) can't
+      // silently wipe an Unlisted report back to Private.
+      const newIsUnlisted = parsed.data.isUnlisted;
       const rows = await sql`
         UPDATE shares
         SET is_public = COALESCE(${newIsPublic ?? null}::boolean, is_public),
-            is_unlisted = ${newIsUnlisted},
+            is_unlisted = COALESCE(${newIsUnlisted ?? null}::boolean, is_unlisted),
             updated_at = NOW()
         WHERE id = ${shareId} AND owner_id = ${userId} AND deleted_at IS NULL
         RETURNING id, is_public, is_unlisted

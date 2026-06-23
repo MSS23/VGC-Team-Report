@@ -146,12 +146,20 @@ export function useShareUrl() {
   // Fetch shared state on mount
   useEffect(() => {
     let settled = false;
+    // Clear any stale failure from a previous run. decodeFailed is otherwise
+    // write-once (never reset), so a single spurious timeout would lock the
+    // viewer on the "corrupt link" error screen forever, even after a retry.
+    setDecodeFailed(false);
+    const controller = new AbortController();
     const timeout = setTimeout(() => {
       if (!settled) {
         settled = true;
+        // Abort the in-flight fetch so a late success can't half-apply after
+        // we've already given up.
+        controller.abort();
         setDecodeFailed(true);
       }
-    }, 5000);
+    }, 15000); // 5s was too aggressive for Neon cold start + edge miss on slow networks
 
     const settle = (state: ShareableState | null, editable?: boolean) => {
       if (settled) return;
@@ -176,7 +184,7 @@ export function useShareUrl() {
       // request gets edit access without needing the key in the URL.
       const fetchUrl = `/api/share/${shareId}`;
 
-      fetch(fetchUrl)
+      fetch(fetchUrl, { signal: controller.signal })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
           if (!data) return settle(null);
@@ -206,18 +214,23 @@ export function useShareUrl() {
       // Replace URL with clean /s/{id} path (strip query params but keep share context)
       history.replaceState(null, "", `/s/${shareId}`);
 
-      return () => clearTimeout(timeout);
+      return () => { clearTimeout(timeout); controller.abort(); };
     }
 
     if (inlineData) {
       decodeShareState(inlineData)
         .then((state) => settle(state))
         .catch(() => settle(null));
-      return () => clearTimeout(timeout);
+      return () => { clearTimeout(timeout); controller.abort(); };
     }
 
     clearTimeout(timeout);
-  }, [shareId, inlineData, editKeyFromUrl]);
+    // editKeyFromUrl is intentionally NOT a dependency: the fetch ignores the
+    // key (auth grants edit access server-side), and history.replaceState
+    // strips ?key= right after, which would otherwise flip editKeyFromUrl to
+    // null and re-run this effect — a wasteful duplicate fetch + URL rewrite.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shareId, inlineData]);
 
   /** Get the active share info for this session (from refs, not localStorage). */
   const getActiveShare = useCallback((): StoredShareInfo | null => {
@@ -230,7 +243,7 @@ export function useShareUrl() {
     return null;
   }, []);
 
-  const copyShareUrl = useCallback(async (state: ShareableState, isPublic?: boolean, isUnlisted?: boolean) => {
+  const copyShareUrl = useCallback(async (state: ShareableState, isPublic?: boolean, isUnlisted?: boolean): Promise<{ ok: boolean; error?: string }> => {
     setShareStatus("copying");
     setUrlWarning(null);
     setLastShareResult(null);
@@ -254,7 +267,20 @@ export function useShareUrl() {
             isPublish: true,
           }),
         });
-        if (!res.ok) throw new Error("API error");
+        if (!res.ok) {
+          // Surface the server's reason (e.g. "no tags on this report") so the
+          // caller can show it, instead of swallowing it into a transient
+          // "Failed" button label with no explanation.
+          let errorMessage: string | undefined;
+          try {
+            const body = await res.json();
+            if (body && typeof body.error === "string") errorMessage = body.error;
+          } catch { /* non-JSON */ }
+          setShareStatus("error");
+          if (timerRef.current) clearTimeout(timerRef.current);
+          timerRef.current = setTimeout(() => setShareStatus("idle"), 3000);
+          return { ok: false, error: errorMessage ?? `Share failed (${res.status})` };
+        }
         const { id, editToken, updated } = await res.json();
         publicUrl = `${window.location.origin}/s/${id}`;
         editUrl = `${window.location.origin}/s/${id}?key=${editToken}`;
@@ -273,7 +299,7 @@ export function useShareUrl() {
         setShareStatus("error");
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => setShareStatus("idle"), 3000);
-        return;
+        return { ok: false, error: "Network error while sharing. Please try again." };
       }
 
       await navigator.clipboard.writeText(publicUrl);
@@ -283,10 +309,12 @@ export function useShareUrl() {
       timerRef.current = setTimeout(() => {
         setShareStatus("idle");
       }, 5000);
+      return { ok: true };
     } catch {
       setShareStatus("error");
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setShareStatus("idle"), 2000);
+      return { ok: false, error: "Could not copy the share link." };
     }
   }, [getActiveShare]);
 
@@ -369,7 +397,7 @@ export function useShareUrl() {
   }, [getActiveShare]);
 
   /** Force a fresh share with a new ID and edit token (invalidates old edit link). */
-  const freshShare = useCallback(async (state: ShareableState, isPublic?: boolean) => {
+  const freshShare = useCallback(async (state: ShareableState, isPublic?: boolean, isUnlisted?: boolean) => {
     setShareStatus("copying");
     setUrlWarning(null);
     setLastShareResult(null);
@@ -377,7 +405,9 @@ export function useShareUrl() {
       const res = await fetch("/api/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state, isPublic }),
+        // Thread isUnlisted through — omitting it collapsed an Unlisted report
+        // to Private/Public on every fresh reshare.
+        body: JSON.stringify({ state, isPublic, isUnlisted }),
       });
       if (!res.ok) throw new Error("API error");
       const { id, editToken } = await res.json();

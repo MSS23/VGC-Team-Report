@@ -31,22 +31,27 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
   const [publishError, setPublishError] = useState<string | null>(null);
   const [creatorRequired, setCreatorRequired] = useState(false);
 
+  // Once the user manually changes visibility, the server-fetched values must
+  // stop overwriting their choice. The fetch that populates fetchedIsPublic
+  // can resolve AFTER an optimistic toggle, which would otherwise snap the
+  // toggle back on screen (a visible flicker + UI disagreeing with the save).
+  // The ref resets when the values clear (fetchedIsPublic → null on navigating
+  // away), so the next report still seeds correctly.
+  const visibilityTouchedRef = useRef(false);
   useEffect(() => {
-    if (fetchedIsPublic !== null) {
-      setIsPublic(fetchedIsPublic);
-    }
+    if (fetchedIsPublic === null) { visibilityTouchedRef.current = false; return; }
+    if (!visibilityTouchedRef.current) setIsPublic(fetchedIsPublic);
   }, [fetchedIsPublic]);
 
   useEffect(() => {
-    if (fetchedIsUnlisted !== null) {
-      setIsUnlisted(fetchedIsUnlisted);
-    }
+    if (fetchedIsUnlisted === null) return;
+    if (!visibilityTouchedRef.current) setIsUnlisted(fetchedIsUnlisted);
   }, [fetchedIsUnlisted]);
   const [allowComments, setAllowComments] = useState(false);
   const [showEditUrl, setShowEditUrl] = useState(false);
   const [editLinkCopied, setEditLinkCopied] = useState(false);
 
-  const handleShareClick = useCallback(() => {
+  const handleShareClick = useCallback(async () => {
     if (!analysis || isSampleTeam) return;
     if (!isSignedIn) {
       setPublishError("Sign in to save and share your team report.");
@@ -58,7 +63,12 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
       return;
     }
     setCreatorRequired(false);
-    copyShareUrl(state, isPublic, isUnlisted);
+    const result = await copyShareUrl(state, isPublic, isUnlisted);
+    if (result && !result.ok) {
+      // Don't open the edit-link panel on a failed share — surface why instead.
+      setPublishError(result.error ?? "Could not share report. Please try again.");
+      return;
+    }
     setShowEditUrl(true);
     const hasMega = analysis.pokemon.some((p) => p.parsed.species.includes("-Mega") || p.parsed.species.includes("-Primal"));
     posthog?.capture("report_shared", {
@@ -67,7 +77,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
       is_public: isPublic,
       pokemon_count: analysis.pokemon.length,
     });
-  }, [analysis, isSampleTeam, copyShareUrl, buildShareState, isPublic, posthog]);
+  }, [analysis, isSampleTeam, copyShareUrl, buildShareState, isPublic, isUnlisted, isSignedIn, posthog]);
 
   const handleReshare = useCallback(() => {
     if (!analysis) return;
@@ -84,9 +94,9 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
 
   const handleFreshReshare = useCallback(() => {
     if (!analysis) return;
-    freshShare(buildShareState(), isPublic);
+    freshShare(buildShareState(), isPublic, isUnlisted);
     setShowEditUrl(true);
-  }, [analysis, freshShare, buildShareState, isPublic]);
+  }, [analysis, freshShare, buildShareState, isPublic, isUnlisted]);
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -100,24 +110,37 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     };
   }, [analysis, isEditingUnlocked, isSignedIn, buildShareState, autoSave, isPublic, isUnlisted]);
 
+  // Monotonic token so that if two visibility changes overlap, a stale earlier
+  // response can't revert the UI to a value the user has since moved past.
+  const visibilityReqRef = useRef(0);
+
   const handleSetPublic = useCallback(async (v: boolean) => {
+    visibilityTouchedRef.current = true;
+    const reqId = ++visibilityReqRef.current;
+    const prevPublic = isPublic; // real previous value, not !v
     setIsPublic(v);
     setPublishError(null);
     const result = await autoSave(buildShareState(), v, isUnlisted);
+    if (reqId !== visibilityReqRef.current) return; // superseded by a newer toggle
     if (!result.ok) {
-      setIsPublic(!v);
+      setIsPublic(prevPublic);
       setPublishError(result.error ?? "Could not update visibility.");
     }
-  }, [autoSave, buildShareState, isUnlisted]);
+  }, [autoSave, buildShareState, isPublic, isUnlisted]);
 
   const handleSetVisibility = useCallback(async (newIsPublic: boolean, newIsUnlisted: boolean) => {
+    visibilityTouchedRef.current = true;
+    const reqId = ++visibilityReqRef.current;
+    const prevPublic = isPublic;
+    const prevUnlisted = isUnlisted;
     setIsPublic(newIsPublic);
     setIsUnlisted(newIsUnlisted);
     setPublishError(null);
     const result = await autoSave(buildShareState(), newIsPublic, newIsUnlisted);
+    if (reqId !== visibilityReqRef.current) return; // superseded by a newer toggle
     if (!result.ok) {
-      setIsPublic(isPublic);
-      setIsUnlisted(isUnlisted);
+      setIsPublic(prevPublic);
+      setIsUnlisted(prevUnlisted);
       setPublishError(result.error ?? "Could not update visibility.");
     }
   }, [autoSave, buildShareState, isPublic, isUnlisted]);
