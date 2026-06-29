@@ -46,6 +46,7 @@ export const metadata: Metadata = {
     description: "Build and share Pokemon VGC team reports with notes, matchup plans, damage calcs, and speed tiers. The home for competitive Pokemon VGC team breakdowns.",
     type: "website",
     siteName: "VGC Team Report",
+    locale: "en_US",
     url: "https://pokemonvgcteamreport.com",
     images: [
       { url: "https://pokemonvgcteamreport.com/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" },
@@ -54,6 +55,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@Manny64Official",
+    creator: "@Manny64Official",
     title: "VGC Team Report - Build and Share Pokemon VGC Teams",
     description: "Build and share Pokemon VGC team reports with notes, matchup plans, damage calcs, and speed tiers. The home for competitive Pokemon VGC team breakdowns.",
     images: [

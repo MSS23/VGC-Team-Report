@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { I18nProvider } from "@/lib/i18n";
 import { CompareContent } from "@/components/compare/CompareContent";
+import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Compare VGC Teams | VGC Team Report",
@@ -28,10 +29,18 @@ export const metadata: Metadata = {
 
 export default function ComparePage() {
   return (
-    <I18nProvider>
-      <Suspense>
-        <CompareContent />
-      </Suspense>
-    </I18nProvider>
+    <>
+      <BreadcrumbListJsonLd
+        items={[
+          { name: "Home", url: "https://pokemonvgcteamreport.com" },
+          { name: "Compare", url: "https://pokemonvgcteamreport.com/compare" },
+        ]}
+      />
+      <I18nProvider>
+        <Suspense>
+          <CompareContent />
+        </Suspense>
+      </I18nProvider>
+    </>
   );
 }

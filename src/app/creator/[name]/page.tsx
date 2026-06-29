@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CreatorProfileWrapper } from "@/components/social/CreatorProfile";
-import { BreadcrumbJsonLd, JsonLd } from "@/components/seo/JsonLd";
+import { BreadcrumbListJsonLd, JsonLd } from "@/components/seo/JsonLd";
 
 export async function generateMetadata({
   params,
@@ -53,7 +53,7 @@ export default async function CreatorPage({
   const creator = decodeURIComponent(name);
   return (
     <>
-      <BreadcrumbJsonLd
+      <BreadcrumbListJsonLd
         items={[
           { name: "Home", url: "https://pokemonvgcteamreport.com" },
           { name: "Explore", url: "https://pokemonvgcteamreport.com/explore" },

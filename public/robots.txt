@@ -1,6 +1,9 @@
 User-agent: *
 Allow: /
-Disallow: /api/
+Disallow: /api
+Disallow: /dashboard
+Disallow: /notifications
+Disallow: /embed/
 
 # Explicitly allow major search engine bots
 User-agent: Googlebot
@@ -22,4 +25,5 @@ Allow: /
 User-agent: OAI-SearchBot
 Allow: /
 
+Host: pokemonvgcteamreport.com
 Sitemap: https://pokemonvgcteamreport.com/sitemap.xml
