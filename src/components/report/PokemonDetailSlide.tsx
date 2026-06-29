@@ -265,12 +265,15 @@ function CollapsibleCalcGroup({
   const [isOpen, setIsOpen] = useState(!isPresentationMode);
   // Force open in print mode so all calcs are visible; guests can still toggle
   const effectiveOpen = isPrint || isOpen;
+  const panelId = `calc-group-${category}`;
 
   return (
     <div>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={effectiveOpen}
+        aria-controls={panelId}
         className="flex items-center gap-2 w-full mb-1 group/header cursor-pointer"
       >
         <span className="text-sm">{cfg.icon}</span>
@@ -292,6 +295,9 @@ function CollapsibleCalcGroup({
         </svg>
       </button>
       <div
+        id={panelId}
+        role="region"
+        aria-label={translatedLabel}
         className={`grid transition-all duration-200 ease-in-out ${effectiveOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
       >
         <div className="overflow-hidden">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { hapticLight } from "@/lib/utils/haptics";
 
@@ -74,6 +74,8 @@ export function SlideNavControls({
 }: SlideNavControlsProps) {
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const hiddenCount = hiddenStates?.filter(Boolean).length ?? 0;
 
   // ── Section model (key-based so it survives any physical reordering) ──
@@ -150,14 +152,55 @@ export function SlideNavControls({
   const hasSheetDesktop = hasSheetMobile || !!onShowShortcuts;
   const showOverflow = hasSheetMobile || hasSheetDesktop;
 
-  // Close the overflow sheet on Escape (the backdrop handles outside clicks).
+  // Overflow sheet: Escape to close, Tab focus-trap, restore focus on close.
+  // Mirrors the pattern used in OTSSheetModal / ShareModal so dialog behaviour
+  // stays consistent across the report viewer.
   useEffect(() => {
     if (!sheetOpen) return;
+    const sheet = sheetRef.current;
+    // Remember whoever was focused (typically the overflow trigger) so we can
+    // restore focus to it when the sheet closes.
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+
+    const focusableSelectors =
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    // Move focus into the sheet so screen-reader / keyboard users land inside.
+    if (sheet) {
+      const firstFocusable = sheet.querySelector<HTMLElement>(focusableSelectors);
+      firstFocusable?.focus();
+    }
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSheetOpen(false);
+      if (e.key === "Escape") {
+        setSheetOpen(false);
+        return;
+      }
+      if (e.key !== "Tab" || !sheet) return;
+      const focusable = Array.from(
+        sheet.querySelectorAll<HTMLElement>(focusableSelectors),
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      // Restore focus to whatever was focused before the sheet opened.
+      previouslyFocusedRef.current?.focus?.();
+    };
   }, [sheetOpen]);
 
   // Auto-close the sheet if everything that fed it disappears (e.g. leaving
@@ -180,6 +223,8 @@ export function SlideNavControls({
             key={tab.key}
             type="button"
             role="tab"
+            id={`tab-section-${tab.key}`}
+            aria-controls={`tabpanel-section-${tab.key}`}
             aria-selected={active}
             aria-disabled={!tab.avail}
             disabled={!tab.avail}
@@ -424,7 +469,9 @@ export function SlideNavControls({
             className="fixed inset-0 z-[55] bg-black/30 sm:bg-transparent animate-fade-in"
           />
           <div
+            ref={sheetRef}
             role="dialog"
+            aria-modal="true"
             aria-label="Slide options"
             className="fixed z-[60] bottom-0 left-0 right-0 rounded-t-2xl border-t border-border bg-surface shadow-2xl pb-[max(0.75rem,env(safe-area-inset-bottom))] animate-fade-in
                        sm:left-auto sm:right-4 sm:bottom-[calc(var(--bottom-nav-height,3.5rem)+0.75rem)] sm:w-72 sm:rounded-2xl sm:border sm:pb-0"
@@ -493,6 +540,8 @@ export function SlideNavControls({
                     key={i}
                     type="button"
                     role="tab"
+                    id={`tab-slide-${i}`}
+                    aria-controls={`tabpanel-slide-${i}`}
                     aria-selected={isCurrent}
                     onClick={() => onGoTo(i)}
                     title={`${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}${hasChanges ? " (changed)" : ""}`}
