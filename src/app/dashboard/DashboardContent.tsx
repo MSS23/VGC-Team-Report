@@ -215,10 +215,25 @@ function DashboardInner() {
                 <button
                   type="button"
                   onClick={async () => {
-                    for (const r of myReports.filter((r) => !r.isPublic && !r.isCollab)) {
-                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: true, isUnlisted: false }) });
+                    const targets = myReports.filter((r) => !r.isPublic && !r.isCollab);
+                    const results = await Promise.allSettled(
+                      targets.map((r) =>
+                        fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: true, isUnlisted: false }) })
+                          .then((res) => ({ shareId: r.id, ok: res.ok }))
+                      )
+                    );
+                    const failed = results.filter((res) => res.status === "rejected" || (res.status === "fulfilled" && !res.value.ok)).length;
+                    if (failed === 0) {
+                      setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: true, isUnlisted: false }));
+                    } else {
+                      const succeeded = targets.length - failed;
+                      alert(`Updated ${succeeded} of ${targets.length} reports — ${failed} could not be updated, please try again.`);
+                      // Refetch so the UI reflects truth — optimistic state would be wrong for failed rows.
+                      fetch("/api/user/reports")
+                        .then((r) => (r.ok ? r.json() : null))
+                        .then((data) => { if (data?.reports) setMyReports(data.reports); })
+                        .catch(() => {});
                     }
-                    setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: true, isUnlisted: false }));
                   }}
                   className="px-2 py-1 text-[10px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition-all"
                 >
@@ -229,10 +244,25 @@ function DashboardInner() {
                   onClick={async () => {
                     // Include Unlisted reports (isPublic === false) — they were
                     // previously skipped, so "All Private" left them Unlisted.
-                    for (const r of myReports.filter((r) => (r.isPublic || r.isUnlisted) && !r.isCollab)) {
-                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: false, isUnlisted: false }) });
+                    const targets = myReports.filter((r) => (r.isPublic || r.isUnlisted) && !r.isCollab);
+                    const results = await Promise.allSettled(
+                      targets.map((r) =>
+                        fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: false, isUnlisted: false }) })
+                          .then((res) => ({ shareId: r.id, ok: res.ok }))
+                      )
+                    );
+                    const failed = results.filter((res) => res.status === "rejected" || (res.status === "fulfilled" && !res.value.ok)).length;
+                    if (failed === 0) {
+                      setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: false, isUnlisted: false }));
+                    } else {
+                      const succeeded = targets.length - failed;
+                      alert(`Updated ${succeeded} of ${targets.length} reports — ${failed} could not be updated, please try again.`);
+                      // Refetch so the UI reflects truth — privacy is the sensitive direction, never trust optimism here.
+                      fetch("/api/user/reports")
+                        .then((r) => (r.ok ? r.json() : null))
+                        .then((data) => { if (data?.reports) setMyReports(data.reports); })
+                        .catch(() => {});
                     }
-                    setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: false, isUnlisted: false }));
                   }}
                   className="px-2 py-1 text-[10px] font-bold rounded-md bg-surface-alt text-text-tertiary border border-border cursor-pointer hover:bg-surface transition-all"
                 >
