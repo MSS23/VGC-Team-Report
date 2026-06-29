@@ -17,6 +17,27 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "June 2026",
+    version: "5.24",
+    title: "Legality Badge, Take-Team Bar, SEO/AEO, A11y & Security Sweep",
+    emoji: "🧹",
+    highlight: true,
+    items: [
+      { type: "new", text: "Pokémon Champions Reg M-B Legality Badge — every team report now shows whether it's legal in the current regulation, with reasons if not. Backed by a public /api/legality endpoint (no auth, rate-limited) so Discord bots and other tools can check a paste in one call." },
+      { type: "new", text: "Take-Team Bar on shared reports — viewers (not just owners) now see a 'Copy as Showdown paste' and 'Open in PokéPaste' bar below the team grid. One-click route from any public team back into your own builder, without asking the owner." },
+      { type: "improved", text: "SEO/AEO: /explore now emits a populated ItemList JSON-LD block with the top 20 popular public reports — author, dates, like + view counts — to help AI search engines cite real teams when users ask 'best VGC team for Reg M-B'." },
+      { type: "fixed", text: "Bug: Dashboard 'All Public' and 'All Private' bulk actions no longer falsely claim success when one of the per-report fetches fails. Now uses Promise.allSettled, surfaces the partial-failure count, and refetches the dashboard so the UI reflects server truth instead of a stale optimistic state. Privacy regression risk closed." },
+      { type: "fixed", text: "Security: /api/user/reports/{shareId} PATCH/DELETE now validates the shareId path param against the canonical regex before any DB lookup, matching the comments and reactions routes." },
+      { type: "fixed", text: "Security: /api/creator/{name} caps the creator name to 1–64 chars and rejects any input containing % or _ (ILIKE wildcards) — /api/creator/%25 used to list every public creator. /api/explore short-query fallback strips the same wildcards before wrapping the search term." },
+      { type: "improved", text: "Accessibility: Share modal Comments switch and the three visibility radios (Private/Unlisted/Public) now show a clear focus ring for keyboard users." },
+      { type: "improved", text: "Accessibility: home page Export Theme modal is now a proper radiogroup with role=radio + aria-checked; signed-out / welcome banner buttons bumped to 44×44px touch targets; 8 decorative SVG flourishes marked aria-hidden so screen readers skip them." },
+      { type: "improved", text: "Accessibility: report viewer SlideNavControls overflow sheet now traps focus and restores it on close; section + dot tabs paired with aria-controls / tabpanel ids; CollapsibleCalcGroup disclosure gets type=button + aria-controls; OTSSheetModal Save-as-PNG spinner honours prefers-reduced-motion and signals aria-busy." },
+      { type: "improved", text: "SEO: removed a duplicate /compare entry from the sitemap, tightened robots.txt disallows (Disallow: /api now catches query-string variants, plus /dashboard, /notifications, /embed/), added og:locale=en_US and twitter:site/creator=@Manny64Official to the root layout, consolidated the duplicate BreadcrumbList JSON-LD helper, and emitted breadcrumb structured data on /compare." },
+      { type: "improved", text: "TypeScript: enabled noImplicitReturns + noFallthroughCasesInSwitch in tsconfig and added explicit return types to 7 lib/ functions (useTranslation, captureServerEvent, createNotification, notifyFollowers, sendCommentNotificationEmail, sendWelcomeEmail, buildWeeklySummaryHtml). Surfaced and patched 2 latent useEffect cleanup gaps in NotificationBell and useShareUrl." },
+      { type: "improved", text: "Removed dead code: DisplayTogglePill component (267 lines, zero refs), useGlobalDisplayPrefs hook (51 lines, zero refs), exportAsPdf helper (21 lines), plus the jspdf dependency it was the only user of (~300 KB, 15 transitive packages). Also privatised UndoRedoSnapshot + SyncStatus and dropped 4 unused CacheKeys/CacheTTL entries." },
+    ],
+  },
+  {
+    date: "June 2026",
     version: "5.23",
     title: "True Private Reports, Champions Reg M-B & Presentation Polish",
     emoji: "🔒",
