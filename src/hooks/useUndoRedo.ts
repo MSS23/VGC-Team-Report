@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
 import type { CalcEntry } from "@/hooks/useDamageCalcs";
 import type { MatchupPlan } from "@/hooks/useMatchupPlans";
 
-export interface UndoRedoSnapshot {
+interface UndoRedoSnapshot {
   notes: Record<string, string>;
   calcs: Record<string, CalcEntry[]>;
   roles: Record<string, string>;

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 
-export type SyncStatus = "idle" | "connecting" | "syncing" | "synced" | "conflict" | "disconnected";
+type SyncStatus = "idle" | "connecting" | "syncing" | "synced" | "conflict" | "disconnected";
 
 interface UseCollaborativeSyncOptions {
   /** The share ID being edited */

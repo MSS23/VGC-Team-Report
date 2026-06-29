@@ -111,8 +111,6 @@ export async function cacheInvalidatePrefix(prefix: string): Promise<void> {
 export const CacheKeys = {
   explore: (params: string) => `explore:${params}`,
   share: (id: string) => `share:${id}`,
-  spotlight: () => "spotlight",
-  topPokemon: () => "top-pokemon",
 } as const;
 
 // ── TTLs (seconds) ─────────────────────────────────────────────────
@@ -120,6 +118,4 @@ export const CacheKeys = {
 export const CacheTTL = {
   EXPLORE_LIST: 60,         // 1 minute — explore page results
   SHARE_PUBLIC: 300,        // 5 minutes — individual public shares
-  SPOTLIGHT: 300,           // 5 minutes — spotlight/featured
-  TOP_POKEMON: 600,         // 10 minutes — usage stats
 } as const;
