@@ -752,7 +752,7 @@ export function ShareModal({
                 if (onSetVisibility) onSetVisibility(false, false);
                 else handleTogglePublic(false);
               }}
-              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all ${
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 ${
                 !isPublic && !isUnlisted
                   ? "bg-surface border-accent/50 shadow-sm shadow-accent/10"
                   : isOwner ? "bg-surface-alt border-border hover:border-accent/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
@@ -775,7 +775,7 @@ export function ShareModal({
                 if (onSetVisibility) onSetVisibility(false, true);
                 else handleTogglePublic(false);
               }}
-              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all ${
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 focus-visible:ring-offset-1 ${
                 isUnlisted && !isPublic
                   ? "bg-surface border-amber-500/50 shadow-sm shadow-amber-500/10"
                   : isOwner ? "bg-surface-alt border-border hover:border-amber-500/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
@@ -803,7 +803,7 @@ export function ShareModal({
                 if (onSetVisibility) onSetVisibility(true, false);
                 else handleTogglePublic(true);
               }}
-              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all ${
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-1 ${
                 isPublic
                   ? "bg-surface border-emerald-500/50 shadow-sm shadow-emerald-500/10"
                   : isOwner && !hasWarnings ? "bg-surface-alt border-border hover:border-emerald-500/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
@@ -893,7 +893,7 @@ export function ShareModal({
             role="switch"
             aria-checked={allowComments}
             onClick={() => onToggleComments(!allowComments)}
-            className="flex items-center gap-3 w-full text-left group cursor-pointer"
+            className="flex items-center gap-3 w-full text-left group cursor-pointer rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1"
           >
             <div className={`relative inline-flex h-[24px] w-[42px] items-center rounded-full transition-all duration-300 flex-shrink-0 ${
               allowComments ? "bg-accent shadow-md shadow-accent/30" : "bg-border"
