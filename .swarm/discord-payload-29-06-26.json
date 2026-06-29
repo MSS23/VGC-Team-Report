@@ -1,0 +1,25 @@
+{
+  "_target": "Discord channel ID 1487202217298493493 (#builds)",
+  "_send_via": "POST $DISCORD_WEBHOOK_URL  OR  POST https://discord.com/api/v10/channels/1487202217298493493/messages with Bot $DISCORD_BOT_TOKEN",
+  "_why_not_sent_automatically": "No DISCORD_BUILDS_WEBHOOK / DISCORD_WEBHOOK_URL / DISCORD_BOT_TOKEN in this swarm session's environment.",
+  "embeds": [
+    {
+      "title": "🤖 Nightly Swarm — 29 Jun 2026",
+      "color": 5763719,
+      "fields": [
+        { "name": "Branch", "value": "swarm-nightly-2026-06-29", "inline": true },
+        { "name": "Commits pushed", "value": "21 (12 code + 1 changelog + 8 notes)", "inline": true },
+        { "name": "Build status", "value": "✅ Passing (tsc + next build green)", "inline": true },
+        { "name": "Linear webhook", "value": "⚠️ env-var mismatch suspected — human action required (see PR body)", "inline": false },
+        { "name": "Linear tickets closed", "value": "None — Linear API key unavailable this run; actions queued in .swarm/linear-pending.md", "inline": false },
+        { "name": "PostHog signals acted on", "value": "None — PostHog API key unavailable this run", "inline": false },
+        { "name": "Updates page", "value": "12 entries added to June 2026 (v5.24)", "inline": false },
+        { "name": "Merge conflicts", "value": "None (branch cut fresh from main, 0 behind)", "inline": false },
+        { "name": "Rejected changes", "value": "None — all 12 substantive changes passed build gate", "inline": false },
+        { "name": "PR", "value": "https://github.com/MSS23/VGC-Team-Report/pull/66", "inline": false },
+        { "name": "What was pushed", "value": "• Reg M-B Legality Badge + public /api/legality\n• TakeTeamBar (Copy-as-Showdown + Open-in-PokéPaste for viewers)\n• Populated ItemList JSON-LD on /explore (Server Component)\n• Dashboard bulk Public/Private — partial-failure fix (privacy)\n• Security: shareId regex + ILIKE wildcard hardening (3 routes)\n• A11y: focus traps, tab/tabpanel, radiogroup, 44px targets, focus-visible rings\n• SEO: sitemap dedupe, robots.txt, og:locale, twitter:site, Breadcrumb consolidate\n• TS: noImplicitReturns + noFallthroughCasesInSwitch + 7 return types\n• Dead code: 339 lines + jspdf dep (~300 KB, 15 packages)", "inline": false }
+      ],
+      "footer": { "text": "vgc-overnight-swarm • channel 1487202217298493493 • Review and merge PR #66 when ready" }
+    }
+  ]
+}
