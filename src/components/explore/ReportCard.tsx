@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion } from "motion/react";
 import { useAuth, useUser, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
 import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { LegalityBadge } from "@/components/report/LegalityBadge";
+import { getLegalityFor } from "@/lib/analysis/detect-regulation";
+import type { ParsedPokemon, StatSpread } from "@/lib/types/pokemon";
 
 export interface ExploreReport {
   id: string;
@@ -148,6 +151,30 @@ export function ReportCard({
 
   const hasTagsSection = !!report.tags?.eventType;
 
+  // Reg M-B legality — best-effort from the species list we have on the
+  // card payload (no items / spreads). Catches unlisted Megas baked into
+  // the species name; SV-format teams report legal (helper short-circuits).
+  const regBadgeLegality = useMemo(() => {
+    if (!report.tags?.regulation || report.species.length === 0) return null;
+    const emptyStats: StatSpread = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+    const fullIvs: StatSpread = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
+    const stub: ParsedPokemon[] = report.species.map((s) => ({
+      species: s,
+      nickname: null,
+      gender: null,
+      item: null,
+      ability: null,
+      level: 50,
+      teraType: null,
+      shiny: false,
+      evs: emptyStats,
+      ivs: fullIvs,
+      nature: "Serious",
+      moves: [],
+    }));
+    return getLegalityFor(stub, "Reg M-B");
+  }, [report.tags?.regulation, report.species]);
+
   return (
     <motion.a
       href={`/s/${report.id}`}
@@ -280,10 +307,17 @@ export function ReportCard({
           </p>
         )}
 
-        {(hasTagsSection || report.hasRental) && (
+        {(hasTagsSection || report.hasRental || regBadgeLegality) && (
           <div className="flex flex-wrap gap-1">
             {hasTagsSection && (
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">{report.tags!.eventType}</span>
+            )}
+            {regBadgeLegality && (
+              <LegalityBadge
+                regulation={regBadgeLegality.regulation}
+                legal={regBadgeLegality.legal}
+                reasons={regBadgeLegality.reasons}
+              />
             )}
             {report.hasRental && (
               <span

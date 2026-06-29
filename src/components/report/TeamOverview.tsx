@@ -14,6 +14,9 @@ import { hapticMedium, hapticSuccess } from "@/lib/utils/haptics";
 import { detectImportSource } from "@/lib/utils/multi-import";
 import { fetchPokePaste } from "@/lib/utils/pokepaste";
 import { validateChampionsTeam, type LegalityResult, type LegalityIssue } from "@/lib/validation/champions-legality";
+import { getLegalityFor } from "@/lib/analysis/detect-regulation";
+import { LegalityBadge as RegLegalityBadge } from "./LegalityBadge";
+import { TakeTeamBar } from "./TakeTeamBar"; /* take-team-bar:W12 */
 
 /** Wraps a card with tap and long-press gestures. Tap navigates instantly on touch; long-press (500ms hold) also navigates + haptic. */
 function LongPressWrapper({
@@ -366,6 +369,15 @@ export function TeamOverview({
       tags?.regulation === "Reg M-B" ? "Reg M-B" : "Reg M-A",
     );
   }, [tags?.regulation, pokemon]);
+
+  // Reg M-B legality badge — independent of the team's claimed regulation
+  // so viewers can spot a team marked "Reg M-A" that wouldn't actually
+  // hold up if entered in M-B (or vice versa). Always shown next to the
+  // existing chips when a regulation tag is present.
+  const regBadgeLegality = useMemo(() => {
+    if (!tags?.regulation) return null;
+    return getLegalityFor(pokemon, "Reg M-B");
+  }, [tags?.regulation, pokemon]);
   const [rentalCopied, setRentalCopied] = useState(false);
   const [summaryExpanded, setSummaryExpanded] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -482,6 +494,13 @@ export function TeamOverview({
                   </span>
                 )}
                 {legality && <LegalityBadge result={legality} />}
+                {regBadgeLegality && (
+                  <RegLegalityBadge
+                    regulation={regBadgeLegality.regulation}
+                    legal={regBadgeLegality.legal}
+                    reasons={regBadgeLegality.reasons}
+                  />
+                )}
                 {tags?.eventType && (
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
                     {tags.eventType}
@@ -772,6 +791,9 @@ export function TeamOverview({
           );
         })}
       </div>
+
+      {/* take-team-bar:W12 */}
+      {isReadOnly && <TakeTeamBar team={pokemon} teamName={teamName} creatorName={creatorName} />}
 
       {/* App trademark */}
       <div className="text-center pt-4 sm:pt-6 mt-2 border-t border-border-subtle">

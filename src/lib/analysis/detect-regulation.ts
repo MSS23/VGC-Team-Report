@@ -41,8 +41,11 @@
  */
 
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
+import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { detectMegaFromItem, isMegaForm, getMegaEntryFromSpecies } from "@/lib/utils/mega-detect";
 import { CHAMPIONS_REG_MB_ONLY_MEGAS } from "@/lib/data/mega-pokemon";
+import { validateChampionsTeam } from "@/lib/validation/champions-legality";
+import { isChampionsFormat } from "@/lib/data/tags";
 import {
   RESTRICTED_LEGENDARIES,
   PARADOX_POKEMON,
@@ -236,4 +239,113 @@ function detectRegulationWithSignals(
  */
 export function detectRegulation(pokemon: AnalyzedPokemon[]): string | null {
   return detectRegulationWithSignals(pokemon).regulation;
+}
+
+// ── Legality helper (Reg M-B badge, public API endpoint) ───────────────────
+
+/**
+ * Compact legality result for a team in a given regulation. Used by the
+ * `LegalityBadge` UI component and the public `/api/legality` endpoint.
+ *
+ * `legal` is true when the team passes the regulation's hard rules.
+ * `reasons` enumerates the *blocking* problems in plain English ("uses
+ * Mega Metagross, which is not legal in Reg M-A") — empty when legal.
+ */
+export interface LegalityFor {
+  regulation: string;
+  legal: boolean;
+  reasons: string[];
+}
+
+type LegalityTeamInput =
+  | AnalyzedPokemon[]
+  | ParsedPokemon[]
+  | { pokemon: AnalyzedPokemon[] }
+  | { pokemon: ParsedPokemon[] };
+
+function toParsedTeam(team: LegalityTeamInput): ParsedPokemon[] {
+  // Accept both raw arrays and wrapper objects (`{ pokemon: [...] }`).
+  const arr = Array.isArray(team) ? team : team.pokemon;
+  if (!arr || arr.length === 0) return [];
+  // AnalyzedPokemon carries `.parsed`; ParsedPokemon is the leaf.
+  return arr.map((p) => {
+    if (p && typeof p === "object" && "parsed" in p && (p as AnalyzedPokemon).parsed) {
+      return (p as AnalyzedPokemon).parsed;
+    }
+    return p as ParsedPokemon;
+  });
+}
+
+/**
+ * Determine whether `team` is legal in `regulation` and surface short,
+ * human-readable reasons when it isn't.
+ *
+ * Pure helper — does not mutate inputs and does not call any external
+ * services, so it is safe to invoke from server components, route
+ * handlers, and client effects.
+ *
+ * Today this only enforces the Champions formats (Reg M-A / Reg M-B) by
+ * delegating to {@link validateChampionsTeam}. For non-Champions
+ * regulations we report `legal: true` with an empty `reasons` array
+ * because the M-B-only Mega-Stone gates this helper was built for don't
+ * apply — callers that want full SV-format validation should reach for
+ * the regulation-specific validators directly.
+ */
+export function getLegalityFor(
+  team: LegalityTeamInput,
+  regulation: string,
+): LegalityFor {
+  const parsed = toParsedTeam(team);
+  const reasons: string[] = [];
+
+  if (parsed.length === 0) {
+    return { regulation, legal: false, reasons: ["Team is empty"] };
+  }
+
+  if (!isChampionsFormat(regulation)) {
+    // Out of scope for this helper — treat as legal so the badge stays
+    // green for SV formats rather than blocking on rules we don't check.
+    return { regulation, legal: true, reasons: [] };
+  }
+
+  const championsReg: "Reg M-A" | "Reg M-B" =
+    regulation === "Reg M-B" ? "Reg M-B" : "Reg M-A";
+
+  // When validating M-A, surface M-B-only Megas as a tailored, top-line
+  // reason — that's the single most common reason an otherwise-fine team
+  // is rejected and the badge's "uses unlisted Mega" copy speaks to it.
+  if (championsReg === "Reg M-A") {
+    for (const p of parsed) {
+      const megaEntry =
+        (isMegaForm(p.species) ? getMegaEntryFromSpecies(p.species) : null) ??
+        detectMegaFromItem(p.item, p.species);
+      if (megaEntry && CHAMPIONS_REG_MB_ONLY_MEGAS.has(megaEntry.dataKey)) {
+        reasons.push(
+          `${megaEntry.displayName} is a Reg M-B Mega Evolution (not legal in Reg M-A)`,
+        );
+      }
+    }
+  }
+
+  const result = validateChampionsTeam(parsed, championsReg);
+  for (const issue of result.issues) {
+    if (issue.severity === "error") {
+      reasons.push(issue.message);
+    }
+  }
+
+  // De-duplicate so the M-B-only Mega callout doesn't appear twice when
+  // the underlying validator also flags it as not in the M-A dex.
+  const seen = new Set<string>();
+  const deduped = reasons.filter((r) => {
+    if (seen.has(r)) return false;
+    seen.add(r);
+    return true;
+  });
+
+  return {
+    regulation: championsReg,
+    legal: deduped.length === 0,
+    reasons: deduped,
+  };
 }
