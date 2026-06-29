@@ -37,6 +37,18 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // manifest.json is static and changes only on a deploy. Without an
+        // explicit Cache-Control, Vercel serves /public assets with
+        // must-revalidate, so the browser sends a conditional request on every
+        // navigation — a misbehaving client then produces a storm of 304s.
+        // A 1h max-age + SWR lets the browser serve it from cache and stop
+        // hammering the origin, while still picking up changes within the hour.
+        source: "/manifest.json",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=3600, stale-while-revalidate=86400" },
+        ],
+      },
+      {
         source: "/(.*)",
         headers: [
           {

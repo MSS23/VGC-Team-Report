@@ -172,6 +172,13 @@ export const config = {
     // negative lookahead covers every API route we need to block
     // middleware on, without needing a second matcher. The `trpc`
     // route (unused in this project) is dropped in the process.
-    '/((?!_next|api/discord|api/sprite|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    //
+    // manifest.json is excluded explicitly: the `js(?!on)` lookahead below
+    // excludes `.js` but NOT `.json`, so without this guard every
+    // manifest.json hit ran the full Clerk + bot-detection stack. A single
+    // looping client (e.g. a wedged Firefox PWA tab) could otherwise burn
+    // thousands of edge invocations in minutes. It's a static public file
+    // that needs zero auth/CORS/CSRF.
+    '/((?!_next|api/discord|api/sprite|manifest\\.json|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
   ],
 }
