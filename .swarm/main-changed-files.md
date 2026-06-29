@@ -1,2 +1,33 @@
-# Files changed on main recently
-(Branch cut fresh from main — no divergence. No recent main commits in last 7 days.)
+package-lock.json
+package.json
+src/app/api/share/[id]/route.ts
+src/app/api/share/route.ts
+src/app/api/user/drafts/route.ts
+src/app/api/user/reports/[shareId]/route.ts
+src/app/changelog/data.ts
+src/app/dashboard/DashboardContent.tsx
+src/app/globals.css
+src/app/page.tsx
+src/app/s/[id]/page.tsx
+src/components/layout/Navbar.tsx
+src/components/report/DefensiveCoverageChart.tsx
+src/components/report/OffensiveCoverageChart.tsx
+src/components/report/PokemonCard.tsx
+src/components/report/PokemonDetailSlide.tsx
+src/components/report/SpeedTierChart.tsx
+src/components/report/TeamOverview.tsx
+src/components/report/TeamStats.tsx
+src/components/report/TournamentMode.tsx
+src/hooks/useExploreUrlSync.ts
+src/hooks/useHomePage.ts
+src/hooks/useShareFlow.ts
+src/hooks/useShareUrl.ts
+src/hooks/useSwipeNavigation.ts
+src/lib/analysis/detect-regulation.ts
+src/lib/data/champions-dex.ts
+src/lib/data/mega-pokemon.ts
+src/lib/data/pokemon.ts
+src/lib/data/tags.ts
+src/lib/utils/sprite-slug.ts
+src/lib/utils/sprite-url.ts
+src/lib/validation/champions-legality.ts
