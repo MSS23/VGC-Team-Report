@@ -957,7 +957,7 @@ function HomeContent() {
         <div className="max-w-5xl mx-auto px-4 pt-2">
           <div className="flex items-start gap-3 px-4 py-3 bg-gradient-to-br from-emerald-500/10 via-accent-surface/20 to-accent/5 border border-emerald-500/30 rounded-xl animate-fade-in">
             <div className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 dark:text-emerald-400">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 dark:text-emerald-400" aria-hidden="true">
                 <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                 <path d="M3 3v5h5" />
               </svg>
@@ -976,14 +976,14 @@ function HomeContent() {
                     handleShareClick();
                     dismissRestoreBanner();
                   }}
-                  className="px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-white hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
+                  className="min-h-[44px] min-w-[44px] px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-white hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
                 >
                   Get my link
                 </button>
                 <button
                   type="button"
                   onClick={dismissRestoreBanner}
-                  className="px-3 py-1.5 text-[11px] font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
+                  className="min-h-[44px] min-w-[44px] px-3 py-1.5 text-[11px] font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
                 >
                   Dismiss
                 </button>
@@ -1022,7 +1022,7 @@ function HomeContent() {
         <div className="max-w-5xl mx-auto px-4 pt-2">
           <div className="flex items-start gap-3 px-4 py-3 bg-gradient-to-br from-accent/10 via-accent-surface/15 to-transparent border border-accent/30 rounded-xl animate-fade-in">
             <div className="w-8 h-8 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent" aria-hidden="true">
                 <path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
@@ -1038,7 +1038,7 @@ function HomeContent() {
                 <SignUpButton mode="modal">
                   <button
                     type="button"
-                    className="px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-white hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
+                    className="min-h-[44px] min-w-[44px] px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-white hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
                   >
                     Sign up to save
                   </button>
@@ -1046,7 +1046,7 @@ function HomeContent() {
                 <SignInButton mode="modal">
                   <button
                     type="button"
-                    className="px-3 py-1.5 text-[11px] font-bold rounded-lg text-text-secondary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
+                    className="min-h-[44px] min-w-[44px] px-3 py-1.5 text-[11px] font-bold rounded-lg text-text-secondary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
                   >
                     Sign in
                   </button>
@@ -1061,7 +1061,7 @@ function HomeContent() {
       {urlWarning && (
         <div className="max-w-5xl mx-auto px-4 pt-2">
           <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-600 dark:text-amber-400">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0" aria-hidden="true">
               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -1115,7 +1115,7 @@ function HomeContent() {
               className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer flex-shrink-0"
               aria-label="Exit version comparison"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -1197,7 +1197,7 @@ function HomeContent() {
         {creatorMode && isSlideHiddenAt(physicalSlide) && (
           <div className="flex items-center gap-3 px-4 py-3 mb-5 bg-amber-500/8 border border-amber-500/25 rounded-2xl animate-fade-in">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400" aria-hidden="true">
                 <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
                 <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
                 <line x1="1" y1="1" x2="23" y2="23" />
@@ -1338,17 +1338,17 @@ function HomeContent() {
                 }
               >
                 {isPublic ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="2" y1="12" x2="22" y2="12" />
                     <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
                   </svg>
                 ) : isUnlisted ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
                   </svg>
                 ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0110 0v4" />
                   </svg>
@@ -1752,10 +1752,12 @@ function HomeContent() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div role="radiogroup" aria-label="Export theme" className="grid grid-cols-2 gap-3">
             {/* Light option */}
             <button
               type="button"
+              role="radio"
+              aria-checked={exportTheme === "light"}
               onClick={() => setExportTheme("light")}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${
                 exportTheme === "light"
@@ -1764,7 +1766,7 @@ function HomeContent() {
               }`}
             >
               <div className="w-14 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="5" />
                   <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
                   <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
@@ -1778,6 +1780,8 @@ function HomeContent() {
             {/* Dark option */}
             <button
               type="button"
+              role="radio"
+              aria-checked={exportTheme === "dark"}
               onClick={() => setExportTheme("dark")}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${
                 exportTheme === "dark"
@@ -1786,7 +1790,7 @@ function HomeContent() {
               }`}
             >
               <div className="w-14 h-10 rounded-lg bg-[#0B0B1A] border border-[#2A2A52] flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0EDE6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0EDE6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
                 </svg>
               </div>
