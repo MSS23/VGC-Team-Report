@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { ExploreContent } from "@/components/explore/ExploreContent";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { getPopularReports } from "@/lib/explore/get-popular-reports";
+
+// Rebuild the populated ItemList schema every 5 minutes — fresh enough for
+// AEO/SEO without hammering the DB on every request.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Best VGC Teams 2026 — Explore Top Team Reports | VGC Team Report",
@@ -42,7 +47,46 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ExplorePage() {
+export default async function ExplorePage() {
+  // Fetch the top 20 popular public reports server-side so we can embed a
+  // populated ItemList JSON-LD block. The visual list itself is still
+  // rendered + filtered by the existing client component below.
+  const popular = await getPopularReports(20);
+
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Popular VGC Teams",
+    itemListOrder: "ItemListOrderDescending",
+    numberOfItems: popular.length,
+    itemListElement: popular.map((r, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
+        "@type": "CreativeWork",
+        "@id": `https://pokemonvgcteamreport.com/s/${r.id}`,
+        name: r.title,
+        ...(r.creatorName
+          ? { author: { "@type": "Person", name: r.creatorName } }
+          : {}),
+        datePublished: r.createdAt,
+        dateModified: r.updatedAt,
+        interactionStatistic: [
+          {
+            "@type": "InteractionCounter",
+            interactionType: "https://schema.org/LikeAction",
+            userInteractionCount: r.likeCount,
+          },
+          {
+            "@type": "InteractionCounter",
+            interactionType: "https://schema.org/ViewAction",
+            userInteractionCount: r.viewCount,
+          },
+        ],
+      },
+    })),
+  };
+
   return (
     <>
       <JsonLd
@@ -77,6 +121,7 @@ export default function ExplorePage() {
           },
         }}
       />
+      {popular.length > 0 ? <JsonLd data={itemListSchema} /> : null}
       <ExploreContent />
     </>
   );
