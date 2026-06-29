@@ -94,6 +94,7 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
       triggerRef.current?.focus();
       wasOpenRef.current = false;
     }
+    return undefined;
   }, [open]);
 
   if (!enabled) return null;

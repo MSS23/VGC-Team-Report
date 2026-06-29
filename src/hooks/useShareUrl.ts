@@ -225,6 +225,7 @@ export function useShareUrl() {
     }
 
     clearTimeout(timeout);
+    return undefined;
     // editKeyFromUrl is intentionally NOT a dependency: the fetch ignores the
     // key (auth grants edit access server-side), and history.replaceState
     // strips ?key= right after, which would otherwise flip editKeyFromUrl to

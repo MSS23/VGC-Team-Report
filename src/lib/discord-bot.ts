@@ -12,7 +12,7 @@ function getConfig() {
   return { token, channelId, configured: !!(token && channelId) };
 }
 
-async function discordFetch(path: string, options: RequestInit = {}) {
+async function discordFetch(path: string, options: RequestInit = {}): Promise<unknown> {
   const { token } = getConfig();
   if (!token) throw new Error("DISCORD_BOT_TOKEN not set");
 
@@ -101,7 +101,7 @@ export async function postFeedbackEmbed(opts: {
   }
 
   // Post the embed
-  const message = await discordFetch(`/channels/${channelId}/messages`, {
+  const message = (await discordFetch(`/channels/${channelId}/messages`, {
     method: "POST",
     body: JSON.stringify({
       embeds: [{
@@ -112,7 +112,7 @@ export async function postFeedbackEmbed(opts: {
         timestamp: new Date().toISOString(),
       }],
     }),
-  });
+  })) as { id: string };
 
   // Try to find an existing thread with a similar topic, or create one
   try {

@@ -29,9 +29,9 @@ async function linearQuery(query: string, variables?: Record<string, unknown>) {
     throw new Error(`Linear API error ${res.status}: ${text}`);
   }
 
-  const data = await res.json();
+  const data = (await res.json()) as { data?: unknown; errors?: { message: string }[] };
   if (data.errors?.length) {
-    throw new Error(`Linear GraphQL error: ${data.errors[0].message}`);
+    throw new Error(`Linear GraphQL error: ${data.errors[0]?.message}`);
   }
 
   return data.data;
@@ -124,13 +124,13 @@ export async function createLinearIssue(opts: {
   // Find or create labels (type label + no-claude default)
   const labelIds: string[] = [];
   try {
-    const labelsData = await linearQuery(`
+    const labelsData = (await linearQuery(`
       query($teamId: String!) {
         team(id: $teamId) {
           labels { nodes { id name } }
         }
       }
-    `, { teamId });
+    `, { teamId })) as { team: { labels: { nodes: { id: string; name: string }[] } } };
 
     const allLabels: { id: string; name: string }[] = labelsData.team.labels.nodes;
 
@@ -141,13 +141,13 @@ export async function createLinearIssue(opts: {
     if (existingLabel) {
       labelIds.push(existingLabel.id);
     } else {
-      const createLabel = await linearQuery(`
+      const createLabel = (await linearQuery(`
         mutation($teamId: String!, $name: String!) {
           issueLabelCreate(input: { teamId: $teamId, name: $name }) {
             issueLabel { id }
           }
         }
-      `, { teamId, name: mapping.label });
+      `, { teamId, name: mapping.label })) as { issueLabelCreate: { issueLabel: { id: string } } };
       labelIds.push(createLabel.issueLabelCreate.issueLabel.id);
     }
 
@@ -167,14 +167,19 @@ export async function createLinearIssue(opts: {
   let stateId: string | undefined;
   let projectId: string | undefined;
   try {
-    const teamData = await linearQuery(`
+    const teamData = (await linearQuery(`
       query($teamId: String!) {
         team(id: $teamId) {
           states { nodes { id name type } }
           projects { nodes { id name } }
         }
       }
-    `, { teamId });
+    `, { teamId })) as {
+      team: {
+        states: { nodes: { id: string; name: string; type: string }[] };
+        projects: { nodes: { id: string; name: string }[] };
+      };
+    };
 
     stateId = teamData.team.states.nodes.find(
       (s: { type: string }) => s.type === "backlog"
@@ -188,7 +193,7 @@ export async function createLinearIssue(opts: {
   }
 
   // Create the issue in Backlog → Community Feedback project
-  const result = await linearQuery(`
+  const result = (await linearQuery(`
     mutation($teamId: String!, $title: String!, $description: String!, $priority: Int!, $labelIds: [String!], $stateId: String, $projectId: String) {
       issueCreate(input: {
         teamId: $teamId
@@ -214,7 +219,7 @@ export async function createLinearIssue(opts: {
     labelIds: labelIds.length > 0 ? labelIds : [],
     stateId: stateId ?? null,
     projectId: projectId ?? null,
-  });
+  })) as { issueCreate: { issue: { id: string; identifier: string; url: string } } };
 
   return result.issueCreate.issue;
 }

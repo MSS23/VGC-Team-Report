@@ -16,11 +16,11 @@ interface PokePasteResult {
 export async function fetchPokePaste(url: string): Promise<PokePasteResult> {
   const res = await fetch(`/api/pokepaste?url=${encodeURIComponent(url.trim())}`);
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as { error?: string; paste?: string; title?: string; url?: string };
     throw new Error(data.error ?? `Failed to fetch (${res.status})`);
   }
-  const data = await res.json();
-  return { paste: data.paste, title: data.title ?? null };
+  const data = (await res.json()) as { error?: string; paste?: string; title?: string; url?: string };
+  return { paste: data.paste ?? "", title: data.title ?? null };
 }
 
 interface CreatePokePasteInput {
@@ -41,10 +41,10 @@ export async function createPokePaste(input: CreatePokePasteInput): Promise<stri
     body: JSON.stringify(input),
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as { error?: string; paste?: string; title?: string; url?: string };
     throw new Error(data.error ?? `Failed to create (${res.status})`);
   }
-  const data = await res.json();
+  const data = (await res.json()) as { error?: string; paste?: string; title?: string; url?: string };
   if (!data.url || typeof data.url !== "string") {
     throw new Error("PokéPaste response missing url");
   }

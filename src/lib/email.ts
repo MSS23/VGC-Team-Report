@@ -82,7 +82,7 @@ export async function sendCommentNotificationEmail(opts: {
   commentBody: string;
   reportTitle: string;
   shareId: string;
-}) {
+}): Promise<void> {
   try {
     const reportUrl = `${APP_URL}/report/${opts.shareId}`;
     const html = buildCommentNotificationHtml(opts.commenterName, opts.commentBody, opts.reportTitle, reportUrl);
@@ -181,7 +181,7 @@ function buildCommentNotificationHtml(
 export async function sendWelcomeEmail(opts: {
   to: string;
   firstName: string | null;
-}) {
+}): Promise<void> {
   try {
     const displayName = opts.firstName || "there";
     const html = buildWelcomeEmailHtml(displayName);
@@ -328,7 +328,7 @@ export function buildWeeklySummaryHtml(data: {
   recentItems: Array<{ type: string; title: string; submitter: string; date: string }>;
   openBugs: number;
   weekLabel: string;
-}) {
+}): string {
   const typeLabel: Record<string, string> = {
     feature: "Feature",
     bug: "Bug",
