@@ -12,6 +12,8 @@ const UpdateBody = z.object({
   restore: z.boolean().optional(),
 });
 
+const SHARE_ID_RE = /^[a-zA-Z0-9_-]{6,16}$/;
+
 // PATCH: update report settings (visibility, restore from trash, etc.)
 export async function PATCH(
   request: Request,
@@ -27,6 +29,9 @@ export async function PATCH(
     }
 
     const { shareId } = await params;
+    if (!SHARE_ID_RE.test(shareId)) {
+      return NextResponse.json({ error: "Invalid share ID" }, { status: 400 });
+    }
     const raw = await request.json();
     const parsed = UpdateBody.safeParse(raw);
     if (!parsed.success) {
@@ -101,6 +106,9 @@ export async function DELETE(
     }
 
     const { shareId } = await params;
+    if (!SHARE_ID_RE.test(shareId)) {
+      return NextResponse.json({ error: "Invalid share ID" }, { status: 400 });
+    }
     const sql = getDb();
 
     // Try owner soft-delete first

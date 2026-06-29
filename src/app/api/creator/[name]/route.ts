@@ -10,6 +10,9 @@ export async function GET(
   try {
     const { name } = await params;
     const creatorName = decodeURIComponent(name);
+    if (creatorName.length < 1 || creatorName.length > 64 || /[%_]/.test(creatorName)) {
+      return NextResponse.json({ error: "Invalid creator name" }, { status: 400 });
+    }
     const guard = await apiGuard(request, { rateLimit: { key: "creator", max: 30 } });
     if (guard) return guard;
 

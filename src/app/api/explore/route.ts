@@ -68,8 +68,11 @@ export async function GET(request: Request) {
       : sql``;
 
     // Build search condition based on searchType
-    // Use full-text search for queries 3+ chars, fall back to ILIKE for short queries
-    const searchPattern = q ? `%${q}%` : null;
+    // Use full-text search for queries 3+ chars, fall back to ILIKE for short queries.
+    // Strip ILIKE wildcards (% and _) from the short-query path so a stray "%" in the
+    // search box can't trigger a full-table scan or wildcard injection.
+    const ilikeSafeQ = q.replace(/[%_]/g, "");
+    const searchPattern = ilikeSafeQ ? `%${ilikeSafeQ}%` : null;
     const useFts = q.length >= 3;
     // Convert query to tsquery: split words, add :* prefix matching to each word.
     // The :* suffix enables prefix matching so "chien" matches "Chien-Pao".
