@@ -45,3 +45,11 @@ next-env.d.ts
 .claude/
 
 .env*.local
+
+# cypress artifacts
+cypress/screenshots/
+cypress/videos/
+
+# stray images / scratch files
+*.jfif
+Screenshot*.png

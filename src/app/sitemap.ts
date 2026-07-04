@@ -15,7 +15,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/tournaments`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
     { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.6, lastModified: now },
     { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3, lastModified: now },
-    { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.5, lastModified: now },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
     { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
     ...getRegMAMegasWithSprites().map((m) => ({
@@ -40,12 +39,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
     const creators = await sql`
-      SELECT DISTINCT data->>'creatorName' as name
+      SELECT data->>'creatorName' as name, MAX(updated_at) as last_modified
       FROM shares
       WHERE is_public = TRUE AND deleted_at IS NULL AND data->>'creatorName' IS NOT NULL AND data->>'creatorName' != ''
+      GROUP BY data->>'creatorName'
     `;
     const creatorPages: MetadataRoute.Sitemap = creators.map((row) => ({
       url: `${BASE}/creator/${encodeURIComponent(row.name as string)}`,
+      lastModified: new Date(row.last_modified as string),
       changeFrequency: "weekly" as const,
       priority: 0.6,
     }));

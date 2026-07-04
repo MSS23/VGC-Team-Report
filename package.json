@@ -23,7 +23,6 @@
     "@opentelemetry/resources": "^2.6.1",
     "@opentelemetry/sdk-logs": "^0.214.0",
     "@pkmn/dex": "^0.10.7",
-    "@sentry/nextjs": "^10.45.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
     "html2canvas-pro": "^2.0.2",

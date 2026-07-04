@@ -21,8 +21,6 @@ export async function register() {
       for (const err of result.errors) console.warn("  - " + err);
     }
 
-    await import("../sentry.server.config");
-
     const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
     if (token) {
       _provider = new LoggerProvider({
@@ -40,10 +38,6 @@ export async function register() {
       });
       logs.setGlobalLoggerProvider(_provider);
     }
-  }
-
-  if (process.env.NEXT_RUNTIME === "edge") {
-    await import("../sentry.edge.config");
   }
 }
 
