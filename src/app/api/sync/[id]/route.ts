@@ -108,19 +108,22 @@ export async function GET(
       // Send initial presence count
       send("presence", { collaborators: getCollaboratorCount(shareId) });
 
-      // Poll for version changes every 2 seconds (much faster than client-side polling)
+      // Poll for version changes every 5 seconds. Each cycle first reads only the
+      // lightweight `version`/`is_public` columns; the full `data` JSONB blob is
+      // fetched in a second query ONLY when a newer version is detected. This keeps
+      // Neon from shipping the whole report every poll when nothing has changed.
       const pollInterval = setInterval(async () => {
         if (closed) { clearInterval(pollInterval); return; }
         try {
           touchPresence(shareId, sessionId);
 
-          const rows = await sql`
-            SELECT data, COALESCE(version, 1) AS version, is_public
+          const metaRows = await sql`
+            SELECT COALESCE(version, 1) AS version, is_public
             FROM shares WHERE id = ${shareId} AND deleted_at IS NULL
           `;
-          if (rows.length === 0) { clearInterval(pollInterval); return; }
+          if (metaRows.length === 0) { clearInterval(pollInterval); return; }
 
-          const serverVersion = Number(rows[0].version);
+          const serverVersion = Number(metaRows[0].version);
 
           // First check — record version
           if (knownVersion === 0) {
@@ -128,15 +131,20 @@ export async function GET(
             return;
           }
 
-          // Newer version detected — push to client
+          // Newer version detected — fetch the full data blob and push to client
           if (serverVersion > knownVersion) {
             knownVersion = serverVersion;
-            const data = rows[0].data as Record<string, unknown>;
-            send("version", {
-              version: serverVersion,
-              state: data,
-              isPublic: !!rows[0].is_public,
-            });
+            const dataRows = await sql`
+              SELECT data FROM shares WHERE id = ${shareId} AND deleted_at IS NULL
+            `;
+            if (dataRows.length > 0) {
+              const data = dataRows[0].data as Record<string, unknown>;
+              send("version", {
+                version: serverVersion,
+                state: data,
+                isPublic: !!metaRows[0].is_public,
+              });
+            }
           }
 
           // Send presence updates
@@ -144,7 +152,7 @@ export async function GET(
         } catch {
           // DB error — skip this cycle
         }
-      }, 2000);
+      }, 5000);
 
       // Keepalive ping every 15 seconds
       const pingInterval = setInterval(() => {

@@ -17,100 +17,112 @@ export async function GET(request: Request) {
 
     const sql = getDb();
 
-    // Total stats across all user's reports
-    const [totals] = await sql`
-      SELECT
-        COUNT(*) as total_reports,
-        COALESCE(SUM(view_count), 0) as total_views,
-        COUNT(*) FILTER (WHERE is_public = TRUE) as public_reports,
-        COUNT(*) FILTER (WHERE is_public = FALSE) as private_reports
-      FROM shares
-      WHERE owner_id = ${userId} AND deleted_at IS NULL
-    `;
-
-    // Top reports by views
-    const topByViews = await sql`
-      SELECT id, data, COALESCE(view_count, 0) as view_count, is_public, created_at, updated_at
-      FROM shares
-      WHERE owner_id = ${userId} AND deleted_at IS NULL
-      ORDER BY view_count DESC NULLS LAST
-      LIMIT 5
-    `;
-
-    // Recent reports (last 5 created)
-    const recentReports = await sql`
-      SELECT id, data, COALESCE(view_count, 0) as view_count, is_public, created_at
-      FROM shares
-      WHERE owner_id = ${userId} AND deleted_at IS NULL
-      ORDER BY created_at DESC
-      LIMIT 5
-    `;
-
-    // Engagement: reactions across all reports
-    const [reactionTotals] = await sql`
-      SELECT
-        COUNT(*) as total_reactions,
-        COUNT(DISTINCT share_id) as reports_with_reactions
-      FROM reactions r
-      INNER JOIN shares s ON s.id = r.share_id
-      WHERE s.owner_id = ${userId} AND s.deleted_at IS NULL
-    `;
-
-    // Engagement: comments across all reports
-    const [commentTotals] = await sql`
-      SELECT
-        COUNT(*) as total_comments,
-        COUNT(DISTINCT share_id) as reports_with_comments
-      FROM comments c
-      INNER JOIN shares s ON s.id = c.share_id
-      WHERE s.owner_id = ${userId} AND s.deleted_at IS NULL
-    `;
-
-    // Saves: how many times user's reports were saved by others
-    const [saveTotals] = await sql`
-      SELECT
-        COUNT(*) as total_saves,
-        COUNT(DISTINCT share_id) as reports_saved
-      FROM saved_reports sr
-      INNER JOIN shares s ON s.id = sr.share_id
-      WHERE s.owner_id = ${userId} AND sr.user_id != ${userId}
-    `;
-
-    // Followers count — get creator name from user's reports, then count follows
-    const [followerCount] = await sql`
-      SELECT COUNT(*) as followers FROM follows
-      WHERE LOWER(creator_name) = LOWER(
-        COALESCE(
-          (SELECT name FROM creator_profiles WHERE LOWER(name) = LOWER(
+    // All nine aggregates are independent per-user queries — issue them
+    // concurrently instead of nine sequential round-trips to Neon.
+    const [
+      totalsRows,
+      topByViews,
+      recentReports,
+      reactionTotalsRows,
+      commentTotalsRows,
+      saveTotalsRows,
+      followerCountRows,
+      monthlyActivity,
+      topReactions,
+    ] = await Promise.all([
+      // Total stats across all user's reports
+      sql`
+        SELECT
+          COUNT(*) as total_reports,
+          COALESCE(SUM(view_count), 0) as total_views,
+          COUNT(*) FILTER (WHERE is_public = TRUE) as public_reports,
+          COUNT(*) FILTER (WHERE is_public = FALSE) as private_reports
+        FROM shares
+        WHERE owner_id = ${userId} AND deleted_at IS NULL
+      `,
+      // Top reports by views
+      sql`
+        SELECT id, data, COALESCE(view_count, 0) as view_count, is_public, created_at, updated_at
+        FROM shares
+        WHERE owner_id = ${userId} AND deleted_at IS NULL
+        ORDER BY view_count DESC NULLS LAST
+        LIMIT 5
+      `,
+      // Recent reports (last 5 created)
+      sql`
+        SELECT id, data, COALESCE(view_count, 0) as view_count, is_public, created_at
+        FROM shares
+        WHERE owner_id = ${userId} AND deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 5
+      `,
+      // Engagement: reactions across all reports
+      sql`
+        SELECT
+          COUNT(*) as total_reactions,
+          COUNT(DISTINCT share_id) as reports_with_reactions
+        FROM reactions r
+        INNER JOIN shares s ON s.id = r.share_id
+        WHERE s.owner_id = ${userId} AND s.deleted_at IS NULL
+      `,
+      // Engagement: comments across all reports
+      sql`
+        SELECT
+          COUNT(*) as total_comments,
+          COUNT(DISTINCT share_id) as reports_with_comments
+        FROM comments c
+        INNER JOIN shares s ON s.id = c.share_id
+        WHERE s.owner_id = ${userId} AND s.deleted_at IS NULL
+      `,
+      // Saves: how many times user's reports were saved by others
+      sql`
+        SELECT
+          COUNT(*) as total_saves,
+          COUNT(DISTINCT share_id) as reports_saved
+        FROM saved_reports sr
+        INNER JOIN shares s ON s.id = sr.share_id
+        WHERE s.owner_id = ${userId} AND sr.user_id != ${userId}
+      `,
+      // Followers count — get creator name from user's reports, then count follows
+      sql`
+        SELECT COUNT(*) as followers FROM follows
+        WHERE LOWER(creator_name) = LOWER(
+          COALESCE(
+            (SELECT name FROM creator_profiles WHERE LOWER(name) = LOWER(
+              (SELECT data->>'creatorName' FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL LIMIT 1)
+            )),
             (SELECT data->>'creatorName' FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL LIMIT 1)
-          )),
-          (SELECT data->>'creatorName' FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL LIMIT 1)
+          )
         )
-      )
-    `;
+      `,
+      // Reports created per month (last 6 months)
+      sql`
+        SELECT
+          to_char(created_at, 'YYYY-MM') as month,
+          COUNT(*) as reports_created
+        FROM shares
+        WHERE owner_id = ${userId} AND deleted_at IS NULL
+          AND created_at >= NOW() - INTERVAL '6 months'
+        GROUP BY to_char(created_at, 'YYYY-MM')
+        ORDER BY month ASC
+      `,
+      // Top reaction types
+      sql`
+        SELECT r.reaction_type, COUNT(*) as count
+        FROM reactions r
+        INNER JOIN shares s ON s.id = r.share_id
+        WHERE s.owner_id = ${userId} AND s.deleted_at IS NULL
+        GROUP BY r.reaction_type
+        ORDER BY count DESC
+        LIMIT 5
+      `,
+    ]);
 
-    // Reports created per month (last 6 months)
-    const monthlyActivity = await sql`
-      SELECT
-        to_char(created_at, 'YYYY-MM') as month,
-        COUNT(*) as reports_created
-      FROM shares
-      WHERE owner_id = ${userId} AND deleted_at IS NULL
-        AND created_at >= NOW() - INTERVAL '6 months'
-      GROUP BY to_char(created_at, 'YYYY-MM')
-      ORDER BY month ASC
-    `;
-
-    // Top reaction types
-    const topReactions = await sql`
-      SELECT r.reaction_type, COUNT(*) as count
-      FROM reactions r
-      INNER JOIN shares s ON s.id = r.share_id
-      WHERE s.owner_id = ${userId} AND s.deleted_at IS NULL
-      GROUP BY r.reaction_type
-      ORDER BY count DESC
-      LIMIT 5
-    `;
+    const [totals] = totalsRows;
+    const [reactionTotals] = reactionTotalsRows;
+    const [commentTotals] = commentTotalsRows;
+    const [saveTotals] = saveTotalsRows;
+    const [followerCount] = followerCountRows;
 
     const formatReport = (row: Record<string, unknown>) => {
       const data = row.data as Record<string, unknown>;

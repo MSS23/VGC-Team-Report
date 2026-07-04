@@ -43,21 +43,32 @@ type ForkedFromMeta = {
 type SqlClient = ReturnType<typeof getDb>;
 
 /**
- * Look up the forked_from_id for a share in a fault-tolerant way.
- * Returns null if the column does not yet exist in the database (i.e. the
- * migration hasn't been run on this environment). This isolates the fork
- * feature from the main share-read path so a missing column can never
- * break `/s/{id}` for end users.
+ * Run a share-row SELECT in a fault-tolerant way with respect to the
+ * `forked_from_id` column. `withFork` selects the column inline (so the fork
+ * lineage rides along with the main read instead of costing an extra
+ * round-trip); if that column does not yet exist in this environment (the
+ * migration hasn't run), the query throws and we fall back to `withoutFork`.
+ * This isolates the fork feature from the main share-read path so a missing
+ * column can never break `/s/{id}` for end users.
  */
-async function loadForkedFromId(sql: SqlClient, id: string): Promise<string | null> {
+async function selectShareRowTolerant<T>(
+  withFork: () => Promise<T>,
+  withoutFork: () => Promise<T>,
+): Promise<{ rows: T; hasForkColumn: boolean }> {
   try {
-    const rows = await sql`SELECT forked_from_id FROM shares WHERE id = ${id}`;
-    if (rows.length === 0) return null;
-    return (rows[0].forked_from_id as string | null) ?? null;
+    return { rows: await withFork(), hasForkColumn: true };
   } catch {
-    // Column does not exist yet — treat as "no fork lineage"
-    return null;
+    return { rows: await withoutFork(), hasForkColumn: false };
   }
+}
+
+/** Read the forked_from_id off an already-fetched share row (null-safe). */
+function forkedFromIdFromRow(
+  row: Record<string, unknown> | undefined,
+  hasForkColumn: boolean,
+): string | null {
+  if (!hasForkColumn || !row) return null;
+  return (row.forked_from_id as string | null) ?? null;
 }
 
 /** Fetch lightweight metadata about the source a share was forked from (if any). */
@@ -129,9 +140,14 @@ export async function GET(
         authedUserId = uid;
       } catch { /* not authenticated */ }
 
-      const rows = await sql`
-        SELECT data, (edit_token = ${key}) AS editable, COALESCE(version, 1) AS version, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL
-      `;
+      const { rows, hasForkColumn } = await selectShareRowTolerant(
+        () => sql`
+          SELECT data, (edit_token = ${key}) AS editable, COALESCE(version, 1) AS version, is_public, is_unlisted, forked_from_id FROM shares WHERE id = ${id} AND deleted_at IS NULL
+        `,
+        () => sql`
+          SELECT data, (edit_token = ${key}) AS editable, COALESCE(version, 1) AS version, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL
+        `,
+      );
       if (rows.length === 0) {
         return NextResponse.json({ error: "Not found" }, { status: 404 });
       }
@@ -152,7 +168,7 @@ export async function GET(
         return new Response(null, { status: 304 });
       }
 
-      const forkedFromId = await loadForkedFromId(sql, id);
+      const forkedFromId = forkedFromIdFromRow(rows[0], hasForkColumn);
       const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
 
       const editable = !!rows[0].editable && !!authedUserId;
@@ -182,10 +198,16 @@ export async function GET(
 
     // If the user is the owner or a collaborator, grant edit access
     if (userId) {
-      const ownerRows = await sql`
-        SELECT data, edit_token, COALESCE(version, 1) AS version, is_public, is_unlisted, owner_id
-        FROM shares WHERE id = ${id} AND deleted_at IS NULL
-      `;
+      const { rows: ownerRows, hasForkColumn } = await selectShareRowTolerant(
+        () => sql`
+          SELECT data, edit_token, COALESCE(version, 1) AS version, is_public, is_unlisted, owner_id, forked_from_id
+          FROM shares WHERE id = ${id} AND deleted_at IS NULL
+        `,
+        () => sql`
+          SELECT data, edit_token, COALESCE(version, 1) AS version, is_public, is_unlisted, owner_id
+          FROM shares WHERE id = ${id} AND deleted_at IS NULL
+        `,
+      );
       if (ownerRows.length > 0) {
         const isOwner = ownerRows[0].owner_id === userId;
         let isCollaborator = false;
@@ -201,9 +223,11 @@ export async function GET(
           if (sinceVersion && Number(sinceVersion) >= Number(ownerRows[0].version)) {
             return new Response(null, { status: 304 });
           }
-          const collabNameRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`;
-          const forkedFromId = await loadForkedFromId(sql, id);
-          const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
+          const forkedFromId = forkedFromIdFromRow(ownerRows[0], hasForkColumn);
+          const [collabNameRows, forkedFrom] = await Promise.all([
+            sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
+            fetchForkedFromMeta(sql, forkedFromId),
+          ]);
           return NextResponse.json({
             ...normalizeReportData(ownerRows[0].data as Record<string, unknown>),
             _editable: true,
@@ -222,9 +246,14 @@ export async function GET(
     // Non-owner access — read-only, no edit info leaked.
     // Private reports behave as "unlisted": anyone with the /s/{id} link can view,
     // but they are not listed on Explore and edit requires the ?key= collab token.
-    const rows = await sql`
-      SELECT data, COALESCE(version, 1) AS version, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL
-    `;
+    const { rows, hasForkColumn } = await selectShareRowTolerant(
+      () => sql`
+        SELECT data, COALESCE(version, 1) AS version, is_public, is_unlisted, forked_from_id FROM shares WHERE id = ${id} AND deleted_at IS NULL
+      `,
+      () => sql`
+        SELECT data, COALESCE(version, 1) AS version, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL
+      `,
+    );
     if (rows.length === 0) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -255,12 +284,14 @@ export async function GET(
       return new Response(null, { status: 304 });
     }
 
-    // Fetch accepted collaborator names for public display
-    const collabRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`;
+    // Fetch accepted collaborator names for public display, in parallel with
+    // fork-source metadata (both are independent of each other).
+    const forkedFromId = forkedFromIdFromRow(rows[0], hasForkColumn);
+    const [collabRows, forkedFrom] = await Promise.all([
+      sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
+      fetchForkedFromMeta(sql, forkedFromId),
+    ]);
     const collaboratorNames = collabRows.map((r) => r.user_name as string);
-
-    const forkedFromId = await loadForkedFromId(sql, id);
-    const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
 
     const normalized = normalizeReportData(rows[0].data as Record<string, unknown>);
     const { data: viewable, redactedFields } = applyPrivateFieldRedaction(normalized);

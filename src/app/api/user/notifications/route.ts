@@ -16,10 +16,25 @@ export async function GET(request: Request) {
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const url = new URL(request.url);
+    const countOnly = url.searchParams.get("countOnly") === "1";
+    const sql = getDb();
+
+    // Lightweight mode: run ONLY the cheap unread-count query, skip the row list.
+    if (countOnly) {
+      const countRows = await sql`
+        SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE read = FALSE) AS unread_count
+        FROM notifications
+        WHERE user_id = ${userId}
+      `;
+      return NextResponse.json({
+        unreadCount: Number(countRows[0]?.unread_count ?? 0),
+        total: Number(countRows[0]?.total ?? 0),
+      });
+    }
+
     const limit = Math.min(Number(url.searchParams.get("limit") ?? 50), 100);
     const offset = Number(url.searchParams.get("offset") ?? 0);
 
-    const sql = getDb();
     const [rows, countRows] = await Promise.all([
       sql`
         SELECT id, type, source_share_id, source_user_name, message, read, created_at

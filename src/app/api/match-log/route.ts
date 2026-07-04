@@ -1,4 +1,4 @@
-import { getDb, ensureTable } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
@@ -45,9 +45,6 @@ export async function POST(request: NextRequest) {
 
     const { opponentArchetype, result, gameCount, notes, tournamentName, shareId } = parsed.data;
 
-    // Ensure table exists (idempotent)
-    await ensureTable();
-
     const sql = getDb();
     const rows = await sql`
       INSERT INTO match_logs (user_id, share_id, opponent_archetype, result, game_count, notes, tournament_name)
@@ -88,8 +85,6 @@ export async function DELETE(request: NextRequest) {
     }
     const id = parsed.data;
 
-    await ensureTable();
-
     const sql = getDb();
     const rows = await sql`
       DELETE FROM match_logs
@@ -117,9 +112,6 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    // Ensure table exists (idempotent)
-    await ensureTable();
 
     const sql = getDb();
     const rows = (await sql`

@@ -1,7 +1,20 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { extractSpecies } from "@/lib/utils/extract-species";
+import { cacheGet, cacheSet } from "@/lib/cache";
 import { NextResponse } from "next/server";
+
+// Public creator pages are hit repeatedly. Short-TTL Redis cache + a matching
+// CDN window keeps the DB (creator UNION + reaction/collaborator batches) cold
+// between refreshes. Inline key/TTL so we don't have to touch shared cache.ts.
+const CREATOR_CACHE_TTL = 60; // seconds
+const CREATOR_CACHE_CONTROL = "public, s-maxage=60, stale-while-revalidate=300";
+
+function creatorResponse(payload: unknown) {
+  const res = NextResponse.json(payload);
+  res.headers.set("Cache-Control", CREATOR_CACHE_CONTROL);
+  return res;
+}
 
 export async function GET(
   request: Request,
@@ -12,6 +25,13 @@ export async function GET(
     const creatorName = decodeURIComponent(name);
     const guard = await apiGuard(request, { rateLimit: { key: "creator", max: 30 } });
     if (guard) return guard;
+
+    // Serve from cache when warm.
+    const cacheKey = `creator:${creatorName}`;
+    const cached = await cacheGet<unknown>(cacheKey);
+    if (cached) {
+      return creatorResponse(cached);
+    }
 
     const sql = getDb();
 
@@ -42,7 +62,9 @@ export async function GET(
 
     // If creator has set their profile to private, return early
     if (profileCheck.length > 0 && profileCheck[0].is_public === false) {
-      return NextResponse.json({ creator: creatorName, isPrivate: true, reports: [] });
+      const privatePayload = { creator: creatorName, isPrivate: true, reports: [] };
+      await cacheSet(cacheKey, privatePayload, CREATOR_CACHE_TTL);
+      return creatorResponse(privatePayload);
     }
 
     const profile = profileCheck.length > 0 ? {
@@ -58,7 +80,9 @@ export async function GET(
     const totalViews = rows.reduce((sum, r) => sum + (Number(r.view_count) || 0), 0);
 
     if (rows.length === 0) {
-      return NextResponse.json({ creator: creatorName, isVerified, profile, followerCount, totalReports: 0, totalReactions: 0, totalViews: 0, reports: [] });
+      const emptyPayload = { creator: creatorName, isVerified, profile, followerCount, totalReports: 0, totalReactions: 0, totalViews: 0, reports: [] };
+      await cacheSet(cacheKey, emptyPayload, CREATOR_CACHE_TTL);
+      return creatorResponse(emptyPayload);
     }
 
     const shareIds = rows.map((r) => r.id as string);
@@ -110,7 +134,7 @@ export async function GET(
       };
     });
 
-    return NextResponse.json({
+    const payload = {
       creator: creatorName,
       isVerified,
       profile,
@@ -119,7 +143,9 @@ export async function GET(
       totalReactions,
       totalViews,
       reports,
-    });
+    };
+    await cacheSet(cacheKey, payload, CREATOR_CACHE_TTL);
+    return creatorResponse(payload);
   } catch (e) {
     console.error("Creator API error:", e);
     return NextResponse.json({ error: "Failed" }, { status: 500 });

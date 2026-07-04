@@ -1,16 +1,28 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { extractSpecies } from "@/lib/utils/extract-species";
+import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
 import { NextResponse } from "next/server";
 
 // Spotlight report ID — set by admin
 const SPOTLIGHT_ID = "TRjVuD8B";
+
+const CACHE_CONTROL = "public, s-maxage=300, stale-while-revalidate=600";
 
 export async function GET(request: Request) {
   const guard = await apiGuard(request, { rateLimit: { key: "spotlight", max: 60 } });
   if (guard) return guard;
 
   try {
+    // Serve from cache when warm — spotlight rarely changes.
+    const cacheKey = CacheKeys.spotlight();
+    const cached = await cacheGet<{ spotlight: unknown }>(cacheKey);
+    if (cached) {
+      const res = NextResponse.json(cached);
+      res.headers.set("Cache-Control", CACHE_CONTROL);
+      return res;
+    }
+
     const sql = getDb();
     const rows = await sql`
       SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count
@@ -19,32 +31,33 @@ export async function GET(request: Request) {
     `;
 
     if (rows.length === 0) {
-      return NextResponse.json({ spotlight: null });
+      const empty = { spotlight: null };
+      await cacheSet(cacheKey, empty, CacheTTL.SPOTLIGHT);
+      const res = NextResponse.json(empty);
+      res.headers.set("Cache-Control", CACHE_CONTROL);
+      return res;
     }
 
     const row = rows[0];
     const data = row.data as Record<string, unknown>;
     const paste = (data.paste as string) ?? "";
-
-    // Check verified status
     const creatorName = (data.creatorName as string) || undefined;
-    let isVerified = false;
-    if (creatorName) {
-      const verified = await sql`SELECT name FROM verified_creators WHERE LOWER(name) = ${creatorName.toLowerCase()}`;
-      isVerified = verified.length > 0;
-    }
 
-    // Like count (total reactions)
-    const likeRows = await sql`
-      SELECT COUNT(*)::int as count
-      FROM reactions WHERE share_id = ${SPOTLIGHT_ID}
-    `;
+    // These three lookups are independent — run them concurrently instead of
+    // three sequential round-trips. The verified check is skipped when there's
+    // no creator name.
+    const [verified, likeRows, commentRows] = await Promise.all([
+      creatorName
+        ? sql`SELECT name FROM verified_creators WHERE LOWER(name) = ${creatorName.toLowerCase()}`
+        : Promise.resolve([] as Array<Record<string, unknown>>),
+      sql`SELECT COUNT(*)::int as count FROM reactions WHERE share_id = ${SPOTLIGHT_ID}`,
+      sql`SELECT COUNT(*)::int as count FROM comments WHERE share_id = ${SPOTLIGHT_ID}`,
+    ]);
+
+    const isVerified = verified.length > 0;
     const likeCount = (likeRows[0]?.count as number) || 0;
 
-    // Comment count
-    const commentRows = await sql`SELECT COUNT(*)::int as count FROM comments WHERE share_id = ${SPOTLIGHT_ID}`;
-
-    return NextResponse.json({
+    const result = {
       spotlight: {
         id: row.id as string,
         species: extractSpecies(paste),
@@ -59,7 +72,13 @@ export async function GET(request: Request) {
         commentCount: (commentRows[0]?.count as number) || undefined,
         isVerified,
       },
-    });
+    };
+
+    await cacheSet(cacheKey, result, CacheTTL.SPOTLIGHT);
+
+    const res = NextResponse.json(result);
+    res.headers.set("Cache-Control", CACHE_CONTROL);
+    return res;
   } catch (e) {
     console.error("Spotlight API error:", e);
     return NextResponse.json({ spotlight: null });
