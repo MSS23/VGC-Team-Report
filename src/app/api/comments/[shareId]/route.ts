@@ -6,7 +6,7 @@ import { createNotification } from "@/lib/notifications";
 import { sendCommentNotificationEmail } from "@/lib/email";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 
 const SHARE_ID_RE = /^[a-zA-Z0-9_-]{6,16}$/;
@@ -31,6 +31,11 @@ export async function GET(
     const url = new URL(request.url);
     const cursor = url.searchParams.get("cursor");
     const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "20", 10) || 20, 50);
+    // Caller's own session id (query param, same value the DELETE handler
+    // authorizes against). Used only to compute `isOwn` server-side — the
+    // raw session_id of each comment is NEVER returned, since it is the
+    // exact credential the DELETE handler trusts.
+    const callerSessionId = url.searchParams.get("sessionId") ?? "";
 
     const sql = getDb();
     let rows;
@@ -59,7 +64,7 @@ export async function GET(
       id: row.id as number,
       displayName: row.display_name as string,
       body: row.body as string,
-      sessionId: row.session_id as string,
+      isOwn: callerSessionId.length > 0 && (row.session_id as string) === callerSessionId,
       createdAt: (row.created_at as Date).toISOString(),
     }));
 
@@ -118,20 +123,21 @@ export async function POST(
       RETURNING id, display_name, body, session_id, created_at
     `;
 
-    // Notify report owner about the new comment (fire-and-forget)
+    // Notify report owner about the new comment.
     const ownerId = shareCheck[0].owner_id as string | undefined;
     if (ownerId) {
-      // Get the commenter's Clerk user ID (if logged in) to avoid self-notification
+      // Get the commenter's Clerk user ID (if logged in) to avoid self-notification.
+      // auth() reads request headers, so it must run during the request, not in after().
       const { userId: commenterId } = await auth();
       const isSelfComment = commenterId && commenterId === ownerId;
 
       if (!isSelfComment) {
-        // In-app notification
-        createNotification(ownerId, "comment", shareId, name, `${name} commented on your report`);
-
-        // Email notification (fire-and-forget, never blocks response)
         const reportTitle = (shareData.tournamentName as string) || (shareData.creatorName as string) || "your report";
-        (async () => {
+        // Run notification + email in the post-response phase so Vercel keeps
+        // the lambda alive until they finish (fire-and-forget would risk the
+        // function freezing before completion).
+        after(async () => {
+          await createNotification(ownerId, "comment", shareId, name, `${name} commented on your report`);
           try {
             const client = await clerkClient();
             const ownerUser = await client.users.getUser(ownerId);
@@ -148,7 +154,7 @@ export async function POST(
           } catch (e) {
             console.warn("Comment email notification failed:", e);
           }
-        })();
+        });
       }
     }
 
@@ -163,7 +169,9 @@ export async function POST(
         id: row.id,
         displayName: row.display_name,
         body: row.body,
-        sessionId: row.session_id,
+        // The caller authored this comment, so it is always their own.
+        // We never echo back the raw session_id (see GET handler note).
+        isOwn: true,
         createdAt: (row.created_at as Date).toISOString(),
       },
     });

@@ -1,6 +1,8 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { getClientIp } from "@/lib/security/input-validation";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -25,10 +27,30 @@ export async function POST(request: Request) {
 
     const sql = getDb();
 
-    // Insert flag (unique per comment+session)
+    // Derive the flag identity from an authenticated source, NOT the
+    // client-supplied sessionId (which could be fabricated to auto-delete a
+    // comment with a few fake IDs). Prefer the Clerk user id; fall back to the
+    // request IP. This value is stored in the comment_flags.session_id column,
+    // which the UNIQUE(comment_id, session_id) constraint dedupes on.
+    const { userId } = await auth();
+    const flagKey = userId ? `user:${userId}` : `ip:${getClientIp(request)}`;
+
+    // Validate the comment exists and belongs to a live public share before
+    // accepting the flag — prevents flagging arbitrary / non-existent ids.
+    const commentCheck = await sql`
+      SELECT c.id
+      FROM comments c
+      JOIN shares s ON s.id = c.share_id
+      WHERE c.id = ${commentId} AND s.is_public = TRUE AND s.deleted_at IS NULL
+    `;
+    if (commentCheck.length === 0) {
+      return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    }
+
+    // Insert flag (unique per comment + authenticated identity)
     await sql`
       INSERT INTO comment_flags (comment_id, session_id)
-      VALUES (${commentId}, ${sessionId})
+      VALUES (${commentId}, ${flagKey})
       ON CONFLICT (comment_id, session_id) DO NOTHING
     `;
 

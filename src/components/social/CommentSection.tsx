@@ -8,7 +8,7 @@ interface Comment {
   id: number;
   displayName: string;
   body: string;
-  sessionId: string;
+  isOwn: boolean;
   createdAt: string;
 }
 
@@ -51,11 +51,12 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
     async (cursor?: string) => {
       const params = new URLSearchParams();
       if (cursor) params.set("cursor", cursor);
+      if (sessionId) params.set("sessionId", sessionId);
       const res = await fetch(`/api/comments/${shareId}?${params}`);
       if (!res.ok) return null;
       return res.json() as Promise<{ comments: Comment[]; nextCursor: string | null }>;
     },
-    [shareId],
+    [shareId, sessionId],
   );
 
   useEffect(() => {
@@ -131,7 +132,7 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
   };
 
   const canDelete = (comment: Comment) =>
-    comment.sessionId === sessionId || !!editToken;
+    comment.isOwn || !!editToken;
 
   const handleFlag = async (commentId: number) => {
     if (!sessionId) return;
@@ -294,7 +295,7 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
                           Delete
                         </button>
                       )}
-                      {comment.sessionId !== sessionId && (
+                      {!comment.isOwn && (
                         <button
                           type="button"
                           onClick={() => handleFlag(comment.id)}

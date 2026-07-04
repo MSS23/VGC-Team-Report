@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-const FollowBody = z.object({ creatorName: z.string().min(1) });
+const FollowBody = z.object({ creatorName: z.string().min(1).max(100) });
 
 // GET: list followed creators, or check single creator with ?creator=X
 export async function GET(request: Request) {

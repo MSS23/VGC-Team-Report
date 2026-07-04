@@ -31,6 +31,9 @@ export async function GET(
 ) {
   try {
     const { id: shareId } = await params;
+    const guard = await apiGuard(request, { rateLimit: { key: "collab-read", max: 30 } });
+    if (guard) return guard;
+
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
 
@@ -158,6 +161,10 @@ export async function PATCH(
 ) {
   try {
     const { id: shareId } = await params;
+    // Token rotation is security-sensitive — keep this stricter than the others.
+    const guard = await apiGuard(request, { rateLimit: { key: "collab-revoke", max: 5 } });
+    if (guard) return guard;
+
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
 
@@ -186,6 +193,9 @@ export async function DELETE(
 ) {
   try {
     const { id: shareId } = await params;
+    const guard = await apiGuard(request, { rateLimit: { key: "collab-remove", max: 10 } });
+    if (guard) return guard;
+
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
 
