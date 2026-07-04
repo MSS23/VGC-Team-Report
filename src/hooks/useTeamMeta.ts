@@ -23,8 +23,10 @@ interface TeamMeta {
    * able to read this and quickly understand how to play the team.
    */
   commonModes?: {
-    leads?: string;       // "Common Leads" — the team's go-to opening pairs
-    modes?: string;       // "Common Modes" — recurring turn patterns / playstyles
+    // Structured "Common Combinations" — lead/back pairs (roster indices) + strategy
+    combinations?: { id: string; leads: number[]; back: number[]; strategy: string }[];
+    leads?: string;       // legacy free-text "Common Leads" (retained for old reports)
+    modes?: string;       // legacy free-text "Common Modes" (retained for old reports)
     strengths?: string;   // "Strengths"
     weaknesses?: string;  // "Weaknesses"
     gameplan?: string;    // "Game Plan" — how to pilot / win conditions

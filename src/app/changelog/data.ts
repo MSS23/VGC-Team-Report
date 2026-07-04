@@ -16,6 +16,22 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "July 2026",
+    version: "5.24",
+    title: "Common Combinations, Clearer Speed Tiers & Faster Everything",
+    emoji: "🎯",
+    highlight: true,
+    items: [
+      { type: "new", text: "Common Combinations: the 'How to Pilot This Team' section replaces the free-text Leads/Modes fields with a visual table. Build numbered rows of 2 Leads + 2 Back picked from your own six Pokémon, each with a strategy note — the same sprite picker used in Match-Up game plans. Older reports keep their existing text under a 'Legacy notes' block, nothing is lost." },
+      { type: "improved", text: "Speed Tiers — Mega Forms: the toggle no longer silently does nothing. If a team has no Mega Stone equipped (or isn't in Reg M-A) it now says why, and it makes clear that Mega Forms adds a separate speed row — so a Mega that shares its base form's Speed (e.g. Charizard) showing the same number is expected, not a bug." },
+      { type: "improved", text: "Speed Tiers — Meta source: the meta benchmark list now shows which regulation it's pulled from (e.g. 'Reg M-A meta' vs 'Standard meta'), with a footnote noting it auto-follows the report's regulation tag." },
+      { type: "improved", text: "Stat bars: added a small 'bar color = stat type, not quality' caption so the standard per-stat colors aren't misread as a hidden percentile ranking." },
+      { type: "improved", text: "Performance & reliability: hot pages (spotlight, creator, explore, embeds) are cached and their queries parallelized, real-time editing polls far less aggressively, and account deletion and version reverts now run in atomic transactions." },
+      { type: "fixed", text: "Fixed a collaborative-editing feedback loop that could silently generate thousands of autosave versions on an open report — version history now stays lean and the database footprint dropped dramatically." },
+      { type: "fixed", text: "Security: comment deletion tokens are no longer exposed to readers, private reports can no longer be pulled through collections, and Discord build commands now require an authorized invoker." },
+    ],
+  },
+  {
     date: "June 2026",
     version: "5.23",
     title: "True Private Reports, Champions Reg M-B & Presentation Polish",

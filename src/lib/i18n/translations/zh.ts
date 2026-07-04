@@ -1,6 +1,19 @@
 import type { TranslationKeys } from "./en";
 
 const zh: TranslationKeys = {
+  commonCombinationsTitle: "常用组合",
+  commonCombinationsDesc: "你常用的出战：从六只中选择两只首发和两只后备，并记下何时使用。",
+  combinationLeads: "首发",
+  combinationBack: "后备",
+  combinationStrategy: "策略",
+  combinationLabel: "组合",
+  combinationStrategyPlaceholder: "何时派出此组合以及如何应对。",
+  addCombination: "添加组合",
+  combinationsEmpty: "暂无组合。",
+  removeCombination: "删除组合",
+  legacyNotesTitle: "旧备注",
+  legacyLeadsLabel: "常用首发（旧）",
+  legacyModesLabel: "常用模式（旧）",
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "创建、分享和发现竞技宝可梦队伍报告",

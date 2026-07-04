@@ -789,6 +789,11 @@ function PokemonDetailSlideBase({
           }
         )}
       </div>
+      {/* Clarify that bar colors are a fixed per-stat palette (which stat),
+          not a percentile/quality ranking — a common point of confusion. */}
+      <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-wide text-text-tertiary/70">
+        Bar color = stat type, not quality
+      </p>
 
       {/* Mega stat delta strip — shows base → mega changes when Mega is active.
           Uses championsStats in Reg M-A (SP-based) and megaStats otherwise so

@@ -1,6 +1,19 @@
 import type { TranslationKeys } from "./en";
 
 const fr: TranslationKeys = {
+  commonCombinationsTitle: "Combinaisons courantes",
+  commonCombinationsDesc: "Vos choix habituels : deux meneurs et deux en réserve parmi vos six, puis notez quand l amener.",
+  combinationLeads: "Meneurs",
+  combinationBack: "Réserve",
+  combinationStrategy: "Stratégie",
+  combinationLabel: "Combinaison",
+  combinationStrategyPlaceholder: "Quand amener cette combinaison et comment la jouer.",
+  addCombination: "Ajouter une combinaison",
+  combinationsEmpty: "Aucune combinaison pour l instant.",
+  removeCombination: "Supprimer la combinaison",
+  legacyNotesTitle: "Anciennes notes",
+  legacyLeadsLabel: "Meneurs courants (ancien)",
+  legacyModesLabel: "Modes courants (ancien)",
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "Construisez, partagez et explorez des rapports d'equipe Pokemon competitif",

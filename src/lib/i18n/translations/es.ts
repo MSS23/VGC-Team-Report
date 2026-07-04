@@ -1,6 +1,19 @@
 import type { TranslationKeys } from "./en";
 
 const es: TranslationKeys = {
+  commonCombinationsTitle: "Combinaciones comunes",
+  commonCombinationsDesc: "Tus opciones habituales: elige dos líderes y dos de reserva entre tus seis, y anota cuándo llevarla.",
+  combinationLeads: "Líderes",
+  combinationBack: "Reserva",
+  combinationStrategy: "Estrategia",
+  combinationLabel: "Combinación",
+  combinationStrategyPlaceholder: "Cuándo llevar esta combinación y cómo jugarla.",
+  addCombination: "Añadir combinación",
+  combinationsEmpty: "Aún no hay combinaciones.",
+  removeCombination: "Eliminar combinación",
+  legacyNotesTitle: "Notas antiguas",
+  legacyLeadsLabel: "Líderes comunes (antiguo)",
+  legacyModesLabel: "Modos comunes (antiguo)",
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "Crea, comparte y descubre reportes de equipo Pokemon competitivo",

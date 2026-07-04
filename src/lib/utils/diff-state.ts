@@ -65,7 +65,13 @@ export function detectChangedSections(oldState: StateRecord | null, newState: St
     sections.push(`Roles (${changedRoles.join(", ")})`);
   }
 
-
+  // "How to pilot this team" — combinations table + strengths/weaknesses/
+  // gameplan + retained legacy leads/modes. Whole-object compare so changes to
+  // the new `combinations` array (and any of the free-text blocks) still fire a
+  // version snapshot. JSON.stringify handles the nested array without crashing.
+  if (JSON.stringify(oldState.commonModes ?? {}) !== JSON.stringify(newState.commonModes ?? {})) {
+    sections.push("How to play");
+  }
 
   // Matchup plans — only compare user-editable content, not structural fields
   if (matchupPlansChanged(asArray(oldState.matchupPlans), asArray(newState.matchupPlans))) {

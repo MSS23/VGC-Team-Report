@@ -47,6 +47,19 @@ export const ShareableStateSchema = z.object({
   teamSummary: z.string().optional(),
   commonModes: z
     .object({
+      // Structured bring combinations (leads/back = roster indices, max 2 each).
+      combinations: z
+        .array(
+          z.object({
+            id: z.string(),
+            leads: z.array(z.number().int()),
+            back: z.array(z.number().int()),
+            strategy: z.string(),
+          }),
+        )
+        .optional(),
+      // Legacy free-text fields — retained so 119 existing shared reports keep
+      // their leads/modes text. Never dropped.
       leads: z.string().optional(),
       modes: z.string().optional(),
       strengths: z.string().optional(),
@@ -116,6 +129,7 @@ export interface ShareableState {
   roles?: Record<string, string>;
   teamSummary?: string;
   commonModes?: {
+    combinations?: { id: string; leads: number[]; back: number[]; strategy: string }[];
     leads?: string;
     modes?: string;
     strengths?: string;

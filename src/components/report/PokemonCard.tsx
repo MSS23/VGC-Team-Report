@@ -544,6 +544,11 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               );
             })}
           </div>
+          {/* Clarify that bar colors are a fixed per-stat palette (which stat),
+              not a percentile/quality ranking — a common point of confusion. */}
+          <p className="mt-1.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-text-tertiary/70">
+            Bar color = stat type, not quality
+          </p>
         </div>
         );
       })()}

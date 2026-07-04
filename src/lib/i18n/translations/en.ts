@@ -206,6 +206,21 @@ const en = {
   weaknessesPlaceholder: "What gives this team trouble and how to play around it.",
   gameplanPlaceholder: "How to pilot the team to win — key sequencing, win conditions, and what to prioritize.",
 
+  // Common Combinations (structured lead/back bring table)
+  commonCombinationsTitle: "Common Combinations",
+  commonCombinationsDesc: "Your go-to brings — pick two leads and two in the back from your six, then note when to bring it.",
+  combinationLeads: "Leads",
+  combinationBack: "Back",
+  combinationStrategy: "Strategy",
+  combinationLabel: "Combination",
+  combinationStrategyPlaceholder: "When to bring this combo and how to play it out.",
+  addCombination: "Add combination",
+  combinationsEmpty: "No combinations yet.",
+  removeCombination: "Remove combination",
+  legacyNotesTitle: "Legacy notes",
+  legacyLeadsLabel: "Common Leads (old)",
+  legacyModesLabel: "Common Modes (old)",
+
   // MatchupSheetRow
   plan: "plan",
   plans: "plans",

@@ -1,6 +1,19 @@
 import type { TranslationKeys } from "./en";
 
 const ja: TranslationKeys = {
+  commonCombinationsTitle: "定番の組み合わせ",
+  commonCombinationsDesc: "よく使う選出です。6匹から先発2匹と後発2匹を選び、いつ選出するかをメモしましょう。",
+  combinationLeads: "先発",
+  combinationBack: "後発",
+  combinationStrategy: "戦略",
+  combinationLabel: "組み合わせ",
+  combinationStrategyPlaceholder: "この組み合わせをいつ選出し、どう立ち回るか。",
+  addCombination: "組み合わせを追加",
+  combinationsEmpty: "まだ組み合わせがありません。",
+  removeCombination: "組み合わせを削除",
+  legacyNotesTitle: "以前のメモ",
+  legacyLeadsLabel: "定番の先発（旧）",
+  legacyModesLabel: "定番のモード（旧）",
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "競技ポケモンのチームレポートを作成・共有・発見",

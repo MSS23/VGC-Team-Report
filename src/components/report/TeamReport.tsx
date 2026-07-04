@@ -284,6 +284,7 @@ export function TeamReport({
         <CommonModesSlide
           commonModes={commonModes}
           onChange={onCommonModesChange ?? (() => {})}
+          yourPokemon={analysis.pokemon}
           isReadOnly={isReadOnly}
           isPresentationMode={isPresentationMode}
         />

@@ -410,6 +410,13 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   const yourModSummary = Array.from(yourModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
   const oppModSummary = Array.from(opponentModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
 
+  // Which meta benchmark list is in play, derived from the report's regulation.
+  // Champions formats (Reg M-A/M-B) pull META_THREATS_CHAMPIONS; everything else
+  // uses the standard list. Surface this so the source is never a mystery.
+  const metaSourceLabel = regulation
+    ? `${regulation} meta`
+    : isChampions ? "Reg M-A meta" : "Standard meta";
+
   return (
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
       <div>
@@ -459,6 +466,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
               <button
                 type="button"
                 onClick={() => setShowMegaTiers(!showMegaTiers)}
+                title="Adds a separate purple Mega-speed row for each team member that has a matching Mega Stone equipped. A Mega that shares its base form's Speed shows the same number — that's expected, not a bug."
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                   showMegaTiers
                     ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
@@ -484,6 +492,16 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
               <span>{"\u{1F30D}"}</span>
               Meta Threats
             </button>
+            {/* Make the meta source explicit \u2014 the benchmark list auto-follows
+                the report's regulation tag, which is otherwise invisible. */}
+            {showMetaThreats && (
+              <span
+                className="text-[10px] sm:text-xs text-text-tertiary font-medium"
+                title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag \u2014 Champions formats use the Reg M-A meta, everything else uses the standard meta."
+              >
+                * {metaSourceLabel}
+              </span>
+            )}
             {hasAnyModifiers && (
               <span className="text-[10px] sm:text-xs text-accent font-medium ml-auto">
                 {yourModSummary && `You: ${yourModSummary}`}
@@ -492,6 +510,21 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
               </span>
             )}
           </div>
+
+          {/* Mega toggle feedback \u2014 explain the empty state instead of silently
+              rendering nothing, and clarify what the toggle actually does. */}
+          {showMegaTiers && (
+            <p className="text-[10px] sm:text-xs text-text-tertiary leading-relaxed">
+              {teamMegaEntries.length === 0 ? (
+                <>
+                  No Mega forms to show \u2014 a team member needs a matching Mega Stone equipped.
+                  {regulation && !isChampionsFormat(regulation) && " Mega Evolution is only legal in Reg M-A."}
+                </>
+              ) : (
+                "Mega Forms adds a separate purple row for each eligible Mega. A Mega that shares its base form's Speed shows the same number \u2014 that's expected, not a bug."
+              )}
+            </p>
+          )}
         </div>
 
         {/* Speed bars */}
@@ -664,12 +697,22 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             </span>
           )}
           {showMetaThreats && (
-            <span className="flex items-center gap-1.5">
+            <span
+              className="flex items-center gap-1.5"
+              title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag."
+            >
               <span className="w-3 h-3 rounded bg-slate-500/40" />
-              Meta (max speed)
+              Meta (max speed) · {metaSourceLabel}*
             </span>
           )}
         </div>
+
+        {/* Meta source footnote — ties the asterisk above to the regulation. */}
+        {showMetaThreats && (
+          <p className="text-[10px] sm:text-xs text-text-tertiary leading-relaxed">
+            * Max-speed benchmarks for your team&apos;s regulation — the meta list auto-follows the {regulation ?? "current"} tag.
+          </p>
+        )}
       </div>
 
     </div>

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 
-const STORAGE_KEY = "vgc-whats-new-v9";
+const STORAGE_KEY = "vgc-whats-new-v10";
 const RETURNING_KEY = "vgc-has-visited";
 
 const WELCOME_FEATURES = [
@@ -31,26 +31,26 @@ const WELCOME_FEATURES = [
 ];
 
 
-const WHATS_NEW_FEATURES_V9 = [
+const WHATS_NEW_FEATURES_V10 = [
   {
-    icon: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3",
-    title: "Downloadable Team Cards",
-    desc: "End of every shared report now has a Download Card button that exports a Spotify-Wrapped style 1080x1920 PNG, built for Twitter, Instagram, and Discord.",
+    icon: "M4 5a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM13 5a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1h-5a1 1 0 01-1-1V5zM4 14a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5zM13 14a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1h-5a1 1 0 01-1-1v-5z",
+    title: "Common Combinations",
+    desc: "The 'How to Pilot This Team' section now has a visual Leads / Back / Strategy table \u2014 build numbered bring combos from your own six Pok\u00e9mon, just like the Match-Up game plans.",
   },
   {
-    icon: "M9 12l2 2 4-4M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z",
-    title: "One-Tap Duplicate",
-    desc: "Like a team you found? The new Duplicate button on shared reports forks it into your account in one click \u2014 no copy/paste required.",
+    icon: "M3 3v18h18M8 17V9M13 17V5M18 17v-7",
+    title: "Clearer Speed Tiers",
+    desc: "The Mega Forms toggle now tells you when it has nothing to show (and why), and the Meta benchmark list shows exactly which regulation it\u2019s pulled from.",
   },
   {
-    icon: "M3 11h18M7 7V5a5 5 0 0110 0v2M5 11v8a2 2 0 002 2h10a2 2 0 002-2v-8",
-    title: "Hide Spreads from Public Viewers",
-    desc: "Creators can now mark EVs, IVs, nature, or held items as private from the team overview. Public viewers see the Pokemon and moves; spreads stay yours.",
+    icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+    title: "Readable Stat Bars",
+    desc: "Stat bar colors are the standard per-stat palette \u2014 a new caption makes clear the color means the stat type, not a hidden quality ranking.",
   },
   {
-    icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
-    title: "Filter Explore by Rental Code",
-    desc: "New Rental code pill on /explore narrows the feed to teams that include a code, so you can find ready-to-import builds at a glance.",
+    icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+    title: "Faster & More Reliable",
+    desc: "Popular pages load quicker, live editing is lighter on the server, and a fix to autosave keeps version history lean \u2014 with tighter security across comments, collections, and sharing.",
   },
 ];
 
@@ -108,7 +108,7 @@ export function WhatsNewModal() {
 
   if (!show) return null;
 
-  const features = isNewUser ? WELCOME_FEATURES : WHATS_NEW_FEATURES_V9;
+  const features = isNewUser ? WELCOME_FEATURES : WHATS_NEW_FEATURES_V10;
   const heading = isNewUser
     ? <>Build your <span className="text-accent">team report</span></>
     : <>Ready for <span className="text-accent">tournament day</span></>;

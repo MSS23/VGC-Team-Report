@@ -1,6 +1,19 @@
 import type { TranslationKeys } from "./en";
 
 const ko: TranslationKeys = {
+  commonCombinationsTitle: "자주 쓰는 조합",
+  commonCombinationsDesc: "자주 내는 선출입니다. 여섯 마리 중 선발 2마리와 후발 2마리를 고르고, 언제 낼지 메모하세요.",
+  combinationLeads: "선발",
+  combinationBack: "후발",
+  combinationStrategy: "전략",
+  combinationLabel: "조합",
+  combinationStrategyPlaceholder: "이 조합을 언제 내고 어떻게 운영할지.",
+  addCombination: "조합 추가",
+  combinationsEmpty: "아직 조합이 없습니다.",
+  removeCombination: "조합 삭제",
+  legacyNotesTitle: "이전 메모",
+  legacyLeadsLabel: "자주 쓰는 선발 (이전)",
+  legacyModesLabel: "자주 쓰는 모드 (이전)",
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "경쟁 포켓몬 팀 리포트를 제작, 공유, 탐색하세요",
