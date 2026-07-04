@@ -215,7 +215,11 @@ export async function ensureTable(): Promise<void> {
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS is_draft BOOLEAN DEFAULT FALSE`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_drafts ON shares(owner_id, updated_at DESC) WHERE is_draft = TRUE AND deleted_at IS NULL`);
 
-  // Edit changelog for collaborative editing
+  // Edit changelog for collaborative editing.
+  // NOTE: intentionally NO `ON DELETE CASCADE` FK to shares — adding one here
+  // is risky against existing data and not reliably idempotent. Orphaned rows
+  // (share deleted) and per-share retention are handled by /api/cleanup, and
+  // the share route trims this table inline on write (§1-B / Finding 5.8).
   await run(sql`
     CREATE TABLE IF NOT EXISTS edit_changelog (
       id SERIAL PRIMARY KEY,
@@ -230,7 +234,11 @@ export async function ensureTable(): Promise<void> {
   await run(sql`CREATE INDEX IF NOT EXISTS idx_edit_changelog_share ON edit_changelog(share_id, version DESC)`);
   await run(sql`ALTER TABLE edit_changelog ADD COLUMN IF NOT EXISTS is_published BOOLEAN DEFAULT FALSE`);
 
-  // Version snapshots for revert capability
+  // Version snapshots for revert capability.
+  // NOTE: intentionally NO `ON DELETE CASCADE` FK to shares (same reasoning as
+  // edit_changelog above). Snapshot coalescing + inline "keep newest 50"
+  // retention live in /api/share; orphan sweep + global retention backstop
+  // live in /api/cleanup. This is what keeps the table from regrowing (§1-B).
   await run(sql`
     CREATE TABLE IF NOT EXISTS share_versions (
       id SERIAL PRIMARY KEY,

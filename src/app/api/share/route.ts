@@ -149,34 +149,89 @@ export async function POST(request: Request) {
       if (hasDataChanges && oldRows.length > 0) {
         const oldVersion = Number(oldRows[0].version);
         const oldData = oldRows[0].data;
-        try {
-          const { userId } = await auth();
-          const user = userId ? await currentUser() : null;
-          const editorName = user?.firstName
-            ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-            : user?.username ?? null;
-          // Awaited so the snapshot actually completes before the Vercel lambda freezes
-          // after responding (bare .catch() on Neon HTTP queries can be cancelled).
-          // Non-fatal — log on failure but don't break the main update.
+
+        // ── Snapshot coalescing (§1-B) ──────────────────────────────────────
+        // Writing a full-report JSONB blob into share_versions on every
+        // 3-second autosave is what ballooned that table to 447MB / 131k rows
+        // for 119 shares. Only take a fresh snapshot when EITHER this is an
+        // explicit publish, OR the newest existing snapshot for this share is
+        // older than the coalescing window. Otherwise skip the blob write and
+        // let the version bump / changelog below carry the change.
+        // The check is a single cheap indexed lookup (idx_share_versions_share).
+        const COALESCE_WINDOW_MINUTES = 10;
+        let shouldSnapshot = isPublish === true;
+        if (!shouldSnapshot) {
           try {
-            await sql`
-              INSERT INTO share_versions (share_id, version, data, editor_id, editor_name)
-              VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb, ${userId ?? null}, ${editorName})
-              ON CONFLICT (share_id, version) DO NOTHING
+            const latest = await sql`
+              SELECT MAX(created_at) AS latest FROM share_versions WHERE share_id = ${existingId}
             `;
+            const latestAt = latest.length > 0 ? latest[0].latest : null;
+            // No prior snapshot, or the newest is older than the window → snapshot.
+            shouldSnapshot =
+              !latestAt ||
+              Date.now() - new Date(latestAt as string).getTime() >
+                COALESCE_WINDOW_MINUTES * 60_000;
           } catch (err) {
-            console.error("share_versions snapshot failed (with editor):", err);
+            // Fail open — a missed snapshot loses revert history; better to write.
+            console.error("share_versions coalesce check failed:", err);
+            shouldSnapshot = true;
           }
-        } catch {
-          // Auth not available — snapshot without editor info
+        }
+
+        if (shouldSnapshot) {
+          let snapshotInserted = false;
           try {
-            await sql`
-              INSERT INTO share_versions (share_id, version, data)
-              VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb)
-              ON CONFLICT (share_id, version) DO NOTHING
-            `;
-          } catch (err) {
-            console.error("share_versions snapshot failed (anon):", err);
+            const { userId } = await auth();
+            const user = userId ? await currentUser() : null;
+            const editorName = user?.firstName
+              ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
+              : user?.username ?? null;
+            // Awaited so the snapshot actually completes before the Vercel lambda freezes
+            // after responding (bare .catch() on Neon HTTP queries can be cancelled).
+            // Non-fatal — log on failure but don't break the main update.
+            try {
+              await sql`
+                INSERT INTO share_versions (share_id, version, data, editor_id, editor_name)
+                VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb, ${userId ?? null}, ${editorName})
+                ON CONFLICT (share_id, version) DO NOTHING
+              `;
+              snapshotInserted = true;
+            } catch (err) {
+              console.error("share_versions snapshot failed (with editor):", err);
+            }
+          } catch {
+            // Auth not available — snapshot without editor info
+            try {
+              await sql`
+                INSERT INTO share_versions (share_id, version, data)
+                VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb)
+                ON CONFLICT (share_id, version) DO NOTHING
+              `;
+              snapshotInserted = true;
+            } catch (err) {
+              console.error("share_versions snapshot failed (anon):", err);
+            }
+          }
+
+          // ── Self-cleaning retention (§1-B) ──────────────────────────────
+          // The versions UI only ever shows the newest 50, so anything beyond
+          // that is invisible dead weight. Trim inline right after each insert
+          // so the table can never regrow unbounded. Keyed to this share_id.
+          if (snapshotInserted) {
+            try {
+              await sql`
+                DELETE FROM share_versions
+                WHERE share_id = ${existingId}
+                  AND id NOT IN (
+                    SELECT id FROM share_versions
+                    WHERE share_id = ${existingId}
+                    ORDER BY version DESC
+                    LIMIT 50
+                  )
+              `;
+            } catch (err) {
+              console.error("share_versions retention trim failed:", err);
+            }
           }
         }
       }
@@ -265,6 +320,22 @@ export async function POST(request: Request) {
                   INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
                   VALUES (${existingId}, ${rows[0].version}, ${userId}, ${editorName}, ${JSON.stringify(sections)}::jsonb, ${isPublish ?? false})
                 `;
+                // Self-cleaning retention (§1-B): keep only the newest 50
+                // changelog rows for this share, matching share_versions above.
+                try {
+                  await sql`
+                    DELETE FROM edit_changelog
+                    WHERE share_id = ${existingId}
+                      AND id NOT IN (
+                        SELECT id FROM edit_changelog
+                        WHERE share_id = ${existingId}
+                        ORDER BY version DESC, id DESC
+                        LIMIT 50
+                      )
+                  `;
+                } catch (err) {
+                  console.error("edit_changelog retention trim failed:", err);
+                }
               } catch (err) {
                 console.error("edit_changelog insert failed (update path):", err);
               }

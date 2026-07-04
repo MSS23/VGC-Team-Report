@@ -21,6 +21,18 @@ async function runCleanup(days: number): Promise<NextResponse> {
   try {
     const sql = getDb();
 
+    // Delete every satellite row tied to a set of share ids that are about to
+    // be hard-deleted. share_versions + edit_changelog were previously leaked
+    // here (only reactions/comments/saved_reports were cleaned), which is a big
+    // part of why share_versions accumulated orphans (§1-B / Finding 5.8).
+    const purgeSatellites = async (ids: string[]) => {
+      await sql`DELETE FROM reactions WHERE share_id = ANY(${ids})`;
+      await sql`DELETE FROM comments WHERE share_id = ANY(${ids})`;
+      await sql`DELETE FROM saved_reports WHERE share_id = ANY(${ids})`;
+      await sql`DELETE FROM share_versions WHERE share_id = ANY(${ids})`;
+      await sql`DELETE FROM edit_changelog WHERE share_id = ANY(${ids})`;
+    };
+
     // 1. Purge soft-deleted reports older than TRASH_TTL_DAYS
     const trashIds = await sql`
       SELECT id FROM shares
@@ -31,33 +43,99 @@ async function runCleanup(days: number): Promise<NextResponse> {
     let trashPurged = 0;
     if (trashIds.length > 0) {
       const ids = trashIds.map((r) => r.id as string);
-      await sql`DELETE FROM reactions WHERE share_id = ANY(${ids})`;
-      await sql`DELETE FROM comments WHERE share_id = ANY(${ids})`;
-      await sql`DELETE FROM saved_reports WHERE share_id = ANY(${ids})`;
+      await purgeSatellites(ids);
       const purged = await sql`DELETE FROM shares WHERE id = ANY(${ids}) RETURNING id`;
       trashPurged = purged.length;
     }
 
-    // 2. Clean up stale shares (non-deleted) that haven't been updated
-    const rows = await sql`
-      DELETE FROM shares
+    // 2. Clean up stale shares (non-deleted) that haven't been updated.
+    // EXEMPT owned content (owner_id IS NOT NULL): signed-in users' reports and
+    // drafts must never be auto-deleted just for being idle (Finding 4.13).
+    // Only anonymous/orphaned shares are eligible for the stale purge. Collect
+    // ids first so the satellite rows (versions/changelog/reactions/…) go too.
+    const staleIds = await sql`
+      SELECT id FROM shares
       WHERE deleted_at IS NULL
+        AND owner_id IS NULL
         AND updated_at < NOW() - INTERVAL '1 day' * ${days}
-        AND id IN (
-          SELECT id FROM shares
-          WHERE deleted_at IS NULL
-            AND updated_at < NOW() - INTERVAL '1 day' * ${days}
-          LIMIT ${MAX_DELETE_PER_RUN}
-        )
-      RETURNING id
+      LIMIT ${MAX_DELETE_PER_RUN}
     `;
+    let deleted = 0;
+    if (staleIds.length > 0) {
+      const ids = staleIds.map((r) => r.id as string);
+      await purgeSatellites(ids);
+      const purged = await sql`DELETE FROM shares WHERE id = ANY(${ids}) RETURNING id`;
+      deleted = purged.length;
+    }
+
+    // 3. Orphan sweep — delete share_versions / edit_changelog rows whose
+    // share_id no longer exists in shares at all (leaked before this route
+    // cleaned them, or from any other path). Batched to MAX_DELETE_PER_RUN.
+    const versionsOrphaned = (await sql`
+      DELETE FROM share_versions
+      WHERE id IN (
+        SELECT sv.id FROM share_versions sv
+        LEFT JOIN shares s ON s.id = sv.share_id
+        WHERE s.id IS NULL
+        LIMIT ${MAX_DELETE_PER_RUN}
+      )
+      RETURNING id
+    `).length;
+    const changelogOrphaned = (await sql`
+      DELETE FROM edit_changelog
+      WHERE id IN (
+        SELECT ec.id FROM edit_changelog ec
+        LEFT JOIN shares s ON s.id = ec.share_id
+        WHERE s.id IS NULL
+        LIMIT ${MAX_DELETE_PER_RUN}
+      )
+      RETURNING id
+    `).length;
+
+    // 4. Global retention backstop — trim share_versions / edit_changelog to
+    // the newest 50 per share. The share route trims inline on write, but this
+    // catches anything that predates that fix. Batched to MAX_DELETE_PER_RUN.
+    const versionsTrimmed = (await sql`
+      DELETE FROM share_versions
+      WHERE id IN (
+        SELECT id FROM (
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY share_id ORDER BY version DESC) AS rn
+          FROM share_versions
+        ) ranked
+        WHERE rn > 50
+        LIMIT ${MAX_DELETE_PER_RUN}
+      )
+      RETURNING id
+    `).length;
+    const changelogTrimmed = (await sql`
+      DELETE FROM edit_changelog
+      WHERE id IN (
+        SELECT id FROM (
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY share_id ORDER BY version DESC, id DESC) AS rn
+          FROM edit_changelog
+        ) ranked
+        WHERE rn > 50
+        LIMIT ${MAX_DELETE_PER_RUN}
+      )
+      RETURNING id
+    `).length;
 
     return NextResponse.json({
-      deleted: rows.length,
+      deleted,
       trashPurged,
+      versionsOrphaned,
+      changelogOrphaned,
+      versionsTrimmed,
+      changelogTrimmed,
       ttlDays: days,
       trashTtlDays: TRASH_TTL_DAYS,
-      hasMore: rows.length === MAX_DELETE_PER_RUN || trashIds.length === MAX_DELETE_PER_RUN,
+      hasMore:
+        deleted === MAX_DELETE_PER_RUN ||
+        trashIds.length === MAX_DELETE_PER_RUN ||
+        versionsOrphaned === MAX_DELETE_PER_RUN ||
+        changelogOrphaned === MAX_DELETE_PER_RUN ||
+        versionsTrimmed === MAX_DELETE_PER_RUN ||
+        changelogTrimmed === MAX_DELETE_PER_RUN,
     });
   } catch (e) {
     console.error("Cleanup error:", e);
