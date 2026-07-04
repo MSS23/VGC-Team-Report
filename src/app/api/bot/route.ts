@@ -1,6 +1,7 @@
 import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { getDb } from "@/lib/db";
 import { sendWeeklySummary, buildWeeklySummaryHtml } from "@/lib/email";
+import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
 import { NextRequest, NextResponse } from "next/server";
 
 interface FeedbackRecentRow { type: string; title: string; submitter_name: string | null; created_at: string; }
@@ -13,30 +14,25 @@ async function discordFetch(path: string, options: RequestInit = {}) {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error("DISCORD_BOT_TOKEN not set");
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-  let response: Response;
   try {
-    response = await fetch(`${DISCORD_API}${path}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bot ${token}`,
-        ...options.headers,
+    return await fetchWithTimeout(
+      `${DISCORD_API}${path}`,
+      {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bot ${token}`,
+          ...options.headers,
+        },
       },
-      signal: controller.signal,
-    });
+      5000,
+    );
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") {
       throw new Error(`Discord API request timed out: ${path}`);
     }
     throw err;
-  } finally {
-    clearTimeout(timeoutId);
   }
-
-  return response;
 }
 
 async function sendDiscordMessage(channelId: string, content: string, embeds?: unknown[]) {

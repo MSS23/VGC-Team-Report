@@ -140,30 +140,46 @@ export async function POST(
       ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
       : user?.username ?? "Unknown";
 
-    sql`
-      INSERT INTO share_versions (share_id, version, data, editor_id, editor_name)
-      VALUES (${id}, ${currentVersion}, ${JSON.stringify(currentData)}::jsonb, ${userId}, ${editorName})
-      ON CONFLICT (share_id, version) DO NOTHING
-    `.catch(() => {});
-
-    // Revert: overwrite current data with the old version's data
+    // Snapshot the current state AND apply the revert atomically. Previously the
+    // snapshot INSERT was fire-and-forget (swallowed .catch) and the UPDATE ran
+    // separately, so a crash between them could bump the version without ever
+    // preserving the pre-revert state. Batch both in a single transaction so
+    // either both land or neither does.
     const revertedData = versionRows[0].data;
-    const rows = await sql`
-      UPDATE shares
-      SET data = ${JSON.stringify(revertedData)}::jsonb, updated_at = NOW(), version = COALESCE(version, 1) + 1
-      WHERE id = ${id}
-      RETURNING COALESCE(version, 1) AS version
-    `;
+    let newVersion: number;
+    try {
+      const results = await sql.transaction([
+        sql`
+          INSERT INTO share_versions (share_id, version, data, editor_id, editor_name)
+          VALUES (${id}, ${currentVersion}, ${JSON.stringify(currentData)}::jsonb, ${userId}, ${editorName})
+          ON CONFLICT (share_id, version) DO NOTHING
+        `,
+        sql`
+          UPDATE shares
+          SET data = ${JSON.stringify(revertedData)}::jsonb, updated_at = NOW(), version = COALESCE(version, 1) + 1
+          WHERE id = ${id}
+          RETURNING COALESCE(version, 1) AS version
+        `,
+      ]);
+      const updateRows = results[1] as Array<{ version: number }>;
+      if (!updateRows || updateRows.length === 0) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      newVersion = Number(updateRows[0].version);
+    } catch (txErr) {
+      console.error("Version revert transaction failed:", txErr);
+      return NextResponse.json({ error: "Failed to revert" }, { status: 500 });
+    }
 
-    // Record revert in changelog
+    // Record revert in changelog (non-critical, fire-and-forget)
     sql`
       INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections)
-      VALUES (${id}, ${rows[0].version}, ${userId}, ${editorName}, ${JSON.stringify([`Reverted to version ${targetVersion}`])}::jsonb)
+      VALUES (${id}, ${newVersion}, ${userId}, ${editorName}, ${JSON.stringify([`Reverted to version ${targetVersion}`])}::jsonb)
     `.catch(() => {});
 
     return NextResponse.json({
       success: true,
-      newVersion: Number(rows[0].version),
+      newVersion,
       revertedTo: targetVersion,
     });
   } catch (e) {
