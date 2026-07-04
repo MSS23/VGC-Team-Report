@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import { hapticLight } from "@/lib/utils/haptics";
 import { isChampionsFormat } from "@/lib/data/tags";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
@@ -317,7 +317,7 @@ function CollapsibleCalcGroup({
   );
 }
 
-export function PokemonDetailSlide({
+function PokemonDetailSlideBase({
   pokemon,
   note,
   onNoteChange,
@@ -962,3 +962,7 @@ export function PokemonDetailSlide({
     </div>
   );
 }
+
+// Memoized so typing in one slide/note does not re-render every other slide
+// subtree (Finding 3.13). Relies on stable callback props from TeamReport.
+export const PokemonDetailSlide = memo(PokemonDetailSlideBase);

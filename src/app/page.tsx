@@ -88,6 +88,7 @@ function HomeContent() {
   const posthog = usePostHog();
   const {
     t,
+    buildShareState,
     paste,
     setPaste,
     analysis,
@@ -348,33 +349,11 @@ function HomeContent() {
       if (!res.ok) { setCompareLoading(false); return; }
       const { data: oldData, editorName: versionEditor } = await res.json() as { data: ShareableState; editorName?: string | null };
 
-      // Build current state for comparison
-      const currentState: ShareableState = {
-        paste,
-        notes,
-        calcs,
-        roles,
-        teamSummary: summary || undefined,
-        commonModes,
-        teamName: teamName || undefined,
-        tournamentName: tournamentName || undefined,
-        placement: placement || undefined,
-        record: record || undefined,
-        mvpIndex: mvpIndex ?? undefined,
-        rentalCode: rentalCode || undefined,
-        creatorName: creatorName || undefined,
-        matchupPlans: plans.map((p) => ({
-          opponentPaste: p.opponentPaste,
-          opponentLabel: p.opponentLabel,
-          showSlide: p.showSlide,
-          gamePlans: p.gamePlans?.map((gp) => ({
-            bring: gp.bring,
-            notes: gp.notes,
-            result: gp.result,
-          })),
-        })),
-        tags: tags && (tags.archetype?.length || tags.regulation || tags.eventType) ? tags : undefined,
-      };
+      // Build current state for comparison using the single canonical
+      // buildShareState() from the hook. Hand-rolling it here (as before) drifted
+      // from the source of truth and omitted hiddenSlides/templateId/privateFields/
+      // genTheme, producing inaccurate version diffs (Finding 5.3).
+      const currentState: ShareableState = buildShareState();
 
       const diff = computeVersionDiff(
         currentState,
@@ -391,7 +370,7 @@ function HomeContent() {
     } finally {
       setCompareLoading(false);
     }
-  }, [activeShareId, sessionShareId, paste, notes, calcs, roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, tags, analysis, speciesKeys]);
+  }, [activeShareId, sessionShareId, buildShareState, plans, analysis, speciesKeys]);
 
   const handleClearCompare = useCallback(() => {
     setVersionDiff(null);

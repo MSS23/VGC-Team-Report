@@ -14,6 +14,7 @@ import { isChampionsFormat } from "@/lib/data/tags";
 import { useTeamMeta } from "@/hooks/useTeamMeta";
 import { useWalkthrough } from "@/hooks/useWalkthrough";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
+import type { UndoRedoSnapshot } from "@/hooks/useUndoRedo";
 import { useTheme } from "@/hooks/useTheme";
 import { useShareFlow } from "@/hooks/useShareFlow";
 import { useCollaborativeSync } from "@/hooks/useCollaborativeSync";
@@ -180,38 +181,55 @@ export function useHomePage() {
   const undoRedo = useUndoRedo();
   const snapshotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // The undo history stores the full editable meta set (not just
+  // notes/calcs/roles/summary/plans). Previously edits to teamName,
+  // tournamentName, placement, record, tags, commonModes, hiddenSlides, etc.
+  // couldn't be undone because they were never snapshotted (Finding 4.6).
+  // We carry them as extra fields on the snapshot object (preserved at runtime)
+  // aligned with the fields in buildShareState.
+  type UndoMeta = Parameters<typeof setMetaFull>[0];
+  type FullUndoSnapshot = UndoRedoSnapshot & { meta: UndoMeta; hiddenSlides: string[] };
+
+  const restoreSnapshot = useCallback((snapshot: FullUndoSnapshot | null) => {
+    if (!snapshot) return;
+    setNotesFull(snapshot.notes);
+    setCalcsFull(snapshot.calcs);
+    setMetaFull({ roles: snapshot.roles, summary: snapshot.summary, ...(snapshot.meta ?? {}) });
+    setPlansFull(snapshot.plans);
+    if (Array.isArray(snapshot.hiddenSlides)) setHiddenFull(snapshot.hiddenSlides);
+    undoRedo.doneRestoring();
+  }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
+
   useEffect(() => {
     if (!analysis || undoRedo.isRestoring()) return;
     if (snapshotTimerRef.current) clearTimeout(snapshotTimerRef.current);
     snapshotTimerRef.current = setTimeout(() => {
-      undoRedo.pushSnapshot({
+      const snapshot: FullUndoSnapshot = {
         notes, calcs, roles, summary,
         plans: plans.map((p) => ({ ...p, gamePlans: p.gamePlans.map((gp) => ({ ...gp })) })),
-      });
+        meta: {
+          commonModes, teamName, tournamentName, placement, record,
+          mvpIndex, rentalCode, creatorName, tags, templateId, privateFields,
+        },
+        hiddenSlides: [...hiddenSlides],
+      };
+      undoRedo.pushSnapshot(snapshot);
     }, 500);
     return () => { if (snapshotTimerRef.current) clearTimeout(snapshotTimerRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notes, calcs, roles, summary, plans, analysis]);
+  }, [
+    notes, calcs, roles, summary, plans, analysis,
+    commonModes, teamName, tournamentName, placement, record,
+    mvpIndex, rentalCode, creatorName, tags, templateId, privateFields, hiddenSlides,
+  ]);
 
   const handleUndo = useCallback(() => {
-    const snapshot = undoRedo.undo();
-    if (!snapshot) return;
-    setNotesFull(snapshot.notes);
-    setCalcsFull(snapshot.calcs);
-    setMetaFull({ roles: snapshot.roles, summary: snapshot.summary });
-    setPlansFull(snapshot.plans);
-    undoRedo.doneRestoring();
-  }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull]);
+    restoreSnapshot(undoRedo.undo() as FullUndoSnapshot | null);
+  }, [undoRedo, restoreSnapshot]);
 
   const handleRedo = useCallback(() => {
-    const snapshot = undoRedo.redo();
-    if (!snapshot) return;
-    setNotesFull(snapshot.notes);
-    setCalcsFull(snapshot.calcs);
-    setMetaFull({ roles: snapshot.roles, summary: snapshot.summary });
-    setPlansFull(snapshot.plans);
-    undoRedo.doneRestoring();
-  }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull]);
+    restoreSnapshot(undoRedo.redo() as FullUndoSnapshot | null);
+  }, [undoRedo, restoreSnapshot]);
 
   // ── Restore in-progress team from localStorage (guest + signed-in) ──
   // The auto-save in useTeamReport writes `vgc-team-paste` on every change,
@@ -262,8 +280,17 @@ export function useHomePage() {
     genTheme: genTheme || undefined,
   }), [paste, notes, calcs, roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId, privateFields, genTheme]);
 
+  // ── Self-echo suppression wiring (§1-B) ──────────────────────────
+  // useCollaborativeSync (below) exposes markSaving/updateVersion but is
+  // instantiated AFTER useShareFlow, which is where saves actually fire.
+  // Bridge the two through a ref so the autosave/publish paths can signal
+  // the sync layer to ignore the version bump they're about to cause.
+  const syncControlsRef = useRef<{ markSaving: () => void; updateVersion: (v?: number) => void } | null>(null);
+  const handleSaveStart = useCallback(() => { syncControlsRef.current?.markSaving(); }, []);
+  const handleSaveEnd = useCallback(() => { syncControlsRef.current?.updateVersion(); }, []);
+
   // ── Share flow (extracted) ───────────────────────────────────────
-  const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t });
+  const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t, onSaveStart: handleSaveStart, onSaveEnd: handleSaveEnd });
 
   // ── Auto-draft (logged-in users) ─────────────────────────────────
   const { clearDraft } = useAutoDraft({
@@ -356,9 +383,12 @@ export function useHomePage() {
   }, [analysis, share.isSharedView, share.isSharePending, share.sharedState, setPaste, parseTeam]);
 
   // Dismiss the welcome-back banner once the user grabs a share link.
+  // Depend on the stable `hasExistingShare` callback, not the freshly-allocated
+  // `share` object (which changes identity every render and re-ran this effect
+  // continuously — Finding 4.7).
   useEffect(() => {
     if (wasRestored && share.hasExistingShare()) setWasRestored(false);
-  }, [wasRestored, share]);
+  }, [wasRestored, share.hasExistingShare]);
 
   // ── beforeunload warning when leaving with unsaved meaningful work ──
   // Fires only when there's a real team on screen and no share link
@@ -383,7 +413,10 @@ export function useHomePage() {
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [analysis, isSampleTeam, share, summary, teamName, tournamentName, notes, calcs]);
+    // Depend on the specific stable fields used, not the `share` object which
+    // is re-allocated every render (Finding 4.7 — the handler was being
+    // detached/re-attached on every render).
+  }, [analysis, isSampleTeam, share.isSharedView, share.hasExistingShare, summary, teamName, tournamentName, notes, calcs]);
 
   // ── Real-time collaborative sync (SSE) ──────────────────────────
   const handleRemoteUpdate = useCallback((state: import("@/lib/sharing/url-codec").ShareableState) => {
@@ -407,27 +440,37 @@ export function useHomePage() {
       privateFields: state.privateFields ?? undefined,
     });
     const rawPlans = Array.isArray(state.matchupPlans) ? state.matchupPlans : [];
+    // Reuse existing plan/gamePlan IDs by position instead of minting fresh
+    // crypto.randomUUID() values on every remote apply. Regenerating IDs made
+    // local state differ from the just-saved state, which retriggered autosave —
+    // the amplifier in the §1-B echo loop. Preserving IDs makes applying an
+    // unchanged remote state idempotent.
     setPlansFull(
-      rawPlans.map((p) => ({
-        id: crypto.randomUUID(),
-        ...p,
-        gamePlans: (p.gamePlans ?? []).map((gp) => ({
-          ...gp,
-          id: crypto.randomUUID(),
-          bring: gp.bring ?? [null, null, null, null],
-          notes: gp.notes ?? "",
-        })),
-      })),
+      rawPlans.map((p, i) => {
+        const existing = plans[i];
+        return {
+          id: existing?.id ?? crypto.randomUUID(),
+          ...p,
+          gamePlans: (p.gamePlans ?? []).map((gp, j) => ({
+            ...gp,
+            id: existing?.gamePlans?.[j]?.id ?? crypto.randomUUID(),
+            bring: gp.bring ?? [null, null, null, null],
+            notes: gp.notes ?? "",
+          })),
+        };
+      }),
     );
     if (Array.isArray(state.hiddenSlides)) setHiddenFull(state.hiddenSlides);
-  }, [setPaste, parseTeam, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
+  }, [plans, setPaste, parseTeam, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
 
-  const { collaborators, syncStatus } = useCollaborativeSync({
+  const { collaborators, syncStatus, markSaving, updateVersion } = useCollaborativeSync({
     shareId: share.activeShareId,
     editKey: share.editKeyFromUrl,
     enabled: share.isEditingUnlocked,
     onRemoteUpdate: handleRemoteUpdate,
   });
+  // markSaving/updateVersion are stable (useCallback []), so this runs once.
+  syncControlsRef.current = { markSaving, updateVersion };
 
   // ── Slide system (extracted) ─────────────────────────────────────
   const slides = useSlideSystem({
@@ -720,6 +763,7 @@ export function useHomePage() {
   // ── Return (same API as before) ──────────────────────────────────
   return {
     t,
+    buildShareState,
     paste, setPaste, analysis, warnings, reorderPokemon,
     creatorMode, setCreatorMode, presentationMode, setPresentationMode,
     darkMode, setDarkMode, genTheme, setGenTheme,

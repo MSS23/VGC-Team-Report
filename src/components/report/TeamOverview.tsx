@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 // QRCode loaded dynamically — only needed when rental code is present
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { SpriteConfig } from "@/lib/types/sprites";
@@ -319,7 +319,7 @@ interface TeamOverviewProps {
   onPrivateFieldsChange?: (fields: string[]) => void;
 }
 
-export function TeamOverview({
+function TeamOverviewBase({
   pokemon,
   creatorMode,
   speciesKeys,
@@ -863,3 +863,7 @@ function PrivateFieldsPanel({
     </details>
   );
 }
+
+// Memoized so edits elsewhere in the report tree do not re-render the whole
+// overview slide subtree (Finding 3.13). Relies on stable props/callbacks.
+export const TeamOverview = memo(TeamOverviewBase);

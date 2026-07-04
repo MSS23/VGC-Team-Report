@@ -62,49 +62,55 @@ function DashboardInner() {
     if (!user) return;
     setLoading(true);
 
+    // Guard against a tab-switch race: a slow response from a previously
+    // selected tab could otherwise resolve after the user moved on and both
+    // populate the wrong tab AND clear the new tab's loading spinner
+    // (Finding 4.5). `cancelled` blocks stale state writes; the AbortController
+    // cancels the in-flight request on cleanup.
+    let cancelled = false;
+    const ac = new AbortController();
+    const json = (r: Response) => (r.ok ? r.json() : null);
+    const stopLoading = () => { if (!cancelled) setLoading(false); };
+
     if (tab === "analytics") {
-      fetch("/api/user/analytics")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => { if (data) setAnalytics(data); setLoading(false); })
-        .catch(() => setLoading(false));
-      return;
+      fetch("/api/user/analytics", { signal: ac.signal })
+        .then(json)
+        .then((data) => { if (cancelled) return; if (data) setAnalytics(data); setLoading(false); })
+        .catch(stopLoading);
+    } else if (tab === "collections") {
+      fetch("/api/user/collections", { signal: ac.signal })
+        .then(json)
+        .then((data) => { if (cancelled) return; if (data?.collections) setCollections(data.collections); setLoading(false); })
+        .catch(stopLoading);
+    } else if (tab === "drafts") {
+      fetch("/api/user/drafts", { signal: ac.signal })
+        .then(json)
+        .then((data) => { if (cancelled) return; if (data?.drafts) setDraftReports(data.drafts); setLoading(false); })
+        .catch(stopLoading);
+    } else {
+      // Load collections in background for the "add to collection" dropdown
+      if (tab === "my") {
+        fetch("/api/user/collections", { signal: ac.signal }).then(json).then((data) => { if (!cancelled && data?.collections) setCollections(data.collections); }).catch(() => {});
+      }
+
+      const endpoint = tab === "my" ? "/api/user/reports" : tab === "trash" ? "/api/user/reports?trash=1" : tab === "feed" ? "/api/user/feed" : tab === "collab" ? "/api/user/collaborations" : "/api/user/saved";
+      fetch(endpoint, { signal: ac.signal })
+        .then(json)
+        .then((data) => {
+          if (cancelled) return;
+          if (data?.reports) {
+            if (tab === "my") setMyReports(data.reports);
+            else if (tab === "trash") setTrashReports(data.reports);
+            else if (tab === "feed") setFeedReports(data.reports);
+            else if (tab === "collab") setCollabReports(data.reports);
+            else setSavedReports(data.reports);
+          }
+          setLoading(false);
+        })
+        .catch(stopLoading);
     }
 
-    if (tab === "collections") {
-      fetch("/api/user/collections")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => { if (data?.collections) setCollections(data.collections); setLoading(false); })
-        .catch(() => setLoading(false));
-      return;
-    }
-
-    // Load collections in background for the "add to collection" dropdown
-    if (tab === "my") {
-      fetch("/api/user/collections").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.collections) setCollections(data.collections); }).catch(() => {});
-    }
-
-    if (tab === "drafts") {
-      fetch("/api/user/drafts")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => { if (data?.drafts) setDraftReports(data.drafts); setLoading(false); })
-        .catch(() => setLoading(false));
-      return;
-    }
-
-    const endpoint = tab === "my" ? "/api/user/reports" : tab === "trash" ? "/api/user/reports?trash=1" : tab === "feed" ? "/api/user/feed" : tab === "collab" ? "/api/user/collaborations" : "/api/user/saved";
-    fetch(endpoint)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.reports) {
-          if (tab === "my") setMyReports(data.reports);
-          else if (tab === "trash") setTrashReports(data.reports);
-          else if (tab === "feed") setFeedReports(data.reports);
-          else if (tab === "collab") setCollabReports(data.reports);
-          else setSavedReports(data.reports);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    return () => { cancelled = true; ac.abort(); };
   }, [user, tab]);
 
   return (
@@ -134,17 +140,17 @@ function DashboardInner() {
                   Manage your reports and favorites.
                 </p>
               </div>
-              <a href="/dashboard/profile" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-accent bg-accent-surface/50 rounded-lg hover:bg-accent-surface transition-all">
+              <a href="/dashboard/profile" aria-label="Edit Profile" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-accent bg-accent-surface/50 rounded-lg hover:bg-accent-surface transition-all">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                 <span className="hidden sm:inline">Edit Profile</span>
                 <span className="sm:hidden">Profile</span>
               </a>
-              <a href="/dashboard/privacy" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
+              <a href="/dashboard/privacy" aria-label="Privacy" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 <span className="hidden sm:inline">Privacy</span>
                 <span className="sm:hidden">Data</span>
               </a>
-              <a href="/dashboard/notifications" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
+              <a href="/dashboard/notifications" aria-label="Notifications" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
                 <span className="hidden sm:inline">Notifications</span>
                 <span className="sm:hidden">Alerts</span>
@@ -657,6 +663,7 @@ function ManagedReportCard({
                   onClick={() => setShowCollectionMenu(!showCollectionMenu)}
                   className="inline-flex items-center px-1.5 sm:px-2 py-1 text-[10px] font-bold rounded-md bg-purple-500/10 text-purple-500 border border-purple-500/20 hover:bg-purple-500/20 transition-all cursor-pointer"
                   title="Add to collection"
+                  aria-label="Add to collection"
                 >
                   <span className="hidden sm:inline">+ Collection</span>
                   <svg className="sm:hidden w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /></svg>

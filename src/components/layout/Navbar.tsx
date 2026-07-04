@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
@@ -9,8 +10,14 @@ import { useTranslation } from "@/lib/i18n";
 import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
 import { NotificationBell } from "@/components/ui/NotificationBell";
-import { VersionHistoryPanel } from "@/components/social/VersionHistoryPanel";
 import { hapticLight } from "@/lib/utils/haptics";
+
+// Only rendered in shared/edit views — keep its 379 lines out of the Navbar's
+// initial chunk (Finding 3.12).
+const VersionHistoryPanel = dynamic(
+  () => import("@/components/social/VersionHistoryPanel").then((m) => ({ default: m.VersionHistoryPanel })),
+  { ssr: false },
+);
 
 interface NavbarProps {
   // Mode flags

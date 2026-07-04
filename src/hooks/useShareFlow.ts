@@ -13,9 +13,14 @@ interface ShareFlowOptions {
   isSampleTeam: boolean;
   buildShareState: () => ShareableState;
   t: TranslationKeys;
+  /** Called immediately before any client-initiated save POST fires, so the
+   *  collaborative-sync layer can suppress the resulting self-echo. */
+  onSaveStart?: () => void;
+  /** Called after a save POST resolves (success or failure). */
+  onSaveEnd?: () => void;
 }
 
-export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: ShareFlowOptions) {
+export function useShareFlow({ analysis, isSampleTeam, buildShareState, t, onSaveStart, onSaveEnd }: ShareFlowOptions) {
   const { isSignedIn } = useAuth();
   const posthog = usePostHog();
   const {
@@ -51,6 +56,22 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
   const [showEditUrl, setShowEditUrl] = useState(false);
   const [editLinkCopied, setEditLinkCopied] = useState(false);
 
+  // Wrap any client-initiated write so the collaborative-sync layer can
+  // suppress the self-echo the server sends back for our own version bump.
+  // Without this, our own save echoes back over SSE, gets re-applied, mutates
+  // local state, and fires another autosave — the runaway loop (§1-B).
+  const withSaveSuppression = useCallback(
+    async <T>(fn: () => Promise<T>): Promise<T> => {
+      onSaveStart?.();
+      try {
+        return await fn();
+      } finally {
+        onSaveEnd?.();
+      }
+    },
+    [onSaveStart, onSaveEnd],
+  );
+
   const handleShareClick = useCallback(async () => {
     if (!analysis || isSampleTeam) return;
     if (!isSignedIn) {
@@ -63,7 +84,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
       return;
     }
     setCreatorRequired(false);
-    const result = await copyShareUrl(state, isPublic, isUnlisted);
+    const result = await withSaveSuppression(() => copyShareUrl(state, isPublic, isUnlisted));
     if (result && !result.ok) {
       // Don't open the edit-link panel on a failed share — surface why instead.
       setPublishError(result.error ?? "Could not share report. Please try again.");
@@ -77,12 +98,12 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
       is_public: isPublic,
       pokemon_count: analysis.pokemon.length,
     });
-  }, [analysis, isSampleTeam, copyShareUrl, buildShareState, isPublic, isUnlisted, isSignedIn, posthog]);
+  }, [analysis, isSampleTeam, copyShareUrl, buildShareState, isPublic, isUnlisted, isSignedIn, posthog, withSaveSuppression]);
 
   const handleReshare = useCallback(() => {
     if (!analysis) return;
-    copyShareUrl(buildShareState(), isPublic, isUnlisted);
-  }, [analysis, copyShareUrl, buildShareState, isPublic, isUnlisted]);
+    withSaveSuppression(() => copyShareUrl(buildShareState(), isPublic, isUnlisted));
+  }, [analysis, copyShareUrl, buildShareState, isPublic, isUnlisted, withSaveSuppression]);
 
   const handleCopyEditLink = useCallback(() => {
     const url = getEditUrl();
@@ -94,21 +115,21 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
 
   const handleFreshReshare = useCallback(() => {
     if (!analysis) return;
-    freshShare(buildShareState(), isPublic, isUnlisted);
+    withSaveSuppression(() => freshShare(buildShareState(), isPublic, isUnlisted));
     setShowEditUrl(true);
-  }, [analysis, freshShare, buildShareState, isPublic, isUnlisted]);
+  }, [analysis, freshShare, buildShareState, isPublic, isUnlisted, withSaveSuppression]);
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!analysis || !isEditingUnlocked || !isSignedIn) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
-      autoSave(buildShareState(), isPublic, isUnlisted);
+      withSaveSuppression(() => autoSave(buildShareState(), isPublic, isUnlisted));
     }, 3000);
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [analysis, isEditingUnlocked, isSignedIn, buildShareState, autoSave, isPublic, isUnlisted]);
+  }, [analysis, isEditingUnlocked, isSignedIn, buildShareState, autoSave, isPublic, isUnlisted, withSaveSuppression]);
 
   // Monotonic token so that if two visibility changes overlap, a stale earlier
   // response can't revert the UI to a value the user has since moved past.
@@ -120,13 +141,13 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     const prevPublic = isPublic; // real previous value, not !v
     setIsPublic(v);
     setPublishError(null);
-    const result = await autoSave(buildShareState(), v, isUnlisted);
+    const result = await withSaveSuppression(() => autoSave(buildShareState(), v, isUnlisted));
     if (reqId !== visibilityReqRef.current) return; // superseded by a newer toggle
     if (!result.ok) {
       setIsPublic(prevPublic);
       setPublishError(result.error ?? "Could not update visibility.");
     }
-  }, [autoSave, buildShareState, isPublic, isUnlisted]);
+  }, [autoSave, buildShareState, isPublic, isUnlisted, withSaveSuppression]);
 
   const handleSetVisibility = useCallback(async (newIsPublic: boolean, newIsUnlisted: boolean) => {
     visibilityTouchedRef.current = true;
@@ -136,14 +157,14 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t }: Sha
     setIsPublic(newIsPublic);
     setIsUnlisted(newIsUnlisted);
     setPublishError(null);
-    const result = await autoSave(buildShareState(), newIsPublic, newIsUnlisted);
+    const result = await withSaveSuppression(() => autoSave(buildShareState(), newIsPublic, newIsUnlisted));
     if (reqId !== visibilityReqRef.current) return; // superseded by a newer toggle
     if (!result.ok) {
       setIsPublic(prevPublic);
       setIsUnlisted(prevUnlisted);
       setPublishError(result.error ?? "Could not update visibility.");
     }
-  }, [autoSave, buildShareState, isPublic, isUnlisted]);
+  }, [autoSave, buildShareState, isPublic, isUnlisted, withSaveSuppression]);
 
   const clearPublishError = useCallback(() => setPublishError(null), []);
 

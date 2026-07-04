@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 import type { MatchupPlan, GameResult } from "@/hooks/useMatchupPlans";
@@ -27,6 +28,11 @@ const MatchupPlanSlide = dynamic(() => import("./MatchupPlanSlide").then(m => ({
 const MatchupSheet = dynamic(() => import("./MatchupSheet").then(m => ({ default: m.MatchupSheet })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" data-walkthrough="matchup-sheet" />,
 });
+
+// Stable empty array so the memoized PokemonDetailSlide sees a referentially
+// equal `calcs` prop for slots with no damage calcs (otherwise `?? []` minted a
+// fresh array every render and defeated React.memo).
+const EMPTY_CALCS: CalcEntry[] = [];
 
 interface TeamReportProps {
   analysis: TeamAnalysis;
@@ -177,6 +183,36 @@ export function TeamReport({
 }: TeamReportProps) {
   const pokemonCount = analysis.pokemon.length;
 
+  // ── Stable per-slide detail callbacks ────────────────────────────
+  // The Pokemon detail slide (currentSlide >= 2) is memoized. Passing fresh
+  // inline arrows every render (e.g. `(text) => onNoteChange(key, text)`) would
+  // change its props on every parent render and defeat the memo. Derive the
+  // active slide's key/index up front and wrap the closures in useCallback so
+  // they stay referentially stable while the same slide is shown. These hooks
+  // must run before any early return to satisfy the rules of hooks.
+  const detailIndex = currentSlide - 2;
+  const detailKey = speciesKeys[detailIndex];
+  const handleDetailNoteChange = useCallback(
+    (text: string) => onNoteChange(detailKey, text),
+    [onNoteChange, detailKey],
+  );
+  const handleDetailAddCalc = useCallback(
+    (text: string, category: CalcCategory) => onAddCalc(detailKey, text, category),
+    [onAddCalc, detailKey],
+  );
+  const handleDetailRemoveCalc = useCallback(
+    (index: number) => onRemoveCalc(detailKey, index),
+    [onRemoveCalc, detailKey],
+  );
+  const handleDetailEditCalc = useCallback(
+    (index: number, updates: Partial<CalcEntry>) => onEditCalc(detailKey, index, updates),
+    [onEditCalc, detailKey],
+  );
+  const handleDetailToggleMega = useMemo(
+    () => (onToggleMega ? () => onToggleMega(detailIndex) : undefined),
+    [onToggleMega, detailIndex],
+  );
+
   const redactedNotice = (redactedFields && redactedFields.length > 0) ? (
     <div className="max-w-5xl mx-auto px-2 sm:px-4 mb-3">
       <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300">
@@ -265,11 +301,11 @@ export function TeamReport({
         <PokemonDetailSlide
           pokemon={pokemon}
           note={notes[key] ?? ""}
-          onNoteChange={(text) => onNoteChange(key, text)}
-          calcs={calcs[key] ?? []}
-          onAddCalc={(text, category) => onAddCalc(key, text, category)}
-          onRemoveCalc={(index) => onRemoveCalc(key, index)}
-          onEditCalc={(index, updates) => onEditCalc(key, index, updates)}
+          onNoteChange={handleDetailNoteChange}
+          calcs={calcs[key] ?? EMPTY_CALCS}
+          onAddCalc={handleDetailAddCalc}
+          onRemoveCalc={handleDetailRemoveCalc}
+          onEditCalc={handleDetailEditCalc}
           isReadOnly={isReadOnly}
           isPresentationMode={isPresentationMode}
           shiny={getSpriteConfig?.(key)?.shiny}
@@ -278,7 +314,7 @@ export function TeamReport({
           pokemonIndex={pokemonIndex}
           regulation={tags?.regulation}
           isMega={megaStates?.[pokemonIndex]}
-          onToggleMega={onToggleMega ? () => onToggleMega(pokemonIndex) : undefined}
+          onToggleMega={handleDetailToggleMega}
         />
     );
   }
