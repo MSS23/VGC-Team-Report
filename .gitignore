@@ -53,3 +53,4 @@ cypress/videos/
 # stray images / scratch files
 *.jfif
 Screenshot*.png
+manraj app.png

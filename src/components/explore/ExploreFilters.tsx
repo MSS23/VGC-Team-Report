@@ -5,6 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ARCHETYPES, REGULATIONS, EVENT_TYPES } from "@/lib/data/tags";
+import { SearchIcon, UserIcon, TrophyIcon, CloseIcon, ChevronDownIcon } from "@/components/ui/icons";
 
 export type SearchCategory = "all" | "pokemon" | "tournament" | "creator";
 
@@ -37,9 +38,7 @@ interface ExploreFiltersProps {
 
 const CATEGORY_ICONS: Record<SearchCategory, React.ReactNode> = {
   all: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
+    <SearchIcon width="14" height="14" />
   ),
   pokemon: (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -47,14 +46,10 @@ const CATEGORY_ICONS: Record<SearchCategory, React.ReactNode> = {
     </svg>
   ),
   tournament: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="6" y="2" width="12" height="10" rx="2" /><path d="M12 12v4" /><path d="M8 20h8" /><path d="M9 16h6" />
-    </svg>
+    <TrophyIcon width="14" height="14" />
   ),
   creator: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
-    </svg>
+    <UserIcon width="14" height="14" />
   ),
 };
 
@@ -208,20 +203,11 @@ export function ExploreFilters({
       <div className="flex items-center gap-2">
         {/* Search input */}
         <div className="relative flex-1 min-w-0">
-          <svg
+          <SearchIcon
             width="15"
             height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
             className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
+          />
           <input
             type="text"
             value={localQuery}
@@ -244,10 +230,7 @@ export function ExploreFilters({
               className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded text-text-tertiary hover:text-text-primary transition-colors"
               aria-label="Clear search"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              <CloseIcon width="12" height="12" strokeWidth="2.5" />
             </button>
           )}
         </div>
@@ -264,9 +247,7 @@ export function ExploreFilters({
               <option key={key} value={key}>{sortLabel[key] ?? key}</option>
             ))}
           </select>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+          <ChevronDownIcon width="12" height="12" strokeWidth="2.5" className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
         </div>
       </div>
 
@@ -353,19 +334,12 @@ export function ExploreFilters({
               : "bg-surface-alt/40 text-text-tertiary hover:text-text-secondary"
           }`}
         >
-          <svg
+          <ChevronDownIcon
             width="12"
             height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
             strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
             className={`transition-transform ${moreOpen ? "rotate-180" : ""}`}
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+          />
           More filters
           {advancedFilterCount > 0 && (
             <span className="min-w-[16px] h-4 flex items-center justify-center bg-accent text-white text-[9px] font-bold rounded-full px-1">
@@ -387,9 +361,7 @@ export function ExploreFilters({
             }`}
           >
             {pill.label}
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <CloseIcon width="8" height="8" strokeWidth="3" />
           </button>
         ))}
 
@@ -455,7 +427,7 @@ export function ExploreFilters({
                       <option value="">Any</option>
                       {EVENT_TYPES.map((e) => <option key={e} value={e}>{e}</option>)}
                     </select>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none"><polyline points="6 9 12 15 18 9" /></svg>
+                    <ChevronDownIcon width="10" height="10" strokeWidth="3" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
                   </div>
                 </div>
               </div>
@@ -503,10 +475,7 @@ export function ExploreFilters({
                       : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <rect x="6" y="2" width="12" height="10" rx="2" />
-                    <path d="M12 12v4" /><path d="M8 20h8" /><path d="M9 16h6" />
-                  </svg>
+                  <TrophyIcon width="12" height="12" strokeWidth="2.5" aria-hidden="true" />
                   Tournament results
                 </button>
 
@@ -678,20 +647,12 @@ function SpeciesChipPicker({
             } ${chipClass}`}
           >
             <span>{chip}</span>
-            <svg
+            <CloseIcon
               width="8"
               height="8"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
               strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
               aria-hidden="true"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            />
           </button>
         ))}
         <input

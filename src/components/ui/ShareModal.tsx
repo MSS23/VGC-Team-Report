@@ -6,6 +6,17 @@ import { usePostHog } from "@/components/providers/PostHogProvider";
 import { TeamCardExport } from "@/components/ui/TeamCardExport";
 import { useTranslation } from "@/lib/i18n";
 import en from "@/lib/i18n/translations/en";
+import {
+  CloseIcon,
+  CheckIcon,
+  WarningTriangleIcon,
+  LockIcon,
+  ShareIcon,
+  ExternalLinkIcon,
+  CopyIcon,
+  GlobeIcon,
+  LinkIcon,
+} from "@/components/ui/icons";
 
 interface ShareModalProps {
   publicUrl: string;
@@ -334,10 +345,7 @@ export function ShareModal({
               className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Close"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              <CloseIcon width="16" height="16" />
             </button>
           </div>
           <p className="text-sm text-text-secondary">
@@ -377,10 +385,7 @@ export function ShareModal({
                 className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer flex-shrink-0"
                 aria-label="Dismiss thank you message"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                <CloseIcon width="14" height="14" />
               </button>
             </div>
           </div>
@@ -420,11 +425,7 @@ export function ShareModal({
           </div>
           {!isShortUrl && (
             <p className="text-xs text-amber-500 mt-1.5 flex items-center gap-1.5">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
+              <WarningTriangleIcon width="12" height="12" className="flex-shrink-0" />
               {t.shareModalLongLinkWarning}
             </p>
           )}
@@ -438,10 +439,7 @@ export function ShareModal({
             <div className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent p-3.5">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400" aria-hidden="true">
-                    <rect x="3" y="11" width="18" height="11" rx="2" />
-                    <path d="M7 11V7a5 5 0 0110 0v4" />
-                  </svg>
+                  <LockIcon width="18" height="18" className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-extrabold uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-0.5">
@@ -458,9 +456,7 @@ export function ShareModal({
                   aria-label={rentalCopied ? "Rental code copied" : "Copy rental code"}
                 >
                   {rentalCopied ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
+                    <CheckIcon width="16" height="16" strokeWidth="2.5" aria-hidden="true" />
                   ) : (
                     <span>Copy</span>
                   )}
@@ -478,13 +474,7 @@ export function ShareModal({
               onClick={handleNativeShare}
               className="flex items-center justify-center gap-3 w-full px-4 py-3.5 bg-accent text-white rounded-xl font-bold text-sm hover:bg-accent/90 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-accent/25"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-              </svg>
+              <ShareIcon width="18" height="18" />
               {t.shareModalNativeShare}
             </button>
             <p className="text-xs text-text-tertiary text-center mt-2">{t.shareModalNativeShareSubtitle}</p>
@@ -520,10 +510,7 @@ export function ShareModal({
                 {t.shareModalTwitterSubtitle}
               </div>
             </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
-              <line x1="7" y1="17" x2="17" y2="7" />
-              <polyline points="7 7 17 7 17 17" />
-            </svg>
+            <ExternalLinkIcon width="14" height="14" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0" />
           </a>
 
           {/* Reddit */}
@@ -549,10 +536,7 @@ export function ShareModal({
                 {t.shareModalRedditSubtitle}
               </div>
             </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
-              <line x1="7" y1="17" x2="17" y2="7" />
-              <polyline points="7 7 17 7 17 17" />
-            </svg>
+            <ExternalLinkIcon width="14" height="14" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0" />
           </a>
 
           {/* Discord */}
@@ -601,10 +585,7 @@ export function ShareModal({
                   {t.shareModalPasteSubtitle}
                 </div>
               </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-              </svg>
+              <CopyIcon width="14" height="14" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0" />
             </button>
           )}
 
@@ -616,13 +597,7 @@ export function ShareModal({
               className="hidden sm:flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group cursor-pointer text-left w-full"
             >
               <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="18" cy="5" r="3" />
-                  <circle cx="6" cy="12" r="3" />
-                  <circle cx="18" cy="19" r="3" />
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                </svg>
+                <ShareIcon width="16" height="16" stroke="white" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
@@ -758,9 +733,7 @@ export function ShareModal({
                   : isOwner ? "bg-surface-alt border-border hover:border-accent/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
               }`}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"}>
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
+              <LockIcon width="18" height="18" className={!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"} />
               <span className={`text-[11px] font-bold leading-none ${!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"}`}>{t.shareModalPrivate}</span>
               <span className="text-[9px] text-text-tertiary leading-tight text-center">{t.shareModalPrivateDesc}</span>
             </button>
@@ -781,9 +754,7 @@ export function ShareModal({
                   : isOwner ? "bg-surface-alt border-border hover:border-amber-500/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
               }`}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"}>
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-              </svg>
+              <LinkIcon width="18" height="18" className={isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"} />
               <span className={`text-[11px] font-bold leading-none ${isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"}`}>{t.shareModalUnlisted}</span>
               <span className="text-[9px] text-text-tertiary leading-tight text-center">{t.shareModalUnlistedDesc}</span>
             </button>
@@ -809,9 +780,7 @@ export function ShareModal({
                   : isOwner && !hasWarnings ? "bg-surface-alt border-border hover:border-emerald-500/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
               }`}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isPublic ? "text-emerald-500" : "text-text-tertiary"}>
-                <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
+              <GlobeIcon width="18" height="18" className={isPublic ? "text-emerald-500" : "text-text-tertiary"} />
               <span className={`text-[11px] font-bold leading-none ${isPublic ? "text-emerald-500" : "text-text-tertiary"}`}>{t.shareModalPublicOption}</span>
               <span className="text-[9px] text-text-tertiary leading-tight text-center">{t.shareModalPublicOptionDesc}</span>
             </button>
@@ -832,11 +801,7 @@ export function ShareModal({
           {/* Creator name error message */}
           {creatorError && (
             <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 flex-shrink-0 mt-0.5">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
+              <WarningTriangleIcon width="14" height="14" className="text-red-500 flex-shrink-0 mt-0.5" />
               <p className="text-xs font-semibold text-red-600 dark:text-red-400">
                 {t.shareModalCreatorError}
               </p>
@@ -846,11 +811,7 @@ export function ShareModal({
           {/* Tag error message */}
           {tagError && (
             <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 flex-shrink-0 mt-0.5">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
+              <WarningTriangleIcon width="14" height="14" className="text-red-500 flex-shrink-0 mt-0.5" />
               <p className="text-xs font-semibold text-red-600 dark:text-red-400">
                 {t.shareModalTagError}
               </p>
@@ -860,11 +821,7 @@ export function ShareModal({
           {/* Server-side publish error (e.g. 403 owner mismatch, 500, network) */}
           {publishError && (
             <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 flex-shrink-0 mt-0.5">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
+              <WarningTriangleIcon width="14" height="14" className="text-red-500 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-red-600 dark:text-red-400">
                   {publishError}

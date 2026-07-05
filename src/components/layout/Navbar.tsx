@@ -11,6 +11,17 @@ import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
 import { NotificationBell } from "@/components/ui/NotificationBell";
 import { hapticLight } from "@/lib/utils/haptics";
+import {
+  CheckIcon,
+  ClockIcon,
+  KeyboardIcon,
+  PlusIcon,
+  EditIcon,
+  DumbbellIcon,
+  CopyIcon,
+  LinkIcon,
+  UsersIcon,
+} from "@/components/ui/icons";
 
 // Only rendered in shared/edit views — keep its 379 lines out of the Navbar's
 // initial chunk (Finding 3.12).
@@ -420,9 +431,7 @@ export function Navbar(props: NavbarProps) {
                   {autoSaveStatus === "saving" && <span className="w-2.5 h-2.5 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin" />}
                   {autoSaveStatus === "saving" ? "Saving..." : autoSaveStatus === "saved" ? "Saved" : "Save failed"}
                   {autoSaveStatus === "saved" && canShowVersionHistory && (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="ml-0.5 opacity-60">
-                      <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                    </svg>
+                    <ClockIcon width="10" height="10" strokeWidth="2.5" className="ml-0.5 opacity-60" />
                   )}
                 </button>
               )}
@@ -442,9 +451,7 @@ export function Navbar(props: NavbarProps) {
                 <span className="w-2 h-2 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
               )}
               {isSharedView && isEditingUnlocked && autoSaveStatus === "saved" && (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 flex-shrink-0">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
+                <CheckIcon width="10" height="10" strokeWidth="3" className="text-emerald-500 flex-shrink-0" />
               )}
             </div>
           </>
@@ -524,9 +531,7 @@ export function Navbar(props: NavbarProps) {
                 title="Keyboard shortcuts (?)"
                 aria-label="Keyboard shortcuts"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="4" width="20" height="16" rx="2" /><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
-                </svg>
+                <KeyboardIcon width="14" height="14" />
               </button>
               {isSharedView && !isEditingUnlocked ? (
                 /* Plain viewer of someone else's shared report — can't edit.
@@ -536,9 +541,7 @@ export function Navbar(props: NavbarProps) {
                   href="/"
                   className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
+                  <PlusIcon width="12" height="12" strokeWidth="2.5" />
                   {t.buildYourOwn}
                 </a>
               ) : (
@@ -547,9 +550,7 @@ export function Navbar(props: NavbarProps) {
                    turns editing on in one tap. */
                 onEditPresentation && (
                   <Button variant="ghost" size="sm" onClick={onEditPresentation} className="gap-1.5">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                    </svg>
+                    <EditIcon width="15" height="15" />
                     Edit
                   </Button>
                 )
@@ -560,9 +561,7 @@ export function Navbar(props: NavbarProps) {
           {/* Build Your Own (shared read-only views) — hidden on mobile, ShareViewCTA handles it */}
           {isSharedView && !isPresentationStyle && !isEditingUnlocked && (
             <a href="/" className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-              </svg>
+              <EditIcon width="12" height="12" strokeWidth="2.5" />
               {t.buildYourOwn}
             </a>
           )}
@@ -726,10 +725,7 @@ export function Navbar(props: NavbarProps) {
                     onClick={() => { setMenuOpen(false); onCopyEditLink(); }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
-                      <path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
-                    </svg>
+                    <UsersIcon width="14" height="14" />
                     {editLinkCopied ? "Copied!" : "Copy Collab Link"}
                   </button>
                 )}
@@ -757,9 +753,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onSetTournamentMode(!tournamentMode); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={tournamentMode ? "text-amber-500" : ""}>
-                        <path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" />
-                      </svg>
+                      <DumbbellIcon width="14" height="14" className={tournamentMode ? "text-amber-500" : ""} />
                       {tournamentMode ? "Exit Tournament Mode" : "Tournament Mode"}
                     </button>
                   </>
@@ -774,10 +768,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); setVersionPanelOpen(true); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                      </svg>
+                      <ClockIcon width="14" height="14" />
                       Version History
                     </button>
                   </>
@@ -796,9 +787,7 @@ export function Navbar(props: NavbarProps) {
                       }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-                      </svg>
+                      <CopyIcon width="14" height="14" />
                       {pasteCopied ? "Copied to Clipboard!" : "Copy Paste"}
                     </button>
                   </>
@@ -827,10 +816,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onCreatePokepaste("ots"); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors disabled:opacity-50 disabled:cursor-wait"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-                        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-                      </svg>
+                      <LinkIcon width="14" height="14" />
                       {pokepasteCreating === "ots" ? "Uploading…" : "Create PokéPaste (OTS)"}
                     </button>
                     <button
@@ -839,10 +825,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onCreatePokepaste("cts"); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors disabled:opacity-50 disabled:cursor-wait"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-                        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-                      </svg>
+                      <LinkIcon width="14" height="14" />
                       {pokepasteCreating === "cts" ? "Uploading…" : "Create PokéPaste (CTS)"}
                     </button>
                   </>
@@ -869,7 +852,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onExportPdf("tournament-evs"); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
+                      <DumbbellIcon width="14" height="14" />
                       Export Tournament (EVs)
                     </button>
                     <button
@@ -877,7 +860,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onExportPdf("tournament-stats"); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
+                      <DumbbellIcon width="14" height="14" />
                       Export Tournament (Stats)
                     </button>
                   </>

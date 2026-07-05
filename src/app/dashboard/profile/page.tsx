@@ -10,6 +10,7 @@ import { UserButton, Show, SignInButton } from "@clerk/nextjs";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ThemePicker } from "@/components/ui/ThemePicker";
+import { UserIcon, SpinnerIcon, LinkIcon, LockIcon } from "@/components/ui/icons";
 
 interface Profile {
   bio: string;
@@ -94,10 +95,7 @@ function ProfilePreview({
             />
           ) : (
             <div className="w-16 h-16 rounded-full bg-accent-surface border-[3px] border-surface shadow-md flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+              <UserIcon width="24" height="24" className="text-accent" />
             </div>
           )}
         </div>
@@ -236,7 +234,7 @@ function ProfileInner() {
         <Show when="signed-in">
           {loading ? (
             <div className="flex justify-center py-16">
-              <svg className="animate-spin h-5 w-5 text-text-secondary" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+              <SpinnerIcon className="animate-spin h-5 w-5 text-text-secondary" />
             </div>
           ) : (
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
@@ -262,10 +260,7 @@ function ProfileInner() {
                     title="Identity"
                     description="Your name and profile picture"
                     icon={
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
-                      </svg>
+                      <UserIcon width="16" height="16" />
                     }
                   >
                     {/* Creator name (read-only) */}
@@ -292,10 +287,7 @@ function ProfileInner() {
                             />
                           ) : (
                             <div className="w-14 h-14 rounded-full bg-accent-surface flex items-center justify-center">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                              </svg>
+                              <UserIcon width="20" height="20" className="text-accent" />
                             </div>
                           )}
                         </div>
@@ -359,10 +351,7 @@ function ProfileInner() {
                     title="Social Links"
                     description="Connect your accounts so fans can find you"
                     icon={
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-                        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-                      </svg>
+                      <LinkIcon width="16" height="16" />
                     }
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -437,10 +426,7 @@ function ProfileInner() {
                     title="Privacy"
                     description="Control who can see your profile"
                     icon={
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                        <path d="M7 11V7a5 5 0 0110 0v4" />
-                      </svg>
+                      <LockIcon width="16" height="16" />
                     }
                   >
                     <div className="flex items-center justify-between">

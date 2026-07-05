@@ -3,6 +3,17 @@
 import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { hapticLight } from "@/lib/utils/haptics";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  CheckIcon,
+  CloseIcon,
+  EyeIcon,
+  EyeOffIcon,
+  KeyboardIcon,
+} from "@/components/ui/icons";
 
 /**
  * Physical slide keys that describe the team as a whole (speed tiers +
@@ -209,9 +220,7 @@ export function SlideNavControls({
       aria-label="Previous slide"
       className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
     >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="15 18 9 12 15 6" />
-      </svg>
+      <ChevronLeftIcon width="18" height="18" strokeWidth="2.5" />
     </button>
   );
 
@@ -220,9 +229,7 @@ export function SlideNavControls({
       aria-label="End of report"
       className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 rounded-full text-accent cursor-default select-none"
     >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="20 6 9 17 4 12" />
-      </svg>
+      <CheckIcon width="18" height="18" strokeWidth="2.5" />
     </span>
   ) : (
     <button
@@ -234,9 +241,7 @@ export function SlideNavControls({
       aria-label="Next slide"
       className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all"
     >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="9 18 15 12 9 6" />
-      </svg>
+      <ChevronRightIcon width="18" height="18" strokeWidth="2.5" />
     </button>
   );
 
@@ -279,10 +284,7 @@ export function SlideNavControls({
           aria-label="Close slide options"
           className="min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          <CloseIcon width="16" height="16" strokeWidth="2.5" />
         </button>
       </div>
 
@@ -339,16 +341,9 @@ export function SlideNavControls({
             className="w-full flex items-center gap-2.5 min-h-[44px] px-2.5 rounded-lg text-sm font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
           >
             {isCurrentHidden ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500">
-                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
-                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
-                <line x1="1" y1="1" x2="23" y2="23" />
-              </svg>
+              <EyeOffIcon width="16" height="16" className="text-amber-500" />
             ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
+              <EyeIcon width="16" height="16" />
             )}
             <span>{isCurrentHidden ? "Hidden from viewers" : "Visible to viewers"}</span>
             <span className="ml-auto text-[11px] font-extrabold text-accent">
@@ -364,9 +359,7 @@ export function SlideNavControls({
                 disabled={!canMoveUp}
                 className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg text-xs font-bold text-text-secondary hover:bg-surface-alt disabled:opacity-30 disabled:pointer-events-none transition-colors"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="18 15 12 9 6 15" />
-                </svg>
+                <ChevronUpIcon width="12" height="12" strokeWidth="2.5" />
                 Move earlier
               </button>
               <button
@@ -375,9 +368,7 @@ export function SlideNavControls({
                 disabled={!canMoveDown}
                 className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg text-xs font-bold text-text-secondary hover:bg-surface-alt disabled:opacity-30 disabled:pointer-events-none transition-colors"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
+                <ChevronDownIcon width="12" height="12" strokeWidth="2.5" />
                 Move later
               </button>
             </div>
@@ -401,10 +392,7 @@ export function SlideNavControls({
           }}
           className="hidden sm:flex w-full items-center gap-2.5 min-h-[40px] px-2.5 rounded-lg text-sm font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="4" width="20" height="16" rx="2" />
-            <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
-          </svg>
+          <KeyboardIcon width="16" height="16" />
           Keyboard shortcuts
         </button>
       )}

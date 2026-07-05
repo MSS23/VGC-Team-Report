@@ -10,6 +10,7 @@ import { PageFooter } from "@/components/layout/PageFooter";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { FollowButton } from "@/components/social/FollowButton";
+import { SpinnerIcon, UserIcon, EyeIcon, UsersIcon } from "@/components/ui/icons";
 
 interface CreatorProfile {
   bio?: string;
@@ -63,10 +64,7 @@ function CreatorProfileInner({ name }: { name: string }) {
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <div className="flex flex-col items-center justify-center py-32 gap-4">
               <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-                <svg className="animate-spin h-5 w-5 text-accent" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
+                <SpinnerIcon className="animate-spin h-5 w-5 text-accent" />
               </div>
               <p className="text-sm font-medium text-text-secondary">{t.loading}</p>
             </div>
@@ -118,10 +116,7 @@ function CreatorProfileInner({ name }: { name: string }) {
                       />
                     ) : (
                       <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-accent-surface ring-4 ring-background shadow-lg flex items-center justify-center">
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                          <circle cx="12" cy="7" r="4" />
-                        </svg>
+                        <UserIcon width="36" height="36" strokeWidth="1.5" className="text-accent" />
                       </div>
                     )}
                   </div>
@@ -198,10 +193,7 @@ function CreatorProfileInner({ name }: { name: string }) {
                     label: "Views",
                     value: data.totalViews.toLocaleString(),
                     icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
+                      <EyeIcon width="18" height="18" />
                     ),
                   },
                   {
@@ -217,12 +209,7 @@ function CreatorProfileInner({ name }: { name: string }) {
                     label: "Followers",
                     value: data.followerCount,
                     icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                      </svg>
+                      <UsersIcon width="18" height="18" />
                     ),
                   },
                 ].map((stat) => (

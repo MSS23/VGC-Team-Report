@@ -10,6 +10,7 @@ import { PageFooter } from "@/components/layout/PageFooter";
 import { MatchTracker } from "@/components/match-tracker/MatchTracker";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { SpinnerIcon, UserIcon, ShieldIcon, BellIcon, PencilIcon, FolderIcon, TrashIcon, CheckIcon, ChevronDownIcon, CloseIcon } from "@/components/ui/icons";
 
 interface DashboardReport extends ExploreReport {
   isPublic?: boolean;
@@ -141,17 +142,17 @@ function DashboardInner() {
                 </p>
               </div>
               <a href="/dashboard/profile" aria-label="Edit Profile" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-accent bg-accent-surface/50 rounded-lg hover:bg-accent-surface transition-all">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                <UserIcon width="12" height="12" />
                 <span className="hidden sm:inline">Edit Profile</span>
                 <span className="sm:hidden">Profile</span>
               </a>
               <a href="/dashboard/privacy" aria-label="Privacy" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <ShieldIcon width="12" height="12" />
                 <span className="hidden sm:inline">Privacy</span>
                 <span className="sm:hidden">Data</span>
               </a>
               <a href="/dashboard/notifications" aria-label="Notifications" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                <BellIcon width="12" height="12" />
                 <span className="hidden sm:inline">Notifications</span>
                 <span className="sm:hidden">Alerts</span>
               </a>
@@ -252,7 +253,7 @@ function DashboardInner() {
             {loading ? (
               <div className="flex justify-center items-start pt-16 min-h-[60vh]">
                 <div className="flex items-center gap-3 text-text-secondary">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                  <SpinnerIcon className="animate-spin h-5 w-5" />
                   <span className="text-sm font-medium">Loading...</span>
                 </div>
               </div>
@@ -261,9 +262,7 @@ function DashboardInner() {
                 {tab === "drafts" && draftReports.length === 0 && (
                   <div className="text-center py-10 sm:py-16">
                     <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500">
-                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
+                      <PencilIcon width="24" height="24" className="text-amber-500" />
                     </div>
                     <p className="text-sm text-text-secondary mb-1">No drafts yet.</p>
                     <p className="text-xs text-text-tertiary mb-4">Start building a team report and it will auto-save here.</p>
@@ -666,7 +665,7 @@ function ManagedReportCard({
                   aria-label="Add to collection"
                 >
                   <span className="hidden sm:inline">+ Collection</span>
-                  <svg className="sm:hidden w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /></svg>
+                  <FolderIcon className="sm:hidden w-3 h-3" />
                 </button>
                 {showCollectionMenu && (
                   <div className="absolute left-0 bottom-full mb-1 sm:bottom-auto sm:top-full sm:mt-1 z-10 bg-surface border border-border rounded-lg shadow-lg py-1 min-w-[160px]">
@@ -729,11 +728,9 @@ function ManagedReportCard({
                 onClick={() => setDeleteStep(1)}
                 className="p-1.5 text-text-tertiary hover:text-red-500 transition-colors cursor-pointer flex-shrink-0"
                 title="Delete report"
+                aria-label="Delete report"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                </svg>
+                <TrashIcon width="12" height="12" />
               </button>
             )
           )}
@@ -877,9 +874,7 @@ function CollabReportCard({
         ) : (
           <div className="flex items-center justify-between gap-2">
             <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+              <CheckIcon width="10" height="10" />
               Collaborator
             </span>
             <a href={`/s/${report.id}`} className="text-[10px] font-bold text-accent hover:underline">
@@ -1162,12 +1157,10 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
               <span className="text-xs font-bold text-text-tertiary">
                 {c.itemCount} {c.itemCount === 1 ? "team" : "teams"}
               </span>
-              <svg
-                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              <ChevronDownIcon
+                width="12" height="12"
                 className={`text-text-tertiary transition-transform ${expanded === c.id ? "rotate-180" : ""}`}
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+              />
             </div>
           </button>
 
@@ -1175,7 +1168,7 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
             <div className="border-t border-border px-4 py-3">
               {loadingItems ? (
                 <div className="flex justify-center py-4">
-                  <svg className="animate-spin h-4 w-4 text-text-tertiary" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                  <SpinnerIcon className="animate-spin h-4 w-4 text-text-tertiary" />
                 </div>
               ) : expandedItems.length === 0 ? (
                 <p className="text-xs text-text-tertiary text-center py-4">
@@ -1200,10 +1193,9 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
                         onClick={() => handleRemoveItem(c.id, item.id)}
                         className="p-1 text-text-tertiary hover:text-red-500 transition-colors cursor-pointer flex-shrink-0"
                         title="Remove from collection"
+                        aria-label="Remove from collection"
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
+                        <CloseIcon width="12" height="12" />
                       </button>
                     </div>
                   ))}
