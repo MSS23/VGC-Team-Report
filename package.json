@@ -47,6 +47,7 @@
     "cypress": "^15.11.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^29.1.1",
     "start-server-and-test": "^2.1.5",
     "tailwindcss": "^4",
     "typescript": "^5",
