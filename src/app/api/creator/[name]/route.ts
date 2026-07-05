@@ -13,6 +13,10 @@ const CREATOR_CACHE_CONTROL = "public, s-maxage=60, stale-while-revalidate=300";
 function creatorResponse(payload: unknown) {
   const res = NextResponse.json(payload);
   res.headers.set("Cache-Control", CREATOR_CACHE_CONTROL);
+  // Explicit CDN headers so Vercel's edge actually caches this (some setups
+  // ignore s-maxage from Cache-Control alone). Mirrors share/explore routes.
+  res.headers.set("CDN-Cache-Control", CREATOR_CACHE_CONTROL);
+  res.headers.set("Vercel-CDN-Cache-Control", CREATOR_CACHE_CONTROL);
   return res;
 }
 
