@@ -1,4 +1,5 @@
 import { PostHog } from "posthog-node";
+import { after } from "next/server";
 
 let posthogClient: PostHog | null = null;
 
@@ -21,14 +22,11 @@ export function getPostHogServer(): PostHog | null {
  * Fire-and-forget server-side event capture.
  * Safe to call without awaiting — silently no-ops if PostHog is unconfigured.
  *
- * IMPORTANT (serverless): `capture()` only enqueues the event. On serverless
- * the function can freeze/exit before the queue is flushed to PostHog, dropping
- * events. Terminal request paths MUST flush after responding — schedule
- * `flushServerEvents()` inside `next/server`'s `after()`:
- *
- *   import { after } from "next/server";
- *   captureServerEvent(id, "event", { ... });
- *   after(() => flushServerEvents());
+ * Serverless flush is handled automatically: `capture()` only enqueues, and on
+ * serverless the function can freeze before the queue reaches PostHog. This
+ * function schedules `flushServerEvents()` in `next/server`'s `after()` for you,
+ * so every call site is covered without extra boilerplate. (Falls back silently
+ * when invoked outside a request scope, e.g. scripts or tests.)
  */
 export function captureServerEvent(
   distinctId: string,
@@ -38,6 +36,16 @@ export function captureServerEvent(
   const ph = getPostHogServer();
   if (!ph) return;
   ph.capture({ distinctId, event, properties });
+  // Serverless flush guarantee (finding 4.3): capture() only enqueues, and the
+  // fire-and-forget flush can be cut short when the lambda freezes. Schedule a
+  // flush in after() so the invocation stays alive until the network flush
+  // resolves — after the response is sent, so it never blocks the request.
+  try {
+    after(() => flushServerEvents());
+  } catch {
+    // after() throws when called outside a request scope (scripts, tests).
+    // capture() with flushAt:1 already attempts a flush there; nothing to do.
+  }
 }
 
 /**
