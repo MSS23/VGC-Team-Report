@@ -21,6 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${BASE}/champions/${m.slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.8,
+      lastModified: now,
     })),
   ];
 
