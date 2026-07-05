@@ -4,6 +4,20 @@
 
 ---
 
+## Execution status — updated 2026-07-05
+
+Most of this plan is now implemented (see git history). Verified state:
+
+**✅ Done:** §1 (Neon crisis — DB 487 MB → ~14 MB; echo-loop fix, snapshot coalescing, retention, orphan sweep, owner-exempt purge), §2.1–2.6 (all access-control + rate-limit fixes; §2.7 `creatorName` already bounded by `max(100)` — an ID pattern is inappropriate for a free-form display name), §3.1–3.10 & §3.12–3.13 (caching, query parallelization, polling trims, `React.memo`), §3.5 (creator route now sets CDN/Vercel edge cache headers), §4.1–4.9 + product cleanup (transactions, `after()` side-effects, N+1 fix, abort guards, full-meta undo, atomic revert, `fetchWithTimeout`), §5.3 (shared `buildShareState`), §5.6/§5.7 (shared `components/ui/icons.tsx` + aria-labels), §6.1 (share-route handler tests via mocked `getDb`), §6.2 (redaction integration), §6.3 (hook tests: `useUndoRedo`, `useCollaborativeSync` echo-loop regression, `useShareFlow`; jsdom wired), §6.4, §7.1–7.3, §7.5, §7.6, §7.8. Test suite: 231 passing.
+
+**⏸ Deferred (large refactors — need a reviewed feature branch, per this repo's own "large/risky changes → branch + PR" policy):**
+- **§3.11** dex-data client bundle split — removing the ~10k lines from the client means converting synchronous `lookupPokemon()` in render paths to an async/API boundary. Behavioral change across many components; not a mechanical edit.
+- **§5.1 / §5.2 / §5.4 / §5.5** god-hook (`useHomePage`, 881 lines / ~130 return fields) and mega-component (`page.tsx`, 1864 lines) decomposition, `TeamReport` 58-prop grouping, hydration state-machine. These touch the exact editor/autosave core that caused the original 98k-version incident and can't be safely landed without interactive runtime verification.
+- **§5.8** cascade FKs — the schema (`src/lib/db.ts`) currently omits them *by explicit design comment* (orphans handled via `/api/cleanup`); adding constraints to the live DB is a migration that needs review.
+- **§7.7** `noUncheckedIndexedAccess` — enabling it surfaces **329** type errors across the dex/parser code; the plan itself calls for fixing these "incrementally."
+
+---
+
 ## Executive summary
 
 The app is in good shape overall — parameterized SQL throughout, Upstash rate limiting, Redis + CDN caching on hot public reads, correctly lazy-loaded heavy libs, and an exemplary unit-test suite for pure library code. But three things need urgent attention:
