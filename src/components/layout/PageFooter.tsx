@@ -31,7 +31,7 @@ export function PageFooter({ hideFeedback = false }: PageFooterProps) {
             <span className="text-sm font-bold text-text-primary">Send Feedback</span>
             <p className="text-xs text-text-secondary mt-0.5">Bug reports, feature requests, ideas</p>
           </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent flex-shrink-0 transition-colors">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent flex-shrink-0 transition-colors">
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </a>
@@ -49,7 +49,7 @@ export function PageFooter({ hideFeedback = false }: PageFooterProps) {
             Manraj Sidhu
           </a>
         </div>
-        <nav className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1 max-w-full">
+        <nav aria-label="Footer navigation" className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1 max-w-full">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}

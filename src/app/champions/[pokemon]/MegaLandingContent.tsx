@@ -86,10 +86,10 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
           <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-transparent" />
           <div className="relative max-w-5xl mx-auto">
             {/* Breadcrumb */}
-            <nav className="flex items-center gap-1.5 text-xs text-text-tertiary mb-6">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-text-tertiary mb-6">
               <Link href="/champions" className="hover:text-accent transition-colors">Champions</Link>
-              <span>/</span>
-              <span className="text-text-secondary font-medium">{mega.displayName}</span>
+              <span aria-hidden="true">/</span>
+              <span aria-current="page" className="text-text-secondary font-medium">{mega.displayName}</span>
             </nav>
 
             <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">

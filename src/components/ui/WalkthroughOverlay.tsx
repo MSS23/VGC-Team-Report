@@ -257,7 +257,8 @@ export function WalkthroughOverlay({
       <div
         ref={tooltipRef}
         role="dialog"
-        aria-label="Walkthrough"
+        aria-modal="true"
+        aria-labelledby="walkthrough-step-title"
         style={{
           position: "fixed",
           top: 0,
@@ -291,7 +292,7 @@ export function WalkthroughOverlay({
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-bold text-text-primary mb-1.5 leading-snug">
+              <h3 id="walkthrough-step-title" className="text-base font-bold text-text-primary mb-1.5 leading-snug">
                 {step.title}
               </h3>
               <p className="text-sm text-text-secondary leading-relaxed">

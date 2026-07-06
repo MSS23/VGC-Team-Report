@@ -136,7 +136,7 @@ export function ChampionsContent() {
                         Coming Soon
                       </span>
                     </div>
-                    <p className="text-xs text-text-tertiary/70 mt-0.5">{mon.ability}</p>
+                    <p className="text-xs text-text-secondary mt-0.5">{mon.ability}</p>
                     <div className="flex gap-1.5 mt-2">
                       {mon.types.map((t) => (
                         <span
@@ -148,7 +148,7 @@ export function ChampionsContent() {
                         </span>
                       ))}
                     </div>
-                    <p className="text-[10px] text-text-tertiary/60 mt-2 italic">Sprite unavailable</p>
+                    <p className="text-[11px] text-text-secondary mt-2 italic">Sprite unavailable</p>
                   </div>
                 );
               }

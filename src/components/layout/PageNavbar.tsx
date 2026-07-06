@@ -37,10 +37,11 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
           </Link>
 
           {/* Center: nav links (desktop) */}
-          <nav className="hidden sm:flex items-center gap-1">
+          <nav aria-label="Primary" className="hidden sm:flex items-center gap-1">
             {/* Create Report CTA — always visible */}
             <Link
               href="/"
+              aria-current={activePage === "home" ? "page" : undefined}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 activePage === "home"
                   ? "text-accent bg-accent-surface/50"
@@ -54,6 +55,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
               <Link
                 key={link.key}
                 href={link.href}
+                aria-current={activePage === link.key ? "page" : undefined}
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                   activePage === link.key
                     ? "text-accent bg-accent-surface/50"
@@ -113,6 +115,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
               <Link
                 key={link.key}
                 href={link.href}
+                aria-current={isActive ? "page" : undefined}
                 className={`relative flex flex-col items-center gap-0 px-2.5 py-1 rounded-xl transition-all duration-200 min-w-[48px] active:scale-[0.90] active:opacity-70 ${
                   isActive
                     ? "text-accent"

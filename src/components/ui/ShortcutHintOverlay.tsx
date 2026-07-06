@@ -59,10 +59,13 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
       onClick={onDismiss}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shortcuts-hint-title"
         className="bg-surface/95 border border-border rounded-2xl p-6 shadow-2xl max-w-xs w-full mx-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">
+        <h3 id="shortcuts-hint-title" className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">
           {t.keyboardShortcuts}
         </h3>
         <div className="space-y-3">
