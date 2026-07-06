@@ -29,3 +29,4 @@
 ## Updates page identification
 - `src/app/changelog/data.ts` is the Updates page source.
 - July 2026 section already exists (v5.24). Append entries to it.
+PR_URL=https://github.com/MSS23/VGC-Team-Report/pull/67
