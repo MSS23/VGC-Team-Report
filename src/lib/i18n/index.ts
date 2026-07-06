@@ -80,7 +80,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       get(target, prop: string) {
         const v = target[prop];
         if (typeof v === "string" && v.length > 0) return v;
-        return (en as unknown as Record<string, string>)[prop];
+        const fallback = (en as unknown as Record<string, string>)[prop];
+        // Fall back to the key itself if neither the current language nor English
+        // has the string — prevents literal "undefined" showing up in the UI when
+        // a new translation key is added but not yet backfilled.
+        return typeof fallback === "string" && fallback.length > 0 ? fallback : prop;
       },
     }) as TranslationKeys;
   }, [translations]);

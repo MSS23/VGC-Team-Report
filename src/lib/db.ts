@@ -1,8 +1,9 @@
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
 export function getDb(): NeonQueryFunction<false, false> {
-  const sql = neon(process.env.DATABASE_URL!);
-  return sql;
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL is not set");
+  return neon(url);
 }
 
 /** Run once to create tables and indexes. Each statement is independent so one failure doesn't block others. */
