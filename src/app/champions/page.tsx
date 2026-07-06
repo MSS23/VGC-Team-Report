@@ -15,12 +15,14 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "VGC Team Report",
     url: "https://pokemonvgcteamreport.com/champions",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report — Pokemon Champions Format" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Pokemon Champions Format | Mega Evolution Teams — VGC Team Report",
     description:
       "Explore Pokemon Champions (Regulation M-A) team reports. Mega Evolution builds, matchup analysis, and team breakdowns from the competitive community.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report — Pokemon Champions Format" }],
   },
   keywords: [
     "Pokemon Champions",

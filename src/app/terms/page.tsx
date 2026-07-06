@@ -4,7 +4,25 @@ import { PageFooter } from "@/components/layout/PageFooter";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
+  description:
+    "Terms of use for VGC Team Report — a free tool for building and sharing Pokemon VGC team reports.",
   alternates: { canonical: "https://pokemonvgcteamreport.com/terms" },
+  openGraph: {
+    title: "Terms of Service — VGC Team Report",
+    description:
+      "Terms of use for VGC Team Report — a free tool for building and sharing Pokemon VGC team reports.",
+    type: "website",
+    siteName: "VGC Team Report",
+    url: "https://pokemonvgcteamreport.com/terms",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Terms of Service — VGC Team Report",
+    description:
+      "Terms of use for VGC Team Report — a free tool for building and sharing Pokemon VGC team reports.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
+  },
 };
 
 export default function TermsPage() {
