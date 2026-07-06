@@ -29,6 +29,12 @@ export const ENTRIES: ChangelogEntry[] = [
       { type: "improved", text: "Performance & reliability: hot pages (spotlight, creator, explore, embeds) are cached and their queries parallelized, real-time editing polls far less aggressively, and account deletion and version reverts now run in atomic transactions." },
       { type: "fixed", text: "Fixed a collaborative-editing feedback loop that could silently generate thousands of autosave versions on an open report — version history now stays lean and the database footprint dropped dramatically." },
       { type: "fixed", text: "Security: comment deletion tokens are no longer exposed to readers, private reports can no longer be pulled through collections, and Discord build commands now require an authorized invoker." },
+      { type: "improved", text: "Accessibility: navigation now announces the current page to screen readers via aria-current on desktop and mobile bottom-tab links; primary and footer navs have distinct aria-labels; and Champions listing 'ability' + 'sprite unavailable' text now clears WCAG 4.5:1 contrast." },
+      { type: "improved", text: "Accessibility: the keyboard-shortcut hint modal and the walkthrough tour tooltip now expose full dialog semantics (role=dialog, aria-modal, aria-labelledby)." },
+      { type: "improved", text: "Accessibility: Champions Mega detail breadcrumb and FAQ breadcrumb now mark the current page correctly for screen readers." },
+      { type: "improved", text: "SEO: /privacy and /terms now emit OpenGraph and Twitter unfurl blocks (previously only title + canonical, so Discord/Slack shared a blank card). /champions unfurl now includes an OG image; /compare noindex removed so it stops contradicting the sitemap." },
+      { type: "improved", text: "Reliability: DATABASE_URL misconfiguration now throws a readable error at startup instead of failing deep inside the Neon driver. And a missing translation key falls back to the key string itself instead of rendering the literal 'undefined' in the UI." },
+      { type: "improved", text: "Removed ~355 lines of dead code (DisplayTogglePill component, its companion useGlobalDisplayPrefs hook, and the ConsentGate wrapper — all had zero call sites)." },
     ],
   },
   {
