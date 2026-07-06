@@ -1,143 +1,92 @@
-# Dead Code Scan — VGC Team Report
+# C1 Dead Code Scan
 
-_Scanned: 2026-05-28. Static analysis (grep/find across 288 source files). No modifications made._
+_Scanned: 2026-07-06 (nightly). 276 non-test TS/TSX files. Static grep across `src/**`. No modifications made._
 
----
-
-## Previously Flagged Items — Status
-
-| Item | Status |
-|------|--------|
-| `useScrollHide` hook | **DELETED** (removed this run) |
-| `ReactionBar` component | **DELETED** (removed this run) |
-| `axios` dependency | **REMOVED** from package.json (removed this run) |
-| `postBuildNotification` (discord-bot.ts) | **RESOLVED** — function removed since May 14 scan |
-| `postToFeedbackChannel` (discord-webhook.ts) | **RESOLVED** — function removed since May 14 scan |
-| `sanitizeInput` / `containsInjection` (input-validation.ts) | **RESOLVED** — functions removed since May 14 scan |
-| `PdfExportButton` (PdfExport.tsx) | **VERIFY** — was flagged in May 13 scan (not re-checked this run) |
+Recent 20 commits reviewed for half-migrated code — nothing obviously abandoned. The `§5.6/§5.7 shared icon set` commit produced `src/components/ui/icons.tsx`; all 31 icon exports are consumed.
 
 ---
 
-## New Findings
+## High confidence (safe to delete)
 
-### 1. `ReportTemplate` type + `REPORT_TEMPLATES` constant — UNNECESSARY EXPORTS (HIGH)
-- **File:** `src/lib/templates.ts` (lines 1, 13)
-- **Issue:** Neither `ReportTemplate` nor `REPORT_TEMPLATES` is imported by any other file. Only `getTemplate` is imported externally (by `useHomePage.ts`). These are internal implementation details leaking into the public API.
-- **Lines saved by making non-exported:** 0 (still needed internally). Remove `export` keyword only.
-- **Confidence:** HIGH
+### Orphan components / hooks (no importer anywhere)
 
-### 2. `isRateLimited` (sync) — DEAD FUNCTION (HIGH)
-- **File:** `src/lib/rate-limit.ts` (line 84)
-- **Issue:** The synchronous `isRateLimited` function has zero external callers. All call sites use `isRateLimitedAsync` instead. The JSDoc itself says "legacy API -- prefer isRateLimitedAsync."
-- **Lines saved:** ~8 (lines 80-90)
-- **Confidence:** HIGH
+- `src/components/display/DisplayTogglePill.tsx:48` — `DisplayTogglePill` — 267-line floating "Form (Base/Mega)" pill. Zero non-self references. `src/components/display/` contains ONLY this file, so the entire directory can be removed.
+- `src/lib/hooks/useGlobalDisplayPrefs.ts:36` — `useGlobalDisplayPrefs` — 51-line localStorage hook (`vgc.display.pillSeen`). ONLY consumer would have been `DisplayTogglePill`, which is itself dead. Sole external mention is a doc-comment sentence pointing at the pill. Delete together.
+- `src/components/providers/ConsentGate.tsx:19` — `ConsentGate` — 37-line render-gate for analytics consent. Zero importers. `PostHogProvider` already gates itself via `hasAnalyticsConsent()`/`onConsentChange()` directly — this wrapper was never wired into any layout. The imported utilities from `lib/consent.ts` remain live via `PostHogProvider`.
 
-### 3. `NotificationType` — UNNECESSARY EXPORT (HIGH)
-- **File:** `src/lib/notifications.ts` (line 3)
-- **Issue:** The type is used internally by `createNotification` (which IS used by 3 API routes) but is never imported externally.
-- **Lines saved:** 0 (remove `export` keyword only)
-- **Confidence:** HIGH
+### Truly dead function
 
-### 4. `AccentTheme` type — UNNECESSARY EXPORT (HIGH)
-- **File:** `src/lib/accent-themes.ts` (line 3)
-- **Issue:** Never imported externally. `ACCENT_THEMES`, `VIEW_TIERS`, `getUnlockedCount`, `getNextTier`, `applyAccentTheme` are all used -- but the `AccentTheme` type itself is not.
-- **Lines saved:** 0 (remove `export` keyword only)
-- **Confidence:** HIGH
+- `src/lib/rate-limit.ts:84` — `isRateLimited` (sync) — ~8 lines. Only its own `__tests__/rate-limit.test.ts` still imports it; JSDoc itself says "prefer `isRateLimitedAsync`." Flagged in every scan since May; no production caller has appeared. Delete function + delete the sync-only tests (keep the async coverage in the same file).
 
-### 5. `LegalitySeverity` type — UNNECESSARY EXPORT (MEDIUM)
-- **File:** `src/lib/validation/champions-legality.ts` (line 29)
-- **Issue:** Never imported externally. Used only as an internal type.
-- **Confidence:** MEDIUM (could be imported by future champions validation UI)
-
-### 6. `MoveCategory`, `MoveFlag`, `MoveData` types — UNNECESSARY EXPORTS (MEDIUM)
-- **File:** `src/lib/data/moves.ts` (lines 3, 4, 10)
-- **Issue:** None of these types are imported externally. Only `MOVES` and `lookupMove` are used by other files.
-- **Confidence:** MEDIUM (types could be useful for future consumers)
-
-### 7. `NatureData` type — UNNECESSARY EXPORT (MEDIUM)
-- **File:** `src/lib/data/natures.ts` (line 3)
-- **Issue:** Never imported externally. Only `NATURES` and `getNatureModifier` are imported.
-- **Confidence:** MEDIUM
-
-### 8. `pokemonToShowdown` + `pokemonToOpenSheet` — UNNECESSARY EXPORTS (MEDIUM)
-- **File:** `src/lib/utils/export-paste.ts` (lines 20, 86)
-- **Issue:** Both are internal helpers used only by `teamToShowdown` and `teamToOpenSheet` (which ARE imported). Only test files import the pokemon-level functions directly.
-- **Lines saved:** 0 (remove `export` keyword only; keep for test access)
-- **Confidence:** MEDIUM
-
-### 9. `replaceSpeciesInBlock` — UNNECESSARY EXPORT (MEDIUM)
-- **File:** `src/lib/utils/paste-edit.ts` (line 59)
-- **Issue:** Used only internally by `replaceSpeciesInPaste` (line 97). Never imported externally.
-- **Confidence:** MEDIUM
-
-### 10. `migrateCalcEntries` — UNNECESSARY EXPORT (MEDIUM)
-- **File:** `src/lib/utils/normalize-report.ts` (line 10)
-- **Issue:** Used only internally by `normalizeReportData` (line 102). Never imported externally.
-- **Confidence:** MEDIUM
-
-### 11. `detectRegulationWithSignals` + `RegulationDetection` type — UNNECESSARY EXPORTS (MEDIUM)
-- **File:** `src/lib/analysis/detect-regulation.ts` (lines 62, 71)
-- **Issue:** Only `detectRegulation` is imported externally (by `useHomePage.ts`). The `WithSignals` variant and its return type are used internally but never imported.
-- **Confidence:** MEDIUM (designed for diagnostic use -- may be needed in future UI)
-
-### 12. `VersionDiffState` type — UNNECESSARY EXPORT (LOW)
-- **File:** `src/lib/contexts/VersionDiffContext.tsx` (line 6)
-- **Issue:** Never imported externally. Used internally as context state shape.
-- **Confidence:** LOW (context types are commonly exported for consumers)
-
-### 13. `ImportSource` type — UNNECESSARY EXPORT (LOW)
-- **File:** `src/lib/utils/multi-import.ts` (line 8)
-- **Issue:** Never imported externally. Used as return type of `detectImportSource`.
-- **Confidence:** LOW (type narrowing for callers could be useful)
-
-### 14. Zod schemas + `PrivateField` type — UNNECESSARY EXPORTS (LOW)
-- **Files:** `src/lib/sharing/url-codec.ts` (lines 11, 18, 39); `src/lib/sharing/redact-paste.ts` (line 21)
-- **Issue:** `SerializedGamePlanSchema`, `SerializedMatchupPlanSchema`, `ShareableStateSchema`, and `PrivateField` type are used internally but never imported externally.
-- **Confidence:** LOW (Zod schemas could be useful for external validation)
-
-### 15. `/api/migrate` route — STALE ADMIN ROUTE (LOW)
-- **File:** `src/app/api/migrate/route.ts` (108 lines)
-- **Issue:** One-time batch migration route. Not in `vercel.json` crons. Only callable via manual POST with `MIGRATE_SECRET`. If all data has been migrated, this is dead weight. However, it is idempotent and useful for future schema changes.
-- **Lines saved:** ~108 if removed
-- **Confidence:** LOW (useful to keep for future migrations)
+**Total high-confidence deletion: ~363 LOC + one empty directory.**
 
 ---
 
-## Duplicate/Redundant Pages (Informational)
+## Medium confidence (verify manually — remove `export`, keep code)
 
-Two separate notification pages exist:
-- `/notifications` (340-line `NotificationsContent.tsx`) -- linked from `NotificationBell` component
-- `/dashboard/notifications` (213-line `NotificationsContent.tsx`) -- linked from `DashboardContent`
+These identifiers are referenced only inside their defining file. Downgrade the `export` to make the module surface honest; the runtime code is fine.
 
-Both are actively linked but serve the same purpose with different implementations. Consider consolidating into one route.
+- `src/lib/templates.ts:1,13` — `ReportTemplate` type, `REPORT_TEMPLATES` const
+- `src/lib/notifications.ts:3` — `NotificationType`
+- `src/lib/accent-themes.ts:3` — `AccentTheme` type
+- `src/lib/validation/champions-legality.ts:29` — `LegalitySeverity`
+- `src/lib/data/moves.ts:3,4,10` — `MoveCategory`, `MoveFlag`, `MoveData`
+- `src/lib/data/natures.ts:3` — `NatureData`
+- `src/lib/data/type-chart.ts` — `TYPE_CHART` (used only by same-file helper)
+- `src/lib/data/mega-pokemon.ts` — `getRegMBMegas`
+- `src/lib/data/dex-subset.ts` — `DexSubsetMegaStone`, `asPokemonTypes`
+- `src/lib/posthog-server.ts` — `flushServerEvents` (called only by same-file `after()`)
+- `src/lib/security/csrf.ts` — `generateCsrfToken` (called by same-file middleware)
+- `src/lib/security/cors.ts` — `isDynamicAllowedOrigin` (called by same-file `getCorsHeaders`)
+- `src/lib/utils/multi-import.ts:8` — `ImportSource`
+- `src/lib/utils/normalize-report.ts:10` — `migrateCalcEntries`
+- `src/lib/utils/paste-edit.ts:59` — `replaceSpeciesInBlock`
+- `src/lib/sharing/url-codec.ts:11,18,39` — `SerializedGamePlanSchema`, `SerializedMatchupPlanSchema`, `ShareableStateSchema`
+- `src/lib/sharing/redact-paste.ts:21` — `PrivateField`
+- `src/lib/analysis/detect-regulation.ts:62,71` — `detectRegulationWithSignals`, `RegulationDetection`
+- `src/lib/contexts/VersionDiffContext.tsx:6` — `VersionDiffState`
+- `src/lib/utils/export-paste.ts:20,86` — `pokemonToShowdown`, `pokemonToOpenSheet` (per-pokemon helpers; only tests import them — leave export IF tests want direct access, otherwise drop)
+- `src/hooks/useExploreUrlSync.ts` — `FilterState`
+- `src/hooks/useMatchupPlans.ts` — `GamePlanSlots`
+- `src/hooks/useWalkthrough.ts` — `WALKTHROUGH_STEPS`
+- `src/hooks/useCollaborativeSync.ts` — `SyncStatus`
+- `src/hooks/useDamageCalcs.ts` — `DamageCalcsMap`
+- `src/hooks/useTeamReport.ts` — `ViewMode`
+- `src/components/ui/PdfExport.tsx:25` — `PdfExportProps`
+- `src/components/report/CommonModesSlide.tsx` — `TeamCombination`
+- `src/components/seo/JsonLd.tsx` — `HowToStep`, `SportsEventData`, `BreadcrumbItem`, `FAQItem`
 
 ---
 
-## What Is NOT Dead
+## npm deps with zero imports
 
-Verified active despite appearing suspicious:
-- **All 75+ components** in `src/components/` have at least one import (0 orphaned after ReactionBar deletion)
-- **All hooks** are actively imported (after useScrollHide deletion)
-- **All API routes** are either in `vercel.json` crons, called by external webhooks (Discord, Clerk, Linear, PostHog), fetched from frontend code, or pinged by health checks
-- **All npm dependencies** are imported (after axios removal)
-- **All lib files** at every nesting level are imported by at least one consumer
-- `/api/keep-alive` -- actively pinged by `/api/cron/daily-ops` health check (stale doc comment says "every 5 min" but actual usage is daily)
-- `/api/setup` -- admin endpoint referenced in middleware auth-bypass list, uses shared `ensureTable` utility
-- `/api/bot` -- Discord bot interaction endpoint, called externally by Discord
-- `/api/discord` -- Discord slash-command interaction endpoint (316 lines), externally triggered
+None. All 20 runtime dependencies in `package.json` have at least one `from "<pkg>"` import in `src/**`. Prior `axios` removal is holding.
 
 ---
 
-## Summary Table
+## Files to inspect for full removal
 
-| Category | Count | Lines Recoverable |
-|----------|-------|--------------------|
-| Previously flagged (now resolved) | 6 | 0 (already cleaned) |
-| Unnecessary `export` keywords | 15 | 0 (code stays, keyword goes) |
-| Truly dead function (`isRateLimited` sync) | 1 | ~8 |
-| Stale admin route (`/api/migrate`) | 1 | ~108 (if removed) |
-| Duplicate page patterns | 1 | ~213 (if consolidated) |
+- `src/components/display/DisplayTogglePill.tsx` — orphan (see above). Removing it also removes the only file in `src/components/display/`, so delete the directory.
+- `src/lib/hooks/useGlobalDisplayPrefs.ts` — orphan support-hook for the pill above; only file under `src/lib/hooks/`, so that directory also empties out.
+- `src/components/providers/ConsentGate.tsx` — orphan wrapper (see above). `PostHogProvider` and `CookieBanner` remain.
+- `src/app/api/migrate/route.ts` — one-shot admin migration route, still not in `vercel.json` crons. LOW confidence — idempotent, useful for future schema changes; keep unless the user has confirmed all data migrated. (~108 LOC recoverable.)
 
-**Total recoverable lines:** ~8 definite, ~321 if admin route removed + notifications consolidated.
+---
 
-The codebase is in good shape. The three highest-priority items from the prior scan (May 14) have all been cleaned up. The three items flagged by prior runs (`useScrollHide`, `ReactionBar`, `axios`) were removed in this run. The remaining findings are primarily unnecessary `export` keywords on internal helpers/types -- a minor hygiene issue, not a functional problem.
+## Duplicate/Redundant (informational — not dead)
+
+- `/notifications` (`NotificationsContent.tsx`, ~340 LOC) vs. `/dashboard/notifications` (`NotificationsContent.tsx`, ~213 LOC) — both actively linked (NotificationBell and DashboardContent respectively). Consolidation ticket, not a delete.
+
+---
+
+## Summary
+
+| Category | Count | Lines |
+|----------|-------|-------|
+| High-confidence orphan files | 3 | ~355 |
+| Dead sync function | 1 | ~8 |
+| Unnecessary `export` keywords | ~35 | 0 (surface hygiene only) |
+| Unused npm deps | 0 | — |
+| **Total high-confidence recoverable** | | **~363 LOC + 2 empty dirs** |
+
+Codebase remains in solid shape. The DisplayTogglePill+useGlobalDisplayPrefs pair is a new finding (last scan didn't flag them) — it's a 318-line dead feature. ConsentGate is a duplicate of gating logic already inlined in `PostHogProvider`. The `isRateLimited` sync function has been flagged for months and is still there.
