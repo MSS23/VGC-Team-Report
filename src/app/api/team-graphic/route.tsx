@@ -88,12 +88,21 @@ export async function GET(request: Request) {
   const shareId = url.searchParams.get("id");
   const style = url.searchParams.get("style") ?? "wide";
 
-  if (!shareId) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  if (!shareId || !/^[A-Za-z0-9]{8}$/.test(shareId)) {
+    return NextResponse.json({ error: "Missing or invalid id" }, { status: 400 });
   }
 
+  // Only render team graphics for shares the requester can actually see.
+  // Private (non-public, non-unlisted) reports are gated by /api/share/[id]
+  // — this route needs the same gate or it silently leaks the paste + team
+  // composition of any private share whose 8-char id is known or guessed.
   const sql = getDb();
-  const rows = await sql`SELECT data FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
+  const rows = await sql`
+    SELECT data FROM shares
+    WHERE id = ${shareId}
+      AND deleted_at IS NULL
+      AND (is_public = TRUE OR is_unlisted = TRUE)
+  `;
   if (rows.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
