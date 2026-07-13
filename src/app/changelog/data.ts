@@ -17,6 +17,22 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "July 2026",
+    version: "5.25",
+    title: "Nightly Fixes: Speed Tier Text, Champions Meta Label & Team Card Perf",
+    emoji: "🩹",
+    items: [
+      { type: "fixed", text: "Speed Tiers: fixed the four places where a literal `\\u2014` was rendering as escape-sequence text instead of an em-dash. The empty-state hints and meta-source tooltip now read cleanly again." },
+      { type: "fixed", text: "Speed Tiers: the empty-state hint no longer tells Reg M-B users that Mega Evolution is only legal in Reg M-A. It now correctly says Megas are legal in both Champions formats (Reg M-A / Reg M-B)." },
+      { type: "fixed", text: "Speed Tiers: the meta-source label for Reg M-B teams no longer misreports the benchmark list as 'Reg M-B meta' when the underlying data is the shared Champions list — it now shows 'Champions meta' for both M-A and M-B, matching the data actually served." },
+      { type: "fixed", text: "Security: /api/team-graphic no longer renders team-image PNGs for private reports. The route now checks the same public/unlisted gate as the share JSON endpoint, and enforces the 8-char share-id shape peer routes use." },
+      { type: "improved", text: "Performance: Pokémon team cards are now memoized. Hover, drag, QR generation, and rental-code copy on the dashboard no longer cascade a re-render into all six cards on the team overview." },
+      { type: "improved", text: "Performance: Dashboard 'All Public' and 'All Private' bulk actions now issue their PATCH requests in parallel. A ~20-report sweep drops from several seconds of sequential round-trips to a single burst." },
+      { type: "improved", text: "Performance: the edit-changelog side panel polls every 60 seconds instead of every 15. The panel is a reference view, not live chat, so the extra requests were pure background load." },
+      { type: "improved", text: "Codebase health: removed ~355 lines of dead UI code (DisplayTogglePill, useGlobalDisplayPrefs, ConsentGate) — three files that were never wired into the app." },
+    ],
+  },
+  {
+    date: "July 2026",
     version: "5.24",
     title: "Common Combinations, Clearer Speed Tiers & Faster Everything",
     emoji: "🎯",
