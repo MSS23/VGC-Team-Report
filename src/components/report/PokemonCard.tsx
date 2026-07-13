@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { Card } from "@/components/ui/Card";
@@ -55,7 +55,7 @@ const STAT_COLORS: Record<string, string> = {
   spe: "var(--stat-spe)",
 };
 
-export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation, onReplaceSpecies, priority = false }: PokemonCardProps) {
+function PokemonCardImpl({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation, onReplaceSpecies, priority = false }: PokemonCardProps) {
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const isPrint = useIsPrintMode();
@@ -562,3 +562,9 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
     </Card>
   );
 }
+
+// Cards render inside TeamOverview's map(); parent state changes (drag,
+// hover, QR generation, rental copy) would otherwise cascade a re-render
+// into all six instances every keystroke. Parent callbacks are already
+// wrapped in useCallback, so a shallow prop compare is a safe skip.
+export const PokemonCard = memo(PokemonCardImpl);

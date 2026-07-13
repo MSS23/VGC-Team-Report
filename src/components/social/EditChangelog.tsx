@@ -37,10 +37,12 @@ export function EditChangelog({ shareId, editToken }: EditChangelogProps) {
     if (open && entries.length === 0) fetchChangelog();
   }, [open, entries.length, fetchChangelog]);
 
-  // Auto-refresh when panel is open
+  // Auto-refresh when panel is open. The changelog is a reference view of
+  // committed history, not a live chat — every 60s is well within perceived
+  // freshness and cuts /api/changelog/[shareId] load by 4x per open panel.
   useEffect(() => {
     if (!open) return;
-    const interval = setInterval(fetchChangelog, 15_000);
+    const interval = setInterval(fetchChangelog, 60_000);
     return () => clearInterval(interval);
   }, [open, fetchChangelog]);
 
