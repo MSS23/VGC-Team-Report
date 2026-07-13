@@ -411,11 +411,14 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   const oppModSummary = Array.from(opponentModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
 
   // Which meta benchmark list is in play, derived from the report's regulation.
-  // Champions formats (Reg M-A/M-B) pull META_THREATS_CHAMPIONS; everything else
-  // uses the standard list. Surface this so the source is never a mystery.
-  const metaSourceLabel = regulation
-    ? `${regulation} meta`
-    : isChampions ? "Reg M-A meta" : "Standard meta";
+  // Champions formats (Reg M-A/M-B) both pull META_THREATS_CHAMPIONS; everything
+  // else uses the standard list. Surface this so the source is never a mystery.
+  // Since a single Champions list serves both M-A and M-B, we label it
+  // "Champions meta" rather than pinning it to one regulation so users on
+  // Reg M-B don't see a mismatched "Reg M-A meta" label.
+  const metaSourceLabel = isChampions
+    ? "Champions meta"
+    : regulation ? `${regulation} meta` : "Standard meta";
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
@@ -497,7 +500,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             {showMetaThreats && (
               <span
                 className="text-[10px] sm:text-xs text-text-tertiary font-medium"
-                title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag \u2014 Champions formats use the Reg M-A meta, everything else uses the standard meta."
+                title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag \u2014 Champions formats (Reg M-A / Reg M-B) use the Champions meta, everything else uses the standard meta."
               >
                 * {metaSourceLabel}
               </span>
@@ -518,7 +521,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
               {teamMegaEntries.length === 0 ? (
                 <>
                   No Mega forms to show \u2014 a team member needs a matching Mega Stone equipped.
-                  {regulation && !isChampionsFormat(regulation) && " Mega Evolution is only legal in Reg M-A."}
+                  {regulation && !isChampionsFormat(regulation) && " Mega Evolution is only legal in Champions formats (Reg M-A / Reg M-B)."}
                 </>
               ) : (
                 "Mega Forms adds a separate purple row for each eligible Mega. A Mega that shares its base form's Speed shows the same number \u2014 that's expected, not a bug."
