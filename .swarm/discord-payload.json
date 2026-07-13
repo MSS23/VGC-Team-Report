@@ -1,20 +1,28 @@
 {
-  "embeds": [{
-    "title": "🤖 Nightly Swarm — 24 May 2026",
-    "color": 5763719,
-    "fields": [
-      { "name": "Branch", "value": "swarm-nightly-2026-05-24", "inline": true },
-      { "name": "Commits pushed", "value": "13", "inline": true },
-      { "name": "Build status", "value": "✅ Passing (tsc + next build clean)", "inline": true },
-      { "name": "Linear webhook", "value": "🔧 fixed in commit c1c1201 — header `linear-signature`, env-var fallback, force-dynamic. Re-enable in Linear settings after deploy.", "inline": false },
-      { "name": "Linear tickets closed", "value": "VGC-209 (Pokemon filter chips on /explore) — ready for review", "inline": false },
-      { "name": "PostHog signals acted on", "value": "None — .env.local not present in this sandbox (PostHog API key missing).", "inline": false },
-      { "name": "Updates page", "value": "v5.20 added to May 2026 section (12 entries)", "inline": false },
-      { "name": "Merge conflicts", "value": "None (branch cut fresh from main tonight)", "inline": false },
-      { "name": "Rejected changes", "value": "None — every commit passed the build gate", "inline": false },
-      { "name": "PR", "value": "https://github.com/MSS23/VGC-Team-Report/pull/38", "inline": false },
-      { "name": "What was pushed", "value": "• Webhook fix: header name + env-var fallback\n• SECURITY: escape HTML in welcome + comment emails\n• SECURITY: timing-safe bearer compare on migrate/setup/cleanup\n• Bug: preserve is_unlisted on share re-POST dedup\n• i18n: fallback to English on empty translation stubs\n• VGC-209: Pokemon filter chips on /explore\n• ShareModal: team card preview at top\n• ShareModal: achievement-led share text\n• a11y: focus rings, aria-labels, 44px targets, kbd backdrops\n• SEO: BreadcrumbList JSON-LD on /explore /tournaments /creator\n• Cleanup: deleted useScrollHide + ReactionBar", "inline": false }
-    ],
-    "footer": { "text": "vgc-overnight-swarm • channel 1487202217298493493 • Review and merge to main when ready" }
-  }]
+  "embeds": [
+    {
+      "title": "🤖 Nightly Swarm — 13 Jul 2026",
+      "color": 5763719,
+      "fields": [
+        { "name": "Branch", "value": "swarm-nightly-2026-07-13", "inline": true },
+        { "name": "Commits pushed", "value": "5 (+2 for swarm notes)", "inline": true },
+        { "name": "Build status", "value": "✅ Passing (tsc + build + 231/231 vitest)", "inline": true },
+        { "name": "Linear webhook", "value": "✅ Handler code correct — see webhook-investigation.md. Human action likely needed for env var in Vercel.", "inline": false },
+        { "name": "Linear tickets closed", "value": "None — Linear MCP unavailable this run", "inline": false },
+        { "name": "PostHog signals acted on", "value": "None — credentials unavailable", "inline": false },
+        { "name": "Updates page", "value": "1 new entry (v5.25) added to July 2026 section", "inline": false },
+        { "name": "Merge conflicts", "value": "None", "inline": false },
+        { "name": "Rejected changes", "value": "None", "inline": false },
+        { "name": "PR", "value": "See branch swarm-nightly-2026-07-13 → main", "inline": false },
+        {
+          "name": "What was pushed",
+          "value": "• Fix SpeedTierChart literal `\\u2014` render bug (was showing raw escape sequence)\n• Fix stale Reg M-A copy for Reg M-B users on the Mega toggle hint\n• Fix meta-source label mismatch for Reg M-B teams (Champions meta, not Reg M-B meta)\n• [SEC HIGH] Gate /api/team-graphic to public/unlisted shares only\n• Memoize PokemonCard — team overview no longer cascades re-renders\n• Parallelize dashboard bulk-visibility PATCHes (20-report sweep ~20x faster)\n• Raise EditChangelog poll from 15s to 60s (-75% traffic to /api/changelog)\n• Remove ~355 LOC of dead UI code (DisplayTogglePill, useGlobalDisplayPrefs, ConsentGate)",
+          "inline": false
+        }
+      ],
+      "footer": {
+        "text": "vgc-overnight-swarm • channel 1487202217298493493 • Review and merge to main when ready"
+      }
+    }
+  ]
 }
