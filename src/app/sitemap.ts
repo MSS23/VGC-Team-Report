@@ -4,25 +4,27 @@ import { getRegMAMegasWithSprites } from "@/lib/data/mega-pokemon";
 
 const BASE = "https://pokemonvgcteamreport.com";
 
+// New public reports and creator pages should become discoverable without
+// waiting for the next production deployment.
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date().toISOString();
   const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE, changeFrequency: "weekly", priority: 1.0, lastModified: now },
-    { url: `${BASE}/explore`, changeFrequency: "daily", priority: 0.9, lastModified: now },
-    { url: `${BASE}/champions`, changeFrequency: "weekly", priority: 0.9, lastModified: now },
-    { url: `${BASE}/faq`, changeFrequency: "monthly", priority: 0.8, lastModified: now },
-    { url: `${BASE}/feedback`, changeFrequency: "monthly", priority: 0.6, lastModified: now },
-    { url: `${BASE}/tournaments`, changeFrequency: "weekly", priority: 0.7, lastModified: now },
-    { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.6, lastModified: now },
-    { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3, lastModified: now },
-    { url: `${BASE}/support`, changeFrequency: "monthly", priority: 0.4, lastModified: now },
-    { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
-    { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1, lastModified: now },
+    { url: BASE, changeFrequency: "weekly", priority: 1.0 },
+    { url: `${BASE}/explore`, changeFrequency: "daily", priority: 0.9 },
+    { url: `${BASE}/champions`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${BASE}/faq`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE}/feedback`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/tournaments`, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${BASE}/support`, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1 },
+    { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1 },
     ...getRegMAMegasWithSprites().map((m) => ({
       url: `${BASE}/champions/${m.slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.8,
-      lastModified: now,
     })),
   ];
 
@@ -31,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const shares = await sql`
       SELECT id, updated_at FROM shares
       WHERE is_public = TRUE AND deleted_at IS NULL
-      ORDER BY created_at DESC
+      ORDER BY updated_at DESC
       LIMIT 5000
     `;
     const sharePages: MetadataRoute.Sitemap = shares.map((row) => ({
@@ -45,6 +47,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       FROM shares
       WHERE is_public = TRUE AND deleted_at IS NULL AND data->>'creatorName' IS NOT NULL AND data->>'creatorName' != ''
       GROUP BY data->>'creatorName'
+      ORDER BY MAX(updated_at) DESC
+      LIMIT 5000
     `;
     const creatorPages: MetadataRoute.Sitemap = creators.map((row) => ({
       url: `${BASE}/creator/${encodeURIComponent(row.name as string)}`,
