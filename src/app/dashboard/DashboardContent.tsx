@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { I18nProvider } from "@/lib/i18n";
 
 import { applyRandomAccent } from "@/lib/utils/random-accent";
@@ -266,9 +267,9 @@ function DashboardInner() {
                     </div>
                     <p className="text-sm text-text-secondary mb-1">No drafts yet.</p>
                     <p className="text-xs text-text-tertiary mb-4">Start building a team report and it will auto-save here.</p>
-                    <a href="/" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                       Create Report
-                    </a>
+                    </Link>
                   </div>
                 )}
                 {tab === "drafts" && draftReports.length > 0 && (
@@ -281,9 +282,9 @@ function DashboardInner() {
                 {tab === "my" && myReports.length === 0 && (
                   <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-4">No reports yet. Create a team report to get started.</p>
-                    <a href="/" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                       Create Report
-                    </a>
+                    </Link>
                   </div>
                 )}
                 {tab === "saved" && savedReports.length === 0 && (

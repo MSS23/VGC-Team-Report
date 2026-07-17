@@ -223,8 +223,8 @@ export async function GET(request: Request) {
 
     // Batch-fetch social counts
     const shareIds = items.map((r) => r.id as string);
-    let likeMap: Record<string, number> = {};
-    let commentMap: Record<string, number> = {};
+    const likeMap: Record<string, number> = {};
+    const commentMap: Record<string, number> = {};
 
     // Collect unique creator names for verification check
     const creatorNames = [...new Set(items.map((r) => ((r.data as Record<string, unknown>).creatorName as string)).filter(Boolean))];

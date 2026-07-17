@@ -4,7 +4,7 @@ import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 import { ENTRIES } from "./data";
 
 export const metadata: Metadata = {
-  title: "Changelog — VGC Team Report",
+  title: "Changelog",
   description: "Full version history of VGC Team Report — new features, bug fixes, and improvements.",
   alternates: { canonical: "https://pokemonvgcteamreport.com/changelog" },
   openGraph: {

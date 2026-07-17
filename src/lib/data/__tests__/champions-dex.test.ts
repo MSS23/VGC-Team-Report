@@ -28,22 +28,12 @@ describe("CHAMPIONS_DEX drift guard", () => {
     expect(CHAMPIONS_DEX.size).toBeLessThan(500);
   });
 
-  it("validateMegaCoverage() reports no CHAMPIONS_DEX drift errors (check 1)", () => {
-    // validateMegaCoverage() has two checks:
-    //   1. Every "-mega" in CHAMPIONS_DEX must have a MEGA_BY_KEY entry (drift guard)
-    //   2. Every MEGA_BY_KEY entry must have POKEMON_DATA stats (data completeness)
-    //
-    // Check 2 has known pre-existing gaps (stub Megas awaiting POKEMON_DATA entries).
-    // This test specifically guards against check-1 regressions — the Golurk-Mega
-    // class of bug where a species appears in the dex but has no MEGA_POKEMON_LIST entry.
+  it("validateMegaCoverage() resolves every Mega used by the UI", () => {
+    // Covers both catalogue drift and the production lookup path, including
+    // generated @pkmn/dex fallback data for newer Champions Mega forms.
     const result = validateMegaCoverage();
-    const driftErrors = result.errors.filter((e) =>
-      e.includes("CHAMPIONS_DEX lists") && e.includes("mega-pokemon.ts has no MEGA_POKEMON_LIST entry"),
-    );
-    expect(
-      driftErrors,
-      `CHAMPIONS_DEX vs MEGA_BY_KEY drift detected:\n${driftErrors.join("\n")}`,
-    ).toEqual([]);
+    expect(result.errors, result.errors.join("\n")).toEqual([]);
+    expect(result.ok).toBe(true);
   });
 
   it("known required base species are present", () => {

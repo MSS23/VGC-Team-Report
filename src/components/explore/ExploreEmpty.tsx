@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import Link from "next/link";
 import { useTranslation } from "@/lib/i18n";
 
 const SUBSTITUTE_URL =
@@ -82,18 +83,18 @@ export function ExploreEmpty({
       {/* Cold-start (no content at all): build CTA + demo link */}
       {!hasSearch && !hasActiveFilters && (
         <div className="mt-6 flex flex-col items-center gap-3">
-          <a
+          <Link
             href="/"
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide min-h-[44px]"
           >
             {t.buildYourOwn}
-          </a>
-          <a
+          </Link>
+          <Link
             href="/?sample=sample-groudon-sun"
-            className="text-sm text-text-tertiary hover:text-accent transition-colors font-medium"
+            className="inline-flex min-h-11 items-center text-sm text-text-tertiary hover:text-accent transition-colors font-medium"
           >
             See how a report looks &rarr;
-          </a>
+          </Link>
         </div>
       )}
     </motion.div>

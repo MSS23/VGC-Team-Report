@@ -105,6 +105,7 @@ describe("useShareFlow", () => {
 
     expect(hook.current.creatorRequired).toBe(false);
     expect(shareUrl.copyShareUrl).toHaveBeenCalledTimes(1);
+    expect(shareUrl.copyShareUrl).toHaveBeenCalledWith(expect.anything(), false, true);
   });
 
   it("autosaves after the 3s debounce once editing is unlocked", () => {

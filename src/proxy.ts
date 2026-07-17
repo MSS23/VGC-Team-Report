@@ -1,4 +1,4 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { clerkMiddleware } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getCorsHeaders, isAllowedOrigin } from '@/lib/security/cors'
@@ -6,38 +6,6 @@ import { setCsrfCookie, validateCsrf } from '@/lib/security/csrf'
 import { isBlockedBot, isSuspiciousRequest } from '@/lib/security/bot-detection'
 
 const CANONICAL_HOST = 'pokemonvgcteamreport.com';
-
-// Routes that are always public — no authentication required to view.
-// /s/:path* covers all public shared team report URLs (VGC-150).
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/s/:path*',
-  '/embed/:path*',
-  '/explore',
-  '/champions(.*)',
-  '/creator/:path*',
-  '/compare',
-  '/changelog',
-  '/feedback',
-  '/privacy',
-  '/terms',
-  '/api/share/:path*',
-  '/api/explore',
-  '/api/spotlight',
-  '/api/views/:path*',
-  '/api/reactions/:path*',
-  '/api/comments/:path*',
-  '/api/oembed',
-  '/api/sprite',
-  '/api/bot',
-  '/api/webhooks/:path*',
-  '/api/cron/:path*',
-  '/api/creator/:path*',
-  '/api/pokepaste',
-  '/api/feedback',
-  '/api/keep-alive',
-  '/api/setup',
-]);
 
 export default clerkMiddleware(async (_auth, request: NextRequest) => {
   const { pathname, search } = request.nextUrl;
@@ -82,6 +50,10 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
 
   const host = request.headers.get('host') ?? '';
   const isApiRoute = pathname.startsWith('/api');
+  const isLoopbackHost =
+    host.startsWith('localhost') ||
+    host.startsWith('127.0.0.1') ||
+    host.startsWith('[::1]');
 
   // ── Canonical redirect: vercel.app → custom domain ─────────────────
   // Redirects all non-custom-domain traffic to the canonical URL.
@@ -92,7 +64,7 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
     process.env.NODE_ENV === 'production' &&
     host !== CANONICAL_HOST &&
     host !== `www.${CANONICAL_HOST}` &&
-    !host.includes('localhost') &&
+    !isLoopbackHost &&
     !isPreviewDeploy
   ) {
     return NextResponse.redirect(

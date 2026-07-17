@@ -244,32 +244,27 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
     <>
       <div className="w-full max-w-3xl mx-auto px-4 pt-3 pb-8 sm:pb-4">
 
-      {/* Animated sprites with floating effect */}
+      {/* Static sprites on mobile save bandwidth and battery; desktop keeps
+          the animated Showdown artwork with a short entrance only. */}
       <div className="flex justify-center gap-3 sm:gap-5 mb-4 sm:mb-8 overflow-hidden">
         {POKEMON_SPRITES.map((name, i) => (
-          <motion.img
-            key={name}
-            src={`https://play.pokemonshowdown.com/sprites/ani/${resolveSlug(name)}.gif`}
-            alt=""
-            className="w-11 h-11 sm:w-16 sm:h-16 object-contain drop-shadow-lg"
-            initial={{ opacity: 0, y: 30, scale: 0.8 }}
-            animate={{
-              opacity: 1,
-              y: [0, -6, 0],
-              scale: 1,
-            }}
-            transition={{
-              opacity: { delay: 0.1 + i * 0.09, duration: 0.5 },
-              scale: { delay: 0.1 + i * 0.09, duration: 0.5 },
-              y: {
-                delay: 0.6 + i * 0.09,
-                duration: 2.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              },
-            }}
-            loading="lazy"
-          />
+          <picture key={name}>
+            <source
+              media="(max-width: 639px), (prefers-reduced-motion: reduce)"
+              srcSet={`https://play.pokemonshowdown.com/sprites/home/${resolveSlug(name)}.png`}
+            />
+            <motion.img
+              src={`https://play.pokemonshowdown.com/sprites/ani/${resolveSlug(name)}.gif`}
+              alt=""
+              width={64}
+              height={64}
+              className="w-11 h-11 sm:w-16 sm:h-16 object-contain drop-shadow-lg"
+              initial={{ opacity: 0, y: 12, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 0.05 + i * 0.04, duration: 0.25, ease: "easeOut" }}
+              loading="eager"
+            />
+          </picture>
         ))}
       </div>
 
@@ -341,7 +336,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           <button
             type="button"
             onClick={() => setHowItWorksOpen(true)}
-            className="sm:hidden w-full flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
+            className="sm:hidden w-full min-h-11 flex items-center justify-center gap-1.5 py-2 text-xs font-bold text-text-tertiary hover:text-text-secondary active:text-text-primary transition-colors cursor-pointer"
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6,9 12,15 18,9" />
@@ -474,7 +469,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             onClick={handleFetchPaste}
             disabled={isFetching}
             whileTap={{ scale: 0.97 }}
-            className="px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 shadow-md shadow-accent/30 cursor-pointer tracking-wide"
+            className="min-h-11 px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 shadow-md shadow-accent/30 cursor-pointer tracking-wide"
           >
             {isFetching ? (
               <span className="flex items-center gap-2">
@@ -493,7 +488,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             onClick={handleAnalyze}
             disabled={!hasContent}
             whileTap={hasContent ? { scale: 0.97 } : undefined}
-            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer tracking-wide ${
+            className={`min-h-11 px-6 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer tracking-wide ${
               hasContent
                 ? "bg-accent text-white hover:brightness-110 shadow-md shadow-accent/30"
                 : "bg-surface-alt text-text-tertiary border-2 border-border cursor-not-allowed"
@@ -507,9 +502,17 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         )}
 
         {/* Archetype sample team picker — 3 cards, horizontally scrollable on mobile */}
+        <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-xs text-text-tertiary">
+          <span>Free to build</span>
+          <span aria-hidden="true">&bull;</span>
+          <span>Saved on this device</span>
+          <span aria-hidden="true">&bull;</span>
+          <span>Link-only sharing by default</span>
+        </p>
+
         {!hasContent && (
           <motion.div className="flex flex-col gap-2">
-            <p className="text-[11px] font-bold text-text-tertiary uppercase tracking-widest px-0.5">
+            <p className="text-xs font-bold text-text-tertiary uppercase tracking-widest px-0.5">
               Try a sample team:
             </p>
             <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-none -mx-1 px-1">
@@ -527,17 +530,17 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
                       <PopularCardSprite key={species} species={species} />
                     ))}
                   </div>
-                  <span className="text-[10px] font-bold text-accent leading-tight mt-0.5 px-1">
+                  <span className="text-xs font-bold text-accent leading-tight mt-0.5 px-1">
                     {team.name}
                   </span>
                 </motion.button>
               ))}
             </div>
-            <p className="text-[11px] text-text-tertiary text-center">
+            <p className="text-xs text-text-tertiary text-center leading-relaxed">
               Or paste from{" "}
-              <a href="https://pokepast.es" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-semibold">PokePaste</a>{" "}
+              <a href="https://pokepast.es" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-accent hover:underline font-semibold">PokePaste</a>{" "}
               /{" "}
-              <a href="https://play.pokemonshowdown.com" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-semibold">Showdown</a>
+              <a href="https://play.pokemonshowdown.com" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-accent hover:underline font-semibold">Showdown</a>
             </p>
           </motion.div>
         )}
@@ -645,21 +648,21 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         transition={{ delay: 0.5, duration: 0.5 }}
       >
         <div className="flex items-center justify-center gap-3">
-          <a href="/feedback" className="px-3 py-1.5 text-xs font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all">
+            <a href="/feedback" className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all">
             Feedback
           </a>
           <span className="text-text-tertiary/30">|</span>
-          <a href="/privacy" className="px-3 py-1.5 text-xs font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all">
+            <a href="/privacy" className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all">
             {t.privacy}
           </a>
         </div>
-        <p className="text-center text-xs text-text-tertiary font-medium">
+        <p className="text-center text-sm text-text-tertiary font-medium">
           {t.builtBy}{" "}
           <a
             href="https://x.com/Manny64Official"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-bold text-text-primary hover:text-accent transition-colors"
+            className="inline-flex min-h-11 items-center font-bold text-text-primary hover:text-accent transition-colors"
           >
             Manraj Sidhu
           </a>

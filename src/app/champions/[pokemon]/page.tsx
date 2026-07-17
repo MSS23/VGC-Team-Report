@@ -121,7 +121,7 @@ async function getTeamsForPokemon(
 
     // Batch fetch like counts
     const shareIds = rows.map((r) => r.id as string);
-    let likeMap: Record<string, number> = {};
+    const likeMap: Record<string, number> = {};
     if (shareIds.length > 0) {
       const likeRows = await sql`
         SELECT share_id, COUNT(*)::int as count

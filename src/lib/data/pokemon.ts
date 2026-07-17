@@ -3034,6 +3034,7 @@ export const POKEMON_DATA: Record<string, PokemonData> = {
   "espurr": { name: "Espurr", types: ["Psychic"], baseStats: { hp: 62, atk: 48, def: 54, spa: 63, spd: 60, spe: 68 }, abilities: ["Keen Eye","Infiltrator","Own Tempo"] },
   "meowstic": { name: "Meowstic", types: ["Psychic"], baseStats: { hp: 74, atk: 48, def: 76, spa: 83, spd: 81, spe: 104 }, abilities: ["Keen Eye","Infiltrator","Prankster"] },
   "meowstic-f": { name: "Meowstic-F", types: ["Psychic"], baseStats: { hp: 74, atk: 48, def: 76, spa: 83, spd: 81, spe: 104 }, abilities: ["Keen Eye","Infiltrator","Competitive"] },
+  "meowstic-mega": { name: "Meowstic-Mega", types: ["Psychic"], baseStats: { hp: 74, atk: 48, def: 76, spa: 143, spd: 101, spe: 124 }, abilities: ["Trace"] },
   "honedge": { name: "Honedge", types: ["Steel","Ghost"], baseStats: { hp: 45, atk: 80, def: 100, spa: 35, spd: 37, spe: 28 }, abilities: ["No Guard"] },
   "doublade": { name: "Doublade", types: ["Steel","Ghost"], baseStats: { hp: 59, atk: 110, def: 150, spa: 45, spd: 49, spe: 35 }, abilities: ["No Guard"] },
   "aegislash-blade": { name: "Aegislash-Blade", types: ["Steel","Ghost"], baseStats: { hp: 60, atk: 140, def: 50, spa: 140, spd: 50, spe: 60 }, abilities: ["Stance Change"] },

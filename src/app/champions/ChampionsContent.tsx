@@ -312,7 +312,7 @@ export function ChampionsContent() {
                           href={entry.limitlessUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
+                           className="inline-flex min-h-11 items-center gap-1 px-2 text-xs font-bold text-accent hover:underline active:opacity-70"
                           aria-label={`View ${entry.player} team on Limitless`}
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -337,7 +337,7 @@ export function ChampionsContent() {
               href="https://play.limitlesstcg.com/tournaments"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent underline underline-offset-2 hover:opacity-80 transition-opacity"
+              className="inline-flex min-h-11 items-center text-accent underline underline-offset-2 hover:opacity-80 active:opacity-70 transition-opacity"
             >
               play.limitlesstcg.com/tournaments
             </a>

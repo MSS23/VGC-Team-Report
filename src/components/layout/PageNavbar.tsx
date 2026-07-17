@@ -31,7 +31,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
       <header className="sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 bg-surface/80 border-b border-border/60 shadow-[0_1px_8px_rgba(0,0,0,0.03)] sticky-header-standalone">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-12 sm:h-14 flex items-center justify-between">
           {/* Left: logo */}
-          <Link href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity">
+          <Link href="/" className="flex min-h-11 items-center gap-1.5 font-bold text-sm hover:opacity-80 active:opacity-70 transition-opacity">
             <span className="text-text-primary">VGC Team</span>
             <span className="text-accent">Report</span>
           </Link>
@@ -69,7 +69,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
           <div className="flex items-center gap-1.5 sm:gap-2">
             {showSignIn && (
               <SignInButton mode="modal">
-                <button className="px-3 py-1.5 text-xs font-bold text-white bg-accent rounded-xl hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/20">
+                <button className="min-h-11 px-3 py-2 text-xs font-bold text-white bg-accent rounded-xl hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-sm shadow-accent/20">
                   Sign In
                 </button>
               </SignInButton>
@@ -79,7 +79,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
                 <Link href="/dashboard" className="hidden sm:inline px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent hover:bg-surface-alt rounded-lg transition-all">
                   Dashboard
                 </Link>
-                <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
+                <UserButton appearance={{ elements: { userButtonTrigger: "min-w-11 min-h-11", avatarBox: "w-8 h-8" } }} />
               </>
             )}
 
@@ -113,7 +113,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
               <Link
                 key={link.key}
                 href={link.href}
-                className={`relative flex flex-col items-center gap-0 px-2.5 py-1 rounded-xl transition-all duration-200 min-w-[48px] active:scale-[0.90] active:opacity-70 ${
+                className={`relative flex min-h-12 flex-1 flex-col items-center justify-center gap-0 px-1.5 py-1 rounded-xl transition-all duration-200 min-w-[56px] active:scale-[0.94] active:opacity-70 ${
                   isActive
                     ? "text-accent"
                     : "text-text-tertiary"
@@ -130,7 +130,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
                     <path d={link.icon} />
                   </svg>
                 </span>
-                <span className={`text-[9px] leading-none font-semibold transition-colors duration-200 ${isActive ? "text-accent" : ""}`}>{link.label}</span>
+                <span className={`text-[10px] leading-none font-semibold transition-colors duration-200 ${isActive ? "text-accent" : ""}`}>{link.label}</span>
               </Link>
             );
           })}

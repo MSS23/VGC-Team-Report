@@ -26,14 +26,14 @@ export async function generateMetadata({
       sql`SELECT data, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
       sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
     ]);
-    if (rows.length === 0) return { title: "VGC Team Report" };
+    if (rows.length === 0) return { title: { absolute: "VGC Team Report" } };
 
     // Private reports (neither public nor unlisted) must not leak even their
     // title/description into <head> — that's the same data we gate at the API.
     const isPublicRow = (rows[0] as Record<string, unknown>).is_public === true;
     const isUnlistedRow = (rows[0] as Record<string, unknown>).is_unlisted === true;
     if (!isPublicRow && !isUnlistedRow) {
-      return { title: "VGC Team Report", robots: { index: false, follow: false } };
+      return { title: { absolute: "VGC Team Report" }, robots: { index: false, follow: false } };
     }
 
     const data = rows[0].data as Record<string, unknown>;
@@ -54,17 +54,17 @@ export async function generateMetadata({
     const speciesLine = species.length > 0 ? species.join(" / ") : "";
     let title: string;
     if (tournamentName && placement) {
-      title = `${tournamentName} — ${placement} | VGC Team Report`;
+      title = `${tournamentName} — ${placement}`;
     } else if (tournamentName) {
       title = speciesLine
         ? `${tournamentName} | ${speciesLine} VGC Team`
-        : `${tournamentName} | VGC Team Report`;
+        : tournamentName;
     } else if (speciesLine && creatorName) {
       title = `${speciesLine} — VGC Team by ${creatorName}`;
     } else if (speciesLine) {
-      title = `${speciesLine} — VGC Team Report`;
+      title = `${speciesLine} — VGC Team`;
     } else {
-      title = "VGC Team Report";
+      title = "VGC Team";
     }
 
     // ── Description: the user's teamSummary always wins — it's their
@@ -141,7 +141,7 @@ export async function generateMetadata({
       },
     };
   } catch {
-    return { title: "VGC Team Report" };
+    return { title: { absolute: "VGC Team Report" } };
   }
 }
 

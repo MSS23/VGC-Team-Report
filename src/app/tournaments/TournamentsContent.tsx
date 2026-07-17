@@ -178,7 +178,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         </span>
         <Link
           href={`/explore?q=${encodeURIComponent(tournament.name)}&searchType=tournament`}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-accent bg-accent-surface rounded-lg hover:brightness-105 transition-all"
+          className="inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold text-accent bg-accent-surface rounded-lg hover:brightness-105 active:scale-[0.97] transition-all"
           aria-label={`View top teams from ${tournament.name}`}
         >
           View top teams

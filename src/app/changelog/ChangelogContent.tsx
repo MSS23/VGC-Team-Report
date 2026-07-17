@@ -190,7 +190,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search the changelog…"
               aria-label="Search the changelog"
-              className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-surface border border-border focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 transition placeholder:text-text-tertiary"
+              className="w-full min-h-11 pl-9 pr-3 py-2.5 text-sm rounded-xl bg-surface border border-border focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 transition placeholder:text-text-tertiary"
             />
           </div>
 
@@ -214,7 +214,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                       if (e.key === "Home") { e.preventDefault(); tabs[0]?.focus(); }
                       if (e.key === "End") { e.preventDefault(); tabs[tabs.length - 1]?.focus(); }
                     }}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all capitalize cursor-pointer ${
+                    className={`min-h-11 px-3 py-2 text-xs font-bold rounded-lg transition-all capitalize cursor-pointer ${
                       active
                         ? "bg-accent text-white shadow-sm shadow-accent/30"
                         : "text-text-secondary hover:text-text-primary"
@@ -228,7 +228,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
             <button
               type="button"
               onClick={expandedVersions.size === entries.length ? collapseAll : expandAll}
-              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition cursor-pointer"
+              className="min-h-11 px-3 py-2 text-xs font-bold rounded-lg bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition cursor-pointer"
             >
               {expandedVersions.size === entries.length ? "Collapse all" : "Expand all"}
             </button>

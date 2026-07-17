@@ -245,7 +245,7 @@ export async function POST(request: Request) {
       const currentIsPublic = oldRows.length > 0 ? !!oldRows[0].is_public : false;
       const currentIsUnlisted = oldRows.length > 0 ? !!oldRows[0].is_unlisted : false;
       // Only the owner can change visibility — collaborators keep the existing value
-      let effectiveIsPublic = isPublic ?? currentIsPublic;
+      const effectiveIsPublic = isPublic ?? currentIsPublic;
       const effectiveIsUnlisted = isUnlisted ?? currentIsUnlisted;
       if (oldRows.length > 0 && isPublic !== undefined) {
         if (isPublic !== currentIsPublic) {

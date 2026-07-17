@@ -63,8 +63,11 @@ export function WhatsNewModal() {
     const seen = localStorage.getItem(STORAGE_KEY);
     const hasVisited = localStorage.getItem(RETURNING_KEY);
 
-    if (!seen) {
-      setIsNewUser(!hasVisited);
+    // Let first-time visitors reach the builder without an interrupting modal.
+    // The homepage already explains the product; release notes are useful on a
+    // later visit, when the user has context for what changed.
+    if (hasVisited && !seen) {
+      setIsNewUser(false);
       setShow(true);
     }
 

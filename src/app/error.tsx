@@ -1,6 +1,7 @@
 "use client";
 
 import { I18nProvider, useTranslation } from "@/lib/i18n";
+import Link from "next/link";
 
 export default function Error({
   error,
@@ -45,12 +46,12 @@ function ErrorContent({
           >
             {t.tryAgain}
           </button>
-          <a
+          <Link
             href="/"
-            className="px-6 py-3 bg-surface border border-border text-text-primary rounded-2xl font-bold text-sm hover:bg-surface-alt active:scale-[0.97] transition-all"
+            className="inline-flex min-h-11 items-center px-6 py-3 bg-surface border border-border text-text-primary rounded-2xl font-bold text-sm hover:bg-surface-alt active:scale-[0.97] transition-all"
           >
             {t.goHome}
-          </a>
+          </Link>
         </div>
       </div>
     </main>

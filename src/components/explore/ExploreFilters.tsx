@@ -222,12 +222,12 @@ export function ExploreFilters({
                 ? "Search creators..."
                 : "Search teams, players, Pokémon..."
             }
-            className="w-full pl-9 pr-8 py-2 bg-surface border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
+            className="w-full min-h-11 pl-9 pr-11 py-2 bg-surface border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
           />
           {localQuery && (
             <button
               onClick={() => setLocalQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded text-text-tertiary hover:text-text-primary transition-colors"
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded text-text-tertiary hover:text-text-primary active:text-text-primary transition-colors"
               aria-label="Clear search"
             >
               <CloseIcon width="12" height="12" strokeWidth="2.5" />
@@ -241,7 +241,7 @@ export function ExploreFilters({
             value={sort}
             onChange={(e) => onSortChange(e.target.value as "newest" | "updated" | "popular" | "views")}
             aria-label="Sort reports by"
-            className="pl-3 pr-7 py-2 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all appearance-none cursor-pointer"
+            className="min-h-11 pl-3 pr-7 py-2 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all appearance-none cursor-pointer"
           >
             {SORT_KEYS.map((key) => (
               <option key={key} value={key}>{sortLabel[key] ?? key}</option>
@@ -258,7 +258,7 @@ export function ExploreFilters({
       {/* used overflow-x-auto and the right-most chips got cut off behind  */}
       {/* the container edge on wide screens with no obvious scroll UX.     */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+      <div className="flex items-center gap-2 mt-2 -mx-4 px-4 overflow-x-auto scrollbar-none sm:mx-0 sm:px-0 sm:overflow-visible sm:flex-wrap" aria-label="Quick filters">
         {/* Search category chips */}
         {CATEGORY_KEYS.map((key) => (
           <button
@@ -267,7 +267,7 @@ export function ExploreFilters({
             onClick={() => onSearchCategoryChange(key)}
             aria-label={`Filter by ${catLabel[key] ?? key}`}
             aria-pressed={searchCategory === key}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap ${
+            className={`inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap ${
               searchCategory === key
                 ? "bg-accent text-white shadow-sm"
                 : "bg-surface-alt/60 text-text-tertiary hover:text-text-secondary hover:bg-surface-alt"
@@ -287,7 +287,7 @@ export function ExploreFilters({
             key={reg}
             type="button"
             onClick={() => onRegulationChange(regulation === reg ? "" : reg)}
-            className={`px-2.5 py-1.5 text-[11px] font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap ${
+            className={`min-h-11 px-3 py-2 text-xs font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap ${
               regulation === reg
                 ? "bg-accent/15 text-accent ring-1 ring-accent/30"
                 : "bg-surface-alt/40 text-text-tertiary hover:text-text-secondary hover:bg-surface-alt/70"
@@ -306,7 +306,7 @@ export function ExploreFilters({
             key={key}
             type="button"
             onClick={() => onPlacementChange(placement === key ? "" : key)}
-            className={`px-2.5 py-1.5 text-[11px] font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap ${
+            className={`min-h-11 px-3 py-2 text-xs font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap ${
               placement === key
                 ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30"
                 : "bg-surface-alt/40 text-text-tertiary hover:text-text-secondary hover:bg-surface-alt/70"
@@ -322,13 +322,13 @@ export function ExploreFilters({
       {/* Also wraps — active-filter pills would otherwise clip when several */}
       {/* are applied at once.                                               */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+      <div className="flex items-center gap-2 mt-2 -mx-4 px-4 overflow-x-auto scrollbar-none sm:mx-0 sm:px-0 sm:overflow-visible sm:flex-wrap" aria-label="Active filters">
         {/* More filters toggle */}
         <button
           type="button"
           onClick={() => setMoreOpen(!moreOpen)}
           aria-expanded={moreOpen}
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] ${
+          className={`inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] ${
             moreOpen || advancedFilterCount > 0
               ? "bg-accent/10 text-accent ring-1 ring-accent/20"
               : "bg-surface-alt/40 text-text-tertiary hover:text-text-secondary"
@@ -354,7 +354,7 @@ export function ExploreFilters({
             key={`${pill.label}-${i}`}
             type="button"
             onClick={pill.onClear}
-            className={`inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md flex-shrink-0 transition-all active:scale-[0.95] cursor-pointer ${
+            className={`inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg flex-shrink-0 transition-all active:scale-[0.95] cursor-pointer ${
               pill.color === "red"
                 ? "bg-red-500/10 text-red-500"
                 : "bg-accent/10 text-accent"
@@ -370,7 +370,7 @@ export function ExploreFilters({
           <button
             type="button"
             onClick={clearAll}
-            className="text-[10px] font-bold text-text-tertiary hover:text-text-primary flex-shrink-0 px-1.5 py-1 cursor-pointer transition-colors whitespace-nowrap"
+            className="min-h-11 text-xs font-bold text-text-tertiary hover:text-text-primary flex-shrink-0 px-3 py-2 cursor-pointer transition-colors whitespace-nowrap"
           >
             Clear all
           </button>
@@ -422,7 +422,7 @@ export function ExploreFilters({
                       id="filter-event"
                       value={eventType}
                       onChange={(e) => onEventTypeChange(e.target.value)}
-                      className="w-full px-3 py-2 pr-7 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 appearance-none cursor-pointer"
+                      className="w-full min-h-11 px-3 py-2 pr-7 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 appearance-none cursor-pointer"
                     >
                       <option value="">Any</option>
                       {EVENT_TYPES.map((e) => <option key={e} value={e}>{e}</option>)}
@@ -449,7 +449,7 @@ export function ExploreFilters({
                           const next = active ? current.filter((x) => x !== a) : [...current, a];
                           onArchetypeChange(next.join(","));
                         }}
-                        className={`text-[10px] font-bold px-2.5 py-1.5 rounded-md border transition-all cursor-pointer active:scale-[0.97] ${
+                        className={`min-h-11 text-xs font-bold px-3 py-2 rounded-lg border transition-all cursor-pointer active:scale-[0.97] ${
                           active
                             ? "bg-accent text-white border-accent"
                             : "bg-surface-alt/50 text-text-tertiary border-transparent hover:text-text-secondary"
@@ -463,13 +463,13 @@ export function ExploreFilters({
               </div>
 
               {/* Toggle row: tournament + following */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={handleTournamentToggle}
                   aria-pressed={tournamentMode}
                   aria-label="Filter by tournament results"
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
+                  className={`inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
                     tournamentMode
                       ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30"
                       : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
@@ -484,7 +484,7 @@ export function ExploreFilters({
                   onClick={() => onHasRentalChange(!hasRental)}
                   aria-pressed={hasRental}
                   aria-label="Filter to teams with rental codes"
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
+                  className={`inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
                     hasRental
                       ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30"
                       : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
@@ -504,7 +504,7 @@ export function ExploreFilters({
                     onClick={() => onFollowingOnlyChange(!followingOnly)}
                     aria-pressed={followingOnly}
                     aria-label="Show reports from creators I follow"
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
+                    className={`inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
                       followingOnly
                         ? "bg-accent text-white"
                         : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
@@ -634,7 +634,7 @@ function SpeciesChipPicker({
         {label}
       </label>
       <div
-        className={`flex flex-wrap items-center gap-1 w-full px-2 py-1.5 bg-surface border border-border rounded-lg transition-all focus-within:outline-none focus-within:ring-2 ${focusRing}`}
+        className={`flex min-h-11 flex-wrap items-center gap-1 w-full px-2 py-1.5 bg-surface border border-border rounded-lg transition-all focus-within:outline-none focus-within:ring-2 ${focusRing}`}
       >
         {chips.map((chip) => (
           <button
@@ -642,7 +642,7 @@ function SpeciesChipPicker({
             type="button"
             onClick={() => removeChip(chip)}
             aria-label={`Remove ${chip}`}
-            className={`inline-flex items-center gap-1 min-h-[24px] px-2 py-0.5 text-[11px] font-bold rounded-md transition-all active:scale-[0.95] cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-surface ${
+            className={`inline-flex items-center gap-1 min-h-11 px-3 py-1 text-xs font-bold rounded-lg transition-all active:scale-[0.95] cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-surface ${
               variant === "include" ? "focus:ring-accent/50" : "focus:ring-red-400/50"
             } ${chipClass}`}
           >
@@ -672,7 +672,7 @@ function SpeciesChipPicker({
               : "Add another..."
           }
           aria-label={label}
-          className="flex-1 min-w-[120px] bg-transparent border-0 px-1.5 py-1 text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none disabled:opacity-50"
+          className="flex-1 min-w-[120px] min-h-11 bg-transparent border-0 px-1.5 py-2 text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none disabled:opacity-50"
         />
       </div>
     </div>

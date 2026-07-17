@@ -324,6 +324,7 @@ export function ShareModal({
         aria-modal="true"
         aria-labelledby={titleId}
         className="bg-surface border border-border rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full sm:mx-4 animate-[sheet-up_0.3s_ease-out] sm:animate-fade-in overflow-hidden max-h-[90vh] overflow-y-auto"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {/* Live region: announces copy confirmations to screen readers */}
         <div aria-live="polite" aria-atomic="true" className="sr-only">{copyAnnouncement}</div>
@@ -409,7 +410,7 @@ export function ShareModal({
         {/* URL display */}
         <div className="px-6 pb-4">
           <div
-            className="flex items-center gap-2 bg-surface-alt border border-border rounded-xl px-4 py-2.5 cursor-pointer hover:border-accent/40 transition-colors"
+            className="flex min-h-11 items-center gap-2 bg-surface-alt border border-border rounded-xl px-4 py-2.5 cursor-pointer hover:border-accent/40 transition-colors"
             onClick={handleCopyLink}
             role="button"
             tabIndex={0}
@@ -423,6 +424,13 @@ export function ShareModal({
               {linkCopied ? t.copied : t.copy}
             </span>
           </div>
+          <p className="mt-2 text-xs leading-relaxed text-text-secondary" aria-live="polite">
+            {isPublic
+              ? t.shareModalVisibilityPublicActive
+              : isUnlisted
+                ? t.shareModalVisibilityUnlistedActive
+                : t.shareModalVisibilityPrivateActive}
+          </p>
           {!isShortUrl && (
             <p className="text-xs text-amber-500 mt-1.5 flex items-center gap-1.5">
               <WarningTriangleIcon width="12" height="12" className="flex-shrink-0" />

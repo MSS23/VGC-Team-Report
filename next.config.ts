@@ -1,5 +1,21 @@
 import type { NextConfig } from "next";
 
+const scriptSources = [
+  "'self'",
+  "'unsafe-inline'",
+  // React Refresh uses eval in local development. Keep the production CSP
+  // strict while allowing the development bundle to hydrate correctly.
+  ...(process.env.NODE_ENV === "development" ? ["'unsafe-eval'"] : []),
+  "https://*.clerk.accounts.dev",
+  "https://*.clerk.com",
+  "https://clerk.pokemonvgcteamreport.com",
+  "https://va.vercel-scripts.com",
+  "https://vercel.live",
+  "https://*.vercel.live",
+  "https://challenges.cloudflare.com",
+  "https://eu-assets.i.posthog.com",
+].join(" ");
+
 const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["motion/react"],
@@ -103,7 +119,7 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               // Scripts: self, Clerk (all domains), Vercel, Cloudflare, PostHog
-              "script-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.pokemonvgcteamreport.com https://va.vercel-scripts.com https://vercel.live https://*.vercel.live https://challenges.cloudflare.com https://eu-assets.i.posthog.com",
+              `script-src ${scriptSources}`,
               // Styles: self + inline + Google Fonts + Clerk
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.com https://clerk.pokemonvgcteamreport.com",
               // Images: self, Showdown sprites, Clerk, GitHub, data URIs, Vercel Toolbar

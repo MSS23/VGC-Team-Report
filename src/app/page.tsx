@@ -3,6 +3,7 @@
 import { Suspense, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useHomePage } from "@/hooks/useHomePage";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
@@ -786,9 +787,9 @@ function HomeContent() {
               Already have an account? Sign in
             </button>
           </SignInButton>
-          <a href="/" className="text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors mt-1">
+          <Link href="/" className="inline-flex min-h-11 items-center text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors mt-1">
             or go to home page
-          </a>
+          </Link>
         </div>
       </main>
     );
@@ -1395,12 +1396,12 @@ function HomeContent() {
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {isSignedIn ? (
-                  <a
+                  <Link
                     href="/"
-                    className="px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30"
+                    className="inline-flex min-h-11 items-center px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30"
                   >
                     Create yours
-                  </a>
+                  </Link>
                 ) : (
                   <SignUpButton mode="modal">
                     <button

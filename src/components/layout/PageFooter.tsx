@@ -15,7 +15,7 @@ const NAV_LINKS = [
 
 export function PageFooter({ hideFeedback = false }: PageFooterProps) {
   return (
-    <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-24 sm:pb-8 border-t border-border/50 mt-12">
+    <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-28 sm:pb-8 border-t border-border/50 mt-12">
       {/* Feedback callout */}
       {!hideFeedback && (
         <a
@@ -38,13 +38,13 @@ export function PageFooter({ hideFeedback = false }: PageFooterProps) {
       )}
 
       <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-4 min-w-0">
-        <div className="flex items-center gap-1.5 text-xs text-text-secondary">
+        <div className="flex items-center gap-1.5 text-sm text-text-secondary">
           <span>Built by</span>
           <a
             href="https://x.com/Manny64Official"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-bold text-text-primary hover:text-accent transition-colors"
+            className="inline-flex min-h-11 items-center font-bold text-text-primary hover:text-accent active:text-accent transition-colors"
           >
             Manraj Sidhu
           </a>
@@ -54,7 +54,7 @@ export function PageFooter({ hideFeedback = false }: PageFooterProps) {
             <a
               key={link.href}
               href={link.href}
-              className="px-2.5 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all whitespace-nowrap"
+              className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all whitespace-nowrap"
             >
               {link.label}
             </a>
@@ -62,7 +62,7 @@ export function PageFooter({ hideFeedback = false }: PageFooterProps) {
           <button
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("open-cookie-settings"))}
-            className="px-2.5 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt rounded-lg transition-all cursor-pointer whitespace-nowrap"
+            className="min-h-11 px-3 py-2 text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all cursor-pointer whitespace-nowrap"
           >
             Cookie Settings
           </button>

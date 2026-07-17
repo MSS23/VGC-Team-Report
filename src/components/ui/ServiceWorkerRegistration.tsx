@@ -9,6 +9,17 @@ export function ServiceWorkerRegistration() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
+    // A production service worker controlling local development can serve
+    // stale chunks and make HMR look broken. Development does not benefit from
+    // offline caching, so remove old registrations and leave the page alone.
+    const isLocalPreview = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+    if (process.env.NODE_ENV !== "production" || isLocalPreview) {
+      navigator.serviceWorker.getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+        .catch(() => {});
+      return;
+    }
+
     // Auto-reload when a new SW takes control (after skipWaiting)
     let refreshing = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {

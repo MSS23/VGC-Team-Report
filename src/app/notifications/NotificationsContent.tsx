@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useNotifications, type Notification } from "@/hooks/useNotifications";
 import { relativeTime } from "@/lib/utils/relative-time";
 
@@ -292,12 +293,12 @@ export function NotificationsContent() {
             <p className="text-sm text-text-secondary max-w-sm mx-auto">
               Share a report to get started! You&apos;ll see comments, reactions, and collaboration invites here.
             </p>
-            <a
+            <Link
               href="/"
-              className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide"
+              className="mt-6 inline-flex min-h-11 items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide"
             >
               Create a Report
-            </a>
+            </Link>
           </div>
         )}
 

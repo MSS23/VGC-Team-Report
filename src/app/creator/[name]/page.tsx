@@ -9,7 +9,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { name } = await params;
   const creator = decodeURIComponent(name);
-  const title = `${creator}'s VGC Team Reports | VGC Team Report`;
+  const title = `${creator}'s VGC Team Reports`;
+  const socialTitle = `${title} | VGC Team Report`;
   const description = `View ${creator}'s VGC competitive team reports, open team sheets (OTS), matchup analysis, and tournament results. Browse all public Pokemon VGC 2026 team builds shared by ${creator}.`;
   return {
     title,
@@ -28,7 +29,7 @@ export async function generateMetadata({
       canonical: `https://pokemonvgcteamreport.com/creator/${encodeURIComponent(creator)}`,
     },
     openGraph: {
-      title,
+      title: socialTitle,
       description,
       type: "profile",
       siteName: "VGC Team Report",
@@ -37,7 +38,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: socialTitle,
       description,
       images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
     },

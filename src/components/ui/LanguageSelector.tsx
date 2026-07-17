@@ -28,7 +28,7 @@ export function LanguageSelector() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border-2 border-border text-xs font-bold text-text-secondary hover:text-text-primary hover:border-border bg-surface-alt transition-all cursor-pointer"
+        className="flex min-w-11 min-h-11 items-center justify-center gap-1.5 px-2 sm:px-2.5 py-2 rounded-lg border-2 border-border text-xs font-bold text-text-secondary hover:text-text-primary hover:border-accent/40 active:scale-[0.97] bg-surface-alt transition-all cursor-pointer"
         title={t.language}
         aria-label={t.language}
       >
@@ -56,7 +56,7 @@ export function LanguageSelector() {
                   setLanguage(lang.code as LanguageCode);
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors ${
+                className={`w-full min-h-11 flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors active:bg-surface-alt ${
                   isActive
                     ? "bg-accent-surface text-accent font-bold"
                     : "text-text-primary hover:bg-surface-alt"

@@ -28,7 +28,7 @@ function parseTeamForGraphic(paste: string): OGPokemon[] {
     const [before, ...rest] = firstLine.split(" @ ");
     if (rest.length > 0) item = rest.join(" @ ").trim();
 
-    let namePart = before.trim().replace(/\s*\([MF]\)\s*$/, "");
+    const namePart = before.trim().replace(/\s*\([MF]\)\s*$/, "");
     const nicknameMatch = namePart.match(/^.+\((.+)\)$/);
     const species = nicknameMatch ? nicknameMatch[1].trim() : namePart;
 

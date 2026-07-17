@@ -4,7 +4,7 @@ import { I18nProvider } from "@/lib/i18n";
 import { CompareContent } from "@/components/compare/CompareContent";
 
 export const metadata: Metadata = {
-  title: "Compare VGC Teams | VGC Team Report",
+  title: "Compare VGC Teams",
   description:
     "Compare two VGC team reports side by side — see differences in Pokémon, movesets, items, and EV spreads.",
   robots: { index: false, follow: true },

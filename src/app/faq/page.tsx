@@ -4,7 +4,7 @@ import { BreadcrumbListJsonLd, FAQPageJsonLd, HowToSchema } from "@/components/s
 import { PageFooter } from "@/components/layout/PageFooter";
 
 export const metadata: Metadata = {
-  title: "VGC Team Report FAQ — Common Questions Answered",
+  title: "FAQ — Common Questions Answered",
   description:
     "Answers to the most common questions about VGC Team Report: how to share a Pokémon VGC team, what a team report is, format support, and more.",
   keywords: ["VGC team report FAQ", "how to share VGC team", "Pokemon team report", "VGC team builder help", "Showdown export", "PokePaste alternative", "VGC damage calcs", "speed tiers VGC", "Pokemon Champions format"],
@@ -144,7 +144,7 @@ export default function FAQPage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-xs text-text-tertiary mb-8" aria-label="Breadcrumb">
-          <Link href="/" className="hover:text-text-secondary transition-colors">
+          <Link href="/" className="inline-flex min-h-11 items-center hover:text-text-secondary transition-colors">
             Home
           </Link>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -189,13 +189,13 @@ export default function FAQPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-bold hover:opacity-90 transition-opacity"
+              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-bold hover:opacity-90 active:scale-[0.97] transition-all"
             >
               Build a Report
             </Link>
             <Link
               href="/explore"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-alt border border-border text-sm font-semibold text-text-primary hover:border-accent/40 transition-colors"
+              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-surface-alt border border-border text-sm font-semibold text-text-primary hover:border-accent/40 active:scale-[0.97] transition-all"
             >
               Browse Reports
             </Link>

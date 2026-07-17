@@ -31,8 +31,11 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t, onSav
     fetchedIsPublic, fetchedIsUnlisted, fetchedCollaborators, autoSaveStatus, forkedFrom, forkReport, redactedFields,
   } = useShareUrl();
 
-  const [isPublic, setIsPublic] = useState(true);
-  const [isUnlisted, setIsUnlisted] = useState(false);
+  // New reports are link-only by default. Sharing with friends should not
+  // silently publish a report to Explore; creators can opt into discovery in
+  // the share sheet once they are ready.
+  const [isPublic, setIsPublic] = useState(false);
+  const [isUnlisted, setIsUnlisted] = useState(true);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [creatorRequired, setCreatorRequired] = useState(false);
 

@@ -3,7 +3,7 @@ import { ExploreContent } from "@/components/explore/ExploreContent";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
-  title: "Best VGC Teams 2026 — Explore Top Team Reports | VGC Team Report",
+  title: "Best VGC Teams 2026 — Explore Top Team Reports",
   alternates: { canonical: "https://pokemonvgcteamreport.com/explore" },
   description:
     "Discover the best VGC teams for 2026. Browse and share VGC team reports, use our VGC team builder tools, and find top Pokemon Champions teams with Mega Evolution builds and competitive analysis.",

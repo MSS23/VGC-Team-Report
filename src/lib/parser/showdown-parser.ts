@@ -92,7 +92,7 @@ function parsePokemonBlock(block: string): { pokemon: ParsedPokemon; warnings: s
 
   // Parse remaining lines
   let ability: string | null = null;
-  let level = 50;
+  const level = 50;
   let teraType: PokemonType | null = null;
   let shiny = false;
   const evs = defaultEvs();
