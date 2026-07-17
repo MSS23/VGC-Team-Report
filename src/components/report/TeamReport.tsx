@@ -329,6 +329,7 @@ export function TeamReport({
           getSpriteConfig={getSpriteConfig}
           isPresentationMode={isPresentationMode}
           regulation={tags?.regulation}
+          megaStates={megaStates}
         />
     );
   }

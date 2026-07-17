@@ -11,6 +11,7 @@ import { isChampionsFormat } from "@/lib/data/tags";
 import { calculateStat, calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import { detectMegaFromItem } from "@/lib/utils/mega-detect";
+import { resolveSpeedTierForm } from "@/lib/utils/speed-tier-form";
 
 /** Map from normalised base-form key (e.g. "kangaskhan") → Mega dataKeys */
 const BASE_KEY_TO_MEGA_KEYS = new Map<string, string[]>();
@@ -26,6 +27,7 @@ interface SpeedTierChartProps {
   getSpriteConfig?: (key: string) => SpriteConfig;
   isPresentationMode?: boolean;
   regulation?: string;
+  megaStates?: Record<number, boolean>;
 }
 
 /** Common meta threats — standard VGC formats (Reg G/H etc.) */
@@ -145,7 +147,7 @@ function SideModifierToggle({
   );
 }
 
-export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode, regulation }: SpeedTierChartProps) {
+export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode, regulation, megaStates }: SpeedTierChartProps) {
   const championsDex = regulation === "Reg M-B" ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
   const META_THREATS = isChampionsFormat(regulation)
     ? META_THREATS_CHAMPIONS.filter(k => lookupPokemon(k) && championsDex.has(k))
@@ -170,14 +172,17 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   // Build your team entries
   const isChampions = isChampionsFormat(regulation);
   const teamEntries = useMemo(() => pokemon.map((mon, i) => {
+    const form = resolveSpeedTierForm(mon, speciesKeys[i], megaStates?.[i] === true);
     // In Champions (Reg M-A), recompute Speed from the SP budget so the
     // tier matches the card display. calculatedStats uses the standard
     // EV formula and diverges from the SP formula when the paste carries
     // SP values in the EV line (sum 66, per-stat <=32).
     let baseSpe = mon.calculatedStats.spe;
-    if (isChampions && mon.data) {
+    if (isChampions && form.data) {
       const sp = convertToChampionsSp(mon.parsed.evs);
-      baseSpe = calculateChampionsStat("spe", mon.data.baseStats.spe, sp.spe, mon.parsed.nature);
+      baseSpe = calculateChampionsStat("spe", form.data.baseStats.spe, sp.spe, mon.parsed.nature);
+    } else if (form.data) {
+      baseSpe = calculateStat("spe", form.data.baseStats.spe, mon.parsed.ivs.spe, mon.parsed.evs.spe, mon.parsed.level, mon.parsed.nature);
     }
     const hasSpeedBoost = mon.itemBoost?.stat === "spe";
     const boostMultiplier = hasSpeedBoost ? mon.itemBoost!.multiplier : 1;
@@ -191,15 +196,17 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     }
 
     return {
-      species: mon.parsed.species,
-      speciesKey: speciesKeys[i],
+      species: form.species,
+      speciesKey: form.speciesKey,
       baseSpe,
       boostMultiplier,
       hasSpeedBoost,
       speedBoostLabel,
       isYours: true as const,
+      isMega: form.isMega,
+      baseSpeciesKey: form.baseSpeciesKey,
     };
-  }), [pokemon, speciesKeys, isChampions]);
+  }), [pokemon, speciesKeys, isChampions, megaStates]);
 
   // Mega-form speed entries for team Pokemon that have a Mega Evolution.
   // EVs/SPs carry over to the Mega form, so Speed is recomputed using the
@@ -211,6 +218,9 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     if (!showMegaTiers) return [];
     if (regulation && !isChampionsFormat(regulation)) return [];
     return pokemon.flatMap((mon, i) => {
+      // The selected form already has its own primary row; do not add a
+      // duplicate overlay row for the same Mega.
+      if (megaStates?.[i] === true) return [];
       const baseKey = speciesKeys[i];
       const megaKeys = BASE_KEY_TO_MEGA_KEYS.get(baseKey) ?? [];
       if (megaKeys.length === 0) return [];
@@ -241,7 +251,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         }];
       });
     });
-  }, [showMegaTiers, pokemon, speciesKeys, isChampions, regulation]);
+  }, [showMegaTiers, pokemon, speciesKeys, isChampions, regulation, megaStates]);
 
   // Build meta threat entries. We intentionally do NOT filter out Pokemon
   // already on the user's team — a player running a bulky/mid-speed variant
@@ -301,8 +311,6 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         const unmodifiedSpeed = calcSpeed(e.baseSpe, e.boostMultiplier, new Set());
         return {
           ...e,
-          isMega: false as const,
-          baseSpeciesKey: undefined as string | undefined,
           displaySpeed: baseSpeed,
           unmodifiedSpeed,
           delta: baseSpeed - unmodifiedSpeed,
