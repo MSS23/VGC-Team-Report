@@ -243,9 +243,9 @@ export async function GET(
       }
     }
 
-    // Non-owner access — read-only, no edit info leaked.
-    // Private reports behave as "unlisted": anyone with the /s/{id} link can view,
-    // but they are not listed on Explore and edit requires the ?key= collab token.
+    // Non-owner access — read-only, with no edit information leaked. Public
+    // and unlisted reports may continue below; truly private reports are
+    // rejected after the visibility flags are loaded.
     const { rows, hasForkColumn } = await selectShareRowTolerant(
       () => sql`
         SELECT data, COALESCE(version, 1) AS version, is_public, is_unlisted, forked_from_id FROM shares WHERE id = ${id} AND deleted_at IS NULL

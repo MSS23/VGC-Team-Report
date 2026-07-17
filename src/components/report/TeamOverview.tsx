@@ -28,6 +28,7 @@ function LongPressWrapper({
   onDragLeave,
   onDragOver,
   onDrop,
+  ariaLabel,
 }: {
   onLongPress?: () => void;
   onTap?: () => void;
@@ -40,10 +41,12 @@ function LongPressWrapper({
   onDragLeave?: React.DragEventHandler;
   onDragOver?: React.DragEventHandler;
   onDrop?: React.DragEventHandler;
+  ariaLabel?: string;
 }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelled = useRef(false);
   const didLongPress = useRef(false);
+  const handledTouchTap = useRef(false);
   const [pressed, setPressed] = useState(false);
 
   const start = useCallback(() => {
@@ -74,6 +77,7 @@ function LongPressWrapper({
       const target = e.target as HTMLElement;
       // Don't navigate if tapping an interactive child element
       if (!target.closest('button, input, textarea, a, [role="button"], [contenteditable]')) {
+        handledTouchTap.current = true;
         onTap();
       }
     }
@@ -81,6 +85,10 @@ function LongPressWrapper({
 
   return (
     <div
+      data-slide-navigation-ignore={onTap ? "true" : undefined}
+      role={onTap ? "button" : undefined}
+      tabIndex={onTap ? 0 : undefined}
+      aria-label={onTap ? ariaLabel : undefined}
       className={`${className ?? ""} ${pressed ? "scale-[0.97] opacity-80" : ""} transition-transform duration-100`}
       draggable={draggable}
       onDragStart={onDragStart}
@@ -93,8 +101,21 @@ function LongPressWrapper({
       onTouchEnd={end}
       onTouchMove={move}
       onClick={(e) => {
+        // Mobile browsers emit a synthetic click after touchend. Suppress it
+        // so one tap never launches two slide transitions.
+        if (handledTouchTap.current) {
+          handledTouchTap.current = false;
+          return;
+        }
         // Desktop click fallback — touch devices use onTap above
         if (onTap && !(e.target as HTMLElement).closest('button, input, textarea, a, [role="button"], [contenteditable]')) {
+          onTap();
+        }
+      }}
+      onKeyDown={(e) => {
+        if (!onTap || e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
           onTap();
         }
       }}
@@ -707,6 +728,7 @@ function TeamOverviewBase({
               key={`${mon.parsed.species}-${i}`}
               onLongPress={onPokemonLongPress ? () => onPokemonLongPress(i) : undefined}
               onTap={onPokemonLongPress ? () => onPokemonLongPress(i) : undefined}
+              ariaLabel={`Open ${mon.parsed.species} details`}
               draggable={canDrag}
               onDragStart={(e: React.DragEvent) => {
                 setDragIndex(i);

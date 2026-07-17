@@ -582,10 +582,12 @@ export function Navbar(props: NavbarProps) {
                    builder) instead of a meaningless "Exit". */
                 <Link
                   href="/"
-                  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"
+                  aria-label={t.buildYourOwn}
+                  className="inline-flex min-h-11 items-center gap-1.5 px-2 min-[360px]:px-3 sm:px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"
                 >
                   <PlusIcon width="12" height="12" strokeWidth="2.5" />
-                  {t.buildYourOwn}
+                  <span className="min-[360px]:hidden">Build</span>
+                  <span className="hidden min-[360px]:inline">{t.buildYourOwn}</span>
                 </Link>
               ) : (
                 /* Owner, collaborator, or the author previewing their own local

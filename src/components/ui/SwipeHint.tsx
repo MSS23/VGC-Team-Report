@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 const STORAGE_KEY = "vgc-swipe-hint-seen";
 
 /**
- * One-time swipe hint shown on mobile when first viewing a report.
+ * One-time gesture hint shown on mobile when first viewing a report.
  * Dismisses on tap or after 4 seconds. Remembers via localStorage.
  */
 export function SwipeHint() {
@@ -41,6 +41,8 @@ export function SwipeHint() {
   return (
     <div
       onClick={dismiss}
+      role="status"
+      aria-live="polite"
       className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 sm:hidden animate-fade-in"
     >
       <div className="flex items-center gap-2.5 px-4 py-2.5 bg-surface/95 backdrop-blur-lg border border-border rounded-full shadow-lg">
@@ -48,7 +50,7 @@ export function SwipeHint() {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent animate-[swipe-arrow_1.5s_ease-in-out_infinite]">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        <span className="text-xs font-bold text-text-primary whitespace-nowrap">Swipe to navigate slides</span>
+        <span className="text-xs font-bold text-text-primary whitespace-nowrap">Swipe or double-tap to advance</span>
         {/* Right arrow */}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent animate-[swipe-arrow_1.5s_ease-in-out_infinite_reverse]">
           <polyline points="9 18 15 12 9 6" />

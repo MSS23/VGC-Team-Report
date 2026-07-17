@@ -18,9 +18,10 @@ interface SearchResult {
 
 interface CollaboratorPanelProps {
   shareId: string;
+  panelId?: string;
 }
 
-export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
+export function CollaboratorPanel({ shareId, panelId = "manage-access" }: CollaboratorPanelProps) {
   const { userId } = useAuth();
   const [open, setOpen] = useState(false);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
@@ -34,6 +35,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
   const [revoking, setRevoking] = useState(false);
   const [revokeConfirm, setRevokeConfirm] = useState(false);
   const [revokeSuccess, setRevokeSuccess] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fetchedRef = useRef(false);
   const collaboratorsRef = useRef<Collaborator[]>(collaborators);
@@ -112,6 +114,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
 
   const handleAdd = async (user: SearchResult) => {
     setAdding(user.id);
+    setActionError(null);
     try {
       const res = await fetch(`/api/share/${shareId}/collaborators`, {
         method: "POST",
@@ -130,9 +133,12 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
         ]);
         setResults((prev) => prev.filter((r) => r.id !== user.id));
         setQuery("");
+      } else {
+        const data = await res.json().catch(() => null) as { error?: string } | null;
+        setActionError(data?.error ?? "Could not send this invitation. Try again.");
       }
     } catch {
-      /* silent */
+      setActionError("Could not send this invitation. Check your connection and try again.");
     } finally {
       setAdding(null);
     }
@@ -140,6 +146,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
 
   const handleRemove = async (targetUserId: string) => {
     setRemoving(targetUserId);
+    setActionError(null);
     try {
       const res = await fetch(`/api/share/${shareId}/collaborators`, {
         method: "DELETE",
@@ -150,9 +157,11 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
         setCollaborators((prev) =>
           prev.filter((c) => c.userId !== targetUserId),
         );
+      } else {
+        setActionError("Could not remove this collaborator. Try again.");
       }
     } catch {
-      /* silent */
+      setActionError("Could not remove this collaborator. Check your connection and try again.");
     } finally {
       setRemoving(null);
     }
@@ -160,6 +169,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
 
   const handleRevokeLink = async () => {
     setRevoking(true);
+    setActionError(null);
     try {
       const res = await fetch(`/api/share/${shareId}/collaborators`, {
         method: "PATCH",
@@ -168,21 +178,23 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
         setRevokeSuccess(true);
         setRevokeConfirm(false);
         setTimeout(() => setRevokeSuccess(false), 3000);
+      } else {
+        setActionError("Could not revoke the old link. Try again.");
       }
     } catch {
-      /* silent */
+      setActionError("Could not revoke the old link. Check your connection and try again.");
     } finally {
       setRevoking(false);
     }
   };
 
   return (
-    <div className="mt-3">
+    <div className="mt-3" id={panelId}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent transition-all cursor-pointer"
+        className="inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent active:scale-[0.98] transition-all cursor-pointer"
       >
         <svg
           width="14"
@@ -233,7 +245,8 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search users to invite..."
-                  className="w-full pl-8 pr-3 py-2 text-xs bg-surface-alt border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+                  aria-label="Search accounts to invite"
+                  className="w-full min-h-11 pl-8 pr-3 py-2 text-xs bg-surface-alt border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
                 />
                 <svg
                   width="14"
@@ -274,7 +287,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
                         type="button"
                         onClick={() => handleAdd(user)}
                         disabled={adding === user.id}
-                        className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-accent text-white hover:brightness-110 transition-all cursor-pointer disabled:opacity-50"
+                        className="min-h-11 min-w-14 px-2.5 py-2 text-xs font-bold rounded-md bg-accent text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
                       >
                         {adding === user.id ? "..." : "Add"}
                       </button>
@@ -359,7 +372,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
                       onClick={() => handleRemove(collab.userId)}
                       disabled={removing === collab.userId}
                       aria-label={`Remove ${collab.name}`}
-                      className="px-2 py-1 text-[10px] font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md transition-colors cursor-pointer disabled:opacity-50"
+                      className="min-h-11 px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-500/10 rounded-md transition-colors cursor-pointer disabled:opacity-50"
                     >
                       {removing === collab.userId ? "..." : "Remove"}
                     </button>
@@ -397,7 +410,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
                   Link revoked. Old collab links no longer work.
                 </p>
               ) : revokeConfirm ? (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="text-[10px] text-red-400 font-semibold flex-1">
                     This will invalidate all existing collab links. Collaborators
                     already added will keep access.
@@ -406,14 +419,14 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
                     type="button"
                     onClick={handleRevokeLink}
                     disabled={revoking}
-                    className="px-2.5 py-1 text-[10px] font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50 flex-shrink-0"
+                    className="min-h-11 px-3 py-2 text-xs font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50 flex-shrink-0"
                   >
                     {revoking ? "..." : "Confirm"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setRevokeConfirm(false)}
-                    className="px-2.5 py-1 text-[10px] font-bold text-text-tertiary hover:text-text-primary transition-colors cursor-pointer flex-shrink-0"
+                    className="min-h-11 px-3 py-2 text-xs font-bold text-text-tertiary hover:text-text-primary transition-colors cursor-pointer flex-shrink-0"
                   >
                     Cancel
                   </button>
@@ -422,7 +435,7 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
                 <button
                   type="button"
                   onClick={() => setRevokeConfirm(true)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-text-tertiary hover:text-red-400 transition-colors cursor-pointer"
+                  className="flex min-h-11 items-center gap-1.5 text-xs font-semibold text-text-tertiary hover:text-red-500 transition-colors cursor-pointer"
                 >
                   <svg
                     width="12"
@@ -441,6 +454,12 @@ export function CollaboratorPanel({ shareId }: CollaboratorPanelProps) {
                   Revoke collab link
                 </button>
               )}
+            </div>
+          )}
+
+          {actionError && (
+            <div role="alert" className="border-t border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-600 dark:text-red-400">
+              {actionError}
             </div>
           )}
         </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { TeamCardExport } from "@/components/ui/TeamCardExport";
+import { CollaboratorPanel } from "@/components/social/CollaboratorPanel";
 import { useTranslation } from "@/lib/i18n";
 import en from "@/lib/i18n/translations/en";
 import {
@@ -20,6 +21,8 @@ import {
 
 interface ShareModalProps {
   publicUrl: string;
+  /** Saved report ID used for account-based private collaboration. */
+  reportId?: string;
   teamSpecies: string[];
   /** Raw Showdown-format paste text for the "Copy Paste" action. */
   showdownPaste?: string;
@@ -60,6 +63,7 @@ interface ShareModalProps {
 
 export function ShareModal({
   publicUrl,
+  reportId,
   teamSpecies,
   showdownPaste,
   rentalCode,
@@ -742,8 +746,8 @@ export function ShareModal({
               }`}
             >
               <LockIcon width="18" height="18" className={!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"} />
-              <span className={`text-[11px] font-bold leading-none ${!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"}`}>{t.shareModalPrivate}</span>
-              <span className="text-[9px] text-text-tertiary leading-tight text-center">{t.shareModalPrivateDesc}</span>
+              <span className={`text-xs font-bold leading-none ${!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"}`}>{t.shareModalPrivate}</span>
+              <span className="text-[10px] text-text-tertiary leading-tight text-center">{t.shareModalPrivateDesc}</span>
             </button>
             {/* Unlisted */}
             <button
@@ -763,8 +767,8 @@ export function ShareModal({
               }`}
             >
               <LinkIcon width="18" height="18" className={isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"} />
-              <span className={`text-[11px] font-bold leading-none ${isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"}`}>{t.shareModalUnlisted}</span>
-              <span className="text-[9px] text-text-tertiary leading-tight text-center">{t.shareModalUnlistedDesc}</span>
+              <span className={`text-xs font-bold leading-none ${isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"}`}>{t.shareModalUnlisted}</span>
+              <span className="text-[10px] text-text-tertiary leading-tight text-center">{t.shareModalUnlistedDesc}</span>
             </button>
             {/* Public */}
             <button
@@ -789,8 +793,8 @@ export function ShareModal({
               }`}
             >
               <GlobeIcon width="18" height="18" className={isPublic ? "text-emerald-500" : "text-text-tertiary"} />
-              <span className={`text-[11px] font-bold leading-none ${isPublic ? "text-emerald-500" : "text-text-tertiary"}`}>{t.shareModalPublicOption}</span>
-              <span className="text-[9px] text-text-tertiary leading-tight text-center">{t.shareModalPublicOptionDesc}</span>
+              <span className={`text-xs font-bold leading-none ${isPublic ? "text-emerald-500" : "text-text-tertiary"}`}>{t.shareModalPublicOption}</span>
+              <span className="text-[10px] text-text-tertiary leading-tight text-center">{t.shareModalPublicOptionDesc}</span>
             </button>
           </div>
           {/* Description line */}
@@ -805,6 +809,21 @@ export function ShareModal({
               ? t.shareModalVisibilityUnlistedActive
               : t.shareModalVisibilityPrivateActive}
           </p>
+
+          {isOwner && reportId && !isPublic && !isUnlisted && (
+            <div className="mt-4 rounded-xl border border-accent/20 bg-accent-surface/20 p-3">
+              <div className="flex items-start gap-2.5">
+                <LockIcon width="16" height="16" className="mt-0.5 flex-shrink-0 text-accent" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-text-primary">Private account access</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-text-secondary">
+                    Only you and accepted collaborators can open this report. Invite trusted people by account; the bare link stays inaccessible to everyone else.
+                  </p>
+                  <CollaboratorPanel shareId={reportId} panelId="manage-access-modal" />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Creator name error message */}
           {creatorError && (

@@ -174,7 +174,9 @@ export function SlideNavControls({
   // Auto-close the sheet if everything that fed it disappears (e.g. leaving
   // creator mode while it's open).
   useEffect(() => {
-    if (sheetOpen && !showOverflow) setSheetOpen(false);
+    if (!sheetOpen || showOverflow) return;
+    const timer = setTimeout(() => setSheetOpen(false), 0);
+    return () => clearTimeout(timer);
   }, [sheetOpen, showOverflow]);
 
   // ── Segmented section tabs ──
@@ -182,7 +184,7 @@ export function SlideNavControls({
     <div
       role="tablist"
       aria-label="Report sections"
-      className={`flex ${compact ? "" : "w-full"} gap-0.5 rounded-full bg-surface-alt p-0.5`}
+      className={`flex ${compact ? "" : "w-full min-w-0 overflow-hidden"} gap-0.5 rounded-full bg-surface-alt p-0.5`}
     >
       {tabs.map((tab) => {
         const active = activeSection === tab.key;
@@ -195,13 +197,13 @@ export function SlideNavControls({
             aria-disabled={!tab.avail}
             disabled={!tab.avail}
             onClick={() => jumpToPhysical(tab.target)}
-            className={`${compact ? "px-4" : "flex-1"} min-h-[44px] sm:min-h-0 sm:py-1.5 px-2 rounded-full text-xs font-bold transition-colors active:scale-[0.97] ${
+            className={`${compact ? "px-4 text-xs" : "flex-1 min-w-0 px-1 text-[10px]"} min-h-[44px] sm:min-h-0 sm:py-1.5 rounded-full font-bold transition-colors active:scale-[0.97] ${
               active
                 ? "bg-accent text-white shadow-sm shadow-accent/30"
                 : "text-text-secondary hover:text-text-primary"
             } ${!tab.avail ? "opacity-40 pointer-events-none" : ""}`}
           >
-            {tab.label}
+            <span className="block truncate">{tab.label}</span>
           </button>
         );
       })}
@@ -425,6 +427,7 @@ export function SlideNavControls({
       <div
         role="navigation"
         aria-label="Slide navigation"
+        aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
         data-walkthrough="slide-nav"
         className={`fixed bottom-0 left-0 right-0 z-50 transition-opacity duration-200 safe-bottom safe-x ${
           autoHide

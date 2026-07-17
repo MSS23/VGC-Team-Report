@@ -579,6 +579,7 @@ function HomeContent() {
   const swipeRef = useSwipeNavigation({
     onSwipeLeft: nextSlide,
     onSwipeRight: prevSlide,
+    onDoubleTap: nextSlide,
     enabled: !!analysis,
   });
 
@@ -1103,6 +1104,10 @@ function HomeContent() {
       <VersionDiffProvider value={versionDiffContextValue}>
       <div
         ref={swipeRef}
+        role="region"
+        aria-roledescription="report slide"
+        aria-label={`${slideLabels[currentSlide] ?? "Team report"}, slide ${currentSlide + 1} of ${totalSlides}`}
+        aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
         className={`max-w-5xl mx-auto slide-content overflow-x-hidden min-h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:min-h-0 sm:h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:overflow-y-auto sm:scrollbar-thin pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:pb-16 ${
           isPresentationStyle
             ? "px-3 sm:px-8 py-2 sm:py-4"
@@ -1530,6 +1535,7 @@ function HomeContent() {
       {showShareModal && lastShareResult?.publicUrl && (
         <ShareModal
           publicUrl={lastShareResult.publicUrl}
+          reportId={activeShareId ?? sessionShareId ?? undefined}
           teamSpecies={teamSpecies}
           showdownPaste={analysis ? teamToShowdown(analysis.pokemon.map((p) => p.parsed)) : undefined}
           rentalCode={rentalCode}
@@ -1567,16 +1573,14 @@ function HomeContent() {
         />
       )}
 
-      {/* Instagram-style double-tap to like — listens window-wide for two
-          quick presses and bursts a heart at the tap location. Active on
-          BOTH presentation and non-presentation shared views (so viewers
-          can still react while the deck is open). Owners and the landing
-          page are filtered out inside the component. */}
+      {/* Outside presentation mode, double-tap keeps the social "like"
+          gesture. Presentation reserves double-tap for advancing the deck,
+          so the two mobile interactions never fire together. */}
       {isSharedView && activeShareId && (
         <DoubleTapLikeOverlay
           shareId={activeShareId}
           isOwner={isOwner}
-          enabled={!!analysis}
+          enabled={!!analysis && !isPresentationStyle}
         />
       )}
 
