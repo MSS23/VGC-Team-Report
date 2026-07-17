@@ -170,7 +170,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-text-tertiary hover:text-accent border border-border-subtle hover:border-accent/30 rounded-lg transition-all cursor-pointer"
+        className="flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold text-text-tertiary hover:text-accent border border-border-subtle hover:border-accent/30 rounded-lg transition-all cursor-pointer"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="16 16 12 12 8 16" />
@@ -186,11 +186,12 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
     <div className="bg-surface border border-border rounded-xl p-3 sm:p-4 flex flex-col gap-2 animate-fade-in">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold uppercase tracking-widest text-text-tertiary">Update Team</span>
-        <button type="button" onClick={() => { setOpen(false); setError(""); }} className="text-text-tertiary hover:text-text-primary text-sm cursor-pointer">&#10005;</button>
+        <button type="button" aria-label="Close team update" onClick={() => { setOpen(false); setError(""); }} className="min-h-11 min-w-11 rounded-lg text-text-tertiary hover:bg-surface-alt hover:text-text-primary text-sm cursor-pointer">&#10005;</button>
       </div>
       <textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
+        aria-label="Updated team paste or PokePaste URL"
         placeholder={"Paste a PokePaste URL or Showdown export...\n\npokepast.es/abc123\n\nOr paste the full Showdown text"}
         className="w-full min-h-[4rem] sm:min-h-[5rem] p-2.5 bg-surface-alt border border-border-subtle rounded-lg text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary/50 resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 leading-relaxed"
         spellCheck={false}
@@ -202,7 +203,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
           type="button"
           onClick={handleSubmit}
           disabled={!input.trim() || loading}
-          className="px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+          className="min-h-11 px-3 py-2 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
         >
           {loading ? "Fetching..." : "Apply"}
         </button>
@@ -413,6 +414,11 @@ function TeamOverviewBase({
 
   return (
     <div className="flex flex-col gap-3 sm:gap-6 animate-fade-in">
+      {isReadOnly && !teamName && (
+        <h1 className="sr-only">
+          {tournamentName || pokemon.map((entry) => entry.parsed.species).join(" / ") || "VGC Team Report"}
+        </h1>
+      )}
       {/* Tournament Context */}
       {isReadOnly ? (
         (hasTournamentInfo || rentalCode || hasCreatorInfo) && (
@@ -597,6 +603,7 @@ function TeamOverviewBase({
             <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">Tags</h4>
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
               <select
+                aria-label="Tournament regulation"
                 value={tags?.regulation ?? ""}
                 onChange={(e) => onTagsChange?.({
                   ...(tags ?? {}),
@@ -611,6 +618,7 @@ function TeamOverviewBase({
                 {REGULATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
               <select
+                aria-label="Event type"
                 value={tags?.eventType ?? ""}
                 onChange={(e) => onTagsChange?.({ ...(tags ?? {}), eventType: e.target.value || undefined })}
                 className="w-full sm:w-[160px] px-3 py-2 bg-surface border-2 border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
@@ -685,6 +693,7 @@ function TeamOverviewBase({
           <textarea
             value={summary}
             onChange={(e) => onSummaryChange(e.target.value)}
+            aria-label="Team summary"
             placeholder={t.teamSummaryPlaceholder}
             className="w-full min-h-[4rem] sm:min-h-[8rem] p-3 sm:p-6 bg-surface border-2 border-border rounded-xl text-sm sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
             spellCheck={false}

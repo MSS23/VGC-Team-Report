@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { hapticLight } from "@/lib/utils/haptics";
 import {
@@ -403,6 +403,23 @@ export function SlideNavControls({
 
   const currentLabel = slideLabels[currentSlide] ?? "";
 
+  const handleSlideTabKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+    let target: number | null = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") target = Math.min(index + 1, totalSlides - 1);
+    if (event.key === "ArrowLeft" || event.key === "ArrowUp") target = Math.max(index - 1, 0);
+    if (event.key === "Home") target = 0;
+    if (event.key === "End") target = totalSlides - 1;
+    if (target === null) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    hapticLight();
+    onGoTo(target);
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>(`[data-slide-dot="${target}"]`)?.focus();
+    });
+  };
+
   return (
     <>
       {/* Overflow sheet (mobile) / popover (desktop) */}
@@ -485,7 +502,10 @@ export function SlideNavControls({
                     type="button"
                     role="tab"
                     aria-selected={isCurrent}
+                    tabIndex={isCurrent ? 0 : -1}
+                    data-slide-dot={i}
                     onClick={() => onGoTo(i)}
+                    onKeyDown={(event) => handleSlideTabKeyDown(event, i)}
                     title={`${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}${hasChanges ? " (changed)" : ""}`}
                     aria-label={`Go to ${slideLabels[i]}`}
                     className="relative flex items-center justify-center w-5 h-5 flex-shrink-0"
