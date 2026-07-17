@@ -8,13 +8,13 @@ import type { TranslationKeys } from "./translations/en";
 
 // Supported languages — the 7 official Pokemon game languages
 export const LANGUAGES = [
-  { code: "en", label: "English", flag: "🇬🇧" },
-  { code: "fr", label: "Francais", flag: "🇫🇷" },
-  { code: "it", label: "Italiano", flag: "🇮🇹" },
-  { code: "es", label: "Espanol", flag: "🇪🇸" },
-  { code: "ja", label: "日本語", flag: "🇯🇵" },
-  { code: "ko", label: "한국어", flag: "🇰🇷" },
-  { code: "zh", label: "中文", flag: "🇨🇳" },
+  { code: "en", label: "English" },
+  { code: "fr", label: "Français" },
+  { code: "it", label: "Italiano" },
+  { code: "es", label: "Español" },
+  { code: "ja", label: "日本語" },
+  { code: "ko", label: "한국어" },
+  { code: "zh", label: "中文" },
 ] as const;
 
 export type LanguageCode = (typeof LANGUAGES)[number]["code"];
@@ -52,10 +52,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
     if (saved && translationLoaders[saved]) {
-      setLanguageState(saved);
-      if (saved !== "en") {
-        translationLoaders[saved]().then((mod) => setTranslations(mod.default));
-      }
+      document.documentElement.lang = saved;
+      translationLoaders[saved]().then((mod) => {
+        setLanguageState(saved);
+        setTranslations(mod.default);
+      });
     }
   }, []);
 

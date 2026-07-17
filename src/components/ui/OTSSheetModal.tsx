@@ -6,6 +6,9 @@ import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { teamToOpenSheet } from "@/lib/utils/export-paste";
 import { resolveSlug, getSpriteUrls } from "@/lib/utils/sprite-slug";
 import { getHtml2Canvas } from "@/lib/dynamic-imports/html2canvas";
+import { useTranslation } from "@/lib/i18n";
+import type { LanguageCode } from "@/lib/i18n";
+import { translateMove } from "@/lib/utils/translate-move";
 
 interface OTSSheetModalProps {
   pokemon: ParsedPokemon[];
@@ -36,7 +39,7 @@ function SpriteImg({ species }: { species: string }) {
   );
 }
 
-function PokemonCard({ mon }: { mon: ParsedPokemon }) {
+function PokemonCard({ mon, language }: { mon: ParsedPokemon; language: LanguageCode }) {
   const displayName = mon.nickname ? `${mon.nickname} (${mon.species})` : mon.species;
   return (
     <div className="flex gap-3 p-3 bg-surface border border-border rounded-xl">
@@ -65,7 +68,7 @@ function PokemonCard({ mon }: { mon: ParsedPokemon }) {
         <ul className="grid grid-cols-2 gap-x-3 gap-y-0">
           {mon.moves.map((move, i) => (
             <li key={i} className="text-[11px] text-text-secondary truncate">
-              <span className="text-text-tertiary">— </span>{move}
+              <span className="text-text-tertiary">— </span>{translateMove(move, language)}
             </li>
           ))}
         </ul>
@@ -75,6 +78,7 @@ function PokemonCard({ mon }: { mon: ParsedPokemon }) {
 }
 
 export function OTSSheetModal({ pokemon, shareUrl, tournamentName, teamName, onClose }: OTSSheetModalProps) {
+  const { language } = useTranslation();
   const sheetRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const titleId = "ots-sheet-modal-title";
@@ -242,7 +246,7 @@ export function OTSSheetModal({ pokemon, shareUrl, tournamentName, teamName, onC
             {/* Pokemon grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {pokemon.map((mon, i) => (
-                <PokemonCard key={i} mon={mon} />
+                <PokemonCard key={i} mon={mon} language={language} />
               ))}
             </div>
 

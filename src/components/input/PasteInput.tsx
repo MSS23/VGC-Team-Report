@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { useTranslation } from "@/lib/i18n";
@@ -648,13 +649,17 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         transition={{ delay: 0.5, duration: 0.5 }}
       >
         <div className="flex items-center justify-center gap-3">
-            <a href="/feedback" className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all">
+          <Link href="/feedback" className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all">
             Feedback
-          </a>
+          </Link>
           <span className="text-text-tertiary/30">|</span>
-            <a href="/privacy" className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all">
+          <Link href="/support" className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all">
+            Support
+          </Link>
+          <span className="text-text-tertiary/30">|</span>
+          <Link href="/privacy" className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all">
             {t.privacy}
-          </a>
+          </Link>
         </div>
         <p className="text-center text-sm text-text-tertiary font-medium">
           {t.builtBy}{" "}

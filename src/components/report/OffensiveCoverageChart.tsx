@@ -7,6 +7,8 @@ import { getEffectiveness } from "@/lib/data/type-chart";
 import { lookupMove } from "@/lib/data/moves";
 import { TYPE_COLORS } from "@/lib/utils/type-colors";
 import { hapticLight } from "@/lib/utils/haptics";
+import { useTranslation } from "@/lib/i18n";
+import { translateMove } from "@/lib/utils/translate-move";
 
 const ALL_TYPES: PokemonType[] = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -135,6 +137,7 @@ function offensiveLabel(mult: number): string {
 }
 
 export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps) {
+  const { language } = useTranslation();
   const [highlightedType, setHighlightedType] = useState<PokemonType | null>(null);
 
   const profiles = pokemon.map((mon) => ({
@@ -255,10 +258,11 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
                   const cell = offensiveCell(mult);
                   const isHighlighted = highlightedType === defType;
                   const isDimmed = highlightedType !== null && !isHighlighted;
-                  const tooltipMove = move
+                  const localizedMove = move ? translateMove(move, language) : null;
+                  const tooltipMove = localizedMove
                     ? typeConversion
-                      ? `${move} (${typeConversion}) → ${defType}: ${mult}x`
-                      : `${move} → ${defType}: ${mult}x`
+                      ? `${localizedMove} (${typeConversion}) → ${defType}: ${mult}x`
+                      : `${localizedMove} → ${defType}: ${mult}x`
                     : `vs ${defType}: ${mult}x`;
                   return (
                     <td key={defType} className={`px-0.5 py-1 transition-opacity ${isDimmed ? "opacity-50" : ""}`}>
