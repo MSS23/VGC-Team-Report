@@ -14,12 +14,12 @@ interface Comment {
 
 interface CommentSectionProps {
   shareId: string;
-  editToken?: string;
+  canModerate?: boolean;
 }
 
 const DISPLAY_NAME_KEY = "vgc-display-name";
 
-export function CommentSection({ shareId, editToken }: CommentSectionProps) {
+export function CommentSection({ shareId, canModerate = false }: CommentSectionProps) {
   const sessionId = useSessionId();
   const [comments, setComments] = useState<Comment[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -120,7 +120,7 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
       const res = await fetch(`/api/comments/${shareId}/${commentId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, editToken }),
+        body: JSON.stringify({ sessionId }),
       });
       if (res.ok) {
         setComments((prev) => prev.filter((c) => c.id !== commentId));
@@ -132,7 +132,7 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
   };
 
   const canDelete = (comment: Comment) =>
-    comment.isOwn || !!editToken;
+    comment.isOwn || canModerate;
 
   const handleFlag = async (commentId: number) => {
     if (!sessionId) return;

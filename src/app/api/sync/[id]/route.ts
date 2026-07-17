@@ -1,10 +1,10 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
-const KeySchema = z.string().regex(/^[0-9a-f]{64}$/, "Invalid edit key");
 
 // ── In-memory presence tracking ──────────────────────────────────────
 // Maps shareId → Set of { sessionId, lastSeen }
@@ -43,7 +43,7 @@ if (typeof globalThis !== "undefined") {
 /**
  * SSE endpoint for real-time collaborative sync.
  *
- * Clients connect with: GET /api/sync/{shareId}?key={editKey}&session={sessionId}&since={version}
+ * Clients connect with: GET /api/sync/{shareId}?session={sessionId}&since={version}
  *
  * Events emitted:
  * - `version` — when a newer version is detected (includes full state data)
@@ -65,22 +65,28 @@ export async function GET(
   const shareId = idResult.data;
 
   const url = new URL(request.url);
-  const key = url.searchParams.get("key");
   const sessionId = url.searchParams.get("session") ?? "anon";
   const sinceParam = url.searchParams.get("since");
 
-  if (!key) {
-    return NextResponse.json({ error: "Edit key required" }, { status: 401 });
-  }
-  const keyResult = KeySchema.safeParse(key);
-  if (!keyResult.success) {
-    return NextResponse.json({ error: "Invalid key" }, { status: 400 });
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Sign in required" }, { status: 401 });
   }
 
-  // Validate the edit key before opening the stream
+  // Presence and full-state sync are available only to the owner or an
+  // accepted account collaborator. URL tokens are never authorization.
   const sql = getDb();
   const authRows = await sql`
-    SELECT 1 FROM shares WHERE id = ${shareId} AND edit_token = ${key} AND deleted_at IS NULL
+    SELECT 1 FROM shares s
+    WHERE s.id = ${shareId} AND s.deleted_at IS NULL
+      AND (
+        s.owner_id = ${userId}
+        OR EXISTS (
+          SELECT 1 FROM collaborators c
+          WHERE c.share_id = s.id AND c.user_id = ${userId}
+            AND COALESCE(c.status, 'accepted') = 'accepted'
+        )
+      )
   `;
   if (authRows.length === 0) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });

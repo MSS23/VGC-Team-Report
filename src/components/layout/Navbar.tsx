@@ -22,7 +22,6 @@ import {
   DumbbellIcon,
   CopyIcon,
   LinkIcon,
-  UsersIcon,
 } from "@/components/ui/icons";
 
 // Only rendered in shared/edit views — keep its 379 lines out of the Navbar's
@@ -73,7 +72,7 @@ interface NavbarProps {
   isSampleTeam?: boolean;
   shareStatus: string;
   shareButtonText: string;
-  lastShareResult?: { updated?: boolean; editUrl?: string } | null;
+  lastShareResult?: { updated?: boolean; publicUrl?: string } | null;
   onShareClick: () => void;
   onReshare: () => void;
   onViewerShare?: () => void;
@@ -83,11 +82,6 @@ interface NavbarProps {
   isOwner: boolean;
   activeShareId?: string | null;
   sessionShareId?: string | null;
-
-  // Edit link
-  hasExistingShare: boolean;
-  editLinkCopied: boolean;
-  onCopyEditLink: () => void;
 
   // Undo / redo
   onUndo?: () => void;
@@ -196,7 +190,6 @@ export function Navbar(props: NavbarProps) {
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare, onViewerShare, creatorRequired,
     isOwner, activeShareId, sessionShareId,
-    hasExistingShare, editLinkCopied, onCopyEditLink,
     onUndo, onRedo, canUndo, canRedo,
     comparingVersion, onCompareVersion, onClearCompareVersion, compareLoading,
     onExportPdf, onExportPokepaste, onCreatePokepaste, pokepasteCreating, onOpenOTSSheet,
@@ -788,18 +781,6 @@ export function Navbar(props: NavbarProps) {
                       <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
                     </svg>
                     {saved ? "Saved" : "Save to my reports"}
-                  </button>
-                )}
-
-                {/* Collab link */}
-                {hasExistingShare && isOwner && (
-                  <button
-                    type="button"
-                    onClick={() => { setMenuOpen(false); onCopyEditLink(); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
-                  >
-                    <UsersIcon width="14" height="14" />
-                    {editLinkCopied ? "Copied!" : "Copy Collab Link"}
                   </button>
                 )}
 

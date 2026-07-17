@@ -32,9 +32,6 @@ export function CollaboratorPanel({ shareId, panelId = "manage-access" }: Collab
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
-  const [revoking, setRevoking] = useState(false);
-  const [revokeConfirm, setRevokeConfirm] = useState(false);
-  const [revokeSuccess, setRevokeSuccess] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fetchedRef = useRef(false);
@@ -164,27 +161,6 @@ export function CollaboratorPanel({ shareId, panelId = "manage-access" }: Collab
       setActionError("Could not remove this collaborator. Check your connection and try again.");
     } finally {
       setRemoving(null);
-    }
-  };
-
-  const handleRevokeLink = async () => {
-    setRevoking(true);
-    setActionError(null);
-    try {
-      const res = await fetch(`/api/share/${shareId}/collaborators`, {
-        method: "PATCH",
-      });
-      if (res.ok) {
-        setRevokeSuccess(true);
-        setRevokeConfirm(false);
-        setTimeout(() => setRevokeSuccess(false), 3000);
-      } else {
-        setActionError("Could not revoke the old link. Try again.");
-      }
-    } catch {
-      setActionError("Could not revoke the old link. Check your connection and try again.");
-    } finally {
-      setRevoking(false);
     }
   };
 
@@ -385,74 +361,6 @@ export function CollaboratorPanel({ shareId, panelId = "manage-access" }: Collab
                   No collaborators yet.
                   {isOriginalOwner ? " Search above to invite people." : ""}
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Revoke link section (owner only) */}
-          {isOriginalOwner && (
-            <div className="border-t border-border px-4 py-3">
-              {revokeSuccess ? (
-                <p className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  Link revoked. Old collab links no longer work.
-                </p>
-              ) : revokeConfirm ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-[10px] text-red-400 font-semibold flex-1">
-                    This will invalidate all existing collab links. Collaborators
-                    already added will keep access.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleRevokeLink}
-                    disabled={revoking}
-                    className="min-h-11 px-3 py-2 text-xs font-bold text-white bg-red-500 rounded-md hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50 flex-shrink-0"
-                  >
-                    {revoking ? "..." : "Confirm"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRevokeConfirm(false)}
-                    className="min-h-11 px-3 py-2 text-xs font-bold text-text-tertiary hover:text-text-primary transition-colors cursor-pointer flex-shrink-0"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setRevokeConfirm(true)}
-                  className="flex min-h-11 items-center gap-1.5 text-xs font-semibold text-text-tertiary hover:text-red-500 transition-colors cursor-pointer"
-                >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0110 0v4" />
-                  </svg>
-                  Revoke collab link
-                </button>
               )}
             </div>
           )}

@@ -10,12 +10,7 @@ interface ChangelogEntry {
   createdAt: string;
 }
 
-interface EditChangelogProps {
-  shareId: string;
-  editToken?: string;
-}
-
-export function EditChangelog({ shareId, editToken }: EditChangelogProps) {
+export function EditChangelog({ shareId }: { shareId: string }) {
   const [entries, setEntries] = useState<ChangelogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -23,15 +18,14 @@ export function EditChangelog({ shareId, editToken }: EditChangelogProps) {
 
   const fetchChangelog = useCallback(async () => {
     try {
-      const params = editToken ? `?key=${encodeURIComponent(editToken)}` : "";
-      const res = await fetch(`/api/changelog/${shareId}${params}`);
+      const res = await fetch(`/api/changelog/${shareId}`);
       if (res.ok) {
         const data = await res.json();
         setEntries(data.entries ?? []);
       }
     } catch { /* silent */ }
     finally { setLoading(false); }
-  }, [shareId, editToken]);
+  }, [shareId]);
 
   useEffect(() => {
     if (open && entries.length === 0) fetchChangelog();

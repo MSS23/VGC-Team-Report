@@ -27,9 +27,9 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
   const posthog = usePostHog();
   const {
     isSharedView, isSharePending, sharedState, shareId: activeShareId,
-    editKeyFromUrl, copyShareUrl, freshShare, autoSave, shareStatus,
+    editKeyFromUrl, copyShareUrl, autoSave, shareStatus,
     urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, isOwner,
-    sessionShareId, lastShareResult, openShareSheetForUrl, getEditUrl, hasExistingShare, clearStoredShare,
+    sessionShareId, lastShareResult, openShareSheetForUrl, hasExistingShare, clearStoredShare,
     fetchedIsPublic, fetchedIsUnlisted, fetchedCollaborators, autoSaveStatus, forkedFrom, forkReport, redactedFields,
   } = useShareUrl();
 
@@ -58,8 +58,6 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
     if (!visibilityTouchedRef.current) setIsUnlisted(fetchedIsUnlisted);
   }, [fetchedIsUnlisted]);
   const [allowComments, setAllowComments] = useState(false);
-  const [showEditUrl, setShowEditUrl] = useState(false);
-  const [editLinkCopied, setEditLinkCopied] = useState(false);
 
   // Wrap any client-initiated write so the collaborative-sync layer can
   // suppress the self-echo the server sends back for our own version bump.
@@ -95,7 +93,6 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
       setPublishError(result.error ?? "Could not share report. Please try again.");
       return;
     }
-    setShowEditUrl(true);
     const hasMega = analysis.pokemon.some((p) => p.parsed.species.includes("-Mega") || p.parsed.species.includes("-Primal"));
     posthog?.capture("report_shared", {
       regulation: (state.tags as Record<string, unknown>)?.regulation as string ?? "unknown",
@@ -109,20 +106,6 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
     if (!analysis) return;
     withSaveSuppression(() => copyShareUrl(buildShareState(), isPublic, isUnlisted));
   }, [analysis, copyShareUrl, buildShareState, isPublic, isUnlisted, withSaveSuppression]);
-
-  const handleCopyEditLink = useCallback(() => {
-    const url = getEditUrl();
-    if (!url) return;
-    navigator.clipboard.writeText(url);
-    setEditLinkCopied(true);
-    setTimeout(() => setEditLinkCopied(false), 2000);
-  }, [getEditUrl]);
-
-  const handleFreshReshare = useCallback(() => {
-    if (!analysis) return;
-    withSaveSuppression(() => freshShare(buildShareState(), isPublic, isUnlisted));
-    setShowEditUrl(true);
-  }, [analysis, freshShare, buildShareState, isPublic, isUnlisted, withSaveSuppression]);
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -186,8 +169,8 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
     isSharedView, isSharePending, sharedState, activeShareId, editKeyFromUrl,
     shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, isOwner,
     sessionShareId, lastShareResult, openShareSheetForUrl, hasExistingShare, clearStoredShare,
-    showEditUrl, setShowEditUrl, editLinkCopied, shareButtonText,
-    handleShareClick, handleReshare, handleCopyEditLink, handleFreshReshare,
+    shareButtonText,
+    handleShareClick, handleReshare,
     isPublic, setIsPublic, handleSetPublic,
     isUnlisted, setIsUnlisted, handleSetVisibility,
     publishError, clearPublishError,

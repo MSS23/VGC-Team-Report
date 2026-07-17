@@ -16,7 +16,6 @@ import { SpinnerIcon, UserIcon, ShieldIcon, BellIcon, PencilIcon, FolderIcon, Tr
 interface DashboardReport extends ExploreReport {
   isPublic?: boolean;
   isUnlisted?: boolean;
-  editToken?: string;
   deletedAt?: string;
   isCollab?: boolean;
 }
@@ -599,9 +598,8 @@ function ManagedReportCard({
     finally { setDeleting(false); setDeleteStep(0); }
   };
 
-  const editUrl = report.editToken
-    ? `/s/${report.id}?key=${report.editToken}`
-    : `/s/${report.id}`;
+  // Editing is authorized by the signed-in account, never by URL tokens.
+  const editUrl = `/s/${report.id}`;
 
   return (
     <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">

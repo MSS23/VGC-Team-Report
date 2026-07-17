@@ -8,8 +8,6 @@ export type SyncStatus = "idle" | "connecting" | "syncing" | "synced" | "conflic
 interface UseCollaborativeSyncOptions {
   /** The share ID being edited */
   shareId: string | null;
-  /** The edit key for authorization */
-  editKey: string | null;
   /** Whether collaborative sync is enabled (must be in an editable shared view) */
   enabled: boolean;
   /** Called when a newer version is available from the server */
@@ -24,7 +22,6 @@ interface UseCollaborativeSyncOptions {
  */
 export function useCollaborativeSync({
   shareId,
-  editKey,
   enabled,
   onRemoteUpdate,
 }: UseCollaborativeSyncOptions) {
@@ -67,7 +64,7 @@ export function useCollaborativeSync({
   }
 
   useEffect(() => {
-    if (!enabled || !shareId || !editKey) {
+    if (!enabled || !shareId) {
       setSyncStatus("idle");
       setCollaborators(0);
       return;
@@ -82,7 +79,6 @@ export function useCollaborativeSync({
       if (disposed) return;
 
       const params = new URLSearchParams({
-        key: editKey!,
         session: sessionIdRef.current,
         ...(versionRef.current > 0 ? { since: String(versionRef.current) } : {}),
       });
@@ -159,7 +155,7 @@ export function useCollaborativeSync({
       eventSource?.close();
       if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [enabled, shareId, editKey]);
+  }, [enabled, shareId]);
 
   return { collaborators, syncStatus, lastRemoteUpdate, markSaving, updateVersion };
 }

@@ -30,7 +30,6 @@ function applyPrivateFieldRedaction(data: Record<string, unknown>): {
 }
 
 const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
-const KeySchema = z.string().regex(/^[0-9a-f]{64}$/, "Invalid edit key");
 
 type ForkedFromMeta = {
   id: string;
@@ -114,82 +113,14 @@ export async function GET(
     const id = idResult.data;
 
     const url = new URL(request.url);
-    const key = url.searchParams.get("key");
-
-    if (key) {
-      const keyResult = KeySchema.safeParse(key);
-      if (!keyResult.success) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
-      }
-    }
-
     const sql = getDb();
 
     // Support version-check polling: ?since=N returns 304 if not changed
     const sinceVersion = url.searchParams.get("since");
 
-    if (key) {
-      // Validate edit key — return data + editable flag + version + visibility.
-      // Require an authenticated session: the key alone does not grant edit
-      // access. Anonymous callers (even with a correct token) get read-only
-      // so a logged-out user cannot mutate a published report via a stale
-      // localStorage token or tampered URL.
-      let authedUserId: string | null = null;
-      try {
-        const { userId: uid } = await auth();
-        authedUserId = uid;
-      } catch { /* not authenticated */ }
-
-      const { rows, hasForkColumn } = await selectShareRowTolerant(
-        () => sql`
-          SELECT data, (edit_token = ${key}) AS editable, COALESCE(version, 1) AS version, is_public, is_unlisted, forked_from_id FROM shares WHERE id = ${id} AND deleted_at IS NULL
-        `,
-        () => sql`
-          SELECT data, (edit_token = ${key}) AS editable, COALESCE(version, 1) AS version, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL
-        `,
-      );
-      if (rows.length === 0) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
-      }
-
-      // Enforce real privacy: a wrong/stale ?key= that does not match the
-      // edit token grants no more access than a bare link. If the report is
-      // private (neither public nor unlisted) and the key doesn't match, the
-      // caller is an outsider — return 404 just like the public path below.
-      // A matching key is a legitimate collaborator/edit link, so it stays
-      // allowed even for private reports (that's the whole point of the link).
-      const keyMatchesEditToken = !!rows[0].editable;
-      if (!keyMatchesEditToken && !rows[0].is_public && !rows[0].is_unlisted) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
-      }
-
-      // If polling with ?since=N, return 304 if version hasn't changed
-      if (sinceVersion && Number(sinceVersion) >= Number(rows[0].version)) {
-        return new Response(null, { status: 304 });
-      }
-
-      const forkedFromId = forkedFromIdFromRow(rows[0], hasForkColumn);
-      const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
-
-      const editable = !!rows[0].editable && !!authedUserId;
-      const normalized = normalizeReportData(rows[0].data as Record<string, unknown>);
-      // Editors with a valid key see full data; bare-link viewers get redacted (VGC-142)
-      const { data: viewable, redactedFields } = editable
-        ? { data: normalized, redactedFields: [] as string[] }
-        : applyPrivateFieldRedaction(normalized);
-      return NextResponse.json({
-        ...viewable,
-        _editable: editable,
-        _version: Number(rows[0].version),
-        _isPublic: !!rows[0].is_public,
-        _isUnlisted: !!rows[0].is_unlisted,
-        _isOwner: false,
-        _forkedFrom: forkedFrom,
-        _redactedFields: redactedFields,
-      });
-    }
-
-    // Public access — check if the signed-in user is the owner
+    // Edit access is account-based. Legacy ?key= values are deliberately
+    // ignored so copied URLs, cookies, and browser storage can never unlock a
+    // report. Signed-in owners and accepted collaborators are resolved below.
     let userId: string | null = null;
     try {
       const { userId: uid } = await auth();

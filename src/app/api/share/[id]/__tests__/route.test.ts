@@ -24,11 +24,11 @@ type Row = Record<string, unknown>;
  * return an empty set (no collaborators). `forked_from_id: null` keeps the
  * fork-metadata SELECT from firing.
  */
-function makeSql(row: Row | null) {
+function makeSql(row: Row | null, isCollaborator = false) {
   return (strings: TemplateStringsArray) => {
     const q = strings.join(" ? ");
     if (/FROM shares WHERE id/.test(q)) return Promise.resolve(row ? [row] : []);
-    if (/FROM collaborators/.test(q)) return Promise.resolve([]);
+    if (/FROM collaborators/.test(q)) return Promise.resolve(isCollaborator ? [{ user_name: "Collaborator" }] : []);
     return Promise.resolve([]);
   };
 }
@@ -70,6 +70,23 @@ describe("GET /api/share/[id] — access control", () => {
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body).toEqual({ error: "Not found" });
+  });
+
+  it("does not let a legacy edit key reveal a private report while signed out", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: null } as never);
+    vi.mocked(getDb).mockReturnValue(
+      makeSql({
+        data: { paste: "Garchomp @ Life Orb\n", creatorName: "X" },
+        edit_token: "a".repeat(64),
+        version: 1,
+        is_public: false,
+        is_unlisted: false,
+        owner_id: "owner-1",
+        forked_from_id: null,
+      }) as never,
+    );
+    const res = await GET(req(`${req().url}?key=${"a".repeat(64)}`), params());
+    expect(res.status).toBe(404);
   });
 
   it("serves a public report to an outsider, read-only, with private fields redacted", async () => {
@@ -121,5 +138,45 @@ describe("GET /api/share/[id] — access control", () => {
     expect(body._editToken).toBe("a".repeat(64));
     // Owner sees their own item — redaction does not apply to the owner.
     expect(String(body.paste)).toContain("Life Orb");
+  });
+
+  it("ignores a valid legacy key for a signed-in outsider", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "outsider-1" } as never);
+    vi.mocked(getDb).mockReturnValue(
+      makeSql({
+        data: { paste: "Garchomp @ Life Orb\n", creatorName: "X" },
+        edit_token: "a".repeat(64),
+        version: 2,
+        is_public: true,
+        is_unlisted: false,
+        owner_id: "owner-1",
+        forked_from_id: null,
+      }) as never,
+    );
+    const res = await GET(req(`${req().url}?key=${"a".repeat(64)}`), params());
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body._editable).toBeUndefined();
+    expect(body._editToken).toBeUndefined();
+  });
+
+  it("grants edit access to an accepted account collaborator without a key", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "collab-1" } as never);
+    vi.mocked(getDb).mockReturnValue(
+      makeSql({
+        data: { paste: "Garchomp @ Life Orb\n", creatorName: "X" },
+        edit_token: "a".repeat(64),
+        version: 2,
+        is_public: false,
+        is_unlisted: false,
+        owner_id: "owner-1",
+        forked_from_id: null,
+      }, true) as never,
+    );
+    const res = await GET(req(), params());
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body._editable).toBe(true);
+    expect(body._isOwner).toBe(false);
   });
 });

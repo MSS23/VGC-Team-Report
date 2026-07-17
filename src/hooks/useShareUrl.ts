@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import {
   decodeShareState,
   type ShareableState,
@@ -22,25 +23,6 @@ const SHARE_TOKENS_KEY = "vgc-share-tokens";
 interface StoredShareInfo {
   shareId: string;
   editToken: string;
-}
-
-function storeShareInfo(info: StoredShareInfo) {
-  try {
-    const existing = localStorage.getItem(SHARE_TOKENS_KEY);
-    let tokens: StoredShareInfo[] = [];
-    if (existing) {
-      const parsed = JSON.parse(existing);
-      // Handle legacy single-object format
-      tokens = Array.isArray(parsed) ? parsed : [parsed];
-    }
-    // Replace if same shareId exists, otherwise append
-    const idx = tokens.findIndex((t) => t.shareId === info.shareId);
-    if (idx >= 0) tokens[idx] = info;
-    else tokens.push(info);
-    localStorage.setItem(SHARE_TOKENS_KEY, JSON.stringify(tokens));
-  } catch {
-    localStorage.setItem(SHARE_TOKENS_KEY, JSON.stringify([info]));
-  }
 }
 
 /** Detect share ID from hash (fallback for #id= links). */
@@ -76,6 +58,7 @@ function detectInlineData(): string | null {
 }
 
 export function useShareUrl() {
+  const { isLoaded: isAuthLoaded, userId } = useAuth();
   // Use Next.js searchParams (works correctly across SSR and hydration)
   const searchParams = useSearchParams();
   // shareId resolves in priority order:
@@ -106,19 +89,26 @@ export function useShareUrl() {
   const [redactedFields, setRedactedFields] = useState<string[]>([]);
   const [lastShareResult, setLastShareResult] = useState<{
     updated: boolean;
-    editUrl?: string;
     publicUrl?: string;
   } | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Active session refs — only set when we have a verified edit session
-  // (loaded via edit link or just created/updated a share in this session).
-  // These are the ONLY source of truth for whether to update vs create.
-  // localStorage is only used to persist across page refreshes within the same editing session.
+  // Active session refs — only set from a server response after account
+  // authorization, or after this account creates/updates a share. They are
+  // deliberately memory-only and are the source of truth for update vs create.
   const activeEditTokenRef = useRef<string | null>(null);
   const activeShareIdRef = useRef<string | null>(null);
   // Reactive state version of activeShareIdRef — tracks whether a share session exists
   // (set after sharing from home page, or when viewing own report at /s/{id})
   const [sessionShareId, setSessionShareId] = useState<string | null>(null);
+
+  // Remove token data written by older releases. It is never read by this
+  // version, and clearing it avoids leaving obsolete edit credentials in a
+  // shared browser profile.
+  useEffect(() => {
+    try {
+      localStorage.removeItem(SHARE_TOKENS_KEY);
+    } catch { /* storage may be unavailable */ }
+  }, []);
 
   // Clear session state when URL no longer points at a share.
   // Without this, navigating from /s/{id} back to / would leave
@@ -145,6 +135,16 @@ export function useShareUrl() {
 
   // Fetch shared state on mount
   useEffect(() => {
+    if (shareId && !isAuthLoaded) return;
+
+    // Auth changes must revoke the editable client state immediately. The
+    // authenticated refetch below is the only path that can unlock it again.
+    activeEditTokenRef.current = null;
+    activeShareIdRef.current = null;
+    setSessionShareId(null);
+    setIsEditingUnlocked(false);
+    setIsOwner(false);
+
     let settled = false;
     // Clear any stale failure from a previous run. decodeFailed is otherwise
     // write-once (never reset), so a single spurious timeout would lock the
@@ -179,9 +179,8 @@ export function useShareUrl() {
     if (shareId) {
       // Always fetch without the edit key first — the API will grant edit
       // access to authenticated owners/collaborators automatically.
-      // The ?key= param is preserved in editKeyFromUrl for the sign-in gate
-      // in page.tsx. After sign-in, the page reloads and the authenticated
-      // request gets edit access without needing the key in the URL.
+      // A legacy ?key= may still trigger the sign-in explanation in page.tsx,
+      // but it is never sent to the API. The account alone determines access.
       const fetchUrl = `/api/share/${shareId}`;
 
       fetch(fetchUrl, { signal: controller.signal })
@@ -205,7 +204,6 @@ export function useShareUrl() {
             activeEditTokenRef.current = ownerEditToken;
             activeShareIdRef.current = shareId;
             setSessionShareId(shareId);
-            storeShareInfo({ shareId, editToken: ownerEditToken });
           }
           settle(state as ShareableState, editable);
         })
@@ -225,12 +223,10 @@ export function useShareUrl() {
     }
 
     clearTimeout(timeout);
-    // editKeyFromUrl is intentionally NOT a dependency: the fetch ignores the
-    // key (auth grants edit access server-side), and history.replaceState
-    // strips ?key= right after, which would otherwise flip editKeyFromUrl to
-    // null and re-run this effect — a wasteful duplicate fetch + URL rewrite.
+    // editKeyFromUrl is intentionally not a dependency: it has no bearing on
+    // access, and history.replaceState strips it immediately.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shareId, inlineData]);
+  }, [shareId, inlineData, isAuthLoaded, userId]);
 
   /** Get the active share info for this session (from refs, not localStorage). */
   const getActiveShare = useCallback((): StoredShareInfo | null => {
@@ -254,7 +250,6 @@ export function useShareUrl() {
     setLastShareResult(null);
     try {
       let publicUrl: string;
-      let editUrl: string | undefined;
 
       // Only reuse an existing share if we have an active session with it
       const active = getActiveShare();
@@ -289,13 +284,11 @@ export function useShareUrl() {
         }
         const { id, editToken, updated } = await res.json();
         publicUrl = `${window.location.origin}/s/${id}`;
-        editUrl = `${window.location.origin}/s/${id}?key=${editToken}`;
 
-        storeShareInfo({ shareId: id, editToken });
         activeEditTokenRef.current = editToken;
         activeShareIdRef.current = id;
         setSessionShareId(id);
-        setLastShareResult({ updated, editUrl, publicUrl });
+        setLastShareResult({ updated, publicUrl });
         // The caller just successfully created or updated a share, so they
         // own the edit token for this session. Mark them as the owner so
         // UI gates (like the "List on Explore" toggle in ShareModal) don't
@@ -390,66 +383,19 @@ export function useShareUrl() {
     setLastShareResult({ updated: false, publicUrl });
   }, []);
 
-  /** Get the edit URL for the active session. */
-  const getEditUrl = useCallback((): string | null => {
-    const active = getActiveShare();
-    if (!active) return null;
-    return `${window.location.origin}/s/${active.shareId}?key=${active.editToken}`;
-  }, [getActiveShare]);
-
-  /** Whether this session has an active share (edit link can be recovered). */
+  /** Whether this session has an active share. */
   const hasExistingShare = useCallback((): boolean => {
     return !!getActiveShare();
   }, [getActiveShare]);
 
-  /** Force a fresh share with a new ID and edit token (invalidates old edit link). */
-  const freshShare = useCallback(async (state: ShareableState, isPublic?: boolean, isUnlisted?: boolean) => {
-    setShareStatus("copying");
-    setUrlWarning(null);
-    setLastShareResult(null);
-    try {
-      const res = await fetch("/api/share", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // Thread isUnlisted through — omitting it collapsed an Unlisted report
-        // to Private/Public on every fresh reshare.
-        body: JSON.stringify({ state, isPublic, isUnlisted }),
-      });
-      if (!res.ok) throw new Error("API error");
-      const { id, editToken } = await res.json();
-      const publicUrl = `${window.location.origin}/s/${id}`;
-      const editUrl = `${window.location.origin}/s/${id}?key=${editToken}`;
-
-      storeShareInfo({ shareId: id, editToken });
-      activeEditTokenRef.current = editToken;
-      activeShareIdRef.current = id;
-      setSessionShareId(id);
-      setLastShareResult({ updated: false, editUrl, publicUrl });
-      // Caller owns this freshly-minted share — same reasoning as copyShareUrl.
-      setIsOwner(true);
-
-      await navigator.clipboard.writeText(publicUrl);
-      setShareStatus("copied");
-
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        setShareStatus("idle");
-      }, 5000);
-    } catch {
-      setShareStatus("error");
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setShareStatus("idle"), 2000);
-    }
-  }, []);
-
   /**
    * Fork an existing share: creates a new report owned by the current user
    * that tracks its lineage back to the source via forked_from_id.
-   * Returns { id, editToken } on success, null on failure.
+   * Returns the new account-owned report ID on success.
    */
   const forkReport = useCallback(async (
     sourceId: string
-  ): Promise<{ id: string; editToken: string } | null> => {
+  ): Promise<{ id: string } | null> => {
     try {
       const res = await fetch(`/api/share/${sourceId}/fork`, {
         method: "POST",
@@ -457,9 +403,8 @@ export function useShareUrl() {
       });
       if (!res.ok) return null;
       const data = await res.json();
-      if (!data?.id || !data?.editToken) return null;
-      storeShareInfo({ shareId: data.id, editToken: data.editToken });
-      return { id: data.id, editToken: data.editToken };
+      if (!data?.id) return null;
+      return { id: data.id };
     } catch {
       return null;
     }
@@ -490,7 +435,6 @@ export function useShareUrl() {
     shareId,
     editKeyFromUrl,
     copyShareUrl,
-    freshShare,
     autoSave,
     shareStatus,
     urlWarning,
@@ -501,7 +445,6 @@ export function useShareUrl() {
     sessionShareId,
     lastShareResult,
     openShareSheetForUrl,
-    getEditUrl,
     hasExistingShare,
     clearStoredShare,
     fetchedIsPublic,

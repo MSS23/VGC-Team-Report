@@ -147,16 +147,13 @@ export async function generateMetadata({
 
 export default async function SharePage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ key?: string }>;
 }) {
   const { id } = await params;
-  const { key } = await searchParams;
-  const qs = key
-    ? `?s=${encodeURIComponent(id)}&key=${encodeURIComponent(key)}`
-    : `?s=${encodeURIComponent(id)}`;
+  // Never forward legacy edit tokens into the client URL. Report access is
+  // resolved from the authenticated account only.
+  const qs = `?s=${encodeURIComponent(id)}`;
 
   // Build JSON-LD from DB (best-effort). We also derive a heading string
   // here that gets handed to the redirect client so its visually-hidden

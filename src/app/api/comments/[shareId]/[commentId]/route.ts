@@ -1,11 +1,11 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const DeleteBody = z.object({
   sessionId: z.string().optional(),
-  editToken: z.string().optional(),
 });
 
 export async function DELETE(
@@ -22,7 +22,7 @@ export async function DELETE(
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }
-    const { sessionId, editToken } = parsed.data;
+    const { sessionId } = parsed.data;
     const commentIdNum = parseInt(commentId, 10);
     if (isNaN(commentIdNum)) {
       return NextResponse.json({ error: "Invalid comment ID" }, { status: 400 });
@@ -31,12 +31,33 @@ export async function DELETE(
     const sql = getDb();
     let deleted;
 
-    if (editToken) {
-      // Report owner can delete any comment
+    let userId: string | null = null;
+    try {
+      ({ userId } = await auth());
+    } catch { /* signed out */ }
+
+    let canModerate = false;
+    if (userId) {
+      const accessRows = await sql`
+        SELECT 1 FROM shares s
+        WHERE s.id = ${shareId} AND s.deleted_at IS NULL
+          AND (
+            s.owner_id = ${userId}
+            OR EXISTS (
+              SELECT 1 FROM collaborators c
+              WHERE c.share_id = s.id AND c.user_id = ${userId}
+                AND COALESCE(c.status, 'accepted') = 'accepted'
+            )
+          )
+      `;
+      canModerate = accessRows.length > 0;
+    }
+
+    if (canModerate) {
+      // Owners and accepted collaborators can moderate report comments.
       deleted = await sql`
         DELETE FROM comments
         WHERE id = ${commentIdNum} AND share_id = ${shareId}
-          AND EXISTS (SELECT 1 FROM shares WHERE id = ${shareId} AND edit_token = ${editToken})
         RETURNING id
       `;
     } else if (sessionId) {
@@ -47,7 +68,7 @@ export async function DELETE(
         RETURNING id
       `;
     } else {
-      return NextResponse.json({ error: "No credentials provided" }, { status: 403 });
+      return NextResponse.json({ error: "No authorized account or comment session provided" }, { status: 403 });
     }
 
     if (deleted.length === 0) {

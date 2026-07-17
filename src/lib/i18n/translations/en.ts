@@ -363,8 +363,8 @@ const en = {
   shareModalEnableComments: "Enable comments",
   shareModalCommentsEnabledDesc: "Viewers can leave comments on your report.",
   shareModalCommentsDisabledDesc: "Comments are off. Turn on to let others share feedback.",
-  shareModalBookmarkBold: "Bookmark this link now.",
-  shareModalBookmarkDesc: "If you close the tab without saving it, you’ll lose edit access to this report.",
+  shareModalBookmarkBold: "Editing is account-protected.",
+  shareModalBookmarkDesc: "Only you and accepted collaborators can edit this report after signing in.",
   shareModalGrowthNote: "The more you share, the more the VGC community grows.",
 
   // Social / Community

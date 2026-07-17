@@ -43,7 +43,9 @@ export async function GET(
     const accessRows = await sql`
       SELECT 1 FROM shares WHERE id = ${shareId} AND owner_id = ${userId} AND deleted_at IS NULL
       UNION
-      SELECT 1 FROM collaborators WHERE share_id = ${shareId} AND user_id = ${userId}
+      SELECT 1 FROM collaborators
+      WHERE share_id = ${shareId} AND user_id = ${userId}
+        AND COALESCE(status, 'accepted') = 'accepted'
     `;
     if (accessRows.length === 0) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -152,8 +154,9 @@ export async function POST(
 }
 
 /**
- * PATCH /api/share/{id}/collaborators — revoke collab link (regenerate edit token)
- * Only the original owner can do this. Invalidates all existing ?key= links.
+ * PATCH /api/share/{id}/collaborators — rotate the internal update nonce.
+ * This is retained for incident recovery; it does not grant or revoke account
+ * access. Only the original owner can rotate it.
  */
 export async function PATCH(
   request: Request,
@@ -170,7 +173,7 @@ export async function PATCH(
 
     const ownerId = await getOwnerId(shareId);
     if (ownerId !== userId) {
-      return NextResponse.json({ error: "Only the owner can revoke the link" }, { status: 403 });
+      return NextResponse.json({ error: "Only the owner can reset edit sessions" }, { status: 403 });
     }
 
     // Generate new edit token
@@ -180,7 +183,7 @@ export async function PATCH(
     const sql = getDb();
     await sql`UPDATE shares SET edit_token = ${newToken} WHERE id = ${shareId}`;
 
-    return NextResponse.json({ success: true, message: "Collab link revoked. Old links no longer work." });
+    return NextResponse.json({ success: true, message: "Active edit sessions were reset." });
   } catch (e) {
     console.error("Revoke link error:", e);
     return NextResponse.json({ error: "Failed" }, { status: 500 });

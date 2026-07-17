@@ -127,15 +127,9 @@ function HomeContent() {
     sharedRedactedFields,
     lastShareResult,
     openShareSheetForUrl,
-    hasExistingShare,
-    showEditUrl,
-    setShowEditUrl,
-    editLinkCopied,
     shareButtonText,
     handleShareClick,
     handleReshare,
-    handleCopyEditLink,
-    handleFreshReshare,
     isPublic,
     handleSetPublic,
     isUnlisted,
@@ -743,9 +737,9 @@ function HomeContent() {
         setTimeout(() => setForkStatus("idle"), 3000);
         return;
       }
-      // Navigate to the new fork with the edit key so the user lands in edit mode.
+      // Account ownership is sufficient; never put edit credentials in URLs.
       // Use a full navigation so useShareUrl re-runs cleanly against the new id.
-      window.location.href = `/s/${result.id}?key=${result.editToken}`;
+      window.location.href = `/s/${result.id}`;
     } catch {
       setForkStatus("error");
       setTimeout(() => setForkStatus("idle"), 3000);
@@ -767,7 +761,8 @@ function HomeContent() {
     );
   }
 
-  // Collab link sign-in gate: if ?key= present and user isn't signed in, prompt sign-in
+  // Legacy collaboration links no longer authorize access. Prompt the visitor
+  // to use the account that owns the report or has accepted an invitation.
   if (!analysis && isSharePending && editKeyFromUrl && authLoaded && !isSignedIn) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
@@ -776,9 +771,9 @@ function HomeContent() {
             <UsersIcon width="28" height="28" className="text-accent" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-text-primary">You&apos;ve been invited to collaborate</h2>
+            <h2 className="text-lg font-bold text-text-primary">Sign in to continue</h2>
             <p className="text-sm text-text-secondary mt-1.5 leading-relaxed">
-              Create an account or sign in to edit this team report. Your changes will sync in real time with the owner.
+              Use the account that owns this report or has accepted a collaborator invitation. A link alone never grants edit access.
             </p>
           </div>
           <SignUpButton mode="modal">
@@ -908,9 +903,6 @@ function HomeContent() {
         isOwner={isOwner}
         activeShareId={activeShareId}
         sessionShareId={sessionShareId}
-        hasExistingShare={hasExistingShare()}
-        editLinkCopied={editLinkCopied}
-        onCopyEditLink={handleCopyEditLink}
         onUndo={handleUndo}
         onRedo={handleRedo}
         canUndo={canUndo}
@@ -1367,7 +1359,7 @@ function HomeContent() {
                 optimistic toggle. */}
           </div>
           {allowComments ? (
-            <CommentSection shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
+            <CommentSection shareId={activeShareId} canModerate={isEditingUnlocked} />
           ) : (
             <div className="flex items-center gap-2 px-4 py-3 bg-surface-alt/50 border border-border rounded-xl text-xs text-text-tertiary">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1507,7 +1499,7 @@ function HomeContent() {
       {isSharedView && isEditingUnlocked && activeShareId && (
         <div className="max-w-5xl mx-auto px-2 sm:px-4">
           {isOwner && <CollaboratorPanel shareId={activeShareId} />}
-          <EditChangelog shareId={activeShareId} editToken={editKeyFromUrl ?? undefined} />
+          <EditChangelog shareId={activeShareId} />
         </div>
       )}
 
@@ -1609,57 +1601,6 @@ function HomeContent() {
           }}
           busy={forkStatus === "forking"}
         />
-      )}
-
-      {/* Edit URL toast — shown after sharing */}
-      {showEditUrl && lastShareResult?.editUrl && (
-        <div className="fixed bottom-20 sm:bottom-16 left-1/2 -translate-x-1/2 z-50 animate-fade-in max-w-md w-full px-4">
-          <div className="bg-surface border border-border rounded-2xl p-4 shadow-2xl">
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <div>
-                <h4 className="text-sm font-bold text-text-primary">{t.publicLinkCopied}</h4>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  {t.saveEditLink}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowEditUrl(false)}
-                aria-label="Dismiss edit link toast"
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-tertiary hover:text-text-primary transition-colors flex-shrink-0 cursor-pointer"
-              >
-                <CloseIcon
-                  width="16"
-                  height="16"
-                  aria-hidden="true"
-                />
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 text-xs bg-surface-alt border border-border-subtle rounded-lg px-3 py-2 text-text-secondary truncate font-mono">
-                {lastShareResult.editUrl}
-              </code>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(lastShareResult.editUrl!);
-                }}
-                className="flex-shrink-0 px-3 py-2 bg-accent text-white rounded-lg text-xs font-semibold hover:bg-accent/85 transition-colors cursor-pointer"
-              >
-                {t.copyEditLink}
-              </button>
-            </div>
-            <p className="text-[10px] text-text-tertiary mt-2.5">
-              {t.lostEditLink}{" "}
-              <button
-                onClick={handleFreshReshare}
-                className="text-accent hover:underline font-medium cursor-pointer"
-              >
-                {t.generateNewEditLink}
-              </button>
-              {" "}{t.oldEditLinkStops}
-            </p>
-          </div>
-        </div>
       )}
 
     </main>

@@ -902,13 +902,13 @@ export function ShareModal({
 
         {/* Footer CTA */}
         <div className="px-6 py-4 bg-surface-alt/50 border-t border-border space-y-2.5">
-          {/* The bookmark-edit-link warning only applies to the owner who
-              just created/updated the share. A read-only viewer has no
-              edit link to lose. */}
+          {/* Reinforce that report editing is tied to account access, not a
+              browser-stored or copied secret link. */}
           {!viewerMode && (
-            <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            <div className="flex items-start gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="10" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
               <p className="text-[11px] text-text-secondary leading-relaxed">
                 <span className="font-bold text-text-primary">{t.shareModalBookmarkBold}</span> {t.shareModalBookmarkDesc}

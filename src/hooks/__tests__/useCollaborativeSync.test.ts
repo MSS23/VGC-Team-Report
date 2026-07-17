@@ -50,7 +50,6 @@ function mountSync(onRemoteUpdate: (s: unknown) => void) {
   return renderHook(() =>
     useCollaborativeSync({
       shareId: "abcd1234",
-      editKey: "edit-key",
       enabled: true,
       onRemoteUpdate,
     }),
@@ -58,6 +57,12 @@ function mountSync(onRemoteUpdate: (s: unknown) => void) {
 }
 
 describe("useCollaborativeSync echo suppression", () => {
+  it("connects with account cookies and never places edit credentials in the URL", () => {
+    mountSync(vi.fn());
+    expect(FakeEventSource.instances[0].url).toContain("/api/sync/abcd1234?");
+    expect(FakeEventSource.instances[0].url).not.toContain("key=");
+  });
+
   it("applies a genuine remote update", () => {
     const onRemoteUpdate = vi.fn();
     mountSync(onRemoteUpdate);

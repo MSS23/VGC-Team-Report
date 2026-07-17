@@ -46,6 +46,7 @@ export function useAutoDraft({ isSignedIn, analysis, isSampleTeam, isSharedView,
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlightRef = useRef<Promise<DraftSaveResult> | null>(null);
+  const exitSaveStartedRef = useRef(false);
 
   const setActiveDraft = useCallback((id: string | null) => {
     draftIdRef.current = id;
@@ -87,6 +88,9 @@ export function useAutoDraft({ isSignedIn, analysis, isSampleTeam, isSharedView,
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ state, draftId: draftIdRef.current }),
+          // Allows the browser to finish the request while a tab or mobile
+          // webview is being backgrounded or closed.
+          keepalive: true,
         });
         const data = await res.json().catch(() => null) as { id?: string; error?: string } | null;
         if (!res.ok || !data?.id) {
@@ -119,6 +123,27 @@ export function useAutoDraft({ isSignedIn, analysis, isSampleTeam, isSharedView,
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [isSignedIn, analysis, isSampleTeam, isSharedView, saveDraft]);
+
+  useEffect(() => {
+    if (!isSignedIn || !analysis || isSampleTeam || isSharedView) return;
+
+    const flushOnExit = () => {
+      if (exitSaveStartedRef.current) return;
+      exitSaveStartedRef.current = true;
+      void saveDraft();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flushOnExit();
+      else exitSaveStartedRef.current = false;
+    };
+
+    window.addEventListener("pagehide", flushOnExit);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", flushOnExit);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [isSignedIn, analysis, isSampleTeam, isSharedView, saveDraft]);
 

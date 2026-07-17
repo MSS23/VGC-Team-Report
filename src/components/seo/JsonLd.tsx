@@ -204,7 +204,7 @@ const DEFAULT_FAQ_ITEMS: FAQItem[] = [
   {
     question: "How do I share a VGC team report?",
     answer:
-      "After building your team report on VGC Team Report, click the Share button in the top navigation bar. You can create a permanent public link that anyone can view, or keep it private and share a direct edit link with collaborators. Public reports are also listed on the Explore page for the community to discover.",
+      "After building your team report on VGC Team Report, click Share to create a permanent viewer link. Keep it private or unlisted, or publish it to Explore. To co-edit securely, invite collaborators by account from Manage Access.",
   },
   {
     question: "What is Pokemon Champions Regulation M-A?",

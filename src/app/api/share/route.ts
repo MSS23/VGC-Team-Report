@@ -141,8 +141,32 @@ export async function POST(request: Request) {
         SELECT data, COALESCE(version, 1) AS version, is_public, is_unlisted, owner_id FROM shares WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
       `;
 
+      // The edit token is an internal update nonce, not an authorization
+      // credential. The caller must also be the owner or an accepted account
+      // collaborator. This prevents a token recovered from an old URL or
+      // browser profile from granting a different account write access.
+      if (oldRows.length === 0) {
+        return NextResponse.json({ error: "Report not found or edit session expired." }, { status: 403 });
+      }
+      const isOwner = oldRows[0].owner_id === authedUserId;
+      let isCollaborator = false;
+      if (!isOwner) {
+        const collaboratorRows = await sql`
+          SELECT 1 FROM collaborators
+          WHERE share_id = ${existingId} AND user_id = ${authedUserId}
+            AND COALESCE(status, 'accepted') = 'accepted'
+        `;
+        isCollaborator = collaboratorRows.length > 0;
+      }
+      if (!isOwner && !isCollaborator) {
+        return NextResponse.json(
+          { error: "Only the report owner or an accepted collaborator can edit this report." },
+          { status: 403 }
+        );
+      }
+
       // Detect actual changes before creating a version
-      const oldState = oldRows.length > 0 ? (oldRows[0].data as Record<string, unknown>) : null;
+      const oldState = oldRows[0].data as Record<string, unknown>;
       const sections = detectChangedSections(oldState, state);
       const hasDataChanges = sections.length > 0;
 
@@ -243,20 +267,15 @@ export async function POST(request: Request) {
       // must NOT silently demote a public or unlisted report to private —
       // that was the cause of "I set it to Unlisted and it reverted to
       // Private". Only an explicit flag from the owner changes visibility.
-      const currentIsPublic = oldRows.length > 0 ? !!oldRows[0].is_public : false;
-      const currentIsUnlisted = oldRows.length > 0 ? !!oldRows[0].is_unlisted : false;
+      const currentIsPublic = !!oldRows[0].is_public;
+      const currentIsUnlisted = !!oldRows[0].is_unlisted;
       // Only the owner can change visibility — collaborators keep the existing value
       const effectiveIsPublic = isPublic ?? currentIsPublic;
       const effectiveIsUnlisted = isUnlisted ?? currentIsUnlisted;
-      if (oldRows.length > 0 && isPublic !== undefined) {
+      if (isPublic !== undefined) {
         if (isPublic !== currentIsPublic) {
           // Visibility is changing — verify caller is the owner
-          let callerId: string | null = null;
-          try {
-            const { userId: uid } = await auth();
-            callerId = uid;
-          } catch { /* not authenticated */ }
-          if (!callerId || callerId !== oldRows[0].owner_id) {
+          if (!isOwner) {
             // Not the owner — return an explicit error so the client can surface
             // it and the user isn't left staring at a "saved" toggle that didn't
             // actually publish. Previously this silently reverted the value,
@@ -270,7 +289,7 @@ export async function POST(request: Request) {
       }
 
       // Require tags to publish — only block when going from private → public
-      const wasPublic = oldRows.length > 0 && !!oldRows[0].is_public;
+      const wasPublic = !!oldRows[0].is_public;
       if (effectiveIsPublic && !wasPublic) {
         const tags = (state.tags ?? {}) as Record<string, unknown>;
         const hasRegulation = !!tags.regulation;

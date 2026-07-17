@@ -47,6 +47,7 @@ describe("useAutoDraft", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ keepalive: true });
     expect(hook.current.draftId).toBe("draft-new");
     expect(hook.current.status).toBe("saved");
     expect(localStorage.getItem("vgc-draft-id")).toBe("draft-new");
@@ -83,6 +84,25 @@ describe("useAutoDraft", () => {
     expect(result).toEqual({ ok: false, error: "Draft storage is unavailable" });
     expect(hook.current.status).toBe("error");
     expect(hook.current.error).toBe("Draft storage is unavailable");
+    hook.unmount();
+  });
+
+  it("flushes a keepalive draft save when the page is being left", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: "draft-exit" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const hook = mount();
+
+    await act(async () => {
+      window.dispatchEvent(new Event("pagehide"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ keepalive: true });
     hook.unmount();
   });
 });

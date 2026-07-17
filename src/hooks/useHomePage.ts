@@ -487,10 +487,11 @@ export function useHomePage() {
     if (Array.isArray(state.hiddenSlides)) setHiddenFull(state.hiddenSlides);
   }, [plans, setPaste, parseTeam, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
 
+  const canEditSharedReport = share.isEditingUnlocked && isSignedIn === true;
+
   const { collaborators, syncStatus, markSaving, updateVersion } = useCollaborativeSync({
     shareId: share.activeShareId,
-    editKey: share.editKeyFromUrl,
-    enabled: share.isEditingUnlocked,
+    enabled: canEditSharedReport,
     onRemoteUpdate: handleRemoteUpdate,
   });
   // markSaving/updateVersion are stable (useCallback []), so this runs once.
@@ -512,8 +513,7 @@ export function useHomePage() {
   // stale localStorage edit token or the URL has been tampered with. The home
   // page remains fully editable without auth (it's a local draft) — sign-in is
   // only required to publish/save via the Share flow.
-  const isSharedReadOnly =
-    share.isSharedView && (!share.isEditingUnlocked || !isSignedIn);
+  const isSharedReadOnly = share.isSharedView && !canEditSharedReport;
   const isReadOnly = isSharedReadOnly || presentationMode || !creatorMode;
   const isPresentationStyle = presentationMode;
 
@@ -578,13 +578,13 @@ export function useHomePage() {
     parseTeam(share.sharedState.paste);
   }, [share.sharedState, setPaste, parseTeam, setCreatorMode]);
 
-  // Auto-enable edit mode for owners and explicit edit links (?key=).
-  // Other viewers see read-only and can toggle via the navbar button.
+  // Auto-enable edit mode only after the authenticated account has been
+  // confirmed as the owner or an accepted collaborator by the server.
   useEffect(() => {
-    if (share.isEditingUnlocked && (share.isOwner || share.editKeyFromUrl)) {
+    if (canEditSharedReport) {
       setCreatorMode(true);
     }
-  }, [share.isEditingUnlocked, share.isOwner, share.editKeyFromUrl, setCreatorMode]);
+  }, [canEditSharedReport, setCreatorMode]);
 
   useEffect(() => {
     if (!share.sharedState || !analysis || hasHydrated.current) return;
@@ -625,10 +625,9 @@ export function useHomePage() {
 
   // Auto-enter presentation mode when a viewer opens a shared team report.
   // The intent is "click a team → drop straight into the deck", same as
-  // tapping a slide deck on Apple Keynote on the web. Skipped when the URL
-  // carries an explicit edit key (?key=...) because those visitors came
-  // here to edit, not present. Tracked via a ref so exiting presentation
-  // mode mid-view doesn't snap the viewer back in.
+  // tapping a slide deck on Apple Keynote on the web. Authenticated editors
+  // stay in editing mode. Tracked via a ref so exiting presentation mode
+  // mid-view doesn't snap the viewer back in.
   const autoPresentTriggered = useRef(false);
   useEffect(() => {
     if (!share.sharedState || !share.isSharedView) {
@@ -636,10 +635,10 @@ export function useHomePage() {
       return;
     }
     if (!analysis || autoPresentTriggered.current) return;
-    if (share.editKeyFromUrl) return;
+    if (canEditSharedReport) return;
     autoPresentTriggered.current = true;
     setPresentationMode(true);
-  }, [share.sharedState, share.isSharedView, share.editKeyFromUrl, analysis, setPresentationMode]);
+  }, [share.sharedState, share.isSharedView, canEditSharedReport, analysis, setPresentationMode]);
 
   // ── Apply template defaults when analysis first appears (non-shared) ──
   const templateApplied = useRef(false);
@@ -804,21 +803,15 @@ export function useHomePage() {
     urlWarning: share.urlWarning,
     decodeFailed: share.decodeFailed,
     exitSharedView: share.exitSharedView,
-    isEditingUnlocked: share.isEditingUnlocked,
+    isEditingUnlocked: canEditSharedReport,
     isOwner: share.isOwner,
     sharedRedactedFields: share.redactedFields,
     sessionShareId: share.sessionShareId,
     lastShareResult: share.lastShareResult,
     openShareSheetForUrl: share.openShareSheetForUrl,
-    hasExistingShare: share.hasExistingShare,
-    showEditUrl: share.showEditUrl,
-    setShowEditUrl: share.setShowEditUrl,
-    editLinkCopied: share.editLinkCopied,
     shareButtonText: share.shareButtonText,
     handleShareClick: share.handleShareClick,
     handleReshare: share.handleReshare,
-    handleCopyEditLink: share.handleCopyEditLink,
-    handleFreshReshare: share.handleFreshReshare,
     isPublic: share.isPublic,
     setIsPublic: share.setIsPublic,
     handleSetPublic: share.handleSetPublic,
