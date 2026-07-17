@@ -121,7 +121,6 @@ function HomeContent() {
     shareStatus,
     urlWarning,
     decodeFailed,
-    exitSharedView,
     isEditingUnlocked,
     isOwner,
     sharedRedactedFields,
@@ -786,9 +785,9 @@ function HomeContent() {
               Already have an account? Sign in
             </button>
           </SignInButton>
-          <Link href="/" className="inline-flex min-h-11 items-center text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors mt-1">
+          <a href="/" className="inline-flex min-h-11 items-center text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors mt-1">
             or go to home page
-          </Link>
+          </a>
         </div>
       </main>
     );
@@ -932,7 +931,6 @@ function HomeContent() {
           setCreatorMode(true);
         }}
         onReset={handleReset}
-        onExitSharedView={exitSharedView}
         onStartTour={!presentationMode ? startWalkthrough : undefined}
       />
 
@@ -1399,12 +1397,12 @@ function HomeContent() {
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {isSignedIn ? (
-                  <Link
+                  <a
                     href="/"
                     className="inline-flex min-h-11 items-center px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30"
                   >
                     Create yours
-                  </Link>
+                  </a>
                 ) : (
                   <SignUpButton mode="modal">
                     <button

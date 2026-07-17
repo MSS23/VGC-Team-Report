@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -135,7 +136,9 @@ export default function RootLayout({
           }}
         />
         <PostHogProvider>
-          <PersistentNavbar />
+          <Suspense fallback={null}>
+            <PersistentNavbar />
+          </Suspense>
           <div id="main-content">{children}</div>
         </PostHogProvider>
         <ClarityProvider />

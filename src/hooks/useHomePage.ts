@@ -802,7 +802,6 @@ export function useHomePage() {
     shareStatus: share.shareStatus,
     urlWarning: share.urlWarning,
     decodeFailed: share.decodeFailed,
-    exitSharedView: share.exitSharedView,
     isEditingUnlocked: canEditSharedReport,
     isOwner: share.isOwner,
     sharedRedactedFields: share.redactedFields,

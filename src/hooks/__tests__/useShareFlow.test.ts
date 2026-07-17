@@ -16,7 +16,6 @@ const shareUrl = {
   shareStatus: "idle",
   urlWarning: null,
   decodeFailed: false,
-  exitSharedView: vi.fn(),
   isEditingUnlocked: false,
   isOwner: false,
   sessionShareId: null,

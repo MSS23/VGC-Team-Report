@@ -410,12 +410,6 @@ export function useShareUrl() {
     }
   }, []);
 
-  const exitSharedView = useCallback(() => {
-    setIsSharedView(false);
-    setIsEditingUnlocked(false);
-    history.replaceState(null, "", window.location.pathname);
-  }, []);
-
   /** Clear active share session so the next Share creates a fresh link. */
   const clearStoredShare = useCallback(() => {
     try {
@@ -439,7 +433,6 @@ export function useShareUrl() {
     shareStatus,
     urlWarning,
     decodeFailed,
-    exitSharedView,
     isEditingUnlocked,
     isOwner,
     sessionShareId,

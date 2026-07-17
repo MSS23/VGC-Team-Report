@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
@@ -114,7 +113,6 @@ interface NavbarProps {
    *  Surfaced as the pencil icon in the top-right while presenting. */
   onEditPresentation?: () => void;
   onReset: () => void;
-  onExitSharedView: () => void;
 
   // Tour
   onStartTour?: () => void;
@@ -195,7 +193,7 @@ export function Navbar(props: NavbarProps) {
     onExportPdf, onExportPokepaste, onCreatePokepaste, pokepasteCreating, onOpenOTSSheet,
     tournamentMode, onSetTournamentMode,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode, onEditPresentation,
-    onReset, onExitSharedView, onStartTour,
+    onReset, onStartTour,
   } = props;
 
   const { t } = useTranslation();
@@ -351,15 +349,15 @@ export function Navbar(props: NavbarProps) {
               )}
             </>
           ) : isSharedView && !isPresentationStyle ? (
-            <Link href="/" className="flex min-h-11 items-center gap-1 font-bold text-xs sm:text-sm hover:opacity-80 transition-opacity">
+            <a href="/" className="flex min-h-11 items-center gap-1 font-bold text-xs sm:text-sm hover:opacity-80 active:opacity-70 transition-opacity">
               <span className="text-text-primary">VGC</span>
               <span className="text-accent">Report</span>
-            </Link>
+            </a>
           ) : isPresentationStyle ? (
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 text-sm text-text-secondary">
               {/* Home — reports open straight into presentation, so this is the
                   only way back out to the rest of the app from the deck. */}
-              <Link
+              <a
                 href="/"
                 aria-label="Home"
                 title="Home"
@@ -368,7 +366,7 @@ export function Navbar(props: NavbarProps) {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
-              </Link>
+              </a>
               {tournamentName && (
                 <>
                   <span className="font-extrabold text-text-primary truncate tracking-tight">{tournamentName}</span>
@@ -573,15 +571,15 @@ export function Navbar(props: NavbarProps) {
                 /* Plain viewer of someone else's shared report — can't edit.
                    Surface the one action that matters (and the way back to the
                    builder) instead of a meaningless "Exit". */
-                <Link
+                <a
                   href="/"
                   aria-label={t.buildYourOwn}
                   className="inline-flex min-h-11 items-center gap-1.5 px-2 min-[360px]:px-3 sm:px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"
                 >
                   <PlusIcon width="12" height="12" strokeWidth="2.5" />
-                  <span className="min-[360px]:hidden">Build</span>
-                  <span className="hidden min-[360px]:inline">{t.buildYourOwn}</span>
-                </Link>
+                  <span className="min-[430px]:hidden">Build</span>
+                  <span className="hidden min-[430px]:inline">{t.buildYourOwn}</span>
+                </a>
               ) : (
                 /* Owner, collaborator, or the author previewing their own local
                    draft — all can edit. "Edit" drops out of presentation and
@@ -598,10 +596,10 @@ export function Navbar(props: NavbarProps) {
 
           {/* Build Your Own (shared read-only views) — hidden on mobile, ShareViewCTA handles it */}
           {isSharedView && !isPresentationStyle && !isEditingUnlocked && (
-            <Link href="/" className="hidden sm:inline-flex min-h-11 items-center gap-1.5 px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
+            <a href="/" className="hidden sm:inline-flex min-h-11 items-center gap-1.5 px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
               <EditIcon width="12" height="12" strokeWidth="2.5" />
               {t.buildYourOwn}
-            </Link>
+            </a>
           )}
 
           {/* PDF export, version history, tournament mode — all in overflow menu now */}

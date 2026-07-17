@@ -28,7 +28,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
   const {
     isSharedView, isSharePending, sharedState, shareId: activeShareId,
     editKeyFromUrl, copyShareUrl, autoSave, shareStatus,
-    urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, isOwner,
+    urlWarning, decodeFailed, isEditingUnlocked, isOwner,
     sessionShareId, lastShareResult, openShareSheetForUrl, hasExistingShare, clearStoredShare,
     fetchedIsPublic, fetchedIsUnlisted, fetchedCollaborators, autoSaveStatus, forkedFrom, forkReport, redactedFields,
   } = useShareUrl();
@@ -167,7 +167,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
 
   return {
     isSharedView, isSharePending, sharedState, activeShareId, editKeyFromUrl,
-    shareStatus, urlWarning, decodeFailed, exitSharedView, isEditingUnlocked, isOwner,
+    shareStatus, urlWarning, decodeFailed, isEditingUnlocked, isOwner,
     sessionShareId, lastShareResult, openShareSheetForUrl, hasExistingShare, clearStoredShare,
     shareButtonText,
     handleShareClick, handleReshare,
