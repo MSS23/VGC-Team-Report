@@ -286,20 +286,44 @@ export function useHomePage() {
   // Bridge the two through a ref so the autosave/publish paths can signal
   // the sync layer to ignore the version bump they're about to cause.
   const syncControlsRef = useRef<{ markSaving: () => void; updateVersion: (v?: number) => void } | null>(null);
+  const activeDraftIdRef = useRef<string | null>(null);
   const handleSaveStart = useCallback(() => { syncControlsRef.current?.markSaving(); }, []);
   const handleSaveEnd = useCallback(() => { syncControlsRef.current?.updateVersion(); }, []);
+  const getActiveDraftId = useCallback(() => activeDraftIdRef.current, []);
 
   // ── Share flow (extracted) ───────────────────────────────────────
-  const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t, onSaveStart: handleSaveStart, onSaveEnd: handleSaveEnd });
+  const share = useShareFlow({
+    analysis,
+    isSampleTeam,
+    buildShareState,
+    getActiveDraftId,
+    t,
+    onSaveStart: handleSaveStart,
+    onSaveEnd: handleSaveEnd,
+  });
 
   // ── Auto-draft (logged-in users) ─────────────────────────────────
-  const { clearDraft } = useAutoDraft({
+  const {
+    draftId,
+    status: draftSaveStatus,
+    error: draftSaveError,
+    saveDraft,
+    setActiveDraft,
+    clearDraft,
+  } = useAutoDraft({
     isSignedIn: !!isSignedIn,
     analysis,
     isSampleTeam,
-    isSharedView: share.isSharedView,
+    isSharedView: share.isSharedView || !!share.sessionShareId,
     buildShareState,
   });
+  activeDraftIdRef.current = draftId;
+
+  // The share endpoint replaces only the active draft. Mirror that successful
+  // transition locally so the next new team cannot target its deleted ID.
+  useEffect(() => {
+    if (share.lastShareResult?.publicUrl && !share.isSharedView) clearDraft();
+  }, [clearDraft, share.isSharedView, share.lastShareResult?.publicUrl]);
 
   // ── Legacy localStorage eviction (one-time, runs on every mount) ──
   // After the 2026-04-10 leak incident, every team-content storage key
@@ -683,7 +707,8 @@ export function useHomePage() {
   const pendingDraftRef = useRef<import("@/lib/sharing/url-codec").ShareableState | null>(null);
   const draftHydrated = useRef(false);
 
-  const loadDraft = useCallback((state: import("@/lib/sharing/url-codec").ShareableState) => {
+  const loadDraft = useCallback((state: import("@/lib/sharing/url-codec").ShareableState, id?: string) => {
+    if (id) setActiveDraft(id);
     pendingDraftRef.current = state;
     draftHydrated.current = false;
     // Skip the auto-template / auto-archetype / auto-regulation effects;
@@ -694,7 +719,7 @@ export function useHomePage() {
     setIsSampleTeam(false);
     setPaste(state.paste);
     parseTeam(state.paste);
-  }, [setPaste, parseTeam]);
+  }, [setActiveDraft, setPaste, parseTeam]);
 
   useEffect(() => {
     const state = pendingDraftRef.current;
@@ -806,6 +831,10 @@ export function useHomePage() {
     allowComments: share.allowComments,
     setAllowComments: share.setAllowComments,
     autoSaveStatus: share.autoSaveStatus,
+    draftId,
+    draftSaveStatus,
+    draftSaveError,
+    saveDraft,
     collaboratorNames: share.fetchedCollaborators,
     forkedFrom: share.forkedFrom,
     forkReport: share.forkReport,

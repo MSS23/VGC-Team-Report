@@ -156,7 +156,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
   };
 
   const [spotlight, setSpotlight] = useState<ExploreReport | null>(null);
-  const [popularReports, setPopularReports] = useState<ExploreReport[]>([]);
+  const [latestReports, setLatestReports] = useState<ExploreReport[]>([]);
 
   // Fetch spotlight report once per session (delayed to avoid blocking render)
   useEffect(() => {
@@ -181,21 +181,17 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
     return () => clearTimeout(timer);
   }, []);
 
-  // Fetch popular reports once per session (delayed further to not compete with spotlight)
+  // Fetch the actual newest public reports. This deliberately avoids a
+  // session-long cache so returning to the homepage surfaces newly published
+  // teams instead of a stale "latest" rail.
   useEffect(() => {
-    const cached = sessionStorage.getItem("vgc-popular-reports");
-    if (cached) {
-      try { setPopularReports(JSON.parse(cached)); } catch { /* ignore */ }
-      return;
-    }
     const timer = setTimeout(() => {
-      fetch("/api/explore?limit=6&sort=popular")
+      fetch("/api/explore?limit=6&sort=newest", { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
           const reports = Array.isArray(data?.reports) ? data.reports as ExploreReport[] : [];
           if (reports.length > 0) {
-            setPopularReports(reports);
-            sessionStorage.setItem("vgc-popular-reports", JSON.stringify(reports));
+            setLatestReports(reports);
           }
         })
         .catch(() => {});
@@ -567,7 +563,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       )}
 
       {/* Popular reports rail */}
-      {popularReports.length > 0 && (
+      {latestReports.length > 0 && (
         <motion.div
           className="mt-6 sm:mt-8"
           initial={{ opacity: 0, y: 12 }}
@@ -579,15 +575,15 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
               </svg>
-              <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Popular Reports</span>
+              <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Latest Public Reports</span>
             </div>
-            <a href="/explore" className="text-[10px] font-bold text-text-tertiary hover:text-accent transition-colors">
+            <Link href="/explore?sort=newest" className="inline-flex min-h-11 items-center px-2 text-[10px] font-bold text-text-tertiary hover:text-accent transition-colors">
               View all →
-            </a>
+            </Link>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-none -mx-1 px-1">
-            {popularReports.map((report) => (
-              <a
+            {latestReports.map((report) => (
+              <Link
                 key={report.id}
                 href={`/s/${report.id}`}
                 className="flex-shrink-0 snap-start w-40 sm:w-44 rounded-xl bg-surface border border-border hover:border-accent/40 hover:bg-surface-alt/60 transition-all p-3 group"
@@ -607,7 +603,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
                     by {report.creatorName}
                   </p>
                 )}
-              </a>
+              </Link>
             ))}
           </div>
         </motion.div>

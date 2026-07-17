@@ -37,6 +37,7 @@ function ExploreInner() {
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const initialLoad = useRef(true);
+  const listVersionRef = useRef(0);
 
   // Batched per-viewer state for the visible cards (replaces the old
   // per-card GET /api/reactions/{id} and GET /api/user/saved N+1 effects).
@@ -102,7 +103,9 @@ function ExploreInner() {
       if (tournamentMode) params.set("tournament", "1");
       if (hasRental) params.set("hasRental", "1");
 
-      const res = await fetch(`/api/explore?${params}`);
+      const res = await fetch(`/api/explore?${params}`, {
+        cache: sort === "newest" || sort === "updated" ? "no-store" : "default",
+      });
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json() as Promise<{
         reports: ExploreReport[];
@@ -114,22 +117,24 @@ function ExploreInner() {
 
   useEffect(() => {
     let cancelled = false;
+    const requestVersion = ++listVersionRef.current;
     const load = async () => {
       setLoading(true);
+      setLoadingMore(false);
       setLoadError(false);
       try {
         const data = await fetchReports();
-        if (!cancelled) {
+        if (!cancelled && requestVersion === listVersionRef.current) {
           setReports(data.reports);
           setNextCursor(data.nextCursor);
         }
       } catch {
-        if (!cancelled) {
+        if (!cancelled && requestVersion === listVersionRef.current) {
           setReports([]);
           setLoadError(true);
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && requestVersion === listVersionRef.current) {
           setLoading(false);
           initialLoad.current = false;
         }
@@ -138,20 +143,26 @@ function ExploreInner() {
     load();
     return () => {
       cancelled = true;
+      if (requestVersion === listVersionRef.current) listVersionRef.current += 1;
     };
   }, [fetchReports, retryKey]);
 
   const loadMore = async () => {
     if (!nextCursor || loadingMore) return;
+    const requestVersion = listVersionRef.current;
     setLoadingMore(true);
     try {
       const data = await fetchReports(nextCursor);
-      setReports((prev) => [...prev, ...data.reports]);
+      if (requestVersion !== listVersionRef.current) return;
+      setReports((prev) => {
+        const seen = new Set(prev.map((report) => report.id));
+        return [...prev, ...data.reports.filter((report) => !seen.has(report.id))];
+      });
       setNextCursor(data.nextCursor);
     } catch {
       // silently fail
     } finally {
-      setLoadingMore(false);
+      if (requestVersion === listVersionRef.current) setLoadingMore(false);
     }
   };
 

@@ -12,6 +12,8 @@ interface ShareFlowOptions {
   analysis: TeamAnalysis | null;
   isSampleTeam: boolean;
   buildShareState: () => ShareableState;
+  /** Resolve the local draft being published so unrelated drafts survive. */
+  getActiveDraftId?: () => string | null;
   t: TranslationKeys;
   /** Called immediately before any client-initiated save POST fires, so the
    *  collaborative-sync layer can suppress the resulting self-echo. */
@@ -20,7 +22,7 @@ interface ShareFlowOptions {
   onSaveEnd?: () => void;
 }
 
-export function useShareFlow({ analysis, isSampleTeam, buildShareState, t, onSaveStart, onSaveEnd }: ShareFlowOptions) {
+export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiveDraftId, t, onSaveStart, onSaveEnd }: ShareFlowOptions) {
   const { isSignedIn } = useAuth();
   const posthog = usePostHog();
   const {
@@ -87,7 +89,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t, onSav
       return;
     }
     setCreatorRequired(false);
-    const result = await withSaveSuppression(() => copyShareUrl(state, isPublic, isUnlisted));
+    const result = await withSaveSuppression(() => copyShareUrl(state, isPublic, isUnlisted, getActiveDraftId?.()));
     if (result && !result.ok) {
       // Don't open the edit-link panel on a failed share — surface why instead.
       setPublishError(result.error ?? "Could not share report. Please try again.");
@@ -101,7 +103,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, t, onSav
       is_public: isPublic,
       pokemon_count: analysis.pokemon.length,
     });
-  }, [analysis, isSampleTeam, copyShareUrl, buildShareState, isPublic, isUnlisted, isSignedIn, posthog, withSaveSuppression]);
+  }, [analysis, isSampleTeam, copyShareUrl, buildShareState, getActiveDraftId, isPublic, isUnlisted, isSignedIn, posthog, withSaveSuppression]);
 
   const handleReshare = useCallback(() => {
     if (!analysis) return;

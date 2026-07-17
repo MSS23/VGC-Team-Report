@@ -4,44 +4,12 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { ShareableStateSchema } from "@/lib/sharing/url-codec";
 
 const DraftBodySchema = z.object({
-  state: z.object({
-    paste: z.string(),
-    matchupPlans: z.array(z.unknown()).optional().default([]),
-    notes: z.record(z.string(), z.unknown()).optional(),
-    calcs: z.record(z.string(), z.unknown()).optional(),
-    roles: z.record(z.string(), z.unknown()).optional(),
-    teamSummary: z.string().optional(),
-    // Must be listed — .strip() drops unknown keys, which silently lost the
-    // Modes section on every draft save (same bug as /api/share).
-    commonModes: z
-      .object({
-        leads: z.string().optional(),
-        modes: z.string().optional(),
-        strengths: z.string().optional(),
-        weaknesses: z.string().optional(),
-        gameplan: z.string().optional(),
-      })
-      .optional(),
-    teamName: z.string().optional(),
-    tournamentName: z.string().optional(),
-    placement: z.string().optional(),
-    record: z.string().optional(),
-    mvpIndex: z.number().nullable().optional(),
-    rentalCode: z.string().optional(),
-    creatorName: z.string().optional(),
-    spriteSettings: z.unknown().optional(),
-    hiddenSlides: z.array(z.union([z.number(), z.string()])).optional(),
-    tags: z.object({
-      regulation: z.string().optional(),
-      eventType: z.string().optional(),
-      archetype: z.array(z.string()).optional(),
-    }).optional(),
-    templateId: z.string().optional(),
-    privateFields: z.array(z.string()).optional(),
-    genTheme: z.string().optional(),
-  }).strip(),
+  // Reuse the canonical report schema so drafts cannot silently lose newly
+  // added fields when they are saved and resumed later.
+  state: ShareableStateSchema,
   draftId: z.string().optional(),
 });
 

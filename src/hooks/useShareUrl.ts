@@ -243,7 +243,12 @@ export function useShareUrl() {
     return null;
   }, []);
 
-  const copyShareUrl = useCallback(async (state: ShareableState, isPublic?: boolean, isUnlisted?: boolean): Promise<{ ok: boolean; error?: string }> => {
+  const copyShareUrl = useCallback(async (
+    state: ShareableState,
+    isPublic?: boolean,
+    isUnlisted?: boolean,
+    draftId?: string | null,
+  ): Promise<{ ok: boolean; error?: string }> => {
     setShareStatus("copying");
     setUrlWarning(null);
     setLastShareResult(null);
@@ -262,6 +267,7 @@ export function useShareUrl() {
             state,
             existingId: active?.shareId,
             editToken: active?.editToken,
+            draftId: draftId ?? undefined,
             isPublic,
             isUnlisted,
             isPublish: true,

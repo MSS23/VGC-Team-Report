@@ -56,6 +56,7 @@ const ShareBodySchema = z.object({
   }).strip(),
   existingId: z.string().optional(),
   editToken: z.string().optional(),
+  draftId: z.string().min(1).max(128).optional(),
   isPublic: z.boolean().optional(),
   isUnlisted: z.boolean().optional(),
   isPublish: z.boolean().optional(),
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const { state, existingId, editToken, isPublic, isUnlisted, isPublish } = parsed.data;
+    const { state, existingId, editToken, draftId, isPublic, isUnlisted, isPublish } = parsed.data;
 
     // Require authentication for ALL writes — both create and update. An edit
     // token in localStorage alone must never grant mutation rights to an
@@ -417,6 +418,18 @@ export async function POST(request: Request) {
         cacheDel(CacheKeys.share(dup.id)),
         cacheInvalidatePrefix("explore:"),
       ]);
+      // Publishing a resumed draft should remove only that draft. Creators
+      // may have several other works in progress in their dashboard.
+      if (draftId) {
+        try {
+          await sql`
+            DELETE FROM shares
+            WHERE id = ${draftId} AND owner_id = ${ownerId} AND is_draft = TRUE
+          `;
+        } catch (err) {
+          console.error("draft cleanup failed:", err);
+        }
+      }
       return NextResponse.json({
         id: dup.id,
         editToken: dup.edit_token,
@@ -460,11 +473,14 @@ export async function POST(request: Request) {
       } catch { /* skip */ }
     }
 
-    // Clean up any drafts for this user — awaited so the cleanup actually runs
-    // (the real share replaces the draft; a leftover draft confuses the UI).
-    if (ownerId) {
+    // Remove only the active draft being published; keep the creator's other
+    // works in progress available in the dashboard.
+    if (draftId) {
       try {
-        await sql`DELETE FROM shares WHERE owner_id = ${ownerId} AND is_draft = TRUE`;
+        await sql`
+          DELETE FROM shares
+          WHERE id = ${draftId} AND owner_id = ${ownerId} AND is_draft = TRUE
+        `;
       } catch (err) {
         console.error("draft cleanup failed:", err);
       }

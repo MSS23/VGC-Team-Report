@@ -52,6 +52,7 @@ function mount(opts: Record<string, unknown> = {}) {
       analysis: analysis as never,
       isSampleTeam: false,
       buildShareState: (opts.buildShareState as never) ?? (() => ({ creatorName: "Trainer", tags: {} }) as never),
+      getActiveDraftId: opts.getActiveDraftId as never,
       t: t as never,
       onSaveStart: opts.onSaveStart as never,
       onSaveEnd: opts.onSaveEnd as never,
@@ -105,7 +106,17 @@ describe("useShareFlow", () => {
 
     expect(hook.current.creatorRequired).toBe(false);
     expect(shareUrl.copyShareUrl).toHaveBeenCalledTimes(1);
-    expect(shareUrl.copyShareUrl).toHaveBeenCalledWith(expect.anything(), false, true);
+    expect(shareUrl.copyShareUrl).toHaveBeenCalledWith(expect.anything(), false, true, undefined);
+  });
+
+  it("publishes only the active draft", async () => {
+    const hook = mount({ getActiveDraftId: () => "draft-current" });
+
+    await act(async () => {
+      await hook.current.handleShareClick();
+    });
+
+    expect(shareUrl.copyShareUrl).toHaveBeenCalledWith(expect.anything(), false, true, "draft-current");
   });
 
   it("autosaves after the 3s debounce once editing is unlocked", () => {

@@ -146,6 +146,9 @@ function HomeContent() {
     allowComments,
     setAllowComments,
     autoSaveStatus,
+    draftSaveStatus,
+    draftSaveError,
+    saveDraft,
     collaboratorNames,
     collaborators,
     syncStatus,
@@ -316,7 +319,7 @@ function HomeContent() {
           // loadDraft restores the full draft state (paste + teamName +
           // tournamentName + summary + notes + calcs + plans + tags + …),
           // not just the paste like the old handleAnalyze path did.
-          loadDraft(draft.data as import("@/lib/sharing/url-codec").ShareableState);
+          loadDraft(draft.data as import("@/lib/sharing/url-codec").ShareableState, draft.id);
         }
       })
       .catch(() => {});
@@ -888,6 +891,9 @@ function HomeContent() {
         warnings={warnings}
         saveFlash={saveFlash}
         autoSaveStatus={autoSaveStatus}
+        draftSaveStatus={draftSaveStatus}
+        draftSaveError={draftSaveError}
+        onSaveDraft={saveDraft}
         collaborators={collaborators}
         syncStatus={syncStatus}
         isSampleTeam={isSampleTeam}

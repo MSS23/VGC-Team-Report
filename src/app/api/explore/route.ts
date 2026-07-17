@@ -5,6 +5,10 @@ import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import {
+  parseChronologicalCursor,
+  serializeChronologicalCursor,
+} from "@/lib/explore/chronological-cursor";
 
 export const dynamic = "force-dynamic";
 
@@ -29,10 +33,11 @@ export async function GET(request: Request) {
     const filterPlacement = url.searchParams.get("placement") ?? ""; // e.g. "1st", "Top 4", "Top 8"
     const filterFollowing = url.searchParams.get("following") === "1";
     const filterHasRental = url.searchParams.get("hasRental") === "1";
+    const freshnessSensitive = sort === "newest" || sort === "updated";
 
     // ── Cache check (skip for user-specific following queries) ───────
     let cacheKey: string | null = null;
-    if (!filterFollowing) {
+    if (!filterFollowing && !freshnessSensitive) {
       cacheKey = CacheKeys.explore(
         `${sort}:${q}:${searchType}:${cursor ?? ""}:${limit}:${filterRegulation}:${filterEventType}:${filterArchetype}:${filterSpecies}:${filterExcludeSpecies}:${filterPlacement}:rental=${filterHasRental ? 1 : 0}`
       );
@@ -204,6 +209,7 @@ export async function GET(request: Request) {
       `;
     } else {
       const col = sort === "updated" ? sql`s.updated_at` : sql`s.created_at`;
+      const chronologicalCursor = parseChronologicalCursor(cursor);
 
       rows = await sql`
         SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
@@ -212,8 +218,12 @@ export async function GET(request: Request) {
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${cursor ? sql`AND ${col} < ${cursor}` : sql``}
-        ORDER BY ${col} DESC
+          ${chronologicalCursor?.id
+            ? sql`AND (${col}, s.id) < (${chronologicalCursor.timestamp}::timestamptz, ${chronologicalCursor.id})`
+            : chronologicalCursor
+              ? sql`AND ${col} < ${chronologicalCursor.timestamp}::timestamptz`
+              : sql``}
+        ORDER BY ${col} DESC, s.id DESC
         LIMIT ${limit + 1}
       `;
     }
@@ -323,8 +333,8 @@ export async function GET(request: Request) {
       const lastCreatedAt = (last.created_at as Date).toISOString();
       if (sort === "popular") nextCursor = `${last.like_count ?? 0}:${lastCreatedAt}`;
       else if (sort === "views") nextCursor = `${last.view_count ?? 0}:${lastCreatedAt}`;
-      else if (sort === "updated") nextCursor = (last.updated_at as Date).toISOString();
-      else nextCursor = lastCreatedAt;
+      else if (sort === "updated") nextCursor = serializeChronologicalCursor(last.updated_at as Date, last.id as string);
+      else nextCursor = serializeChronologicalCursor(last.created_at as Date, last.id as string);
     }
 
     const result = { reports, nextCursor };
@@ -354,12 +364,15 @@ export async function GET(request: Request) {
     // invocations for the CDN TTL window.
     const res = NextResponse.json(result);
     if (!filterFollowing) {
-      res.headers.set(
-        "Cache-Control",
-        "public, s-maxage=60, stale-while-revalidate=300",
-      );
-      res.headers.set("CDN-Cache-Control", "public, s-maxage=60");
-      res.headers.set("Vercel-CDN-Cache-Control", "public, s-maxage=60");
+      if (freshnessSensitive) {
+        res.headers.set("Cache-Control", "private, no-store, max-age=0");
+        res.headers.set("CDN-Cache-Control", "no-store");
+        res.headers.set("Vercel-CDN-Cache-Control", "no-store");
+      } else {
+        res.headers.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+        res.headers.set("CDN-Cache-Control", "public, s-maxage=60");
+        res.headers.set("Vercel-CDN-Cache-Control", "public, s-maxage=60");
+      }
     }
     return res;
   } catch (e) {
