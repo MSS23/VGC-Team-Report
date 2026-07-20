@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -9,11 +9,17 @@ interface BeforeInstallPromptEvent extends Event {
 
 const DISMISS_KEY = "vgc-install-dismissed";
 const DISMISS_COOLDOWN = 14 * 24 * 60 * 60 * 1000; // 14 days
+const TITLE_ID = "install-prompt-title";
 
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOSPrompt, setShowIOSPrompt] = useState(false);
   const [dismissed, setDismissed] = useState(true); // start hidden, reveal after checks
+  const sheetRef = useRef<HTMLDivElement>(null);
+  // Remember the element that had focus at reveal time so we can restore it
+  // when the sheet closes — otherwise focus falls back to <body> and
+  // keyboard users lose their place in the page.
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     // Don't show if already dismissed recently
@@ -107,7 +113,42 @@ export function InstallPrompt() {
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
   }, []);
 
-  if (dismissed || (!deferredPrompt && !showIOSPrompt)) return null;
+  const isOpen = !dismissed && (deferredPrompt !== null || showIOSPrompt);
+
+  // While the sheet is open, treat Escape as dismissal and move focus into
+  // the sheet on reveal. Without this a keyboard user gets stuck behind the
+  // scrim with no way to close the sheet or reach its buttons. On close,
+  // restore focus to whatever element had it when the sheet opened.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    returnFocusRef.current = document.activeElement as HTMLElement | null;
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        handleDismiss();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+
+    const raf = requestAnimationFrame(() => {
+      const sheet = sheetRef.current;
+      if (!sheet) return;
+      const focusable = sheet.querySelector<HTMLElement>(
+        'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+      );
+      focusable?.focus();
+    });
+
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      cancelAnimationFrame(raf);
+      returnFocusRef.current?.focus?.();
+    };
+  }, [isOpen, handleDismiss]);
+
+  if (!isOpen) return null;
 
   return (
     <>
@@ -121,7 +162,13 @@ export function InstallPrompt() {
       {/* Bottom sheet */}
       <div className="fixed bottom-0 left-0 right-0 z-[61] safe-bottom animate-sheet-up">
         <div className="mx-auto max-w-lg">
-          <div className="bg-surface rounded-t-3xl shadow-[0_-8px_40px_rgba(0,0,0,0.12)] border-t border-x border-border/50 px-6 pt-3 pb-6">
+          <div
+            ref={sheetRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={TITLE_ID}
+            className="bg-surface rounded-t-3xl shadow-[0_-8px_40px_rgba(0,0,0,0.12)] border-t border-x border-border/50 px-6 pt-3 pb-6"
+          >
             {/* Handle bar */}
             <div className="flex justify-center mb-4">
               <div className="w-10 h-1 rounded-full bg-border" />
@@ -141,7 +188,7 @@ export function InstallPrompt() {
               <div className="flex-1 min-w-0">
                 {deferredPrompt ? (
                   <>
-                    <p className="text-base font-bold text-text-primary leading-tight">
+                    <p id={TITLE_ID} className="text-base font-bold text-text-primary leading-tight">
                       Install VGC Team Report
                     </p>
                     <p className="text-sm text-text-secondary mt-1 leading-relaxed">
@@ -150,7 +197,7 @@ export function InstallPrompt() {
                   </>
                 ) : (
                   <>
-                    <p className="text-base font-bold text-text-primary leading-tight">
+                    <p id={TITLE_ID} className="text-base font-bold text-text-primary leading-tight">
                       Add to Home Screen
                     </p>
                     <p className="text-sm text-text-secondary mt-1 leading-relaxed">
