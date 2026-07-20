@@ -27,18 +27,22 @@ async function runLinearDigest() {
   }
 
   try {
-    const completed = await query(
-      `query($teamId: String!, $since: DateTimeOrDuration!) { team(id: $teamId) { issues(filter: { state: { type: { eq: "completed" } }, completedAt: { gte: $since } }, first: 50) { nodes { identifier title } } } }`,
-      { teamId, since: oneWeekAgo }
-    );
-    const inProgress = await query(
-      `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title } } } }`,
-      { teamId }
-    );
-    const inReview = await query(
-      `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Review" } } }, first: 50) { nodes { identifier title } } } }`,
-      { teamId }
-    );
+    // Three independent Linear queries — run in parallel. Was serial ~600ms;
+    // now ~200ms bounded by the slowest.
+    const [completed, inProgress, inReview] = await Promise.all([
+      query(
+        `query($teamId: String!, $since: DateTimeOrDuration!) { team(id: $teamId) { issues(filter: { state: { type: { eq: "completed" } }, completedAt: { gte: $since } }, first: 50) { nodes { identifier title } } } }`,
+        { teamId, since: oneWeekAgo }
+      ),
+      query(
+        `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title } } } }`,
+        { teamId }
+      ),
+      query(
+        `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Review" } } }, first: 50) { nodes { identifier title } } } }`,
+        { teamId }
+      ),
+    ]);
 
     const done = completed.team.issues.nodes;
     const wip = inProgress.team.issues.nodes;
@@ -66,13 +70,33 @@ async function runGrowthDigest() {
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-    const [stw] = await sql`SELECT COUNT(*) as c FROM shares WHERE created_at >= ${oneWeekAgo.toISOString()}`;
-    const [slw] = await sql`SELECT COUNT(*) as c FROM shares WHERE created_at >= ${twoWeeksAgo.toISOString()} AND created_at < ${oneWeekAgo.toISOString()}`;
-    const [ftw] = await sql`SELECT COUNT(*) as c FROM feedback WHERE created_at >= ${oneWeekAgo.toISOString()}`;
-    const [flw] = await sql`SELECT COUNT(*) as c FROM feedback WHERE created_at >= ${twoWeeksAgo.toISOString()} AND created_at < ${oneWeekAgo.toISOString()}`;
-    const [ctw] = await sql`SELECT COUNT(*) as c FROM comments WHERE created_at >= ${oneWeekAgo.toISOString()}`;
-    const [clw] = await sql`SELECT COUNT(*) as c FROM comments WHERE created_at >= ${twoWeeksAgo.toISOString()} AND created_at < ${oneWeekAgo.toISOString()}`;
-    const [total] = await sql`SELECT COUNT(*) as c FROM shares WHERE deleted_at IS NULL`;
+    // Three tables × two windows + one total = 7 counts. Collapse the per-
+    // table counts into a single query with FILTER buckets — this drops the
+    // round-trip fan-out (was 7 × ~50ms serial) to 3 parallel Neon calls.
+    const oneWeekIso = oneWeekAgo.toISOString();
+    const twoWeeksIso = twoWeeksAgo.toISOString();
+
+    const [[sharesRow], [feedbackRow], [commentsRow]] = await Promise.all([
+      sql`
+        SELECT
+          COUNT(*) FILTER (WHERE created_at >= ${oneWeekIso}) AS tw,
+          COUNT(*) FILTER (WHERE created_at >= ${twoWeeksIso} AND created_at < ${oneWeekIso}) AS lw,
+          COUNT(*) FILTER (WHERE deleted_at IS NULL) AS total
+        FROM shares
+      `,
+      sql`
+        SELECT
+          COUNT(*) FILTER (WHERE created_at >= ${oneWeekIso}) AS tw,
+          COUNT(*) FILTER (WHERE created_at >= ${twoWeeksIso} AND created_at < ${oneWeekIso}) AS lw
+        FROM feedback
+      `,
+      sql`
+        SELECT
+          COUNT(*) FILTER (WHERE created_at >= ${oneWeekIso}) AS tw,
+          COUNT(*) FILTER (WHERE created_at >= ${twoWeeksIso} AND created_at < ${oneWeekIso}) AS lw
+        FROM comments
+      `,
+    ]);
 
     function trend(tw: number, lw: number) {
       const diff = tw - lw;
@@ -81,9 +105,10 @@ async function runGrowthDigest() {
       return "";
     }
 
-    const tw = Number(stw.c), lw = Number(slw.c);
-    const ft = Number(ftw.c), fl = Number(flw.c);
-    const ct = Number(ctw.c), cl = Number(clw.c);
+    const tw = Number(sharesRow.tw), lw = Number(sharesRow.lw);
+    const ft = Number(feedbackRow.tw), fl = Number(feedbackRow.lw);
+    const ct = Number(commentsRow.tw), cl = Number(commentsRow.lw);
+    const total = { c: sharesRow.total };
 
     return [
       `Reports: **${tw}**${trend(tw, lw)}`,
@@ -107,23 +132,31 @@ async function runDependencyCheck() {
     const pkg = JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf-8"));
     const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
 
-    const outdated: string[] = [];
-    for (const name of keyDeps) {
-      if (!allDeps[name]) continue;
-      try {
-        const npmController = new AbortController();
-        const npmTimeout = setTimeout(() => npmController.abort(), 5000);
-        const res = await fetch(`https://registry.npmjs.org/${name}/latest`, {
-          signal: npmController.signal,
-        }).finally(() => clearTimeout(npmTimeout));
-        if (!res.ok) continue;
-        const data = await res.json();
-        const current = allDeps[name].replace(/^[\^~]/, "");
-        if (current !== data.version) {
-          outdated.push(`\`${name}\` ${current} -> ${data.version}`);
-        }
-      } catch { /* skip */ }
-    }
+    // Was serial: N deps × up-to-5s each. Parallel fan-out bounds the whole
+    // check at ~5s regardless of dep count, with per-request timeout preserved.
+    const results = await Promise.all(
+      keyDeps
+        .filter((name) => allDeps[name])
+        .map(async (name) => {
+          try {
+            const npmController = new AbortController();
+            const npmTimeout = setTimeout(() => npmController.abort(), 5000);
+            const res = await fetch(`https://registry.npmjs.org/${name}/latest`, {
+              signal: npmController.signal,
+            }).finally(() => clearTimeout(npmTimeout));
+            if (!res.ok) return null;
+            const data = await res.json();
+            const current = allDeps[name].replace(/^[\^~]/, "");
+            if (current !== data.version) {
+              return `\`${name}\` ${current} -> ${data.version}`;
+            }
+            return null;
+          } catch {
+            return null;
+          }
+        })
+    );
+    const outdated: string[] = results.filter((r): r is string => r !== null);
 
     return outdated.length > 0
       ? `**${outdated.length} updates:**\n${outdated.map((o) => `- ${o}`).join("\n")}`

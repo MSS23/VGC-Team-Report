@@ -65,31 +65,31 @@ export async function GET(request: NextRequest) {
 
   try {
     if (action === "summary" || action === "weekly-email") {
-      // Get feedback stats for the last 7 days
-      const stats = await sql`
-        SELECT
-          COUNT(*) as total,
-          COUNT(*) FILTER (WHERE type = 'bug') as bugs,
-          COUNT(*) FILTER (WHERE type = 'feature') as features,
-          COUNT(*) FILTER (WHERE type = 'improvement') as improvements,
-          COUNT(*) FILTER (WHERE type = 'other') as other_count
-        FROM feedback
-        WHERE created_at > NOW() - INTERVAL '7 days'
-      `;
-
-      const recent = (await sql`
-        SELECT type, title, submitter_name, created_at
-        FROM feedback
-        WHERE created_at > NOW() - INTERVAL '7 days'
-        ORDER BY created_at DESC
-        LIMIT 10
-      `) as FeedbackRecentRow[];
-
-      // Find trending: group similar titles
-      const allRecent = (await sql`
-        SELECT title, type FROM feedback
-        WHERE created_at > NOW() - INTERVAL '30 days'
-      `) as FeedbackRecentRow[];
+      // Three independent SELECTs — fan out in parallel. Was serial
+      // ~3 × Neon round-trip; now bounded by the slowest single query.
+      const [stats, recent, allRecent] = await Promise.all([
+        sql`
+          SELECT
+            COUNT(*) as total,
+            COUNT(*) FILTER (WHERE type = 'bug') as bugs,
+            COUNT(*) FILTER (WHERE type = 'feature') as features,
+            COUNT(*) FILTER (WHERE type = 'improvement') as improvements,
+            COUNT(*) FILTER (WHERE type = 'other') as other_count
+          FROM feedback
+          WHERE created_at > NOW() - INTERVAL '7 days'
+        `,
+        sql`
+          SELECT type, title, submitter_name, created_at
+          FROM feedback
+          WHERE created_at > NOW() - INTERVAL '7 days'
+          ORDER BY created_at DESC
+          LIMIT 10
+        ` as unknown as Promise<FeedbackRecentRow[]>,
+        sql`
+          SELECT title, type FROM feedback
+          WHERE created_at > NOW() - INTERVAL '30 days'
+        ` as unknown as Promise<FeedbackRecentRow[]>,
+      ]);
 
       // Simple keyword clustering — count repeated words in titles
       const wordCounts: Record<string, { count: number; titles: Set<string> }> = {};
