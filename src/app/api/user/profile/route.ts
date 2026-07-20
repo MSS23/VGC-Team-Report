@@ -8,20 +8,60 @@ import { escapeHtml } from "@/lib/utils/sanitize";
 
 const VALID_THEMES = ["rose", "ocean", "emerald", "amber", "violet", "sunset"];
 
+// Handles are interpolated straight into anchor `href`s
+// (`https://twitter.com/${handle}`, `https://youtube.com/@${handle}`) on the
+// public creator page. Without validation a user can set the field to
+// `foo?redirect=evil.com` or `../../evil` and produce a working phishing link
+// that looks like an endorsed profile link. Matches Twitter (max 15) and
+// YouTube (max 30) handle rules with a permissive superset.
+const HANDLE_REGEX = /^[A-Za-z0-9_.-]{1,30}$/;
+
+// Avatar URLs are rendered directly as an <img src> on the public creator
+// page. HTTPS-only is not enough — an attacker-controlled host lets them
+// track every visitor via the image request (referer + IP). Matches the CSP
+// img-src set in next.config.ts.
+const ALLOWED_AVATAR_HOSTS = new Set([
+  "img.clerk.com",
+  "images.clerk.dev",
+  "i.imgur.com",
+  "avatars.githubusercontent.com",
+]);
+
+function isAllowedAvatarUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return false;
+    return ALLOWED_AVATAR_HOSTS.has(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 const ProfileBody = z.object({
   bio: z.string().max(500).optional(),
-  twitter: z.string().max(100).optional(),
+  twitter: z
+    .string()
+    .max(30)
+    .optional()
+    .refine((v) => !v || HANDLE_REGEX.test(v), { message: "Invalid twitter handle" }),
   discord: z.string().max(100).optional(),
-  youtube: z.string().max(100).optional(),
+  youtube: z
+    .string()
+    .max(30)
+    .optional()
+    .refine((v) => !v || HANDLE_REGEX.test(v), { message: "Invalid youtube handle" }),
   isPublic: z.boolean().optional(),
   accentTheme: z.string().max(20).optional().refine(
     (v) => !v || VALID_THEMES.includes(v),
     { message: "Invalid theme" }
   ),
-  avatarUrl: z.string().max(500).optional().refine(
-    (v) => !v || v.startsWith("https://"),
-    { message: "Avatar URL must be HTTPS" }
-  ),
+  avatarUrl: z
+    .string()
+    .max(500)
+    .optional()
+    .refine((v) => !v || isAllowedAvatarUrl(v), {
+      message: "Avatar URL host not allowed",
+    }),
 });
 
 // GET: fetch current user's creator profile

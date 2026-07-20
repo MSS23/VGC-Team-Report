@@ -40,8 +40,17 @@ export function validateCsrf(request: Request): boolean {
 
   if (!cookieToken || !headerToken) return false;
   if (cookieToken.length !== TOKEN_LENGTH * 2) return false;
+  if (cookieToken.length !== headerToken.length) return false;
 
-  return cookieToken === headerToken;
+  // Constant-time comparison. Runs in the middleware (edge) runtime where
+  // Node's crypto.timingSafeEqual isn't available, so we XOR-fold every
+  // char to a running diff — as long as both strings are equal length,
+  // the loop and comparison take the same time for any input pair.
+  let diff = 0;
+  for (let i = 0; i < cookieToken.length; i++) {
+    diff |= cookieToken.charCodeAt(i) ^ headerToken.charCodeAt(i);
+  }
+  return diff === 0;
 }
 
 /** Create a response that sets the CSRF cookie (for initial page load) */
