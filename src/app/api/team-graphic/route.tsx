@@ -92,8 +92,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
+  // Match the id shape used everywhere else (see comments/reactions/views
+  // routes) — a shareId that isn't exactly 8 URL-safe chars can't identify
+  // any real share, so return 404 without touching the database.
+  if (!/^[A-Za-z0-9]{8}$/.test(shareId)) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Gate on visibility. Without this a caller who guesses (or is told) any
+  // 8-char id can pull the paste/tera/item/ability/tournament/placement of
+  // a *private* report by asking for its OG image. Public or unlisted only.
   const sql = getDb();
-  const rows = await sql`SELECT data FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
+  const rows = await sql`
+    SELECT data
+    FROM shares
+    WHERE id = ${shareId}
+      AND deleted_at IS NULL
+      AND (is_public = TRUE OR is_unlisted = TRUE)
+  `;
   if (rows.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
