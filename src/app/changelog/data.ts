@@ -17,6 +17,26 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "July 2026",
+    version: "5.25",
+    title: "Security, Accessibility & Server Speed Under the Hood",
+    emoji: "🛡️",
+    highlight: false,
+    items: [
+      { type: "fixed", text: "Security: the /api/team-graphic endpoint (used to render the shareable OG image) no longer serves private reports — a caller who knew or guessed an 8-char id could pull the paste, tera, item, ability, tournament and placement of a private report by requesting its graphic. Now gated on Public or Unlisted, matching the /s/[id]/opengraph-image route." },
+      { type: "fixed", text: "Security: creator profile twitter/youtube handles are now validated against a strict handle regex before they're interpolated into outbound anchor URLs on the public profile — this closes a phishing vector where a user could set 'foo?redirect=evil.com' and end up with a working link that looked endorsed." },
+      { type: "fixed", text: "Security: creator profile avatar URLs are now restricted to img.clerk.com, images.clerk.dev, i.imgur.com and avatars.githubusercontent.com — HTTPS alone wasn't enough because an attacker-controlled host could track every public-profile visitor via referer + IP." },
+      { type: "fixed", text: "Security: the CSRF double-submit token check now uses constant-time comparison in the middleware/edge runtime, closing a theoretical timing side-channel on the token equality gate." },
+      { type: "improved", text: "Accessibility: the Install-App bottom sheet now behaves like a real dialog — role='dialog', aria-modal, aria-labelledby, Escape to dismiss, and focus is moved into the sheet on open and restored on close. Keyboard users could previously get stuck behind the scrim with no way to reach the sheet buttons." },
+      { type: "improved", text: "Accessibility: the notification bell trigger in the navbar is now 44×44 (WCAG 2.5.8) to match every other icon-only button in the app." },
+      { type: "improved", text: "Performance: the weekly Discord report cron shaves roughly a second per run by parallelising the three Linear GraphQL queries, collapsing seven per-table COUNT(*) queries into three FILTER-bucket queries, and fanning the npm-registry version checks out with Promise.all instead of a serial loop." },
+      { type: "improved", text: "Performance: the /api/bot summary handler runs its three feedback SELECTs in parallel instead of serial, cutting the endpoint's server time by 200–400 ms." },
+      { type: "improved", text: "SEO: static sitemap entries (/, /explore, /champions, /faq, /support, /privacy, /terms and every Champions Mega page) once again carry a lastModified timestamp — the hourly regenerate now refreshes it naturally so search engines get a fresh recrawl hint every pass." },
+      { type: "improved", text: "Types: explicit return types on eight hot server helpers (captureServerEvent, createNotification, notifyFollowers, sendEmail, sendCommentNotificationEmail, sendWelcomeEmail, buildWeeklySummaryHtml, postFeedbackEmbed) so a future signature drift fails at the compiler rather than silently propagating to callers." },
+      { type: "improved", text: "Cleanup: deleted ~412 lines of unused code — an orphan DisplayTogglePill component and its useGlobalDisplayPrefs hook, a never-used ConsentGate provider, the legacy sync isRateLimited wrapper (all callers use the async variant), and one dead getRegMBMegas helper. Zero user-visible change; less to trip over." },
+    ],
+  },
+  {
+    date: "July 2026",
     version: "5.24",
     title: "Common Combinations, Clearer Speed Tiers & Faster Everything",
     emoji: "🎯",
