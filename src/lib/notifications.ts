@@ -12,7 +12,7 @@ export async function createNotification(
   sourceShareId: string | null,
   sourceUserName: string | null,
   message: string,
-) {
+): Promise<void> {
   try {
     const sql = getDb();
     await sql`
@@ -31,7 +31,7 @@ export async function notifyFollowers(
   creatorName: string,
   shareId: string,
   excludeUserId?: string,
-) {
+): Promise<void> {
   try {
     const sql = getDb();
     const message = `${creatorName} published a new team report`;

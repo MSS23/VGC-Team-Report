@@ -68,7 +68,7 @@ export async function postFeedbackEmbed(opts: {
   screenSize?: string;
   linearUrl?: string;
   linearIdentifier?: string;
-}) {
+}): Promise<{ id: string } | null> {
   const { channelId, configured } = getConfig();
   if (!configured) return null;
 
@@ -100,8 +100,10 @@ export async function postFeedbackEmbed(opts: {
     });
   }
 
-  // Post the embed
-  const message = await discordFetch(`/channels/${channelId}/messages`, {
+  // Post the embed. discordFetch's untyped res.json() means `message` is
+  // otherwise `any`; we know this endpoint returns a message-create response,
+  // which always has a string `id`.
+  const message = (await discordFetch(`/channels/${channelId}/messages`, {
     method: "POST",
     body: JSON.stringify({
       embeds: [{
@@ -112,7 +114,7 @@ export async function postFeedbackEmbed(opts: {
         timestamp: new Date().toISOString(),
       }],
     }),
-  });
+  })) as { id: string };
 
   // Try to find an existing thread with a similar topic, or create one
   try {

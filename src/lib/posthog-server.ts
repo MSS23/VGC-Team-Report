@@ -32,7 +32,7 @@ export function captureServerEvent(
   distinctId: string,
   event: string,
   properties?: Record<string, unknown>,
-) {
+): void {
   const ph = getPostHogServer();
   if (!ph) return;
   ph.capture({ distinctId, event, properties });
