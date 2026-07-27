@@ -17,6 +17,21 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "July 2026",
+    version: "5.25",
+    title: "Security, Accessibility & Dead-Code Sweep",
+    emoji: "🛡️",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Security (HIGH): the /api/team-graphic PNG endpoint no longer exposes private teams. It now enforces the same is_public / is_unlisted check as /s/{id} and /api/embed — a private report's full paste (species, item, ability, Tera type, tournament name, creator name) can no longer be pulled down as a shareable image by anyone with the share id. The id is also regex-validated against /^[A-Za-z0-9]{8}$/ before hitting the database, matching every other share-scoped endpoint." },
+      { type: "fixed", text: "Security: CSRF cookie/header token comparison switched from `===` to a constant-time equality helper — closes a theoretical remote timing side-channel that could leak the per-session token. Uses a pure-JS implementation because csrf.ts is imported by the edge middleware where node:crypto's timingSafeEqual isn't universally available." },
+      { type: "fixed", text: "Security: /api/user/saved shareId body validation tightened from `min(1)` to the standard /^[A-Za-z0-9]{8}$/ regex used elsewhere in the codebase — defence-in-depth against oversized IDs or enumeration attempts slipping into a DB lookup." },
+      { type: "improved", text: "Accessibility: LanguageSelector, top-bar WarningPopover, and the Legality badge triggers in TeamOverview now report aria-expanded and aria-haspopup so screen readers announce disclosure state correctly. The dark-mode toggle in PageNavbar reports aria-pressed so the toggled state is spoken. Decorative SVG icons inside already-labelled buttons (settings cog, replace-species pencil, error X, sun/moon) got aria-hidden so screen readers stop double-announcing them." },
+      { type: "improved", text: "Accessibility: Champions page type badges now use dark text on light backgrounds (Electric, Ice, Ground, Steel) — the previous white-on-yellow / white-on-cyan combination failed WCAG AA contrast." },
+      { type: "improved", text: "Dead-code cleanup: deleted the unused DisplayTogglePill component and its useGlobalDisplayPrefs hook (no importers), removed the unused asPokemonTypes helper and getRegMBMegas selector, and downgraded the sole stray console.log in weekly-digest to console.info to match sibling cron routes." },
+    ],
+  },
+  {
+    date: "July 2026",
     version: "5.24",
     title: "Common Combinations, Clearer Speed Tiers & Faster Everything",
     emoji: "🎯",
