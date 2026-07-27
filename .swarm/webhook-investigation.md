@@ -1,22 +1,42 @@
-# Linear Webhook Investigation — 2026-05-28
+# Webhook Investigation — 2026-07-27
 
-## Root causes found (same as prior 7 runs — no PR has been merged):
+## Handler location
+`src/app/api/webhooks/linear/route.ts` — exists and is well-formed.
 
-1. **Wrong env var name**: `LINEAR_WEBHOOK_SECRET` → should be `LINEAR_WEBHOOK_SIGNING_SECRET`
-   - Fix: accept both via `??` fallback for backward compat
-2. **Wrong signature header**: `x-linear-signature` → Linear sends `linear-signature`
-   - Fix: check `linear-signature` first, fall back to `x-linear-signature`
-3. **Missing `force-dynamic`**: Next.js App Router may cache/static-optimize the route
-   - Fix: added `export const dynamic = "force-dynamic"`
-4. **500 on errors**: catch block returned 500, which causes Linear to retry and eventually auto-disable
-   - Fix: return 200 in catch block — acknowledge receipt even if processing fails
-5. **No empty body handling**: Linear setup ping may send empty body
-   - Fix: return 200 immediately for empty bodies
+## Audit checklist (all pass)
+- ✅ Reads signing secret from `process.env.LINEAR_WEBHOOK_SIGNING_SECRET` (with `LINEAR_WEBHOOK_SECRET` legacy fallback).
+- ✅ No hardcoded secret in source.
+- ✅ Reads raw body via `await request.text()` BEFORE JSON parsing — HMAC computed over raw bytes.
+- ✅ Verifies `linear-signature` header (with `x-linear-signature` fallback).
+- ✅ HMAC-SHA256, hex encoded, compared with `crypto.timingSafeEqual` (constant time).
+- ✅ Returns 200 for empty body (Linear setup ping).
+- ✅ Returns 401 for missing secret or invalid signature.
+- ✅ Returns 400 for missing signature header.
+- ✅ Wraps in try/catch returning 200 on unhandled errors — prevents Linear from auto-disabling on transient failures.
+- ✅ Handles `url_verification` challenge event.
+- ✅ Returns 405 on GET with proper `Allow` header.
+- ✅ Exports `dynamic = "force-dynamic"` and `runtime = "nodejs"` (Node crypto available).
+- ✅ Returns 200 for unknown event types (falls through to `{ ok: true }`).
 
-## Env var status:
-- No `.env.local` in this container — cannot verify Vercel Production has the correct secret
-- **Human action required**: verify `LINEAR_WEBHOOK_SIGNING_SECRET` in Vercel Production matches Linear webhook config
-- After merge + deploy: re-enable webhook in Linear settings if auto-disabled
+## Diagnosis
+The handler code is correct. If Linear is reporting delivery failures, the root cause is one of:
 
-## Note:
-This is the 8th consecutive nightly run proposing this fix. None of the previous PRs (35-48) have been merged.
+1. **Env-var mismatch (most likely):** `LINEAR_WEBHOOK_SIGNING_SECRET` (or `LINEAR_WEBHOOK_SECRET`) in Vercel Production does not match the secret configured in Linear's webhook settings. Every request returns 401 and Linear counts them as failures. **Requires human action** — cannot be fixed from the swarm.
+
+2. **Env-var missing:** If neither `LINEAR_WEBHOOK_SIGNING_SECRET` nor `LINEAR_WEBHOOK_SECRET` is set in Vercel Production, every request returns 401. **Requires human action.**
+
+3. **Header casing:** Linear may be sending signature under a different header name than `linear-signature` / `x-linear-signature`. Unlikely — the handler already covers both.
+
+## Access limitations this run
+- Cannot query Vercel MCP (unavailable in this session).
+- Cannot query PostHog for webhook route errors (POSTHOG_API_KEY not in env).
+- Cannot verify actual delivery status from Linear (Linear MCP not authenticated).
+
+## Recommended action for human
+1. Log into Vercel Production → Settings → Environment Variables. Verify `LINEAR_WEBHOOK_SIGNING_SECRET` exists and is non-empty.
+2. Log into Linear → Settings → API → Webhooks → the failing webhook. Copy the signing secret shown there.
+3. Compare: they must match exactly (no leading/trailing whitespace, no rotated secret drift).
+4. If mismatched, either update Vercel env var to match Linear, or regenerate the Linear secret and update Vercel.
+5. Redeploy Vercel to pick up any env-var change.
+6. Trigger a test event in Linear → verify Vercel logs show 200.
+7. Re-enable the webhook in Linear settings if it was auto-disabled.
