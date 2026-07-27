@@ -31,6 +31,8 @@ export function LanguageSelector() {
         className="flex min-w-11 min-h-11 items-center justify-center gap-1.5 px-2 sm:px-2.5 py-2 rounded-lg border-2 border-border text-xs font-bold text-text-secondary hover:text-text-primary hover:border-accent/40 active:scale-[0.97] bg-surface-alt transition-all cursor-pointer"
         title={t.language}
         aria-label={t.language}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
       >
         <span className="uppercase tracking-wider">{currentLang.code}</span>
         {!isEnglish && (

@@ -240,6 +240,8 @@ function LegalityBadge({ result }: { result: LegalityResult }) {
           type="button"
           onClick={() => setOpen(!open)}
           className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition-colors"
+          aria-expanded={open}
+          aria-haspopup="dialog"
         >
           &#10003; Legal
         </button>
@@ -270,6 +272,8 @@ function LegalityBadge({ result }: { result: LegalityResult }) {
             ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-500/20"
             : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
         }`}
+        aria-expanded={open}
+        aria-haspopup="dialog"
       >
         {errors.length > 0 ? "\u2716" : "\u26A0"} {issueCount} {issueCount === 1 ? "issue" : "issues"}
       </button>

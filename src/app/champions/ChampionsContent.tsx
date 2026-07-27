@@ -29,6 +29,14 @@ const TYPE_COLORS: Record<string, string> = {
   Steel: "#B8B8D0", Fairy: "#EE99AC",
 };
 
+// Light type colors where white text fails WCAG 1.4.3 AA contrast. Same set
+// used by Pokemon Showdown and Bulbapedia for readability against pale backs.
+const LIGHT_TYPE_BADGES = new Set(["Electric", "Ice", "Ground", "Steel"]);
+const typeBadgeText = (type: string, dim = false) =>
+  LIGHT_TYPE_BADGES.has(type)
+    ? (dim ? "text-black/70" : "text-black")
+    : (dim ? "text-white/70" : "text-white");
+
 export function ChampionsContent() {
   const posthog = usePostHog();
   useEffect(() => {
@@ -141,7 +149,7 @@ export function ChampionsContent() {
                       {mon.types.map((t) => (
                         <span
                           key={t}
-                          className="text-[10px] font-bold text-white/70 px-2 py-0.5 rounded-full"
+                          className={`text-[10px] font-bold ${typeBadgeText(t, true)} px-2 py-0.5 rounded-full`}
                           style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
                         >
                           {t}
@@ -164,7 +172,7 @@ export function ChampionsContent() {
                     {mon.types.map((t) => (
                       <span
                         key={t}
-                        className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
+                        className={`text-[10px] font-bold ${typeBadgeText(t)} px-2 py-0.5 rounded-full`}
                         style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
                       >
                         {t}
