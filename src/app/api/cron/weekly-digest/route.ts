@@ -370,6 +370,6 @@ export async function GET(request: Request) {
     }
   }
 
-  console.log(`[weekly-digest] Done — sent:${sent} skipped:${skipped} errors:${errors}`);
+  console.info(`[weekly-digest] Done — sent:${sent} skipped:${skipped} errors:${errors}`);
   return NextResponse.json({ ok: true, sent, skipped, errors });
 }

@@ -842,11 +842,6 @@ export const CHAMPIONS_REG_MB_MEGAS = new Set<string>([
   ...CHAMPIONS_REG_MB_ONLY_MEGAS,
 ]);
 
-/** Filtered list of MEGA_POKEMON_LIST entries that are legal in Reg M-B. */
-export function getRegMBMegas(): MegaPokemonEntry[] {
-  return MEGA_POKEMON_LIST.filter((m) => CHAMPIONS_REG_MB_MEGAS.has(m.dataKey));
-}
-
 /**
  * Megas with at least one usable sprite on Pokemon Showdown's CDN
  * (probed across all 4 sprite paths: ani.gif, gen5ani.gif, home.png,
