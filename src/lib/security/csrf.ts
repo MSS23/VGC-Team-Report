@@ -40,8 +40,24 @@ export function validateCsrf(request: Request): boolean {
 
   if (!cookieToken || !headerToken) return false;
   if (cookieToken.length !== TOKEN_LENGTH * 2) return false;
+  if (headerToken.length !== cookieToken.length) return false;
 
-  return cookieToken === headerToken;
+  return constantTimeEqual(cookieToken, headerToken);
+}
+
+/**
+ * Constant-time string comparison — runs in a fixed number of operations
+ * relative to the shared length. Prefer this over `===` when comparing
+ * secrets so a remote timing side-channel cannot leak the token byte-by-byte.
+ * Pure JS so it works in both the Node and Edge runtimes (this file is
+ * imported by `src/proxy.ts` which runs on Edge).
+ */
+function constantTimeEqual(a: string, b: string): boolean {
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
 }
 
 /** Create a response that sets the CSRF cookie (for initial page load) */

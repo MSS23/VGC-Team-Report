@@ -2,10 +2,13 @@ import { ImageResponse } from "next/og";
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
 import { POKEMON_TYPES_MAP } from "@/lib/data/pokemon-types-map";
 
 export const runtime = "edge";
+
+const ShareIdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/);
 
 interface OGPokemon {
   species: string;
@@ -85,16 +88,30 @@ export async function GET(request: Request) {
   if (guard) return guard;
 
   const url = new URL(request.url);
-  const shareId = url.searchParams.get("id");
+  const rawShareId = url.searchParams.get("id");
   const style = url.searchParams.get("style") ?? "wide";
 
-  if (!shareId) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  const parsed = ShareIdSchema.safeParse(rawShareId);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Missing or invalid id" }, { status: 400 });
   }
+  const shareId = parsed.data;
 
+  // Enforce the same visibility rule as /s/{id} anonymous read
+  // (src/app/api/share/[id]/route.ts): only Public and Unlisted shares are
+  // readable via this unauthenticated endpoint. Without this, a private
+  // report's full team paste (species, item, ability, Tera type) leaks as a
+  // shareable PNG to anyone who knows or guesses the share ID.
   const sql = getDb();
-  const rows = await sql`SELECT data FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
+  const rows = await sql`
+    SELECT data, is_public, is_unlisted
+    FROM shares
+    WHERE id = ${shareId} AND deleted_at IS NULL
+  `;
   if (rows.length === 0) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  if (!rows[0].is_public && !rows[0].is_unlisted) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 

@@ -58,7 +58,12 @@ export async function GET(request: Request) {
   }
 }
 
-const SaveBody = z.object({ shareId: z.string().min(1) });
+// Matches the ShareIdSchema used elsewhere (share/[id], collections,
+// team-graphic) — defence-in-depth against ID enumeration or oversized IDs
+// slipping into a DB lookup.
+const SaveBody = z.object({
+  shareId: z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID"),
+});
 
 // POST: save a report
 export async function POST(request: Request) {
