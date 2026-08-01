@@ -115,20 +115,18 @@ export function convertToChampionsSp(evs: StatSpread): StatSpread {
     sp[stat] = Math.min(sp[stat], CHAMPIONS_MAX_SP_PER_STAT);
   }
 
-  // Step 3: Distribute remaining SP to invested stats (highest EV first)
+  // Step 3: Distribute remaining SP to invested stats (highest EV first).
+  // Only invested stats — padding uninvested stats fabricated allocations
+  // (an empty EVs line became 32 HP / 32 Atk / 2 Def on every Pokemon).
+  // Leftover budget stays unspent; the legality validator surfaces it.
   let totalSp = stats.reduce((sum, s) => sum + sp[s], 0);
   if (totalSp < CHAMPIONS_TOTAL_SP) {
     const investedStats = stats
       .filter((s) => sp[s] > 0 && sp[s] < CHAMPIONS_MAX_SP_PER_STAT)
       .sort((a, b) => evs[b] - evs[a]);
 
-    // If no invested stats have room, try uninvested stats
-    const candidates = investedStats.length > 0
-      ? investedStats
-      : stats.filter((s) => sp[s] < CHAMPIONS_MAX_SP_PER_STAT).sort((a, b) => evs[b] - evs[a]);
-
     let remaining = CHAMPIONS_TOTAL_SP - totalSp;
-    for (const stat of candidates) {
+    for (const stat of investedStats) {
       if (remaining <= 0) break;
       const canAdd = CHAMPIONS_MAX_SP_PER_STAT - sp[stat];
       const add = Math.min(canAdd, remaining);

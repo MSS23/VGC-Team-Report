@@ -1,5 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { calculateStat, calculateAllStats } from "@/lib/analysis/stat-calculator";
+import {
+  calculateStat,
+  calculateAllStats,
+  calculateChampionsStat,
+  convertToChampionsSp,
+  CHAMPIONS_TOTAL_SP,
+} from "@/lib/analysis/stat-calculator";
+import type { StatSpread } from "@/lib/types/pokemon";
+
+function spread(partial: Partial<StatSpread> = {}): StatSpread {
+  return { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0, ...partial };
+}
 
 describe("calculateStat", () => {
   describe("HP calculation", () => {
@@ -106,5 +117,58 @@ describe("calculateAllStats", () => {
     expect(stats.spa).toBe(90);  // Jolly -SpA
     // All 6 stat keys should be present
     expect(Object.keys(stats)).toHaveLength(6);
+  });
+});
+
+describe("convertToChampionsSp", () => {
+  it("returns all zeros for a zero-EV spread (regression: was fabricating 32 HP / 32 Atk / 2 Def)", () => {
+    expect(convertToChampionsSp(spread())).toEqual(spread());
+  });
+
+  it("does not pad uninvested stats when invested stats are already maxed", () => {
+    // 252 HP only → 32 HP, nothing invented in Atk
+    expect(convertToChampionsSp(spread({ hp: 252 }))).toEqual(spread({ hp: 32 }));
+  });
+
+  it("passes through spreads already in SP form (total ≤ 66, per-stat ≤ 32)", () => {
+    const sp = spread({ hp: 22, def: 11, spa: 24, spd: 4, spe: 5 });
+    expect(convertToChampionsSp(sp)).toEqual(sp);
+  });
+
+  it("converts a standard 252/4/252 EV spread within budget", () => {
+    const sp = convertToChampionsSp(spread({ atk: 252, spd: 4, spe: 252 }));
+    expect(sp.atk).toBe(32);
+    expect(sp.spe).toBe(32);
+    expect(sp.spd).toBeGreaterThanOrEqual(1); // 4 EVs keeps its minimum investment
+    expect(sp.hp).toBe(0);
+    expect(sp.def).toBe(0);
+    expect(sp.spa).toBe(0);
+    const total = Object.values(sp).reduce((a, b) => a + b, 0);
+    expect(total).toBeLessThanOrEqual(CHAMPIONS_TOTAL_SP);
+  });
+
+  it("never exceeds the 66 SP budget or 32 per stat", () => {
+    const sp = convertToChampionsSp(spread({ hp: 252, atk: 252, def: 252, spe: 252 }));
+    const total = Object.values(sp).reduce((a, b) => a + b, 0);
+    expect(total).toBeLessThanOrEqual(CHAMPIONS_TOTAL_SP);
+    for (const v of Object.values(sp)) expect(v).toBeLessThanOrEqual(32);
+  });
+});
+
+describe("calculateChampionsStat", () => {
+  it("calculates HP: floor((2*base+31)*50/100) + 60 + SP", () => {
+    // Garchomp base 108 HP, 32 SP: floor(247*50/100) + 60 + 32 = 123 + 92 = 215
+    expect(calculateChampionsStat("hp", 108, 32, "Jolly")).toBe(215);
+  });
+
+  it("calculates a nature-boosted stat", () => {
+    // Garchomp base 130 Atk, 32 SP, Adamant: floor((floor(291*50/100) + 5 + 32) * 1.1)
+    // = floor((145 + 37) * 1.1) = floor(200.2) = 200
+    expect(calculateChampionsStat("atk", 130, 32, "Adamant")).toBe(200);
+  });
+
+  it("uninvested stat gets no SP bonus", () => {
+    // base 130 Atk, 0 SP, neutral: 145 + 5 = 150
+    expect(calculateChampionsStat("atk", 130, 0, "Serious")).toBe(150);
   });
 });
