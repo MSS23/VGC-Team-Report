@@ -16,7 +16,7 @@ node node_modules/next/dist/bin/next build        # prod build
 ```
 
 - If you must run npx (e.g. the Vercel CLI), `cd ~` first — any cwd without `&` works.
-- Vercel CLI is not installed globally, but CLI auth exists on this machine (`$LOCALAPPDATA/com.vercel.cli/Data/auth.json`), so `cd ~ && npx -y vercel <cmd>` works.
+- Vercel CLI is not installed globally, but CLI auth exists on this machine (`$APPDATA/com.vercel.cli/Data/auth.json`), so `cd ~ && npx -y vercel <cmd>` works.
 
 ## Architecture map
 
