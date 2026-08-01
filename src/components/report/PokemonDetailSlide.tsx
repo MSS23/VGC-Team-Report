@@ -6,6 +6,7 @@ import { isChampionsFormat } from "@/lib/data/tags";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { CalcEntry, CalcCategory } from "@/hooks/useDamageCalcs";
 import { PokemonSprite } from "./PokemonSprite";
+import { StatColorNote } from "./StatColorNote";
 import { TypeBadge } from "./TypeBadge";
 import { CalcInput } from "./CalcInput";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
@@ -790,10 +791,9 @@ function PokemonDetailSlideBase({
         )}
       </div>
       {/* Clarify that bar colors are a fixed per-stat palette (which stat),
-          not a percentile/quality ranking — a common point of confusion. */}
-      <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-wide text-text-tertiary/70">
-        Bar color = stat type, not quality
-      </p>
+          not a percentile/quality ranking — a common point of confusion.
+          Dismissible; hides everywhere once the user gets it. */}
+      <StatColorNote />
 
       {/* Mega stat delta strip — shows base → mega changes when Mega is active.
           Uses championsStats in Reg M-A (SP-based) and megaStats otherwise so
