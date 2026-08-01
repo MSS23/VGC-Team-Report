@@ -16,6 +16,15 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "August 2026",
+    version: "5.25",
+    title: "Hide the Stat Bar Caption",
+    emoji: "👋",
+    items: [
+      { type: "improved", text: "Stat bars: the 'bar color = stat type, not quality' caption is now dismissible — tap the × next to it and it stays hidden on your browser, across every card and report. Requested by a user who already knew." },
+    ],
+  },
+  {
     date: "July 2026",
     version: "5.24",
     title: "Common Combinations, Clearer Speed Tiers & Faster Everything",
