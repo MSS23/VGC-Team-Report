@@ -5,12 +5,24 @@
 set -euo pipefail
 
 # ── Config ────────────────────────────────────────────────────────────────────
+# Credentials resolve environment-first, then fall back to .env.local.
+# This lets headless/swarm containers inject LINEAR_API_KEY and
+# DISCORD_BUILDS_WEBHOOK as env vars without needing a .env.local file,
+# while local dev keeps working unchanged. All lookups are guarded so a
+# missing file or key can't kill `source` under `set -euo pipefail`.
 PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo ".")"
-LINEAR_API_KEY=$(grep LINEAR_API_KEY "$PROJECT_ROOT/.env.local" | cut -d= -f2)
-LINEAR_TEAM_ID="06531926-0387-4a3e-8325-8b7be754ced5"
+
+_env_local_get() {
+  # Usage: _env_local_get KEY  → value from .env.local, or empty
+  grep -m1 "^${1}=" "$PROJECT_ROOT/.env.local" 2>/dev/null | cut -d= -f2- || true
+}
+
+LINEAR_API_KEY="${LINEAR_API_KEY:-$(_env_local_get LINEAR_API_KEY)}"
+LINEAR_TEAM_ID="${LINEAR_TEAM_ID:-06531926-0387-4a3e-8325-8b7be754ced5}"
 
 # ── State IDs ─────────────────────────────────────────────────────────────────
-STATE_BACKLOG="$(linear_query '{ team(id: "'"$LINEAR_TEAM_ID"'") { states { nodes { id type } } } }' 2>/dev/null | python3 -c "import sys,json; states=json.load(sys.stdin)['data']['team']['states']['nodes']; print([s['id'] for s in states if s['type']=='backlog'][0])" 2>/dev/null || echo "")"
+# NOTE: STATE_BACKLOG is resolved lazily (see linear_state_backlog below) —
+# the old eager lookup ran before linear_query was defined and was always "".
 STATE_IN_PROGRESS="0cbef347-0afb-4fa1-8dc2-79e9e04d1abe"
 STATE_IN_REVIEW="89e58e68-05e3-4dc9-a0e8-20344f1b1a00"
 
@@ -19,7 +31,28 @@ GITHUB_REPO="MSS23/VGC-Team-Report"
 GITHUB_BASE_URL="https://github.com/$GITHUB_REPO"
 
 # ── Discord ───────────────────────────────────────────────────────────────────
-DISCORD_BUILDS_WEBHOOK=$(grep DISCORD_BUILDS_WEBHOOK "$PROJECT_ROOT/.env.local" | cut -d= -f2)
+DISCORD_BUILDS_WEBHOOK="${DISCORD_BUILDS_WEBHOOK:-$(_env_local_get DISCORD_BUILDS_WEBHOOK)}"
+
+# ── Preflight ────────────────────────────────────────────────────────────────
+linear_preflight() {
+  # Reports which connections are usable. Exit 0 if all configured, 1 otherwise.
+  # Swarm sessions should run this ONCE at start and skip unavailable
+  # integrations for the rest of the run instead of retrying them.
+  local ok=0
+  if [[ -n "$LINEAR_API_KEY" ]]; then
+    echo "✅ LINEAR_API_KEY present"
+  else
+    echo "❌ LINEAR_API_KEY missing (env var or .env.local) — skip all Linear ops this run"
+    ok=1
+  fi
+  if [[ -n "$DISCORD_BUILDS_WEBHOOK" ]]; then
+    echo "✅ DISCORD_BUILDS_WEBHOOK present"
+  else
+    echo "❌ DISCORD_BUILDS_WEBHOOK missing (env var or .env.local) — skip Discord notifications this run"
+    ok=1
+  fi
+  return $ok
+}
 
 # ── Core API ──────────────────────────────────────────────────────────────────
 
@@ -35,6 +68,15 @@ linear_query() {
 linear_mutate() {
   # Usage: linear_mutate 'mutation { ... }'
   linear_query "$1"
+}
+
+linear_state_backlog() {
+  # Lazily resolves (and caches) the Backlog state UUID. Safe to call anytime
+  # after sourcing — unlike the old top-of-file lookup, linear_query exists now.
+  if [[ -z "${STATE_BACKLOG:-}" ]]; then
+    STATE_BACKLOG="$(linear_query '{ team(id: \"'"$LINEAR_TEAM_ID"'\") { states { nodes { id type } } } }' 2>/dev/null | python3 -c "import sys,json; states=json.load(sys.stdin)['data']['team']['states']['nodes']; print([s['id'] for s in states if s['type']=='backlog'][0])" 2>/dev/null || echo "")"
+  fi
+  echo "$STATE_BACKLOG"
 }
 
 # ── Issue Operations ──────────────────────────────────────────────────────────
@@ -64,7 +106,7 @@ linear_create_issue() {
   local description="$2"
   local priority="$3"
   local project_id="$4"
-  local state_id="${STATE_BACKLOG:-}"
+  local state_id="$(linear_state_backlog)"
 
   local state_input=""
   if [[ -n "$state_id" ]]; then

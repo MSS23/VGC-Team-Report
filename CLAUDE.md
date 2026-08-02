@@ -16,6 +16,7 @@ node node_modules/next/dist/bin/next build        # prod build
 ```
 
 - If you must run npx (e.g. the Vercel CLI), `cd ~` first — any cwd without `&` works.
+- **Overnight swarm container:** run `source scripts/swarm-setup.sh` FIRST, before `npm install`. It clears the proxy vars that cause npm ECONNRESET, sets `CYPRESS_INSTALL_BINARY=0` (the Cypress CDN 403s through the proxy), and runs the connection preflight. Credentials arrive as **env vars** (`LINEAR_API_KEY`, `DISCORD_BUILDS_WEBHOOK`) — there is no `.env.local` in the container; `linear.sh` resolves env-first. If the preflight reports an integration missing, **skip it for the whole run and say so in the report — do not retry it.** The Linear-webhook-fix P0 is stale: it has been merged on main since May; don't re-verify it.
 - Vercel CLI is not installed globally, but CLI auth exists on this machine (`$APPDATA/com.vercel.cli/Data/auth.json`), so `cd ~ && npx -y vercel <cmd>` works.
 
 ## Architecture map
