@@ -147,6 +147,21 @@ describe("validateChampionsTeam", () => {
     ).toBe(true);
   });
 
+  it("flags a fully uninvested Pokemon as 0/66 SP (regression: zero spreads were silent)", () => {
+    const team = makeTeam();
+    team[0] = makePokemon({ evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 } });
+    const result = validateChampionsTeam(team);
+    expect(
+      result.issues.some(
+        (i) =>
+          i.severity === "info" &&
+          i.pokemon === "Incineroar" &&
+          i.message.includes("0/66 SP allocated") &&
+          i.message.includes("66 more available"),
+      ),
+    ).toBe(true);
+  });
+
   it("keeps traditional EV spreads on the EV path (any stat over 32 disambiguates)", () => {
     const team = makeTeam();
     // Classic 252/252/4 spread — unambiguously EVs because 252 > 32.

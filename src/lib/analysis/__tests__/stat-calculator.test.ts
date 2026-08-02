@@ -4,6 +4,7 @@ import {
   calculateAllStats,
   calculateChampionsStat,
   convertToChampionsSp,
+  looksLikeChampionsSp,
   CHAMPIONS_TOTAL_SP,
 } from "@/lib/analysis/stat-calculator";
 import type { StatSpread } from "@/lib/types/pokemon";
@@ -121,7 +122,7 @@ describe("calculateAllStats", () => {
 });
 
 describe("convertToChampionsSp", () => {
-  it("returns all zeros for a zero-EV spread (regression: was fabricating 32 HP / 32 Atk / 2 Def)", () => {
+  it("returns all zeros for a fully uninvested spread (regression: was fabricating 32 HP / 32 Atk / 2 Def)", () => {
     expect(convertToChampionsSp(spread())).toEqual(spread());
   });
 
@@ -130,28 +131,68 @@ describe("convertToChampionsSp", () => {
     expect(convertToChampionsSp(spread({ hp: 252 }))).toEqual(spread({ hp: 32 }));
   });
 
+  it("regression: 252 HP / 4 Def does not turn the 4-EV filler into a maxed 32 SP Def", () => {
+    // Was 32 HP / 32 Def — the leftover budget was dumped into the only
+    // stat with headroom, inventing investment the user never made.
+    expect(convertToChampionsSp(spread({ hp: 252, def: 4 }))).toEqual(
+      spread({ hp: 32, def: 1 }),
+    );
+  });
+
+  it("regression: a 4-EV filler converts identically regardless of the rest of the spread", () => {
+    // The old greedy top-up gave the filler 31 SP with one maxed stat and
+    // 2 SP with two, so the same 4 EVs meant different things per spread.
+    const oneMaxed = convertToChampionsSp(spread({ hp: 252, spd: 4 }));
+    const twoMaxed = convertToChampionsSp(spread({ hp: 252, atk: 252, spd: 4 }));
+    expect(oneMaxed.spd).toBe(1);
+    expect(twoMaxed.spd).toBe(1);
+  });
+
   it("passes through spreads already in SP form (total ≤ 66, per-stat ≤ 32)", () => {
     const sp = spread({ hp: 22, def: 11, spa: 24, spd: 4, spe: 5 });
     expect(convertToChampionsSp(sp)).toEqual(sp);
   });
 
-  it("converts a standard 252/4/252 EV spread within budget", () => {
-    const sp = convertToChampionsSp(spread({ atk: 252, spd: 4, spe: 252 }));
-    expect(sp.atk).toBe(32);
-    expect(sp.spe).toBe(32);
-    expect(sp.spd).toBeGreaterThanOrEqual(1); // 4 EVs keeps its minimum investment
-    expect(sp.hp).toBe(0);
-    expect(sp.def).toBe(0);
-    expect(sp.spa).toBe(0);
-    const total = Object.values(sp).reduce((a, b) => a + b, 0);
-    expect(total).toBeLessThanOrEqual(CHAMPIONS_TOTAL_SP);
+  it("converts a standard 252/4/252 EV spread to exact SP values", () => {
+    // 252 → 32, 4 → 1, leftover budget stays unspent (65/66).
+    expect(convertToChampionsSp(spread({ atk: 252, spd: 4, spe: 252 }))).toEqual(
+      spread({ atk: 32, spd: 1, spe: 32 }),
+    );
+  });
+
+  it("scales partial investment proportionally (ceil of EV/8)", () => {
+    expect(convertToChampionsSp(spread({ hp: 156, atk: 100, spe: 252 }))).toEqual(
+      spread({ hp: 20, atk: 13, spe: 32 }),
+    );
   });
 
   it("never exceeds the 66 SP budget or 32 per stat", () => {
-    const sp = convertToChampionsSp(spread({ hp: 252, atk: 252, def: 252, spe: 252 }));
-    const total = Object.values(sp).reduce((a, b) => a + b, 0);
-    expect(total).toBeLessThanOrEqual(CHAMPIONS_TOTAL_SP);
-    for (const v of Object.values(sp)) expect(v).toBeLessThanOrEqual(32);
+    for (const evs of [
+      spread({ hp: 252, atk: 252, def: 252, spe: 252 }),
+      spread({ hp: 252, atk: 252, spd: 4 }),
+      spread({ hp: 156, atk: 100, spe: 252 }),
+      spread({ hp: 252, def: 4 }),
+      spread(),
+    ]) {
+      const sp = convertToChampionsSp(evs);
+      const total = Object.values(sp).reduce((a, b) => a + b, 0);
+      expect(total).toBeLessThanOrEqual(CHAMPIONS_TOTAL_SP);
+      for (const v of Object.values(sp)) expect(v).toBeLessThanOrEqual(32);
+    }
+  });
+});
+
+describe("looksLikeChampionsSp", () => {
+  it("reads a 66-total spread with per-stat ≤ 32 as SP", () => {
+    expect(looksLikeChampionsSp(spread({ hp: 22, def: 11, spa: 24, spd: 4, spe: 5 }))).toBe(true);
+  });
+
+  it("reads an all-zero spread as SP (0/66 allocated, not an EV spread)", () => {
+    expect(looksLikeChampionsSp(spread())).toBe(true);
+  });
+
+  it("rejects traditional EV spreads", () => {
+    expect(looksLikeChampionsSp(spread({ hp: 252, def: 4, spd: 252 }))).toBe(false);
   });
 });
 
