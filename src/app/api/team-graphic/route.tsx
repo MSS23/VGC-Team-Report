@@ -4,8 +4,12 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { NextResponse } from "next/server";
 import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
 import { POKEMON_TYPES_MAP } from "@/lib/data/pokemon-types-map";
+import { normalizePrivateFields, redactPasteFields } from "@/lib/sharing/redact-paste";
+import { z } from "zod";
 
 export const runtime = "edge";
+
+const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
 
 interface OGPokemon {
   species: string;
@@ -85,21 +89,42 @@ export async function GET(request: Request) {
   if (guard) return guard;
 
   const url = new URL(request.url);
-  const shareId = url.searchParams.get("id");
+  const rawShareId = url.searchParams.get("id");
   const style = url.searchParams.get("style") ?? "wide";
 
-  if (!shareId) {
+  if (!rawShareId) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
+  const idResult = IdSchema.safeParse(rawShareId);
+  if (!idResult.success) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  const shareId = idResult.data;
+
   const sql = getDb();
-  const rows = await sql`SELECT data FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
+  const rows = await sql`SELECT data, is_public, is_unlisted FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
   if (rows.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // This endpoint is unauthenticated (edge, used by unfurlers and the
+  // download-card button), so it can only ever serve outsiders. Same rule as
+  // the other share reads: a report that is neither public nor unlisted is
+  // private and must not be rendered — not even as an image. (404, matching
+  // /api/share/[id].)
+  const isPublic = !!rows[0].is_public;
+  const isUnlisted = !!rows[0].is_unlisted;
+  if (!isPublic && !isUnlisted) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const data = rows[0].data as Record<string, unknown>;
-  const paste = (data.paste as string) ?? "";
+  // Honour tiered publishing (VGC-142): fields the creator marked private are
+  // stripped from the paste before we render anything, so the graphic can't
+  // become a bypass for the redaction /api/share/[id] applies.
+  const privateFields = normalizePrivateFields(data.privateFields as string[] | undefined);
+  const paste = redactPasteFields((data.paste as string) ?? "", privateFields);
   const tournamentName = (data.tournamentName as string) ?? "";
   const placement = (data.placement as string) ?? "";
   const creatorName = (data.creatorName as string) ?? "";
