@@ -176,7 +176,7 @@ export function InstallPrompt() {
                   <button
                     type="button"
                     onClick={handleInstall}
-                    className="w-full py-3 bg-accent text-white text-sm font-bold rounded-2xl hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-accent/20"
+                    className="w-full py-3 bg-accent text-accent-on text-sm font-bold rounded-2xl hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-lg shadow-accent/20"
                   >
                     Install App
                   </button>

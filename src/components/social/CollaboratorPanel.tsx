@@ -263,7 +263,7 @@ export function CollaboratorPanel({ shareId, panelId = "manage-access" }: Collab
                         type="button"
                         onClick={() => handleAdd(user)}
                         disabled={adding === user.id}
-                        className="min-h-11 min-w-14 px-2.5 py-2 text-xs font-bold rounded-md bg-accent text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+                        className="min-h-11 min-w-14 px-2.5 py-2 text-xs font-bold rounded-md bg-accent text-accent-on hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
                       >
                         {adding === user.id ? "..." : "Add"}
                       </button>

@@ -74,7 +74,7 @@ export default function SupportPage() {
                   href={donationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-white shadow-sm shadow-accent/20 transition-all hover:brightness-110 active:scale-[0.98]"
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-on shadow-sm shadow-accent/20 transition-all hover:brightness-110 active:scale-[0.98]"
                 >
                   Donate securely
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

@@ -189,7 +189,7 @@ export function DisplayTogglePill({
                     onClick={() => onGlobalMegaChange(false)}
                     className={`flex-1 h-full rounded-md text-xs font-semibold transition-colors duration-150 cursor-pointer ${
                       !showingMega
-                        ? "bg-accent text-white shadow-sm"
+                        ? "bg-accent text-accent-on shadow-sm"
                         : "text-text-secondary hover:text-text-primary"
                     }`}
                   >

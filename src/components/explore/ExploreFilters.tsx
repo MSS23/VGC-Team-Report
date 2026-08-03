@@ -269,7 +269,7 @@ export function ExploreFilters({
             aria-pressed={searchCategory === key}
             className={`inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap ${
               searchCategory === key
-                ? "bg-accent text-white shadow-sm"
+                ? "bg-accent text-accent-on shadow-sm"
                 : "bg-surface-alt/60 text-text-tertiary hover:text-text-secondary hover:bg-surface-alt"
             }`}
           >
@@ -342,7 +342,7 @@ export function ExploreFilters({
           />
           More filters
           {advancedFilterCount > 0 && (
-            <span className="min-w-[16px] h-4 flex items-center justify-center bg-accent text-white text-[9px] font-bold rounded-full px-1">
+            <span className="min-w-[16px] h-4 flex items-center justify-center bg-accent text-accent-on text-[9px] font-bold rounded-full px-1">
               {advancedFilterCount}
             </span>
           )}
@@ -451,7 +451,7 @@ export function ExploreFilters({
                         }}
                         className={`min-h-11 text-xs font-bold px-3 py-2 rounded-lg border transition-all cursor-pointer active:scale-[0.97] ${
                           active
-                            ? "bg-accent text-white border-accent"
+                            ? "bg-accent text-accent-on border-accent"
                             : "bg-surface-alt/50 text-text-tertiary border-transparent hover:text-text-secondary"
                         }`}
                       >
@@ -506,7 +506,7 @@ export function ExploreFilters({
                     aria-label="Show reports from creators I follow"
                     className={`inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
                       followingOnly
-                        ? "bg-accent text-white"
+                        ? "bg-accent text-accent-on"
                         : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
                     }`}
                   >

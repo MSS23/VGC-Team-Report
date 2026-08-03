@@ -11,6 +11,7 @@ import { UserButton, Show, SignInButton } from "@clerk/nextjs";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 import { UserIcon, SpinnerIcon, LinkIcon, LockIcon } from "@/components/ui/icons";
+import { ReducedMotionProvider } from "@/components/providers/ReducedMotionProvider";
 
 interface Profile {
   bio: string;
@@ -25,7 +26,9 @@ interface Profile {
 export default function ProfilePage() {
   return (
     <I18nProvider>
-      <ProfileInner />
+      <ReducedMotionProvider>
+        <ProfileInner />
+      </ReducedMotionProvider>
     </I18nProvider>
   );
 }
@@ -166,6 +169,7 @@ function ProfileInner() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Track the initial profile to detect unsaved changes
   const initialProfileRef = useRef<Profile | null>(null);
@@ -201,6 +205,7 @@ function ProfileInner() {
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
+    setSaveError(null);
     try {
       const res = await fetch("/api/user/profile", {
         method: "PUT",
@@ -211,8 +216,17 @@ function ProfileInner() {
         initialProfileRef.current = { ...profile };
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
+      } else {
+        // The server refuses profile writes for a creator name another account
+        // already publishes under, so this must not fail silently.
+        const body = await res.json().catch(() => null);
+        setSaveError(
+          (body?.error as string) || "Couldn't save your profile. Please try again.",
+        );
       }
-    } catch { /* silent */ }
+    } catch {
+      setSaveError("Couldn't save your profile. Please try again.");
+    }
     finally { setSaving(false); }
   };
 
@@ -226,7 +240,7 @@ function ProfileInner() {
           <div className="text-center py-20">
             <h1 className="text-2xl font-extrabold mb-3">Sign in to edit your profile</h1>
             <SignInButton mode="modal">
-              <button className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer">Sign In</button>
+              <button className="px-6 py-3 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer">Sign In</button>
             </SignInButton>
           </div>
         </Show>
@@ -475,10 +489,17 @@ function ProfileInner() {
             className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-surface/95 backdrop-blur-md shadow-[0_-4px_20px_rgb(0_0_0/0.08)]"
           >
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-              <p className="text-xs text-text-secondary">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5 align-middle" />
-                You have unsaved changes
-              </p>
+              {saveError ? (
+                <p role="alert" className="text-xs font-medium text-rose-700 dark:text-rose-400">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-600 dark:bg-rose-400 mr-1.5 align-middle" />
+                  {saveError}
+                </p>
+              ) : (
+                <p className="text-xs text-text-secondary">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5 align-middle" />
+                  You have unsaved changes
+                </p>
+              )}
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -493,7 +514,7 @@ function ProfileInner() {
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-5 py-2 bg-accent text-white text-xs font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all disabled:opacity-40 tracking-wide focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 cursor-pointer"
+                  className="px-5 py-2 bg-accent text-accent-on text-xs font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all disabled:opacity-40 tracking-wide focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 cursor-pointer"
                 >
                   {saving ? "Saving..." : "Save Profile"}
                 </button>

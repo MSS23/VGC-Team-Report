@@ -447,7 +447,7 @@ export function CompareContent() {
               <button
                 onClick={handleCompare}
                 disabled={!pasteA.trim() || !pasteB.trim() || fetching}
-                className="px-8 py-3 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide"
+                className="px-8 py-3 bg-accent text-accent-on rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide"
               >
                 {fetching ? (
                   <span className="flex items-center gap-2">

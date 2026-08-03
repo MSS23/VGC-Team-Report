@@ -85,7 +85,7 @@ export function ExploreEmpty({
         <div className="mt-6 flex flex-col items-center gap-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide min-h-[44px]"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide min-h-[44px]"
           >
             {t.buildYourOwn}
           </Link>

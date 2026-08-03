@@ -131,7 +131,7 @@ function SideModifierToggle({
               onClick={() => onToggle(side, key)}
               className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 active
-                  ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
+                  ? "bg-accent text-accent-on border-accent shadow-sm shadow-accent/20"
                   : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
               }`}
               title={`${cfg.label} on ${label}: ${cfg.description}`}

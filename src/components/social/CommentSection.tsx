@@ -238,7 +238,7 @@ export function CommentSection({ shareId, canModerate = false }: CommentSectionP
               type="button"
               onClick={handleSubmit}
               disabled={!body.trim() || submitting}
-              className="px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed tracking-wide"
+              className="px-4 py-2 bg-accent text-accent-on text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed tracking-wide"
             >
               {submitting ? "Posting..." : "Post Comment"}
             </button>

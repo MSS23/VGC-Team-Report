@@ -10,6 +10,7 @@ import { getSessionId } from "@/lib/utils/session-id";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 import { SignInButton, useAuth } from "@clerk/nextjs";
+import { ReducedMotionProvider } from "@/components/providers/ReducedMotionProvider";
 
 const TYPES = [
   { value: "feature", label: "Feature Request", icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5", color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20", activeColor: "border-emerald-500/50 bg-emerald-500/15 shadow-emerald-500/10" },
@@ -48,7 +49,9 @@ function detectScreenSize(): string {
 export function FeedbackContent() {
   return (
     <I18nProvider>
-      <FeedbackInner />
+      <ReducedMotionProvider>
+        <FeedbackInner />
+      </ReducedMotionProvider>
     </I18nProvider>
   );
 }
@@ -136,7 +139,7 @@ function FeedbackInner() {
               We require sign-in so we can follow up on your feedback and keep submissions high quality.
             </p>
             <SignInButton mode="modal">
-              <button className="min-h-11 px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide">
+              <button className="min-h-11 px-6 py-2.5 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide">
                 Sign in
               </button>
             </SignInButton>
@@ -163,7 +166,7 @@ function FeedbackInner() {
               Your feedback has been submitted. We review every submission and use it to improve VGC Team Report.
             </p>
             <div className="flex items-center justify-center gap-3">
-              <Link href="/" className="inline-flex min-h-11 items-center px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+              <Link href="/" className="inline-flex min-h-11 items-center px-6 py-2.5 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                 Back to Home
               </Link>
               <button

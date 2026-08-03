@@ -74,7 +74,7 @@ export function ChampionsContent() {
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19" />
@@ -207,7 +207,7 @@ export function ChampionsContent() {
                 </div>
                 <Link
                   href={`/?sample=${team.id}`}
-                  className="mt-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-accent-surface text-accent text-xs font-bold rounded-lg hover:bg-accent hover:text-white transition-colors"
+                  className="mt-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-accent-surface text-accent text-xs font-bold rounded-lg hover:bg-accent hover:text-accent-on transition-colors"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <polygon points="5 3 19 12 5 21 5 3" />
@@ -352,7 +352,7 @@ export function ChampionsContent() {
                     href={source.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-11 items-center gap-1.5 px-4 bg-accent-surface text-accent text-xs font-bold rounded-lg hover:bg-accent hover:text-white transition-colors"
+                    className="inline-flex min-h-11 items-center gap-1.5 px-4 bg-accent-surface text-accent text-xs font-bold rounded-lg hover:bg-accent hover:text-accent-on transition-colors"
                     aria-label={`View Indianapolis Regionals results on ${source.label} (opens in a new tab)`}
                   >
                     {source.label}
@@ -430,7 +430,7 @@ export function ChampionsContent() {
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-8 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
+            className="inline-flex items-center gap-2 px-8 py-3 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
           >
             Start Building
           </Link>

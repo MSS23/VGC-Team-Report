@@ -574,7 +574,7 @@ export function Navbar(props: NavbarProps) {
                 <a
                   href="/"
                   aria-label={t.buildYourOwn}
-                  className="inline-flex min-h-11 items-center gap-1.5 px-2 min-[360px]:px-3 sm:px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"
+                  className="inline-flex min-h-11 items-center gap-1.5 px-2 min-[360px]:px-3 sm:px-4 py-2 bg-accent text-accent-on text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"
                 >
                   <PlusIcon width="12" height="12" strokeWidth="2.5" />
                   <span className="min-[430px]:hidden">Build</span>
@@ -596,7 +596,7 @@ export function Navbar(props: NavbarProps) {
 
           {/* Build Your Own (shared read-only views) — hidden on mobile, ShareViewCTA handles it */}
           {isSharedView && !isPresentationStyle && !isEditingUnlocked && (
-            <a href="/" className="hidden sm:inline-flex min-h-11 items-center gap-1.5 px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
+            <a href="/" className="hidden sm:inline-flex min-h-11 items-center gap-1.5 px-4 py-2 bg-accent text-accent-on text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
               <EditIcon width="12" height="12" strokeWidth="2.5" />
               {t.buildYourOwn}
             </a>
@@ -649,7 +649,7 @@ export function Navbar(props: NavbarProps) {
                     <div className="px-4 py-2.5">
                       <SignInButton mode="modal">
                         <button
-                          className="w-full px-3 py-2 text-sm font-bold text-white bg-accent rounded-lg hover:brightness-110 transition-all cursor-pointer"
+                          className="w-full px-3 py-2 text-sm font-bold text-accent-on bg-accent rounded-lg hover:brightness-110 transition-all cursor-pointer"
                           onClick={() => setMenuOpen(false)}
                         >
                           Sign In

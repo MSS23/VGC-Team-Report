@@ -484,7 +484,7 @@ export function ShareModal({
             <button
               type="button"
               onClick={handleNativeShare}
-              className="flex items-center justify-center gap-3 w-full px-4 py-3.5 bg-accent text-white rounded-xl font-bold text-sm hover:bg-accent/90 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-accent/25"
+              className="flex items-center justify-center gap-3 w-full px-4 py-3.5 bg-accent text-accent-on rounded-xl font-bold text-sm hover:bg-accent/90 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-accent/25"
             >
               <ShareIcon width="18" height="18" />
               {t.shareModalNativeShare}
@@ -700,7 +700,7 @@ export function ShareModal({
                   <button
                     type="button"
                     onClick={() => setPublicConfirmDismissed(true)}
-                    className="px-3.5 py-2.5 text-xs font-bold rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors cursor-pointer"
+                    className="px-3.5 py-2.5 text-xs font-bold rounded-lg bg-accent text-accent-on hover:bg-accent/90 transition-colors cursor-pointer"
                   >
                     {t.shareModalYesPublish}
                   </button>

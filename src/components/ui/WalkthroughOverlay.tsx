@@ -340,7 +340,7 @@ export function WalkthroughOverlay({
             )}
             <button
               onClick={onNext}
-              className="text-xs font-bold text-white bg-accent hover:brightness-110 px-5 py-2 rounded-lg active:scale-[0.95] transition-all cursor-pointer shadow-sm shadow-accent/25"
+              className="text-xs font-bold text-accent-on bg-accent hover:brightness-110 px-5 py-2 rounded-lg active:scale-[0.95] transition-all cursor-pointer shadow-sm shadow-accent/25"
             >
               {isLastStep ? t.done : t.next}
             </button>

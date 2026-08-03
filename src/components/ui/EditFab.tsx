@@ -18,7 +18,7 @@ export function EditFab({ creatorMode, onToggle, visible }: EditFabProps) {
       onClick={() => { hapticMedium(); onToggle(); }}
       className={`fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:right-6 z-40 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all active:scale-90 hover:scale-105 group ${
         creatorMode
-          ? "bg-accent text-white shadow-accent/30 hover:shadow-accent/50"
+          ? "bg-accent text-accent-on shadow-accent/30 hover:shadow-accent/50"
           : "bg-surface text-text-secondary border border-border shadow-black/10 hover:shadow-black/20 hover:border-accent/30"
       }`}
       aria-label={creatorMode ? "Switch to view mode" : "Switch to edit mode"}
