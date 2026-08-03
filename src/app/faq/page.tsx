@@ -90,7 +90,7 @@ const FAQ_ITEMS = [
   {
     question: "What are SP spreads in Pokémon Champions?",
     answer:
-      "In the Pokémon Champions format, Stat Points (SP) replace the traditional EV (Effort Value) system. Each Pokémon has 600 total SP to distribute across the six stats (HP, Attack, Defense, Sp. Atk, Sp. Def, Speed), with a maximum of 200 SP per individual stat. SP function similarly to EVs but with different numerical values — 200 SP in a stat is roughly equivalent to 252 EVs in traditional VGC. VGC Team Report automatically detects Champion format teams and displays SP values correctly when you import a team paste.",
+      "In the Pokémon Champions format, Stat Points (SP) replace the traditional EV (Effort Value) system. Each Pokémon has 66 total SP to distribute across the six stats (HP, Attack, Defense, Sp. Atk, Sp. Def, Speed), with a maximum of 32 SP per individual stat. SP are not a 1:1 rename of EVs — the budget is far smaller and the scale is different, so a maxed 32 SP corresponds to a fully invested 252 EV stat in traditional VGC. VGC Team Report automatically detects Champions format teams and converts EV-style pastes to their correct SP values when you import a team paste.",
   },
   {
     question: "What is Regulation M-A in Pokémon Champions?",
