@@ -524,7 +524,10 @@ export function useHomePage() {
     setSaveFlash(true);
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => setSaveFlash(false), 1500);
-  }, [notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, analysis, share.isSharedView]);
+    // VGC-245: `commonModes` was missing from this list, so editing the
+    // "How to Pilot This Team" section never flashed "Saved" on a local
+    // draft even though the edit was persisted.
+  }, [notes, calcs, roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, analysis, share.isSharedView]);
 
   // ── Walkthrough ──────────────────────────────────────────────────
   const pokemonNames = useMemo(
