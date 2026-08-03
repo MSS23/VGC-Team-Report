@@ -55,7 +55,7 @@ const FAQ_ITEMS = [
   {
     question: "Does VGC Team Report support Pokémon Champions and Mega Evolution?",
     answer:
-      "Yes. VGC Team Report fully supports Pokémon Champions — the official competitive format for the 2026 Play! Pokémon Championship Series — including Mega Evolution detection and display. When you import a Pokémon Champions team, Mega Evolutions are automatically recognized and displayed with their Mega form stats. VGC Team Report also supports the Regulation M-A format used for Indianapolis Regionals and the 2026 World Championships.",
+      "Yes. VGC Team Report fully supports Pokémon Champions — the official competitive format for the 2026 Play! Pokémon Championship Series — including Mega Evolution detection and display. When you import a Pokémon Champions team, Mega Evolutions are automatically recognized and displayed with their Mega form stats. Both Regulation M-A and the newer Regulation M-B Mega rotation are supported, and the correct legal Mega list is applied per regulation.",
   },
   {
     question: "How is VGC Team Report different from PokéPaste or VGC.tools?",
@@ -70,7 +70,7 @@ const FAQ_ITEMS = [
   {
     question: "What competitive Pokémon formats does VGC Team Report support?",
     answer:
-      "VGC Team Report supports Pokémon Champions 2026 (Regulation M-A with Mega Evolution), Pokémon Scarlet and Violet (all Regulation sets including H, I, and earlier), and standard Pokémon Showdown export format for any generation. When new regulation sets launch for Pokémon Champions, the tool is updated to recognize the expanded Pokédex and new mechanics.",
+      "VGC Team Report supports Pokémon Champions 2026 (Regulations M-A and M-B, both with Mega Evolution), Pokémon Scarlet and Violet (all Regulation sets including H, I, and earlier), and standard Pokémon Showdown export format for any generation. When new regulation sets launch for Pokémon Champions, the tool is updated to recognize the expanded Pokédex and new mechanics.",
   },
   {
     question: "What are damage calculations, and why do they belong in a team report?",
@@ -189,7 +189,7 @@ export default function FAQPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/"
-              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-bold hover:opacity-90 active:scale-[0.97] transition-all"
+              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-accent text-accent-on text-sm font-bold hover:opacity-90 active:scale-[0.97] transition-all"
             >
               Build a Report
             </Link>
