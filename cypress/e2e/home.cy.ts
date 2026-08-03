@@ -50,11 +50,15 @@ describe("Home / Paste Input", () => {
     cy.get("a[href='/privacy']").should("exist");
   });
 
+  // TODO(VGC-224): selector drift, verify against current UI — no "Community" heading is
+  // rendered by PasteInput.tsx any more; the home page now links to /explore?sort=newest.
   it("shows community section with Explore link", () => {
     cy.contains("Community").should("be.visible");
     cy.get("a[href='/explore']").should("exist");
   });
 
+  // TODO(VGC-224): selector drift, verify against current UI — the "Share & Explore" and
+  // "Matchup Plans" pill copy no longer exists in src/lib/i18n/translations/en.ts.
   it("shows feature pills", () => {
     cy.contains("Team Analysis").should("be.visible");
     cy.contains("Share & Explore").should("be.visible");

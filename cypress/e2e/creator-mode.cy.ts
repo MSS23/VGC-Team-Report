@@ -1,3 +1,8 @@
+// TODO(VGC-224): selector drift, verify against current UI.
+// The whole suite is gated on `[data-walkthrough='creator-toggle']`, which no longer
+// exists anywhere in src/ — the creator-mode toggle moved into the Navbar overflow menu
+// (see src/components/layout/Navbar.tsx, "Creator mode toggle — in overflow menu").
+// Every test below will fail in beforeEach until the selector is re-pointed.
 describe("Creator Mode", () => {
   beforeEach(() => {
     cy.loadSampleTeam();
@@ -9,6 +14,7 @@ describe("Creator Mode", () => {
     });
     cy.wait(300);
     // Enable creator mode
+    // TODO(VGC-224): selector drift, verify against current UI — 'creator-toggle' is gone.
     cy.get("[data-walkthrough='creator-toggle'] button").click();
     cy.wait(300);
   });

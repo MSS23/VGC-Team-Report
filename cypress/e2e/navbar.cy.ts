@@ -33,20 +33,28 @@ describe("Navbar", () => {
     cy.get("[data-dark-mode]").should("not.exist");
   });
 
+  // TODO(VGC-224): selector drift, verify against current UI — `data-walkthrough='creator-toggle'`
+  // no longer exists in src/; the creator-mode toggle moved into the Navbar overflow menu.
   it("shows creator mode toggle", () => {
     cy.get("[data-walkthrough='creator-toggle']").should("be.visible");
   });
 
+  // TODO(VGC-224): selector drift, verify against current UI — see note above.
   it("toggles creator mode to show editing UI", () => {
     cy.get("[data-walkthrough='creator-toggle'] button").click();
     cy.get("[data-walkthrough='tournament-info']").should("be.visible");
     cy.get("[data-walkthrough='creator-toggle'] button").click();
   });
 
+  // TODO(VGC-224): selector drift, verify against current UI — `data-walkthrough='present-button'`
+  // no longer exists in src/.
   it("shows present button", () => {
     cy.get("[data-walkthrough='present-button']").should("be.visible");
   });
 
+  // TODO(VGC-224): selector drift, verify against current UI — both `present-button` and the
+  // generic "Exit" button are gone. Navbar.tsx now makes the top-right presentation control
+  // role-based ("Edit"/"Home") rather than a generic Exit.
   it("enters and exits presentation mode", () => {
     cy.get("[data-walkthrough='present-button']").click();
     cy.contains("button", "Exit").should("be.visible");
