@@ -17,6 +17,24 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "August 2026",
+    version: "5.27",
+    title: "Modes That Actually Save, Consent Before Tracking & Reg M-B Guides",
+    emoji: "🛠️",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "The 'How to Pilot This Team' section no longer loses your Common Combinations on shared reports. Every row and strategy note now saves and comes back on reload — previously the report said 'Saved' while the server quietly dropped the table, and drafts kept it but shared reports didn't, which is why it felt intermittent." },
+      { type: "fixed", text: "Privacy: Microsoft Clarity session recording was starting before you answered the cookie banner. Analytics now load only after you accept, stop immediately if you withdraw consent, and the banner correctly names every service it covers." },
+      { type: "new", text: "Regulation M-B Mega guide pages are live — Mega Metagross, Blaziken, Swampert, Mawile and ten more. The guides had been pinned to Reg M-A, so every M-B Mega page was missing entirely." },
+      { type: "fixed", text: "Corrected the Worlds 2026 dates and venue on the tournaments page, and fixed the FAQ's description of Champions Stat Points — it claimed 600 SP with a 200 cap, when the real budget is 66 total and 32 per stat." },
+      { type: "fixed", text: "Removed the placeholder Indianapolis Regionals top-cut table. It listed every player as 'TBD' beside invented team compositions; the section now points to the official results instead of showing results that were never real." },
+      { type: "fixed", text: "Dark mode colours now follow the theme you picked in the app instead of your device's system setting. If the two disagreed, text could land at barely-visible contrast — worst case around 1.5:1 against its own background." },
+      { type: "improved", text: "Buttons and badges on coloured backgrounds are readable in dark mode again, and animations now respect your system's reduced-motion preference." },
+      { type: "improved", text: "English visitors no longer download the Japanese, Korean and Chinese move-name tables — about 46 KB (gzipped) off the first page load. They're fetched only when you actually switch language." },
+      { type: "improved", text: "Security: creator pages and profile editing are hardened — creator lookups match names exactly and load a bounded number of reports, and nobody else can claim your creator name by changing their display name. Also updated the framework to close a request-filtering bypass." },
+    ],
+  },
+  {
+    date: "August 2026",
     version: "5.26",
     title: "Privacy Fix, Cleaner Imports & Honest SP Spreads",
     emoji: "🔐",
