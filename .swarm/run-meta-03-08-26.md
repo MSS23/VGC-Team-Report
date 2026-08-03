@@ -66,3 +66,33 @@ R1 reports the container proxy blocked **all competitor domains and Reddit**, so
 research (R1 Part B, and the R3/R4/R5/R7 agent types generally) cannot gather primary evidence in this
 environment. Combined with the missing PostHog credentials, the swarm currently has **no working
 channel to real user signal** — it can only read the codebase. Worth a ticket alongside VGC-220.
+
+## Dispatch stopped at 19/25 — deliberate
+Sibling agents began reporting `Another next build process is already running` with **up to 13
+concurrent `next build` processes** on the box. Each implementation agent runs the full
+tsc+vitest+build gate, so dispatching the remaining 6 budgeted agents would have degraded
+verification for the 12 already in flight rather than adding throughput. The remaining budget was
+left unused on purpose. Final authoritative gate is the orchestrator's own serial build at
+integration time.
+
+**Lesson for future runs:** the 25-agent cap is not the binding constraint on this box — concurrent
+`next build` capacity is (~4-5 before contention). Budget implementation agents against build slots,
+not against the dispatch cap, or have agents verify with `tsc` + `vitest` only and leave `next build`
+to the orchestrator.
+
+## Environment limitation discovered: egress policy blocks research sources
+VGC-181's agent found that **every citable tournament-data host returns 403 on CONNECT**
+(policy denial, not a transient error): `play.limitlesstcg.com`, `api.limitlesstcg.com`,
+`limitlessvgc.com`, `standings.limitlessvgc.com`, `victoryroad.pro`, `rk9.gg`, `pikalytics.com`,
+`liquipedia.net`, `pokedata.ovh`, `bulbagarden.net`, and `en.wikipedia.org`. The
+`limitless-tournament` skill fails the same way with an empty cache. R1 independently reported all
+competitor domains and Reddit blocked.
+
+WebSearch *does* work, but returns model-summarized content that cannot be checked against a page
+actually read — and in VGC-181's case it **contradicted itself across queries** on the same players'
+records (11-1/10-2 vs 14-2/12-3/11-3). It is therefore not an acceptable substitute for a citable
+source when the output is factual data shipped to production.
+
+Consequence: any ticket whose completion requires real-world data (tournament results, competitor
+feature checks, community sentiment) **cannot be completed by this swarm** in the current container.
+Those tickets should be routed to a human or the egress policy widened for a read-only allowlist.
