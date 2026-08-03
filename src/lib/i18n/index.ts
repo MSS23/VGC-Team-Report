@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import React from "react";
+import { loadMoveNames } from "@/lib/data/move-names";
 import en from "./translations/en";
 import type { TranslationKeys } from "./translations/en";
 
@@ -53,7 +54,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
     if (saved && translationLoaders[saved]) {
       document.documentElement.lang = saved;
-      translationLoaders[saved]().then((mod) => {
+      // Move names are code-split per locale; load them alongside the UI strings
+      // so the whole page swaps language in one commit.
+      Promise.all([translationLoaders[saved](), loadMoveNames(saved)]).then(([mod]) => {
         setLanguageState(saved);
         setTranslations(mod.default);
       });
@@ -66,7 +69,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     if (code === "en") {
       setTranslations(en);
     } else {
-      translationLoaders[code]().then((mod) => setTranslations(mod.default));
+      Promise.all([translationLoaders[code](), loadMoveNames(code)]).then(([mod]) =>
+        setTranslations(mod.default),
+      );
     }
     // Update html lang attribute
     document.documentElement.lang = code;
