@@ -264,7 +264,7 @@ body {
 
 ::selection {
   background: var(--accent);
-  color: white;
+  color: var(--accent-on);
 }
 
 [data-creator-mode] {
@@ -313,10 +313,15 @@ body {
    clamp() collapses to OKLCH lightness 1 (white) for accents below the
    crossover and 0 (black) above it, so the result is always pure #FFF or #000
    — and for any sRGB colour at least one of those clears 4.5:1.
+   0.591 is the midpoint of the safe band: every accent that *needs* white sits
+   at or below OKLCH L 0.5858 (#E11D48) and every accent that *needs* black at
+   or above 0.5960 (#059669). Across all 34 accent values shipped by
+   useTheme.ts, accent-themes.ts and random-accent.ts the worst result is
+   4.57:1 (#DB2777) and the median is ~8:1.
    Declared after [data-dark-mode] so it wins in both themes; browsers without
    relative colour syntax drop it and keep the static pair above. */
 :root {
-  --accent-on: oklch(from var(--accent) clamp(0, (0.594 - l) * 1000, 1) 0 0);
+  --accent-on: oklch(from var(--accent) clamp(0, (0.591 - l) * 1000, 1) 0 0);
 }
 
 [data-dark-mode] body::before {
