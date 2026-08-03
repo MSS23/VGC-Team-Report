@@ -24,6 +24,56 @@ const ProfileBody = z.object({
   ),
 });
 
+/**
+ * `creator_profiles` is keyed on the display name, not on the Clerk user id, so
+ * `INSERT … ON CONFLICT (name) DO UPDATE` lets anyone who sets their Clerk name
+ * to a known creator's name overwrite that creator's public bio, links and
+ * avatar. The correct fix is to key the row on `user_id`, which needs a schema
+ * change (new column + unique index + a backfill) — deliberately NOT done here.
+ *
+ * Until that lands, this is the strongest ownership signal available in
+ * application code: `shares.owner_id` records which Clerk account published
+ * each report, and `data->>'creatorName'` records the name it was published
+ * under. If a *different* account has already published under this name, the
+ * name is considered claimed and the upsert is refused. First claim wins; a
+ * user editing their own profile is unaffected because their own reports carry
+ * their own owner_id (and a user with no reports at all hits no owner rows).
+ *
+ * Verified names get the stricter rule: they may only be written by an account
+ * that has actually published under that name, never claimed by an unrelated
+ * new account.
+ */
+async function findNameConflict(
+  creatorName: string,
+  userId: string,
+): Promise<string | null> {
+  const sql = getDb();
+  const nameLower = creatorName.toLowerCase();
+
+  const [ownerRows, verifiedRows] = await Promise.all([
+    sql`
+      SELECT DISTINCT owner_id
+      FROM shares
+      WHERE owner_id IS NOT NULL
+        AND deleted_at IS NULL
+        AND LOWER(data->>'creatorName') = ${nameLower}
+      LIMIT 20
+    `,
+    sql`SELECT name FROM verified_creators WHERE LOWER(name) = ${nameLower} LIMIT 1`,
+  ]);
+
+  const owners = ownerRows.map((r) => r.owner_id as string);
+  const isOwnName = owners.includes(userId);
+
+  if (owners.length > 0 && !isOwnName) {
+    return "This creator name is already in use by another account.";
+  }
+  if (verifiedRows.length > 0 && !isOwnName) {
+    return "This creator name belongs to a verified creator.";
+  }
+  return null;
+}
+
 // GET: fetch current user's creator profile
 export async function GET(request: Request) {
   const guard = await apiGuard(request, { rateLimit: { key: "profile-read", max: 30 } });
@@ -79,6 +129,13 @@ export async function PUT(request: Request) {
     const { bio, twitter, discord, youtube, isPublic, accentTheme, avatarUrl } = parsed.data;
     const isPublicValue = isPublic !== undefined ? isPublic : true;
     const sql = getDb();
+
+    // Refuse to write a profile row that belongs to somebody else (see
+    // findNameConflict — a real fix needs the row keyed on the Clerk user id).
+    const conflict = await findNameConflict(creatorName, user.id);
+    if (conflict) {
+      return NextResponse.json({ error: conflict }, { status: 409 });
+    }
 
     await sql`
       INSERT INTO creator_profiles (name, bio, twitter, discord, youtube, is_public, accent_theme, avatar_url, updated_at)
