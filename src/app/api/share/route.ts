@@ -4,56 +4,49 @@ import { notifyFollowers } from "@/lib/notifications";
 import { detectChangedSections } from "@/lib/utils/diff-state";
 import { cacheInvalidatePrefix, cacheDel, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { ShareableStateSchema } from "@/lib/sharing/url-codec";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const MAX_BODY_SIZE = 512_000; // 500 KB
 
+/**
+ * Write-path schema for the report `state` blob.
+ *
+ * Derived from the canonical `ShareableStateSchema` rather than redeclared.
+ * This route used to carry its own hand-maintained copy of every field, and
+ * because a zod object strips keys it does not know about, any field added to
+ * the canonical schema but forgotten here was silently deleted on save — the
+ * request still returned 200 and the client still showed "saved", but the data
+ * never reached the DB.
+ *
+ * That has now bitten twice:
+ *   - `commonModes` / `privateFields` entirely (fixed in 6a20445, v5.23), and
+ *   - `commonModes.combinations` when the Common Combinations table shipped in
+ *     fbfc877 / v5.24 — the canonical schema and the drafts route (which had
+ *     already been switched to the canonical schema in d3260c6) both kept it,
+ *     while this route quietly dropped it. That divergence is VGC-245, and it
+ *     is why the bug looked intermittent: drafts persisted, shares did not.
+ *
+ * Extending the canonical schema means new report fields round-trip here for
+ * free. The overrides below are deliberate server-side leniency — the write
+ * path must never reject a save because an older client sent a looser shape
+ * (numeric hiddenSlides, legacy matchup plans, non-string note values). The
+ * read path (`normalizeReportData`) is what tidies those up.
+ */
+const ShareStateSchema = ShareableStateSchema.extend({
+  notes: z.record(z.string(), z.unknown()).optional(),
+  calcs: z.record(z.string(), z.unknown()).optional(),
+  roles: z.record(z.string(), z.unknown()).optional(),
+  matchupPlans: z.array(z.unknown()).optional().default([]),
+  hiddenSlides: z.array(z.union([z.number(), z.string()])).optional(),
+  mvpIndex: z.number().nullable().optional(),
+  spriteSettings: z.unknown().optional(),
+}).strip();
+
 const ShareBodySchema = z.object({
-  state: z.object({
-    paste: z.string(),
-    matchupPlans: z.array(z.unknown()).optional().default([]),
-    notes: z.record(z.string(), z.unknown()).optional(),
-    calcs: z.record(z.string(), z.unknown()).optional(),
-    roles: z.record(z.string(), z.unknown()).optional(),
-    teamSummary: z.string().optional(),
-    // "How to pilot this team" (Common Modes / leads / strengths / etc.).
-    // MUST be listed here — the schema strips unknown keys, so omitting this
-    // silently dropped the entire Modes section on every save (the client
-    // showed "saved" but the DB never stored it).
-    commonModes: z
-      .object({
-        leads: z.string().optional(),
-        modes: z.string().optional(),
-        strengths: z.string().optional(),
-        weaknesses: z.string().optional(),
-        gameplan: z.string().optional(),
-      })
-      .optional(),
-    teamName: z.string().optional(),
-    tournamentName: z.string().optional(),
-    placement: z.string().optional(),
-    record: z.string().optional(),
-    mvpIndex: z.number().nullable().optional(),
-    rentalCode: z.string().optional(),
-    creatorName: z.string().optional(),
-    spriteSettings: z.unknown().optional(),
-    hiddenSlides: z.array(z.union([z.number(), z.string()])).optional(),
-    allowComments: z.boolean().optional(),
-    tags: z.object({
-      regulation: z.string().optional(),
-      eventType: z.string().optional(),
-      archetype: z.array(z.string()).optional(),
-      regulationAutoDetected: z.boolean().optional(),
-    }).optional(),
-    templateId: z.string().optional(),
-    // Tiered-publishing per-field visibility flags. Also previously absent
-    // from this schema, so the "hide fields from public viewers" choices were
-    // stripped on save the same way commonModes was.
-    privateFields: z.array(z.string()).optional(),
-    genTheme: z.string().optional(),
-  }).strip(),
+  state: ShareStateSchema,
   existingId: z.string().optional(),
   editToken: z.string().optional(),
   draftId: z.string().min(1).max(128).optional(),

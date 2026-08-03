@@ -21,7 +21,7 @@ import { CHAMPIONS_DEX, CHAMPIONS_MB_DEX } from "@/lib/data/champions-dex";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import {
   CHAMPIONS_TOTAL_SP,
-  CHAMPIONS_MAX_SP_PER_STAT,
+  looksLikeChampionsSp,
 } from "@/lib/analysis/stat-calculator";
 
 // ── Severity levels ─────────────────────────────────────────────────────────
@@ -255,8 +255,10 @@ export function validateChampionsTeam(
   // Reg M-A is natively an SP (Stat Points) format: 66 total, 32 per stat.
   // Showdown has no "SPs:" line yet, so Champions pastes ship SP values
   // inside the EVs line — a spread whose total ≤ 66 and whose per-stat
-  // values are ≤ 32 can only coherently be SP (same detection used by
-  // convertToChampionsSp). Validate those as SP.
+  // values are ≤ 32 can only coherently be SP (shared detection with
+  // convertToChampionsSp via looksLikeChampionsSp). Validate those as SP.
+  // An entirely uninvested spread is 0/66 SP and must still be surfaced —
+  // silently skipping it let a 0 SP Pokemon read as fully built.
   //
   // Traditional EV spreads (512 total, 252 per stat) are still accepted
   // because the rest of the app converts them to SP on display, but are
@@ -264,11 +266,9 @@ export function validateChampionsTeam(
   // still surface.
   for (const p of pokemon) {
     const total = Object.values(p.evs).reduce((a, b) => a + b, 0);
-    const maxPerStat = Math.max(...Object.values(p.evs));
-    const looksLikeSp = total > 0 && total <= CHAMPIONS_TOTAL_SP && maxPerStat <= CHAMPIONS_MAX_SP_PER_STAT;
 
-    if (looksLikeSp) {
-      // looksLikeSp guarantees every stat ≤ 32, so per-stat cap is already
+    if (looksLikeChampionsSp(p.evs)) {
+      // looksLikeChampionsSp guarantees every stat ≤ 32, so the per-stat cap is already
       // satisfied — only the total-budget hint is worth surfacing.
       if (total < CHAMPIONS_TOTAL_SP) {
         issues.push({

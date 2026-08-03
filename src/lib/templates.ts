@@ -10,7 +10,7 @@ export interface ReportTemplate {
   };
 }
 
-export const REPORT_TEMPLATES: ReportTemplate[] = [
+const REPORT_TEMPLATES: ReportTemplate[] = [
   {
     id: "quick",
     name: "Quick Share",

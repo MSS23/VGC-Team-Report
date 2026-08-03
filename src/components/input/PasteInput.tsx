@@ -12,6 +12,7 @@ import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { resolveSlug, getSpriteUrls } from "@/lib/utils/sprite-slug";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
+import { ReducedMotionProvider } from "@/components/providers/ReducedMotionProvider";
 
 const WhatsNewModal = dynamic(
   () => import("@/components/ui/WhatsNewModal").then(m => ({ default: m.WhatsNewModal })),
@@ -238,7 +239,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
   };
 
   return (
-    <>
+    <ReducedMotionProvider>
       <div className="w-full max-w-3xl mx-auto px-4 pt-3 pb-8 sm:pb-4">
 
       {/* Static sprites on mobile save bandwidth and battery; desktop keeps
@@ -421,7 +422,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           <motion.span
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute top-3 right-3 px-2.5 py-1 bg-accent text-white text-[10px] font-extrabold rounded-md uppercase tracking-widest shadow-sm"
+            className="absolute top-3 right-3 px-2.5 py-1 bg-accent text-accent-on text-[10px] font-extrabold rounded-md uppercase tracking-widest shadow-sm"
           >
             {t.pokePaste}
           </motion.span>
@@ -466,7 +467,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             onClick={handleFetchPaste}
             disabled={isFetching}
             whileTap={{ scale: 0.97 }}
-            className="min-h-11 px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 shadow-md shadow-accent/30 cursor-pointer tracking-wide"
+            className="min-h-11 px-6 py-2.5 bg-accent text-accent-on rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 shadow-md shadow-accent/30 cursor-pointer tracking-wide"
           >
             {isFetching ? (
               <span className="flex items-center gap-2">
@@ -487,7 +488,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             whileTap={hasContent ? { scale: 0.97 } : undefined}
             className={`min-h-11 px-6 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer tracking-wide ${
               hasContent
-                ? "bg-accent text-white hover:brightness-110 shadow-md shadow-accent/30"
+                ? "bg-accent text-accent-on hover:brightness-110 shadow-md shadow-accent/30"
                 : "bg-surface-alt text-text-tertiary border-2 border-border cursor-not-allowed"
             }`}
           >
@@ -672,6 +673,6 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
       <WhatsNewModal />
       </div>
-    </>
+    </ReducedMotionProvider>
   );
 }

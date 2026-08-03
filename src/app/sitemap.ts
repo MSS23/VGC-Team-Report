@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getDb } from "@/lib/db";
-import { getRegMAMegasWithSprites } from "@/lib/data/mega-pokemon";
+import { getRegMBMegas, hasMegaSprite } from "@/lib/data/mega-pokemon";
 
 const BASE = "https://pokemonvgcteamreport.com";
 
@@ -21,11 +21,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/support`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1 },
     { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1 },
-    ...getRegMAMegasWithSprites().map((m) => ({
-      url: `${BASE}/champions/${m.slug}`,
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    })),
+    // Must stay in lockstep with generateStaticParams in
+    // src/app/champions/[pokemon]/page.tsx: Reg M-B legal (a superset of Reg
+    // M-A) AND sprited. Listing anything outside that set would put 404s in
+    // the sitemap; listing less would hide the Reg M-B Mega pages from Google.
+    ...getRegMBMegas()
+      .filter((m) => hasMegaSprite(m.dataKey))
+      .map((m) => ({
+        url: `${BASE}/champions/${m.slug}`,
+        changeFrequency: "weekly" as const,
+        priority: 0.8,
+      })),
   ];
 
   try {

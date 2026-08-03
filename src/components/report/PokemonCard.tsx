@@ -434,8 +434,10 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               // (66 SP ≠ 66 EVs — the conversion curve is non-linear), so
               // the budget badge stays SP-native instead of offering an EV
               // toggle that would mix two unit systems.
+              // 0/66 is under budget too — an uninvested Pokemon must not
+              // fall through to the emerald "budget satisfied" dot.
               const spOver = totalSp > CHAMPIONS_TOTAL_SP;
-              const spUnder = totalSp < CHAMPIONS_TOTAL_SP && totalSp > 0;
+              const spUnder = totalSp < CHAMPIONS_TOTAL_SP;
               const spDot = spOver ? "bg-danger" : spUnder ? "bg-amber-500" : "bg-emerald-500";
               return (
                 <div

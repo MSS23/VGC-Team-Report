@@ -8,6 +8,7 @@ import { applyRandomAccent } from "@/lib/utils/random-accent";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 import type { ChangelogEntry, EntryType } from "./data";
+import { ReducedMotionProvider } from "@/components/providers/ReducedMotionProvider";
 
 // Type-system color tokens. Each maps to a swatch that passes WCAG AA on
 // both the light surface (#FFFFFF) and the dark surface (#141428) used by
@@ -51,7 +52,9 @@ interface ChangelogContentProps {
 export function ChangelogContent({ entries }: ChangelogContentProps) {
   return (
     <I18nProvider>
-      <ChangelogInner entries={entries} />
+      <ReducedMotionProvider>
+        <ChangelogInner entries={entries} />
+      </ReducedMotionProvider>
     </I18nProvider>
   );
 }
@@ -216,7 +219,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                     }}
                     className={`min-h-11 px-3 py-2 text-xs font-bold rounded-lg transition-all capitalize cursor-pointer ${
                       active
-                        ? "bg-accent text-white shadow-sm shadow-accent/30"
+                        ? "bg-accent text-accent-on shadow-sm shadow-accent/30"
                         : "text-text-secondary hover:text-text-primary"
                     }`}
                   >
@@ -277,7 +280,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                     <div
                       className={`hidden sm:flex absolute left-0 top-4 w-10 h-10 rounded-full items-center justify-center z-10 transition-transform duration-300 hover:scale-105 ${
                         entry.highlight
-                          ? "bg-accent text-white shadow-lg shadow-accent/30 ring-4 ring-accent/15"
+                          ? "bg-accent text-accent-on shadow-lg shadow-accent/30 ring-4 ring-accent/15"
                           : "bg-surface border-2 border-border text-text-tertiary"
                       }`}
                       aria-hidden
@@ -304,7 +307,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                         <span className="sm:hidden text-xl flex-shrink-0">{entry.emoji}</span>
                         <span
                           className={`inline-flex items-center px-2.5 py-1 text-[11px] font-extrabold rounded-lg tracking-wide flex-shrink-0 font-mono ${
-                            entry.highlight ? "bg-accent text-white" : "bg-accent-surface text-accent"
+                            entry.highlight ? "bg-accent text-accent-on" : "bg-accent-surface text-accent"
                           }`}
                         >
                           v{entry.version}
@@ -380,7 +383,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
           <p className="text-sm text-text-tertiary mb-4">Have an idea for the next update?</p>
           <a
             href="/feedback"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide"
           >
             <svg
               width="14"

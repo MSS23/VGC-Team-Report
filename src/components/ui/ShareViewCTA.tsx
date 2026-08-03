@@ -26,7 +26,7 @@ export function ShareViewCTA({
   busy,
 }: ShareViewCTAProps) {
   const buttonClasses =
-    "px-3.5 py-2 sm:px-5 sm:py-2.5 bg-accent text-white text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer disabled:opacity-60 disabled:cursor-wait";
+    "px-3.5 py-2 sm:px-5 sm:py-2.5 bg-accent text-accent-on text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer disabled:opacity-60 disabled:cursor-wait";
 
   return (
     <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] sm:bottom-[calc(3rem+env(safe-area-inset-bottom,0px))] inset-x-0 z-30 pointer-events-none">

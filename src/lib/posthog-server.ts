@@ -53,7 +53,7 @@ export function captureServerEvent(
  * `next/server`'s `after()` so the flush completes after the response is sent
  * without blocking it. Resolves (and never throws) if PostHog is unconfigured.
  */
-export async function flushServerEvents(): Promise<void> {
+async function flushServerEvents(): Promise<void> {
   const ph = getPostHogServer();
   if (!ph) return;
   try {

@@ -68,10 +68,17 @@ interface MegaLandingContentProps {
   baseStats: StatSpread;
   teams: ExploreReport[];
   relatedMegas: { slug: string; displayName: string; types: string[] }[];
+  /**
+   * Champions regulation this Mega is keyed to — "Reg M-B" for Megas that only
+   * exist in M-B, "Reg M-A" otherwise (those are legal in both, M-B being a
+   * superset). Used for the /explore deep link so it doesn't send Reg M-B-only
+   * Megas to a Reg M-A filter that can never match.
+   */
+  regulation: "Reg M-A" | "Reg M-B";
   // faqs removed from the visible UI — JSON-LD still generated server-side.
 }
 
-export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: MegaLandingContentProps) {
+export function MegaLandingContent({ mega, baseStats, teams, relatedMegas, regulation }: MegaLandingContentProps) {
   const bst = Object.values(baseStats).reduce((a, b) => a + b, 0);
 
   useEffect(() => {
@@ -149,7 +156,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
               {mega.displayName} SP Spreads & Competitive Teams
             </h2>
             <Link
-              href={`/explore?species=${encodeURIComponent(mega.baseName)}&regulation=Reg+M-A`}
+              href={`/explore?species=${encodeURIComponent(mega.baseName)}&regulation=${encodeURIComponent(regulation)}`}
               className="text-xs font-bold text-accent hover:brightness-110 transition-all"
             >
               View all &rarr;

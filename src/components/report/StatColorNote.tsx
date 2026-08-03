@@ -39,10 +39,14 @@ export function StatColorNote() {
 
   if (dismissed) return null;
 
+  // The row is sized to hold the 44×44 dismiss target (min-h-11) rather than
+  // letting the button overflow its line box via negative margins — an
+  // overflowing hit area sits invisibly on top of the stat rows and swallows
+  // their taps.
   return (
     <p
       role="note"
-      className="mt-1.5 flex items-center text-xs font-semibold uppercase tracking-wide text-text-tertiary"
+      className="flex min-h-11 items-center text-xs font-semibold uppercase tracking-wide text-text-tertiary"
     >
       Bar color = stat type, not quality
       <button
@@ -50,7 +54,7 @@ export function StatColorNote() {
         onClick={dismiss}
         aria-label="Hide this note permanently"
         title="Hide this note"
-        className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] -my-4 -ml-2 text-text-tertiary hover:text-text-primary transition-colors duration-150 cursor-pointer rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        className="inline-flex items-center justify-center min-w-11 min-h-11 shrink-0 text-text-tertiary hover:text-text-primary transition-colors duration-150 cursor-pointer rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <line x1="18" y1="6" x2="6" y2="18" />

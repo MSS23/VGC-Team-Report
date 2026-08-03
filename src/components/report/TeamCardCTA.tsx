@@ -64,7 +64,7 @@ export function TeamCardCTA({
         type="button"
         onClick={handleDownload}
         disabled={downloading}
-        className="w-full sm:w-auto px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+        className="w-full sm:w-auto px-5 py-2.5 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
       >
         {downloading ? "Generating…" : "Download card"}
       </button>

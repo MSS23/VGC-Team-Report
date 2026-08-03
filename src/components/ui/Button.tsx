@@ -13,7 +13,7 @@ export function Button({
   const base = "inline-flex items-center justify-center font-bold rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed tracking-wide";
 
   const variants = {
-    primary: "bg-accent text-white hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 hover:shadow-lg hover:shadow-accent/25",
+    primary: "bg-accent text-accent-on hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 hover:shadow-lg hover:shadow-accent/25",
     secondary: "bg-surface text-text-primary border-2 border-border hover:border-accent/40 hover:bg-accent-surface active:scale-[0.97]",
     ghost: "text-text-secondary hover:text-accent hover:bg-accent-surface/60 active:scale-[0.97]",
   };

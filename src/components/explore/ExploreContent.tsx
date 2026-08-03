@@ -16,11 +16,14 @@ import { ReportCard, type ExploreReport } from "./ReportCard";
 import { ExploreEmpty } from "./ExploreEmpty";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { useExploreUrlSync } from "@/hooks/useExploreUrlSync";
+import { ReducedMotionProvider } from "@/components/providers/ReducedMotionProvider";
 
 export function ExploreContent() {
   return (
     <I18nProvider>
-      <ExploreInner />
+      <ReducedMotionProvider>
+        <ExploreInner />
+      </ReducedMotionProvider>
     </I18nProvider>
   );
 }
@@ -234,7 +237,7 @@ function ExploreInner() {
             </div>
             <button
               onClick={() => setRetryKey((k) => k + 1)}
-              className="min-h-[44px] px-6 py-2.5 bg-accent text-white rounded-xl font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer"
+              className="min-h-[44px] px-6 py-2.5 bg-accent text-accent-on rounded-xl font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer"
             >
               Retry
             </button>

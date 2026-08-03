@@ -32,10 +32,16 @@ const listeners = new Set<ConsentListener>();
 /**
  * Subscribe to consent changes fired by CookieBanner.
  * Returns an unsubscribe function.
+ *
+ * Multiple subscribers are expected (ConsentGate and PostHogProvider both listen),
+ * and every subscriber must be notified on both grant and withdrawal — that is what
+ * lets analytics start/stop without a page reload.
  */
 export function onConsentChange(fn: ConsentListener): () => void {
   listeners.add(fn);
-  return () => listeners.delete(fn);
+  return () => {
+    listeners.delete(fn);
+  };
 }
 
 /** Called by CookieBanner when consent is accepted or rejected. */

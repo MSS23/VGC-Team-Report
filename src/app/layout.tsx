@@ -8,6 +8,7 @@ import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import { ConnectivityStatus } from "@/components/ui/ConnectivityStatus";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ClarityProvider } from "@/components/providers/ClarityProvider";
+import { ConsentGate } from "@/components/providers/ConsentGate";
 import { CookieBanner } from "@/components/providers/CookieBanner";
 import { JsonLd, OrganizationJsonLd, WebSiteSchema } from "@/components/seo/JsonLd";
 import { PersistentNavbar } from "@/components/layout/PersistentNavbar";
@@ -141,7 +142,11 @@ export default function RootLayout({
           </Suspense>
           <div id="main-content">{children}</div>
         </PostHogProvider>
-        <ClarityProvider />
+        {/* Analytics that write to the user's device must stay inside ConsentGate.
+            CookieBanner above deliberately stays outside it so the banner always renders. */}
+        <ConsentGate>
+          <ClarityProvider />
+        </ConsentGate>
         <InstallPrompt />
         <ConnectivityStatus />
         <ServiceWorkerRegistration />

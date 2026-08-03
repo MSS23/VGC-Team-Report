@@ -76,15 +76,3 @@ export async function isRateLimitedAsync(
   }
   return isRateLimitedInMemory(key, maxRequests, windowMs);
 }
-
-/**
- * Synchronous in-memory rate limiter (legacy API).
- * Kept for backward compatibility — prefer isRateLimitedAsync.
- */
-export function isRateLimited(
-  key: string,
-  maxRequests: number = 30,
-  windowMs: number = 60_000,
-): boolean {
-  return isRateLimitedInMemory(key, maxRequests, windowMs);
-}

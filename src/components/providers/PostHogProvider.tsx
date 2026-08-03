@@ -105,6 +105,19 @@ const INTERNAL_USER_IDS = new Set(
     .split(",").map((s) => s.trim()).filter(Boolean),
 );
 
+/**
+ * Pre-consent tier. Deliberately initialises without a consent check, but in a
+ * cookieless configuration: persistence is memory-only (nothing is written to the
+ * visitor's device) and session recording is off. Consent then upgrades this in
+ * place via upgradeToFullTracking, and withdrawal downgrades it via
+ * downgradeToAnonymous.
+ *
+ * This is intentional, not the ClarityProvider bug: it is the standard
+ * consent-exempt analytics pattern. Note it still transmits pageviews, autocapture
+ * and exceptions pre-consent — if that is not the product/legal position wanted,
+ * wrap <PostHogProvider> in <ConsentGate> like <ClarityProvider>. Do not "fix" it
+ * silently either way.
+ */
 async function initPostHogAnonymous(posthog: PostHog) {
   if (typeof window === "undefined" || !process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) return;
   if (posthog.__loaded) return;
@@ -145,11 +158,34 @@ async function initPostHogAnonymous(posthog: PostHog) {
   });
 }
 
+/**
+ * Tracks whether PostHog is currently in the consented "full tracking" tier.
+ * Guards against the repeated upgrade/downgrade calls that would otherwise happen
+ * because vanilla-cookieconsent fires onConsent on every page load in addition to
+ * onFirstConsent/onChange.
+ */
+let _fullTracking = false;
+
 function upgradeToFullTracking(posthog: PostHog) {
-  if (!posthog.__loaded) return;
+  if (!posthog.__loaded || _fullTracking) return;
   posthog.set_config({ persistence: "localStorage+cookie", disable_session_recording: false });
   posthog.set_config({ session_recording: { maskAllInputs: false, maskInputOptions: { password: true } } });
   posthog.startSessionRecording();
+  _fullTracking = true;
+}
+
+/**
+ * Consent withdrawn mid-session: stop session recording and drop back to the
+ * pre-consent cookieless tier. reset() runs *before* persistence is switched back
+ * to memory so the localStorage/cookie entries written while consented are
+ * actually cleared rather than orphaned on the device.
+ */
+function downgradeToAnonymous(posthog: PostHog) {
+  if (!posthog.__loaded || !_fullTracking) return;
+  posthog.stopSessionRecording();
+  posthog.reset();
+  posthog.set_config({ persistence: "memory", disable_session_recording: true });
+  _fullTracking = false;
 }
 
 let _posthogSingleton: PostHog | null = null;
@@ -172,7 +208,10 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           _usePostHog = usePostHog;
           initPostHogAnonymous(posthog);
           if (hasAnalyticsConsent()) upgradeToFullTracking(posthog);
-          unsubConsent = onConsentChange((accepted) => { if (accepted) upgradeToFullTracking(posthog); });
+          unsubConsent = onConsentChange((accepted) => {
+            if (accepted) upgradeToFullTracking(posthog);
+            else downgradeToAnonymous(posthog);
+          });
           setReady(true);
         }
       );

@@ -32,7 +32,7 @@ function NotFoundContent() {
         <Link
           href="/"
           aria-label="Go back to home page"
-          className="mt-1 px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold hover:brightness-110 active:scale-[0.97] transition-all shadow-sm shadow-accent/20"
+          className="mt-1 px-6 py-2.5 bg-accent text-accent-on rounded-xl text-sm font-bold hover:brightness-110 active:scale-[0.97] transition-all shadow-sm shadow-accent/20"
         >
           {t.goHome}
         </Link>

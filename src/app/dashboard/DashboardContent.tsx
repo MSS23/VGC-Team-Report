@@ -12,6 +12,7 @@ import { MatchTracker } from "@/components/match-tracker/MatchTracker";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 import { SpinnerIcon, UserIcon, ShieldIcon, BellIcon, PencilIcon, FolderIcon, TrashIcon, CheckIcon, ChevronDownIcon, CloseIcon } from "@/components/ui/icons";
+import { ReducedMotionProvider } from "@/components/providers/ReducedMotionProvider";
 
 interface DashboardReport extends ExploreReport {
   isPublic?: boolean;
@@ -27,7 +28,9 @@ interface CollabReport extends ExploreReport {
 export function DashboardContent() {
   return (
     <I18nProvider>
-      <DashboardInner />
+      <ReducedMotionProvider>
+        <DashboardInner />
+      </ReducedMotionProvider>
     </I18nProvider>
   );
 }
@@ -122,7 +125,7 @@ function DashboardInner() {
             <h1 className="text-2xl font-extrabold mb-3">Sign in to access your dashboard</h1>
             <p className="text-sm text-text-secondary mb-6">Manage your team reports, save favorites, and track your analytics.</p>
             <SignInButton mode="modal">
-              <button className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide cursor-pointer">
+              <button className="px-6 py-3 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide cursor-pointer">
                 Sign In
               </button>
             </SignInButton>
@@ -266,7 +269,7 @@ function DashboardInner() {
                     </div>
                     <p className="text-sm text-text-secondary mb-1">No drafts yet.</p>
                     <p className="text-xs text-text-tertiary mb-4">Start building a team report and it will auto-save here.</p>
-                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                       Create Report
                     </Link>
                   </div>
@@ -281,7 +284,7 @@ function DashboardInner() {
                 {tab === "my" && myReports.length === 0 && (
                   <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-4">No reports yet. Create a team report to get started.</p>
-                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                       Create Report
                     </Link>
                   </div>
@@ -289,7 +292,7 @@ function DashboardInner() {
                 {tab === "saved" && savedReports.length === 0 && (
                   <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-4">No saved reports yet. Browse the Explore page and save teams you like.</p>
-                    <a href="/explore" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <a href="/explore" className="px-5 py-2.5 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                       Explore Teams
                     </a>
                   </div>
@@ -298,7 +301,7 @@ function DashboardInner() {
                   <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-2">Your feed is empty.</p>
                     <p className="text-xs text-text-tertiary mb-4 max-w-sm mx-auto">Follow creators from the Explore page to see their new reports here.</p>
-                    <a href="/explore" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <a href="/explore" className="px-5 py-2.5 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                       Find Creators
                     </a>
                   </div>
@@ -1119,7 +1122,7 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
           <button
             onClick={handleCreate}
             disabled={!newName.trim() || creating}
-            className="px-4 py-2 bg-accent text-white text-sm font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
+            className="px-4 py-2 bg-accent text-accent-on text-sm font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
           >
             {creating ? "Creating..." : "Create"}
           </button>

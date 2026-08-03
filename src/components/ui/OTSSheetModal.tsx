@@ -262,7 +262,7 @@ export function OTSSheetModal({ pokemon, shareUrl, tournamentName, teamName, onC
             type="button"
             onClick={handleDownloadPng}
             disabled={downloading}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 min-h-[44px] rounded-xl bg-accent text-white text-sm font-bold hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-wait"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 min-h-[44px] rounded-xl bg-accent text-accent-on text-sm font-bold hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-wait"
           >
             {downloading ? (
               <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

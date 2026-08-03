@@ -1,0 +1,11 @@
+.claude/scripts/linear.sh
+.github/workflows/ci.yml
+AGENTS.md
+CLAUDE.md
+scripts/swarm-setup.sh
+src/app/changelog/data.ts
+src/components/report/PokemonCard.tsx
+src/components/report/PokemonDetailSlide.tsx
+src/components/report/StatColorNote.tsx
+src/lib/analysis/__tests__/stat-calculator.test.ts
+src/lib/analysis/stat-calculator.ts

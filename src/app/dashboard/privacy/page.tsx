@@ -82,7 +82,7 @@ function PrivacyDashboardInner() {
           <div className="text-center py-20">
             <h1 className="text-2xl font-extrabold mb-3">Sign in to manage your data</h1>
             <SignInButton mode="modal">
-              <button className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer">Sign In</button>
+              <button className="px-6 py-3 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer">Sign In</button>
             </SignInButton>
           </div>
         </Show>
@@ -108,7 +108,7 @@ function PrivacyDashboardInner() {
             <button
               onClick={handleDownload}
               disabled={downloading}
-              className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 bg-accent text-accent-on text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {downloading ? "Exporting..." : "Download My Data"}
             </button>

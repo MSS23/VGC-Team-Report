@@ -3,6 +3,16 @@
 @custom-variant creator (&:where([data-creator-mode] *));
 @custom-variant presenting (&:where([data-presentation-mode] *));
 
+/* Bind Tailwind's `dark:` variant to the app's OWN theme attribute.
+   Without this, Tailwind v4 defaults `dark:` to `@media (prefers-color-scheme: dark)`,
+   which is completely independent of the `data-dark-mode` attribute that
+   useDarkMode.ts / the layout.tsx blocking script actually toggle. That mismatch
+   made every `dark:` utility render the wrong colour whenever the in-app theme
+   disagreed with the OS theme (measured as low as 1.29:1).
+   Do NOT add a media-query variant alongside this one — useDarkMode already seeds
+   `data-dark-mode` from the media query on first load, so both would apply. */
+@custom-variant dark (&:where([data-dark-mode], [data-dark-mode] *));
+
 :root {
   --nav-height: 6rem;
   /* Height reserved for the fixed bottom slide-nav bar. Mobile uses the
@@ -22,6 +32,9 @@
   --accent: #E11D48;
   --accent-light: #FDA4AF;
   --accent-surface: #FFF1F2;
+  /* Foreground for text/icons placed ON --accent. Static fallback; the computed
+     rule further down overrides it in browsers with relative colour syntax. */
+  --accent-on: #FFFFFF;
   --success: #16A34A;
   --warning: #D97706;
   --danger: #DC2626;
@@ -60,6 +73,7 @@
   --color-accent: var(--accent);
   --color-accent-light: var(--accent-light);
   --color-accent-surface: var(--accent-surface);
+  --color-accent-on: var(--accent-on);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
@@ -250,7 +264,7 @@ body {
 
 ::selection {
   background: var(--accent);
-  color: white;
+  color: var(--accent-on);
 }
 
 [data-creator-mode] {
@@ -283,6 +297,31 @@ body {
   --accent: var(--accent-dark, #FB7185);
   --accent-light: #FDA4AF;
   --accent-surface: var(--accent-surface-dark, #3B1525);
+  /* Static fallback for the no-relative-colour path: every dark-mode accent
+     preset is a pastel, so near-black is the readable foreground (9.5–13.9:1). */
+  --accent-on: #0B0B1A;
+}
+
+/* Auto-contrasting on-accent foreground.
+   --accent is written as an INLINE style on <html> by three independent code
+   paths (the layout.tsx blocking script, useTheme.applyTheme, and
+   applyRandomAccent/applyAccentTheme), and they do not agree about whether the
+   dark-mode value is the pastel or the saturated variant. A hard-coded
+   light/dark pair therefore cannot stay in sync with the accent actually
+   painted. Deriving the foreground from --accent itself is race-free.
+
+   clamp() collapses to OKLCH lightness 1 (white) for accents below the
+   crossover and 0 (black) above it, so the result is always pure #FFF or #000
+   — and for any sRGB colour at least one of those clears 4.5:1.
+   0.591 is the midpoint of the safe band: every accent that *needs* white sits
+   at or below OKLCH L 0.5858 (#E11D48) and every accent that *needs* black at
+   or above 0.5960 (#059669). Across all 34 accent values shipped by
+   useTheme.ts, accent-themes.ts and random-accent.ts the worst result is
+   4.57:1 (#DB2777) and the median is ~8:1.
+   Declared after [data-dark-mode] so it wins in both themes; browsers without
+   relative colour syntax drop it and keep the static pair above. */
+:root {
+  --accent-on: oklch(from var(--accent) clamp(0, (0.591 - l) * 1000, 1) 0 0);
 }
 
 [data-dark-mode] body::before {
@@ -307,6 +346,8 @@ body {
   --accent: #E11D48 !important;
   --accent-light: #FDA4AF !important;
   --accent-surface: #FFF1F2 !important;
+  --accent-on: #FFFFFF !important;      /* 4.70:1 on #E11D48 */
+  --color-accent-on: #FFFFFF !important;
   --color-background: #FAF9F6 !important;
   --color-foreground: #1A1A2E !important;
   --color-surface: #FFFFFF !important;
@@ -335,6 +376,8 @@ body {
   --accent: #FB7185 !important;
   --accent-light: #FDA4AF !important;
   --accent-surface: #3B1525 !important;
+  --accent-on: #0B0B1A !important;      /* 7.24:1 on #FB7185 */
+  --color-accent-on: #0B0B1A !important;
   --color-background: #0B0B1A !important;
   --color-foreground: #F0EDE6 !important;
   --color-surface: #141428 !important;
@@ -594,7 +637,7 @@ body {
   filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 40%, transparent));
 }
 
-.dark .walkthrough-spotlight {
+[data-dark-mode] .walkthrough-spotlight {
   outline-color: rgba(255, 255, 255, 0.6);
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
 }
@@ -722,6 +765,8 @@ body {
     --accent: #E11D48;
     --accent-light: #FDA4AF;
     --accent-surface: #FFF1F2;
+    --accent-on: #FFFFFF;               /* 4.70:1 on #E11D48 */
+    --color-accent-on: #FFFFFF;
     --success: #16A34A;
     --warning: #D97706;
     --danger: #DC2626;
@@ -885,7 +930,7 @@ body {
   animation: version-diff-pulse 2.5s ease-in-out infinite;
 }
 
-:is(.dark) .version-diff-border {
+[data-dark-mode] .version-diff-border {
   border-color: #60a5fa;
   box-shadow:
     0 0 0 1px rgba(96, 165, 250, 0.15),
@@ -921,7 +966,7 @@ body {
   z-index: -1;
 }
 
-:is(.dark) .version-diff-highlight::before {
+[data-dark-mode] .version-diff-highlight::before {
   background: rgba(96, 165, 250, 0.06);
 }
 

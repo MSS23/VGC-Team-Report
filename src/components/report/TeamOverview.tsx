@@ -203,7 +203,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
           type="button"
           onClick={handleSubmit}
           disabled={!input.trim() || loading}
-          className="min-h-11 px-3 py-2 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+          className="min-h-11 px-3 py-2 text-xs font-bold bg-accent text-accent-on rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
         >
           {loading ? "Fetching..." : "Apply"}
         </button>
@@ -641,7 +641,7 @@ function TeamOverviewBase({
                     }}
                     className={`text-xs font-semibold px-2.5 py-1 rounded-md border transition-all ${
                       active
-                        ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
+                        ? "bg-accent text-accent-on border-accent shadow-sm shadow-accent/20"
                         : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
                     }`}
                   >

@@ -95,7 +95,7 @@ export function ServiceWorkerRegistration() {
         <button
           type="button"
           onClick={handleUpdate}
-          className="px-4 py-2 text-xs font-bold text-white bg-accent rounded-xl hover:brightness-110 active:scale-[0.96] transition-all cursor-pointer flex-shrink-0 shadow-sm shadow-accent/20"
+          className="px-4 py-2 text-xs font-bold text-accent-on bg-accent rounded-xl hover:brightness-110 active:scale-[0.96] transition-all cursor-pointer flex-shrink-0 shadow-sm shadow-accent/20"
         >
           Refresh
         </button>

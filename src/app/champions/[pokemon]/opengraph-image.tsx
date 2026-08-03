@@ -167,7 +167,9 @@ export default async function Image({
           {displayName}
         </div>
 
-        {/* Subtitle */}
+        {/* Subtitle. Format-agnostic: this route now covers both Reg M-A and
+            Reg M-B Megas, and the edge runtime cannot import the M-B mega set
+            from @/lib to tell them apart. */}
         <div
           style={{
             fontSize: 22,
@@ -177,7 +179,7 @@ export default async function Image({
             textAlign: "center",
           }}
         >
-          VGC Team Report — Regulation M-A
+          VGC Team Report — Pokémon Champions
         </div>
 
         {/* Accent bar */}

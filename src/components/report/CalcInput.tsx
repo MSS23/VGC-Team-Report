@@ -297,7 +297,7 @@ Examples:
             <button
               type="button"
               onClick={handleAddAll}
-              className="self-end px-4 py-2 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90 transition-colors"
+              className="self-end px-4 py-2 bg-accent text-accent-on text-sm font-medium rounded-xl hover:bg-accent/90 transition-colors"
             >
               {t.addAll} ({parsedLines.length})
             </button>
@@ -373,7 +373,7 @@ Examples:
         <button
           type="submit"
           disabled={!calcInput.trim()}
-          className="px-3 sm:px-4 py-2.5 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 min-h-[40px]"
+          className="px-3 sm:px-4 py-2.5 bg-accent text-accent-on text-sm font-medium rounded-xl hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 min-h-[40px]"
         >
           {t.add}
         </button>

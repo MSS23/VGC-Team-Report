@@ -79,28 +79,47 @@ export const CHAMPIONS_MAX_SP_PER_STAT = 32;
 export const CHAMPIONS_TOTAL_SP = 66;
 
 /**
- * Convert a traditional EV spread to an optimal Champions SP spread.
- * Preserves the intent of the original spread:
+ * True when a spread is already expressed in Champions SP form.
+ *
+ * Showdown has no "SPs:" line yet, so Champions teams carry SP values inside
+ * the EV line (e.g. "EVs: 22 HP / 11 Def / 24 SpA / 4 SpD / 5 Spe" sums to
+ * 66). If every value fits inside [0, 32] and the total fits inside 66, the
+ * only consistent reading is "these are SP" — treating them as EVs and
+ * running ceil(ev/8) would collapse "5 Spe" to 1 SP and break downstream stat
+ * math (e.g. Choice Scarf on Primarina).
+ *
+ * An all-zero spread counts as SP form too: Champions is SP-native, so an
+ * uninvested paste is 0/66 SP. Both readings produce all-zero SP anyway.
+ */
+export function looksLikeChampionsSp(spread: StatSpread): boolean {
+  const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
+  const total = stats.reduce((sum, s) => sum + spread[s], 0);
+  return (
+    total <= CHAMPIONS_TOTAL_SP &&
+    stats.every((s) => spread[s] <= CHAMPIONS_MAX_SP_PER_STAT)
+  );
+}
+
+/**
+ * Convert a traditional EV spread to a Champions SP spread.
+ *
+ * The mapping is proportional to what the user actually invested:
  *  - 252 EVs → 32 SP (full investment)
  *  - 4 EVs → 1 SP (minimum investment)
  *  - 0 EVs → 0 SP
- * Then distributes any remaining SP budget proportionally to invested stats.
+ *
+ * Leftover budget is deliberately left unspent. Topping invested stats up to
+ * 66 fabricated investment nobody made: "252 HP / 4 Def" came out as
+ * "32 HP / 32 Def", turning a 4-EV filler into a maxed stat, and how much the
+ * filler absorbed depended on what else happened to be in the spread. The
+ * under-budget state belongs to the SP badge and the legality validator, not
+ * to the conversion.
  */
 export function convertToChampionsSp(evs: StatSpread): StatSpread {
   const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
 
-  // Fast path — pastes that are already in SP form. Showdown has no "SP:"
-  // prefix yet, so Champions teams carry SP values inside the EV line
-  // (e.g. "EVs: 22 HP / 11 Def / 24 SpA / 4 SpD / 5 Spe" sums to 66).
-  // If every value fits inside [0, 32] and the total fits inside 66,
-  // the only consistent reading is "these are SP" — treating them as
-  // EVs and running ceil(ev/8) would collapse "5 Spe" to 1 SP and
-  // break downstream stat math (e.g. Choice Scarf on Primarina).
-  const totalInput = stats.reduce((sum, s) => sum + evs[s], 0);
-  const anyOverMax = stats.some((s) => evs[s] > CHAMPIONS_MAX_SP_PER_STAT);
-  if (totalInput > 0 && totalInput <= CHAMPIONS_TOTAL_SP && !anyOverMax) {
-    return { ...evs };
-  }
+  // Fast path — pastes that are already in SP form.
+  if (looksLikeChampionsSp(evs)) return { ...evs };
 
   // Step 1: Direct conversion — ceil for non-zero to preserve intent
   const sp: StatSpread = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
@@ -115,28 +134,8 @@ export function convertToChampionsSp(evs: StatSpread): StatSpread {
     sp[stat] = Math.min(sp[stat], CHAMPIONS_MAX_SP_PER_STAT);
   }
 
-  // Step 3: Distribute remaining SP to invested stats (highest EV first).
-  // Only invested stats — padding uninvested stats fabricated allocations
-  // (an empty EVs line became 32 HP / 32 Atk / 2 Def on every Pokemon).
-  // Leftover budget stays unspent; the legality validator surfaces it.
-  let totalSp = stats.reduce((sum, s) => sum + sp[s], 0);
-  if (totalSp < CHAMPIONS_TOTAL_SP) {
-    const investedStats = stats
-      .filter((s) => sp[s] > 0 && sp[s] < CHAMPIONS_MAX_SP_PER_STAT)
-      .sort((a, b) => evs[b] - evs[a]);
-
-    let remaining = CHAMPIONS_TOTAL_SP - totalSp;
-    for (const stat of investedStats) {
-      if (remaining <= 0) break;
-      const canAdd = CHAMPIONS_MAX_SP_PER_STAT - sp[stat];
-      const add = Math.min(canAdd, remaining);
-      sp[stat] += add;
-      remaining -= add;
-    }
-  }
-
-  // Step 4: If over budget, trim from lowest-invested stats
-  totalSp = stats.reduce((sum, s) => sum + sp[s], 0);
+  // Step 3: If over budget, trim from lowest-invested stats
+  const totalSp = stats.reduce((sum, s) => sum + sp[s], 0);
   if (totalSp > CHAMPIONS_TOTAL_SP) {
     const sortedAsc = stats.filter((s) => sp[s] > 0).sort((a, b) => sp[a] - sp[b]);
     let excess = totalSp - CHAMPIONS_TOTAL_SP;
