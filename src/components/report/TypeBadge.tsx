@@ -6,8 +6,15 @@ interface TypeBadgeProps {
   className?: string;
 }
 
+/**
+ * Neutral styling for a type that isn't one of the 18 real ones. The dex data
+ * is validated upstream, but a bad type must never be able to throw here and
+ * white-screen the whole report — same defensive shape as getMoveTypeStyle.
+ */
+const FALLBACK_COLORS = { bg: "#6B7280", text: "#FFFFFF", border: "#5B6270" };
+
 export function TypeBadge({ type, className = "" }: TypeBadgeProps) {
-  const colors = TYPE_COLORS[type];
+  const colors = TYPE_COLORS[type] ?? FALLBACK_COLORS;
 
   return (
     <span

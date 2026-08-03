@@ -178,13 +178,29 @@ export function parseShowdownPaste(paste: string): ParsedTeam {
     if (name) teamName = name;
   }
 
+  // Strip the folder header (=== [format] Team Name ===) from wherever it sits.
+  // The team name was already captured above. Matching per-line (/m) matters:
+  // when no blank line follows the header it shares a block with the first
+  // Pokemon and used to be parsed as a species.
+  const withoutHeaders = normalized.replace(/^===.*===[ \t]*$/gm, "");
+
   // Split into Pokemon blocks (double newline separated)
-  const blocks = normalized
+  const rawBlocks = withoutHeaders
     .split(/\n\s*\n/)
     .map(b => b.trim())
-    .filter(Boolean)
-    // Filter out header lines
-    .filter(b => !b.match(/^===.*===$/));
+    .filter(Boolean);
+
+  // A stray blank line inside a Pokemon (chat clients mangle pastes) must not
+  // start a new Pokemon: a block opening with a move line ("- Move") is a
+  // continuation of the previous block, not a new species.
+  const blocks: string[] = [];
+  for (const block of rawBlocks) {
+    if (blocks.length > 0 && block.startsWith("- ")) {
+      blocks[blocks.length - 1] += `\n${block}`;
+    } else {
+      blocks.push(block);
+    }
+  }
 
   if (blocks.length === 0) {
     return { pokemon: [], warnings: ["No Pokemon found in paste"], teamName };

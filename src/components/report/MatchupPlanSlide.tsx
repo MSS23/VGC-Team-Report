@@ -496,11 +496,14 @@ function GamePlanSection({
 
   return (
     <div className={`bg-surface border border-border rounded-2xl border-l-[3px] ${color.accent} shadow-sm transition-shadow hover:shadow-md`}>
-      {/* Header — always visible */}
+      {/* Header — always visible. The toggle and the delete control are siblings
+          so both stay keyboard reachable (no nested interactive elements). */}
+      <div className="flex items-center rounded-t-2xl">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 sm:px-5 py-3.5 hover:bg-surface-alt/30 transition-colors rounded-t-2xl"
+        aria-expanded={!isCollapsed}
+        className="flex-1 min-w-0 flex items-center justify-between pl-4 sm:pl-5 pr-2 py-3.5 hover:bg-surface-alt/30 transition-colors rounded-tl-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
       >
         <div className="flex items-center gap-3">
           <svg
@@ -549,15 +552,18 @@ function GamePlanSection({
             </div>
           )}
         </div>
-        {!isReadOnly && canDelete && (
-          <span
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="text-text-tertiary hover:text-red-400 text-xs px-2 py-1 rounded-md hover:bg-red-400/10 transition-colors"
-          >
-            {t.delete}
-          </span>
-        )}
       </button>
+      {!isReadOnly && canDelete && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          aria-label={`${t.delete} ${t.gameN} ${index + 1}`}
+          className="flex-shrink-0 inline-flex items-center justify-center min-w-[44px] min-h-[44px] mr-2 sm:mr-3 px-2 text-text-tertiary hover:text-red-400 text-xs rounded-md hover:bg-red-400/10 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
+        >
+          {t.delete}
+        </button>
+      )}
+      </div>
 
       {/* Content — collapsible */}
       {!isCollapsed && (

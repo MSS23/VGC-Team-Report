@@ -17,6 +17,21 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "August 2026",
+    version: "5.26",
+    title: "Privacy Fix, Cleaner Imports & Honest SP Spreads",
+    emoji: "🔐",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Privacy: team card images no longer leak private reports. A report set to Private could still be turned into a shareable PNG by anyone who knew its link ID — showing the full team, items, event, placement and creator name. Private reports now return nothing, and any fields you've chosen to hide from public viewers are stripped from the image too." },
+      { type: "fixed", text: "Imports: teams pasted from Discord or other chat apps now come in cleanly. A stray blank line in the middle of a Pokémon, or the '=== Team Name ===' header Showdown adds, could be read as an extra Pokémon and quietly steal one of your six slots." },
+      { type: "fixed", text: "Fixed a rare glitch where an invalid entry in our Pokédex data could blank out an entire report. Bad entries are now filtered out, and any unrecognised type renders safely instead of breaking the page." },
+      { type: "improved", text: "Champions SP spreads now mirror what you actually invested. A 4-EV filler stays a 1-point nudge instead of being silently maxed to 32, and the result no longer depends on what else is in the spread. A Pokémon with nothing invested is now flagged as 0/66 SP instead of showing a green all-clear, and the legality check reports it too." },
+      { type: "improved", text: "Accessibility: deleting a game plan in your matchup notes now works with a keyboard and screen readers — it's a proper labelled button you can tab to, with a visible focus ring." },
+      { type: "fixed", text: "Tapping a stat row next to the 'bar color = stat type' caption no longer dismisses the caption by accident — the × now only responds when you actually aim for it." },
+    ],
+  },
+  {
+    date: "August 2026",
     version: "5.25",
     title: "Hide the Stat Bar Caption",
     emoji: "👋",

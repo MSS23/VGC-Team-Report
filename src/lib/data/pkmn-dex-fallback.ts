@@ -35,6 +35,30 @@ const pokemonCache = new Map<string, PokemonData | null>();
 const megaEntryCache = new Map<string, MegaPokemonEntry | null>();
 const itemMegaCache = new Map<string, MegaPokemonEntry | null>();
 
+// ── Type validation ─────────────────────────────────────────────────────────
+
+/**
+ * The 18 real Pokemon types. The dex subset stores types as plain strings and
+ * carries a few joke/legacy entries from @pkmn/dex — `MissingNo.` is typed
+ * "Bird", which is not a member of `PokemonType`. Casting those straight to
+ * `PokemonType` used to white-screen the report the moment a type colour was
+ * looked up, so validate instead of asserting.
+ */
+const POKEMON_TYPES: ReadonlySet<string> = new Set<PokemonType>([
+  "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
+  "Fighting", "Poison", "Ground", "Flying", "Psychic", "Bug",
+  "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
+]);
+
+/**
+ * True only when every entry in `types` is a real `PokemonType` (and there is
+ * at least one). An entry with any unknown type is rejected wholesale rather
+ * than half-salvaged — `MissingNo.` is not a real VGC Pokemon.
+ */
+function hasValidTypes(types: string[]): types is PokemonType[] {
+  return types.length > 0 && types.every((t) => POKEMON_TYPES.has(t));
+}
+
 // ── Pokemon lookup fallback ─────────────────────────────────────────────────
 
 function normaliseKey(species: string): string {
@@ -73,8 +97,15 @@ export function lookupPokemonFromDex(species: string): PokemonData | null {
     return null;
   }
 
+  if (!hasValidTypes(entry.types)) {
+    // Joke/legacy dex entries (e.g. "MissingNo." typed "Bird"). Treat as a
+    // miss so no unknown type ever reaches the type-colour lookups in the UI.
+    pokemonCache.set(key, null);
+    return null;
+  }
+
   // Narrow to the [T] | [T, T] tuple our PokemonData type expects.
-  const types = entry.types as PokemonType[];
+  const types = entry.types;
   const typesTuple: PokemonData["types"] = types.length >= 2
     ? [types[0], types[1]]
     : [types[0]];
@@ -114,7 +145,7 @@ export function getMegaEntryFromDex(species: string): MegaPokemonEntry | null {
   if (megaEntryCache.has(key)) return megaEntryCache.get(key) ?? null;
 
   const entry = getSpecies(species);
-  if (!entry || !isMegaForme(entry)) {
+  if (!entry || !isMegaForme(entry) || !hasValidTypes(entry.types)) {
     megaEntryCache.set(key, null);
     return null;
   }
@@ -130,7 +161,7 @@ export function getMegaEntryFromDex(species: string): MegaPokemonEntry | null {
     }
   }
 
-  const megaTypes = entry.types as PokemonType[];
+  const megaTypes = entry.types;
   const megaTypesTuple: MegaPokemonEntry["types"] = megaTypes.length >= 2
     ? [megaTypes[0], megaTypes[1]]
     : [megaTypes[0]];

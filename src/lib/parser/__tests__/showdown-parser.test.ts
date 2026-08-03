@@ -215,6 +215,48 @@ describe("parseShowdownPaste", () => {
     });
   });
 
+  describe("regression: stray blank line inside a move block creates a phantom Pokemon", () => {
+    it("keeps the moves after a stray blank line on the same Pokemon", () => {
+      // Paste mangled by a chat client: a blank line sneaks in before the last moves
+      const mangled = [
+        `Garchomp @ Life Orb\nAbility: Rough Skin\nEVs: 252 Atk / 252 Spe / 4 HP\nJolly Nature\n- Dragon Claw\n- Protect\n\n- Earthquake\n- Swords Dance`,
+        `Flutter Mane @ Choice Specs\nAbility: Protosynthesis\nEVs: 252 SpA / 252 Spe / 4 HP\nTimid Nature\n- Moonblast\n- Shadow Ball\n- Dazzling Gleam\n- Mystical Fire`,
+        `Incineroar @ Safety Goggles\nAbility: Intimidate\nEVs: 252 HP / 4 Atk / 252 SpD\nCareful Nature\n- Fake Out\n- Flare Blitz\n- Knock Off\n- Parting Shot`,
+        `Rillaboom @ Assault Vest\nAbility: Grassy Surge\nEVs: 252 HP / 252 Atk / 4 SpD\nAdamant Nature\n- Grassy Glide\n- Wood Hammer\n- Fake Out\n- U-turn`,
+        `Urshifu-Rapid-Strike @ Focus Sash\nAbility: Unseen Fist\nEVs: 252 Atk / 4 SpD / 252 Spe\nJolly Nature\n- Surging Strikes\n- Close Combat\n- Aqua Jet\n- Detect`,
+        `Tornadus @ Covert Cloak\nAbility: Prankster\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Bleakwind Storm\n- Tailwind\n- Rain Dance\n- Protect`,
+      ].join("\n\n");
+
+      const result = parseShowdownPaste(mangled);
+
+      expect(result.pokemon).toHaveLength(6);
+      // No phantom "Earthquake" Pokemon eating a team slot
+      expect(result.pokemon.map(p => p.species)).toEqual([
+        "Garchomp", "Flutter Mane", "Incineroar", "Rillaboom", "Urshifu-Rapid-Strike", "Tornadus",
+      ]);
+      expect(result.pokemon[0].moves).toEqual([
+        "Dragon Claw", "Protect", "Earthquake", "Swords Dance",
+      ]);
+      // The continuation block must not be treated as a mon with no ability/moves
+      expect(result.warnings.some(w => w.startsWith("Earthquake"))).toBe(false);
+    });
+  });
+
+  describe("regression: === Team Name === header parsed as a Pokemon", () => {
+    it("ignores a header that is not followed by a blank line", () => {
+      const paste = `=== [gen9vgc2024regg] My Team ===\nGarchomp @ Life Orb\nAbility: Rough Skin\nEVs: 252 Atk / 252 Spe / 4 HP\nJolly Nature\n- Earthquake\n- Dragon Claw\n- Protect\n- Swords Dance\n\nFlutter Mane @ Choice Specs\nAbility: Protosynthesis\nEVs: 252 SpA / 252 Spe / 4 HP\nTimid Nature\n- Moonblast\n- Shadow Ball\n- Dazzling Gleam\n- Protect`;
+
+      const result = parseShowdownPaste(paste);
+
+      expect(result.teamName).toBe("My Team");
+      expect(result.pokemon).toHaveLength(2);
+      expect(result.pokemon.map(p => p.species)).toEqual(["Garchomp", "Flutter Mane"]);
+      expect(result.pokemon.some(p => p.species.includes("==="))).toBe(false);
+      expect(result.pokemon[0].item).toBe("Life Orb");
+      expect(result.pokemon[0].moves).toHaveLength(4);
+    });
+  });
+
   describe("IVs parsing", () => {
     it("parses explicit IVs", () => {
       const paste = `Garchomp @ Life Orb\nAbility: Rough Skin\nIVs: 0 Atk / 0 Spe\n- Earthquake`;
