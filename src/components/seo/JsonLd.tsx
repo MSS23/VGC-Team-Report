@@ -83,6 +83,8 @@ export function OrganizationJsonLd() {
 export interface SportsEventData {
   name: string;
   startDate: string;
+  /** ISO date of the final day. Omit for single-day events. */
+  endDate?: string;
   location: string;
   url: string;
   description?: string;
@@ -100,6 +102,7 @@ export function SportsEventJsonLd({ events }: { events: SportsEventData[] }) {
           "@type": "SportsEvent",
           name: events[0].name,
           startDate: events[0].startDate,
+          ...(events[0].endDate ? { endDate: events[0].endDate } : {}),
           location: {
             "@type": "Place",
             name: events[0].location,
@@ -120,6 +123,7 @@ export function SportsEventJsonLd({ events }: { events: SportsEventData[] }) {
             "@type": "SportsEvent",
             name: e.name,
             startDate: e.startDate,
+            ...(e.endDate ? { endDate: e.endDate } : {}),
             location: {
               "@type": "Place",
               name: e.location,

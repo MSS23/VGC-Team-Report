@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { TournamentsContent } from "./TournamentsContent";
-import { SportsEventJsonLd, BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
+import { SportsEventJsonLd, BreadcrumbListJsonLd, type SportsEventData } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "VGC Tournament Results Archive | Team Reports 2026",
@@ -35,20 +35,26 @@ export const metadata: Metadata = {
   ],
 };
 
-const UPCOMING_TOURNAMENTS = [
+// Dates/venues here are published as SportsEvent structured data — only add an
+// entry once the date and venue are confirmed by an official Play! Pokemon source.
+// Worlds 2026 verified 2026-08-03 against pokemon.com (PokemonXP + Worlds schedule
+// announcement): August 28-30 2026, Moscone Center, San Francisco, finals at Chase Center.
+const UPCOMING_TOURNAMENTS: SportsEventData[] = [
   {
     name: "VGC Indianapolis Regionals 2026",
     startDate: "2026-05-29",
+    endDate: "2026-05-31",
     location: "Indianapolis, Indiana, USA",
     url: "https://pokemonvgcteamreport.com/tournaments",
     description: "The first Pokemon Champions Regulation M-A Regional Championship, held May 29-31, 2026 in Indianapolis.",
   },
   {
     name: "2026 Pokemon World Championships",
-    startDate: "2026-08-14",
-    location: "San Francisco, California, USA",
+    startDate: "2026-08-28",
+    endDate: "2026-08-30",
+    location: "Moscone Center, San Francisco, California, USA",
     url: "https://pokemonvgcteamreport.com/tournaments",
-    description: "The 2026 Pokemon World Championships held August 14-17 in San Francisco, the pinnacle of the VGC competitive season.",
+    description: "The 2026 Pokemon World Championships, held August 28-30 at the Moscone Center in San Francisco with Championship Sunday finals at the Chase Center. The pinnacle of the VGC competitive season, played in Pokemon Champions Regulation M-B.",
   },
 ];
 

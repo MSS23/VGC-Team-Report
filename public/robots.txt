@@ -1,3 +1,20 @@
+# robots.txt for https://pokemonvgcteamreport.com
+#
+# IMPORTANT (RFC 9309 §2.2.1): a crawler obeys ONLY the single most specific
+# user-agent group that matches it, and ignores every other group — including
+# the wildcard `*` group. A named group therefore does NOT inherit the
+# wildcard's rules. The named groups below previously contained only `Allow: /`,
+# which silently exempted Googlebot, Bingbot, GPTBot, ClaudeBot, PerplexityBot
+# and OAI-SearchBot from `Disallow: /api/`.
+#
+# So: every group must repeat every rule it needs. If you add a Disallow here,
+# add it to ALL groups.
+#
+# Deliberately NOT disallowed: /embed/, /dashboard/, /notifications. Those carry
+# a `noindex` robots meta tag, and blocking them here would stop crawlers from
+# ever reading that tag — a robots.txt-blocked URL can still be indexed
+# URL-only. Crawl-blocking and noindex are mutually exclusive by design.
+
 User-agent: *
 Allow: /
 Disallow: /api/
@@ -5,21 +22,27 @@ Disallow: /api/
 # Explicitly allow major search engine bots
 User-agent: Googlebot
 Allow: /
+Disallow: /api/
 
 User-agent: Bingbot
 Allow: /
+Disallow: /api/
 
 # Explicitly allow AI crawlers
 User-agent: GPTBot
 Allow: /
+Disallow: /api/
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /api/
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /api/
 
 User-agent: OAI-SearchBot
 Allow: /
+Disallow: /api/
 
 Sitemap: https://pokemonvgcteamreport.com/sitemap.xml
