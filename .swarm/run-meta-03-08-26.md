@@ -96,3 +96,18 @@ source when the output is factual data shipped to production.
 Consequence: any ticket whose completion requires real-world data (tournament results, competitor
 feature checks, community sentiment) **cannot be completed by this swarm** in the current container.
 Those tickets should be routed to a human or the egress policy widened for a read-only allowlist.
+
+## Final state — run complete
+- **PR:** https://github.com/MSS23/VGC-Team-Report/pull/72 (DRAFT, 27 commits)
+- **Pushes to main: ZERO.** Every push used the guard + explicit refspec
+  `claude/loving-sagan-t7immy:refs/heads/claude/loving-sagan-t7immy`. No force-push anywhere.
+- **Merged in:** `origin/claude/gallant-bohr-nycyuh` (PR #71) — clean, no conflicts.
+- **Gate:** tsc clean · vitest 342/342 across 36 files · next build exit 0 · npm audit 12 (0 critical).
+- **Discord:** ✅ **HTTP 204 — delivered.** First success after 10+ consecutive failed runs;
+  the env-first credential resolution in `a70d924` fixed it.
+- **Linear:** VGC-251/245/181/224 → In Review (+ full root-cause comments).
+  VGC-187 left in Todo with a blocked explanation. VGC-248/220/162 corrected with new evidence.
+  10 new Backlog tickets filed: VGC-253 … VGC-262.
+- **No ticket moved to Done** — that transition is the human's, after merging.
+- **Nothing sent externally** beyond the #builds Discord post: no emails, posts, DMs, or form
+  submissions. Marketing/outreach output stayed in `.swarm/drafts/`.
