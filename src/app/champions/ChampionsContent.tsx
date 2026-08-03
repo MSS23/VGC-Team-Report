@@ -9,7 +9,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { useEffect } from "react";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
-import { INDY_TOP_CUT } from "@/data/indy-top-cut";
+import { INDY_TOP_CUT, INDY_RESULT_SOURCES } from "@/data/indy-top-cut";
 
 import { getRegMAMegas, hasMegaSprite } from "@/lib/data/mega-pokemon";
 import { MetaSnapshot } from "@/components/champions/MetaSnapshot";
@@ -228,29 +228,19 @@ export function ChampionsContent() {
             <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
               Indianapolis Regionals Top Cut
             </h2>
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full self-start sm:self-auto mb-0.5">
-              Sample — May 29-31, 2026
+            <span className="text-xs font-bold text-text-secondary bg-surface-alt border border-border px-2 py-0.5 rounded-full self-start sm:self-auto mb-0.5">
+              May 29-31, 2026
             </span>
           </div>
-          <p className="text-sm text-text-secondary mb-1">
-            The inaugural Champions format Regional Championship. These are representative archetypes from the Regulation M-A meta.
+          <p className="text-sm text-text-secondary mb-6">
+            The inaugural Champions format Regional Championship — the first Play! Pokémon event
+            run entirely on Regulation M-A.
           </p>
-          <p className="text-xs text-text-tertiary mb-6">
-            Real results will be published on{" "}
-            <a
-              href="https://play.limitlesstcg.com/tournaments"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent underline underline-offset-2 hover:opacity-80 transition-opacity"
-            >
-              Limitless TCG
-            </a>{" "}
-            once the tournament concludes.
-          </p>
+          {INDY_TOP_CUT.length > 0 ? (
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm border-collapse" aria-label="Indianapolis Regionals top cut teams">
               <caption className="sr-only">
-                Indianapolis Regionals Top Cut — Sample representatives from the Regulation M-A meta. Columns: placement, player, team Pokémon, and Limitless link.
+                Indianapolis Regionals Top Cut. Columns: placement, player, team Pokémon, and a link to the source standings.
               </caption>
               <thead>
                 <tr className="bg-surface-alt border-b border-border">
@@ -307,13 +297,13 @@ export function ChampionsContent() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {entry.limitlessUrl ? (
+                      {entry.sourceUrl ? (
                         <a
-                          href={entry.limitlessUrl}
+                          href={entry.sourceUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                            className="inline-flex min-h-11 items-center gap-1 px-2 text-xs font-bold text-accent hover:underline active:opacity-70"
-                          aria-label={`View ${entry.player} team on Limitless`}
+                          aria-label={`View ${entry.player}'s team on the source standings page`}
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -331,17 +321,51 @@ export function ChampionsContent() {
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-text-tertiary mt-3 text-center">
-            Full bracket and team lists:{" "}
-            <a
-              href="https://play.limitlesstcg.com/tournaments"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center text-accent underline underline-offset-2 hover:opacity-80 active:opacity-70 transition-opacity"
-            >
-              play.limitlesstcg.com/tournaments
-            </a>
-          </p>
+          ) : (
+            <div className="rounded-xl border border-border bg-surface px-4 py-10 sm:px-6 text-center">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="mx-auto mb-3 text-text-tertiary"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <polyline points="12 7 12 12 15 14" />
+              </svg>
+              <p className="text-sm font-bold text-text-primary mb-1.5">
+                Top-cut results not yet imported
+              </p>
+              <p className="text-sm text-text-secondary max-w-prose mx-auto mb-5">
+                The event has finished, but we haven&apos;t transcribed the verified standings and
+                team lists yet. Rather than show placeholder teams, here are the official results.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {INDY_RESULT_SOURCES.map((source) => (
+                  <a
+                    key={source.url}
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center gap-1.5 px-4 bg-accent-surface text-accent text-xs font-bold rounded-lg hover:bg-accent hover:text-white transition-colors"
+                    aria-label={`View Indianapolis Regionals results on ${source.label} (opens in a new tab)`}
+                  >
+                    {source.label}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                      <polyline points="15 3 21 3 21 9" />
+                      <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* How it works */}
