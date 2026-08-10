@@ -92,3 +92,44 @@ The SP fix (#8) CANNOT be dispatched yet — the VGC-262 converter-page agent is
 `src/lib/analysis/stat-calculator.ts` and its test file right now. A dedicated fix agent goes out the
 moment VGC-262 returns. This also makes VGC-262 a good thing to have run first: the converter page is
 UI over exactly this function, so it must not ship on top of a broken conversion.
+
+## From R8 (accessibility audit, `.swarm/r8-a11y-10-08-26.md`)
+
+12. **[a11y] Edit-mode `TeamOverview` (`:527-656`) has no `<h1>`** — P3.
+    The one item genuinely still open from the VGC-219 family. Not fixed tonight because
+    `TeamOverview.tsx` was owned by the VGC-260 agent under the file-overlap rule.
+
+13. **[a11y] Five further High findings** — P2, worth one ticket each or one grouped ticket:
+    mobile tab bar semantics, gen-theme accent contrast, tertiary-opacity text below 4.5:1,
+    and a button nested inside an anchor. All touch files owned by other agents tonight.
+
+### VGC-219 should be CLOSED, not re-implemented
+R8 REFUTED both parts of VGC-219 (currently sitting In Review):
+- The no-name `h1` fallback already exists at `TeamOverview.tsx:417-421` (commit `595f2eb`), plus
+  `s/[id]/redirect.tsx:18`. R8 checked the `hasTournamentInfo` guard at `:380` and found no gap.
+- The Export Theme modal already has a full focus trap, Escape handling, and focus restore
+  (`page.tsx:396-437`), with `aria-modal`/`aria-labelledby` at `:1651-1653` (commit `d706f71`).
+A comment recording this goes on the ticket; the human can close it after merging.
+
+## From C2 (TypeScript audit, `.swarm/c2-typescript-10-08-26.md`)
+
+14. **[Chore] `linearQuery` is duplicated in `lib/linear.ts` and `api/discord/route.ts`** — P3.
+    Both return `any` across 11 call sites. Deferred tonight purely on file-overlap risk
+    (`api/discord/route.ts` is security-adjacent and near another agent's work).
+
+15. **[Chore] Implicit `any` from 40 `.json()` call sites** — P2.
+    There is ZERO explicit `any` and zero `@ts-ignore` in `src/` — the real exposure is untyped
+    `.json()`. Four are unvalidated INBOUND parses, worst being the PostHog webhook. Eleven are
+    outbound `return res.json()`. Worth a zod boundary on the four inbound ones.
+
+16. **[Chore] Two exported `src/lib` functions infer `Promise<any>`** — P3.
+    `email.ts:32` and `discord-bot.ts:60`. Ten exported lib functions lack explicit return types,
+    but only these two actually degrade to `any`.
+
+### VGC-261 was CONSERVATIVE, not wrong
+C2 measured every flag by extending the real tsconfig from /tmp (baseline 0 errors). SIX flags are
+clean, not four: the ticket's four plus `noUncheckedSideEffectImports` and `verbatimModuleSyntax`.
+`verbatimModuleSyntax` is deliberately NOT being enabled — it changes EMIT, which is a different
+risk class from a pure type-check flag and must not ride along in a "free wins" commit.
+Also: the ticket lists `useUnknownInCatchVariables` and `strictFunctionTypes` as near-misses, but
+`strict: true` already enables both — they are not separate wins.

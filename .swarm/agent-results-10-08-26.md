@@ -29,3 +29,40 @@ back to the overview rather than throwing.
 
 26 new tests, including the named "Set (0)" regression per CLAUDE.md.
 Agent-reported verification: tsc clean, vitest 300/300 across 30 files, build succeeded.
+
+## VGC-254 — Privacy policy omits Microsoft Clarity session recording — PASS (needs human legal review)
+
+Files: `src/app/privacy/page.tsx`, `src/components/providers/ClarityProvider.tsx`,
+`src/components/providers/CookieBanner.tsx`
+
+The ticket assumed Clarity was already consent-gated and only the policy copy needed fixing.
+**That assumption was wrong.** `ClarityProvider.tsx` called `Clarity.init()` unconditionally in a
+`useEffect`, and `layout.tsx` renders `<ClarityProvider />` outside any gate — so session replay was
+starting for EVERY visitor pre-consent, contradicting the already-published cookie policy.
+
+The agent gated it (`hasAnalyticsConsent()`, `onConsentChange` subscription, init at most once,
+`Clarity.consent(false)` on withdrawal) rather than publishing a policy that documented the
+pre-consent recording. It flagged this as a deliberate scope extension beyond copy, and warned that
+the new wording must not ship without the gate or the "only after you grant consent" claim is false.
+
+Also confirmed by reading the code, not assumed:
+- Vercel Analytics is genuinely gone (no `@vercel/analytics`, no imports; changelog v5.11 records
+  the removal), so the policy's references were factually false.
+- PostHog: `initPostHogAnonymous()` still runs pre-consent with `persistence: "memory"` and
+  `disable_session_recording: true`; full tracking starts only post-consent. Because
+  `maskAllInputs: false` and only password inputs are masked, the policy now states plainly that
+  non-password text — team pastes, notes — may appear in PostHog replays.
+- `CookieBanner.tsx` named two retired Vercel products and omitted Clarity entirely. That is the
+  consent-GATHERING copy, so leaving it stale would undermine the consent basis.
+
+### ⚠️ Requires a human before production
+1. This is legal-adjacent copy written by an agent, not a lawyer.
+2. Clarity's retention period is not documented anywhere in the repo and there is no internet
+   access, so the retention bullet deliberately carries NO number. A human must insert Microsoft's
+   documented figure.
+3. The Microsoft Clarity processor entry has no DPA hyperlink, and the section intro asserting every
+   processor "has signed a DPA with SCCs" now implicitly covers Microsoft — the operator must confirm.
+4. The pre-existing "Retained for 12 months by PostHog" claim was carried over UNVERIFIED.
+
+Verified in an isolated copy of HEAD with only its three files applied (tsc exit 0, 263 tests,
+build exit 0), because the shared tree carried a transient break from the in-flight VGC-258 agent.
