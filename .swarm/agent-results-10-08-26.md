@@ -66,3 +66,32 @@ Also confirmed by reading the code, not assumed:
 
 Verified in an isolated copy of HEAD with only its three files applied (tsc exit 0, 263 tests,
 build exit 0), because the shared tree carried a transient break from the in-flight VGC-258 agent.
+
+## VGC-262 — Standalone EV→SP converter page — PASS (with a file-overlap caveat)
+
+Files: `src/lib/analysis/stat-calculator.ts`, `src/lib/analysis/__tests__/stat-calculator.test.ts`,
+`src/app/tools/ev-to-sp/page.tsx`, `src/app/tools/ev-to-sp/EvToSpConverter.tsx`,
+`src/app/sitemap.ts`, `src/components/layout/PageFooter.tsx`,
+`src/app/champions/ChampionsContent.tsx`
+
+Did the structurally right thing rather than the quick thing: instead of reimplementing the
+conversion for the UI, it extracted the existing per-stat EV→SP curve out of `convertToChampionsSp`
+into an exported `evToChampionsSp` (single source of truth — `convertToChampionsSp` now calls it,
+behaviour unchanged), then derived `championsSpToEv` by SEARCHING the forward function so the two
+directions cannot drift apart. 11 new cases: round-trip, monotonicity, the 4-then-8 EV ladder, the
+248-EV cap.
+
+The route is a Server Component: `h1`, prose explaining the `ceil(EV/8)` curve with its 1-SP floor
+and the 66/32 budget, and two reference tables GENERATED FROM the lib functions rather than
+hand-written, so the published tables cannot drift from the implementation. Metadata with canonical
++ openGraph/twitter following the repo's existing pattern; BreadcrumbList + FAQPage + WebApplication
+JSON-LD via the existing `components/seo/JsonLd` helpers. Interactivity is a `"use client"` child:
+six bidirectional EV↔SP rows, a live 66-SP budget bar, over-budget and over-32-per-stat warnings in
+an `aria-live` region.
+
+Verified in an isolated tree (git HEAD + only this ticket's changes) because the shared tree was
+mid-edit; `/tools/ev-to-sp` prerendered as a static route with the h1, both tables and the JSON-LD
+present in the HTML.
+
+**Caveat:** returned `conflict_risk: true`. Three of its files are also owned by the in-flight
+VGC-258 agent. See `.swarm/conflicts.md` for the reconciliation checklist.
