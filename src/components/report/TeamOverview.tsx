@@ -10,6 +10,7 @@ import { useTranslation } from "@/lib/i18n";
 import { ARCHETYPES, REGULATIONS, EVENT_TYPES, isChampionsFormat } from "@/lib/data/tags";
 import type { ReportTags } from "@/lib/data/tags";
 import { FieldDiffHighlight } from "./TeamReport";
+import { encodeSectionKey } from "@/lib/utils/version-diff";
 import { hapticMedium, hapticSuccess } from "@/lib/utils/haptics";
 import { detectImportSource } from "@/lib/utils/multi-import";
 import { fetchPokePaste } from "@/lib/utils/pokepaste";
@@ -781,7 +782,13 @@ function TeamOverviewBase({
                 isDragOver ? "ring-2 ring-accent ring-offset-2 ring-offset-background scale-[1.02]" : ""
               }`}
             >
-              <FieldDiffHighlight field={[`pokemon:${i}`, `roles:${speciesKeys[i]}`]} label="Updated">
+              <FieldDiffHighlight
+                field={[
+                  encodeSectionKey({ kind: "pokemon", index: i }),
+                  encodeSectionKey({ kind: "roles", speciesKey: speciesKeys[i] }),
+                ]}
+                label="Updated"
+              >
               <PokemonCard
                 pokemon={mon}
                 creatorMode={creatorMode}

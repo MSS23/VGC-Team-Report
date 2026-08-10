@@ -18,6 +18,154 @@ export interface VersionDiff {
 }
 
 /**
+ * Every section key the diff can emit, as a discriminated union.
+ *
+ * The wire format is a flat string (it doubles as the `data-diff-field`
+ * attribute in the DOM), so emit and parse used to be two hand-written string
+ * templates that drifted: `pokemon:<index>` was emitted with a numeric INDEX
+ * but read back as if the payload were a species name, which rendered the
+ * label "Set (0)" and navigated to the wrong slide (VGC-260).
+ *
+ * Both directions now go through `encodeSectionKey` / `parseSectionKey`, so
+ * the payload of each variant is fixed by the type and cannot drift again.
+ */
+export type SectionKey =
+  /** A whole-report field with a fixed label (see FIELD_LABELS) */
+  | { kind: "field"; field: GlobalFieldKey }
+  /** A Pokemon's paste block — payload is the team INDEX, not a species name */
+  | { kind: "pokemon"; index: number }
+  | { kind: "notes"; speciesKey: string }
+  | { kind: "calcs"; speciesKey: string }
+  | { kind: "roles"; speciesKey: string }
+  /** Internal marker that a slide contains at least one change */
+  | { kind: "slide"; slide: number };
+
+/** Keys of the fixed whole-report fields. */
+export type GlobalFieldKey = keyof typeof FIELD_LABELS;
+
+/** The per-Pokemon section kinds, in the order they read in the UI. */
+const PER_POKEMON_LABELS = {
+  pokemon: "Set",
+  notes: "Notes",
+  calcs: "Calcs",
+  roles: "Role",
+} as const;
+
+function isGlobalFieldKey(value: string): value is GlobalFieldKey {
+  return Object.prototype.hasOwnProperty.call(FIELD_LABELS, value);
+}
+
+/** Serialize a section key to its wire/DOM string form. */
+export function encodeSectionKey(key: SectionKey): string {
+  switch (key.kind) {
+    case "field":
+      return key.field;
+    case "pokemon":
+      return `pokemon:${key.index}`;
+    case "notes":
+      return `notes:${key.speciesKey}`;
+    case "calcs":
+      return `calcs:${key.speciesKey}`;
+    case "roles":
+      return `roles:${key.speciesKey}`;
+    case "slide":
+      return `slide:${key.slide}`;
+  }
+}
+
+/**
+ * Parse a wire/DOM string back into a section key.
+ * Returns null for anything unrecognised (callers skip those).
+ *
+ * Splits on the FIRST colon only, so species keys that themselves contain a
+ * colon (e.g. "Type: Null") survive the round trip.
+ */
+export function parseSectionKey(raw: string): SectionKey | null {
+  const sep = raw.indexOf(":");
+  if (sep === -1) {
+    return isGlobalFieldKey(raw) ? { kind: "field", field: raw } : null;
+  }
+
+  const prefix = raw.slice(0, sep);
+  const payload = raw.slice(sep + 1);
+
+  switch (prefix) {
+    case "pokemon": {
+      // Numeric team index — 0 is a real Pokemon, not a missing one.
+      if (!/^\d+$/.test(payload)) return null;
+      return { kind: "pokemon", index: Number(payload) };
+    }
+    case "notes":
+    case "calcs":
+    case "roles":
+      return payload ? { kind: prefix, speciesKey: payload } : null;
+    case "slide": {
+      if (!/^\d+$/.test(payload)) return null;
+      return { kind: "slide", slide: Number(payload) };
+    }
+    default:
+      return null;
+  }
+}
+
+const capitalize = (s: string) => s.replace(/^./, (c) => c.toUpperCase());
+
+/**
+ * Human-readable label for a section key.
+ * Per-Pokemon keys resolve to the Pokemon's actual species name — a
+ * `pokemon:<index>` key looks its species up in `speciesKeys` rather than
+ * printing the raw index (VGC-260).
+ */
+export function sectionKeyLabel(key: SectionKey, speciesKeys: string[] = []): string | null {
+  switch (key.kind) {
+    case "field":
+      return FIELD_LABELS[key.field];
+    case "pokemon": {
+      const name = speciesKeys[key.index] ?? `Pokemon ${key.index + 1}`;
+      return `${PER_POKEMON_LABELS.pokemon} (${capitalize(name)})`;
+    }
+    case "notes":
+    case "calcs":
+    case "roles":
+      return `${PER_POKEMON_LABELS[key.kind]} (${capitalize(key.speciesKey)})`;
+    case "slide":
+      return null; // internal marker, never shown
+  }
+}
+
+/** Context needed to map a section key onto a slide index. */
+interface SlideLayout {
+  pokemonCount: number;
+  speciesKeys: string[];
+  plansCount: number;
+}
+
+/**
+ * Which slide a section key lives on.
+ * Logical layout: 0 overview · 1 common modes · 2.. Pokemon detail slides,
+ * so Pokemon #index sits at index + 2.
+ */
+export function sectionKeySlide(key: SectionKey, layout: SlideLayout): number {
+  switch (key.kind) {
+    case "field":
+      if (key.field === "commonModes") return 1;
+      if (key.field === "matchupPlans") return layout.pokemonCount + 5 + layout.plansCount;
+      return 0;
+    case "pokemon":
+      // Out-of-range index falls back to the overview rather than a dead slide.
+      return key.index >= 0 && key.index < layout.speciesKeys.length ? key.index + 2 : 0;
+    case "notes":
+    case "calcs":
+    case "roles": {
+      const index = layout.speciesKeys.indexOf(key.speciesKey);
+      return index >= 0 ? index + 2 : 0;
+    }
+    case "slide":
+      return key.slide;
+  }
+}
+
+/**
  * Parse a paste string into individual Pokemon blocks for per-Pokemon comparison.
  */
 function parsePasteBlocks(paste: string): string[] {
@@ -50,48 +198,44 @@ export function computeVersionDiff(
   const changedFields = new Set<string>();
   const changedSlides = new Set<number>();
 
+  /** Record a change. Every emitted key goes through the SectionKey union. */
+  const addChange = (key: SectionKey, ...slides: number[]) => {
+    changedFields.add(encodeSectionKey(key));
+    for (const slide of slides) changedSlides.add(slide);
+  };
+
   // --- Overview slide (slide 0) ---
 
   if ((current.teamSummary ?? "") !== (old.teamSummary ?? "")) {
-    changedFields.add("teamSummary");
-    changedSlides.add(0);
+    addChange({ kind: "field", field: "teamSummary" }, 0);
   }
   // Common Modes lives on its own slide (physical index 1), inserted after the overview.
   if (JSON.stringify(current.commonModes ?? {}) !== JSON.stringify(old.commonModes ?? {})) {
-    changedFields.add("commonModes");
-    changedSlides.add(1);
+    addChange({ kind: "field", field: "commonModes" }, 1);
   }
   if ((current.teamName ?? "") !== (old.teamName ?? "")) {
-    changedFields.add("teamName");
-    changedSlides.add(0);
+    addChange({ kind: "field", field: "teamName" }, 0);
   }
   if ((current.tournamentName ?? "") !== (old.tournamentName ?? "")) {
-    changedFields.add("tournamentName");
-    changedSlides.add(0);
+    addChange({ kind: "field", field: "tournamentName" }, 0);
   }
   if ((current.placement ?? "") !== (old.placement ?? "")) {
-    changedFields.add("placement");
-    changedSlides.add(0);
+    addChange({ kind: "field", field: "placement" }, 0);
   }
   if ((current.record ?? "") !== (old.record ?? "")) {
-    changedFields.add("record");
-    changedSlides.add(0);
+    addChange({ kind: "field", field: "record" }, 0);
   }
   if ((current.creatorName ?? "") !== (old.creatorName ?? "")) {
-    changedFields.add("creatorName");
-    changedSlides.add(0);
+    addChange({ kind: "field", field: "creatorName" }, 0);
   }
   if ((current.mvpIndex ?? null) !== (old.mvpIndex ?? null)) {
-    changedFields.add("mvpIndex");
-    changedSlides.add(0);
+    addChange({ kind: "field", field: "mvpIndex" }, 0);
   }
   if ((current.rentalCode ?? "") !== (old.rentalCode ?? "")) {
-    changedFields.add("rentalCode");
-    changedSlides.add(0);
+    addChange({ kind: "field", field: "rentalCode" }, 0);
   }
   if (JSON.stringify(current.tags ?? {}) !== JSON.stringify(old.tags ?? {})) {
-    changedFields.add("tags");
-    changedSlides.add(0);
+    addChange({ kind: "field", field: "tags" }, 0);
   }
 
   // --- Per-Pokemon changes ---
@@ -109,45 +253,38 @@ export function computeVersionDiff(
 
     // Pokemon paste block changed (stats, moves, item, ability, etc.)
     if ((currentBlocks[i] ?? "") !== (oldBlocks[i] ?? "")) {
-      changedFields.add(`pokemon:${i}`);
-      changedSlides.add(0); // Overview shows pokemon cards
-      changedSlides.add(slideIndex);
-      changedSlides.add(pokemonCount + 2); // Speed chart
+      // Overview (0) shows pokemon cards; pokemonCount + 2 is the speed chart.
+      addChange({ kind: "pokemon", index: i }, 0, slideIndex, pokemonCount + 2);
       hasChange = true;
     }
 
     // Notes
     if ((current.notes?.[key] ?? "") !== (old.notes?.[key] ?? "")) {
-      changedFields.add(`notes:${key}`);
-      changedSlides.add(slideIndex);
+      addChange({ kind: "notes", speciesKey: key }, slideIndex);
       hasChange = true;
     }
 
     // Calcs
     if (JSON.stringify(current.calcs?.[key] ?? []) !== JSON.stringify(old.calcs?.[key] ?? [])) {
-      changedFields.add(`calcs:${key}`);
-      changedSlides.add(slideIndex);
+      addChange({ kind: "calcs", speciesKey: key }, slideIndex);
       hasChange = true;
     }
 
     // Roles
     if ((current.roles?.[key] ?? "") !== (old.roles?.[key] ?? "")) {
-      changedFields.add(`roles:${key}`);
-      changedSlides.add(0); // Roles shown on overview
-      changedSlides.add(slideIndex);
+      // Roles show on the overview as well as the detail slide.
+      addChange({ kind: "roles", speciesKey: key }, 0, slideIndex);
       hasChange = true;
     }
 
     if (hasChange) {
-      changedFields.add(`slide:${slideIndex}`);
+      addChange({ kind: "slide", slide: slideIndex });
     }
   }
 
   // Team composition size changed
   if (currentBlocks.length !== oldBlocks.length) {
-    changedFields.add("teamComposition");
-    changedSlides.add(0);
-    changedSlides.add(pokemonCount + 2); // Speed chart
+    addChange({ kind: "field", field: "teamComposition" }, 0, pokemonCount + 2); // Speed chart
   }
 
   // --- Matchup plans ---
@@ -175,7 +312,7 @@ export function computeVersionDiff(
     currentNorm.some((p: string, i: number) => p !== oldNorm[i]);
 
   if (plansChanged) {
-    changedFields.add("matchupPlans");
+    addChange({ kind: "field", field: "matchupPlans" });
     // Matchup plan slides start at pokemonCount + 5 (overview, common-modes,
     // N Pokemon, speed, offensive, defensive precede them).
     for (let i = 0; i < plansCount; i++) {
@@ -214,43 +351,16 @@ export function getNavigableChanges(
   plansCount: number
 ): DiffChange[] {
   const changes: DiffChange[] = [];
+  const layout = { pokemonCount, speciesKeys, plansCount };
 
   for (const field of diff.changedFields) {
-    if (field.startsWith("slide:")) continue;
+    const key = parseSectionKey(field);
+    if (!key || key.kind === "slide") continue; // slide: is an internal marker
 
-    let label = FIELD_LABELS[field];
-    let slide = 0;
+    const label = sectionKeyLabel(key, speciesKeys);
+    if (!label) continue;
 
-    if (label) {
-      // Overview fields are all on slide 0, except commonModes (own slide) and matchupPlans.
-      if (field === "commonModes") {
-        slide = 1; // Common Modes slide
-      } else if (field === "matchupPlans") {
-        slide = pokemonCount + 5 + plansCount; // matchup sheet
-      }
-    } else {
-      const match = field.match(/^(pokemon|notes|calcs|roles):(.+)$/);
-      if (!match) continue;
-      const [, type, key] = match;
-      const name = key.replace(/^./, (c) => c.toUpperCase());
-      const typeLabel =
-        type === "pokemon" ? "Set" :
-        type === "notes" ? "Notes" :
-        type === "calcs" ? "Calcs" :
-        type === "roles" ? "Role" : type;
-      label = `${typeLabel} (${name})`;
-
-      // Find which pokemon index this key belongs to
-      const pokemonIndex = speciesKeys.indexOf(key);
-      // pokemon paste changes show on the pokemon detail slide
-      // roles show on overview but we navigate to the pokemon slide for detail
-      // +2: overview (0) and common-modes (1) precede the first Pokemon slide.
-      slide = pokemonIndex >= 0 ? pokemonIndex + 2 : 0;
-    }
-
-    if (label) {
-      changes.push({ field, label, slide });
-    }
+    changes.push({ field, label, slide: sectionKeySlide(key, layout) });
   }
 
   // Sort by slide order for natural navigation
@@ -258,8 +368,12 @@ export function getNavigableChanges(
   return changes;
 }
 
-/** Field key labels for human-readable summaries */
-const FIELD_LABELS: Record<string, string> = {
+/**
+ * Field key labels for human-readable summaries.
+ * `as const` keeps the key literals — `GlobalFieldKey` is derived from them,
+ * so a field can't be emitted without also having a label.
+ */
+const FIELD_LABELS = {
   teamSummary: "Team summary",
   commonModes: "How to play",
   teamName: "Team name",
@@ -272,37 +386,24 @@ const FIELD_LABELS: Record<string, string> = {
   tags: "Tags",
   teamComposition: "Team composition",
   matchupPlans: "Matchup plans",
-};
+} as const satisfies Record<string, string>;
 
 /**
  * Turn a set of changed field keys into a human-readable summary string.
  * e.g. "Team summary, Notes (Pikachu), Calcs (Urshifu) — highlighted in blue"
+ *
+ * `speciesKeys` lets `pokemon:<index>` keys resolve to the real species name;
+ * without it they fall back to "Pokemon N" (never the bare index).
  */
-export function summarizeChangedFields(fields: Set<string>): string {
+export function summarizeChangedFields(fields: Set<string>, speciesKeys: string[] = []): string {
   const labels: string[] = [];
 
   for (const field of fields) {
-    // Skip internal slide markers
-    if (field.startsWith("slide:")) continue;
+    const key = parseSectionKey(field);
+    if (!key || key.kind === "slide") continue; // skip internal slide markers
 
-    // Direct labels
-    if (FIELD_LABELS[field]) {
-      labels.push(FIELD_LABELS[field]);
-      continue;
-    }
-
-    // Per-pokemon fields: "notes:pikachu" → "Notes (Pikachu)"
-    const match = field.match(/^(pokemon|notes|calcs|roles):(.+)$/);
-    if (match) {
-      const [, type, key] = match;
-      const name = key.replace(/^./, (c) => c.toUpperCase());
-      const typeLabel =
-        type === "pokemon" ? "Set" :
-        type === "notes" ? "Notes" :
-        type === "calcs" ? "Calcs" :
-        type === "roles" ? "Role" : type;
-      labels.push(`${typeLabel} (${name})`);
-    }
+    const label = sectionKeyLabel(key, speciesKeys);
+    if (label) labels.push(label);
   }
 
   if (labels.length === 0) return "No differences found";
