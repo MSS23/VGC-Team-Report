@@ -903,6 +903,30 @@ export function getRegMAMegasWithSprites(): MegaPokemonEntry[] {
   return getRegMAMegas().filter((m) => MEGAS_WITH_SPRITES.has(m.dataKey));
 }
 
+/**
+ * Reg M-B Megas that have sprites on Showdown. This is the set the public
+ * /champions surfaces build from — index grid links, generateStaticParams,
+ * relatedMegas, and the sitemap — because M-B is the current (and widest)
+ * Champions regulation. Sprite-less Megas (Meowstic, Raichu X/Y) are still
+ * shown on the index as non-clickable "Coming Soon" cards.
+ */
+export function getRegMBMegasWithSprites(): MegaPokemonEntry[] {
+  return getRegMBMegas().filter((m) => MEGAS_WITH_SPRITES.has(m.dataKey));
+}
+
+/**
+ * Earliest Champions regulation a Mega is legal in. M-B is a superset of M-A,
+ * so an M-A Mega is legal in BOTH regulations while an M-B-only Mega is legal
+ * in M-B alone.
+ *
+ * SEO-critical: the /champions/[pokemon] pages are statically generated, so a
+ * hard-coded "legal in Regulation M-A" string would publish a factually false
+ * legality claim on all 16 M-B-only Megas. Always derive the label from here.
+ */
+export function getMegaRegulation(dataKey: string): "M-A" | "M-B" {
+  return CHAMPIONS_REG_MA_MEGAS.has(dataKey) ? "M-A" : "M-B";
+}
+
 /** Whether a Mega entry currently has a usable sprite on Showdown. */
 export function hasMegaSprite(dataKey: string): boolean {
   return MEGAS_WITH_SPRITES.has(dataKey);

@@ -9,7 +9,12 @@ interface PageFooterProps {
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/explore", label: "Explore" },
+  // /champions is the root of the SEO-critical Mega landing-page cluster (75
+  // pages). It was reachable only from the top nav, so the cluster had no
+  // sitewide footer link at all.
+  { href: "/champions", label: "Champions" },
   { href: "/faq", label: "FAQ" },
+  { href: "/tools/ev-to-sp", label: "EV → SP" },
   { href: "/changelog", label: "Changelog" },
   { href: "/support", label: "Support" },
   { href: "/privacy", label: "Privacy" },

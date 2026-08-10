@@ -11,15 +11,69 @@ import { usePostHog } from "@/components/providers/PostHogProvider";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 import { INDY_TOP_CUT } from "@/data/indy-top-cut";
 
-import { getRegMAMegas, hasMegaSprite } from "@/lib/data/mega-pokemon";
+import {
+  CHAMPIONS_REG_MB_ONLY_MEGAS,
+  getRegMAMegas,
+  getRegMBMegas,
+  hasMegaSprite,
+  type MegaPokemonEntry,
+} from "@/lib/data/mega-pokemon";
 import { MetaSnapshot } from "@/components/champions/MetaSnapshot";
-const MEGA_POKEMON = getRegMAMegas().map((m) => ({
-  name: m.displayName.replace(/^Mega /, "") + "-Mega",
-  ability: m.ability,
-  types: m.types,
-  slug: m.slug,
-  hasSprite: hasMegaSprite(m.dataKey),
-}));
+
+interface MegaCard {
+  name: string;
+  ability: string;
+  types: string[];
+  slug: string;
+  hasSprite: boolean;
+  /** Added in the Reg M-B rotation — NOT legal in Reg M-A. */
+  mbOnly: boolean;
+}
+
+function toCard(m: MegaPokemonEntry): MegaCard {
+  return {
+    name: m.displayName.replace(/^Mega /, "") + "-Mega",
+    ability: m.ability,
+    types: m.types as string[],
+    slug: m.slug,
+    hasSprite: hasMegaSprite(m.dataKey),
+    mbOnly: CHAMPIONS_REG_MB_ONLY_MEGAS.has(m.dataKey),
+  };
+}
+
+// Grouped by regulation rather than filtered by a client-side control ON
+// PURPOSE: every card has to be present in the server-rendered HTML so crawlers
+// see all 75 internal links. This grid is the ONLY place on the site that links
+// to a Mega detail page, and building it from getRegMAMegas() alone is what left
+// the 16 Reg M-B Megas with zero inbound links (VGC-258).
+//
+// M-B-only Megas lead because they're the newest additions and the ones the
+// index previously omitted entirely.
+const MEGA_GROUPS: {
+  id: string;
+  heading: string;
+  blurb: string;
+  megas: MegaCard[];
+}[] = [
+  {
+    id: "megas-reg-m-b",
+    heading: "New in Regulation M-B",
+    blurb:
+      "Mega Evolutions added when the Champions format rotated to Regulation M-B. These are not legal in Regulation M-A.",
+    megas: getRegMBMegas()
+      .filter((m) => CHAMPIONS_REG_MB_ONLY_MEGAS.has(m.dataKey))
+      .map(toCard),
+  },
+  {
+    id: "megas-reg-m-a",
+    heading: "Legal in Regulation M-A and M-B",
+    blurb:
+      "The launch-format Mega pool. Regulation M-B is a superset of Regulation M-A, so every one of these is legal in both.",
+    megas: getRegMAMegas().map(toCard),
+  },
+];
+
+const TOTAL_MEGAS = MEGA_GROUPS.reduce((n, g) => n + g.megas.length, 0);
 
 const TYPE_COLORS: Record<string, string> = {
   Normal: "#A8A878", Fire: "#F08030", Water: "#6890F0", Electric: "#F8D030",
@@ -105,76 +159,112 @@ export function ChampionsContent() {
               as the headline mechanic.
             </p>
             <p>
-              The first official format is <strong className="text-text-primary">Regulation M-A</strong>,
-              which will be used for the Global Challenge (May 1-4), Indianapolis Regionals (May 29-31),
-              and the 2026 World Championships in San Francisco (August 28-30). Reg M-A bans all
-              Legendary and Restricted Pokemon — no Groudon, Kyogre, Calyrex, Miraidon, Koraidon, or
-              other restricted picks. Players may Mega Evolve once per battle from a pool of 59 legal
-              Mega forms (Mega Salamence, Mega Metagross, and Mega Mawile are explicitly NOT in the
-              format).
+              The season opened on <strong className="text-text-primary">Regulation M-A</strong>, the
+              format played at the Global Challenge (May 1-4), Indianapolis Regionals (May 29-31), and
+              the NA International Championships (June 12-14). Reg M-A banned all Legendary and
+              Restricted Pokemon — no Groudon, Kyogre, Calyrex, Miraidon, Koraidon, or other restricted
+              picks — and allowed one Mega Evolution per battle from a pool of 59 legal Mega forms.
+            </p>
+            <p>
+              Champions has since rotated to <strong className="text-text-primary">Regulation M-B</strong>,
+              a superset of Reg M-A. The Restricted ban and the one-Mega-per-battle rule are unchanged,
+              but the legal Mega pool grows to {TOTAL_MEGAS} forms — 16 new additions including Mega
+              Metagross, Mega Mawile, Mega Blaziken, Mega Swampert, and Mega Sceptile, none of which
+              were legal in Reg M-A. Every Reg M-A Mega is still legal in Reg M-B.
             </p>
           </div>
         </section>
 
-        {/* Featured Mega Pokemon */}
+        {/* Mega Pokemon index — grouped by regulation */}
         <section className="max-w-5xl mx-auto px-4 py-12">
-          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
-            Featured Mega Evolutions
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-2">
+            Every Legal Mega Evolution
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {MEGA_POKEMON.map((mon) => {
-              if (!mon.hasSprite) {
-                return (
-                  <div
-                    key={mon.name}
-                    className="rounded-xl border border-border bg-surface/60 p-4 opacity-60 cursor-not-allowed"
-                    aria-disabled="true"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-sm font-bold text-text-tertiary">{mon.name}</h3>
-                      <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
-                        Coming Soon
-                      </span>
-                    </div>
-                    <p className="text-xs text-text-tertiary/70 mt-0.5">{mon.ability}</p>
-                    <div className="flex gap-1.5 mt-2">
-                      {mon.types.map((t) => (
-                        <span
-                          key={t}
-                          className="text-[10px] font-bold text-white/70 px-2 py-0.5 rounded-full"
-                          style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-text-tertiary/60 mt-2 italic">Sprite unavailable</p>
-                  </div>
-                );
-              }
-              return (
-                <Link
-                  key={mon.name}
-                  href={`/champions/${mon.slug}`}
-                  className="rounded-xl border border-border bg-surface p-4 hover:border-accent/30 transition-colors group"
-                >
-                  <h3 className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">{mon.name}</h3>
-                  <p className="text-xs text-text-tertiary mt-0.5">{mon.ability}</p>
-                  <div className="flex gap-1.5 mt-2">
-                    {mon.types.map((t) => (
-                      <span
-                        key={t}
-                        className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
+          <p className="text-sm text-text-secondary mb-8 max-w-2xl leading-relaxed">
+            All {TOTAL_MEGAS} Mega Evolutions legal in Pokemon Champions, grouped by the regulation
+            they can be played in. Pick one for its stats, ability, Mega Stone, SP spreads, and
+            community team reports.
+          </p>
+          {MEGA_GROUPS.map((group) => (
+            <div key={group.id} className="mb-10 last:mb-0">
+              <h3
+                id={group.id}
+                className="text-base sm:text-lg font-extrabold text-text-primary tracking-tight"
+              >
+                {group.heading}{" "}
+                <span className="text-xs font-bold text-text-tertiary align-middle">
+                  ({group.megas.length})
+                </span>
+              </h3>
+              <p className="text-xs text-text-secondary mt-1 mb-4 max-w-2xl leading-relaxed">
+                {group.blurb}
+              </p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 list-none p-0 m-0">
+                {group.megas.map((mon) => (
+                  <li key={mon.slug}>
+                    {mon.hasSprite ? (
+                      <Link
+                        href={`/champions/${mon.slug}`}
+                        className="block h-full rounded-xl border border-border bg-surface p-4 hover:border-accent/30 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
+                            {mon.name}
+                          </h4>
+                          {mon.mbOnly && (
+                            <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent-surface text-accent border border-accent/20 whitespace-nowrap">
+                              Reg M-B
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-text-tertiary mt-0.5">{mon.ability}</p>
+                        <div className="flex gap-1.5 mt-2">
+                          {mon.types.map((t) => (
+                            <span
+                              key={t}
+                              className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </Link>
+                    ) : (
+                      // Sprite-less Megas (Meowstic, Raichu X/Y) have no landing
+                      // page — Showdown ships no usable sprite, so the page would
+                      // render broken. Surfaced as a non-clickable "Coming Soon"
+                      // card instead.
+                      <div
+                        className="h-full rounded-xl border border-border bg-surface/60 p-4 opacity-60 cursor-not-allowed"
+                        aria-disabled="true"
+                      >
+                        <div className="flex items-start justify-between gap-2 flex-wrap">
+                          <h4 className="text-sm font-bold text-text-tertiary">{mon.name}</h4>
+                          <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
+                            Coming Soon
+                          </span>
+                        </div>
+                        <p className="text-xs text-text-tertiary/70 mt-0.5">{mon.ability}</p>
+                        <div className="flex gap-1.5 mt-2">
+                          {mon.types.map((t) => (
+                            <span
+                              key={t}
+                              className="text-[10px] font-bold text-white/70 px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-text-tertiary/60 mt-2 italic">Sprite unavailable</p>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </section>
 
         {/* Sample Teams */}
@@ -352,7 +442,7 @@ export function ChampionsContent() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
               { step: "1", title: "Paste Your Team", desc: "Export your team from Pokemon Showdown or PokePaste and paste it into the editor. Mega Evolutions are automatically detected." },
-              { step: "2", title: "Add Notes & Calcs", desc: "Add strategy notes, damage calculations, spread notes, and matchup plans for each Pokemon. Tag with Reg M-A." },
+              { step: "2", title: "Add Notes & Calcs", desc: "Add strategy notes, damage calculations, spread notes, and matchup plans for each Pokemon. Tag with Reg M-A or Reg M-B." },
               { step: "3", title: "Share & Discover", desc: "Share your report with a link, embed it on Discord, or make it public for the community to explore and learn from." },
             ].map((item) => (
               <div key={item.step} className="text-center">
@@ -364,6 +454,27 @@ export function ChampionsContent() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* EV → SP converter */}
+        <section className="max-w-5xl mx-auto px-4 py-12">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-2">
+            Still Thinking in EVs?
+          </h2>
+          <p className="text-sm text-text-secondary mb-5 max-w-2xl leading-relaxed">
+            Champions swaps EVs for Stat Points — 66 in total, 32 max per stat.
+            The first SP costs 4 EVs and every one after it costs 8, which is why
+            the conversion trips people up. Our free converter does the math both ways.
+          </p>
+          <Link
+            href="/tools/ev-to-sp"
+            className="inline-flex min-h-11 items-center gap-2 px-4 py-2 bg-surface border border-border text-sm font-bold text-text-primary rounded-xl hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.97] transition-all"
+          >
+            Open the EV to SP Converter
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </Link>
         </section>
 
         {/* Key Events */}

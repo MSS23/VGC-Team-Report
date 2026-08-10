@@ -68,10 +68,25 @@ interface MegaLandingContentProps {
   baseStats: StatSpread;
   teams: ExploreReport[];
   relatedMegas: { slug: string; displayName: string; types: string[] }[];
+  /**
+   * Human-readable legality, derived server-side from the Mega's actual
+   * regulation (e.g. "Regulation M-A and M-B" vs "Regulation M-B only").
+   * Never hard-code this — M-B-only Megas are not M-A legal.
+   */
+  regulationLabel: string;
+  /** Matching `regulation` filter value for /explore deep links. */
+  exploreRegulation: string;
   // faqs removed from the visible UI — JSON-LD still generated server-side.
 }
 
-export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: MegaLandingContentProps) {
+export function MegaLandingContent({
+  mega,
+  baseStats,
+  teams,
+  relatedMegas,
+  regulationLabel,
+  exploreRegulation,
+}: MegaLandingContentProps) {
   const bst = Object.values(baseStats).reduce((a, b) => a + b, 0);
 
   useEffect(() => {
@@ -124,6 +139,9 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
                 <p className="mt-2 text-xs text-text-tertiary">
                   Mega Stone: <span className="font-medium text-text-secondary">{mega.megaStone}</span>
                 </p>
+                <p className="mt-1 text-xs text-text-tertiary">
+                  Legal in: <span className="font-medium text-text-secondary">{regulationLabel}</span>
+                </p>
               </div>
             </div>
           </div>
@@ -149,7 +167,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
               {mega.displayName} SP Spreads & Competitive Teams
             </h2>
             <Link
-              href={`/explore?species=${encodeURIComponent(mega.baseName)}&regulation=Reg+M-A`}
+              href={`/explore?species=${encodeURIComponent(mega.baseName)}&regulation=${encodeURIComponent(exploreRegulation)}`}
               className="text-xs font-bold text-accent hover:brightness-110 transition-all"
             >
               View all &rarr;
