@@ -10,10 +10,12 @@ Paste a Pokémon Showdown team → get a shareable VGC team report. Supports cla
 
 ```bash
 cd "/c/Users/msidh/Documents/Projects & Code/VGC Team Report"
-node node_modules/typescript/bin/tsc --noEmit     # type-check
+node node_modules/typescript/bin/tsc --noEmit --incremental false   # type-check (COLD — see below)
 node node_modules/vitest/vitest.mjs run           # unit tests
 node node_modules/next/dist/bin/next build        # prod build
 ```
+
+- **The type gate must run cold.** `tsconfig.json` keeps `incremental: true` so `next build` stays fast, but a warm root `tsconfig.tsbuildinfo` has previously masked real errors — a green warm `tsc` is not evidence. Always pass `--incremental false` (or run `npm run typecheck`, which is exactly `tsc --noEmit --incremental false` and is the same command CI runs). Never treat a bare `tsc --noEmit` as the pre-commit gate.
 
 - If you must run npx (e.g. the Vercel CLI), `cd ~` first — any cwd without `&` works.
 - **Overnight swarm container:** run `source scripts/swarm-setup.sh` FIRST, before `npm install`. It clears the proxy vars that cause npm ECONNRESET, sets `CYPRESS_INSTALL_BINARY=0` (the Cypress CDN 403s through the proxy), and runs the connection preflight. Credentials arrive as **env vars** (`LINEAR_API_KEY`, `DISCORD_BUILDS_WEBHOOK`) — there is no `.env.local` in the container; `linear.sh` resolves env-first. If the preflight reports an integration missing, **skip it for the whole run and say so in the report — do not retry it.** The Linear-webhook-fix P0 is stale: it has been merged on main since May; don't re-verify it.
