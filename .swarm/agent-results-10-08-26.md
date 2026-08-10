@@ -95,3 +95,61 @@ present in the HTML.
 
 **Caveat:** returned `conflict_risk: true`. Three of its files are also owned by the in-flight
 VGC-258 agent. See `.swarm/conflicts.md` for the reconciliation checklist.
+
+## VGC-259 — a11y: no `<h1>` on report slides after the first — PASS (partial: edit mode still open)
+
+Files: `src/app/page.tsx`
+
+Added an `sr-only <h1>` as the first child of the slide region div, guarded by
+`(tournamentMode || physicalSlide !== 0)`. Text is `slideLabels[currentSlide]` (or "Tournament Mode",
+matching the Navbar's own menu label) plus the team name when one exists, so it reads meaningfully
+in isolation.
+
+The agent verified all five identifiers are genuinely in scope rather than trusting the prescription:
+`slideLabels`/`currentSlide`/`physicalSlide` from the hook destructure at `:203-211`, `teamName` at
+`:169`, `tournamentMode` local state at `:245`. Nice detail — `slideLabels[currentSlide]` is ALREADY
+the source of the region's `aria-label` at `:1132`, so the heading and the region name stay in sync
+by construction.
+
+No duplicate `h1` on slide 0: the `physicalSlide !== 0` guard suppresses it exactly where
+`TeamReport` mounts `TeamOverview`, which owns the sr-only h1 at `TeamOverview.tsx:418`.
+`sr-only` by design — every slide already renders its own visible title.
+
+### ⚠️ Not fully closed: edit mode
+`TeamOverview`'s BOTH h1s are gated on `isReadOnly` (`:418` and the `:424` ternary), so in
+creator/edit mode slide 0 renders zero `h1`, and the `physicalSlide !== 0` guard deliberately skips
+it there. The agent did NOT force a workaround because `TeamOverview.tsx` was owned by another agent
+tonight — correct call under the file-overlap rule. Remains open; filed as a follow-up ticket
+(R8 finding L3: drop the `isReadOnly` guard on the `:418` fallback).
+
+No test added, correctly: this is a JSX render guard in a page component, not `src/lib` logic, so
+CLAUDE.md's test rule does not apply.
+
+## SWARM-DEADCODE — delete three verified-dead files — PASS
+
+Files (deleted): `src/components/display/DisplayTogglePill.tsx`,
+`src/lib/hooks/useGlobalDisplayPrefs.ts`, `src/components/providers/ConsentGate.tsx`
+Plus two now-empty directories: `src/components/display/` and `src/lib/hooks/`
+(the confusing duplicate of the real `src/hooks/`).
+
+The agent did the re-verification properly — against the CURRENT tree, not C1's earlier snapshot,
+since tonight's implementation agents had moved things. Repo-wide ripgrep plus path-prefix greps
+plus a barrel-file check (no `src/components/index.ts` or `src/lib/index.ts` exist to re-export
+them silently).
+
+Critically, it verified `ConsentGate` INDEPENDENTLY rather than trusting the VGC-254 agent's claim:
+`layout.tsx:11` imports `CookieBanner`, not `ConsentGate`, and VGC-254's new `ClarityProvider.tsx`
+gates Clarity via `hasAnalyticsConsent()`/`onConsentChange()` imported straight from `@/lib/consent`,
+never wrapping in `ConsentGate`. So the consent work did NOT resurrect it.
+
+Also confirmed `src/lib/consent.ts` stays LIVE with three consumers (`PostHogProvider.tsx:6`,
+`ClarityProvider.tsx:5`, `CookieBanner.tsx:6`) — it was not deleted.
+
+Everything I marked out of scope was left alone: the `proxy.ts` `/api/builder` clause,
+`isRateLimited`, the `@pkmn/dex` classification, and the 39 Tier-4 exports.
+
+### Operational note for the integration gate
+`next build` could NOT run in the shared tree — another agent's build held the Turbopack lock
+("Another next build process is already running") across two attempts. The agent verified in an
+isolated copy instead. **Consequence: the orchestrator's final integrated build must run when no
+agent is still building**, otherwise it will fail for lock reasons rather than code reasons.

@@ -133,3 +133,9 @@ clean, not four: the ticket's four plus `noUncheckedSideEffectImports` and `verb
 risk class from a pure type-check flag and must not ride along in a "free wins" commit.
 Also: the ticket lists `useUnknownInCatchVariables` and `strictFunctionTypes` as near-misses, but
 `strict: true` already enables both — they are not separate wins.
+
+17. **[a11y] Edit-mode slide 0 still renders zero `<h1>`** — P3. (Supersedes item 12 with the exact cause.)
+    `TeamOverview.tsx` gates BOTH its h1s on `isReadOnly` (`:418` and the `:424` ternary), so in
+    creator/edit mode there is no h1 at all on slide 0. VGC-259's fix guards on `physicalSlide !== 0`
+    and so deliberately skips it. Fix is to drop the `isReadOnly` guard on the `:418` fallback.
+    Not done tonight because `TeamOverview.tsx` was owned by the VGC-260 agent.
