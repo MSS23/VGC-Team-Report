@@ -83,8 +83,11 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
 
   // ── CORS: Block cross-origin API requests from unknown origins ────
   // Exempt Discord and Linear webhook endpoints (sent from their servers, not browsers)
-  // Exempt builder proxy endpoints — authenticated via secret key, called from cloud sandbox
-  if (isApiRoute && !pathname.startsWith('/api/discord') && !pathname.startsWith('/api/webhooks/') && !pathname.startsWith('/api/builder/') && pathname !== '/api/setup' && !isAllowedOrigin(request)) {
+  // NOTE: a `/api/builder/` exemption used to live here for a builder proxy that
+  // no longer exists. It was removed — a pre-authorised prefix that nothing owns
+  // means any future route added under it would silently ship with cross-origin
+  // checks disabled. Don't re-add an exemption for a route that isn't here yet.
+  if (isApiRoute && !pathname.startsWith('/api/discord') && !pathname.startsWith('/api/webhooks/') && pathname !== '/api/setup' && !isAllowedOrigin(request)) {
     return NextResponse.json(
       { error: 'Origin not allowed' },
       { status: 403 },
