@@ -139,3 +139,38 @@ Also: the ticket lists `useUnknownInCatchVariables` and `strictFunctionTypes` as
     creator/edit mode there is no h1 at all on slide 0. VGC-259's fix guards on `physicalSlide !== 0`
     and so deliberately skips it. Fix is to drop the `isReadOnly` guard on the `:418` fallback.
     Not done tonight because `TeamOverview.tsx` was owned by the VGC-260 agent.
+
+## From C3 (bundle audit, `.swarm/c3-perf-10-08-26.md`)
+
+18. **[Perf] `motion` is eagerly bundled on 7 routes (37.8 kB gzip)** — P2, UNTICKETED.
+19. **[Perf] `move-names.ts` is eagerly bundled on `/` (45.8 kB gzip)** — P2, UNTICKETED.
+    (A previous run's changelog claims a move-names win already shipped — another instance of a fix
+    sitting on an unmerged branch while `main` still carries the cost.)
+
+20. **[Tooling] Next 16 + Turbopack no longer prints a First Load JS size table** — P3.
+    The build output shows only Route/Revalidate/Expire. C3 had to derive every size by parsing
+    `<script src>` out of prerendered HTML and sizing chunks, then confirm causes with differential
+    builds from clean `git archive HEAD` trees. Worth a scripted bundle-size check in CI, otherwise
+    bundle regressions are now invisible.
+
+### Both perf tickets are CONFIRMED and UNDERSTATED
+
+**VGC-256** — measured **−264.9 kB raw / −62.8 kB gzip**, vs the ticket's 223.9 / 50.4.
+Exactly ONE load-bearing edge: `useShareUrl.ts:9` imports the VALUE `decodeShareState`; all seven
+other client importers are `import type` and erase. C3 warns explicitly NOT to estimate this with
+rolldown — rolldown said 64 kB, but Turbopack tree-shakes zod v4 roughly 4× worse.
+
+**VGC-257** — the 330.3 kB figure matches exactly, but there are **TWO copies** (`/` and `/compare`)
+reached by **two independent eager chains**:
+- `page.tsx:61 → mega-detect → pkmn-dex-fallback → dex-subset.json`
+- `page.tsx:11 → TeamReport → PokemonCard → lib/data/pokemon → same`
+Both must be fixed or the win is halved. Measured **−323.7 kB raw / −43.7 kB gzip on `/`, plus the
+same again on `/compare`**.
+C3's lowest-risk fix: re-emit as array-of-arrays (323.7 → 137.9 kB raw, no API change), with full
+lazy-loading as a follow-up. **Explicit warning: do NOT prune by `isNonstandard` — 49 of 98 Megas
+are `Future`** and would be silently dropped.
+
+Combined, the homepage goes 598.9 → 492.4 kB gzip (−17.8%).
+
+Confirmed already correct, no action: `@pkmn/dex`, `jspdf`, `html2canvas-pro`, `posthog-js`,
+`qrcode` are all lazy or server-only.

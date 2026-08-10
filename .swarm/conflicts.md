@@ -32,3 +32,28 @@ survived, and re-apply by hand if not:
 
 This is exactly why the sequential commit loop re-gates from the integrated tree rather than trusting
 each agent's isolated green run.
+
+## RESOLVED — verified in the integrated tree at 02:0x, 2026-08-10
+
+The VGC-258 agent reconciled the overlap itself and reported both agents' edits surviving. The
+orchestrator re-verified INDEPENDENTLY rather than trusting that report, by grepping the integrated
+tree:
+
+1. `src/app/sitemap.ts` — HAS BOTH: `/tools/ev-to-sp` (line 17, VGC-262) AND
+   `getRegMBMegasWithSprites` import + mapping (lines 3, 29, VGC-258). ✅
+2. `src/components/layout/PageFooter.tsx` — HAS BOTH: `/champions` (line 15, VGC-258) AND
+   `/tools/ev-to-sp` labelled "EV → SP" (line 17, VGC-262). ✅
+3. `src/app/champions/ChampionsContent.tsx` — HAS ALL THREE: the converter callout
+   (`href="/tools/ev-to-sp"`, line 470, VGC-262), the M-B grid grouping
+   ("New in Regulation M-B", line 60, VGC-258), and the Indianapolis paragraph now in PAST tense
+   ("format played at ... Indianapolis Regionals (May 29-31)", line 163). ✅
+
+No re-application needed. Outcome was luck as much as design — the two agents happened to edit
+disjoint regions of each file. The dispatch error stands as a real process bug: the file-overlap
+control exists precisely so this does not depend on luck, and I did not apply it when I told the
+VGC-262 agent to "link it from somewhere discoverable".
+
+**Lesson for the next run:** when an implementation agent is told to "link this from somewhere" or
+"add it to the sitemap", the dispatcher must name the exact files it may touch and cross-check them
+against every other agent's file set BEFORE dispatch — a vague instruction silently expands an
+agent's file footprint beyond what the overlap check was run against.

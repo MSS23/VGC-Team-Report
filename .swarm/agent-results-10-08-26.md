@@ -153,3 +153,82 @@ Everything I marked out of scope was left alone: the `proxy.ts` `/api/builder` c
 ("Another next build process is already running") across two attempts. The agent verified in an
 isolated copy instead. **Consequence: the orchestrator's final integrated build must run when no
 agent is still building**, otherwise it will fail for lock reasons rather than code reasons.
+
+## VGC-261 — enable already-clean TS strict flags — PASS (+ found a latent bug)
+
+Files: `tsconfig.json`, `package.json`, `.github/workflows/ci.yml`, `CLAUDE.md`,
+`src/lib/utils/sprite-url.ts`, `src/lib/utils/__tests__/sprite-url.test.ts`
+
+**Flags enabled** (exactly the five C2 measured at 0 errors, with an inline tsconfig comment
+recording that they were MEASURED on 2026-08-10, not guessed): `noImplicitOverride`,
+`noFallthroughCasesInSwitch`, `noUncheckedSideEffectImports`, `allowUnreachableCode: false`,
+`allowUnusedLabels: false`.
+
+**Deliberately left OFF:** `verbatimModuleSyntax` — 0 errors, but it changes import-elision EMIT
+rather than just diagnostics, so it needs its own commit behind a real `next build` instead of
+riding along in a free-wins batch. `useUnknownInCatchVariables` and `strictFunctionTypes` were not
+written out at all: `strict: true` already enables both, so they are no-ops, not wins. The ticket
+should be closed noting the true count is **5 clean flags, not 4 (+2 near-misses)**.
+
+### The stale-tsbuildinfo hazard — good reasoning, worth reading
+The agent diagnosed that only the WARM LOCAL run is dishonest: `tsconfig.tsbuildinfo` sits at the
+repo root and is gitignored, so CI checkouts and Vercel builds are already cold.
+
+It therefore did NOT drop `incremental` (keeps `next build` fast, and Next re-injects the option
+anyway), and specifically did NOT relocate `tsBuildInfoFile` into `.next/cache` — because **Vercel
+restores `.next/cache` between builds, which would have made PRODUCTION builds warm and actively
+less honest**. That is a subtle trap avoided.
+
+Instead it made the gate command itself cold: `npm run typecheck` = `tsc --noEmit --incremental false`,
+CI switched to the same command so local and CI are byte-identical, and CLAUDE.md's gate snippet
+updated with a note that a green warm `tsc` is not evidence. It verified `next build` leaves
+`tsconfig.json` md5-identical, so the comments survive and no options get injected.
+
+### Latent bug found while writing the test (beyond the ticket)
+`GEN_SPRITE_STYLES` is an object literal, so `GEN_SPRITE_STYLES['toString' | 'constructor' |
+'__proto__']` returns an inherited `Object.prototype` member. The `?? DEFAULT` fallback therefore
+NEVER fires, and the 12 downstream `style.*` reads emit `.../undefined/<slug>.png`.
+**`genTheme` comes from persisted user preferences, so this is reachable input.**
+Fixed with `Object.prototype.hasOwnProperty.call` (chosen over `Object.hasOwn` to avoid browser-target
+risk), and `isGenThemePixelated` now shares the same helper so unknown-theme behaviour has one
+source of truth. 13 tests, including an assertion that no `undefined` leaks into a URL segment.
+
+### In-flight noise, correctly diagnosed
+Its first cold `tsc` reported 3× TS6053 "File not found" for the three files the dead-code agent
+deleted between tsc's directory scan and its file read. Not caused by any enabled flag; an immediate
+re-run was clean. Final cold tsc, 34 files / 351 tests, and `next build` all pass.
+
+## VGC-258 — /champions index missing the Reg M-B megas — PASS
+
+Files: `src/lib/data/mega-pokemon.ts`, `src/app/champions/ChampionsContent.tsx`,
+`src/app/champions/page.tsx`, `src/app/champions/[pokemon]/page.tsx`,
+`src/app/champions/[pokemon]/MegaLandingContent.tsx`, `src/app/sitemap.ts`,
+`src/components/layout/PageFooter.tsx`,
+`src/app/champions/[pokemon]/__tests__/generate-static-params.test.ts`
+
+**Acceptance criterion met and MEASURED, not assumed: 58 → 72 prerendered `/champions/*` routes**
+(58 from a clean pre-change build, 72 from the post-change build). Meowstic, Raichu X and Raichu Y
+stay correctly excluded as sprite-less, following the existing Meowstic "Coming Soon" pattern.
+
+Added `getRegMBMegasWithSprites()` and `getMegaRegulation()` reusing the existing `getRegMBMegas()` —
+no duplicated data. Switched `generateStaticParams`, `relatedMegas` and `sitemap.ts` to the M-B
+superset.
+
+The index grid is composed from both regulations and GROUPED ("New in Regulation M-B" 16, "Legal in
+Regulation M-A and M-B" 59) rather than client-filtered — a deliberate SEO choice, so all 75 cards
+and 72 links sit in the server-rendered HTML. Verified by counting `href="/champions/mega-*"` in the
+built `champions.html`.
+
+**The correctness half matters more than the SEO half:** description, keywords, the FAQ legality
+answer, the hero "Legal in" line and the `/explore` deep link now all derive from the Pokemon's
+ACTUAL regulation. Verified in built HTML that `mega-metagross.html` says "Regulation M-B only"
+while `mega-kangaskhan.html` says "Regulation M-A and M-B". Previously an M-B-only Mega would have
+asserted M-A legality — factually wrong content on an indexed SSG page.
+
+Also in the same pass: Indianapolis paragraph rewritten to past tense (the event was in May; today
+is 10 August), "Tag with Reg M-A" → "Reg M-A or Reg M-B", `/champions` added to the footer,
+`relatedMegas` rotated by page index instead of a fixed `.slice(0, 8)` so link equity spreads across
+all 72 rather than piling on the same 8, and focus-visible rings added to grid cards that lacked them.
+
+8 new assertions guarding that static params cover both regulations, include the 14 named megas,
+exclude sprite-less ones, and total 72. tsc clean, 351/351 tests, build exit 0.
