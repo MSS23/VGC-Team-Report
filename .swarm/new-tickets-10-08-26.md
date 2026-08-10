@@ -56,3 +56,39 @@ would break that agent's work. Deletion is therefore gated on VGC-254's returned
 ### C1 findings deliberately NOT actioned
 De-exporting the 39 internally-used-but-exported symbols. Zero bytes saved, and it is exactly the
 drive-by refactor CLAUDE.md forbids. C1 recommended against it too.
+
+## From C5 (commit review, `.swarm/c5-commit-review-10-08-26.md`) — HIGHEST-VALUE FINDING OF THE RUN
+
+8. **[Bug] `convertToChampionsSp` still fabricates SP and the over-budget trim always sacrifices HP first** — P1/Urgent.
+   Commit `b5712a6` ("stop fabricating 32 HP / 32 Atk SP") fixed only half the bug. C5 simulated the
+   SHIPPED function:
+   - `252 HP / 4 Def` still yields **32 HP / 32 Def**
+   - `252 / 252 / 252` yields **2 HP / 32 Atk / 32 Def**, because the over-budget trim is biased by
+     the hardcoded stat-array order, so HP is always the stat sacrificed first.
+
+   Worse, **the regression tests added alongside that commit pass on every one of those wrong
+   outputs**: the key test picks the one input where padding is structurally impossible, and asserts
+   `spd >= 1` where the true value is 2. So the suite is green and the behaviour is wrong — the tests
+   are not merely absent, they are actively misleading.
+
+   Blast radius: SP is derived at RENDER time, so this retroactively changes what already-shared
+   reports and speed tiers display. It shipped with no changelog entry. This is the exact class of
+   change CLAUDE.md's conventions single out as needing care, on the exact module they name as most
+   correctness-sensitive (66 total / 32 per stat).
+
+9. **[Bug] `keepalive: true` applied to ALL draft saves, not just the exit flush** — P2.
+   The browser caps `keepalive` request bodies at 64 KiB. Large reports can therefore silently fail
+   to autosave. It should be scoped to the exit/unload flush only.
+
+10. **[Chore] CI lint made non-blocking with 35 outstanding errors and no tracking ticket** — P2.
+    `.github/workflows/ci.yml`. Also carries a stray `# ponytail:` token in the comment. Non-blocking
+    lint with no ticket is how 35 errors becomes 200.
+
+11. **[Bug] `fe70914` silently reverted `83d195a`'s sitemap `lastModified` work** — P3.
+    A revert with no explanation; the sitemap lost its per-route `lastModified` values.
+
+### Sequencing
+The SP fix (#8) CANNOT be dispatched yet — the VGC-262 converter-page agent is editing
+`src/lib/analysis/stat-calculator.ts` and its test file right now. A dedicated fix agent goes out the
+moment VGC-262 returns. This also makes VGC-262 a good thing to have run first: the converter page is
+UI over exactly this function, so it must not ship on top of a broken conversion.
