@@ -232,3 +232,101 @@ all 72 rather than piling on the same 8, and focus-visible rings added to grid c
 
 8 new assertions guarding that static params cover both regulations, include the 14 named megas,
 exclude sprite-less ones, and total 72. tsc clean, 351/351 tests, build exit 0.
+
+## SWARM-SP — `convertToChampionsSp` fabrication + order-biased trim — PASS ⭐ headline fix
+
+Files: `src/lib/analysis/stat-calculator.ts`, `src/lib/analysis/__tests__/stat-calculator.test.ts`
+
+### Reproduced BEFORE changing anything (as instructed)
+Scratch script against the shipped function, confirming C5's numbers exactly:
+- `252 HP / 4 Def` → `{hp:32, def:32}` (total 64)
+- `252/252/252` → `{hp:2, atk:32, def:32}` (total 66)
+- `252 HP/Atk/Def/Spe` → `{hp:0, atk:2, def:32, spe:32}`
+- `100 HP / 156 Spe` → `{hp:32, spe:32}`
+- `252 Atk / 4 SpD / 252 Spe` → `{atk:32, spd:2, spe:32}`
+
+### Rules derived from the domain, written down before coding
+1. Per-stat curve is `evToChampionsSp`: first SP costs 4 EVs, each later SP costs 8 (0→0, 4→1, 12→2, … 248+→32).
+2. Hard caps: 66 total, 32 per stat.
+3. 0 EVs → 0 SP, never padded (an EV-less paste legitimately parses to an all-zero spread).
+4. **A spread must never be inflated** — converted SP for a stat can never exceed `evToChampionsSp`
+   of that stat's EVs, so unspent budget stays unspent.
+
+### The fix
+Deleted the padding step entirely (that was the remaining half of the fabrication bug) and replaced
+the order-biased trim with **proportional largest-remainder (Hamilton)** in exact integer arithmetic
+(`numerator = sp_i * 66`, `remainder = numerator % total`) so equal shares always compare equal and
+floats can never fake a tie.
+
+The refinement that actually guarantees order-independence: **a remainder tie is served as a GROUP or
+not at all.** If the stats tied at the top remainder outnumber the points left, those points stay
+unspent rather than going to whichever stat happens to sort first. Consequences: `base_i + 1 <= sp_i`
+always, so trimming can only reduce, never fabricate; stats at 0 SP have remainder 0 and are never
+topped up.
+
+### After-values
+- `252 HP / 4 Def` → `{hp:32, def:1}` (33/66, rest honestly unspent)
+- `252/252/252` → `{hp:22, atk:22, def:22}` (66/66)
+- `252 HP/Atk/Def/Spe` → `{hp:16, atk:16, def:16, spe:16}` (64/66 — the 4-way 0.5 tie leaves 2 SP
+  unspent rather than favouring two stats)
+- `252 Atk / 4 SpD / 252 Spe` → `{atk:32, spd:1, spe:32}`; all-zero → all-zero; SP-form passthrough unchanged
+
+### Verification quality — the part that matters most
+- Order-independence proven empirically over **all 720 stat relabelings × 300 random spreads**, plus
+  **200k random spreads** for the budget/cap/no-inflation/no-zero-padding invariants. Zero violations.
+- **COUNTERFACTUAL CHECK:** the new test file run against the SHIPPED HEAD converter fails 9
+  assertions with exactly the reproduced before-values. This is the thing that proves the tests pin
+  the fix rather than passing on anything — precisely the failure mode of the ORIGINAL tests.
+- Nothing deleted. Three changed assertions are each justified: the `spd >= 1` one C5 named (passed
+  on the buggy 2; the documented curve says a 4-EV chip is worth exactly 1), a budget-invariants-only
+  test that passed on nonsense output, and one other. Three correct-but-blind tests left byte-identical.
+- `evToChampionsSp` / `championsSpToEv` untouched; all 25 VGC-262-era cases still pass and the
+  round-trip still holds for every SP 1..32.
+
+### ⚠️ USER-VISIBLE DATA CHANGE
+SP is derived at render time, so **every already-shared Champions report will now display different
+(correct) SP values and speed tiers.** This must be called out in the changelog, the PR and Discord.
+
+Deliberately left alone: the permissive `<=66` SP-form fast path (C5 finding F5) — separate ticket,
+and changing it would move far more output.
+
+## SWARM-SEC — X-Forwarded-For trust + CORS holes — PASS
+
+Files: `src/lib/security/input-validation.ts`, `src/lib/security/cors.ts`, `src/proxy.ts`,
+`src/lib/security/__tests__/input-validation.test.ts`, `src/lib/security/__tests__/cors.test.ts`
+
+**FIX 1 (High).** `getClientIp` no longer trusts the left-most XFF entry. New order:
+`x-vercel-forwarded-for` → `x-real-ip` (both set/overwritten by Vercel's own proxy, so not
+client-settable) → **only** the right-most XFF entry (no leftward scan, so appending junk cannot
+reinstate the spoof) → existing header-fingerprint fallback → `unknown`. A long SECURITY comment
+above the function explains why right-most is correct and names both consequences (the
+`comment_flags` UNIQUE dedupe defeat at `FLAG_THRESHOLD=3`, and the `apiGuard` rate-limit key) so a
+future refactor cannot silently revert it. 13 tests including a named "C4 Finding 1" regression block
+asserting three different forged prefixes now collapse to ONE identity.
+
+**FIX 2 (High).** The preview regex `/^https:\/\/vgc-team-report[a-z0-9-]*\.vercel\.app$/` became
+`/^https:\/\/vgc-team-report-(?:[a-z0-9]+|git-[a-z0-9-]+)-mss23s-projects\.vercel\.app$/`, anchored on
+the team scope slug documented in CLAUDE.md.
+- STILL ALLOWED: `pokemonvgcteamreport.com`, `www.` variant, `vgc-team-report.vercel.app`,
+  localhost/127.0.0.1 (non-production only), and this project's real preview shapes.
+- DROPPED: every other `*.vercel.app` matching the old prefix wildcard (e.g.
+  `vgc-team-report-evil.vercel.app`) — globally registrable by ANY Vercel user, and previously
+  reflected into `Access-Control-Allow-Origin` with `Allow-Credentials: true`, while also skipping
+  `proxy.ts`'s origin block and CSRF branch.
+- Residual risk stated honestly by the agent: `*.vercel.app` names remain first-come, so someone
+  could still register a project literally named `vgc-team-report-x-mss23s-projects`. Far narrower
+  than a generic prefix wildcard, but not zero. `Allow-Credentials: true` left as-is (out of scope).
+
+**FIX 3 (Medium).** Confirmed no `/api/builder` route exists anywhere, then removed the stale CORS
+exemption from `proxy.ts` and replaced the comment with a note on why it must not be re-added.
+
+Verification: tsc clean, 371/371 tests across 34 files, build succeeded, eslint clean.
+
+### ⚠️ The fix is deliberately INCOMPLETE — follow-up required
+Respecting its file scope, the agent did NOT change three routes that still do their own left-most
+`x-forwarded-for.split(',')[0]` parse:
+- `src/app/api/share/route.ts:86`
+- `src/app/api/share/[id]/fork/route.ts:138`
+- `src/app/api/explore/route.ts:20`
+Until these are switched to `getClientIp`, those three endpoints remain spoofable. Filed as a
+follow-up ticket — this is the correct call under the file-overlap rule, but it must not be lost.

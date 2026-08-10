@@ -174,3 +174,13 @@ Combined, the homepage goes 598.9 → 492.4 kB gzip (−17.8%).
 
 Confirmed already correct, no action: `@pkmn/dex`, `jspdf`, `html2canvas-pro`, `posthog-js`,
 `qrcode` are all lazy or server-only.
+
+21. **[Security] Three routes still parse `x-forwarded-for` left-most directly** — P1/High.
+    `src/app/api/share/route.ts:86`, `src/app/api/share/[id]/fork/route.ts:138`,
+    `src/app/api/explore/route.ts:20`. Tonight's SWARM-SEC fix hardened the shared `getClientIp`
+    helper, but these three bypass it with their own `.split(',')[0]`, so they remain spoofable.
+    **The security fix is not complete until these are switched to `getClientIp`.**
+
+22. **[Security] `Access-Control-Allow-Credentials: true` on the CORS config** — P3.
+    Left as-is tonight (out of scope). Worth a deliberate decision now that the origin allowlist is
+    tight: with credentials enabled, any future widening of the allowlist is far more dangerous.
