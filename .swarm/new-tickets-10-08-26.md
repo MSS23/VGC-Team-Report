@@ -28,3 +28,31 @@
    to merge the backlog or to stop the nightly runs until it is drained.
 
 (Further entries appended as Wave 1 agents report.)
+
+## From C1 (dead-code scan, `.swarm/c1-dead-code-10-08-26.md`)
+
+5. **[Security] Stale `/api/builder/` CORS exemption in `proxy.ts:87` for a route that no longer exists** — P2.
+   A pre-authorised CORS hole pointing at a deleted route. Nothing legitimate uses it, so it is
+   pure attack surface. (Held tonight pending C4's independent security review of the same file to
+   avoid two agents editing `proxy.ts` in parallel.)
+
+6. **[Chore] `isRateLimited` is production-dead but is the only coverage of the in-memory window logic** — P3.
+   All callers use the async variant. C1 explicitly recommends retargeting the test onto the async
+   path BEFORE deleting the sync function, rather than deleting both and losing the coverage.
+
+7. **[Chore] `@pkmn/dex` sits in `dependencies` with no runtime import in `src/`** — P3.
+   Build-script only (~1.8MB). Likely belongs in `devDependencies`. Needs a human to confirm the
+   build scripts still resolve it in Vercel's install before moving it.
+
+### C1 findings actioned tonight
+Three files are dead with verified zero import sites (~355 lines): `DisplayTogglePill.tsx`,
+`useGlobalDisplayPrefs.ts`, `ConsentGate.tsx`.
+
+**Sequencing hazard noted:** `ConsentGate.tsx` cannot be deleted until the VGC-254 privacy agent
+reports. VGC-254's ticket explicitly floats "wrapping `<PostHogProvider>` in `<ConsentGate>`" as a
+possible change — so that component may be about to become live again. Deleting it in parallel
+would break that agent's work. Deletion is therefore gated on VGC-254's returned file list.
+
+### C1 findings deliberately NOT actioned
+De-exporting the 39 internally-used-but-exported symbols. Zero bytes saved, and it is exactly the
+drive-by refactor CLAUDE.md forbids. C1 recommended against it too.
