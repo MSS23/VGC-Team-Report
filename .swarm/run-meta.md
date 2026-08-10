@@ -13,3 +13,10 @@
 - VERCEL_TOKEN / Vercel MCP: not available — Vercel env-var + log checks skipped
 - Linear MCP server: requires interactive OAuth, unavailable headless — using REST/GraphQL via linear.sh instead
 - gh CLI: not installed in this environment — GitHub operations go through the GitHub MCP server
+
+## History mode change
+- First push completed at the pre-flight-notes commit. The branch is now
+  PUBLISHED on origin. From this point: **merge only, never rebase, never force-push.**
+- Tip commit of this push is `.swarm/*.md` only (docs). Per CLAUDE.md's Ignored
+  Build Step rule, Vercel diffs only the tip commit and excludes `*.md`, so this
+  push is expected to CANCEL rather than consume build minutes. Intentional.
