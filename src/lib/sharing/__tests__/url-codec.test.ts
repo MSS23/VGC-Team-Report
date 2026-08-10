@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import zlib from "node:zlib";
 
@@ -33,6 +33,13 @@ function fromBase64Url(str: string): Uint8Array {
 function encodeSync(state: ShareableState): string {
   const json = JSON.stringify(state);
   const compressed = zlib.deflateRawSync(Buffer.from(json, "utf-8"));
+  return "1:" + toBase64Url(new Uint8Array(compressed));
+}
+
+// Same wire format as encodeSync, but accepts arbitrary JSON so tests can build
+// payloads that are structurally valid yet fail schema validation.
+function encodeRaw(value: unknown): string {
+  const compressed = zlib.deflateRawSync(Buffer.from(JSON.stringify(value), "utf-8"));
   return "1:" + toBase64Url(new Uint8Array(compressed));
 }
 
@@ -148,5 +155,125 @@ describe("encodeShareState / decodeShareState (Node-compatible)", () => {
       const decoded = fromBase64Url(encoded);
       expect(decoded).toEqual(original);
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// VGC-256: zod moved out of the eager client bundle. `url-codec.ts` now loads
+// `url-codec.schemas.ts` with a dynamic `import()` inside `decodeShareState`.
+// The block above exercises a Node re-implementation of the codec; these tests
+// drive the REAL exported `decodeShareState` so the schema validation and the
+// new async boundary are actually covered.
+// ---------------------------------------------------------------------------
+
+/**
+ * Node's `DecompressionStream` writer rejects a raw `ArrayBuffer` (it wants a
+ * TypedArray), while browsers accept it — and production passes `bytes.buffer`.
+ * Wrap the global so the real production code path can run under vitest.
+ */
+function installNodeCompatDecompressionStream() {
+  const Native = globalThis.DecompressionStream;
+  class NodeCompatDecompressionStream {
+    readable: ReadableStream<Uint8Array>;
+    writable: { getWriter: () => { write: (c: unknown) => Promise<void>; close: () => Promise<void> } };
+    constructor(format: CompressionFormat) {
+      const inner = new Native(format);
+      this.readable = inner.readable as ReadableStream<Uint8Array>;
+      const innerWritable = inner.writable;
+      this.writable = {
+        getWriter() {
+          const writer = innerWritable.getWriter();
+          // Production fires write()/close() without awaiting and relies on the
+          // READABLE side rejecting to signal a corrupt payload. Under Node's
+          // webstreams adapter the writable side also rejects (Z_BUF_ERROR),
+          // which surfaces as an unhandled rejection in the test runner even
+          // though the browser path is unaffected. Swallow it here — the
+          // reader's rejection is what `decodeShareState` actually catches.
+          const swallow = (p: Promise<void>) => {
+            p.catch(() => {});
+            return p;
+          };
+          return {
+            write: (chunk: unknown) =>
+              swallow(
+                writer.write(
+                  (chunk instanceof ArrayBuffer ? new Uint8Array(chunk) : chunk) as BufferSource,
+                ),
+              ),
+            close: () => swallow(writer.close()),
+          };
+        },
+      };
+    }
+  }
+  globalThis.DecompressionStream =
+    NodeCompatDecompressionStream as unknown as typeof globalThis.DecompressionStream;
+  return () => {
+    globalThis.DecompressionStream = Native;
+  };
+}
+
+describe("decodeShareState (real implementation, lazy zod)", () => {
+  let restoreDecompressionStream: () => void;
+  let decodeShareState: (encoded: string) => Promise<ShareableState | null>;
+
+  beforeAll(async () => {
+    restoreDecompressionStream = installNodeCompatDecompressionStream();
+    ({ decodeShareState } = await import("@/lib/sharing/url-codec"));
+  });
+
+  afterAll(() => {
+    restoreDecompressionStream();
+  });
+
+  it("is async — returns a promise that resolves", () => {
+    const pending = decodeShareState(encodeSync(MINIMAL_STATE));
+    expect(pending).toBeInstanceOf(Promise);
+    return expect(pending).resolves.toEqual(MINIMAL_STATE);
+  });
+
+  it("round-trips a valid share payload", async () => {
+    await expect(decodeShareState(encodeSync(MINIMAL_STATE))).resolves.toEqual(MINIMAL_STATE);
+    await expect(decodeShareState(encodeSync(FULL_STATE))).resolves.toEqual(FULL_STATE);
+  });
+
+  it("round-trips a legacy payload with no '1:' version prefix", async () => {
+    const legacy = encodeSync(FULL_STATE).slice(2);
+    await expect(decodeShareState(legacy)).resolves.toEqual(FULL_STATE);
+  });
+
+  it("resolves on repeated calls (the lazily-imported schema module is reused)", async () => {
+    const encoded = encodeSync(MINIMAL_STATE);
+    const [a, b, c] = await Promise.all([
+      decodeShareState(encoded),
+      decodeShareState(encoded),
+      decodeShareState(encoded),
+    ]);
+    expect(a).toEqual(MINIMAL_STATE);
+    expect(b).toEqual(MINIMAL_STATE);
+    expect(c).toEqual(MINIMAL_STATE);
+  });
+
+  it("rejects a corrupt base64 payload with null", async () => {
+    await expect(decodeShareState("1:!!invalid!!base64!!")).resolves.toBeNull();
+    await expect(decodeShareState("not-valid-data")).resolves.toBeNull();
+    await expect(decodeShareState("")).resolves.toBeNull();
+  });
+
+  it("rejects a payload that decompresses but fails schema validation with null", async () => {
+    // Well-formed deflate + JSON, but `paste` is missing and `matchupPlans` is
+    // the wrong type — safeParse must reject rather than leak it to the viewer.
+    const bad = encodeRaw({ notes: {}, matchupPlans: "nope" });
+    await expect(decodeShareState(bad)).resolves.toBeNull();
+  });
+
+  it("rejects non-object JSON with null", async () => {
+    await expect(decodeShareState(encodeRaw("just a string"))).resolves.toBeNull();
+    await expect(decodeShareState(encodeRaw(null))).resolves.toBeNull();
+  });
+
+  it("still decodes legacy links carrying the removed `replays` key (keys are stripped, not rejected)", async () => {
+    const withLegacyKey = encodeRaw({ ...MINIMAL_STATE, replays: ["https://example.com/r/1"] });
+    await expect(decodeShareState(withLegacyKey)).resolves.toEqual(MINIMAL_STATE);
   });
 });
