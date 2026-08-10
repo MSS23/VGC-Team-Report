@@ -57,3 +57,14 @@ VGC-262 agent to "link it from somewhere discoverable".
 "add it to the sitemap", the dispatcher must name the exact files it may touch and cross-check them
 against every other agent's file set BEFORE dispatch — a vague instruction silently expands an
 agent's file footprint beyond what the overlap check was run against.
+
+## Unclaimed working-tree artifact — quarantined, not committed
+
+`VGC-Team-Project` — a BROKEN SYMLINK to `/home/user/VGC-Team-Project` (a path that does not exist),
+timestamped 00:38, which predates this run's 01:14 start. Not in any agent's `files_changed`, not
+gitignored, and would have been committed by a careless `git add .`.
+
+Most likely residue from an isolated-verification tree attempt (one agent reported a Turbopack
+"symlink points out of filesystem root" panic when symlinking instead of hardlinking node_modules).
+
+Moved to the session scratchpad rather than deleted, so it is recoverable. Not committed.
