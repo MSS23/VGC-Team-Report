@@ -330,3 +330,42 @@ Respecting its file scope, the agent did NOT change three routes that still do t
 - `src/app/api/explore/route.ts:20`
 Until these are switched to `getClientIp`, those three endpoints remain spoofable. Filed as a
 follow-up ticket — this is the correct call under the file-overlap rule, but it must not be lost.
+
+## VGC-256 — lazy-load zod out of the client bundle — PASS
+
+Files: `src/lib/sharing/url-codec.schemas.ts` (new), `src/lib/sharing/url-codec.ts`,
+`src/lib/sharing/__tests__/url-codec.test.ts`, `src/app/api/user/drafts/route.ts`
+
+Split the schemas into `url-codec.schemas.ts` and load them from `decodeShareState` via a cached
+`await import()`. Two things made this cheaper than feared, both verified rather than assumed:
+`decodeShareState` was ALREADY async (it awaits the `DecompressionStream` reader), and its single
+client caller at `useShareUrl.ts:219` already uses `.then()` — so **no call-site change was needed,
+`useShareUrl.ts` is untouched, and no new race was introduced.**
+
+Independently confirmed C3's claims: `ShareableStateSchema` has zero client references (its only
+value importer was the server route `api/user/drafts/route.ts`, repointed at `url-codec.schemas` so
+the server keeps a static zod import), and all seven other client importers are `import type` and
+erase. `url-codec.ts` deliberately does NOT re-export the schemas — a static re-export would silently
+undo the whole split.
+
+**MEASURED via differential `next build` in two isolated `git archive HEAD` trees** (hardlinked
+node_modules), with zod identified by C3's byte signature:
+- BEFORE: 27 eager chunks on `/`, 2353.3 kB raw / 613.3 kB gzip; zod inside eager chunk
+  `0p-3laet_uvan.js` (459.7 kB raw / 114.5 kB gzip)
+- AFTER: 27 eager chunks, 2081.6 kB raw / 548.9 kB gzip; **zod ABSENT from every eager chunk**,
+  now alone in `0.vkkd2tnyb8w.js`, fetched only when a legacy inline `#data=` share link is decoded
+- Net on `/`: **−271.7 kB raw / −64.4 kB gzip** — beats C3's predicted −264.9/−62.8 and far exceeds
+  the ticket's −223.9/−50.4. Exactly one zod chunk per build, so no straggler copy.
+
+### Another misleading-test finding
+The pre-existing `url-codec` test block only exercised a **Node re-implementation** of the codec and
+never touched zod validation at all. The agent added a block driving the REAL exported
+`decodeShareState` (with a Node-compat `DecompressionStream` shim, since Node's writer rejects the
+ArrayBuffer browsers accept), covering round-trips, legacy un-prefixed links, corrupt base64,
+schema-invalid JSON, the legacy `replays` key strip, the async boundary, and concurrent calls
+resolving off the one cached module.
+
+That is the THIRD instance tonight of tests that were green while testing the wrong thing
+(the others: the SP regression tests, and the version-diff module having none at all).
+
+Verified in the real working tree: cold tsc 0 errors, 34 files / 371 tests, eslint clean.
