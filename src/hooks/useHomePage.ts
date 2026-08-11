@@ -28,6 +28,7 @@ import { getTemplate } from "@/lib/templates";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { detectArchetypes } from "@/lib/analysis/detect-archetype";
 import { detectRegulation } from "@/lib/analysis/detect-regulation";
+import { isDifferentTeam } from "@/lib/utils/extract-species";
 
 export function useHomePage() {
   const { t } = useTranslation();
@@ -761,6 +762,14 @@ export function useHomePage() {
   // ── Actions ──────────────────────────────────────────────────────
   const handleAnalyze = (directPaste?: string) => {
     const teamPaste = directPaste ?? paste;
+    // Analyzing an entirely different team must start its own draft. The
+    // active draft ID persists in localStorage, so without this the 4s
+    // autosave would overwrite the previous team's draft with the new team —
+    // silent data loss for anyone keeping multiple drafts in the dashboard.
+    // Editing the current team (any species overlap) keeps updating its draft.
+    if (draftId && (!analysis || isDifferentTeam(analysis.pokemon.map((p) => p.parsed.species), teamPaste))) {
+      clearDraft();
+    }
     setIsSampleTeam(teamPaste.trim() === SAMPLE_PASTE.trim());
     templateApplied.current = false; // reset so template applies on next parse
     archetypeDetected.current = false;

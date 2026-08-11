@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractSpecies } from "@/lib/utils/extract-species";
+import { extractSpecies, isDifferentTeam } from "@/lib/utils/extract-species";
 
 describe("extractSpecies", () => {
   it("extracts species from simple paste", () => {
@@ -39,5 +39,23 @@ describe("extractSpecies", () => {
   it("handles species without item", () => {
     const paste = "Garchomp\nAbility: Rough Skin\n- Earthquake";
     expect(extractSpecies(paste)).toEqual(["Garchomp"]);
+  });
+});
+
+describe("isDifferentTeam", () => {
+  const garchomp = "Garchomp @ Life Orb\nAbility: Rough Skin\n- Earthquake";
+  const pikachu = "Pikachu @ Light Ball\nAbility: Static\n- Thunderbolt";
+
+  it("no shared species → different team", () => {
+    expect(isDifferentTeam(["Garchomp", "Flutter Mane"], pikachu)).toBe(true);
+  });
+
+  it("any shared species → same team (iterating on it)", () => {
+    expect(isDifferentTeam(["Garchomp", "Flutter Mane"], `${garchomp}\n\n${pikachu}`)).toBe(false);
+  });
+
+  it("empty previous team or unparseable paste → not different", () => {
+    expect(isDifferentTeam([], pikachu)).toBe(false);
+    expect(isDifferentTeam(["Garchomp"], "")).toBe(false);
   });
 });
