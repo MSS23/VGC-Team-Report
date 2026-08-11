@@ -188,7 +188,7 @@ function getTeamWeaknesses(pokemon: CompareAnalyzedPokemon[]) {
   for (const mon of pokemon) {
     const types = mon.displayTypes;
     if (types.length === 0) continue;
-    const profile = getDefensiveProfile(types as PokemonType[]);
+    const profile = getDefensiveProfile(types as PokemonType[], mon.parsed.ability);
     for (const [t, mult] of Object.entries(profile)) {
       if (mult >= 2) weakMap[t] = (weakMap[t] ?? 0) + 1;
       if (mult <= 0.5) resistMap[t] = (resistMap[t] ?? 0) + 1;

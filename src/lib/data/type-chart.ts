@@ -181,18 +181,27 @@ export function getEffectiveness(
   return mult;
 }
 
+// Abilities that grant a full immunity to an attacking type.
+// ponytail: immunities only — absorb/boost abilities (Flash Fire, Volt Absorb…)
+// still render as 0 damage, which is what the defensive chart cares about.
+const ABILITY_IMMUNITIES: Record<string, PokemonType> = {
+  levitate: "Ground",
+};
+
 /**
  * Returns a map of every attacking type → effectiveness multiplier against
  * the given defensive typing (one or two types).
  *
  * Useful for rendering a full defensive profile / weakness chart for a Pokemon.
+ * Pass the Pokemon's ability to apply ability-based immunities (e.g. Levitate → Ground 0x).
  *
  * Example:
  *   getDefensiveProfile(["Water", "Flying"])
  *   // { Normal: 1, Fire: 0.5, Water: 0.5, Electric: 2, Grass: 1, ... }
  */
 export function getDefensiveProfile(
-  types: PokemonType[]
+  types: PokemonType[],
+  ability?: string | null
 ): Record<PokemonType, number> {
   const allTypes: PokemonType[] = [
     "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -204,5 +213,9 @@ export function getDefensiveProfile(
   for (const attackType of allTypes) {
     profile[attackType] = getEffectiveness(attackType, types);
   }
+
+  const immuneType = ability ? ABILITY_IMMUNITIES[ability.toLowerCase()] : undefined;
+  if (immuneType) profile[immuneType] = 0;
+
   return profile;
 }

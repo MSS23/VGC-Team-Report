@@ -45,7 +45,7 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
     return {
       species: mon.parsed.species,
       types,
-      profile: getDefensiveProfile(types),
+      profile: getDefensiveProfile(types, mon.parsed.ability),
     };
   });
 
