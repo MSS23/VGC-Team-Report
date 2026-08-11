@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { SearchCategory } from "@/components/explore/ExploreFilters";
 
 export interface FilterState {
@@ -128,18 +128,27 @@ export function useExploreUrlSync(): ExploreUrlSyncResult {
     return () => window.clearTimeout(id);
   }, [filters]);
 
-  const setQuery = (v: string) => setFilters((f) => ({ ...f, query: v }));
-  const setSort = (v: FilterState["sort"]) => setFilters((f) => ({ ...f, sort: v }));
-  const setSearchCategory = (v: SearchCategory) => setFilters((f) => ({ ...f, searchCategory: v }));
-  const setRegulation = (v: string) => setFilters((f) => ({ ...f, regulation: v }));
-  const setEventType = (v: string) => setFilters((f) => ({ ...f, eventType: v }));
-  const setArchetype = (v: string) => setFilters((f) => ({ ...f, archetype: v }));
-  const setSpecies = (v: string) => setFilters((f) => ({ ...f, species: v }));
-  const setExcludeSpecies = (v: string) => setFilters((f) => ({ ...f, excludeSpecies: v }));
-  const setPlacement = (v: string) => setFilters((f) => ({ ...f, placement: v }));
-  const setFollowingOnly = (v: boolean) => setFilters((f) => ({ ...f, followingOnly: v }));
-  const setTournamentMode = (v: boolean) => setFilters((f) => ({ ...f, tournamentMode: v }));
-  const setHasRental = (v: boolean) => setFilters((f) => ({ ...f, hasRental: v }));
+  // Setters must be identity-stable AND bail out on no-op values. The old
+  // plain arrows were recreated every render and always produced a new
+  // filters object — combined with ExploreFilters' debounce effect (which
+  // lists onQueryChange in its deps) that formed a perpetual 300ms
+  // re-render loop on /explore from mount, without any user input.
+  const makeSetter = <K extends keyof FilterState>(key: K) =>
+    (v: FilterState[K]) => setFilters((f) => (f[key] === v ? f : { ...f, [key]: v }));
+  /* eslint-disable react-hooks/exhaustive-deps */
+  const setQuery = useCallback(makeSetter("query"), []);
+  const setSort = useCallback(makeSetter("sort"), []);
+  const setSearchCategory = useCallback(makeSetter("searchCategory"), []);
+  const setRegulation = useCallback(makeSetter("regulation"), []);
+  const setEventType = useCallback(makeSetter("eventType"), []);
+  const setArchetype = useCallback(makeSetter("archetype"), []);
+  const setSpecies = useCallback(makeSetter("species"), []);
+  const setExcludeSpecies = useCallback(makeSetter("excludeSpecies"), []);
+  const setPlacement = useCallback(makeSetter("placement"), []);
+  const setFollowingOnly = useCallback(makeSetter("followingOnly"), []);
+  const setTournamentMode = useCallback(makeSetter("tournamentMode"), []);
+  const setHasRental = useCallback(makeSetter("hasRental"), []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   return {
     ...filters,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { useAuth, useUser, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
@@ -94,11 +94,16 @@ export function ReportCard({
   ));
 
   // Sync from the batched lookups once they resolve (undefined while pending).
+  // Once the user has toggled a control themselves, stop syncing: the batched
+  // refetch that "Load more" triggers can race a just-committed like and
+  // would visibly un-fill the heart the user just tapped.
+  const likeTouchedRef = useRef(false);
+  const saveTouchedRef = useRef(false);
   useEffect(() => {
-    if (initialLiked !== undefined) setLiked(initialLiked);
+    if (initialLiked !== undefined && !likeTouchedRef.current) setLiked(initialLiked);
   }, [initialLiked]);
   useEffect(() => {
-    if (initialSaved !== undefined) setBookmarked(initialSaved);
+    if (initialSaved !== undefined && !saveTouchedRef.current) setBookmarked(initialSaved);
   }, [initialSaved]);
 
   const toggleLike = useCallback(async (e: React.MouseEvent) => {
@@ -106,16 +111,20 @@ export function ReportCard({
     e.stopPropagation();
     if (!sessionId || !isSignedIn) return;
 
+    likeTouchedRef.current = true;
     const wasLiked = liked;
     setLiked(!wasLiked);
     setLikeCount((c) => Math.max(0, c + (wasLiked ? -1 : 1)));
 
     try {
-      await fetch(`/api/reactions/${report.id}`, {
+      const res = await fetch(`/api/reactions/${report.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reactionType: "heart", sessionId }),
       });
+      // fetch only rejects on network failure — a 429/500 resolves fine and
+      // would leave the optimistic heart filled with nothing written.
+      if (!res.ok) throw new Error("reaction failed");
     } catch {
       setLiked(wasLiked);
       setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));
@@ -126,15 +135,17 @@ export function ReportCard({
     e.preventDefault();
     e.stopPropagation();
     if (bookmarkLoading) return;
+    saveTouchedRef.current = true;
     setBookmarkLoading(true);
     const wasSaved = bookmarked;
     setBookmarked(!wasSaved);
     try {
-      await fetch("/api/user/saved", {
+      const res = await fetch("/api/user/saved", {
         method: wasSaved ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shareId: report.id }),
       });
+      if (!res.ok) throw new Error("save failed");
     } catch {
       setBookmarked(wasSaved);
     } finally {

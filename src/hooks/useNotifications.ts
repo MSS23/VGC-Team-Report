@@ -19,6 +19,10 @@ export function useNotifications(enabled: boolean) {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  // Mirror of `notifications` so markIdsRead can compute the real unread
+  // delta without churning its useCallback identity.
+  const notificationsRef = useRef<Notification[]>([]);
+  notificationsRef.current = notifications;
 
   const fetchNotifications = useCallback(async () => {
     if (!enabled) return;
@@ -75,11 +79,13 @@ export function useNotifications(enabled: boolean) {
 
   const markAllRead = useCallback(async () => {
     try {
-      await fetch("/api/user/notifications", {
+      const res = await fetch("/api/user/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ markAllRead: true }),
       });
+      // Only clear the badge when the server actually persisted the change.
+      if (!res.ok) return;
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch {
@@ -89,16 +95,23 @@ export function useNotifications(enabled: boolean) {
 
   const markIdsRead = useCallback(async (ids: number[]) => {
     if (ids.length === 0) return;
+    // Count only ids that are actually unread — callers pass ids regardless
+    // of read state, and subtracting ids.length twice (open the bell twice)
+    // drove the badge to 0 while unread rows remained.
+    const delta = notificationsRef.current.filter(
+      (n) => ids.includes(n.id) && !n.read
+    ).length;
     try {
-      await fetch("/api/user/notifications", {
+      const res = await fetch("/api/user/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
       });
+      if (!res.ok) return;
       setNotifications((prev) =>
         prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n))
       );
-      setUnreadCount((prev) => Math.max(0, prev - ids.length));
+      setUnreadCount((prev) => Math.max(0, prev - delta));
     } catch {
       // silently fail
     }

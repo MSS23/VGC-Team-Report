@@ -148,10 +148,14 @@ function SideModifierToggle({
 }
 
 export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode, regulation, megaStates }: SpeedTierChartProps) {
-  const championsDex = regulation === "Reg M-B" ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
-  const META_THREATS = isChampionsFormat(regulation)
-    ? META_THREATS_CHAMPIONS.filter(k => lookupPokemon(k) && championsDex.has(k))
-    : META_THREATS_DEFAULT;
+  // Memoized: this runs ~40 lookupPokemon calls and must keep a stable array
+  // identity, or the metaEntries memo below misses on every render and
+  // rebuilds the whole meta-threat speed table.
+  const META_THREATS = useMemo(() => {
+    if (!isChampionsFormat(regulation)) return META_THREATS_DEFAULT;
+    const championsDex = regulation === "Reg M-B" ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
+    return META_THREATS_CHAMPIONS.filter(k => lookupPokemon(k) && championsDex.has(k));
+  }, [regulation]);
   const { t } = useTranslation();
   const [yourModifiers, setYourModifiers] = useState<Set<SpeedModifier>>(new Set());
   const [opponentModifiers, setOpponentModifiers] = useState<Set<SpeedModifier>>(new Set());
