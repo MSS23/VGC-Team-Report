@@ -967,8 +967,12 @@ function HomeContent() {
         onStartTour={!presentationMode ? startWalkthrough : undefined}
       />
 
-      {/* Welcome-back banner — shown when paste was restored from localStorage */}
-      {wasRestored && !isSharedView && analysis && (
+      {/* Welcome-back banner — shown when paste was restored from localStorage.
+          Signed-in only: its "Get my link" CTA calls handleShareClick, which
+          hard-requires an account — for guests the button silently failed AND
+          dismissed the banner, while the logged-out banner below simultaneously
+          said publishing needs sign-in. Guests get that banner instead. */}
+      {wasRestored && !isSharedView && analysis && isSignedIn && (
         <div className="max-w-5xl mx-auto px-4 pt-2">
           <div className="flex items-start gap-3 px-4 py-3 bg-gradient-to-br from-emerald-500/10 via-accent-surface/20 to-accent/5 border border-emerald-500/30 rounded-xl animate-fade-in">
             <div className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
@@ -982,7 +986,7 @@ function HomeContent() {
                 Welcome back — we restored your team
               </p>
               <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">
-                Your in-progress report is still here. <span className="font-bold text-text-primary">Click Share to get a permanent link</span> so you don&apos;t lose it when you close the tab.
+                Your in-progress report is still here and auto-saves to your drafts. <span className="font-bold text-text-primary">Click Share to get a permanent link</span> you can send to others.
               </p>
               <div className="flex items-center gap-2 mt-2">
                 <button
