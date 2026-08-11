@@ -31,14 +31,15 @@ function getCollaboratorCount(shareId: string): number {
   return presence.get(shareId)?.size ?? 0;
 }
 
-// Clean up stale presence entries periodically
-if (typeof globalThis !== "undefined") {
-  setInterval(() => {
-    for (const shareId of presence.keys()) {
-      cleanPresence(shareId);
-    }
-  }, 60_000);
-}
+// No module-scope sweeper interval: it kept the Lambda warm and defeated
+// scale-to-zero (the exact pattern the views route documents as a past
+// incident). cleanPresence already runs on every poll cycle via
+// getCollaboratorCount, and lambda recycling clears the map anyway.
+
+// Cap each SSE stream. The client's EventSource reconnects automatically
+// (with ?since=version, so nothing is missed) — without a cap, a tab left
+// open overnight polls Postgres every 5s indefinitely.
+const MAX_STREAM_MS = 5 * 60_000;
 
 /**
  * SSE endpoint for real-time collaborative sync.
@@ -166,11 +167,11 @@ export async function GET(
         send("ping", { t: Date.now() });
       }, 15_000);
 
-      // Handle client disconnect via AbortSignal
-      request.signal.addEventListener("abort", () => {
+      const shutdown = () => {
         closed = true;
         clearInterval(pollInterval);
         clearInterval(pingInterval);
+        clearTimeout(deadline);
         // Remove from presence
         const sessions = presence.get(shareId);
         if (sessions) {
@@ -178,7 +179,13 @@ export async function GET(
           if (sessions.size === 0) presence.delete(shareId);
         }
         try { controller.close(); } catch { /* already closed */ }
-      });
+      };
+
+      // Close after MAX_STREAM_MS; the client reconnects and resumes.
+      const deadline = setTimeout(shutdown, MAX_STREAM_MS);
+
+      // Handle client disconnect via AbortSignal
+      request.signal.addEventListener("abort", shutdown);
     },
   });
 

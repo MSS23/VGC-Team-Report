@@ -26,11 +26,23 @@ async function runCleanup(days: number): Promise<NextResponse> {
     // here (only reactions/comments/saved_reports were cleaned), which is a big
     // part of why share_versions accumulated orphans (§1-B / Finding 5.8).
     const purgeSatellites = async (ids: string[]) => {
+      // comment_flags reference comments by id — purge them before the
+      // comments they point at are gone.
+      await sql`
+        DELETE FROM comment_flags
+        WHERE comment_id IN (SELECT id FROM comments WHERE share_id = ANY(${ids}))
+      `;
       await sql`DELETE FROM reactions WHERE share_id = ANY(${ids})`;
       await sql`DELETE FROM comments WHERE share_id = ANY(${ids})`;
       await sql`DELETE FROM saved_reports WHERE share_id = ANY(${ids})`;
       await sql`DELETE FROM share_versions WHERE share_id = ANY(${ids})`;
       await sql`DELETE FROM edit_changelog WHERE share_id = ANY(${ids})`;
+      await sql`DELETE FROM collection_items WHERE share_id = ANY(${ids})`;
+      await sql`DELETE FROM collaborators WHERE share_id = ANY(${ids})`;
+      await sql`DELETE FROM notifications WHERE source_share_id = ANY(${ids})`;
+      // match_logs are the USER'S match history — keep the rows, drop the
+      // reference to the now-deleted report.
+      await sql`UPDATE match_logs SET share_id = NULL WHERE share_id = ANY(${ids})`;
     };
 
     // 1. Purge soft-deleted reports older than TRASH_TTL_DAYS

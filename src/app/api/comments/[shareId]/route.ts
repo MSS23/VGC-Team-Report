@@ -38,6 +38,17 @@ export async function GET(
     const callerSessionId = url.searchParams.get("sessionId") ?? "";
 
     const sql = getDb();
+
+    // Same visibility rule as POST below: comment threads are only readable
+    // on live public reports. Without this, anyone holding an old id could
+    // read display names + bodies on a report that went private or trashed.
+    const visible = await sql`
+      SELECT 1 FROM shares WHERE id = ${shareId} AND is_public = TRUE AND deleted_at IS NULL
+    `;
+    if (visible.length === 0) {
+      return NextResponse.json({ comments: [], nextCursor: null });
+    }
+
     let rows;
     if (cursor) {
       rows = await sql`

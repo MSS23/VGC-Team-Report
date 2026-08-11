@@ -71,8 +71,13 @@ export async function POST(
     const sql = getDb();
 
     // Fetch owner_id once — reused for the self-like guard below and the
-    // owner notification in the "added" branch.
-    const ownerRows = await sql`SELECT owner_id FROM shares WHERE id = ${shareId}`;
+    // owner notification in the "added" branch. Also the existence check:
+    // without it, reactions insert rows keyed to share ids that don't exist
+    // (or are trashed), which nothing ever cleans up.
+    const ownerRows = await sql`SELECT owner_id FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
+    if (ownerRows.length === 0) {
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
+    }
     const ownerId = ownerRows[0]?.owner_id as string | undefined;
 
     // Prevent owners from liking their own reports

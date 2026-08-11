@@ -32,8 +32,9 @@ export async function GET(request: Request) {
       SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
       FROM saved_reports sr
       JOIN shares s ON sr.share_id = s.id
-      WHERE sr.user_id = ${userId}
+      WHERE sr.user_id = ${userId} AND s.deleted_at IS NULL
       ORDER BY sr.created_at DESC
+      LIMIT 100
     `;
 
     const reports = rows.map((row) => {

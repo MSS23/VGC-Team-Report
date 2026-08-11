@@ -58,8 +58,12 @@ export async function cacheSet(key: string, value: unknown, ttlSeconds: number):
  * Atomic set-if-absent with TTL. Returns true if the key was set (first
  * call within the window), false if it already existed. Used for cross-
  * Lambda dedup (e.g. view-count rate limiting per session) without keeping
- * a serverless function warm via setInterval. Returns true on Redis miss
- * so the caller's side-effect still runs when caching is unavailable.
+ * a serverless function warm via setInterval.
+ *
+ * Unconfigured Redis (no env vars, e.g. local dev) returns true so the
+ * caller's side-effect still runs. A Redis ERROR returns false — failing
+ * open there would turn an Upstash outage into one dedup-free DB write per
+ * pageview on the hottest path (the share_versions incident shape).
  */
 export async function cacheSetIfAbsent(key: string, ttlSeconds: number): Promise<boolean> {
   try {
@@ -68,7 +72,7 @@ export async function cacheSetIfAbsent(key: string, ttlSeconds: number): Promise
     const res = await r.set(key, 1, { ex: ttlSeconds, nx: true });
     return res === "OK";
   } catch {
-    return true;
+    return false;
   }
 }
 

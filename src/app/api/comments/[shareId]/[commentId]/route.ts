@@ -75,6 +75,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Not found or not authorized" }, { status: 404 });
     }
 
+    // The flags rows reference the comment by id and nothing else cleans them.
+    await sql`DELETE FROM comment_flags WHERE comment_id = ${commentIdNum}`;
+
     return NextResponse.json({ deleted: true });
   } catch (e) {
     console.error("Comment DELETE error:", e);

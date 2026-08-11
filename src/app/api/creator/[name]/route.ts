@@ -39,21 +39,25 @@ export async function GET(
 
     const sql = getDb();
 
-    // Fetch public reports where this person is the creator OR a collaborator
+    // Fetch public reports where this person is the creator OR a collaborator.
+    // Exact case-insensitive match (like the verified/profile/follows queries
+    // below) — ILIKE here treated the path param as a pattern, so /creator/%25
+    // matched every public report in the table. LIMIT bounds the payload.
     const rows = await sql`
       SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count, 'creator' as role
       FROM shares
-      WHERE is_public = TRUE AND deleted_at IS NULL AND data->>'creatorName' ILIKE ${creatorName}
+      WHERE is_public = TRUE AND deleted_at IS NULL AND LOWER(data->>'creatorName') = ${creatorName.toLowerCase()}
 
       UNION
 
       SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, 'collaborator' as role
       FROM shares s
       JOIN collaborators c ON c.share_id = s.id
-      WHERE s.is_public = TRUE AND s.deleted_at IS NULL AND c.user_name ILIKE ${creatorName}
+      WHERE s.is_public = TRUE AND s.deleted_at IS NULL AND LOWER(c.user_name) = ${creatorName.toLowerCase()}
         AND COALESCE(c.status, 'accepted') = 'accepted'
 
       ORDER BY created_at DESC
+      LIMIT 100
     `;
 
     // Check verified status, profile, and follower count
