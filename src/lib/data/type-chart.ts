@@ -181,11 +181,23 @@ export function getEffectiveness(
   return mult;
 }
 
-// Abilities that grant a full immunity to an attacking type.
-// ponytail: immunities only — absorb/boost abilities (Flash Fire, Volt Absorb…)
-// still render as 0 damage, which is what the defensive chart cares about.
+// Abilities that grant a full immunity to an attacking type. Absorb/redirect
+// abilities (Flash Fire, Storm Drain…) count: they take 0 damage, which is
+// what the defensive chart cares about. Keys are lowercased with spaces
+// stripped so paste variants ("Lightning Rod" / "Lightningrod") both match.
+// ponytail: Dry Skin's extra Fire weakness isn't modeled — immunities only.
 const ABILITY_IMMUNITIES: Record<string, PokemonType> = {
   levitate: "Ground",
+  eartheater: "Ground",
+  flashfire: "Fire",
+  wellbakedbody: "Fire",
+  voltabsorb: "Electric",
+  lightningrod: "Electric",
+  motordrive: "Electric",
+  waterabsorb: "Water",
+  stormdrain: "Water",
+  dryskin: "Water",
+  sapsipper: "Grass",
 };
 
 /**
@@ -214,7 +226,7 @@ export function getDefensiveProfile(
     profile[attackType] = getEffectiveness(attackType, types);
   }
 
-  const immuneType = ability ? ABILITY_IMMUNITIES[ability.toLowerCase()] : undefined;
+  const immuneType = ability ? ABILITY_IMMUNITIES[ability.toLowerCase().replace(/[^a-z]/g, "")] : undefined;
   if (immuneType) profile[immuneType] = 0;
 
   return profile;
