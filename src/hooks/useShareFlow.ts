@@ -57,7 +57,25 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
     if (fetchedIsUnlisted === null) return;
     if (!visibilityTouchedRef.current) setIsUnlisted(fetchedIsUnlisted);
   }, [fetchedIsUnlisted]);
-  const [allowComments, setAllowComments] = useState(false);
+  const [allowComments, setAllowCommentsState] = useState(false);
+
+  // allowComments lives in THIS hook, not in useHomePage's buildShareState —
+  // so it must be merged into every saved state here. Without this, the flag
+  // never reached the server and comments stayed 403 on every report, even
+  // after the owner toggled them on in the share sheet.
+  //
+  // Read through a ref written synchronously by the setter: the ShareModal
+  // toggles the flag and fires a save in the SAME tick, so a plain state
+  // closure would still persist the old value.
+  const allowCommentsRef = useRef(false);
+  const setAllowComments = useCallback((v: boolean) => {
+    allowCommentsRef.current = v;
+    setAllowCommentsState(v);
+  }, []);
+  const buildStateWithComments = useCallback(
+    () => ({ ...buildShareState(), allowComments: allowCommentsRef.current }),
+    [buildShareState],
+  );
 
   // Wrap any client-initiated write so the collaborative-sync layer can
   // suppress the self-echo the server sends back for our own version bump.
@@ -81,7 +99,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
       setPublishError("Sign in to save and share your team report.");
       return;
     }
-    const state = buildShareState();
+    const state = buildStateWithComments();
     if (!state.creatorName?.trim()) {
       setCreatorRequired(true);
       return;
@@ -100,24 +118,24 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
       is_public: isPublic,
       pokemon_count: analysis.pokemon.length,
     });
-  }, [analysis, isSampleTeam, copyShareUrl, buildShareState, getActiveDraftId, isPublic, isUnlisted, isSignedIn, posthog, withSaveSuppression]);
+  }, [analysis, isSampleTeam, copyShareUrl, buildStateWithComments, getActiveDraftId, isPublic, isUnlisted, isSignedIn, posthog, withSaveSuppression]);
 
   const handleReshare = useCallback(() => {
     if (!analysis) return;
-    withSaveSuppression(() => copyShareUrl(buildShareState(), isPublic, isUnlisted));
-  }, [analysis, copyShareUrl, buildShareState, isPublic, isUnlisted, withSaveSuppression]);
+    withSaveSuppression(() => copyShareUrl(buildStateWithComments(), isPublic, isUnlisted));
+  }, [analysis, copyShareUrl, buildStateWithComments, isPublic, isUnlisted, withSaveSuppression]);
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!analysis || !isEditingUnlocked || !isSignedIn) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
-      withSaveSuppression(() => autoSave(buildShareState(), isPublic, isUnlisted));
+      withSaveSuppression(() => autoSave(buildStateWithComments(), isPublic, isUnlisted));
     }, 3000);
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [analysis, isEditingUnlocked, isSignedIn, buildShareState, autoSave, isPublic, isUnlisted, withSaveSuppression]);
+  }, [analysis, isEditingUnlocked, isSignedIn, buildStateWithComments, autoSave, isPublic, isUnlisted, withSaveSuppression]);
 
   // Monotonic token so that if two visibility changes overlap, a stale earlier
   // response can't revert the UI to a value the user has since moved past.
@@ -129,13 +147,13 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
     const prevPublic = isPublic; // real previous value, not !v
     setIsPublic(v);
     setPublishError(null);
-    const result = await withSaveSuppression(() => autoSave(buildShareState(), v, isUnlisted));
+    const result = await withSaveSuppression(() => autoSave(buildStateWithComments(), v, isUnlisted));
     if (reqId !== visibilityReqRef.current) return; // superseded by a newer toggle
     if (!result.ok) {
       setIsPublic(prevPublic);
       setPublishError(result.error ?? "Could not update visibility.");
     }
-  }, [autoSave, buildShareState, isPublic, isUnlisted, withSaveSuppression]);
+  }, [autoSave, buildStateWithComments, isPublic, isUnlisted, withSaveSuppression]);
 
   const handleSetVisibility = useCallback(async (newIsPublic: boolean, newIsUnlisted: boolean) => {
     visibilityTouchedRef.current = true;
@@ -145,14 +163,14 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
     setIsPublic(newIsPublic);
     setIsUnlisted(newIsUnlisted);
     setPublishError(null);
-    const result = await withSaveSuppression(() => autoSave(buildShareState(), newIsPublic, newIsUnlisted));
+    const result = await withSaveSuppression(() => autoSave(buildStateWithComments(), newIsPublic, newIsUnlisted));
     if (reqId !== visibilityReqRef.current) return; // superseded by a newer toggle
     if (!result.ok) {
       setIsPublic(prevPublic);
       setIsUnlisted(prevUnlisted);
       setPublishError(result.error ?? "Could not update visibility.");
     }
-  }, [autoSave, buildShareState, isPublic, isUnlisted, withSaveSuppression]);
+  }, [autoSave, buildStateWithComments, isPublic, isUnlisted, withSaveSuppression]);
 
   const clearPublishError = useCallback(() => setPublishError(null), []);
 

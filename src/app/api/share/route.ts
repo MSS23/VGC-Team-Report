@@ -24,6 +24,19 @@ const ShareBodySchema = z.object({
     // showed "saved" but the DB never stored it).
     commonModes: z
       .object({
+        // Structured bring combinations — same shape as ShareableStateSchema.
+        // Absent here, zod stripped the whole array on every save (the exact
+        // bug class the comment above describes).
+        combinations: z
+          .array(
+            z.object({
+              id: z.string(),
+              leads: z.array(z.number().int()),
+              back: z.array(z.number().int()),
+              strategy: z.string(),
+            }),
+          )
+          .optional(),
         leads: z.string().optional(),
         modes: z.string().optional(),
         strengths: z.string().optional(),
