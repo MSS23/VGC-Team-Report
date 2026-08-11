@@ -102,6 +102,14 @@ describe("parseShowdownPaste", () => {
       const result = parseShowdownPaste(paste);
       expect(result.teamName).toBe("Cool Team");
     });
+
+    it("header with no blank line after it does not eat the first Pokemon (regression)", () => {
+      const paste = `=== [gen9vgc2025regi] Worlds Team ===\n${GARCHOMP_BLOCK}`;
+      const result = parseShowdownPaste(paste);
+      expect(result.teamName).toBe("Worlds Team");
+      expect(result.pokemon).toHaveLength(1);
+      expect(result.pokemon[0].species).toBe("Garchomp");
+    });
   });
 
   describe("empty paste", () => {

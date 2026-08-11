@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { getDefensiveProfile } from "../type-chart";
 
+describe("getDefensiveProfile type chart", () => {
+  it("Poison resists Bug (regression: Amoonguss showed a phantom Bug weakness)", () => {
+    // Grass/Poison: Bug is 2x vs Grass, 0.5x vs Poison → 1x net
+    expect(getDefensiveProfile(["Grass", "Poison"]).Bug).toBe(1);
+    expect(getDefensiveProfile(["Poison"]).Bug).toBe(0.5);
+  });
+});
+
 describe("getDefensiveProfile ability immunities", () => {
   it("Levitate grants Ground immunity", () => {
     // Gengar (Ghost/Poison) with Levitate: Ground would be 2x by typing alone

@@ -1,4 +1,6 @@
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
+import { detectMegaFromItem } from "@/lib/utils/mega-detect";
+import { CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT } from "@/lib/analysis/stat-calculator";
 
 /**
  * Auto-detect team archetypes based on abilities, moves, and Pokemon composition.
@@ -51,10 +53,10 @@ export function detectArchetypes(pokemon: AnalyzedPokemon[]): string[] {
     detected.push("Primal Weather");
   }
 
-  // Mega Offense
+  // Mega Offense — use the real mega-stone lookup, not an "-ite" suffix
+  // match, which tagged every Eviolite holder as Mega Offense.
   const hasMega = species.some((s) => s.includes("-mega"));
-  const items = pokemon.map((p) => p.parsed.item?.toLowerCase() ?? "");
-  const hasMegaStone = items.some((item) => item.endsWith("ite") || item.endsWith("ite x") || item.endsWith("ite y"));
+  const hasMegaStone = pokemon.some((p) => detectMegaFromItem(p.parsed.item ?? null, p.parsed.species));
   if (hasMega || hasMegaStone) {
     detected.push("Mega Offense");
   }
@@ -77,11 +79,23 @@ export function detectArchetypes(pokemon: AnalyzedPokemon[]): string[] {
     detected.push("Tailwind");
   }
 
+  // Champions (SP) spreads cap at 32 per stat / 66 total, so the EV-scale
+  // investment thresholds below (100/200) could never trigger and every
+  // Champions team fell through to "Goodstuffs". Scale thresholds by the
+  // per-stat max of whichever system the team is using. All-zero spreads
+  // trip the SP branch harmlessly (no threshold fires on zeros either way).
+  const isSpScale = pokemon.length > 0 && pokemon.every((p) => {
+    const evs = p.parsed.evs;
+    if (!evs) return true;
+    return Object.values(evs).reduce((a, b) => a + (b ?? 0), 0) <= CHAMPIONS_TOTAL_SP;
+  });
+  const evScale = isSpScale ? CHAMPIONS_MAX_SP_PER_STAT / 252 : 1;
+
   // Hyper Offense: lots of max speed/attack investment, few defensive moves
   const offensiveCount = pokemon.filter((p) => {
     const atkEvs = (p.parsed.evs?.atk ?? 0) + (p.parsed.evs?.spa ?? 0);
     const speEvs = p.parsed.evs?.spe ?? 0;
-    return atkEvs >= 200 && speEvs >= 200;
+    return atkEvs >= 200 * evScale && speEvs >= 200 * evScale;
   }).length;
 
   const protectCount = allMoves.filter((m) => m === "protect" || m === "detect" || m === "wide guard" || m === "quick guard").length;
@@ -94,7 +108,7 @@ export function detectArchetypes(pokemon: AnalyzedPokemon[]): string[] {
   const bulkyOffenseCount = pokemon.filter((p) => {
     const hpEvs = p.parsed.evs?.hp ?? 0;
     const atkEvs = (p.parsed.evs?.atk ?? 0) + (p.parsed.evs?.spa ?? 0);
-    return hpEvs >= 100 && atkEvs >= 100;
+    return hpEvs >= 100 * evScale && atkEvs >= 100 * evScale;
   }).length;
 
   if (bulkyOffenseCount >= 3 && !detected.includes("Hyper Offense")) {
@@ -111,7 +125,7 @@ export function detectArchetypes(pokemon: AnalyzedPokemon[]): string[] {
     );
     const hasOffense = pokemon.some((p) => {
       const atkEvs = (p.parsed.evs?.atk ?? 0) + (p.parsed.evs?.spa ?? 0);
-      return atkEvs >= 200;
+      return atkEvs >= 200 * evScale;
     });
     if (hasSupport && hasOffense) {
       // Only add if not already covered

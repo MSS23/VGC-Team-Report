@@ -178,13 +178,17 @@ export function parseShowdownPaste(paste: string): ParsedTeam {
     if (name) teamName = name;
   }
 
+  // Strip header lines BEFORE splitting into blocks. The old per-block filter
+  // only matched a header that was its own block — a header directly followed
+  // by a Pokemon (no blank line) became that block's first line and was
+  // parsed as the species, silently eating the real first Pokemon.
+  const withoutHeaders = normalized.replace(/^===.*===[ \t]*$/gm, "");
+
   // Split into Pokemon blocks (double newline separated)
-  const blocks = normalized
+  const blocks = withoutHeaders
     .split(/\n\s*\n/)
     .map(b => b.trim())
-    .filter(Boolean)
-    // Filter out header lines
-    .filter(b => !b.match(/^===.*===$/));
+    .filter(Boolean);
 
   if (blocks.length === 0) {
     return { pokemon: [], warnings: ["No Pokemon found in paste"], teamName };

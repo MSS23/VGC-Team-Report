@@ -187,4 +187,20 @@ describe("validateChampionsTeam", () => {
     expect(result.issues.filter((i) => i.severity === "error")).toHaveLength(0);
     expect(result.issues.some((i) => i.message.includes("Restricted Pokemon (2/2)"))).toBe(true);
   });
+
+  it("Species Clause catches alternate forms of the same dex number (regression)", () => {
+    // Rotom-Wash + Rotom-Heat share National Dex #479 — illegal together
+    const team = makeTeam();
+    team[0] = makePokemon({ species: "Rotom-Wash", item: "Sitrus Berry" });
+    team[1] = makePokemon({ species: "Rotom-Heat", item: "Leftovers" });
+    const result = validateChampionsTeam(team);
+    expect(result.issues.some((i) => i.message.includes("Species Clause"))).toBe(true);
+  });
+
+  it("rejects EV totals over 510, the real game cap (regression: 512 passed)", () => {
+    const team = makeTeam();
+    team[0] = makePokemon({ evs: { hp: 252, atk: 0, def: 252, spa: 0, spd: 0, spe: 8 } }); // 512
+    const result = validateChampionsTeam(team);
+    expect(result.issues.some((i) => i.severity === "error" && i.message.includes("510"))).toBe(true);
+  });
 });

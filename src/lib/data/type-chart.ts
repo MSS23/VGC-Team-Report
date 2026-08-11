@@ -108,6 +108,7 @@ export const TYPE_CHART: Record<PokemonType, Partial<Record<PokemonType, number>
     Fire: 0.5,
     Grass: 2,
     Fighting: 0.5,
+    Poison: 0.5,
     Flying: 0.5,
     Psychic: 2,
     Ghost: 0.5,

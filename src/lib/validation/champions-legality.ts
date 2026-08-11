@@ -18,6 +18,7 @@
 
 import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { CHAMPIONS_DEX, CHAMPIONS_MB_DEX } from "@/lib/data/champions-dex";
+import { getSpecies } from "@/lib/data/dex-subset";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import {
   CHAMPIONS_TOTAL_SP,
@@ -127,13 +128,17 @@ function getRestrictedBase(species: string): string {
 
 /**
  * Get the base species for Species Clause checks.
- * Mega forms count as the same species as their base.
- * "Kangaskhan-Mega" → "kangaskhan"
- * But different regional forms are different species.
+ *
+ * Species Clause goes by National Dex number, and every form of a species
+ * shares one — so Rotom-Wash duplicates Rotom-Heat, Ninetales duplicates
+ * Ninetales-Alola, and Urshifu duplicates Urshifu-Rapid-Strike. The dex
+ * lookup's baseSpecies collapses all forms; the regex strip is only the
+ * fallback for species the dex subset doesn't know.
  */
 function getSpeciesClauseKey(species: string): string {
+  const entry = getSpecies(species);
+  if (entry) return normalizeSpecies(entry.baseSpecies ?? entry.name);
   const key = normalizeSpecies(species);
-  // Strip mega suffix only — regional forms and other forms are distinct species
   return key.replace(/-mega(-[xy])?$/, "").replace(/-primal$/, "");
 }
 
@@ -278,16 +283,18 @@ export function validateChampionsTeam(
         });
       }
     } else {
-      if (total > 512) {
+      // The game's EV budget is 510, not 512 — the parser already warns at
+      // 510, and disagreeing with it here let 512-EV spreads validate clean.
+      if (total > 510) {
         issues.push({
           severity: "error",
-          message: `${p.species}: EV total ${total} exceeds maximum of 512`,
+          message: `${p.species}: EV total ${total} exceeds maximum of 510`,
           pokemon: p.species,
         });
-      } else if (total > 0 && total < 512) {
+      } else if (total > 0 && total < 510) {
         issues.push({
           severity: "info",
-          message: `${p.species}: ${total} EVs allocated — ${512 - total} more available (${regLabel} allows 512 total)`,
+          message: `${p.species}: ${total} EVs allocated — ${510 - total} more available (${regLabel} allows 510 total)`,
           pokemon: p.species,
         });
       }
