@@ -12,9 +12,14 @@
  * Data source is the pre-extracted `dex-subset.json` (built from @pkmn/dex
  * by `scripts/build-dex-subset.mjs`). The full @pkmn/dex package is ~1.8MB
  * raw / ~350KB gzipped and includes moves/learnsets/tiers the client never
- * reads; the subset is ~324KB raw / ~47KB gzipped and holds only species
+ * reads; the subset is ~127KB raw / ~32KB gzipped and holds only species
  * stats, types, abilities, and mega-stone metadata. Regenerate after every
  * `npm update @pkmn/dex` and commit the new JSON.
+ *
+ * The subset is stored as positional arrays and decoded in `dex-subset.ts`
+ * (VGC-257) — the same 1,515 species, 197KB less client JS. Never shrink it
+ * further by filtering `isNonstandard`: the Champions-original Megas are the
+ * `Future`-flagged rows.
  *
  * Cached: each species/item is looked up at most once per session, so the
  * fallback adds essentially no runtime cost after warmup.

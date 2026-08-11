@@ -1139,6 +1139,18 @@ function HomeContent() {
         key={tournamentMode ? "tournament" : physicalSlide}
         style={tournamentMode ? undefined : { viewTransitionName: "slide" }}
       >
+        {/*
+          VGC-259: every slide needs an <h1>. TeamOverview owns the visible h1 on
+          slide 0 (read-only view), so this sr-only heading covers every other
+          slide — and tournament mode, which replaces the slide body entirely.
+          Visually hidden on purpose: the slides already render their own visible
+          titles, so a visible h1 would duplicate them on screen.
+        */}
+        {(tournamentMode || physicalSlide !== 0) && (
+          <h1 className="sr-only">
+            {`${tournamentMode ? "Tournament Mode" : (slideLabels[currentSlide] ?? "Team report")}${teamName ? ` — ${teamName}` : ""}`}
+          </h1>
+        )}
         {tournamentMode ? (
           <TournamentMode
             analysis={analysis!}

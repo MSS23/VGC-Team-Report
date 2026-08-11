@@ -24,6 +24,7 @@ import {
   CHAMPIONS_MAX_SP_PER_STAT,
 } from "@/lib/analysis/stat-calculator";
 import { FieldDiffHighlight } from "./TeamReport";
+import { encodeSectionKey } from "@/lib/utils/version-diff";
 import { useIsPrintMode } from "@/components/ui/print-context";
 
 interface PokemonDetailSlideProps {
@@ -848,7 +849,7 @@ function PokemonDetailSlideBase({
   };
 
   const renderNotes = () => (
-    <FieldDiffHighlight field={speciesKey ? [`notes:${speciesKey}`] : []} label="Notes changed">
+    <FieldDiffHighlight field={speciesKey ? [encodeSectionKey({ kind: "notes", speciesKey })] : []} label="Notes changed">
     <div className="flex flex-col gap-2">
       <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="pokemon-notes">
         {isPresentationMode ? t.notes : isReadOnly ? t.aboutThisPokemon : t.yourExplanation}
@@ -871,7 +872,7 @@ function PokemonDetailSlideBase({
   );
 
   const renderCalcs = () => (
-    <FieldDiffHighlight field={speciesKey ? [`calcs:${speciesKey}`] : []} label="Calcs changed">
+    <FieldDiffHighlight field={speciesKey ? [encodeSectionKey({ kind: "calcs", speciesKey })] : []} label="Calcs changed">
     <div className="flex flex-col gap-4">
       <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="notable-calcs">
         {t.notableCalcs}
@@ -918,7 +919,7 @@ function PokemonDetailSlideBase({
     <div className="animate-fade-in">
       {/* ── Mobile: card-based tabbed layout (< 640px) ── */}
       <div className="sm:hidden flex flex-col gap-3">
-        <FieldDiffHighlight field={pokemonIndex !== undefined ? [`pokemon:${pokemonIndex}`] : []} label="Set changed">
+        <FieldDiffHighlight field={pokemonIndex !== undefined ? [encodeSectionKey({ kind: "pokemon", index: pokemonIndex })] : []} label="Set changed">
           {renderHeroHeader()}
         </FieldDiffHighlight>
 
@@ -951,7 +952,7 @@ function PokemonDetailSlideBase({
 
       {/* ── Desktop: two-column layout (>= 640px) ── */}
       <div className="hidden sm:grid sm:grid-cols-[9fr_11fr] gap-6 lg:gap-10 items-start">
-        <FieldDiffHighlight field={pokemonIndex !== undefined ? [`pokemon:${pokemonIndex}`] : []} label="Set changed">
+        <FieldDiffHighlight field={pokemonIndex !== undefined ? [encodeSectionKey({ kind: "pokemon", index: pokemonIndex })] : []} label="Set changed">
         <div className="flex flex-col gap-6 min-w-0">
           {renderHeroHeader()}
           {renderMoves()}

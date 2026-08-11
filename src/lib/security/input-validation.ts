@@ -38,12 +38,34 @@ function normalizeIp(raw: string): string {
 }
 
 /**
- * Extract a client identifier for rate limiting.
+ * Extract a client identifier for rate limiting and anti-abuse dedupe.
  *
- * Prefers a validated IP from x-forwarded-for (left-most = originating
- * client), then x-real-ip. When no valid IP is present, falls back to a
- * coarse fingerprint built from other request headers so unrelated clients
- * don't all share a single bucket.
+ * SECURITY — read before changing the header order below.
+ *
+ * `X-Forwarded-For` is append-only: each proxy appends the peer address it
+ * actually observed to whatever the client already sent. The LEFT-most entry
+ * is therefore pure, unverified client input — a caller can put any value
+ * there — while the RIGHT-most entry is the one appended by the proxy closest
+ * to us (on Vercel, Vercel's own edge). This app is deployed behind exactly
+ * one trusted proxy, so the right-most entry is the only trustworthy one.
+ *
+ * Trusting the left-most entry (the behaviour this function used to have) let
+ * an unauthenticated caller mint an unlimited number of distinct identities by
+ * rotating a forged header, which:
+ *   - defeated `comment_flags`' UNIQUE(comment_id, session_id) dedupe, so three
+ *     requests could push any comment past FLAG_THRESHOLD and delete it; and
+ *   - voided every rate limit, since `apiGuard` keys its buckets on this value.
+ * See the regression tests in `__tests__/input-validation.test.ts`.
+ *
+ * Order of preference:
+ *   1. `x-vercel-forwarded-for` / `x-real-ip` — set (and overwritten) by the
+ *      Vercel proxy itself, so a client-supplied value never survives to here.
+ *   2. The right-most `x-forwarded-for` entry — and ONLY the right-most. We do
+ *      not scan leftwards for the first parseable address: that would let a
+ *      caller reinstate the spoof by appending junk, and it would amount to
+ *      trusting an arbitrary number of hops we don't control.
+ *   3. A coarse header fingerprint, so clients behind a stripped
+ *      x-forwarded-for don't all collapse into one bucket.
  *
  * NOTE: as a last resort this still returns the literal "unknown", and every
  * client that presents no usable identifying header collapses into that one
@@ -51,16 +73,19 @@ function normalizeIp(raw: string): string {
  * always rate-limited rather than trusting it to isolate a single caller.
  */
 export function getClientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    for (const part of forwarded.split(",")) {
-      const ip = normalizeIp(part);
-      if (ip && isValidIp(ip)) return ip;
-    }
+  // 1. Platform-set headers — not client-controllable behind Vercel's proxy.
+  for (const header of ["x-vercel-forwarded-for", "x-real-ip"]) {
+    const ip = normalizeIp(request.headers.get(header) ?? "");
+    if (ip && isValidIp(ip)) return ip;
   }
 
-  const realIp = normalizeIp(request.headers.get("x-real-ip") ?? "");
-  if (realIp && isValidIp(realIp)) return realIp;
+  // 2. Right-most x-forwarded-for entry = appended by the nearest trusted proxy.
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const parts = forwarded.split(",");
+    const ip = normalizeIp(parts[parts.length - 1] ?? "");
+    if (ip && isValidIp(ip)) return ip;
+  }
 
   // No valid IP — derive a granular-ish identifier from available headers so
   // callers behind a stripped/missing x-forwarded-for don't collapse into one

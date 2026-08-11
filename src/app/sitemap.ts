@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getDb } from "@/lib/db";
-import { getRegMAMegasWithSprites } from "@/lib/data/mega-pokemon";
+import { getRegMBMegasWithSprites } from "@/lib/data/mega-pokemon";
 
 const BASE = "https://pokemonvgcteamreport.com";
 
@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/explore`, changeFrequency: "daily", priority: 0.9 },
     { url: `${BASE}/champions`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${BASE}/faq`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE}/tools/ev-to-sp`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/feedback`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/tournaments`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.6 },
@@ -21,7 +22,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/support`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1 },
     { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1 },
-    ...getRegMAMegasWithSprites().map((m) => ({
+    // Reg M-B is the current Champions regulation and a superset of M-A, so
+    // this covers every legal Mega with a usable sprite (72), not just the 58
+    // that were M-A legal. Sprite-less Megas are deliberately excluded — they
+    // have no landing page to point at.
+    ...getRegMBMegasWithSprites().map((m) => ({
       url: `${BASE}/champions/${m.slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.8,

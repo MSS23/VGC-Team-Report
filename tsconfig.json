@@ -5,6 +5,19 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    // VGC-261 — the five flags below are NOT implied by `strict: true`. Each was
+    // measured individually against the full program on 2026-08-10 and reported
+    // 0 errors, so they were verified clean rather than assumed clean.
+    // (`useUnknownInCatchVariables` and `strictFunctionTypes` are already on via
+    // `strict: true` — writing them out would be a no-op.)
+    // Deliberately still OFF: `verbatimModuleSyntax`. It also measures 0 errors,
+    // but it changes import-elision *emit* rather than only diagnostics, so it
+    // needs its own commit with a real `next build` behind it.
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -12,6 +25,13 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
+    // Kept ON so `next build` reuses its type-check state. NOTE: a warm
+    // `tsconfig.tsbuildinfo` has masked real errors before, so the pre-commit
+    // type gate must run COLD — use `npm run typecheck` (or pass
+    // `--incremental false`) rather than a bare `tsc --noEmit`.
+    // The buildinfo deliberately stays at the repo root (gitignored via
+    // `*.tsbuildinfo`) so CI checkouts and Vercel builds are always cold; do not
+    // relocate it into `.next/cache`, which Vercel restores between builds.
     "incremental": true,
     "plugins": [
       {

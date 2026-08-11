@@ -4,7 +4,10 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { ShareableStateSchema } from "@/lib/sharing/url-codec";
+// Server-only route: import the schemas module directly so this path keeps a
+// static zod import. `url-codec.ts` no longer re-exports the schemas (VGC-256)
+// because it sits in the homepage client graph.
+import { ShareableStateSchema } from "@/lib/sharing/url-codec.schemas";
 
 const DraftBodySchema = z.object({
   // Reuse the canonical report schema so drafts cannot silently lose newly

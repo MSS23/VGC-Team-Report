@@ -4,7 +4,11 @@ import {
   calculateAllStats,
   calculateChampionsStat,
   convertToChampionsSp,
+  evToChampionsSp,
+  championsSpToEv,
   CHAMPIONS_TOTAL_SP,
+  CHAMPIONS_MAX_SP_PER_STAT,
+  MAX_EV_PER_STAT,
 } from "@/lib/analysis/stat-calculator";
 import type { StatSpread } from "@/lib/types/pokemon";
 
@@ -120,6 +124,12 @@ describe("calculateAllStats", () => {
   });
 });
 
+const STAT_KEYS: (keyof StatSpread)[] = ["hp", "atk", "def", "spa", "spd", "spe"];
+
+function totalOf(sp: StatSpread): number {
+  return STAT_KEYS.reduce((sum, k) => sum + sp[k], 0);
+}
+
 describe("convertToChampionsSp", () => {
   it("returns all zeros for a zero-EV spread (regression: was fabricating 32 HP / 32 Atk / 2 Def)", () => {
     expect(convertToChampionsSp(spread())).toEqual(spread());
@@ -136,22 +146,222 @@ describe("convertToChampionsSp", () => {
   });
 
   it("converts a standard 252/4/252 EV spread within budget", () => {
-    const sp = convertToChampionsSp(spread({ atk: 252, spd: 4, spe: 252 }));
-    expect(sp.atk).toBe(32);
-    expect(sp.spe).toBe(32);
-    expect(sp.spd).toBeGreaterThanOrEqual(1); // 4 EVs keeps its minimum investment
-    expect(sp.hp).toBe(0);
-    expect(sp.def).toBe(0);
-    expect(sp.spa).toBe(0);
-    const total = Object.values(sp).reduce((a, b) => a + b, 0);
-    expect(total).toBeLessThanOrEqual(CHAMPIONS_TOTAL_SP);
+    // 32 + 1 + 32 = 65 SP, one point short of the 66 budget — exactly what the
+    // documented curve says. The 4-EV chip is worth 1 SP, not 2 and not 32.
+    expect(convertToChampionsSp(spread({ atk: 252, spd: 4, spe: 252 }))).toEqual(
+      spread({ atk: 32, spd: 1, spe: 32 })
+    );
+    expect(totalOf(convertToChampionsSp(spread({ atk: 252, spd: 4, spe: 252 })))).toBe(65);
+  });
+
+  describe("regression: convertToChampionsSp inflated minimum-investment stats to 32 SP", () => {
+    it("keeps a 4-EV filler chip at 1 SP instead of padding it to 32 (252 HP / 4 Def)", () => {
+      // Shipped behaviour before the fix: { hp: 32, def: 32 } — a 4-EV chip was
+      // inflated into a fully-maxed defensive investment the player never bought.
+      expect(convertToChampionsSp(spread({ hp: 252, def: 4 }))).toEqual(
+        spread({ hp: 32, def: 1 })
+      );
+    });
+
+    it("leaves budget unspent rather than inventing investment (100 HP / 156 Spe)", () => {
+      // Shipped behaviour before the fix: { hp: 32, spe: 32 } — a deliberately
+      // non-maxed spread collapsed to max/max.
+      expect(convertToChampionsSp(spread({ hp: 100, spe: 156 }))).toEqual(
+        spread({ hp: 13, spe: 20 })
+      );
+    });
+
+    it("never returns more SP for a stat than that stat's own EV conversion", () => {
+      const cases: Partial<StatSpread>[] = [
+        { hp: 252, def: 4 },
+        { hp: 252, atk: 252, def: 252 },
+        { hp: 100, spe: 156 },
+        { atk: 252, spd: 4, spe: 252 },
+        { hp: 4, atk: 252, def: 252, spa: 252 },
+        { hp: 252, atk: 252, def: 252, spa: 252, spd: 252, spe: 252 },
+      ];
+      for (const partial of cases) {
+        const evs = spread(partial);
+        const sp = convertToChampionsSp(evs);
+        for (const k of STAT_KEYS) {
+          expect(sp[k]).toBeLessThanOrEqual(evToChampionsSp(evs[k]));
+        }
+      }
+    });
+  });
+
+  describe("regression: over-budget trim was biased by stat array order and gutted HP", () => {
+    it("trims 252/252/252 proportionally instead of zeroing HP", () => {
+      // Shipped behaviour before the fix: { hp: 2, atk: 32, def: 32 } — HP was
+      // sacrificed first purely because "hp" is index 0 of the stat array.
+      expect(convertToChampionsSp(spread({ hp: 252, atk: 252, def: 252 }))).toEqual(
+        spread({ hp: 22, atk: 22, def: 22 })
+      );
+    });
+
+    it("trims 252/252/252/252 proportionally instead of zeroing HP", () => {
+      // Shipped behaviour before the fix: { hp: 0, atk: 2, def: 32, spe: 32 }.
+      // 66/128 of 32 SP is 16.5 per stat; the four-way remainder tie cannot be
+      // split without favouring a stat, so 2 SP stay unspent.
+      expect(
+        convertToChampionsSp(spread({ hp: 252, atk: 252, def: 252, spe: 252 }))
+      ).toEqual(spread({ hp: 16, atk: 16, def: 16, spe: 16 }));
+    });
+
+    it("awards the rounding remainder by size, not by position (252 HP / 156 Atk / 252 Spe)", () => {
+      // 32 / 20 / 32 = 84 SP scaled by 66/84 → 25.14 / 15.71 / 25.14.
+      // Atk has the largest fractional remainder, so it takes the spare point.
+      expect(convertToChampionsSp(spread({ hp: 252, atk: 156, spe: 252 }))).toEqual(
+        spread({ hp: 25, atk: 16, spe: 25 })
+      );
+    });
+
+    it("is independent of which stat slot the investment occupies", () => {
+      // Same EV values, relabelled onto the back three stats: the SP result must
+      // be the same values on the same relabelled stats.
+      expect(convertToChampionsSp(spread({ spa: 252, spd: 252, spe: 252 }))).toEqual(
+        spread({ spa: 22, spd: 22, spe: 22 })
+      );
+
+      // Asymmetric case mirrored across the spread.
+      const front = convertToChampionsSp(spread({ hp: 252, atk: 156, def: 60 }));
+      const back = convertToChampionsSp(spread({ spa: 252, spd: 156, spe: 60 }));
+      expect([front.hp, front.atk, front.def]).toEqual([back.spa, back.spd, back.spe]);
+      expect([front.spa, front.spd, front.spe]).toEqual([0, 0, 0]);
+      expect([back.hp, back.atk, back.def]).toEqual([0, 0, 0]);
+    });
+
+    it("is independent of the key insertion order of the input object", () => {
+      const ascending: StatSpread = { hp: 252, atk: 252, def: 252, spa: 0, spd: 0, spe: 0 };
+      const descending: StatSpread = { spe: 0, spd: 0, spa: 0, def: 252, atk: 252, hp: 252 };
+      expect(convertToChampionsSp(ascending)).toEqual(convertToChampionsSp(descending));
+    });
+  });
+
+  it("leaves a spread that converts to exactly 66 SP untouched", () => {
+    // 252 / 252 / 12 EVs → 32 + 32 + 2 = 66 SP exactly: no trim, nothing padded.
+    const sp = convertToChampionsSp(spread({ hp: 252, atk: 252, def: 12 }));
+    expect(sp).toEqual(spread({ hp: 32, atk: 32, def: 2 }));
+    expect(totalOf(sp)).toBe(CHAMPIONS_TOTAL_SP);
+  });
+
+  it("trims a spread that converts to just over 66 SP back onto budget", () => {
+    // 252 / 244 / 28 EVs → 32 + 31 + 4 = 67 SP, one over. Scaling by 66/67 costs
+    // HP and Atk a point each and hands one back to Def (largest remainder).
+    const sp = convertToChampionsSp(spread({ hp: 252, atk: 244, def: 28 }));
+    expect(sp).toEqual(spread({ hp: 31, atk: 31, def: 4 }));
+    expect(totalOf(sp)).toBe(CHAMPIONS_TOTAL_SP);
+  });
+
+  it("caps a single stat at 32 SP however many EVs it is given", () => {
+    expect(convertToChampionsSp(spread({ spe: 508 }))).toEqual(spread({ spe: 32 }));
+    expect(convertToChampionsSp(spread({ hp: 252, spe: 252 }))).toEqual(
+      spread({ hp: 32, spe: 32 })
+    );
   });
 
   it("never exceeds the 66 SP budget or 32 per stat", () => {
     const sp = convertToChampionsSp(spread({ hp: 252, atk: 252, def: 252, spe: 252 }));
-    const total = Object.values(sp).reduce((a, b) => a + b, 0);
+    expect(sp).toEqual(spread({ hp: 16, atk: 16, def: 16, spe: 16 }));
+    expect(totalOf(sp)).toBe(64);
+    expect(totalOf(sp)).toBeLessThanOrEqual(CHAMPIONS_TOTAL_SP);
+    for (const v of Object.values(sp)) expect(v).toBeLessThanOrEqual(CHAMPIONS_MAX_SP_PER_STAT);
+  });
+
+  it("holds the budget, per-stat cap and no-inflation invariants across the EV space", () => {
+    // Deterministic sweep rather than random sampling, so a failure is reproducible.
+    const steps = [0, 4, 12, 28, 60, 100, 156, 244, 252];
+    for (const a of steps) {
+      for (const b of steps) {
+        for (const c of steps) {
+          const evs = spread({ hp: a, atk: b, spe: c });
+          const sp = convertToChampionsSp(evs);
+          const total = totalOf(sp);
+          const inputTotal = totalOf(evs);
+          // Spreads that are already in SP form take the passthrough path.
+          const isSpForm =
+            inputTotal > 0 &&
+            inputTotal <= CHAMPIONS_TOTAL_SP &&
+            STAT_KEYS.every((k) => evs[k] <= CHAMPIONS_MAX_SP_PER_STAT);
+          expect(total).toBeLessThanOrEqual(CHAMPIONS_TOTAL_SP);
+          for (const k of STAT_KEYS) {
+            expect(sp[k]).toBeGreaterThanOrEqual(0);
+            expect(sp[k]).toBeLessThanOrEqual(CHAMPIONS_MAX_SP_PER_STAT);
+            if (evs[k] === 0) expect(sp[k]).toBe(0);
+            if (!isSpForm) expect(sp[k]).toBeLessThanOrEqual(evToChampionsSp(evs[k]));
+          }
+        }
+      }
+    }
+  });
+});
+
+describe("evToChampionsSp", () => {
+  it("charges nothing for an uninvested stat", () => {
+    expect(evToChampionsSp(0)).toBe(0);
+  });
+
+  it("charges 1 SP for the standard 4-EV chip", () => {
+    expect(evToChampionsSp(4)).toBe(1);
+  });
+
+  it("the first SP costs 4 EVs and every SP after it costs 8", () => {
+    // This is the exact community sticking point the converter page explains.
+    expect(evToChampionsSp(4)).toBe(1);
+    expect(evToChampionsSp(12)).toBe(2);
+    expect(evToChampionsSp(20)).toBe(3);
+    expect(evToChampionsSp(28)).toBe(4);
+    for (let sp = 2; sp <= 31; sp++) {
+      expect(evToChampionsSp(8 * sp - 4)).toBe(sp);
+    }
+  });
+
+  it("caps at 32 SP from 248 EVs upward", () => {
+    expect(evToChampionsSp(244)).toBe(31);
+    expect(evToChampionsSp(248)).toBe(CHAMPIONS_MAX_SP_PER_STAT);
+    expect(evToChampionsSp(MAX_EV_PER_STAT)).toBe(CHAMPIONS_MAX_SP_PER_STAT);
+  });
+
+  it("never returns more than the per-stat cap", () => {
+    for (let ev = 0; ev <= 508; ev += 4) {
+      expect(evToChampionsSp(ev)).toBeLessThanOrEqual(CHAMPIONS_MAX_SP_PER_STAT);
+    }
+  });
+
+  it("is monotonic — more EVs never buy fewer SP", () => {
+    for (let ev = 1; ev <= MAX_EV_PER_STAT; ev++) {
+      expect(evToChampionsSp(ev)).toBeGreaterThanOrEqual(evToChampionsSp(ev - 1));
+    }
+  });
+});
+
+describe("championsSpToEv", () => {
+  it("returns 0 EVs for 0 SP", () => {
+    expect(championsSpToEv(0)).toBe(0);
+  });
+
+  it("round-trips through evToChampionsSp for every legal SP value", () => {
+    for (let sp = 1; sp <= CHAMPIONS_MAX_SP_PER_STAT; sp++) {
+      expect(evToChampionsSp(championsSpToEv(sp))).toBe(sp);
+    }
+  });
+
+  it("returns the minimum EV investment for each SP value", () => {
+    expect(championsSpToEv(1)).toBe(4);
+    expect(championsSpToEv(2)).toBe(12);
+    expect(championsSpToEv(3)).toBe(20);
+    expect(championsSpToEv(31)).toBe(244);
+    expect(championsSpToEv(CHAMPIONS_MAX_SP_PER_STAT)).toBe(248);
+  });
+
+  it("clamps SP above the per-stat cap to the 32 SP EV cost", () => {
+    expect(championsSpToEv(99)).toBe(championsSpToEv(CHAMPIONS_MAX_SP_PER_STAT));
+  });
+
+  it("a full 252/252/4 EV team spread fits inside the 66 SP budget", () => {
+    const total = evToChampionsSp(252) + evToChampionsSp(252) + evToChampionsSp(4);
+    expect(total).toBe(65);
     expect(total).toBeLessThanOrEqual(CHAMPIONS_TOTAL_SP);
-    for (const v of Object.values(sp)) expect(v).toBeLessThanOrEqual(32);
   });
 });
 

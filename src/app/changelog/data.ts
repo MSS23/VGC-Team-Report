@@ -17,6 +17,25 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "August 2026",
+    version: "5.26",
+    title: "Corrected Champions Stat Points, Reg M-B Megas & a Much Lighter Homepage",
+    emoji: "🧮",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Champions Stat Points are now calculated correctly. EV spreads are no longer inflated to fill the 66 SP budget — 252 HP / 4 Def now correctly reads 32 HP / 1 Def instead of 32 HP / 32 Def — and a spread that goes over budget is trimmed proportionally across every stat instead of always gutting HP first. Please note: because Stat Points are worked out when a report is displayed rather than when it's saved, any Champions report you shared before today will now show these corrected numbers, and its speed tiers may shift accordingly." },
+      { type: "new", text: "New free EV to SP converter at /tools/ev-to-sp. Type in any EV spread and see exactly what it costs in Pokémon Champions Stat Points against the 66 SP budget and the 32 SP per-stat cap. It converts in both directions and includes a full reference table showing why the first Stat Point costs 4 EVs and every one after it costs 8 — the bit of the maths that trips everyone up." },
+      { type: "new", text: "The Champions page now lists every Mega legal in Regulation M-B, not just the Reg M-A pool. All 16 new M-B Megas — including Mega Metagross, Mawile, Blaziken, Swampert and Sceptile — have proper guide pages, grouped by which regulation they're legal in, so an M-B-only Mega no longer claims to be Reg M-A legal." },
+      { type: "improved", text: "The homepage and the team comparison page each load roughly 260 KB less JavaScript, so pasting a team and getting your report starts noticeably faster — especially on phone data at an event." },
+      { type: "fixed", text: "Version history now shows the actual Pokémon's name when its set changes, instead of 'Set (0)', and clicking the entry jumps straight to that Pokémon's slide rather than back to the team overview." },
+      { type: "fixed", text: "Privacy: the privacy policy and cookie banner now disclose Microsoft Clarity session recording and drop references to Vercel Analytics, which no longer ships. Clarity also no longer starts recording until you've granted analytics consent — previously it began as soon as the page loaded." },
+      { type: "fixed", text: "Security: comment flagging and rate limits can no longer be bypassed with forged request headers, and cross-origin API access is now restricted to our own domains and this project's own preview deployments." },
+      { type: "improved", text: "Accessibility: screen-reader users can now tell which slide of a report they're on — every slide, including Tournament Mode, announces its own heading with the slide and team name instead of starting part-way down the heading hierarchy." },
+      { type: "fixed", text: "Sprites no longer break if your saved sprite-style preference is ever invalid — the fallback to the default style now works in cases where it previously produced a broken image." },
+      { type: "improved", text: "Under the hood: tightened TypeScript settings, made the pre-commit type check run cold every time so build-breaking mistakes can't slip through a cached result, and removed three unused files left behind by earlier refactors." },
+    ],
+  },
+  {
+    date: "August 2026",
     version: "5.25",
     title: "Hide the Stat Bar Caption",
     emoji: "👋",

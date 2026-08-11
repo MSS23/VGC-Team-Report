@@ -1,2 +1,6 @@
-# Files changed on main recently
-(Branch cut fresh from main — no divergence. No recent main commits in last 7 days.)
+.swarm/branch-name
+.swarm/branch-name.txt
+.swarm/main-changed-files.md
+.swarm/posthog-insights.md
+.swarm/run-meta.md
+.swarm/webhook-investigation.md
