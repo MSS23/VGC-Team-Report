@@ -17,6 +17,19 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "August 2026",
+    version: "5.27",
+    title: "Sounder Saves, Honest Drafts & a Security Sweep",
+    emoji: "🛡️",
+    items: [
+      { type: "fixed", text: "Published reports no longer come back from the dead as a 'draft'. If you published a report and later opened the site signed out, your browser would resurrect the already-published team with a banner claiming it only lived on that device. Once you publish, the local copy now knows it's published — only genuinely unpublished work is restored." },
+      { type: "fixed", text: "Large reports now autosave reliably. Saves were sent in a mode browsers cap at 64 KB, so the biggest, most detailed reports — exactly the ones you'd hate to lose — could silently fail to save. In-session autosaves no longer have any size cap; only the final save-as-you-leave keeps the old mode, where it's genuinely needed." },
+      { type: "fixed", text: "Corrected the Stat Points explanation in the FAQ and in the reference file served to AI assistants. Both previously described the wrong system (including a '1 SP = 1 EV' claim) — they now teach the real Champions maths: 66 SP total, 32 per stat, first point costs 4 EVs and each one after costs 8. A new automated check keeps these documents locked to the actual calculator code." },
+      { type: "improved", text: "Security sweep: upgraded the framework to clear nine published vulnerabilities (including one affecting sign-in middleware), closed a header-forgery gap in how three API endpoints identified callers, tightened webhook replay protection, and removed credentialed cross-origin API access that nothing legitimate used. Rate limiting, CORS, and content-security headers were re-audited end to end." },
+      { type: "fixed", text: "Search engines and AI crawlers get consistent instructions again: robots.txt accidentally invited six named crawlers to index the raw API, and one page told crawlers 'index me' in the sitemap while saying 'don't' in its own header. Both sorted." },
+    ],
+  },
+  {
+    date: "August 2026",
     version: "5.26",
     title: "Corrected Champions Stat Points, Reg M-B Megas & a Much Lighter Homepage",
     emoji: "🧮",
