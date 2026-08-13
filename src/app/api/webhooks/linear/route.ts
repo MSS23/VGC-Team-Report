@@ -60,6 +60,18 @@ export async function POST(request: Request) {
 
     const body = JSON.parse(rawBody);
 
+    // Replay protection: the signed payload carries webhookTimestamp (Unix
+    // ms). A captured request stays validly signed forever, so reject
+    // anything outside a one-minute window (Linear's own recommendation).
+    // ponytail: no delivery-id dedupe — within the window a replay is
+    // possible; add a seen-id cache if this webhook ever mutates state.
+    if (typeof body.webhookTimestamp === "number") {
+      const ageMs = Math.abs(Date.now() - body.webhookTimestamp);
+      if (ageMs > 60_000) {
+        return NextResponse.json({ error: "Stale webhook" }, { status: 401 });
+      }
+    }
+
     if (body.type === "url_verification") {
       return NextResponse.json({ challenge: body.challenge });
     }

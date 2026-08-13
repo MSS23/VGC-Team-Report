@@ -68,9 +68,17 @@ describe("getCorsHeaders", () => {
     expect(headers["Access-Control-Allow-Origin"]).toBe("https://pokemonvgcteamreport.com");
   });
 
-  it("never echoes a disallowed origin alongside Allow-Credentials", () => {
+  it("never echoes a disallowed origin", () => {
     const headers = getCorsHeaders(req("https://vgc-team-report-evil.vercel.app"));
     expect(headers["Access-Control-Allow-Origin"]).toBe("");
-    expect(headers["Access-Control-Allow-Credentials"]).toBe("true");
+  });
+
+  // VGC-274: credentialed cross-origin access was deliberately removed —
+  // nothing legitimate reads /api cross-origin with cookies, and omitting
+  // the header caps the blast radius of any future allowlist widening at
+  // anonymous responses.
+  it("never sends Access-Control-Allow-Credentials", () => {
+    const allowed = getCorsHeaders(req("https://pokemonvgcteamreport.com"));
+    expect(allowed["Access-Control-Allow-Credentials"]).toBeUndefined();
   });
 });

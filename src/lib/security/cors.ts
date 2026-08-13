@@ -50,7 +50,12 @@ export function getCorsHeaders(request: Request): Record<string, string> {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-CSRF-Token",
-    "Access-Control-Allow-Credentials": "true",
+    // Deliberately NO Access-Control-Allow-Credentials (VGC-274). The app
+    // only ever calls /api same-origin (where CORS doesn't apply); nothing
+    // legitimate does a credentialed cross-origin read. Omitting it means
+    // even a mistakenly-widened origin allowlist can only leak anonymous
+    // responses, never a signed-in user's data. Do not re-add without an
+    // actual cross-origin consumer that needs cookies.
     "Access-Control-Max-Age": "86400",
   };
 }
