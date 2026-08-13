@@ -19,13 +19,18 @@ export async function postToBuildsChannel(embed: DiscordEmbed): Promise<void> {
     return;
   }
 
-  await fetch(url, {
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       embeds: [{ ...embed, timestamp: embed.timestamp ?? new Date().toISOString() }],
     }),
   });
+  // A dead webhook (410 after deletion, 429 rate limit) otherwise fails
+  // silently and the crons look healthy while #builds hears nothing.
+  if (!res.ok) {
+    console.error(`Discord builds webhook failed: ${res.status} ${await res.text().catch(() => "")}`);
+  }
 }
 
 /** Color constants for Discord embeds */

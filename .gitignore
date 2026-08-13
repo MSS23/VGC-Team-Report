@@ -44,6 +44,10 @@ next-env.d.ts
 # claude code
 .claude/
 
+# other agent tooling (local-only, like .claude/)
+.agents/
+.codex/
+
 .env*.local
 
 # cypress artifacts
