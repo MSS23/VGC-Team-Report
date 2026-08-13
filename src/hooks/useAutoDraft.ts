@@ -65,7 +65,7 @@ export function useAutoDraft({ isSignedIn, analysis, isSampleTeam, isSharedView,
     setError(null);
   }, [setActiveDraft]);
 
-  const saveDraft = useCallback(async (): Promise<DraftSaveResult> => {
+  const saveDraft = useCallback(async (opts?: { exitFlush?: boolean }): Promise<DraftSaveResult> => {
     if (!isSignedIn || !analysis || isSampleTeam || isSharedView) {
       return { ok: false, error: "Sign in and load your own team before saving a draft." };
     }
@@ -88,9 +88,12 @@ export function useAutoDraft({ isSignedIn, analysis, isSampleTeam, isSharedView,
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ state, draftId: draftIdRef.current }),
-          // Allows the browser to finish the request while a tab or mobile
-          // webview is being backgrounded or closed.
-          keepalive: true,
+          // keepalive lets the request outlive a closing tab, but browsers
+          // cap keepalive bodies at 64 KiB — a large report would make the
+          // save throw immediately. So it is ONLY set on the exit flush,
+          // where outliving the page is worth the size gamble; in-session
+          // autosaves use a normal uncapped fetch. (VGC-267)
+          keepalive: opts?.exitFlush === true,
         });
         const data = await res.json().catch(() => null) as { id?: string; error?: string } | null;
         if (!res.ok || !data?.id) {
@@ -132,7 +135,7 @@ export function useAutoDraft({ isSignedIn, analysis, isSampleTeam, isSharedView,
     const flushOnExit = () => {
       if (exitSaveStartedRef.current) return;
       exitSaveStartedRef.current = true;
-      void saveDraft();
+      void saveDraft({ exitFlush: true });
     };
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") flushOnExit();

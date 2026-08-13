@@ -47,7 +47,10 @@ describe("useAutoDraft", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ keepalive: true });
+    // VGC-267: in-session autosaves must NOT set keepalive — browsers cap
+    // keepalive bodies at 64 KiB, which silently broke saves of large
+    // reports. Only the exit flush (pagehide test below) uses keepalive.
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ keepalive: false });
     expect(hook.current.draftId).toBe("draft-new");
     expect(hook.current.status).toBe("saved");
     expect(localStorage.getItem("vgc-draft-id")).toBe("draft-new");
