@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { getClientIp } from "@/lib/security/input-validation";
 import { notifyFollowers } from "@/lib/notifications";
 import { detectChangedSections } from "@/lib/utils/diff-state";
 import { cacheInvalidatePrefix, cacheDel, CacheKeys } from "@/lib/cache";
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
     const guard = await apiGuard(request, { rateLimit: { key: "share", max: 20 }, maxBodySize: MAX_BODY_SIZE });
     if (guard) return guard;
 
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const ip = getClientIp(request);
 
     const raw = await request.json();
     const parsed = ShareBodySchema.safeParse(raw);
