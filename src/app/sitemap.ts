@@ -17,7 +17,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/tools/ev-to-sp`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/feedback`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/tournaments`, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${BASE}/compare`, changeFrequency: "monthly", priority: 0.6 },
+    // /compare is intentionally noindex (robots: { index: false }) — do not
+    // re-add it here; sitemapping a noindex page sends crawlers
+    // contradictory signals. (VGC-272)
     { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/support`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1 },
