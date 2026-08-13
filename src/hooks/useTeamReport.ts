@@ -79,6 +79,22 @@ export function useTeamReport(persist = true) {
     });
   }, []);
 
+  // After a successful publish the canonical copy lives on the server, so the
+  // stored paste must stop counting as a local draft — otherwise a later
+  // (possibly signed-out) visit restores the already-published team and the
+  // UI mislabels it "this draft only lives on this device". Post-publish
+  // edits re-mark the source "user" via the persist effect above, which
+  // correctly makes the diverged copy a draft again.
+  const markPastePublished = useCallback(() => {
+    try {
+      if (localStorage.getItem(STORAGE_KEY)) {
+        localStorage.setItem(STORAGE_SOURCE_KEY, "published");
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const reset = useCallback(() => {
     setParsedTeam(null);
     setPaste("");
@@ -99,6 +115,7 @@ export function useTeamReport(persist = true) {
     setViewMode,
     parseTeam,
     reorderPokemon,
+    markPastePublished,
     reset,
     warnings: parsedTeam?.warnings ?? [],
   };

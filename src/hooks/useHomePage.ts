@@ -69,7 +69,7 @@ export function useHomePage() {
 
   // ── Core team data ───────────────────────────────────────────────
   const {
-    paste, setPaste, analysis, parseTeam, reorderPokemon, reset, warnings: rawWarnings,
+    paste, setPaste, analysis, parseTeam, reorderPokemon, markPastePublished, reset, warnings: rawWarnings,
   } = useTeamReport(!isSampleTeam && !isInShareContext);
 
   // ── Mode toggles ─────────────────────────────────────────────────
@@ -322,9 +322,15 @@ export function useHomePage() {
 
   // The share endpoint replaces only the active draft. Mirror that successful
   // transition locally so the next new team cannot target its deleted ID.
+  // Also re-mark the persisted paste as published: the canonical copy now
+  // lives on the server, so the mount-restore must not resurrect this team
+  // as a local "draft" on a later (possibly signed-out) visit.
   useEffect(() => {
-    if (share.lastShareResult?.publicUrl && !share.isSharedView) clearDraft();
-  }, [clearDraft, share.isSharedView, share.lastShareResult?.publicUrl]);
+    if (share.lastShareResult?.publicUrl && !share.isSharedView) {
+      clearDraft();
+      markPastePublished();
+    }
+  }, [clearDraft, markPastePublished, share.isSharedView, share.lastShareResult?.publicUrl]);
 
   // ── Legacy localStorage eviction (one-time, runs on every mount) ──
   // After the 2026-04-10 leak incident, every team-content storage key
@@ -398,7 +404,9 @@ export function useHomePage() {
         parseTeam(stored);
         setWasRestored(true);
       } else if (stored) {
-        // Defensive eviction in case the marker check fails.
+        // Evict non-restorable state: a "published" marker (the report lives
+        // on the server now — restoring it here would mislabel it a draft),
+        // or a missing/unknown marker (defensive, post-leak-incident).
         localStorage.removeItem("vgc-team-paste-v2");
         localStorage.removeItem("vgc-team-paste-source-v2");
       }
