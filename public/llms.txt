@@ -26,7 +26,7 @@ Source: https://pokemonvgcteamreport.com
 ## Key concepts
 
 - **Team report:** A structured document covering a VGC team's six Pokémon builds (moves, item, EVs/IVs, nature, tera type), overall team strategy, matchup plans against common threats, damage calculations, and speed tier comparisons.
-- **SP (Standard Points) vs EVs:** SP is an alternative stat-expression system used in some reporting contexts. 1 SP = 1 EV (effort value). Both refer to the same underlying game mechanic.
+- **SP (Stat Points) vs EVs:** SP is the stat-investment system used by Pokémon Champions (Regulation M-A/M-B) in place of EVs. The conversion is not 1:1 — the first SP in a stat costs 4 EVs and every SP after that costs 8 (so 32 SP = 248+ EVs). The budget is 66 SP total per Pokémon with a maximum of 32 SP per stat, compared to the 510-EV / 252-per-stat budget of standard VGC formats.
 - **Regulation / Format:** VGC rotates formats seasonally. Regulation G and Regulation H are recent standard formats. Champions Regulation M-A adds Mega Evolutions.
 - **PokePaste import:** Reports can be imported from Pokémon Showdown team format text or a pokepast.es URL.
 
