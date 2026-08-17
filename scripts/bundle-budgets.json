@@ -1,0 +1,32 @@
+{
+  "$comment": "Eager first-load JS budgets. Baselines are measured, never guessed: run `npm run check:bundle -- --update` after a production build to re-baseline deliberately, and review the diff.",
+  "tolerancePercent": 5,
+  "generatedAt": "2026-08-17",
+  "routes": [
+    {
+      "route": "/",
+      "label": "/ (paste + report)",
+      "rawBytes": 1711916,
+      "gzipBytes": 499988
+    },
+    {
+      "route": "/compare",
+      "label": "/compare",
+      "rawBytes": 1088074,
+      "gzipBytes": 314642
+    },
+    {
+      "route": "/champions/[pokemon]",
+      "label": "/champions/[pokemon]",
+      "sample": "/champions/mega-kangaskhan",
+      "rawBytes": 861026,
+      "gzipBytes": 266166
+    },
+    {
+      "route": "/s/[id]",
+      "label": "/s/[id] (shared report)",
+      "rawBytes": 833481,
+      "gzipBytes": 258436
+    }
+  ]
+}
