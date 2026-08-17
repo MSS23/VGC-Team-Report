@@ -19,8 +19,24 @@ jobs:
       # Same command locally and in CI so a warm .tsbuildinfo can never make the
       # two disagree (a stale one has masked real errors before).
       - run: npm run typecheck
-      # ponytail: 35 pre-existing lint errors (react-hooks etc.) — non-blocking
-      # until that debt is cleared, then remove continue-on-error
-      - run: npm run lint
-        continue-on-error: true
+      # VGC-273: lint is ratcheted, not silently ignored.
+      #
+      # It is not fully blocking yet: there are 33 pre-existing errors across 24
+      # files, and they are NOT mechanical — 21 are react-hooks/set-state-in-effect
+      # plus react-hooks/refs and /immutability, i.e. real render-behaviour changes
+      # in components and hooks, and 6 are @next/next/no-html-link-for-pages.
+      # Fixing them is a behavioural change per file and belongs in its own ticket,
+      # not in a chore pass.
+      #
+      # What this step DOES do is fail on any NEW error above the baseline below,
+      # so the debt can only shrink. When you fix errors, lower LINT_ERROR_BASELINE
+      # to the new count — the script prints the exact value to set. When it
+      # reaches 0, delete this env var and the script call and make it a plain
+      # `npm run lint`.
+      - name: Lint (ratcheted — fails on new errors)
+        env:
+          LINT_ERROR_BASELINE: "33"
+        run: |
+          npx eslint -f json -o eslint-report.json || true
+          node .github/scripts/lint-ratchet.mjs eslint-report.json
       - run: npm test

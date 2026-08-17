@@ -7,6 +7,19 @@ import { z } from "zod";
 const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
 
 /**
+ * POST body — the version to restore. Previously this was read off an untyped
+ * `await request.json()` and coerced with `Number(body.version)`, which happily
+ * turned `null`, `[]` and `" 3 "` into numbers. Accept only a positive integer
+ * (or its exact string form), and reject everything else with a 400. (VGC-273)
+ */
+const RestoreVersionSchema = z.object({
+  version: z.union([
+    z.number().int().positive(),
+    z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().positive()),
+  ]),
+});
+
+/**
  * GET /api/share/{id}/versions
  * Returns version history for a shared report.
  * Only accessible by the owner or collaborators.
@@ -102,11 +115,18 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const body = await request.json();
-    const targetVersion = Number(body.version);
-    if (!Number.isInteger(targetVersion) || targetVersion < 1) {
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const bodyResult = RestoreVersionSchema.safeParse(rawBody);
+    if (!bodyResult.success) {
       return NextResponse.json({ error: "Invalid version" }, { status: 400 });
     }
+    const targetVersion = bodyResult.data.version;
 
     const sql = getDb();
 

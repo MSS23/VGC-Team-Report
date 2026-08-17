@@ -9,6 +9,19 @@ const BASE = "https://pokemonvgcteamreport.com";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // These static entries deliberately carry NO `lastModified` — do not "restore" it.
+  // 83d195a stamped every entry with a build-time `new Date()`; fe70914 removed it
+  // in the same change that made this route revalidate hourly (above). Together
+  // those meant every static URL would advertise a brand-new modification date
+  // every hour, telling crawlers the whole site had changed when nothing had —
+  // which devalues the signal for the pages that genuinely did change. Omitting
+  // the field lets Google fall back to its own change detection, which is the
+  // correct behaviour for content that only moves on deploy.
+  //
+  // Only entries whose timestamp comes from real data carry `lastModified` — see
+  // the share/creator pages below, which use `shares.updated_at` from the DB.
+  // If static pages ever need it, derive it from file/content mtime, never `new Date()`.
+  // (Reviewed under VGC-273: the fe70914 revert was correct and is intentional.)
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE, changeFrequency: "weekly", priority: 1.0 },
     { url: `${BASE}/explore`, changeFrequency: "daily", priority: 0.9 },
