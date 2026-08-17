@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { lookupPokemon } from "@/lib/data/pokemon";
+import { teamNeedsDexFallback } from "@/lib/data/dex-fallback-gate";
+import { loadDexFallback } from "@/lib/data/pkmn-dex-fallback";
 import { calculateAllStats } from "@/lib/analysis/stat-calculator";
 import { getItemStatBoost } from "@/lib/analysis/item-boosts";
 import type { ParsedTeam } from "@/lib/types/pokemon";
@@ -46,9 +48,28 @@ export function useTeamReport(persist = true) {
     }
   }, [paste, parsedTeam, persist]);
 
+  // Monotonic token so a slow dex fetch for an earlier paste can never clobber
+  // a newer one (paste → edit → paste in quick succession).
+  const parseSeq = useRef(0);
+
   const parseTeam = useCallback((input: string) => {
     const result = parseShowdownPaste(input);
-    setParsedTeam(result);
+    const seq = ++parseSeq.current;
+
+    // Fast path: every member resolves from the static maps, so commit
+    // synchronously — identical timing to before VGC-271, and the dex-subset
+    // chunk is never fetched at all.
+    if (!teamNeedsDexFallback(result.pokemon)) {
+      setParsedTeam(result);
+      return;
+    }
+
+    // Slow path: this team contains a species/stone only the dex subset knows.
+    // Wait for the chunk before committing, so the cards' first render already
+    // has names, types and base stats instead of flashing an empty shell.
+    void loadDexFallback().then(() => {
+      if (parseSeq.current === seq) setParsedTeam(result);
+    });
   }, []);
 
   const analysis = useMemo<TeamAnalysis | null>(() => {

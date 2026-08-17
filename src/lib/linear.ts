@@ -3,6 +3,8 @@
  * Requires LINEAR_API_KEY and LINEAR_TEAM_ID environment variables.
  */
 
+import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
+
 const LINEAR_API = "https://api.linear.app/graphql";
 
 function getConfig() {
@@ -11,30 +13,91 @@ function getConfig() {
   return { apiKey, teamId, configured: !!(apiKey && teamId) };
 }
 
-async function linearQuery(query: string, variables?: Record<string, unknown>) {
+/** A GraphQL response envelope from the Linear API. */
+export interface LinearGraphQLResponse<T> {
+  data?: T;
+  errors?: Array<{ message: string }>;
+}
+
+/**
+ * The single Linear GraphQL client for the whole app (VGC-273).
+ *
+ * `src/app/api/discord/route.ts` used to carry a second, near-identical copy of
+ * this function; both returned `any`. This is now the only implementation and
+ * it is generic over the caller's expected `data` shape, so the 11 call sites
+ * type-check their own selection sets instead of dotting through `any`.
+ *
+ * Returns the raw envelope so callers that treat a GraphQL-level error as a
+ * miss rather than a failure (e.g. the Discord `/status` command, which probes
+ * by issue id and falls back to a search) can inspect `errors` themselves.
+ * Prefer `linearQuery` unless you need that.
+ *
+ * The 10s timeout matters: these run inside serverless handlers, and an
+ * un-aborted fetch to a hung Linear would burn the whole function budget.
+ */
+export async function linearRequest<T>(
+  query: string,
+  variables?: Record<string, unknown>,
+  timeoutMs = 10_000,
+): Promise<LinearGraphQLResponse<T>> {
   const { apiKey } = getConfig();
   if (!apiKey) throw new Error("LINEAR_API_KEY not set");
 
-  const res = await fetch(LINEAR_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: apiKey,
+  const res = await fetchWithTimeout(
+    LINEAR_API,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: apiKey,
+      },
+      body: JSON.stringify({ query, ...(variables ? { variables } : {}) }),
     },
-    body: JSON.stringify({ query, variables }),
-  });
+    timeoutMs,
+  );
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`Linear API error ${res.status}: ${text}`);
   }
 
-  const data = await res.json();
-  if (data.errors?.length) {
-    throw new Error(`Linear GraphQL error: ${data.errors[0].message}`);
+  return (await res.json()) as LinearGraphQLResponse<T>;
+}
+
+/**
+ * `linearRequest` + unwrap: throws on any GraphQL error, otherwise returns the
+ * `data` payload typed as `T`.
+ */
+export async function linearQuery<T>(
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<T> {
+  const body = await linearRequest<T>(query, variables);
+
+  if (body.errors?.length) {
+    throw new Error(`Linear GraphQL error: ${body.errors[0].message}`);
+  }
+  if (!body.data) {
+    throw new Error("Linear GraphQL response contained no data");
   }
 
-  return data.data;
+  return body.data;
+}
+
+// ── Selection-set shapes for the queries issued below ────────────────────────
+
+/** A Linear workflow state (Backlog / Todo / In Progress / …). */
+export interface LinearStateNode {
+  id: string;
+  name: string;
+  type: string;
+}
+
+/** A minimally-selected issue: enough to identify and link to it. */
+export interface LinearIssueRef {
+  id: string;
+  identifier: string;
+  url: string;
 }
 
 // Map feedback types to Linear label names and base priorities (1=urgent, 2=high, 3=normal, 4=low)
@@ -124,7 +187,9 @@ export async function createLinearIssue(opts: {
   // Find or create labels (type label + no-claude default)
   const labelIds: string[] = [];
   try {
-    const labelsData = await linearQuery(`
+    const labelsData = await linearQuery<{
+      team: { labels: { nodes: { id: string; name: string }[] } };
+    }>(`
       query($teamId: String!) {
         team(id: $teamId) {
           labels { nodes { id name } }
@@ -132,7 +197,7 @@ export async function createLinearIssue(opts: {
       }
     `, { teamId });
 
-    const allLabels: { id: string; name: string }[] = labelsData.team.labels.nodes;
+    const allLabels = labelsData.team.labels.nodes;
 
     // Type label (Bug, Feature, etc.)
     const existingLabel = allLabels.find(
@@ -141,7 +206,9 @@ export async function createLinearIssue(opts: {
     if (existingLabel) {
       labelIds.push(existingLabel.id);
     } else {
-      const createLabel = await linearQuery(`
+      const createLabel = await linearQuery<{
+        issueLabelCreate: { issueLabel: { id: string } };
+      }>(`
         mutation($teamId: String!, $name: String!) {
           issueLabelCreate(input: { teamId: $teamId, name: $name }) {
             issueLabel { id }
@@ -167,7 +234,12 @@ export async function createLinearIssue(opts: {
   let stateId: string | undefined;
   let projectId: string | undefined;
   try {
-    const teamData = await linearQuery(`
+    const teamData = await linearQuery<{
+      team: {
+        states: { nodes: LinearStateNode[] };
+        projects: { nodes: { id: string; name: string }[] };
+      };
+    }>(`
       query($teamId: String!) {
         team(id: $teamId) {
           states { nodes { id name type } }
@@ -176,19 +248,19 @@ export async function createLinearIssue(opts: {
       }
     `, { teamId });
 
-    stateId = teamData.team.states.nodes.find(
-      (s: { type: string }) => s.type === "backlog"
-    )?.id;
+    stateId = teamData.team.states.nodes.find((s) => s.type === "backlog")?.id;
 
     projectId = teamData.team.projects.nodes.find(
-      (p: { name: string }) => p.name === "Community Feedback"
+      (p) => p.name === "Community Feedback"
     )?.id;
   } catch {
     // Non-critical — issue will use defaults
   }
 
   // Create the issue in Backlog → Community Feedback project
-  const result = await linearQuery(`
+  const result = await linearQuery<{
+    issueCreate: { issue: LinearIssueRef };
+  }>(`
     mutation($teamId: String!, $title: String!, $description: String!, $priority: Int!, $labelIds: [String!], $stateId: String, $projectId: String) {
       issueCreate(input: {
         teamId: $teamId

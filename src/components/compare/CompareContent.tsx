@@ -18,6 +18,8 @@ import { TypeBadge } from "@/components/report/TypeBadge";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
+import { teamNeedsDexFallback } from "@/lib/data/dex-fallback-gate";
+import { loadDexFallback } from "@/lib/data/pkmn-dex-fallback";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { PokemonType } from "@/lib/types/pokemon";
 
@@ -287,6 +289,18 @@ function isUrl(input: string): boolean {
   return isPokePasteUrl(input) || !!extractShareId(input);
 }
 
+/**
+ * Whether either paste contains a species/stone that only the lazily-loaded dex
+ * subset can resolve (VGC-271). Synchronous, so an all-meta comparison skips
+ * the chunk — and the spinner — entirely.
+ */
+function pastesNeedDex(a: string, b: string): boolean {
+  const members = [a, b].flatMap((p) =>
+    p.trim() ? parseShowdownPaste(p).pokemon : [],
+  );
+  return teamNeedsDexFallback(members);
+}
+
 export function CompareContent() {
   const [pasteA, setPasteA] = useState("");
   const [pasteB, setPasteB] = useState("");
@@ -356,7 +370,20 @@ export function CompareContent() {
     const needsFetchB = isUrl(pasteB);
 
     if (!needsFetchA && !needsFetchB) {
-      if (pasteA.trim() && pasteB.trim()) setCompared(true);
+      if (!pasteA.trim() || !pasteB.trim()) return;
+      // Both pastes are already inline — only block if an uncommon species
+      // means the dex-subset chunk has to load first.
+      if (!pastesNeedDex(pasteA, pasteB)) {
+        setCompared(true);
+        return;
+      }
+      setFetching(true);
+      try {
+        await loadDexFallback();
+      } finally {
+        setFetching(false);
+      }
+      setCompared(true);
       return;
     }
 
@@ -366,6 +393,7 @@ export function CompareContent() {
         resolvePaste(pasteA),
         resolvePaste(pasteB),
       ]);
+      if (pastesNeedDex(resolvedA, resolvedB)) await loadDexFallback();
       setPasteA(resolvedA);
       setPasteB(resolvedB);
       // Set compared in next tick so useMemo picks up the new paste values

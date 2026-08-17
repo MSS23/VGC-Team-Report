@@ -1,5 +1,6 @@
 import { apiGuard } from "@/lib/security/api-guard";
 import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
+import { normalizePokePasteUrl } from "@/lib/utils/pokepaste-url";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -10,22 +11,58 @@ const PokePasteCreateSchema = z.object({
   notes: z.string().max(5_000).optional(),
 });
 
-const PokePasteUrlSchema = z.string().url().refine(
-  (val: string) => {
-    try {
-      return new URL(val).hostname === "pokepast.es";
-    } catch {
-      return false;
+/**
+ * Largest paste we will pull into memory. A full 6-mon Showdown export is
+ * ~2 KB; 512 KB is generous and still bounds a hostile/huge response.
+ */
+const MAX_PASTE_BYTES = 512 * 1024;
+
+/** Read a response body with a hard byte cap, aborting once the cap is passed. */
+async function readCappedText(res: Response, maxBytes: number): Promise<string | null> {
+  const declared = Number(res.headers.get("content-length") ?? "");
+  if (Number.isFinite(declared) && declared > maxBytes) return null;
+
+  const body = res.body;
+  if (!body) return null;
+
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
     }
-  },
-  { message: "Only pokepast.es URLs are supported" }
-);
+  } finally {
+    reader.releaseLock();
+  }
+
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
 
 /**
  * Proxy endpoint for fetching PokéPaste content.
  * Returns the raw paste text and the page title (team name).
  *
  * GET /api/pokepaste?url=https://pokepast.es/abc123
+ *
+ * SECURITY: this fetches a URL supplied by the caller, so it is an SSRF
+ * surface. `normalizePokePasteUrl` enforces an exact-hostname allowlist and
+ * rebuilds the outbound URL from the validated paste id alone; we additionally
+ * refuse to follow redirects (a 30x off-host is an error, not a hop) and cap
+ * the response body. Upstream response bodies are never echoed back.
  */
 export async function GET(request: NextRequest) {
   const guard = await apiGuard(request, { rateLimit: { key: "pokepaste", max: 20 } });
@@ -37,43 +74,74 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
   }
 
-  const urlResult = PokePasteUrlSchema.safeParse(url);
-  if (!urlResult.success) {
-    const msg = urlResult.error.issues[0]?.message;
-    if (msg === "Only pokepast.es URLs are supported") {
-      return NextResponse.json({ error: "Only pokepast.es URLs are supported" }, { status: 400 });
-    }
-    return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+  // Reject non-https explicitly: an http (or any other scheme) URL is a client
+  // bug worth surfacing, and we only ever make https requests ourselves.
+  if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(url.trim()) && !/^https:\/\//i.test(url.trim())) {
+    return NextResponse.json(
+      { error: "Only https pokepast.es URLs are supported" },
+      { status: 400 },
+    );
   }
 
-  const parsed = new URL(urlResult.data);
+  const target = normalizePokePasteUrl(url);
+  if (!target) {
+    return NextResponse.json(
+      { error: "Only pokepast.es URLs are supported" },
+      { status: 400 },
+    );
+  }
 
-  // Build the /raw URL and the HTML page URL
-  const basePath = parsed.pathname.replace(/\/raw\/?$/, "").replace(/\/$/, "");
-  const rawUrl = `https://pokepast.es${basePath}/raw`;
-  const htmlUrl = `https://pokepast.es${basePath}`;
+  const { rawUrl, htmlUrl } = target;
 
   try {
-    // Fetch both raw paste and HTML page in parallel, each under a 5s timeout
+    // Fetch both raw paste and HTML page in parallel, each under a 5s timeout.
+    // `redirect: "manual"` keeps a redirect from carrying us to another host.
+    const fetchOptions: RequestInit = {
+      headers: { "User-Agent": "VGC-Team-Report/1.0" },
+      redirect: "manual",
+    };
     const [rawRes, htmlRes] = await Promise.all([
-      fetchWithTimeout(rawUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" } }, 5000),
-      fetchWithTimeout(htmlUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" } }, 5000),
+      fetchWithTimeout(rawUrl, fetchOptions, 5000),
+      fetchWithTimeout(htmlUrl, fetchOptions, 5000),
     ]);
 
-    if (!rawRes.ok) {
+    if (rawRes.status === 404) {
+      return NextResponse.json({ error: "Paste not found" }, { status: 404 });
+    }
+
+    // A redirect is not a hop we are willing to take — it could point anywhere.
+    if (rawRes.status >= 300 && rawRes.status < 400) {
       return NextResponse.json(
-        { error: `PokéPaste returned ${rawRes.status}` },
-        { status: rawRes.status }
+        { error: "PokéPaste redirected the request; refusing to follow" },
+        { status: 502 },
       );
     }
 
-    const text = await rawRes.text();
+    if (!rawRes.ok) {
+      // Deliberately does not echo the upstream body.
+      return NextResponse.json(
+        { error: "PokéPaste is unavailable right now" },
+        { status: 502 }
+      );
+    }
+
+    const text = await readCappedText(rawRes, MAX_PASTE_BYTES);
+    if (text === null) {
+      return NextResponse.json(
+        { error: "That paste is too large to import" },
+        { status: 413 },
+      );
+    }
 
     // Extract title from HTML page
     let title: string | null = null;
     if (htmlRes.ok) {
-      const html = await htmlRes.text();
-      const titleMatch = html.match(/<h1>(.*?)<\/h1>/i) ?? html.match(/<title>(.*?)<\/title>/i);
+      // The title is a nicety — if the page is oversized, skip it rather than
+      // failing the whole import.
+      const html = await readCappedText(htmlRes, MAX_PASTE_BYTES);
+      const titleMatch = html
+        ? html.match(/<h1>(.*?)<\/h1>/i) ?? html.match(/<title>(.*?)<\/title>/i)
+        : null;
       if (titleMatch) {
         // Decode HTML entities (&#39; → ', &amp; → &, etc.)
         const raw = titleMatch[1]

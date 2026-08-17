@@ -1,186 +1,162 @@
 /**
- * Dynamic dex fallback — coverage for every Pokemon, every form, every Mega.
- * This layer fires only when our hand-maintained static maps in pokemon.ts /
- * mega-pokemon.ts miss, so:
+ * Dynamic dex fallback — the *split* entry point (VGC-271).
  *
- *   - Common meta Pokemon stay on the fast static path (zero extra work).
- *   - Anything we haven't catalogued yet — Champions-exclusive forms,
- *     Pokemon added in future game patches, obscure regional variants —
- *     resolves automatically without vanishing from the UI (the Golurk-Mega
- *     class of bug).
+ * ── Why this file is a façade ───────────────────────────────────────────────
+ * The fallback resolves any Pokemon/Mega our hand-maintained maps in
+ * `pokemon.ts` / `mega-pokemon.ts` miss, by reading `dex-subset.json`. That
+ * JSON is 129,858 bytes even after the VGC-257 re-encode, and because this
+ * module used to `import` it statically it landed in the EAGER script set of
+ * `/` and `/compare` — downloaded, parsed and evaluated on every first paint
+ * to service a table that a typical (all-meta) team never touches.
  *
- * Data source is the pre-extracted `dex-subset.json` (built from @pkmn/dex
- * by `scripts/build-dex-subset.mjs`). The full @pkmn/dex package is ~1.8MB
- * raw / ~350KB gzipped and includes moves/learnsets/tiers the client never
- * reads; the subset is ~127KB raw / ~32KB gzipped and holds only species
- * stats, types, abilities, and mega-stone metadata. Regenerate after every
- * `npm update @pkmn/dex` and commit the new JSON.
+ * So the module is split in two:
  *
- * The subset is stored as positional arrays and decoded in `dex-subset.ts`
- * (VGC-257) — the same 1,515 species, 197KB less client JS. Never shrink it
- * further by filtering `isNonstandard`: the Champions-original Megas are the
- * `Future`-flagged rows.
+ *   pkmn-dex-fallback.impl.ts    the real table + lookups. Statically imports
+ *                                `dex-subset.ts` → the JSON. Reached from the
+ *                                client ONLY through `import()`, so Turbopack
+ *                                emits it as its own on-demand chunk.
+ *   pkmn-dex-fallback.ts (here)  a synchronous façade with the exact same
+ *                                exported signatures. Delegates to the impl
+ *                                once it is registered; returns `null` (and
+ *                                kicks off the load) before that.
+ *   pkmn-dex-fallback.server.ts  a side-effect module that statically imports
+ *                                the impl and registers it. Server-only.
  *
- * Cached: each species/item is looked up at most once per session, so the
- * fallback adds essentially no runtime cost after warmup.
+ * ── The two synchronous SERVER consumers ────────────────────────────────────
+ * `src/instrumentation.ts` (validateMegaCoverage at startup) and
+ * `src/app/champions/[pokemon]/page.tsx` (SSG for the SEO Mega guides) call
+ * into this fallback synchronously and cannot await anything. Both import
+ * `pkmn-dex-fallback.server` first, which registers the impl at module-eval
+ * time — so on the server the lookups below are *always* fully populated and
+ * behave exactly as they did before the split. Nothing on the server ever
+ * observes the un-registered state.
+ *
+ * ── The client's null-then-populate window ──────────────────────────────────
+ * On the client the impl arrives asynchronously, so there IS a window where a
+ * lookup for an uncommon species would return `null`. Nothing is allowed to
+ * render during that window: `dex-fallback-gate.ts` probes a freshly parsed
+ * team, and the report/compare views only commit the team to React state once
+ * the chunk has landed. Common teams resolve from the static maps and never
+ * pay for the chunk at all.
  */
 
-import type { PokemonData, PokemonType, StatSpread } from "@/lib/types/pokemon";
+import type { PokemonData } from "@/lib/types/pokemon";
 import type { MegaPokemonEntry } from "@/lib/data/mega-pokemon";
-import {
-  allMegaStones,
-  getMegaStone,
-  getSpecies,
-  type DexSubsetSpecies,
-} from "@/lib/data/dex-subset";
 
-// ── Caches ──────────────────────────────────────────────────────────────────
-// `null` is a cached miss — distinct from "not yet looked up" (undefined).
-const pokemonCache = new Map<string, PokemonData | null>();
-const megaEntryCache = new Map<string, MegaPokemonEntry | null>();
-const itemMegaCache = new Map<string, MegaPokemonEntry | null>();
+/** The surface `pkmn-dex-fallback.impl.ts` must provide. */
+export interface DexFallbackImpl {
+  lookupPokemonFromDex(species: string): PokemonData | null;
+  getMegaEntryFromDex(species: string): MegaPokemonEntry | null;
+  detectMegaFromItemDex(item: string | null, species: string): MegaPokemonEntry | null;
+  getDexBaseSpecies(species: string): string | null;
+}
 
-// ── Pokemon lookup fallback ─────────────────────────────────────────────────
+let impl: DexFallbackImpl | null = null;
+let loading: Promise<void> | null = null;
 
-function normaliseKey(species: string): string {
-  return species
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
+/** Install the implementation synchronously (server path). Idempotent. */
+export function registerDexFallback(next: DexFallbackImpl): void {
+  impl ??= next;
+}
+
+/** True once lookups below are backed by the real dex subset. */
+export function isDexFallbackReady(): boolean {
+  return impl !== null;
 }
 
 /**
- * Resolve a species name against the dex subset. Returns our PokemonData
- * shape or null if the subset doesn't recognise it either (which means the
- * user really did type a fictional species, OR a new form was added to
- * @pkmn/dex since we last regenerated the subset).
+ * Load the dex subset on demand. Idempotent and safe to call concurrently —
+ * every caller awaits the same in-flight import. Resolves (rather than
+ * rejects) on a failed chunk fetch: callers use this to decide when it is safe
+ * to render, and a network blip must degrade to "static maps only", not to a
+ * stuck UI.
+ */
+export function loadDexFallback(): Promise<void> {
+  if (impl) return Promise.resolve();
+  loading ??= import("./pkmn-dex-fallback.impl")
+    .then((m) => {
+      registerDexFallback(m.dexFallbackImpl);
+    })
+    .catch(() => {
+      // Allow a later call to retry the fetch.
+      loading = null;
+    });
+  return loading;
+}
+
+/**
+ * Answer `null` now, but start fetching the chunk so a later render/parse has
+ * it. Fire-and-forget — the synchronous contract of these functions can't
+ * change. Only called from paths where the caller plausibly *did* want dex
+ * data; the "obviously not in the dex" short-circuits below skip it so an
+ * all-meta team never pulls the chunk at all.
+ */
+function warmAndMiss(): null {
+  void loadDexFallback();
+  return null;
+}
+
+/**
+ * Every Mega forme in the subset is named `<Base>-Mega[-X|-Y]`, so a species
+ * string with no "mega" in it can never resolve to a Mega entry — answering
+ * null for it is not a "miss" and must not trigger a chunk fetch.
+ */
+const LOOKS_LIKE_MEGA = /mega/i;
+
+/**
+ * All 93 mega stones in the subset end in "ite", optionally followed by a
+ * single X/Y/Z ("Charizardite X", "Absolite Z"). Verified against
+ * `dex-subset.json`; anything else cannot be a mega stone.
+ */
+const LOOKS_LIKE_MEGA_STONE = /ite( ?[xyz])?$/i;
+
+// ── Public API (identical signatures to the pre-split module) ───────────────
+
+/**
+ * Resolve a species name against the dex subset. Returns our PokemonData shape,
+ * or null if the subset doesn't recognise it either — or, on the client, if the
+ * subset chunk has not loaded yet (see the gate).
  */
 export function lookupPokemonFromDex(species: string): PokemonData | null {
-  const key = normaliseKey(species);
-  if (pokemonCache.has(key)) return pokemonCache.get(key) ?? null;
-
-  // The subset's getSpecies uses the same toID normalisation @pkmn/dex does
-  // (lowercase + strip non-alphanumerics), so it accepts spaces, hyphens,
-  // capitalisation variants. Try the original first, then the hyphenated
-  // normalised key as a fallback.
-  let entry = getSpecies(species);
-  if (!entry) entry = getSpecies(key);
-  if (!entry) {
-    pokemonCache.set(key, null);
-    return null;
-  }
-
-  const baseStats = entry.baseStats as StatSpread;
-  if (!baseStats || (baseStats.hp === 0 && baseStats.atk === 0)) {
-    // Defensive: same near-match guard the @pkmn/dex version used. The subset
-    // generator already filters these out, so this is belt-and-braces.
-    pokemonCache.set(key, null);
-    return null;
-  }
-
-  // Narrow to the [T] | [T, T] tuple our PokemonData type expects.
-  const types = entry.types as PokemonType[];
-  const typesTuple: PokemonData["types"] = types.length >= 2
-    ? [types[0], types[1]]
-    : [types[0]];
-
-  const data: PokemonData = {
-    name: entry.name,
-    types: typesTuple,
-    baseStats,
-    abilities: entry.abilities,
-  };
-  pokemonCache.set(key, data);
-  return data;
-}
-
-// ── Mega lookups ────────────────────────────────────────────────────────────
-
-function megaSlugFromDataKey(dataKey: string): string {
-  // "kangaskhan-mega" → "mega-kangaskhan"; "charizard-mega-y" → "mega-charizard-y"
-  if (dataKey.includes("-mega-")) {
-    const [base, , variant] = dataKey.split("-");
-    return `mega-${base}-${variant}`;
-  }
-  return `mega-${dataKey.replace(/-mega$/, "")}`;
-}
-
-function isMegaForme(entry: DexSubsetSpecies): boolean {
-  return entry.forme === "Mega" || (entry.forme?.startsWith("Mega") ?? false);
+  return impl ? impl.lookupPokemonFromDex(species) : warmAndMiss();
 }
 
 /**
  * Given a species string that IS a mega form (e.g. "Golurk-Mega"), build a
- * MegaPokemonEntry from the dex subset. Returns null if the species isn't a
- * mega or doesn't exist in the subset either.
+ * MegaPokemonEntry from the dex subset.
  */
 export function getMegaEntryFromDex(species: string): MegaPokemonEntry | null {
-  const key = normaliseKey(species);
-  if (megaEntryCache.has(key)) return megaEntryCache.get(key) ?? null;
-
-  const entry = getSpecies(species);
-  if (!entry || !isMegaForme(entry)) {
-    megaEntryCache.set(key, null);
-    return null;
-  }
-
-  // Find the mega stone item that triggers this form by reverse-lookup.
-  // Item.megaStone is { [baseSpeciesName]: megaSpeciesName } in @pkmn/dex —
-  // we preserved the same shape in the subset.
-  let megaStone = "";
-  for (const item of allMegaStones()) {
-    if (Object.values(item.megaStone).includes(entry.name)) {
-      megaStone = item.name;
-      break;
-    }
-  }
-
-  const megaTypes = entry.types as PokemonType[];
-  const megaTypesTuple: MegaPokemonEntry["types"] = megaTypes.length >= 2
-    ? [megaTypes[0], megaTypes[1]]
-    : [megaTypes[0]];
-
-  const built: MegaPokemonEntry = {
-    slug: megaSlugFromDataKey(key),
-    dataKey: key,
-    displayName: entry.name.startsWith("Mega ") ? entry.name : `Mega ${entry.baseSpecies ?? entry.name}`,
-    baseName: entry.baseSpecies ?? entry.name.replace(/-Mega(-[XY])?$/, ""),
-    types: megaTypesTuple,
-    ability: entry.abilities[0] ?? "",
-    megaStone: megaStone || `${entry.baseSpecies ?? entry.name}ite`,
-    description: `${entry.name} — Mega Evolution data resolved dynamically from the pre-built dex subset.`,
-  };
-  megaEntryCache.set(key, built);
-  return built;
+  if (impl) return impl.getMegaEntryFromDex(species);
+  // `isMegaForm()` runs this for every team member; without the guard a team of
+  // six ordinary Pokemon would fetch the chunk it demonstrably doesn't need.
+  if (!LOOKS_LIKE_MEGA.test(species)) return null;
+  return warmAndMiss();
 }
 
 /**
- * Given a base species + held item, build a MegaPokemonEntry by asking the
- * dex subset whether the item is a mega stone for that species.
+ * Given a base species + held item, build a MegaPokemonEntry by asking the dex
+ * subset whether the item is a mega stone for that species.
  */
 export function detectMegaFromItemDex(
   item: string | null,
   species: string,
 ): MegaPokemonEntry | null {
   if (!item) return null;
-  const cacheKey = `${species.toLowerCase()}::${item.toLowerCase()}`;
-  if (itemMegaCache.has(cacheKey)) return itemMegaCache.get(cacheKey) ?? null;
+  if (impl) return impl.detectMegaFromItemDex(item, species);
+  // Same reasoning as getMegaEntryFromDex: Leftovers is not a mega stone, and
+  // saying so must not cost a 129 kB fetch.
+  if (!LOOKS_LIKE_MEGA_STONE.test(item.trim())) return null;
+  return warmAndMiss();
+}
 
-  const itemEntry = getMegaStone(item);
-  if (!itemEntry) {
-    itemMegaCache.set(cacheKey, null);
-    return null;
-  }
-
-  // megaStone shape: { "Manectric": "Manectric-Mega" }
-  const megaName = itemEntry.megaStone[species]
-    ?? Object.values(itemEntry.megaStone)[0];
-  if (!megaName) {
-    itemMegaCache.set(cacheKey, null);
-    return null;
-  }
-
-  const result = getMegaEntryFromDex(megaName);
-  itemMegaCache.set(cacheKey, result);
-  return result;
+/**
+ * The canonical base-species name for any forme ("Rotom-Wash" → "Rotom").
+ * Used by Species Clause in `champions-legality.ts`, which keeps its own regex
+ * fallback for the null case.
+ */
+export function getDexBaseSpecies(species: string): string | null {
+  // No warm-up here: the gate decides up front whether a team's Species Clause
+  // check can need form collapsing, so reaching this un-loaded is the benign
+  // "no two members could possibly be the same species" case.
+  return impl ? impl.getDexBaseSpecies(species) : null;
 }

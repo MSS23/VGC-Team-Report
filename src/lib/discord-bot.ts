@@ -12,7 +12,16 @@ function getConfig() {
   return { token, channelId, configured: !!(token && channelId) };
 }
 
-async function discordFetch(path: string, options: RequestInit = {}) {
+/**
+ * A Discord message object, narrowed to the fields this module uses.
+ * @see https://discord.com/developers/docs/resources/channel#message-object
+ */
+export interface DiscordMessage {
+  id: string;
+  channel_id?: string;
+}
+
+async function discordFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
   const { token } = getConfig();
   if (!token) throw new Error("DISCORD_BOT_TOKEN not set");
 
@@ -30,7 +39,7 @@ async function discordFetch(path: string, options: RequestInit = {}) {
     throw new Error(`Discord API ${res.status}: ${text}`);
   }
 
-  return res.json();
+  return (await res.json()) as T;
 }
 
 const TYPE_COLORS: Record<string, number> = {
@@ -56,6 +65,10 @@ const PRIORITY_LABELS: Record<number, string> = {
 
 /**
  * Post a rich feedback embed to the feedback channel and create/find a topic thread.
+ * Returns the posted message, or null when the bot is not configured.
+ *
+ * The explicit return type is load-bearing (VGC-273): `discordFetch` returned
+ * `any`, so this inferred `Promise<any>` and callers lost all checking.
  */
 export async function postFeedbackEmbed(opts: {
   type: string;
@@ -68,7 +81,7 @@ export async function postFeedbackEmbed(opts: {
   screenSize?: string;
   linearUrl?: string;
   linearIdentifier?: string;
-}) {
+}): Promise<DiscordMessage | null> {
   const { channelId, configured } = getConfig();
   if (!configured) return null;
 
@@ -101,7 +114,7 @@ export async function postFeedbackEmbed(opts: {
   }
 
   // Post the embed
-  const message = await discordFetch(`/channels/${channelId}/messages`, {
+  const message = await discordFetch<DiscordMessage>(`/channels/${channelId}/messages`, {
     method: "POST",
     body: JSON.stringify({
       embeds: [{

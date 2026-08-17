@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion } from "motion/react";
+import { MotionDiv } from "@/components/ui/LazyMotion";
 import { useAuth } from "@clerk/nextjs";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { useSessionId } from "@/hooks/useSessionId";
@@ -259,7 +259,7 @@ function ExploreInner() {
           />
         ) : (
           <>
-            <motion.div
+            <MotionDiv
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
               initial="hidden"
               animate="visible"
@@ -276,7 +276,7 @@ function ExploreInner() {
                   initialSaved={savedIds ? savedIds.has(report.id) : undefined}
                 />
               ))}
-            </motion.div>
+            </MotionDiv>
 
             {nextCursor && (
               <div className="flex justify-center mt-10">

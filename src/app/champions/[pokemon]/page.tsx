@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+// Side-effect import — registers the dex-subset fallback synchronously so the
+// `lookupPokemon` call below resolves Champions-original Megas during SSG
+// (VGC-271). The fallback is lazy on the client; this page is server-only and
+// prerenders every Mega guide, so it takes the static path. Must stay above the
+// `lookupPokemon` import for readability — ESM evaluates it first either way.
+import "@/lib/data/pkmn-dex-fallback.server";
 import { MEGA_BY_SLUG, getMegaRegulation, getRegMBMegasWithSprites } from "@/lib/data/mega-pokemon";
 import { lookupPokemon } from "@/lib/data/pokemon";
 import { getDb } from "@/lib/db";

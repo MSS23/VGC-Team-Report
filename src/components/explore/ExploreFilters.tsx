@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, MotionDiv, useReducedMotion } from "@/components/ui/LazyMotion";
 import { ARCHETYPES, REGULATIONS, EVENT_TYPES } from "@/lib/data/tags";
 import { SearchIcon, UserIcon, TrophyIcon, CloseIcon, ChevronDownIcon } from "@/components/ui/icons";
 
@@ -382,7 +382,7 @@ export function ExploreFilters({
       {/* ------------------------------------------------------------------ */}
       <AnimatePresence>
         {moreOpen && (
-          <motion.div
+          <MotionDiv
             initial={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
             animate={shouldReduceMotion ? { opacity: 1 } : { height: "auto", opacity: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
@@ -518,7 +518,7 @@ export function ExploreFilters({
                 )}
               </div>
             </div>
-          </motion.div>
+          </MotionDiv>
         )}
       </AnimatePresence>
     </div>

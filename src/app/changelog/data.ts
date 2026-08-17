@@ -17,6 +17,19 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "August 2026",
+    version: "5.28",
+    title: "PokePaste Import, Unbroken Sprites & a Lighter Report",
+    emoji: "📥",
+    items: [
+      { type: "new", text: "You can now paste a PokePaste link straight into the box instead of copying the team out first — we'll fetch it and build the report for you. If the link is wrong, the paste has been deleted, or it turns out to have no Pokémon in it, you'll get a message that actually says which of those happened." },
+      { type: "fixed", text: "Pokémon with unusual formes — Zygarde-10%, Zygarde-Complete, Sirfetch'd and Ash-Greninja among them — no longer show up as broken images. If one sprite source is missing the picture we now try others automatically until one works, which particularly helps on iPhone, where the community's usual browser-extension workaround can't run." },
+      { type: "improved", text: "Reports load lighter. The large reference table of rare Pokémon and Mega Stones now downloads only if your team actually contains one, and animation code waits until the page content is on screen. The homepage drops ~26 KB, the comparison page ~33 KB and the Mega guide pages ~37 KB of compressed JavaScript — and your cards still appear complete the first time you see them." },
+      { type: "improved", text: "Accessibility: while you're building or editing a team, the report now always has a proper page title for screen readers. Shared reports already had one, but the editing view — which is the normal state right after you paste a team — had none at all." },
+      { type: "improved", text: "Under the hood: incoming data from our feedback and analytics integrations is now checked properly before it's trusted, our Linear and Discord tooling shares one correct copy of its code instead of two that had drifted apart, and two new automated checks keep an eye on page weight and stop code-quality problems quietly piling up." },
+    ],
+  },
+  {
+    date: "August 2026",
     version: "5.27",
     title: "Sounder Saves, Honest Drafts & a Security Sweep",
     emoji: "🛡️",

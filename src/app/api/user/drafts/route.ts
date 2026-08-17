@@ -16,6 +16,11 @@ const DraftBodySchema = z.object({
   draftId: z.string().optional(),
 });
 
+/** DELETE body — the draft id is required and must be a non-empty string. */
+const DraftDeleteSchema = z.object({
+  draftId: z.string().min(1),
+});
+
 function generateId(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const bytes = new Uint8Array(8);
@@ -160,10 +165,22 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { draftId } = await request.json();
-    if (!draftId) {
-      return NextResponse.json({ error: "Missing draftId" }, { status: 400 });
+    // VGC-273: this used to destructure an untyped `await request.json()`, so
+    // `draftId` was `any` and only truthiness-checked — a non-string (array,
+    // object, number) reached the SQL parameter untyped. Validate it like every
+    // other body in this file; fail closed with a generic 400.
+    let raw: unknown;
+    try {
+      raw = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
+
+    const parsed = DraftDeleteSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    }
+    const { draftId } = parsed.data;
 
     const sql = getDb();
     await sql`

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { MotionDiv } from "@/components/ui/LazyMotion";
 
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 
@@ -35,9 +35,12 @@ function StatBar({ label, value, color, max = 230 }: { label: string; value: num
     <div className="flex items-center gap-2">
       <span className="w-8 text-xs font-bold text-text-secondary text-right">{label}</span>
       <div className="flex-1 h-3 bg-surface-alt rounded-full overflow-hidden">
-        <motion.div
+        <MotionDiv
           className="h-full rounded-full"
-          style={{ backgroundColor: color }}
+          // The width is also set statically so the bar is already at its final
+          // length before/without the animation chunk (motion overrides it while
+          // animating).
+          style={{ backgroundColor: color, width: `${pct}%` }}
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.6, ease: "easeOut" }}
@@ -175,7 +178,7 @@ export function MegaLandingContent({
           </div>
 
           {teams.length > 0 ? (
-            <motion.div
+            <MotionDiv
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
               initial="hidden"
               animate="visible"
@@ -184,7 +187,7 @@ export function MegaLandingContent({
               {teams.map((report) => (
                 <ReportCard key={report.id} report={report} />
               ))}
-            </motion.div>
+            </MotionDiv>
           ) : (
             <div className="text-center py-12 bg-surface rounded-xl border border-border">
               <p className="text-sm text-text-secondary mb-3">

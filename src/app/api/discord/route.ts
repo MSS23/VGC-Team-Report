@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getDb } from "@/lib/db";
-import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
+import { linearRequest, type LinearStateNode } from "@/lib/linear";
 import nacl from "tweetnacl";
 
-const LINEAR_API = "https://api.linear.app/graphql";
 const DISCORD_PUBLIC_KEY = "44b2cb02932ad5b5eae681352246314ffb23ecd299c2490d7875d5883e5596ae";
 
 // Discord interaction types
@@ -13,25 +13,81 @@ const APPLICATION_COMMAND = 2;
 const PONG = 1;
 const CHANNEL_MESSAGE = 4;
 
-function getLinearAuth() {
-  return process.env.LINEAR_API_KEY ?? "";
-}
 function getTeamId() {
   return process.env.LINEAR_TEAM_ID ?? "";
 }
 
-async function linearQuery(query: string, variables?: Record<string, unknown>) {
-  const res = await fetchWithTimeout(
-    LINEAR_API,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: getLinearAuth() },
-      body: JSON.stringify({ query, ...(variables ? { variables } : {}) }),
-    },
-    10000,
-  );
-  return res.json();
+// VGC-273: the local `linearQuery` copy that used to live here (identical to
+// the one in src/lib/linear.ts, and likewise returning `any`) is gone. This
+// route uses the shared `linearRequest`, which returns the raw GraphQL envelope
+// — `/status` depends on that, because it probes by issue id and treats a
+// GraphQL error as "not found" before falling back to a number search.
+
+// ── Selection-set shapes for this route's queries ────────────────────────────
+
+/** Issue fields selected by `/status`. */
+interface LinearIssueDetail {
+  id?: string;
+  identifier: string;
+  title: string;
+  description?: string | null;
+  priority: number;
+  state?: { name: string } | null;
+  labels?: { nodes: { name: string }[] } | null;
+  project?: { name: string } | null;
+  url: string;
 }
+
+/** Issue fields selected by `/approve` and `/reject`. */
+interface LinearIssueSummary {
+  id: string;
+  identifier: string;
+  title: string;
+  state?: { name: string } | null;
+}
+
+/**
+ * Team query shape for `/approve` and `/reject`. Every level is optional
+ * because a partial GraphQL error yields a partially-populated `data`, and this
+ * route's existing `?.` chains rely on being able to short-circuit.
+ */
+interface LinearTeamLookup {
+  team?: {
+    states?: { nodes: LinearStateNode[] };
+    issues?: { nodes: LinearIssueSummary[] };
+  };
+}
+
+// ── Inbound interaction payload (VGC-273) ────────────────────────────────────
+// The Ed25519 check above proves the bytes came from Discord, but not that they
+// are shaped the way this handler assumes. The body was previously `JSON.parse`d
+// straight into `any`, so `body.data.options` could be any value and a parse
+// failure threw outside the try/catch below — surfacing as a 500. Validate it
+// and fail closed with a 400 instead.
+const DiscordInteractionSchema = z.object({
+  type: z.number(),
+  data: z
+    .object({
+      name: z.string(),
+      // `value` is intentionally left unconstrained: Discord's option value
+      // type varies by option type (and subcommands nest further). Validating
+      // the STRUCTURE is what matters here — over-constraining the value would
+      // 400 a legitimate interaction. `getOption` below narrows to primitives.
+      options: z
+        .array(z.object({ name: z.string(), value: z.unknown() }).loose())
+        .optional(),
+    })
+    .loose()
+    .optional(),
+  member: z
+    .object({
+      user: z.object({ id: z.string() }).loose().optional(),
+      roles: z.array(z.string()).optional(),
+    })
+    .loose()
+    .optional(),
+  user: z.object({ id: z.string() }).loose().optional(),
+}).loose();
 
 // Discord user/role IDs allowed to run mutating commands (approve/reject).
 // Comma-separated list of Discord snowflake IDs in DISCORD_ADMIN_USER_IDS
@@ -92,7 +148,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  const body = JSON.parse(rawBody);
+  let body: z.infer<typeof DiscordInteractionSchema>;
+  try {
+    body = DiscordInteractionSchema.parse(JSON.parse(rawBody));
+  } catch {
+    // Generic message — do not echo the parse/zod detail back to the caller.
+    return NextResponse.json({ error: "Invalid interaction body" }, { status: 400 });
+  }
 
   // Handle Discord ping (required for registering the endpoint)
   if (body.type === PING) {
@@ -105,13 +167,20 @@ export async function POST(request: NextRequest) {
 
   const command = body.data?.name;
   const options = body.data?.options ?? [];
-  const getOption = (name: string) => options.find((o: { name: string }) => o.name === name)?.value as string | undefined;
+  // Only primitive option values become strings. A non-primitive (a nested
+  // subcommand object) yields undefined rather than "[object Object]".
+  const getOption = (name: string): string | undefined => {
+    const value = options.find((o) => o.name === name)?.value;
+    if (typeof value === "string") return value;
+    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    return undefined;
+  };
 
   // Signature verification proves the request is from Discord, not WHO invoked
   // it. Mutating commands (approve/reject) drive the autonomous-build pipeline,
   // so restrict them to an allowlist of admin user/role IDs. Reject with an
   // ephemeral (flags: 64) message so only the invoker sees it.
-  if (MUTATING_COMMANDS.has(command) && !isAuthorizedInvoker(body)) {
+  if (command && MUTATING_COMMANDS.has(command) && !isAuthorizedInvoker(body)) {
     return NextResponse.json({
       type: CHANNEL_MESSAGE,
       data: {
@@ -211,7 +280,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ type: CHANNEL_MESSAGE, data: { content: "Provide an issue ID (e.g., VGC-10)" } });
       }
 
-      const result = await linearQuery(
+      const result = await linearRequest<{ issue: LinearIssueDetail | null }>(
         `query($issueId: String!) {
           issue(id: $issueId) { identifier title description priority state { name } labels { nodes { name } } project { name } url }
         }`,
@@ -219,9 +288,11 @@ export async function POST(request: NextRequest) {
       );
 
       // Try by identifier if direct ID fails
-      let issue = result.data?.issue;
+      let issue: LinearIssueDetail | null | undefined = result.data?.issue;
       if (!issue) {
-        const searchResult = await linearQuery(
+        const searchResult = await linearRequest<{
+          team?: { issues?: { nodes: LinearIssueDetail[] } };
+        }>(
           `query($teamId: String!, $issueNum: Float!) {
             team(id: $teamId) {
               issues(filter: { number: { eq: $issueNum } }, first: 1) {
@@ -239,7 +310,7 @@ export async function POST(request: NextRequest) {
       }
 
       const priMap: Record<number, string> = { 1: "🔴 Urgent", 2: "🟠 High", 3: "🟡 Normal", 4: "⚪ Low" };
-      const labels = issue.labels?.nodes?.map((l: { name: string }) => l.name).join(", ") || "None";
+      const labels = issue.labels?.nodes?.map((l) => l.name).join(", ") || "None";
 
       return NextResponse.json({
         type: CHANNEL_MESSAGE,
@@ -268,7 +339,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Get Todo state ID and find the issue
-      const teamData = await linearQuery(
+      const teamData = await linearRequest<LinearTeamLookup>(
         `query($teamId: String!, $issueNum: Float!) {
           team(id: $teamId) {
             states { nodes { id name type } }
@@ -280,7 +351,7 @@ export async function POST(request: NextRequest) {
         { teamId: getTeamId(), issueNum: parseInt(issueId.replace(/\D/g, "")) || 0 },
       );
 
-      const todoState = teamData.data?.team?.states?.nodes?.find((s: { type: string }) => s.type === "unstarted");
+      const todoState = teamData.data?.team?.states?.nodes?.find((s) => s.type === "unstarted");
       const issue = teamData.data?.team?.issues?.nodes?.[0];
 
       if (!issue) {
@@ -290,7 +361,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ type: CHANNEL_MESSAGE, data: { content: "Could not find Todo state." } });
       }
 
-      await linearQuery(
+      await linearRequest<{
+        issueUpdate: { issue: { identifier: string; state: { name: string } } };
+      }>(
         `mutation($issueId: String!, $stateId: String!) { issueUpdate(id: $issueId, input: { stateId: $stateId }) { issue { identifier state { name } } } }`,
         { issueId: issue.id, stateId: todoState.id },
       );
@@ -314,7 +387,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ type: CHANNEL_MESSAGE, data: { content: "Provide an issue ID (e.g., VGC-10)" } });
       }
 
-      const teamData = await linearQuery(
+      const teamData = await linearRequest<LinearTeamLookup>(
         `query($teamId: String!, $issueNum: Float!) {
           team(id: $teamId) {
             states { nodes { id name type } }
@@ -326,18 +399,18 @@ export async function POST(request: NextRequest) {
         { teamId: getTeamId(), issueNum: parseInt(issueId.replace(/\D/g, "")) || 0 },
       );
 
-      const wontDoState = teamData.data?.team?.states?.nodes?.find((s: { name: string }) => s.name === "Won't Do");
+      const wontDoState = teamData.data?.team?.states?.nodes?.find((s) => s.name === "Won't Do");
       const issue = teamData.data?.team?.issues?.nodes?.[0];
 
       if (!issue || !wontDoState) {
         return NextResponse.json({ type: CHANNEL_MESSAGE, data: { content: `Issue ${issueId} not found or missing state.` } });
       }
 
-      await linearQuery(
+      await linearRequest<{ issueUpdate: { issue: { identifier: string } } }>(
         `mutation($issueId: String!, $stateId: String!) { issueUpdate(id: $issueId, input: { stateId: $stateId }) { issue { identifier } } }`,
         { issueId: issue.id, stateId: wontDoState.id },
       );
-      await linearQuery(
+      await linearRequest<{ commentCreate: { comment: { id: string } } }>(
         `mutation($issueId: String!, $body: String!) { commentCreate(input: { issueId: $issueId, body: $body }) { comment { id } } }`,
         { issueId: issue.id, body: `Rejected via Discord: ${reason}` },
       );

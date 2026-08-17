@@ -1,7 +1,37 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
+
+// ── Inbound payload contract (VGC-273) ───────────────────────────────────────
+// This body is attacker-influenced: anything PostHog captures from the browser
+// (URLs, exception messages, element trees) is echoed into a Linear ticket. The
+// handler previously consumed `await request.json()` untyped, so a payload with
+// e.g. a numeric `event` or an array `properties` flowed straight into string
+// formatting and ticket creation. Parse it first; anything that does not match
+// is rejected with a 400 and never reaches Linear.
+//
+// The shape is deliberately permissive — PostHog's payload varies by trigger
+// type and we must not reject a legitimate webhook for carrying extra keys —
+// but every field this handler actually reads is now typed rather than `any`.
+const PostHogPropertiesSchema = z.record(z.string(), z.unknown());
+
+const PostHogWebhookSchema = z
+  .object({
+    event: z.string().optional(),
+    timestamp: z.string().optional(),
+    person: z
+      .object({
+        distinct_id: z.string().optional(),
+        properties: z.record(z.string(), z.unknown()).optional(),
+      })
+      .loose()
+      .optional(),
+    properties: PostHogPropertiesSchema.optional(),
+    data: PostHogPropertiesSchema.optional(),
+  })
+  .loose();
 
 // ── Session timeline enrichment ──────────────────────────────────────────────
 // On every webhook, query PostHog for the user's last ~15 events leading up to
@@ -185,14 +215,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    // Fail closed on a malformed body. The error response is deliberately
+    // generic — it must not echo the zod issue list, which would leak the
+    // internal payload shape back to an unauthenticated-ish caller.
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const parsed = PostHogWebhookSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      console.warn("PostHog webhook: rejected malformed payload");
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
+    const body = parsed.data;
 
     // PostHog webhook payload varies by trigger type
-    const event = body.event ?? body.data?.event_name ?? "unknown_event";
-    const personEmail = body.person?.properties?.email ?? "anonymous";
+    const eventName = body.data?.event_name;
+    const event = body.event ?? (typeof eventName === "string" ? eventName : undefined) ?? "unknown_event";
+    const personEmailRaw = body.person?.properties?.email;
+    const personEmail = typeof personEmailRaw === "string" ? personEmailRaw : "anonymous";
     const personId = body.person?.distinct_id ?? "unknown";
     const timestamp = body.timestamp ?? new Date().toISOString();
-    const properties = body.properties ?? body.data ?? {};
+    const properties: Record<string, unknown> = body.properties ?? body.data ?? {};
 
     // Deduplicate — skip if we already created a ticket for this error recently
     const fingerprint = getFingerprint(event, properties);

@@ -415,9 +415,15 @@ function TeamOverviewBase({
 
   return (
     <div className="flex flex-col gap-3 sm:gap-6 animate-fade-in">
-      {isReadOnly && !teamName && (
+      {/* VGC-270: slide 0 owns the page's only H1 (page.tsx skips its sr-only
+          heading when physicalSlide === 0). The visible H1 below renders only
+          when read-only AND teamName exists, so this fallback covers every
+          other case — including creator/edit mode, where the team name is an
+          <input>, not a heading. The two are mutually exclusive by
+          construction: exactly one H1 renders on slide 0. */}
+      {!(isReadOnly && teamName) && (
         <h1 className="sr-only">
-          {tournamentName || pokemon.map((entry) => entry.parsed.species).join(" / ") || "VGC Team Report"}
+          {teamName || tournamentName || pokemon.map((entry) => entry.parsed.species).join(" / ") || "VGC Team Report"}
         </h1>
       )}
       {/* Tournament Context */}

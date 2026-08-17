@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { MotionDiv } from "@/components/ui/LazyMotion";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { I18nProvider, useTranslation } from "@/lib/i18n";
 
@@ -98,7 +98,7 @@ function CreatorProfileInner({ name }: { name: string }) {
             </div>
           </div>
         ) : (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+          <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
             <div className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-accent/15 via-accent/5 to-transparent" />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
@@ -324,7 +324,7 @@ function CreatorProfileInner({ name }: { name: string }) {
                 </>
               )}
             </div>
-          </motion.div>
+          </MotionDiv>
         )}
       </main>
       <PageFooter />

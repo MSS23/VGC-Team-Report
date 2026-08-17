@@ -26,14 +26,26 @@ const LINEAR_URL = "https://linear.app/vgc-team-report";
 const GITHUB_URL = "https://github.com/MSS23/VGC-Team-Report";
 
 /**
+ * Resend's 200 response for POST /emails — just the queued message id.
+ * @see https://resend.com/docs/api-reference/emails/send-email
+ */
+export interface ResendSendResult {
+  id: string;
+}
+
+/**
  * Generic email sender via Resend.
  * Returns null if RESEND_API_KEY is not set or the request fails.
+ *
+ * The explicit return type is load-bearing (VGC-273): without it the trailing
+ * `res.json()` inferred `Promise<any>`, which leaked into every caller and
+ * silently disabled type-checking on the result.
  */
 export async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
-}) {
+}): Promise<ResendSendResult | null> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn("RESEND_API_KEY not set, skipping email");
@@ -66,7 +78,7 @@ export async function sendEmail(opts: {
     return null;
   }
 
-  return res.json();
+  return (await res.json()) as ResendSendResult;
 }
 
 /** @deprecated Use sendEmail instead */

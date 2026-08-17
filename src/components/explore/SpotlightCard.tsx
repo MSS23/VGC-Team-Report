@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { MotionA, MotionDiv } from "@/components/ui/LazyMotion";
 import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
@@ -33,7 +33,7 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
     : 0);
 
   return (
-    <motion.a
+    <MotionA
       href={`/s/${report.id}`}
       className="block bg-surface rounded-2xl border-2 border-accent/20 shadow-lg shadow-accent/5 hover:shadow-xl hover:border-accent/40 transition-all duration-300 overflow-hidden group"
       initial={{ opacity: 0, y: 16 }}
@@ -95,7 +95,7 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
       <div className="px-4 sm:px-6 pt-5 pb-3">
         <div className="flex items-end justify-center gap-2 sm:gap-5">
           {report.species.map((species, i) => (
-            <motion.div
+            <MotionDiv
               key={i}
               className="flex flex-col items-center gap-1"
               initial={{ opacity: 0, y: 10 }}
@@ -106,7 +106,7 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
               <span className="text-[9px] sm:text-[10px] font-semibold text-text-tertiary text-center leading-tight max-w-[56px] sm:max-w-[72px] truncate">
                 {species}
               </span>
-            </motion.div>
+            </MotionDiv>
           ))}
         </div>
       </div>
@@ -162,7 +162,7 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
           </span>
         </div>
       </div>
-    </motion.a>
+    </MotionA>
   );
 }
 

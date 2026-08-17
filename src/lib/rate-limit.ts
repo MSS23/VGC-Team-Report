@@ -77,14 +77,10 @@ export async function isRateLimitedAsync(
   return isRateLimitedInMemory(key, maxRequests, windowMs);
 }
 
-/**
- * Synchronous in-memory rate limiter (legacy API).
- * Kept for backward compatibility — prefer isRateLimitedAsync.
- */
-export function isRateLimited(
-  key: string,
-  maxRequests: number = 30,
-  windowMs: number = 60_000,
-): boolean {
-  return isRateLimitedInMemory(key, maxRequests, windowMs);
-}
+// VGC-273: the synchronous `isRateLimited` export was removed here. It had no
+// production callers — every route and `security/api-guard.ts` use
+// `isRateLimitedAsync` — and keeping a sync entry point around invited a new
+// caller to accidentally opt out of distributed (Upstash) limiting, which on
+// serverless means a per-instance limit that an attacker can trivially spread
+// across instances. Its tests were retargeted onto `isRateLimitedAsync` first,
+// so the in-memory window logic above is still covered.
