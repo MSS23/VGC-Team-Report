@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { MotionDiv } from "@/components/ui/LazyMotion";
 import Link from "next/link";
 import { useTranslation } from "@/lib/i18n";
 
@@ -25,7 +25,7 @@ export function ExploreEmpty({
   const { t } = useTranslation();
 
   return (
-    <motion.div
+    <MotionDiv
       className="flex flex-col items-center justify-center py-20 text-center"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -97,6 +97,6 @@ export function ExploreEmpty({
           </Link>
         </div>
       )}
-    </motion.div>
+    </MotionDiv>
   );
 }

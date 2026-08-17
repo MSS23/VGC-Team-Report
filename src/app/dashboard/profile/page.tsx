@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatePresence, MotionDiv } from "@/components/ui/LazyMotion";
 import { I18nProvider } from "@/lib/i18n";
 
 import { applyRandomAccent } from "@/lib/utils/random-accent";
@@ -237,7 +237,7 @@ function ProfileInner() {
               <SpinnerIcon className="animate-spin h-5 w-5 text-text-secondary" />
             </div>
           ) : (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
               {/* Page header */}
               <div className="mb-8">
                 <h1 className="text-2xl font-extrabold tracking-tight mb-1">Creator Profile</h1>
@@ -459,7 +459,7 @@ function ProfileInner() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </MotionDiv>
           )}
         </Show>
       </main>
@@ -467,7 +467,7 @@ function ProfileInner() {
       {/* Sticky save bar */}
       <AnimatePresence>
         {hasChanges && !loading && (
-          <motion.div
+          <MotionDiv
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
@@ -504,7 +504,7 @@ function ProfileInner() {
                 )}
               </div>
             </div>
-          </motion.div>
+          </MotionDiv>
         )}
       </AnimatePresence>
 

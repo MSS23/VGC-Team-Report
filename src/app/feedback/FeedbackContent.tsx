@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { MotionButton, MotionDiv, MotionForm, MotionP } from "@/components/ui/LazyMotion";
 import Link from "next/link";
 import { I18nProvider } from "@/lib/i18n";
 
@@ -121,7 +121,7 @@ function FeedbackInner() {
             <div className="h-4 w-64 bg-surface-alt rounded mx-auto" />
           </div>
         ) : !isSignedIn ? (
-          <motion.div
+          <MotionDiv
             className="text-center py-16"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -140,15 +140,15 @@ function FeedbackInner() {
                 Sign in
               </button>
             </SignInButton>
-          </motion.div>
+          </MotionDiv>
         ) : submitted ? (
-          <motion.div
+          <MotionDiv
             className="text-center py-16"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4 }}
           >
-            <motion.div
+            <MotionDiv
               className="w-20 h-20 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-6 border-2 border-emerald-500/20"
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -157,7 +157,7 @@ function FeedbackInner() {
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-            </motion.div>
+            </MotionDiv>
             <h1 className="text-2xl font-extrabold tracking-tight mb-2">Thank you!</h1>
             <p className="text-sm text-text-secondary mb-8 max-w-sm mx-auto leading-relaxed">
               Your feedback has been submitted. We review every submission and use it to improve VGC Team Report.
@@ -173,9 +173,9 @@ function FeedbackInner() {
                 Submit Another
               </button>
             </div>
-          </motion.div>
+          </MotionDiv>
         ) : (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <MotionDiv initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             {/* Hero */}
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-accent-surface flex items-center justify-center">
@@ -196,7 +196,7 @@ function FeedbackInner() {
             {/* Type selector */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-8 mb-8">
               {TYPES.map((t, i) => (
-                <motion.button
+                <MotionButton
                   key={t.value}
                   type="button"
                   onClick={() => setType(t.value)}
@@ -220,12 +220,12 @@ function FeedbackInner() {
                   <span className={`text-xs font-bold transition-colors ${type === t.value ? "text-text-primary" : "text-text-secondary"}`}>
                     {t.label}
                   </span>
-                </motion.button>
+                </MotionButton>
               ))}
             </div>
 
             {/* Form */}
-            <motion.form
+            <MotionForm
               className="space-y-5"
               onSubmit={(event) => {
                 event.preventDefault();
@@ -317,14 +317,14 @@ function FeedbackInner() {
 
               {/* Error */}
               {error && (
-                <motion.p
+                <MotionP
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
                   role="alert"
                   className="text-sm text-danger font-bold px-3 py-2 bg-danger/10 border border-danger/20 rounded-lg"
                 >
                   {error}
-                </motion.p>
+                </MotionP>
               )}
 
               {/* Submit */}
@@ -364,8 +364,8 @@ function FeedbackInner() {
                   View the changelog
                 </Link>
               </p>
-            </motion.form>
-          </motion.div>
+            </MotionForm>
+          </MotionDiv>
         )}
       </main>
 

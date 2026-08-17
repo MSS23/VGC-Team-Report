@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { MotionDiv, MotionSection } from "@/components/ui/LazyMotion";
 import { I18nProvider } from "@/lib/i18n";
 
 import { applyRandomAccent } from "@/lib/utils/random-accent";
@@ -120,7 +120,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
 
       <main className="relative max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16 pb-24 sm:pb-20">
         {/* Hero */}
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
@@ -159,10 +159,10 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
             <CountPill color="amber" label={`${totalFixed} fixes`} />
             <span className="text-xs text-text-tertiary font-medium ml-1">across {entries.length} releases</span>
           </div>
-        </motion.div>
+        </MotionDiv>
 
         {/* Controls — search + type filter + expand/collapse */}
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08, duration: 0.4 }}
@@ -233,7 +233,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
               {expandedVersions.size === entries.length ? "Collapse all" : "Expand all"}
             </button>
           </div>
-        </motion.div>
+        </MotionDiv>
 
         {/* Timeline */}
         <div className="relative">
@@ -264,7 +264,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                 const anchorId = `v${entry.version.replace(/\./g, "-")}`;
 
                 return (
-                  <motion.section
+                  <MotionSection
                     key={entry.version}
                     id={anchorId}
                     initial={{ opacity: 0, y: 14 }}
@@ -363,7 +363,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                         </div>
                       </div>
                     </article>
-                  </motion.section>
+                  </MotionSection>
                 );
               })}
             </div>
@@ -371,7 +371,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
         </div>
 
         {/* CTA */}
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.4 }}
@@ -397,7 +397,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
             </svg>
             Send Feedback
           </a>
-        </motion.div>
+        </MotionDiv>
       </main>
 
       <PageFooter />

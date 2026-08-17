@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { motion } from "motion/react";
+import { MotionA } from "@/components/ui/LazyMotion";
 import { useAuth, useUser, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
 import { useTranslation } from "@/lib/i18n";
@@ -160,7 +160,7 @@ export function ReportCard({
   const hasTagsSection = !!report.tags?.eventType;
 
   return (
-    <motion.a
+    <MotionA
       href={`/s/${report.id}`}
       className="relative block bg-surface rounded-xl border border-border shadow-sm hover:shadow-md hover:border-accent/30 overflow-hidden group card-hover"
       variants={{
@@ -384,6 +384,6 @@ export function ReportCard({
           </span>
         </div>
       </div>
-    </motion.a>
+    </MotionA>
   );
 }
