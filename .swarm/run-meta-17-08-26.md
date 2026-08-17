@@ -64,3 +64,15 @@ Until then Goal B (compound the board) is blocked at the source.
 - Rejected changes: NONE (no .swarm/rejected.md created)
 - Merge conflicts: NONE (origin/main had not moved; post-commit merge was a no-op)
 - PR: #74, DRAFT, https://github.com/MSS23/VGC-Team-Report/pull/74
+
+## Discord
+Sent OK (HTTP 204) via DISCORD_BUILDS_WEBHOOK using curl.
+NOTE for future runs: python urllib gets Cloudflare 403 "error code: 1010" on the
+Discord webhook (banned browser signature -- the Python-urllib UA). curl works.
+Use curl for Discord in this container. The several .swarm/discord-failed-*.md
+files from earlier runs are likely this same cause, not a bad webhook URL.
+
+## Step 6B status integrity
+All 7 implemented tickets are In Review with a closing comment. No ticket failed
+the gate, so no ticket needed reverting to In Progress, and
+.swarm/linear-status-failures.md was not created.
