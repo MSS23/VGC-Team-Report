@@ -8,6 +8,14 @@ let _provider: LoggerProvider | null = null;
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
+    // Install the dex-subset fallback synchronously for the whole server
+    // process (VGC-271). The table is lazy on the client, but every server
+    // consumer — validateMegaCoverage below, the /champions/* SSG pass, SSR of
+    // any report — calls into it synchronously and cannot await. Registering it
+    // here, before the first lookup, keeps those paths byte-identical to the
+    // pre-split behaviour.
+    await import("./lib/data/pkmn-dex-fallback.server");
+
     // Build-time data integrity check — fail loudly if a Champions-legal Mega
     // is missing from the catalogue or cannot resolve through the production
     // lookup path. Catches invisible spread regressions before users see them.

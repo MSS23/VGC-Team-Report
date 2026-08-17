@@ -18,7 +18,12 @@
 
 import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { CHAMPIONS_DEX, CHAMPIONS_MB_DEX } from "@/lib/data/champions-dex";
-import { getSpecies } from "@/lib/data/dex-subset";
+// Goes through the lazy fallback façade, NOT `@/lib/data/dex-subset` directly:
+// this module is imported by TeamOverview, so a static dex-subset import here
+// pins the 129,858-byte table into the eager client chunk (VGC-271). Callers on
+// the client render only after `dex-fallback-gate.ts` has resolved, so the
+// lookup below is fully populated by the time a team is validated.
+import { getDexBaseSpecies } from "@/lib/data/pkmn-dex-fallback";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import {
   CHAMPIONS_TOTAL_SP,
@@ -136,8 +141,8 @@ function getRestrictedBase(species: string): string {
  * fallback for species the dex subset doesn't know.
  */
 function getSpeciesClauseKey(species: string): string {
-  const entry = getSpecies(species);
-  if (entry) return normalizeSpecies(entry.baseSpecies ?? entry.name);
+  const baseSpecies = getDexBaseSpecies(species);
+  if (baseSpecies) return normalizeSpecies(baseSpecies);
   const key = normalizeSpecies(species);
   return key.replace(/-mega(-[xy])?$/, "").replace(/-primal$/, "");
 }
