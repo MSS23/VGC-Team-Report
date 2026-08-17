@@ -42,3 +42,25 @@ competitor teardowns (R1/R2), Reddit/Twitter sentiment (R3/R4) and AEO (R7)
 reports across ~35 prior runs, and `.swarm/drafts/` holds 27 unsent drafts.
 Re-running them is near-zero marginal value. Budget shifted to Wave 2
 implementation, which serves Goal A (drain the board) — the stated top priority.
+
+## BLOCKER discovered at ticket-filing time
+Linear workspace is at its FREE-PLAN ISSUE CAP (activeIssueCount). issueCreate
+returns USAGE_LIMIT_EXCEEDED after VGC-275. Team query returns the 250 API page
+cap, of which 143 are already `completed` and still consuming quota (Linear
+counts non-archived issues, so closing does not free a slot -- only archiving does).
+
+Result: 1 of 11 research tickets filed (VGC-275). The other 10 -- including three
+P1 security/SEO defects -- are written up paste-ready in
+.swarm/pending-tickets-17-08-26.md so nothing is lost.
+
+Human action: archive the ~143 Done issues, or upgrade/start Linear's free trial.
+Until then Goal B (compound the board) is blocked at the source.
+
+## Final run tally
+- Subagents dispatched: 14 of 25 cap (7 audit/research, 7 implementation)
+- Commits: 12 (11 + this note), all on claude/loving-sagan-853anq
+- Pushes to main: ZERO. Every push used the guard + explicit refspec, no --force.
+- Gate on integrated tree: tsc cold PASS, vitest 520/520 PASS, next build PASS
+- Rejected changes: NONE (no .swarm/rejected.md created)
+- Merge conflicts: NONE (origin/main had not moved; post-commit merge was a no-op)
+- PR: #74, DRAFT, https://github.com/MSS23/VGC-Team-Report/pull/74
