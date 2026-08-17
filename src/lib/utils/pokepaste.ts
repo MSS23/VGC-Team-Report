@@ -1,8 +1,13 @@
-const POKEPASTE_REGEX = /^https?:\/\/pokepast\.es\/[a-zA-Z0-9]+\/?(?:raw\/?)?$/;
+import {
+  normalizePokePasteUrl,
+  errorKindForStatus,
+  PokePasteImportError,
+} from "./pokepaste-url";
 
-export function isPokePasteUrl(input: string): boolean {
-  return POKEPASTE_REGEX.test(input.trim());
-}
+// URL detection/normalisation lives in `pokepaste-url.ts` so the API route can
+// share the exact same host allowlist. Re-exported here for existing callers.
+export { isPokePasteUrl, normalizePokePasteUrl, PokePasteImportError } from "./pokepaste-url";
+export type { PokePasteErrorKind } from "./pokepaste-url";
 
 interface PokePasteResult {
   paste: string;
@@ -12,14 +17,34 @@ interface PokePasteResult {
 /**
  * Fetches a PokéPaste team from a pokepast.es URL via our API proxy.
  * Returns the raw Showdown paste text and the page title (team name).
+ *
+ * Throws a `PokePasteImportError` whose `kind` identifies the failure, so the
+ * UI can show a specific message instead of a generic one.
  */
 export async function fetchPokePaste(url: string): Promise<PokePasteResult> {
-  const res = await fetch(`/api/pokepaste?url=${encodeURIComponent(url.trim())}`);
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error ?? `Failed to fetch (${res.status})`);
+  // Validate client-side first: an obviously wrong link should not cost a
+  // round trip or burn the caller's rate-limit budget.
+  const target = normalizePokePasteUrl(url);
+  if (!target) {
+    throw new PokePasteImportError("invalid-url");
   }
-  const data = await res.json();
+
+  let res: Response;
+  try {
+    res = await fetch(`/api/pokepaste?url=${encodeURIComponent(target.htmlUrl)}`);
+  } catch {
+    // Network failure / offline — never surfaced as a status code.
+    throw new PokePasteImportError("upstream");
+  }
+
+  if (!res.ok) {
+    throw new PokePasteImportError(errorKindForStatus(res.status));
+  }
+
+  const data = await res.json().catch(() => null);
+  if (!data || typeof data.paste !== "string") {
+    throw new PokePasteImportError("upstream");
+  }
   return { paste: data.paste, title: data.title ?? null };
 }
 

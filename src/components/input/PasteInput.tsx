@@ -5,6 +5,14 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
+import {
+  PokePasteImportError,
+  normalizePokePasteUrl,
+  pokePasteErrorMessage,
+  type PokePasteErrorKind,
+} from "@/lib/utils/pokepaste-url";
+import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
+import { usePostHog } from "@/components/providers/PostHogProvider";
 import { useTranslation } from "@/lib/i18n";
 
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
@@ -120,6 +128,7 @@ function PopularCardSprite({ species }: { species: string }) {
 
 export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect }: PasteInputProps) {
   const { t } = useTranslation();
+  const posthog = usePostHog();
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -226,12 +235,39 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
     if (!isUrl) return;
     setIsFetching(true);
     setFetchError(null);
+
+    const target = normalizePokePasteUrl(paste);
+
+    const failImport = (kind: PokePasteErrorKind) => {
+      setFetchError(pokePasteErrorMessage(kind));
+      posthog?.capture("pokepaste_import_failed", {
+        reason: kind,
+        paste_id: target?.id ?? null,
+      });
+    };
+
     try {
       const result = await fetchPokePaste(paste);
+
+      // A paste can fetch cleanly and still contain no team (an empty paste, a
+      // notes-only paste, or something that isn't a Showdown export). Reuse the
+      // existing parser rather than guessing from the raw text.
+      const parsed = parseShowdownPaste(result.paste);
+      if (parsed.pokemon.length === 0) {
+        failImport("empty-team");
+        return;
+      }
+
+      posthog?.capture("pokepaste_imported", {
+        paste_id: target?.id ?? null,
+        pokemon_count: parsed.pokemon.length,
+        has_title: !!result.title,
+      });
+
       onPasteChange(result.paste);
       onAnalyze(result.paste);
     } catch (err) {
-      setFetchError(err instanceof Error ? err.message : "Failed to fetch PokePaste");
+      failImport(err instanceof PokePasteImportError ? err.kind : "upstream");
     } finally {
       setIsFetching(false);
     }
