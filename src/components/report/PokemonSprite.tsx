@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { getGenThemedSpriteUrls, isGenThemePixelated } from "@/lib/utils/sprite-url";
+import { SHOWDOWN_SUBSTITUTE_URL } from "@/lib/utils/sprite-fallback";
 import { useTheme } from "@/hooks/useTheme";
 import { useIsPrintMode } from "@/components/ui/print-context";
 
@@ -40,12 +41,33 @@ export function PokemonSprite({
     setUrlIndex(0);
   }, [species, shiny, effectiveAnimated, genTheme]);
 
+  // VGC-232: terminal link of the chain. The proxy walks the full
+  // server-side fallback chain (Showdown HOME -> PokemonDB HOME -> gen5 ->
+  // substitute -> inline SVG) with per-CDN forme normalisation, so formes
+  // Showdown spells differently from the paste — Ash-Greninja, Zygarde-10%,
+  // Sirfetch'd — resolve to a real sprite instead of the substitute doll.
+  const proxySrc = useMemo(() => {
+    const p = new URLSearchParams({ species });
+    if (effectiveAnimated) p.set("animated", "1");
+    if (shiny) p.set("shiny", "1");
+    return `/api/sprite?${p.toString()}`;
+  }, [species, effectiveAnimated, shiny]);
+
   const urls = useMemo(
-    () => getGenThemedSpriteUrls(species, genTheme, effectiveAnimated, shiny),
-    [species, genTheme, effectiveAnimated, shiny],
+    () => [
+      // Drop the CDN chain's own substitute terminal: it returns 200, so
+      // onError never fires and we'd stop on the doll without ever asking
+      // the proxy. The proxy has its own guaranteed-renderable terminal.
+      ...getGenThemedSpriteUrls(species, genTheme, effectiveAnimated, shiny).filter(
+        (u) => u !== SHOWDOWN_SUBSTITUTE_URL,
+      ),
+      proxySrc,
+    ],
+    [species, genTheme, effectiveAnimated, shiny, proxySrc],
   );
 
-  const rawSrc = urls[Math.min(urlIndex, urls.length - 1)];
+  const rawSrc = urls[Math.min(urlIndex, urls.length - 1)] ?? proxySrc;
+  const isFallbackProxy = rawSrc === proxySrc;
   // In print/export mode, route the sprite through our same-origin
   // /api/sprite proxy. html2canvas uses useCORS:true which forces
   // crossorigin="anonymous" on every image, and Showdown's CDN doesn't
@@ -53,10 +75,16 @@ export function PokemonSprite({
   // decode during capture and the sprites blank out in the PNG export.
   // The proxy re-serves the bytes from our origin so CORS doesn't
   // apply. Non-print renders still use the CDN directly so we don't
-  // pay the proxy round-trip during normal browsing.
-  const src = isPrint ? `/api/sprite?u=${encodeURIComponent(rawSrc)}` : rawSrc;
+  // pay the proxy round-trip during normal browsing — the proxy is only
+  // reached once the direct CDN links have actually 404'd.
+  const src =
+    isPrint && !isFallbackProxy
+      ? `/api/sprite?u=${encodeURIComponent(rawSrc)}&species=${encodeURIComponent(species)}`
+      : rawSrc;
   const isGif = rawSrc.endsWith(".gif");
-  const pixelated = isGenThemePixelated(genTheme) && !isGif;
+  // The proxy resolves to a modern HOME render, which shouldn't be
+  // pixel-scaled even under a retro gen theme.
+  const pixelated = isGenThemePixelated(genTheme) && !isGif && !isFallbackProxy;
 
   return (
     <img
