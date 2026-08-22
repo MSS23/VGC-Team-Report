@@ -5,6 +5,8 @@ export function extractSpecies(paste: string): string[] {
   for (const block of blocks) {
     const firstLine = block.trim().split("\n")[0]?.trim();
     if (!firstLine) continue;
+    // Showdown backup format wraps teams in "=== [format] Name ===" headers
+    if (firstLine.startsWith("===")) continue;
     let namePart = firstLine.split(" @ ")[0].trim();
     namePart = namePart.replace(/\s*\([MF]\)\s*$/, "");
     const nicknameMatch = namePart.match(/^.+\((.+)\)$/);

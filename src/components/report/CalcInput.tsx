@@ -53,8 +53,9 @@ function autoDetectCategory(line: string, pokemonSpecies: string): CalcCategory 
     // Format: "ATTACKER move vs. DEFENDER: damage"
     // If the pokemon species appears before "vs." → offensive
     // If it appears after "vs." → defensive
-    const vsIndex = lower.indexOf("vs.");
-    if (vsIndex === -1) return "offensive";
+    const vsMatch = /\bvs\.?\s/.exec(lower);
+    if (!vsMatch) return "offensive";
+    const vsIndex = vsMatch.index;
 
     const beforeVs = lower.slice(0, vsIndex);
     const afterVs = lower.slice(vsIndex);

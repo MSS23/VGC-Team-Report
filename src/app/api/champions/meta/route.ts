@@ -76,10 +76,10 @@ export async function GET(request: Request) {
       name_parts AS (
         SELECT
           id,
-          block_num,
+          row_number() OVER (PARTITION BY id ORDER BY block_num) AS block_num,
           trim(split_part(first_line, ' @ ', 1)) AS name_part
         FROM blocks
-        WHERE first_line <> ''
+        WHERE first_line <> '' AND first_line !~ '^==='
       ),
       gender_stripped AS (
         SELECT

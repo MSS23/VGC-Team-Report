@@ -20,6 +20,7 @@ import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { CHAMPIONS_DEX, CHAMPIONS_MB_DEX } from "@/lib/data/champions-dex";
 import { getSpecies } from "@/lib/data/dex-subset";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
+import { getRegulationLookupKey } from "@/lib/data/gen9-regulation-signals";
 import {
   CHAMPIONS_TOTAL_SP,
   CHAMPIONS_MAX_SP_PER_STAT,
@@ -109,21 +110,9 @@ function normalizeSpecies(species: string): string {
  * "Necrozma-Dusk-Mane" → "necrozma"
  */
 function getRestrictedBase(species: string): string {
-  const key = normalizeSpecies(species);
-  // Strip mega/primal suffixes for base check
-  const stripped = key
-    .replace(/-mega(-[xy])?$/, "")
-    .replace(/-primal$/, "")
-    .replace(/-origin$/, "")
-    .replace(/-crowned$/, "")
-    .replace(/-ice$/, "")
-    .replace(/-shadow$/, "")
-    .replace(/-white$/, "")
-    .replace(/-black$/, "")
-    .replace(/-dusk-mane$/, "")
-    .replace(/-dawn-wings$/, "")
-    .replace(/-ultra$/, "");
-  return stripped;
+  // Shares the form-suffix strip list with regulation detection so the two
+  // never drift (Zygarde-10, Terapagos-Terastal, etc. collapse to base).
+  return getRegulationLookupKey(species);
 }
 
 /**

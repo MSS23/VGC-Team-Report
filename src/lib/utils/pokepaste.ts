@@ -1,4 +1,4 @@
-const POKEPASTE_REGEX = /^https?:\/\/pokepast\.es\/[a-zA-Z0-9]+\/?(?:raw\/?)?$/;
+const POKEPASTE_REGEX = /^https?:\/\/(?:www\.)?pokepast\.es\/[a-zA-Z0-9]+\/?(?:raw\/?)?$/;
 
 export function isPokePasteUrl(input: string): boolean {
   return POKEPASTE_REGEX.test(input.trim());

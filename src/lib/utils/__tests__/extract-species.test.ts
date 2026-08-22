@@ -32,6 +32,17 @@ describe("extractSpecies", () => {
     expect(extractSpecies(blocks)).toHaveLength(6);
   });
 
+  it("skips '=== Team ===' backup-format headers and keeps the 6th Pokemon", () => {
+    const blocks = Array.from({ length: 6 }, (_, i) =>
+      `Mon${i + 1} @ Leftovers\nAbility: Test\n- Tackle`
+    );
+    const paste = `=== [gen9vgc2026] My Team ===\n\n${blocks.join("\n\n")}`;
+    const species = extractSpecies(paste);
+    expect(species).toHaveLength(6);
+    expect(species[0]).toBe("Mon1");
+    expect(species[5]).toBe("Mon6");
+  });
+
   it("handles empty paste", () => {
     expect(extractSpecies("")).toEqual([]);
   });

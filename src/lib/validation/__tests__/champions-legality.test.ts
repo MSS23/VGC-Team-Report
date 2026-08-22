@@ -64,6 +64,18 @@ describe("validateChampionsTeam", () => {
     expect(result.issues.some((i) => i.message.includes("restricted Pokemon") && i.message.includes("3/2"))).toBe(true);
   });
 
+  it("counts form variants like Zygarde-10% toward the restricted cap", () => {
+    // Regression: -10/-50/-complete/-terastal/-stellar suffixes escaped
+    // getRestrictedBase, undercounting restricted Pokemon.
+    const team = makeTeam();
+    team[0] = makePokemon({ species: "Zygarde-10%", item: "Mystic Water" });
+    team[1] = makePokemon({ species: "Terapagos-Terastal", item: "White Herb" });
+    team[2] = makePokemon({ species: "Kyogre", item: "Leftovers" });
+    const result = validateChampionsTeam(team);
+    expect(result.legal).toBe(false);
+    expect(result.issues.some((i) => i.message.includes("restricted Pokemon") && i.message.includes("3/2"))).toBe(true);
+  });
+
   it("allows exactly 2 restricted Pokemon", () => {
     const team = makeTeam();
     team[0] = makePokemon({ species: "Kyogre", item: "Mystic Water" });

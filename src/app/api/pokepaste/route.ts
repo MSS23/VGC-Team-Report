@@ -13,7 +13,8 @@ const PokePasteCreateSchema = z.object({
 const PokePasteUrlSchema = z.string().url().refine(
   (val: string) => {
     try {
-      return new URL(val).hostname === "pokepast.es";
+      const hostname = new URL(val).hostname;
+      return hostname === "pokepast.es" || hostname === "www.pokepast.es";
     } catch {
       return false;
     }

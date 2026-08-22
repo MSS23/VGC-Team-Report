@@ -6,7 +6,7 @@ export interface StatBoost {
   boostedValue: number;
 }
 
-const BOOSTER_ABILITIES = ["Protosynthesis", "Quark Drive"];
+const BOOSTER_ABILITIES = ["protosynthesis", "quark drive"];
 
 /**
  * Returns the stat boost applied by the Pokémon's held item, if any.
@@ -33,7 +33,7 @@ export function getItemStatBoost(
     };
   }
 
-  if (normalized === "booster energy" && ability && BOOSTER_ABILITIES.includes(ability)) {
+  if (normalized === "booster energy" && ability && BOOSTER_ABILITIES.includes(ability.toLowerCase().trim())) {
     // Find highest non-HP stat
     const battleStats: StatName[] = ["atk", "def", "spa", "spd", "spe"];
     let highestStat: StatName = "atk";

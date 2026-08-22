@@ -80,7 +80,7 @@ export async function GET(request: Request) {
     // Convert query to tsquery: split words, add :* prefix matching to each word.
     // The :* suffix enables prefix matching so "chien" matches "Chien-Pao".
     const tsQuery = q
-      ? q.trim().split(/\s+/).map(w => w.replace(/[^\w]/g, "")).filter(Boolean).map(w => `${w}:*`).join(" & ")
+      ? q.trim().split(/[^\w]+/).filter(Boolean).map(w => `${w}:*`).join(" & ")
       : null;
 
     // For popular sort, we need a subquery to count likes
@@ -190,7 +190,7 @@ export async function GET(request: Request) {
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${c ? sql`AND (COALESCE(rc.like_count, 0), s.created_at) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
+          ${c ? sql`AND (COALESCE(rc.like_count, 0), date_trunc('milliseconds', s.created_at)) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
         ORDER BY COALESCE(rc.like_count, 0) DESC, s.created_at DESC
         LIMIT ${limit + 1}
       `;
@@ -204,7 +204,7 @@ export async function GET(request: Request) {
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${c ? sql`AND (COALESCE(s.view_count, 0), s.created_at) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
+          ${c ? sql`AND (COALESCE(s.view_count, 0), date_trunc('milliseconds', s.created_at)) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
         ORDER BY COALESCE(s.view_count, 0) DESC, s.created_at DESC
         LIMIT ${limit + 1}
       `;
@@ -220,9 +220,9 @@ export async function GET(request: Request) {
           ${tagFilters}
           ${followingCondition}
           ${chronologicalCursor?.id
-            ? sql`AND (${col}, s.id) < (${chronologicalCursor.timestamp}::timestamptz, ${chronologicalCursor.id})`
+            ? sql`AND (date_trunc('milliseconds', ${col}), s.id) < (${chronologicalCursor.timestamp}::timestamptz, ${chronologicalCursor.id})`
             : chronologicalCursor
-              ? sql`AND ${col} < ${chronologicalCursor.timestamp}::timestamptz`
+              ? sql`AND date_trunc('milliseconds', ${col}) < ${chronologicalCursor.timestamp}::timestamptz`
               : sql``}
         ORDER BY ${col} DESC, s.id DESC
         LIMIT ${limit + 1}
