@@ -184,6 +184,13 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
     setMeta((prev) => ({ ...prev, tags: newTags }));
   }, []);
 
+  // Merge a partial patch into the current tags. Unlike setTags this can't
+  // clobber a concurrent write — needed by the async auto-detect effects,
+  // which may resolve out of order from the same tags snapshot.
+  const mergeTags = useCallback((patch: Partial<ReportTags>) => {
+    setMeta((prev) => ({ ...prev, tags: { ...prev.tags, ...patch } }));
+  }, []);
+
   const setTemplateId = useCallback((id: string | undefined) => {
     setMeta((prev) => ({ ...prev, templateId: id }));
   }, []);
@@ -241,6 +248,6 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
 
   return {
     roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault, privateFields,
-    setRole, setSummary, setCommonModes, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
+    setRole, setSummary, setCommonModes, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, mergeTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
   };
 }

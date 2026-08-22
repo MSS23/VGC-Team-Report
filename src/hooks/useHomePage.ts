@@ -26,8 +26,8 @@ import { usePostHog } from "@/components/providers/PostHogProvider";
 import { useTranslation } from "@/lib/i18n";
 import { getTemplate } from "@/lib/templates";
 import type { SpriteConfig } from "@/lib/types/sprites";
-import { detectArchetypes } from "@/lib/analysis/detect-archetype";
-import { detectRegulation } from "@/lib/analysis/detect-regulation";
+// detect-archetype / detect-regulation pull the dex subset (~130KB raw) via
+// mega-detect — imported lazily in their effects to keep it off first paint.
 import { isDifferentTeam } from "@/lib/utils/extract-species";
 
 export function useHomePage() {
@@ -113,7 +113,7 @@ export function useHomePage() {
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
     roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault, privateFields,
-    setRole, setSummary, setCommonModes, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
+    setRole, setSummary, setCommonModes, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, mergeTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
   } = useTeamMeta(speciesKeys, shouldPersist);
 
   // Compute the effective Mega-or-base state for a given Pokemon index.
@@ -670,11 +670,13 @@ export function useHomePage() {
     if (!analysis || share.isSharedView || archetypeDetected.current) return;
     if (tags?.archetype && tags.archetype.length > 0) return; // user already set tags
     archetypeDetected.current = true;
-    const detected = detectArchetypes(analysis.pokemon);
-    if (detected.length > 0) {
-      setTags({ ...tags, archetype: detected });
-    }
-  }, [analysis, share.isSharedView, tags, setTags]);
+    void import("@/lib/analysis/detect-archetype").then(({ detectArchetypes }) => {
+      const detected = detectArchetypes(analysis.pokemon);
+      if (detected.length > 0) {
+        mergeTags({ archetype: detected });
+      }
+    });
+  }, [analysis, share.isSharedView, tags, mergeTags]);
 
   // ── Auto-detect regulation from the team composition ─────────────
   // Uses the signal-based detector (lib/analysis/detect-regulation.ts)
@@ -693,13 +695,14 @@ export function useHomePage() {
     if (!analysis || share.isSharedView || regulationDetected.current) return;
     if (tags?.regulation) return; // user already set regulation
     regulationDetected.current = true;
-    const detected = detectRegulation(analysis.pokemon);
-    setTags({
-      ...tags,
-      regulation: detected ?? "Custom",
-      regulationAutoDetected: true,
+    void import("@/lib/analysis/detect-regulation").then(({ detectRegulation }) => {
+      const detected = detectRegulation(analysis.pokemon);
+      mergeTags({
+        regulation: detected ?? "Custom",
+        regulationAutoDetected: true,
+      });
     });
-  }, [analysis, share.isSharedView, tags, setTags]);
+  }, [analysis, share.isSharedView, tags, mergeTags]);
 
   // ── Draft hydration (parallel to shared-view hydration above) ────
   // The /?draft=ID flow used to call only handleAnalyze(paste), which

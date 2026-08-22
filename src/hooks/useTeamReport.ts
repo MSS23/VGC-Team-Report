@@ -1,12 +1,8 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
-import { lookupPokemon } from "@/lib/data/pokemon";
-import { calculateAllStats } from "@/lib/analysis/stat-calculator";
-import { getItemStatBoost } from "@/lib/analysis/item-boosts";
+import { useState, useCallback, useEffect } from "react";
 import type { ParsedTeam } from "@/lib/types/pokemon";
-import type { AnalyzedPokemon, TeamAnalysis } from "@/lib/types/analysis";
+import type { TeamAnalysis } from "@/lib/types/analysis";
 
 // v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
 // The pre-v2 keys could contain leaked content from someone else's shared
@@ -46,26 +42,30 @@ export function useTeamReport(persist = true) {
     }
   }, [paste, parsedTeam, persist]);
 
+  // The parser + Pokémon data tables (~330KB raw) live in the lazily-loaded
+  // analyze-team chunk so the paste screen doesn't pay for them on first
+  // paint. Both loads hit the same module, so the chunk downloads once;
+  // after that these resolve in a microtask. Callers already treat
+  // parsedTeam/analysis as async state, so the extra tick changes nothing.
   const parseTeam = useCallback((input: string) => {
-    const result = parseShowdownPaste(input);
-    setParsedTeam(result);
+    void import("@/lib/analysis/analyze-team").then(({ parseShowdownPaste }) => {
+      setParsedTeam(parseShowdownPaste(input));
+    });
   }, []);
 
-  const analysis = useMemo<TeamAnalysis | null>(() => {
-    if (!parsedTeam || parsedTeam.pokemon.length === 0) return null;
-
-    const analyzedPokemon: AnalyzedPokemon[] = parsedTeam.pokemon.map((parsed) => {
-      const data = lookupPokemon(parsed.species);
-      const calculatedStats = data
-        ? calculateAllStats(data.baseStats, parsed.ivs, parsed.evs, parsed.level, parsed.nature)
-        : { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
-
-      const itemBoost = getItemStatBoost(parsed.item, parsed.ability, calculatedStats);
-
-      return { parsed, data, calculatedStats, itemBoost };
+  const [analysis, setAnalysis] = useState<TeamAnalysis | null>(null);
+  useEffect(() => {
+    if (!parsedTeam || parsedTeam.pokemon.length === 0) {
+      setAnalysis(null);
+      return;
+    }
+    let cancelled = false;
+    void import("@/lib/analysis/analyze-team").then(({ analyzeTeam }) => {
+      if (!cancelled) setAnalysis(analyzeTeam(parsedTeam));
     });
-
-    return { pokemon: analyzedPokemon };
+    return () => {
+      cancelled = true;
+    };
   }, [parsedTeam]);
 
   /** Reorder Pokemon by swapping positions. Preserves all parsed data. */

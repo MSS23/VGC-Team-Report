@@ -62,7 +62,6 @@ const CommentSection = dynamic(() => import("@/components/social/CommentSection"
 const PrintableReport = dynamic(() => import("@/components/ui/PdfExport").then(m => ({ default: m.PrintableReport })));
 import type { ExportMode } from "@/components/ui/PdfExport";
 const OTSSheetModal = dynamic(() => import("@/components/ui/OTSSheetModal").then(m => ({ default: m.OTSSheetModal })), { ssr: false });
-import { detectMegaFromItem } from "@/lib/utils/mega-detect";
 
 const HOW_TO_STEPS = [
   {
@@ -279,21 +278,34 @@ function HomeContent() {
   // to decide if the Form segment of the floating display pill should
   // appear. Already-Mega imports (Kangaskhan-Mega, etc.) don't count
   // because they can't be flipped to base form via this control.
-  const hasMegaCapable = useMemo(() => {
-    if (!analysis) return false;
+  // State + lazy import rather than a memo: mega-detect pulls the dex subset
+  // (~130KB raw), which must stay out of the homepage's initial bundle.
+  const [hasMegaCapable, setHasMegaCapable] = useState(false);
+  useEffect(() => {
     // Mega Evolutions only exist in the Champions format (Reg M-A). When
     // an explicit non-M-A regulation is set (Reg F/G/H/I etc.) Megas can't
     // be used, so we hide the global Display pill and any Mega controls
     // entirely. Undefined regulation falls through to the content check
     // so legacy reports without a regulation tag don't lose Mega support.
-    if (tags?.regulation && !isChampionsFormat(tags.regulation)) return false;
-    // The pill drives the per-card Mega flip — which itself requires an
-    // actual Mega Stone equipped. An already-Mega species name without
-    // its Stone (e.g. `Kangaskhan-Mega @ Sitrus Berry`) can't flip in
-    // battle, so we don't surface the toggle for it here either.
-    return analysis.pokemon.some((p) =>
-      !!detectMegaFromItem(p.parsed.item, p.parsed.species),
-    );
+    if (!analysis || (tags?.regulation && !isChampionsFormat(tags.regulation))) {
+      setHasMegaCapable(false);
+      return;
+    }
+    let cancelled = false;
+    void import("@/lib/utils/mega-detect").then(({ detectMegaFromItem }) => {
+      // The pill drives the per-card Mega flip — which itself requires an
+      // actual Mega Stone equipped. An already-Mega species name without
+      // its Stone (e.g. `Kangaskhan-Mega @ Sitrus Berry`) can't flip in
+      // battle, so we don't surface the toggle for it here either.
+      if (!cancelled) {
+        setHasMegaCapable(
+          analysis.pokemon.some((p) => !!detectMegaFromItem(p.parsed.item, p.parsed.species)),
+        );
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [analysis, tags?.regulation]);
 
   // ── Load draft from ?draft=ID ─────────────────────────────────────
