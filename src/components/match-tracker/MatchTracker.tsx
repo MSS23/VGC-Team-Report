@@ -495,7 +495,7 @@ export function MatchTracker() {
                           type="button"
                           onClick={() => setPendingDeleteId(log.id)}
                           aria-label="Delete match entry"
-                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 rounded text-text-tertiary hover:text-red-500 transition-all cursor-pointer"
+                          className="sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-text-tertiary hover:text-red-500 transition-all cursor-pointer"
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="3 6 5 6 21 6" />

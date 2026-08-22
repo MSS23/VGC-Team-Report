@@ -490,7 +490,7 @@ export function SlideNavControls({
             <div
               role="tablist"
               aria-label="Slides"
-              className="flex-1 flex items-center justify-center gap-[5px] overflow-x-auto scrollbar-none"
+              className="flex-1 flex items-center [justify-content:safe_center] gap-[5px] overflow-x-auto scrollbar-none"
             >
               {Array.from({ length: totalSlides }, (_, i) => {
                 const isHidden = hiddenStates?.[i] ?? false;

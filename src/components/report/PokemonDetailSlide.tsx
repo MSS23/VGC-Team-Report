@@ -930,7 +930,7 @@ function PokemonDetailSlideBase({
               key={tab}
               type="button"
               onClick={() => handleTabChange(tab)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 min-h-11 rounded-lg text-xs font-bold uppercase tracking-wide transition-all ${
                 mobileTab === tab
                   ? "bg-surface text-accent shadow-sm"
                   : "text-text-tertiary hover:text-text-secondary"

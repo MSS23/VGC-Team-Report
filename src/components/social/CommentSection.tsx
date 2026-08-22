@@ -283,7 +283,7 @@ export function CommentSection({ shareId, canModerate = false }: CommentSectionP
                       </span>
                     </div>
                     <div
-                      className="flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all"
+                      className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-all"
                     >
                       {canDelete(comment) && (
                         <button

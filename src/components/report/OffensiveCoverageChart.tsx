@@ -217,7 +217,7 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
 
       {/* Heatmap grid */}
       <div className="overflow-x-auto -mx-2 px-2 scrollbar-none" style={{ touchAction: "pan-x" }}>
-        <table className="w-full table-fixed sm:table-auto border-collapse text-center min-w-0 sm:min-w-[40rem]">
+        <table className="w-full table-fixed sm:table-auto border-collapse text-center min-w-[40rem]">
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[9px] sm:text-xs font-bold text-text-tertiary uppercase tracking-wider w-14 sm:w-32">
@@ -235,7 +235,7 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
                     }}
                   >
                     <span
-                      className={`inline-block w-full px-0.5 sm:px-1 py-1 text-[8px] sm:text-[11px] font-bold uppercase rounded-md leading-tight transition-opacity ${highlightedType && highlightedType !== type ? "opacity-50" : ""}`}
+                      className={`inline-block w-full px-0.5 sm:px-1 py-1 text-[10px] sm:text-[11px] font-bold uppercase rounded-md leading-tight transition-opacity ${highlightedType && highlightedType !== type ? "opacity-50" : ""}`}
                       style={{ backgroundColor: tc.bg, color: tc.text }}
                       title={type}
                     >
