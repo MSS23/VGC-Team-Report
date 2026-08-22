@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import Clarity from "@microsoft/clarity";
 import { hasAnalyticsConsent, onConsentChange } from "@/lib/consent";
 
 /**
@@ -18,19 +17,24 @@ export function ClarityProvider() {
     if (!id) return;
 
     let started = false;
+    let clarity: typeof import("@microsoft/clarity").default | null = null;
 
-    const start = () => {
+    // Lazy import keeps the Clarity SDK out of every route's initial bundle —
+    // it only loads once analytics consent actually exists.
+    const start = async () => {
       if (started) return;
       started = true;
+      const { default: Clarity } = await import("@microsoft/clarity");
+      clarity = Clarity;
       Clarity.init(id);
       Clarity.consent(true);
     };
 
-    if (hasAnalyticsConsent()) start();
+    if (hasAnalyticsConsent()) void start();
 
     return onConsentChange((accepted) => {
-      if (accepted) start();
-      else if (started) Clarity.consent(false);
+      if (accepted) void start();
+      else if (started) clarity?.consent(false);
     });
   }, []);
 

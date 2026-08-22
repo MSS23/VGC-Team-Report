@@ -57,6 +57,8 @@ function MegaSprite({ species }: { species: string }) {
       alt={species}
       width={120}
       height={120}
+      loading="eager"
+      fetchPriority="high"
       className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-lg"
       onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
     />

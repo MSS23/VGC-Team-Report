@@ -8,10 +8,14 @@ import { useHomePage } from "@/hooks/useHomePage";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 import { PasteInput } from "@/components/input/PasteInput";
-import { TeamReport } from "@/components/report/TeamReport";
-import { TeamCardCTA } from "@/components/report/TeamCardCTA";
-import { TournamentMode } from "@/components/report/TournamentMode";
-import { SlideNavControls } from "@/components/report/SlideNavControls";
+// Report-view components never render on the initial paste screen — lazy-load
+// them so first paint doesn't pay for the full report bundle.
+const TeamReport = dynamic(() => import("@/components/report/TeamReport").then(m => ({ default: m.TeamReport })), {
+  loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-64 max-w-5xl mx-auto" />,
+});
+const TeamCardCTA = dynamic(() => import("@/components/report/TeamCardCTA").then(m => ({ default: m.TeamCardCTA })));
+const TournamentMode = dynamic(() => import("@/components/report/TournamentMode").then(m => ({ default: m.TournamentMode })));
+const SlideNavControls = dynamic(() => import("@/components/report/SlideNavControls").then(m => ({ default: m.SlideNavControls })));
 import { isChampionsFormat } from "@/lib/data/tags";
 import { WalkthroughOverlay } from "@/components/ui/WalkthroughOverlay";
 import { ShortcutHintOverlay } from "@/components/ui/ShortcutHintOverlay";
