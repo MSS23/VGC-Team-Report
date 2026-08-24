@@ -40,6 +40,41 @@ const pokemonCache = new Map<string, PokemonData | null>();
 const megaEntryCache = new Map<string, MegaPokemonEntry | null>();
 const itemMegaCache = new Map<string, MegaPokemonEntry | null>();
 
+// ── Type narrowing ──────────────────────────────────────────────────────────
+
+const POKEMON_TYPES: ReadonlySet<string> = new Set([
+  "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
+  "Fighting", "Poison", "Ground", "Flying", "Psychic", "Bug",
+  "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
+]);
+
+function isPokemonType(type: string): type is PokemonType {
+  return POKEMON_TYPES.has(type);
+}
+
+/**
+ * Narrow the subset's `string[]` types to the `[T] | [T, T]` tuple our
+ * PokemonData/MegaPokemonEntry shapes promise.
+ *
+ * This must FILTER, never cast. The subset stores types as a pipe-joined
+ * string and `splitList("")` correctly decodes to `[]`, so a blind
+ * `[types[0]]` builds `[undefined]` while the type system believes it holds a
+ * valid PokemonType — `undefined` then reaches the type chart (silently
+ * neutral matchups) and TYPE_COLORS (`colors.bg` on undefined ⇒ render
+ * crash). Non-union strings leak the same way: `MissingNo.` really is typed
+ * `Bird|Normal` in the subset.
+ *
+ * Returns null when nothing survives the filter — the caller treats that as a
+ * lookup miss rather than fabricating a bogus type entry.
+ */
+function narrowTypes(
+  types: string[],
+): [PokemonType] | [PokemonType, PokemonType] | null {
+  const [first, second] = types.filter(isPokemonType);
+  if (!first) return null;
+  return second ? [first, second] : [first];
+}
+
 // ── Pokemon lookup fallback ─────────────────────────────────────────────────
 
 function normaliseKey(species: string): string {
@@ -79,10 +114,14 @@ export function lookupPokemonFromDex(species: string): PokemonData | null {
   }
 
   // Narrow to the [T] | [T, T] tuple our PokemonData type expects.
-  const types = entry.types as PokemonType[];
-  const typesTuple: PokemonData["types"] = types.length >= 2
-    ? [types[0], types[1]]
-    : [types[0]];
+  const typesTuple = narrowTypes(entry.types);
+  if (!typesTuple) {
+    // No recognisable typing — same class of guard as the zero-stat check
+    // above. A typeless card would render blank badges and an all-neutral
+    // defensive profile, so report a miss instead.
+    pokemonCache.set(key, null);
+    return null;
+  }
 
   const data: PokemonData = {
     name: entry.name,
@@ -135,10 +174,11 @@ export function getMegaEntryFromDex(species: string): MegaPokemonEntry | null {
     }
   }
 
-  const megaTypes = entry.types as PokemonType[];
-  const megaTypesTuple: MegaPokemonEntry["types"] = megaTypes.length >= 2
-    ? [megaTypes[0], megaTypes[1]]
-    : [megaTypes[0]];
+  const megaTypesTuple = narrowTypes(entry.types);
+  if (!megaTypesTuple) {
+    megaEntryCache.set(key, null);
+    return null;
+  }
 
   const built: MegaPokemonEntry = {
     slug: megaSlugFromDataKey(key),
