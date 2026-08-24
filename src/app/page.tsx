@@ -3,7 +3,6 @@
 import { Suspense, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useHomePage } from "@/hooks/useHomePage";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
@@ -49,7 +48,7 @@ import { I18nProvider } from "@/lib/i18n";
 import { FAQPageJsonLd, HowToSchema } from "@/components/seo/JsonLd";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
-import { computeVersionDiff, summarizeChangedFields, getNavigableChanges, type VersionDiff, type DiffChange } from "@/lib/utils/version-diff";
+import { computeVersionDiff, getNavigableChanges, type VersionDiff, type DiffChange } from "@/lib/utils/version-diff";
 const DiffNavigator = dynamic(() => import("@/components/ui/DiffNavigator").then(m => ({ default: m.DiffNavigator })));
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import { usePostHog } from "@/components/providers/PostHogProvider";
@@ -187,7 +186,6 @@ function HomeContent() {
     setTags,
     privateFields,
     setPrivateFields,
-    megaStates,
     toggleMega,
     globalMegaDefault,
     setGlobalMegaDefaultAndReset,
@@ -226,13 +224,10 @@ function HomeContent() {
     walkthroughSkip,
     startWalkthrough,
     walkthroughGuidePokemon,
-    walkthroughIsFirstTime,
     canUndo,
     canRedo,
     handleUndo,
     handleRedo,
-    pendingTemplateId,
-    setPendingTemplateId,
     handleAnalyze,
     loadDraft,
     isSampleTeam,
@@ -802,8 +797,6 @@ function HomeContent() {
           paste={paste}
           onPasteChange={setPaste}
           onAnalyze={handleAnalyze}
-          selectedTemplate={pendingTemplateId}
-          onTemplateSelect={setPendingTemplateId}
         />
       </main>
     );
@@ -1145,13 +1138,24 @@ function HomeContent() {
 
       {/* Report content */}
       <VersionDiffProvider value={versionDiffContextValue}>
+      {/*
+        The slide body is its own scroll container on >= sm, so it must be
+        focusable for keyboard users to be able to scroll it (WCAG 2.1.1) — it
+        already carries an accessible name, which is what the ARIA APG asks of a
+        focusable scroll region. `data-slide-scroll` lets useSlideNavigation
+        scroll it with Up/Down before paging the deck; `data-slide-shortcut-scope`
+        scopes the single-character shortcuts to this region (WCAG 2.1.4).
+      */}
       <div
         ref={swipeRef}
         role="region"
         aria-roledescription="report slide"
         aria-label={`${slideLabels[currentSlide] ?? "Team report"}, slide ${currentSlide + 1} of ${totalSlides}`}
         aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
-        className={`max-w-5xl mx-auto slide-content overflow-x-hidden min-h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:min-h-0 sm:h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:overflow-y-auto sm:scrollbar-thin pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:pb-16 ${
+        tabIndex={0}
+        data-slide-scroll=""
+        data-slide-shortcut-scope=""
+        className={`max-w-5xl mx-auto slide-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-inset overflow-x-hidden min-h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:min-h-0 sm:h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:overflow-y-auto sm:scrollbar-thin pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:pb-16 ${
           isPresentationStyle
             ? "px-3 sm:px-8 py-2 sm:py-4"
             : "px-2 sm:px-6 lg:px-8 py-2 sm:py-6 creator:px-8 creator:py-6"
