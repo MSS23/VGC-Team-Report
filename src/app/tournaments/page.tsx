@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   ],
 };
 
-const UPCOMING_TOURNAMENTS = [
+const TOURNAMENT_SCHEDULE = [
   {
     name: "VGC Indianapolis Regionals 2026",
     startDate: "2026-05-29",
@@ -45,12 +45,25 @@ const UPCOMING_TOURNAMENTS = [
   },
   {
     name: "2026 Pokemon World Championships",
-    startDate: "2026-08-14",
-    location: "San Francisco, California, USA",
+    startDate: "2026-08-28",
+    location: "Moscone Center, San Francisco, California, USA",
     url: "https://pokemonvgcteamreport.com/tournaments",
-    description: "The 2026 Pokemon World Championships held August 14-17 in San Francisco, the pinnacle of the VGC competitive season.",
+    description: "The 2026 Pokemon World Championships held August 28-30 in San Francisco, the pinnacle of the VGC competitive season.",
   },
 ];
+
+// This list is hand-maintained, so an event stays here after it happens.
+// Derive eventStatus from the date rather than asserting EventScheduled
+// forever — the same rule TournamentsContent applies to its own list — so a
+// past event degrades to EventCompleted instead of publishing a stale
+// "upcoming" claim in structured data.
+const TOURNAMENT_EVENTS = TOURNAMENT_SCHEDULE.map((event) => ({
+  ...event,
+  eventStatus:
+    event.startDate > new Date().toISOString().slice(0, 10)
+      ? "https://schema.org/EventScheduled"
+      : "https://schema.org/EventCompleted",
+}));
 
 export default function TournamentsPage() {
   return (
@@ -61,7 +74,7 @@ export default function TournamentsPage() {
           { name: "Tournaments", url: "https://pokemonvgcteamreport.com/tournaments" },
         ]}
       />
-      <SportsEventJsonLd events={UPCOMING_TOURNAMENTS} />
+      <SportsEventJsonLd events={TOURNAMENT_EVENTS} />
       <TournamentsContent />
     </>
   );

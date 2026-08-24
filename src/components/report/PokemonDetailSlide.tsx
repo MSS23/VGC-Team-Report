@@ -241,7 +241,6 @@ function EditableCalcEntry({
 }
 
 function CollapsibleCalcGroup({
-  category,
   cfg,
   entries,
   globalCalcs,

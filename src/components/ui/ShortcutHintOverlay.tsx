@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "@/lib/i18n";
+import { areShortcutsEnabled, setShortcutsEnabled } from "@/lib/utils/keyboard-shortcuts";
 
 interface ShortcutHintOverlayProps {
   visible: boolean;
@@ -11,6 +12,8 @@ interface ShortcutHintOverlayProps {
 
 export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = false }: ShortcutHintOverlayProps) {
   const { t } = useTranslation();
+  // WCAG 2.1.4 — the single-character shortcuts must be switchable off.
+  const [singleKeyOn, setSingleKeyOn] = useState(true);
 
   const SHORTCUTS_COMMON = [
     { key: "\u2190 / \u2192", label: t.navigateSlides },
@@ -33,6 +36,11 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
     { key: "H", label: "Hide/show current slide" },
     { key: "[ / ]", label: "Reorder slide up/down" },
   ];
+  // Re-read the stored preference each time the panel opens
+  useEffect(() => {
+    if (visible) setSingleKeyOn(areShortcutsEnabled());
+  }, [visible]);
+
   // Close on Escape key
   useEffect(() => {
     if (!visible) return;
@@ -81,6 +89,29 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
           ))}
         </div>
         <div className="mt-4 pt-3 border-t border-border-subtle">
+          <label
+            htmlFor="single-key-shortcuts-toggle"
+            className="flex items-center justify-between gap-3 min-h-11 cursor-pointer"
+          >
+            <span className="text-xs font-semibold text-text-secondary">Single-key shortcuts</span>
+            <input
+              id="single-key-shortcuts-toggle"
+              type="checkbox"
+              checked={singleKeyOn}
+              onChange={(e) => {
+                setSingleKeyOn(e.target.checked);
+                setShortcutsEnabled(e.target.checked);
+              }}
+              className="w-5 h-5 flex-shrink-0 accent-[var(--accent)] cursor-pointer"
+            />
+          </label>
+          <p className="text-[11px] text-text-tertiary leading-relaxed">
+            Turn these off if letter keys clash with speech input or a screen reader. Arrow keys,
+            Home/End and Esc keep working, and this panel stays available from the Keyboard
+            shortcuts button.
+          </p>
+        </div>
+        <div className="mt-3 pt-3 border-t border-border-subtle">
           <p className="text-[11px] text-text-tertiary text-center leading-relaxed">
             {t.swipeHint}
           </p>

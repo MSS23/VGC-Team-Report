@@ -24,7 +24,6 @@ import { useAuth } from "@clerk/nextjs";
 import { SAMPLE_PASTE } from "@/components/input/PasteInput";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { useTranslation } from "@/lib/i18n";
-import { getTemplate } from "@/lib/templates";
 import type { SpriteConfig } from "@/lib/types/sprites";
 // detect-archetype / detect-regulation pull the dex subset (~130KB raw) via
 // mega-detect — imported lazily in their effects to keep it off first paint.
@@ -35,7 +34,6 @@ export function useHomePage() {
   const { isSignedIn } = useAuth();
   const posthog = usePostHog();
   const [isSampleTeam, setIsSampleTeam] = useState(false);
-  const [pendingTemplateId, setPendingTemplateId] = useState<string>("blank");
 
   // ── Share context detection ─────────────────────────────────────
   // Detect whether the current URL points at a shared report BEFORE any
@@ -649,21 +647,6 @@ export function useHomePage() {
     setPresentationMode(true);
   }, [share.sharedState, share.isSharedView, canEditSharedReport, analysis, setPresentationMode]);
 
-  // ── Apply template defaults when analysis first appears (non-shared) ──
-  const templateApplied = useRef(false);
-  useEffect(() => {
-    if (!analysis || share.isSharedView || templateApplied.current) return;
-    templateApplied.current = true;
-    const tmpl = getTemplate(pendingTemplateId);
-    if (!tmpl || tmpl.id === "blank") return;
-    setTemplateId(tmpl.id);
-
-    // Apply template-specific placeholder summary if summary is empty
-    if (!summary && tmpl.defaults.summaryPlaceholder) {
-      setSummary(tmpl.defaults.summaryPlaceholder);
-    }
-  }, [analysis, share.isSharedView, pendingTemplateId, setTemplateId, summary, setSummary]);
-
   // ── Auto-detect archetypes when analysis appears (if no tags set) ──
   const archetypeDetected = useRef(false);
   useEffect(() => {
@@ -722,9 +705,8 @@ export function useHomePage() {
     if (id) setActiveDraft(id);
     pendingDraftRef.current = state;
     draftHydrated.current = false;
-    // Skip the auto-template / auto-archetype / auto-regulation effects;
+    // Skip the auto-archetype / auto-regulation effects;
     // a draft already has its own user-authored values for these.
-    templateApplied.current = true;
     archetypeDetected.current = true;
     regulationDetected.current = true;
     setIsSampleTeam(false);
@@ -782,7 +764,6 @@ export function useHomePage() {
       clearDraft();
     }
     setIsSampleTeam(teamPaste.trim() === SAMPLE_PASTE.trim());
-    templateApplied.current = false; // reset so template applies on next parse
     archetypeDetected.current = false;
     regulationDetected.current = false;
     parseTeam(teamPaste);
@@ -906,9 +887,6 @@ export function useHomePage() {
     canUndo: undoRedo.canUndo,
     canRedo: undoRedo.canRedo,
     handleUndo, handleRedo,
-
-    // Templates
-    pendingTemplateId, setPendingTemplateId,
 
     // Actions
     handleAnalyze,

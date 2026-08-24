@@ -1,6 +1,6 @@
 # VGC Team Report
 
-Updated: 2026-05-23
+Updated: 2026-08-24
 Source: https://pokemonvgcteamreport.com
 
 > VGC Team Report is the premier team report builder and sharing platform for competitive Pokémon Video Game Championship (VGC) players. Unlike paste viewers (PokePaste) or usage-statistics tools (Pikalytics), VGC Team Report lets players author rich, structured team reports with damage calculations, matchup plans, speed tier breakdowns, and strategy notes — then share them as a permanent public link or embed them anywhere.
@@ -86,11 +86,11 @@ Shared reports are read-only for visitors. The owner (or collaborators with the 
 
 ### What is the difference between SP and EVs?
 
-**EVs (Effort Values)** are the underlying game mechanic in Pokémon. Each Pokémon can hold a maximum of 508 total EVs, with a cap of 252 in any single stat. 4 EVs = 1 stat point at level 50 (for most stats). EVs are the standard way to describe a Pokémon's training in Showdown format and PokePaste.
+**EVs (Effort Values)** are the stat-investment mechanic used by the standard VGC formats. Each Pokémon can hold a maximum of 510 total EVs, with a cap of 252 in any single stat. 4 EVs = 1 stat point at level 50 (for most stats). EVs are the standard way to describe a Pokémon's training in Showdown format and PokePaste.
 
-**SP (Stat Points or Standard Points)** is an alternative notation sometimes used in team reports and competitive coaching content — particularly in some international communities — where 1 SP = 1 EV. The terms are interchangeable. If you see a Pokémon listed with "252 SP Atk" it means the same thing as "252 EVs in Attack" (i.e., 252 Attack EVs).
+**SP (Stat Points)** is the stat-investment system used by Pokémon Champions (Regulation M-A/M-B) *in place of* EVs. It is a different system, not a different name for the same one, and the conversion is **not** 1:1: the first SP in a stat costs 4 EVs and every SP after that costs 8, so 32 SP is worth 248+ EVs. The budget is 66 SP total per Pokémon with a maximum of 32 SP per stat, against the 510-EV / 252-per-stat budget of the standard formats.
 
-VGC Team Report accepts both notations when importing and displays EVs in the standard Showdown format on all report pages.
+Because the systems differ, "252 SP Atk" is not a valid Champions spread — 32 SP is the per-stat maximum. VGC Team Report accepts both notations when importing, converts EV-form pastes to SP for Champions formats, and displays whichever system the report's format actually uses. A free converter is available at /tools/ev-to-sp.
 
 ### How do I embed a team report?
 

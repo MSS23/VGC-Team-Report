@@ -1,6 +1,34 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { areShortcutsEnabled, subscribeShortcutsEnabled } from "@/lib/utils/keyboard-shortcuts";
+
+/** Marks the report shell — single-character shortcuts only fire inside it. */
+const SHORTCUT_SCOPE_SELECTOR = "[data-slide-shortcut-scope]";
+/** Marks the scrolling slide region so arrow keys scroll it before paging. */
+const SCROLL_REGION_SELECTOR = "[data-slide-scroll]";
+
+/**
+ * WCAG 2.1.4 — character shortcuts must be scoped to focus (as well as being
+ * disableable). Focus on an unrelated part of the page (nav, footer, another
+ * landmark) must not reach the report's letter shortcuts. Nothing focused at
+ * all still counts as in scope: the report shell is the page's only interactive
+ * surface at that point, and the documented shortcuts would otherwise be dead
+ * on load.
+ */
+function isWithinShortcutScope(): boolean {
+  if (typeof document === "undefined") return false;
+  const active = document.activeElement as HTMLElement | null;
+  if (!active || active === document.body || active === document.documentElement) return true;
+  return !!active.closest?.(SHORTCUT_SCOPE_SELECTOR);
+}
+
+/** True when `el` still has room to scroll in `direction` (-1 up, 1 down). */
+function canScrollFurther(el: HTMLElement, direction: 1 | -1): boolean {
+  const max = el.scrollHeight - el.clientHeight;
+  if (max <= 1) return false;
+  return direction === -1 ? el.scrollTop > 0 : el.scrollTop < max - 1;
+}
 
 interface UseSlideNavigationOptions {
   totalSlides: number;
@@ -90,6 +118,17 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
     bypassFocusGuardRef.current = bypassFocusGuard;
   }, [bypassFocusGuard]);
 
+  // WCAG 2.1.4 — the user can switch the single-character shortcuts off.
+  // Read lazily (localStorage is unavailable during SSR) and kept in sync with
+  // the toggle in the keyboard-shortcuts dialog and with other tabs.
+  const shortcutsEnabledRef = useRef(true);
+  useEffect(() => {
+    shortcutsEnabledRef.current = areShortcutsEnabled();
+    return subscribeShortcutsEnabled((value) => {
+      shortcutsEnabledRef.current = value;
+    });
+  }, []);
+
   // Keyboard listener — only re-attaches when `enabled` changes
   useEffect(() => {
     if (!enabled) return;
@@ -124,6 +163,16 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
         return;
       }
 
+      // The slide body is its own scroll container on >= sm. When focus is
+      // inside it and it still has somewhere to scroll, Up/Down must scroll it
+      // rather than page the deck — otherwise overflowing slide content is
+      // unreachable by keyboard (WCAG 2.1.1).
+      const verticalDirection = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
+      if (verticalDirection !== 0) {
+        const scroller = target?.closest?.(SCROLL_REGION_SELECTOR) as HTMLElement | null;
+        if (scroller && canScrollFurther(scroller, verticalDirection)) return;
+      }
+
       if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
         withTransition(() => setCurrentSlide((prev) => Math.min(prev + 1, total - 1)));
@@ -139,6 +188,14 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
       } else if (e.key === "Escape" && cbs.onEscape) {
         e.preventDefault();
         cbs.onEscape();
+      }
+      // ---- Single-character shortcuts below (WCAG 2.1.4) --------------------
+      // They fire only while the report shell holds focus and only while the
+      // user has left them switched on. Everything above this line is a
+      // navigation key (arrows / Home / End / Escape) or a modified chord, and
+      // is outside 2.1.4.
+      else if (!shortcutsEnabledRef.current || !isWithinShortcutScope()) {
+        return;
       } else if ((e.key === "d" || e.key === "D") && cbs.onToggleDarkMode) {
         e.preventDefault();
         cbs.onToggleDarkMode();

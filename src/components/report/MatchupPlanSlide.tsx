@@ -496,11 +496,16 @@ function GamePlanSection({
 
   return (
     <div className={`bg-surface border border-border rounded-2xl border-l-[3px] ${color.accent} shadow-sm transition-shadow hover:shadow-md`}>
-      {/* Header — always visible */}
+      {/* Header — always visible.
+          The collapse toggle and the delete control are SIBLING buttons: a click
+          target nested inside a <button> is invalid HTML and is unreachable by
+          keyboard (WCAG 2.1.1 / 4.1.2). */}
+      <div className="flex items-center rounded-t-2xl overflow-hidden">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 sm:px-5 py-3.5 hover:bg-surface-alt/30 transition-colors rounded-t-2xl"
+        aria-expanded={!isCollapsed}
+        className="flex-1 min-w-0 flex items-center justify-between px-4 sm:px-5 py-3.5 hover:bg-surface-alt/30 transition-colors"
       >
         <div className="flex items-center gap-3">
           <svg
@@ -508,7 +513,8 @@ function GamePlanSection({
             height="10"
             viewBox="0 0 10 10"
             fill="currentColor"
-            className="text-text-tertiary/60 transition-transform flex-shrink-0"
+            aria-hidden="true"
+            className="text-text-tertiary transition-transform flex-shrink-0"
             style={{ transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
           >
             <polygon points="0,0 10,5 0,10" />
@@ -549,15 +555,18 @@ function GamePlanSection({
             </div>
           )}
         </div>
-        {!isReadOnly && canDelete && (
-          <span
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="text-text-tertiary hover:text-red-400 text-xs px-2 py-1 rounded-md hover:bg-red-400/10 transition-colors"
-          >
-            {t.delete}
-          </span>
-        )}
       </button>
+      {!isReadOnly && canDelete && (
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label={`${t.delete} ${t.gameN} ${index + 1}`}
+          className="flex-shrink-0 mr-4 sm:mr-5 min-h-11 min-w-11 inline-flex items-center justify-center text-text-tertiary hover:text-red-400 text-xs px-2 py-1 rounded-md hover:bg-red-400/10 transition-colors cursor-pointer"
+        >
+          {t.delete}
+        </button>
+      )}
+      </div>
 
       {/* Content — collapsible */}
       {!isCollapsed && (
@@ -611,7 +620,8 @@ function GamePlanSection({
                     onReorderBring(0 as 0 | 1 | 2 | 3, 2 as 0 | 1 | 2 | 3);
                     onReorderBring(1 as 0 | 1 | 2 | 3, 3 as 0 | 1 | 2 | 3);
                   }}
-                  className="self-center p-1.5 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/50 transition-all cursor-pointer lg:hidden"
+                  className="self-center min-h-11 min-w-11 inline-flex items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/50 transition-all cursor-pointer lg:hidden"
+                  aria-label="Swap lead and back Pokemon"
                   title="Swap lead and back"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

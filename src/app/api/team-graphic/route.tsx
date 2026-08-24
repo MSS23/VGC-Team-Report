@@ -4,6 +4,10 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { NextResponse } from "next/server";
 import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
 import { POKEMON_TYPES_MAP } from "@/lib/data/pokemon-types-map";
+import {
+  normalizePrivateFields,
+  redactPasteFields,
+} from "@/lib/sharing/redact-paste";
 
 export const runtime = "edge";
 
@@ -92,14 +96,38 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
+  // Same share-ID shape the rest of the share surface enforces. Plain regex
+  // rather than zod: this route runs on the edge, and VGC-256 deliberately
+  // keeps zod out of eagerly-loaded bundles.
+  if (!/^[A-Za-z0-9]{8}$/.test(shareId)) {
+    return NextResponse.json({ error: "Invalid share ID" }, { status: 400 });
+  }
+
   const sql = getDb();
-  const rows = await sql`SELECT data FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
+  const rows = await sql`SELECT data, is_public, is_unlisted FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
   if (rows.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // Mirror the visibility rule enforced on the share read path
+  // (src/app/api/share/[id]/route.ts): a report that is neither public nor
+  // unlisted is private, and rendering its graphic here would hand an
+  // outsider the whole team from the share ID alone. Unlisted reports stay
+  // link-viewable by design, so they keep working.
+  if (!rows[0].is_public && !rows[0].is_unlisted) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const data = rows[0].data as Record<string, unknown>;
-  const paste = (data.paste as string) ?? "";
+
+  // Tiered publishing lets an owner mark individual fields (items, EVs,
+  // natures...) private. The share read path redacts those before returning a
+  // paste; this route rendered the raw one, so a field hidden on the report was
+  // still legible in the PNG. Apply the same redaction here.
+  const privateFields = normalizePrivateFields(
+    data.privateFields as string[] | undefined,
+  );
+  const paste = redactPasteFields((data.paste as string) ?? "", privateFields);
   const tournamentName = (data.tournamentName as string) ?? "";
   const placement = (data.placement as string) ?? "";
   const creatorName = (data.creatorName as string) ?? "";

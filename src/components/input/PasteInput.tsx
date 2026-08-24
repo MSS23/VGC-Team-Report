@@ -84,8 +84,6 @@ interface PasteInputProps {
   paste: string;
   onPasteChange: (value: string) => void;
   onAnalyze: (directPaste?: string) => void;
-  selectedTemplate?: string;
-  onTemplateSelect?: (id: string) => void;
 }
 
 function looksLikeShowdownPaste(text: string): boolean {
@@ -118,7 +116,7 @@ function PopularCardSprite({ species }: { species: string }) {
   );
 }
 
-export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect }: PasteInputProps) {
+export function PasteInput({ paste, onPasteChange, onAnalyze }: PasteInputProps) {
   const { t } = useTranslation();
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
