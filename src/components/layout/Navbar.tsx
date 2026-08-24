@@ -183,7 +183,7 @@ export function Navbar(props: NavbarProps) {
     darkMode, onDarkModeChange,
     genTheme, onGenThemeChange,
     warnings, saveFlash, autoSaveStatus, draftSaveStatus, draftSaveError, onSaveDraft,
-    collaborators, syncStatus,
+    collaborators,
     isSampleTeam,
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare, onViewerShare, creatorRequired,
@@ -199,7 +199,6 @@ export function Navbar(props: NavbarProps) {
   const { t } = useTranslation();
   const { isLoaded, isSignedIn } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [versionPanelOpen, setVersionPanelOpen] = useState(false);
   const [pasteCopied, setPasteCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

@@ -1,7 +1,7 @@
 import { getDb } from "@/lib/db";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { apiGuard } from "@/lib/security/api-guard";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { escapeHtml } from "@/lib/utils/sanitize";

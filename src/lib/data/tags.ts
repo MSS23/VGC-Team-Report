@@ -30,7 +30,6 @@ export const EVENT_TYPES = [
 
 export type Archetype = (typeof ARCHETYPES)[number];
 export type Regulation = (typeof REGULATIONS)[number];
-type EventType = (typeof EVENT_TYPES)[number];
 
 export interface ReportTags {
   archetype?: string[];

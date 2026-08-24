@@ -31,7 +31,7 @@ interface SlideSystemOptions {
 
 export function useSlideSystem(opts: SlideSystemOptions) {
   const {
-    analysis, speciesKeys, plans, hiddenSlides,
+    analysis, speciesKeys, plans,
     isHidden, toggleSlide, togglePlanSlide,
     creatorMode, presentationMode, paste,
     darkMode, setDarkMode, setPresentationMode, setShowShortcutHint,

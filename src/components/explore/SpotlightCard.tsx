@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 import type { ExploreReport } from "./ReportCard";
@@ -26,7 +25,6 @@ function AnimatedSprite({ species, size = 56 }: { species: string; size?: number
 }
 
 export function SpotlightCard({ report }: { report: ExploreReport }) {
-  const { t } = useTranslation();
 
   const likeCount = report.likeCount ?? (report.reactionCounts
     ? Object.values(report.reactionCounts).reduce((sum, c) => sum + c, 0)
