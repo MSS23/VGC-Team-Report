@@ -12,6 +12,11 @@ import type { AnalyzedPokemon, TeamAnalysis } from "@/lib/types/analysis";
  * homepage's initial render path may import this module statically — that
  * would put the data back into every visitor's first paint. Import it with
  * `await import("@/lib/analysis/analyze-team")` from event handlers/effects.
+ *
+ * This is enforced, not just requested: `__tests__/analyze-team-barrier.test.ts`
+ * fails the suite if any non-test source file statically imports this module.
+ * `/compare` has its own copy of the barrier in
+ * `@/components/compare/analyze-compare-paste`.
  */
 export { parseShowdownPaste };
 

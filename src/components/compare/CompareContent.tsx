@@ -2,24 +2,36 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
-import { lookupPokemon } from "@/lib/data/pokemon";
-import {
-  calculateAllStats,
-  calculateChampionsStat,
-  convertToChampionsSp,
-  CHAMPIONS_MAX_SP_PER_STAT,
-  CHAMPIONS_TOTAL_SP,
-} from "@/lib/analysis/stat-calculator";
-import { getItemStatBoost } from "@/lib/analysis/item-boosts";
 import { getDefensiveProfile } from "@/lib/data/type-chart";
 import { PokemonSprite } from "@/components/report/PokemonSprite";
 import { TypeBadge } from "@/components/report/TypeBadge";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
-import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
-import type { AnalyzedPokemon } from "@/lib/types/analysis";
+import type { CompareAnalyzedPokemon } from "./analyze-compare-paste";
 import type { PokemonType } from "@/lib/types/pokemon";
+
+/**
+ * The paste analyzer pulls in the Pokémon data tables (pokemon.ts +
+ * dex-subset.json, ~73 kB gzip). `/compare` shows two empty textareas on
+ * first paint and needs none of that until somebody actually compares, so
+ * the module is loaded with a memoised dynamic `import()` — same pattern as
+ * `@/lib/sharing/url-codec` (VGC-256) and `@/lib/analysis/analyze-team`
+ * (VGC-257). Do NOT turn this into a static import: that puts the dex back
+ * into every /compare visitor's first load.
+ */
+type CompareAnalyzer = typeof import("./analyze-compare-paste");
+
+let analyzerPromise: Promise<CompareAnalyzer> | null = null;
+
+function loadCompareAnalyzer(): Promise<CompareAnalyzer> {
+  analyzerPromise ??= import("./analyze-compare-paste").catch((err) => {
+    // Never cache a failed chunk fetch — a transient network error would
+    // otherwise permanently break comparing for the rest of the session.
+    analyzerPromise = null;
+    throw err;
+  });
+  return analyzerPromise;
+}
 
 interface UserReport {
   id: string;
@@ -106,81 +118,6 @@ const ALL_TYPES: PokemonType[] = [
   "Fighting", "Poison", "Ground", "Flying", "Psychic", "Bug",
   "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
 ];
-
-interface CompareAnalyzedPokemon extends AnalyzedPokemon {
-  /** Resolved display name (mega name if applicable) */
-  displaySpecies: string;
-  /** Resolved types (mega types if applicable) */
-  displayTypes: string[];
-  /** Sprite key (mega data key if applicable) */
-  spriteSpecies: string;
-}
-
-/**
- * Champions-format detection for a parsed team.
- *
- * The Compare page receives raw pastes without regulation metadata, so we
- * infer the format from the spread shape. Champions (Reg M-A) pastes carry
- * SP values in the EV line — total ≤ 66, no stat > 32 — which is
- * unambiguous vs. Reg G (total up to 508). Applied team-wide so every
- * Pokemon in the same paste is read consistently.
- */
-function looksLikeChampionsTeam(pokemon: { evs: import("@/lib/types/pokemon").StatSpread }[]): boolean {
-  if (pokemon.length === 0) return false;
-  for (const p of pokemon) {
-    const stats = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
-    const total = stats.reduce((sum, s) => sum + p.evs[s], 0);
-    if (total === 0) continue; // uninvested — inconclusive
-    if (total > CHAMPIONS_TOTAL_SP) return false;
-    if (stats.some((s) => p.evs[s] > CHAMPIONS_MAX_SP_PER_STAT)) return false;
-  }
-  return true;
-}
-
-function analyzePaste(paste: string): CompareAnalyzedPokemon[] | null {
-  if (!paste.trim()) return null;
-  const parsed = parseShowdownPaste(paste);
-  if (parsed.pokemon.length === 0) return null;
-  const isChampions = looksLikeChampionsTeam(parsed.pokemon);
-  return parsed.pokemon.map((p) => {
-    let data = lookupPokemon(p.species);
-    let displaySpecies = p.species;
-    let spriteSpecies = p.species;
-    let displayTypes: string[] = data?.types ?? [];
-
-    // Resolve mega evolution — either already mega or has mega stone
-    const alreadyMega = isMegaForm(p.species);
-    if (!alreadyMega) {
-      const megaEntry = detectMegaFromItem(p.item, p.species);
-      if (megaEntry) {
-        const megaData = lookupPokemon(megaEntry.dataKey);
-        if (megaData) {
-          data = megaData;
-          displaySpecies = megaEntry.displayName;
-          spriteSpecies = megaEntry.dataKey;
-          displayTypes = megaData.types;
-        }
-      }
-    }
-
-    let calculatedStats = data
-      ? calculateAllStats(data.baseStats, p.ivs, p.evs, p.level, p.nature)
-      : { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
-    if (isChampions && data) {
-      const sp = convertToChampionsSp(p.evs);
-      calculatedStats = {
-        hp: calculateChampionsStat("hp", data.baseStats.hp, sp.hp, p.nature),
-        atk: calculateChampionsStat("atk", data.baseStats.atk, sp.atk, p.nature),
-        def: calculateChampionsStat("def", data.baseStats.def, sp.def, p.nature),
-        spa: calculateChampionsStat("spa", data.baseStats.spa, sp.spa, p.nature),
-        spd: calculateChampionsStat("spd", data.baseStats.spd, sp.spd, p.nature),
-        spe: calculateChampionsStat("spe", data.baseStats.spe, sp.spe, p.nature),
-      };
-    }
-    const itemBoost = getItemStatBoost(p.item, p.ability, calculatedStats);
-    return { parsed: p, data, calculatedStats, itemBoost, displaySpecies, displayTypes, spriteSpecies };
-  });
-}
 
 function getTeamWeaknesses(pokemon: CompareAnalyzedPokemon[]) {
   const weakMap: Record<string, number> = {};
@@ -295,7 +232,17 @@ export function CompareContent() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [selectedIdA, setSelectedIdA] = useState<string | null>(null);
   const [selectedIdB, setSelectedIdB] = useState<string | null>(null);
+  const [analyzer, setAnalyzer] = useState<CompareAnalyzer | null>(null);
   const { reports, loading: reportsLoading, isSignedIn } = useMyReports();
+
+  // Warm the analyzer chunk as soon as there's anything to compare, so the
+  // click on "Compare Teams" almost always resolves in a microtask and the
+  // results appear without a visible gap. Failures are ignored here —
+  // handleCompare retries and surfaces the error.
+  const hasInput = pasteA.trim().length > 0 || pasteB.trim().length > 0;
+  useEffect(() => {
+    if (hasInput) void loadCompareAnalyzer().catch(() => {});
+  }, [hasInput]);
 
   const handleSelectReport = useCallback(async (shareId: string, setter: (v: string) => void, setSelectedId: (id: string) => void) => {
     setFetchError(null);
@@ -315,8 +262,16 @@ export function CompareContent() {
     }
   }, []);
 
-  const teamA = useMemo<CompareAnalyzedPokemon[] | null>(() => compared ? analyzePaste(pasteA) : null, [pasteA, compared]);
-  const teamB = useMemo<CompareAnalyzedPokemon[] | null>(() => compared ? analyzePaste(pasteB) : null, [pasteB, compared]);
+  // `compared` is only ever set to true once the analyzer chunk has resolved
+  // (see handleCompare), so these never render a half-loaded results view.
+  const teamA = useMemo<CompareAnalyzedPokemon[] | null>(
+    () => (compared && analyzer ? analyzer.analyzePaste(pasteA) : null),
+    [pasteA, compared, analyzer],
+  );
+  const teamB = useMemo<CompareAnalyzedPokemon[] | null>(
+    () => (compared && analyzer ? analyzer.analyzePaste(pasteB) : null),
+    [pasteB, compared, analyzer],
+  );
 
   const sharedSpecies = useMemo(() => {
     if (!teamA || !teamB) return new Set<string>();
@@ -356,16 +311,27 @@ export function CompareContent() {
     const needsFetchB = isUrl(pasteB);
 
     if (!needsFetchA && !needsFetchB) {
-      if (pasteA.trim() && pasteB.trim()) setCompared(true);
+      if (!pasteA.trim() || !pasteB.trim()) return;
+      setFetching(true);
+      try {
+        setAnalyzer(await loadCompareAnalyzer());
+        setCompared(true);
+      } catch {
+        setFetchError("Could not load the comparison tools. Check your connection and try again.");
+      } finally {
+        setFetching(false);
+      }
       return;
     }
 
     setFetching(true);
     try {
-      const [resolvedA, resolvedB] = await Promise.all([
+      const [resolvedA, resolvedB, loaded] = await Promise.all([
         resolvePaste(pasteA),
         resolvePaste(pasteB),
+        loadCompareAnalyzer(),
       ]);
+      setAnalyzer(loaded);
       setPasteA(resolvedA);
       setPasteB(resolvedB);
       // Set compared in next tick so useMemo picks up the new paste values
