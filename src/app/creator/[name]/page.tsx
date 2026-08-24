@@ -12,6 +12,16 @@ export async function generateMetadata({
   const title = `${creator}'s VGC Team Reports`;
   const socialTitle = `${title} | VGC Team Report`;
   const description = `View ${creator}'s VGC competitive team reports, open team sheets (OTS), matchup analysis, and tournament results. Browse all public Pokemon VGC 2026 team builds shared by ${creator}.`;
+  // Creator-specific card (name, bio, accent theme, stats) rather than the
+  // site-wide fallback. The renderer reads Postgres directly and is CDN-cached,
+  // and it degrades to a generic card for private profiles — see
+  // ./opengraph-image.tsx.
+  const ogImage = {
+    url: `/creator/${encodeURIComponent(creator)}/opengraph-image`,
+    width: 1200,
+    height: 630,
+    alt: `${creator} on VGC Team Report`,
+  };
   return {
     title,
     description,
@@ -34,13 +44,13 @@ export async function generateMetadata({
       type: "profile",
       siteName: "VGC Team Report",
       url: `https://pokemonvgcteamreport.com/creator/${encodeURIComponent(creator)}`,
-      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
       title: socialTitle,
       description,
-      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
+      images: [ogImage],
     },
   };
 }
