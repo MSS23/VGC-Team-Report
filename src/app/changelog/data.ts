@@ -17,6 +17,27 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "August 2026",
+    version: "5.29",
+    title: "Shared Links That Actually Show Your Team",
+    emoji: "🔗",
+    highlight: true,
+    items: [
+      { type: "improved", text: "Shared report links now show your full team the moment the page opens. Until now /s/… served a blank spinner and then bounced you to the homepage to load the report a second time, which meant search engines never saw a team at all — around 5,000 shared links were, as far as Google was concerned, empty pages. The report is now built on the server and arrives with the first response, so it appears faster for readers and is finally indexable." },
+      { type: "fixed", text: "Posting a shared link in Discord or Slack now produces a proper team preview card instead of a bare link. The card had been silently switched off in the page's settings, and the old card was also too slow to generate before Discord gave up waiting — it now uses the fast pre-rendered team graphic. (X/Twitter previews are still pending: their crawler refuses the address the graphic is served from, which needs a follow-up.)" },
+      { type: "fixed", text: "Privacy: the team-graphic image endpoint would render ANY report as an image for anyone who knew its ID — including reports set to Private, and including individual fields you had marked private. It now refuses private reports outright and honours per-field privacy, matching the rest of the site." },
+      { type: "fixed", text: "Only a report's owner can change whether it is public or unlisted. Collaborators can still edit the content, as intended, but could previously flip a report's visibility. The Discord bot endpoint also stops accepting old, replayed commands." },
+      { type: "fixed", text: "Corrected the Stat Points explanation in the detailed reference file served to AI assistants, which still claimed \"1 SP = 1 EV\" and that the two are interchangeable. That is the opposite of how Champions works, and it contradicted the shorter reference file that was fixed last month. The automated check that keeps these documents honest now covers both files, which is why the error survived the first correction." },
+      { type: "fixed", text: "The tournaments page listed the 2026 World Championships on the wrong dates (14–17 August rather than 28–30 August at San Francisco's Moscone Center) — four days before the event. Past events also no longer describe themselves as upcoming." },
+      { type: "improved", text: "The Compare page loads about 25% less JavaScript — it no longer downloads the full Pokédex until you actually press Compare Teams." },
+      { type: "fixed", text: "A missing space in the code had collapsed two styling rules into one on the speed tier filter buttons, so those buttons were neither the intended tap size on phones nor the intended text size. Both restored." },
+      { type: "improved", text: "Accessibility: keyboard and screen-reader users can now delete a game plan, scroll long slides with the arrow keys, and switch off the single-letter shortcuts from the Keyboard shortcuts panel." },
+      { type: "fixed", text: "A Pokémon whose typing could not be read no longer slips a blank type into its card — that previously showed an all-neutral defensive chart that looked like a real result, and could crash the type badges outright." },
+      { type: "new", text: "Creator profiles now have their own link preview card, so sharing your profile shows your name and report count instead of the generic site card." },
+      { type: "improved", text: "Removed around 140 lines of unused code and five leftover starter files, including a half-built template feature that could never run." },
+    ],
+  },
+  {
+    date: "August 2026",
     version: "5.27",
     title: "Sounder Saves, Honest Drafts & a Security Sweep",
     emoji: "🛡️",
