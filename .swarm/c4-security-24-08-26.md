@@ -3,9 +3,12 @@
 Read-only audit. No files outside `.swarm/` were modified. `npm audit fix`, `npm install`
 and `npm run build` were **not** run.
 
-**PostHog note:** no PostHog credentials were available this run, so there is **no exception
-or error-rate data** cross-referenced anywhere below. Every claim here comes from static
-reading of the repo. No incident-frequency numbers are given because none could be obtained.
+**Integration note:** no PostHog credentials were available this run, so there is **no
+exception or error-rate data** cross-referenced anywhere below. Every claim here comes from
+static reading of the repo. No incident-frequency numbers are given because none could be
+obtained. The **Linear MCP server is unauthorized** in this session, so the VGC-2xx tickets
+in §4 were cross-checked against the code only — their current Linear status was not read
+and none were updated.
 
 ---
 

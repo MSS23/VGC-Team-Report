@@ -24,6 +24,21 @@ it is named instead.
 
 ---
 
+## P0 / Urgent — ADDED LATE IN THE RUN
+
+**0. [SECURITY] Rotate the leaked Discord feedback webhook — live token in public git history**
+
+A working Discord webhook token sits in this public repo's history
+(`src/app/api/feedback/route.ts`, added in `5da513a`, removed from the tree in
+`28f5b8b` but never rotated). Verified still live. Repo is public and forkable,
+so anyone can post into the project's Discord feedback channel.
+
+The swarm deliberately did not revoke it: production feedback may read this exact
+URL from an env var, so revoking without updating Vercel would break feedback.
+Rotate in Discord and update the Vercel env var in the same sitting.
+
+Full detail, including why a history purge is not the fix: `.swarm/P0-leaked-discord-webhook-24-08-26.md`.
+
 ## P0 / Urgent
 
 **1. [INFRA] Linear workspace is over the free-plan issue cap**
