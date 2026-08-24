@@ -301,6 +301,24 @@ export async function POST(request: Request) {
           }
         }
       }
+      // is_unlisted is visibility too, and it used to be written straight from
+      // the request body with no owner check — so an accepted collaborator
+      // could flip a Private report to Unlisted (making it viewable by anyone
+      // holding the id) or un-unlist a report the owner deliberately shared by
+      // link. Visibility is the owner's decision alone, so gate it exactly the
+      // way isPublic is gated above: only an explicit CHANGE by a non-owner is
+      // rejected, so a collaborator's plain content autosave (which omits the
+      // flag, or echoes the current value back) still saves fine.
+      if (isUnlisted !== undefined) {
+        if (isUnlisted !== currentIsUnlisted) {
+          if (!isOwner) {
+            return NextResponse.json(
+              { error: "Only the report owner can change visibility." },
+              { status: 403 }
+            );
+          }
+        }
+      }
 
       // Require tags to publish — only block when going from private → public
       const wasPublic = !!oldRows[0].is_public;

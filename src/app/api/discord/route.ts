@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
+import { apiGuard } from "@/lib/security/api-guard";
 import nacl from "tweetnacl";
 
 const LINEAR_API = "https://api.linear.app/graphql";
@@ -68,11 +69,29 @@ function isAuthorizedInvoker(body: {
 // Commands that change Linear/pipeline state require an authorized invoker.
 const MUTATING_COMMANDS = new Set(["approve", "reject"]);
 
+// Replay window for the signed X-Signature-Timestamp, in seconds.
+// Discord signs `timestamp + body`, so a captured request stays validly
+// signed forever unless we bound its age — the same class the Linear webhook
+// closes with its webhookTimestamp window. 5 minutes is Discord's own
+// recommended tolerance: wide enough to absorb clock skew between Vercel and
+// Discord (a window that rejects real interactions is worse than the bug),
+// narrow enough that a leaked HAR/proxy log stops being a working /approve.
+// ponytail: no interaction-id dedupe yet, so an in-window replay still lands
+// — add a seen-id cache if the mutating commands ever grow teeth.
+const REPLAY_WINDOW_SECONDS = 300;
+
 /**
  * POST /api/discord — Discord interaction endpoint
  * Handles slash commands from the VGC Team Report bot.
  */
 export async function POST(request: NextRequest) {
+  // This route is exempt from ALL middleware (src/proxy.ts) — no bot
+  // detection, no CORS, no CSRF — so it has to rate limit itself. Sized well
+  // above real interaction volume so genuine slash commands and Discord's
+  // endpoint-verification PINGs are never turned away.
+  const guard = await apiGuard(request, { rateLimit: { key: "discord", max: 30 } });
+  if (guard) return guard;
+
   // Ed25519 signature verification (required by Discord)
   const signature = request.headers.get("x-signature-ed25519");
   const timestamp = request.headers.get("x-signature-timestamp");
@@ -80,6 +99,17 @@ export async function POST(request: NextRequest) {
 
   if (!signature || !timestamp) {
     return NextResponse.json({ error: "Missing signature" }, { status: 401 });
+  }
+
+  // Replay protection — Discord sends Unix SECONDS in this header, and it is
+  // part of the signed payload, so it cannot be forged without a fresh
+  // signature. Reject anything outside the window before spending crypto on it.
+  const timestampSeconds = Number(timestamp);
+  if (
+    !Number.isFinite(timestampSeconds) ||
+    Math.abs(Date.now() / 1000 - timestampSeconds) > REPLAY_WINDOW_SECONDS
+  ) {
+    return NextResponse.json({ error: "Stale request" }, { status: 401 });
   }
 
   const isValid = nacl.sign.detached.verify(

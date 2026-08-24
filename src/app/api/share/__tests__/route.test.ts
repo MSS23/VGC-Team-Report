@@ -27,23 +27,33 @@ const body = {
   editToken: TOKEN,
 };
 
-function request() {
+function request(overrides: Record<string, unknown> = {}) {
   return new Request("https://x.test/api/share", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, ...overrides }),
   });
 }
 
-function makeSql(isCollaborator: boolean) {
-  return (strings: TemplateStringsArray) => {
+/**
+ * `current` is the stored row's visibility, so a test can start from a
+ * Private report and check what a collaborator is allowed to change.
+ */
+function makeSql(
+  isCollaborator: boolean,
+  current: { is_public?: boolean; is_unlisted?: boolean } = {},
+  writes?: Record<string, unknown>[],
+) {
+  const isPublic = current.is_public ?? false;
+  const isUnlisted = current.is_unlisted ?? true;
+  return (strings: TemplateStringsArray, ...values: unknown[]) => {
     const query = strings.join(" ? ");
     if (/SELECT data, COALESCE\(version/.test(query)) {
       return Promise.resolve([{
         data: body.state,
         version: 2,
-        is_public: false,
-        is_unlisted: true,
+        is_public: isPublic,
+        is_unlisted: isUnlisted,
         owner_id: "owner-1",
       }]);
     }
@@ -51,7 +61,8 @@ function makeSql(isCollaborator: boolean) {
       return Promise.resolve(isCollaborator ? [{ allowed: 1 }] : []);
     }
     if (/UPDATE shares/.test(query)) {
-      return Promise.resolve([{ id: "abcd1234", version: 2, is_public: false, is_unlisted: true }]);
+      writes?.push({ query, values });
+      return Promise.resolve([{ id: "abcd1234", version: 2, is_public: isPublic, is_unlisted: isUnlisted }]);
     }
     return Promise.resolve([]);
   };
@@ -88,5 +99,74 @@ describe("POST /api/share — account authorization", () => {
     const response = await POST(request());
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ id: "abcd1234", updated: true });
+  });
+});
+
+/**
+ * Regression: "a collaborator can change a report's unlisted status".
+ * The owner-only visibility guard covered `isPublic` but not `isUnlisted`, so
+ * an accepted collaborator could POST `{ isUnlisted: true }` and publish the
+ * owner's Private report by link — or un-unlist one the owner deliberately
+ * shared. Visibility is the owner's decision alone.
+ */
+describe("POST /api/share — is_unlisted is owner-gated like is_public", () => {
+  it("rejects a collaborator flipping a private report to unlisted", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "collab-1" } as never);
+    vi.mocked(getDb).mockReturnValue(
+      makeSql(true, { is_public: false, is_unlisted: false }) as never,
+    );
+
+    const response = await POST(request({ isUnlisted: true }));
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      error: expect.stringContaining("Only the report owner can change visibility"),
+    });
+  });
+
+  it("rejects a collaborator un-unlisting a report the owner shared by link", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "collab-1" } as never);
+    vi.mocked(getDb).mockReturnValue(
+      makeSql(true, { is_public: false, is_unlisted: true }) as never,
+    );
+
+    const response = await POST(request({ isUnlisted: false }));
+    expect(response.status).toBe(403);
+  });
+
+  it("still lets a collaborator autosave content, preserving the unlisted flag", async () => {
+    // The guard must only fire on an explicit CHANGE — a plain content save
+    // that omits the flag has to keep working, and must not demote the report.
+    const writes: Record<string, unknown>[] = [];
+    vi.mocked(auth).mockResolvedValue({ userId: "collab-1" } as never);
+    vi.mocked(getDb).mockReturnValue(
+      makeSql(true, { is_public: false, is_unlisted: true }, writes) as never,
+    );
+
+    const response = await POST(request());
+    expect(response.status).toBe(200);
+    // is_public, is_unlisted are the 3rd and 4th bound values of the UPDATE.
+    expect((writes[0].values as unknown[])[3]).toBe(true);
+  });
+
+  it("lets a collaborator echo the unchanged unlisted value back", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "collab-1" } as never);
+    vi.mocked(getDb).mockReturnValue(
+      makeSql(true, { is_public: false, is_unlisted: true }) as never,
+    );
+
+    const response = await POST(request({ isUnlisted: true }));
+    expect(response.status).toBe(200);
+  });
+
+  it("lets the owner change the unlisted flag", async () => {
+    const writes: Record<string, unknown>[] = [];
+    vi.mocked(auth).mockResolvedValue({ userId: "owner-1" } as never);
+    vi.mocked(getDb).mockReturnValue(
+      makeSql(false, { is_public: false, is_unlisted: true }, writes) as never,
+    );
+
+    const response = await POST(request({ isUnlisted: false }));
+    expect(response.status).toBe(200);
+    expect((writes[0].values as unknown[])[3]).toBe(false);
   });
 });
