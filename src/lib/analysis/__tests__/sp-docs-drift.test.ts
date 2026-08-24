@@ -12,6 +12,10 @@ import {
 // drift from the implementation again.
 describe("SP documentation matches stat-calculator constants", () => {
   const llms = readFileSync(join(process.cwd(), "public", "llms.txt"), "utf8");
+  const llmsFull = readFileSync(
+    join(process.cwd(), "public", "llms-full.txt"),
+    "utf8",
+  );
   const faq = readFileSync(
     join(process.cwd(), "src", "app", "faq", "page.tsx"),
     "utf8",
@@ -23,6 +27,20 @@ describe("SP documentation matches stat-calculator constants", () => {
     expect(llms).toContain("Stat Points");
     expect(llms).not.toMatch(/standard points/i);
     expect(llms).not.toMatch(/1 SP = 1 EV/i);
+  });
+
+  // VGC-266 corrected llms.txt and the FAQ but missed llms-full.txt, which
+  // went on serving AI crawlers "1 SP = 1 EV. The terms are interchangeable"
+  // — the exact myth the other two had just been fixed for, and on the
+  // project's flagship differentiator. The guard now covers both files so the
+  // pair cannot contradict each other again.
+  it("llms-full.txt states the real budget and never the 1 SP = 1 EV myth", () => {
+    expect(llmsFull).toContain(`${CHAMPIONS_TOTAL_SP} SP total`);
+    expect(llmsFull).toContain(`${CHAMPIONS_MAX_SP_PER_STAT} SP per stat`);
+    expect(llmsFull).toContain("Stat Points");
+    expect(llmsFull).not.toMatch(/standard points/i);
+    expect(llmsFull).not.toMatch(/1 SP = 1 EV/i);
+    expect(llmsFull).not.toMatch(/terms are interchangeable/i);
   });
 
   it("FAQ states the real budget, not the old 600/200 claim", () => {
