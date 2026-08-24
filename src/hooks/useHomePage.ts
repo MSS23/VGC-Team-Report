@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useLayoutEffect, useRef, useCallback, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTeamReport } from "@/hooks/useTeamReport";
+import { useTeamReport, readRestorableDraft } from "@/hooks/useTeamReport";
 import { useCreatorMode } from "@/hooks/useCreatorMode";
 import { usePresentationMode } from "@/hooks/usePresentationMode";
 import { useDarkMode } from "@/hooks/useDarkMode";
@@ -387,31 +387,24 @@ export function useHomePage() {
   // Runs once after share state has settled. Skipped when entering a
   // shared view (/s/[id]) since that path hydrates from the server.
   //
-  // SECURITY: Only restore if the stored paste has the v2 "user" source
-  // marker. The v2 namespace did not exist before the 2026-04-10 leak fix,
-  // so anything in vgc-team-paste-v2 was definitively written by post-fix
-  // code with the source check in place — it cannot contain leaked content.
+  // SECURITY: readRestorableDraft only returns pastes with the v2 "user"
+  // source marker. The v2 namespace did not exist before the 2026-04-10 leak
+  // fix, so anything in vgc-team-paste-v2 was definitively written by
+  // post-fix code with the source check in place — it cannot contain leaked
+  // content. It also refuses (and evicts) anything that matches the
+  // last-published copy, carries a "published" marker, predates save
+  // timestamps, or has aged out — so an already-published team can't
+  // resurface labeled "this draft only lives on this device".
   useEffect(() => {
     if (restoreAttempted.current) return;
     if (analysis) return; // already have a team loaded
     if (share.isSharedView || share.isSharePending || share.sharedState) return;
     restoreAttempted.current = true;
-    try {
-      const stored = localStorage.getItem("vgc-team-paste-v2");
-      const source = localStorage.getItem("vgc-team-paste-source-v2");
-      if (stored && stored.trim() && source === "user") {
-        setPaste(stored);
-        parseTeam(stored);
-        setWasRestored(true);
-      } else if (stored) {
-        // Evict non-restorable state: a "published" marker (the report lives
-        // on the server now — restoring it here would mislabel it a draft),
-        // or a missing/unknown marker (defensive, post-leak-incident).
-        localStorage.removeItem("vgc-team-paste-v2");
-        localStorage.removeItem("vgc-team-paste-source-v2");
-      }
-    } catch {
-      // localStorage unavailable — nothing to restore
+    const stored = readRestorableDraft();
+    if (stored) {
+      setPaste(stored);
+      parseTeam(stored);
+      setWasRestored(true);
     }
   }, [analysis, share.isSharedView, share.isSharePending, share.sharedState, setPaste, parseTeam]);
 
