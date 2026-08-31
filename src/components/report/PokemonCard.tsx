@@ -275,7 +275,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => posthog?.capture("calc_opened", { pokemon_name: showMega && megaEntry ? megaEntry.displayName : parsed.species })}
-                className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200"
+                className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/40 transition-all duration-200"
                 title="Open damage calculator"
                 aria-label={`Open damage calculator for ${showMega && megaEntry ? megaEntry.displayName : parsed.species}`}
               >
@@ -301,7 +301,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="ml-auto min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200 cursor-pointer"
+                className="ml-auto min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/40 transition-all duration-200 cursor-pointer"
                 title="Replace this Pokemon"
                 aria-label={`Replace ${displaySpecies}`}
               >
@@ -319,7 +319,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                 className={`${canReplace ? "" : "ml-auto"} min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg transition-all duration-200 ${
                   isMvp
                     ? "text-amber-500 bg-amber-500/10"
-                    : "text-text-tertiary/40 hover:text-amber-400 hover:bg-amber-400/5"
+                    : "text-text-tertiary hover:text-amber-400 hover:bg-amber-400/5"
                 }`}
                 title={isMvp ? t.removeMvp : t.setAsMvp}
                 aria-label={isMvp ? t.removeMvp : t.setAsMvp}
@@ -460,7 +460,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                 ) : totalEvs > 0 && totalEvs < 508 ? (
                   <span className="text-[10px] sm:text-xs font-bold text-amber-500 ml-auto tabular-nums">{totalEvs}/508<span className="hidden sm:inline"> · {508 - totalEvs} left</span></span>
                 ) : totalEvs > 0 ? (
-                  <span className="text-[10px] sm:text-xs font-bold text-text-tertiary/50 ml-auto tabular-nums hidden sm:inline">{totalEvs}/508</span>
+                  <span className="text-[10px] sm:text-xs font-bold text-text-tertiary ml-auto tabular-nums hidden sm:inline">{totalEvs}/508</span>
                 ) : null}
               </>
             )}

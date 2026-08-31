@@ -497,10 +497,12 @@ function GamePlanSection({
   return (
     <div className={`bg-surface border border-border rounded-2xl border-l-[3px] ${color.accent} shadow-sm transition-shadow hover:shadow-md`}>
       {/* Header — always visible */}
+      <div className="flex items-center rounded-t-2xl">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 sm:px-5 py-3.5 hover:bg-surface-alt/30 transition-colors rounded-t-2xl"
+        aria-expanded={!isCollapsed}
+        className="flex-1 min-w-0 flex items-center justify-between px-4 sm:px-5 py-3.5 hover:bg-surface-alt/30 transition-colors rounded-tl-2xl"
       >
         <div className="flex items-center gap-3">
           <svg
@@ -549,15 +551,18 @@ function GamePlanSection({
             </div>
           )}
         </div>
-        {!isReadOnly && canDelete && (
-          <span
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="text-text-tertiary hover:text-red-400 text-xs px-2 py-1 rounded-md hover:bg-red-400/10 transition-colors"
-          >
-            {t.delete}
-          </span>
-        )}
       </button>
+      {!isReadOnly && canDelete && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          aria-label={`${t.delete} ${t.gameN} ${index + 1}`}
+          className="shrink-0 mr-4 sm:mr-5 inline-flex items-center justify-center min-h-11 min-w-11 text-text-tertiary hover:text-red-400 text-xs px-2 py-1 rounded-md hover:bg-red-400/10 transition-colors"
+        >
+          {t.delete}
+        </button>
+      )}
+      </div>
 
       {/* Content — collapsible */}
       {!isCollapsed && (

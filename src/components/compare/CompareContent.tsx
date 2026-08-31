@@ -80,6 +80,7 @@ function ReportDropdown({
   return (
     <div className="mb-2">
       <select
+        aria-label={variant === "blue" ? "Select a saved report for Team A" : "Select a saved report for Team B"}
         className={`w-full px-3 py-2 bg-surface border-2 border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 ${focusClasses} cursor-pointer`}
         defaultValue=""
         onChange={(e) => {
@@ -416,7 +417,7 @@ export function CompareContent() {
                   value={pasteA}
                   onChange={(e) => { setPasteA(e.target.value); setSelectedIdA(null); setCompared(false); }}
                   placeholder={"Incineroar @ Sitrus Berry\nAbility: Intimidate\nEVs: 252 HP / 4 Atk / 252 Spe\n- Fake Out\n...\n\nOr paste a URL:\nhttps://pokepast.es/abc123"}
-                  className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary/40 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 resize-y font-[family-name:var(--font-mono)]"
+                  className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 resize-y font-[family-name:var(--font-mono)]"
                   spellCheck={false}
                 />
               </div>
@@ -435,7 +436,7 @@ export function CompareContent() {
                   value={pasteB}
                   onChange={(e) => { setPasteB(e.target.value); setSelectedIdB(null); setCompared(false); }}
                   placeholder={"Flutter Mane @ Choice Specs\nAbility: Protosynthesis\nEVs: 252 SpA / 252 Spe\n- Moonblast\n...\n\nOr paste a URL:\nhttps://pokepast.es/xyz789"}
-                  className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary/40 focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500 resize-y font-[family-name:var(--font-mono)]"
+                  className="w-full h-48 p-4 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500 resize-y font-[family-name:var(--font-mono)]"
                   spellCheck={false}
                 />
               </div>
