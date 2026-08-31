@@ -17,6 +17,21 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "August 2026",
+    version: "5.28",
+    title: "Private Graphics Stay Private, Keyboard Access & Honest Consent",
+    emoji: "🔒",
+    items: [
+      { type: "fixed", text: "Private reports can no longer be read through their shareable team graphic. The image endpoint that draws a team card never checked who was asking, so anyone holding a private report's link could pull a picture of it showing your species, items, abilities, Tera types and tournament placement. It now checks: a private report's card renders only for you and the people you've shared it with. Anything you marked private — an item, a spread — is also stripped from the card before it's drawn, including on cards you download to post yourself." },
+      { type: "fixed", text: "Withdrawing analytics consent now stops session recording for good, even if you opt out in the split second while the analytics script is still loading. Previously that exact timing let recording start after you'd already said no, and it couldn't be stopped for the rest of the visit." },
+      { type: "fixed", text: "Shared-link preview cards and team listings now show every Pokémon on your team when your paste begins with a Showdown '=== Team ===' header. The header was being counted as a Pokémon, which quietly pushed your sixth one off the card." },
+      { type: "fixed", text: "The Mega Forms, Meta Threats and speed-modifier buttons on the Speed Tiers chart are the right size again and large enough to tap reliably on a phone — a stray typo in the styling meant neither the text size nor the minimum tap size was being applied." },
+      { type: "improved", text: "Accessibility: the report and dashboard are properly usable with a keyboard and a screen reader. Editing a saved damage calc and deleting a game plan no longer need a mouse, the sort and report-picker dropdowns and the public-profile toggle now announce what they do, the accent theme picker says which theme is selected instead of showing it in colour alone, and faded icons and placeholder text were darkened to meet contrast standards in both light and dark modes." },
+      { type: "improved", text: "Accessibility: editing your team's overview slide now announces a proper page heading to screen readers, instead of leaving that view with no heading at all." },
+      { type: "improved", text: "Tidied a stray internal note that had been left in an older changelog entry." },
+    ],
+  },
+  {
+    date: "August 2026",
     version: "5.27",
     title: "Sounder Saves, Honest Drafts & a Security Sweep",
     emoji: "🛡️",
