@@ -105,3 +105,24 @@ constraint. A larger PR would have been a fourth unmergeable one.
 - VGC-271 / VGC-268 (perf): both verified STILL VALID with exact import chains, and both are
   good next-run candidates. Skipped tonight only to keep the diff small; VGC-271 also
   overlaps CompareContent.tsx, which the accessibility agent owned.
+
+## GOAL B BLOCKED — Linear workspace is at its free issue limit
+`issueCreate` returns `USAGE_LIMIT_EXCEEDED` for every new ticket:
+  "You've exceeded the free issue limit for this workspace."
+Comments and status transitions still work — only creation is blocked. So this run:
+ - posted 19 Linear comments (17 reconciliation/implementation + VGC-265 root cause + VGC-253 evidence)
+ - moved VGC-270 to In Review
+ - could file 0 of the 3 intended Backlog tickets. All three are saved in full, ready to paste:
+     .swarm/drafts/linear-clerk-eager-on-homepage.md
+     .swarm/drafts/linear-oembed-discovery-link.md
+     .swarm/drafts/linear-delete-orphan-branches.md
+This sharpens VGC-265 considerably: closing the 16 verified-stale tickets is not housekeeping,
+it is a PREREQUISITE for the board accepting any new work at all. The swarm still must not
+close them itself — Done is the human's signal.
+
+## Final tally
+- Commits: 9 (7 code, 1 changelog, 1 notes) + 1 drafts commit
+- Subagents: 14 of 25
+- Pushes to main: ZERO. Every push used the guarded refspec claude/loving-sagan-ib785e:refs/heads/claude/loving-sagan-ib785e
+- PR: #76 (DRAFT) https://github.com/MSS23/VGC-Team-Report/pull/76
+- Discord: posted, HTTP 204
