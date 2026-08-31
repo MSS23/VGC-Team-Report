@@ -99,7 +99,7 @@ export const ENTRIES: ChangelogEntry[] = [
     emoji: "🛡️",
     highlight: true,
     items: [
-      { type: "fixed", text: "Linear webhook handler: corrected signature header name (linear-signature), env var (LINEAR_WEBHOOK_SIGNING_SECRET), added force-dynamic and empty body handling. 8th consecutive fix proposal — please merge!" },
+      { type: "fixed", text: "Linear webhook handler: corrected signature header name (linear-signature), env var (LINEAR_WEBHOOK_SIGNING_SECRET), added force-dynamic and empty body handling." },
       { type: "fixed", text: "Security: all user-controlled fields in comment notification, welcome, and weekly summary emails are now HTML-escaped to prevent XSS. Subject lines stripped of CR/LF/quotes." },
       { type: "fixed", text: "Security: Linear GraphQL queries in daily-ops and weekly-report crons now use parameterized variables instead of string interpolation." },
       { type: "fixed", text: "Security: /api/migrate and /api/setup routes now use crypto.timingSafeEqual for secret comparison. Setup route no longer leaks internal error details." },
