@@ -1,12 +1,20 @@
 /** Extract species names from a Showdown paste string. */
 export function extractSpecies(paste: string): string[] {
-  const blocks = paste.trim().split(/\n\s*\n/);
+  // Showdown's backup format wraps teams in "=== [format] Name ===" headers.
+  // Strip them BEFORE splitting into blocks, exactly as the parser does: the
+  // old per-block skip only caught a header that stood alone as its own block,
+  // so a header glued to the first Pokemon (no blank line after it) became that
+  // block's first line and was counted as the species — silently eating the
+  // real first mon everywhere species are listed.
+  const withoutHeaders = paste
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/^===.*===[ \t]*$/gm, "");
+  const blocks = withoutHeaders.trim().split(/\n\s*\n/);
   const species: string[] = [];
   for (const block of blocks) {
     const firstLine = block.trim().split("\n")[0]?.trim();
     if (!firstLine) continue;
-    // Showdown backup format wraps teams in "=== [format] Name ===" headers
-    if (firstLine.startsWith("===")) continue;
     let namePart = firstLine.split(" @ ")[0].trim();
     namePart = namePart.replace(/\s*\([MF]\)\s*$/, "");
     const nicknameMatch = namePart.match(/^.+\((.+)\)$/);

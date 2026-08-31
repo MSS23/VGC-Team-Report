@@ -43,6 +43,47 @@ describe("extractSpecies", () => {
     expect(species[5]).toBe("Mon6");
   });
 
+  // Regression: a "=== [format] Team ===" header with no blank line after it
+  // became the first block's first line, so it was counted as the species and
+  // the real first Pokemon was dropped (parser hit the same bug in 1b14f3b).
+  it("keeps the first Pokemon when a header is glued to it (no blank line)", () => {
+    const paste = "=== [gen9vgc2026regh] My Team ===\nGarchomp @ Life Orb\nAbility: Rough Skin\n- Earthquake";
+    expect(extractSpecies(paste)).toEqual(["Garchomp"]);
+  });
+
+  it("returns all 6 Pokemon when a leading header is glued to the first one", () => {
+    const blocks = Array.from({ length: 6 }, (_, i) =>
+      `Mon${i + 1} @ Leftovers\nAbility: Test\n- Tackle`
+    );
+    const paste = `=== [gen9vgc2026] My Team ===\n${blocks.join("\n\n")}`;
+    expect(extractSpecies(paste)).toEqual(["Mon1", "Mon2", "Mon3", "Mon4", "Mon5", "Mon6"]);
+  });
+
+  it("handles a header with trailing whitespace and CRLF line endings", () => {
+    const paste = "=== [gen9vgc2026] My Team ===  \r\nGarchomp @ Life Orb\r\nAbility: Rough Skin\r\n\r\nFlutter Mane @ Choice Specs\r\nAbility: Protosynthesis";
+    expect(extractSpecies(paste)).toEqual(["Garchomp", "Flutter Mane"]);
+  });
+
+  it("drops headers that appear between teams in a multi-team backup paste", () => {
+    const paste = [
+      "=== [gen9vgc2026] Team A ===",
+      "Garchomp @ Life Orb",
+      "",
+      "=== [gen9vgc2026] Team B ===",
+      "Pikachu @ Light Ball",
+    ].join("\n");
+    expect(extractSpecies(paste)).toEqual(["Garchomp", "Pikachu"]);
+  });
+
+  it("keeps a nicknamed first Pokemon glued to a header", () => {
+    const paste = "=== Champions Reg M-A ===\nBig Boy (Garchomp) @ Life Orb\nAbility: Rough Skin";
+    expect(extractSpecies(paste)).toEqual(["Garchomp"]);
+  });
+
+  it("returns nothing for a header-only paste", () => {
+    expect(extractSpecies("=== [gen9vgc2026] My Team ===")).toEqual([]);
+  });
+
   it("handles empty paste", () => {
     expect(extractSpecies("")).toEqual([]);
   });
