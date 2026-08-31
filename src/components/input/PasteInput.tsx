@@ -414,7 +414,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             "Incineroar @ Sitrus Berry\nAbility: Intimidate\nLevel: 50\nEVs: 252 HP / 4 Atk / 252 Spe\nCareful Nature\n- Fake Out\n- Knock Off\n- Flare Blitz\n- Parting Shot"
           }
           aria-label="Paste your Showdown team export, PokéPaste URL, or replay URL"
-          className="relative w-full h-40 sm:h-56 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none focus:border-accent/50 transition-all duration-300"
+          className="relative w-full h-40 sm:h-56 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary resize-none focus:outline-none focus:border-accent/50 transition-all duration-300"
           spellCheck={false}
         />
         {isUrl && (

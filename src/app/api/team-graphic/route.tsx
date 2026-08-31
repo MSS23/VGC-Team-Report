@@ -1,11 +1,33 @@
 import { ImageResponse } from "next/og";
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { normalizePrivateFields, redactPasteFields } from "@/lib/sharing/redact-paste";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
 import { POKEMON_TYPES_MAP } from "@/lib/data/pokemon-types-map";
 
 export const runtime = "edge";
+
+/** Same permissive share-id shape the other public share routes accept. */
+const SHARE_ID_RE = /^[a-zA-Z0-9_-]{6,16}$/;
+
+/**
+ * Public/unlisted cards are viewer-independent, so they keep the aggressive
+ * edge cache that unfurlers (Twitter/Discord/Slack/iMessage) rely on.
+ */
+const PUBLIC_CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+} as const;
+
+/**
+ * A private report's card is rendered only for its owner/collaborators, so it
+ * must never enter a shared cache — `public, s-maxage` would let Vercel's edge
+ * hand the owner's card to the next anonymous caller for the same share id.
+ */
+const PRIVATE_CACHE_HEADERS = {
+  "Cache-Control": "private, no-store",
+} as const;
 
 interface OGPokemon {
   species: string;
@@ -91,15 +113,63 @@ export async function GET(request: Request) {
   if (!shareId) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
+  if (!SHARE_ID_RE.test(shareId)) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
   const sql = getDb();
-  const rows = await sql`SELECT data FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
+  const rows = await sql`
+    SELECT data, is_public, is_unlisted, owner_id FROM shares
+    WHERE id = ${shareId} AND deleted_at IS NULL
+  `;
   if (rows.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // ── Visibility gate (mirrors src/app/api/share/[id]/route.ts) ─────────
+  // Public and unlisted reports render for anyone with the link — that is the
+  // whole point of a shareable card, and unfurlers/crawlers fetch this URL
+  // logged out. A report that is neither is owner-only, exactly as the /s/{id}
+  // read path enforces, so it must not be renderable by a stranger who knows
+  // or guesses the id. Failure is the same opaque 404 the sibling routes
+  // return for a missing share, so the response can't confirm the id exists.
+  const isPublic = rows[0].is_public === true;
+  const isUnlisted = rows[0].is_unlisted === true;
+  const isPrivate = !isPublic && !isUnlisted;
+
+  if (isPrivate) {
+    let userId: string | null = null;
+    try {
+      const { userId: uid } = await auth();
+      userId = uid;
+    } catch { /* not authenticated */ }
+
+    if (!userId) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    let allowed = rows[0].owner_id === userId;
+    if (!allowed) {
+      const collabRows = await sql`
+        SELECT 1 FROM collaborators WHERE share_id = ${shareId} AND user_id = ${userId}
+          AND COALESCE(status, 'accepted') = 'accepted'
+      `;
+      allowed = collabRows.length > 0;
+    }
+    if (!allowed) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+  }
+
+  const cacheHeaders = isPrivate ? PRIVATE_CACHE_HEADERS : PUBLIC_CACHE_HEADERS;
+
   const data = rows[0].data as Record<string, unknown>;
-  const paste = (data.paste as string) ?? "";
+  // Honour tiered publishing (VGC-142) the same way the report view does: a
+  // field the creator marked private is stripped from the paste before it is
+  // drawn. Applied for every viewer — this image is a shareable artifact and
+  // is served from a shared cache key, so it must never carry hidden fields.
+  const privateFields = normalizePrivateFields(data.privateFields as string[] | undefined);
+  const rawPaste = (data.paste as string) ?? "";
+  const paste = privateFields.length > 0 ? redactPasteFields(rawPaste, privateFields) : rawPaste;
   const tournamentName = (data.tournamentName as string) ?? "";
   const placement = (data.placement as string) ?? "";
   const creatorName = (data.creatorName as string) ?? "";
@@ -365,9 +435,7 @@ export async function GET(request: Request) {
       ),
       {
         ...sz,
-        headers: {
-          "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
-        },
+        headers: { ...cacheHeaders },
       },
     );
   }
@@ -515,12 +583,11 @@ export async function GET(request: Request) {
     ),
     {
       ...sz,
-      // Cache aggressively at the edge — share data is stable, and unfurlers
-      // (Twitter/Discord/Slack/iMessage) cache OG images for hours-to-days
-      // so a stale image never appears once a share is published.
-      headers: {
-        "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
-      },
+      // Cache aggressively at the edge for public/unlisted cards — share data
+      // is stable, and unfurlers (Twitter/Discord/Slack/iMessage) cache OG
+      // images for hours-to-days so a stale image never appears once a share
+      // is published. Owner-only cards fall back to `private, no-store`.
+      headers: { ...cacheHeaders },
     },
   );
 }

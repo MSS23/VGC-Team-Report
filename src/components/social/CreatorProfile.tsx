@@ -301,6 +301,7 @@ function CreatorProfileInner({ name }: { name: string }) {
                       </span>
                     </div>
                     <select
+                      aria-label="Sort reports"
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as "newest" | "views")}
                       className="px-3 py-1.5 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer"

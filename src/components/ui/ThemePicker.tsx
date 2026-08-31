@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 import { ACCENT_THEMES, VIEW_TIERS, getUnlockedCount, getNextTier, applyAccentTheme } from "@/lib/accent-themes";
 
 interface ThemePickerProps {
@@ -11,13 +13,14 @@ interface ThemePickerProps {
 export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePickerProps) {
   const unlockedCount = getUnlockedCount(totalViews);
   const nextTier = getNextTier(totalViews);
+  const groupLabelId = useId();
 
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
+        <span id={groupLabelId} className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
           Accent Theme
-        </label>
+        </span>
         <p className="text-xs text-text-tertiary mb-3">
           Unlock themes by getting views on your public reports.
           {nextTier && (
@@ -31,7 +34,7 @@ export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePicker
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3" role="group" aria-labelledby={groupLabelId}>
         {ACCENT_THEMES.map((theme, i) => {
           const isUnlocked = i < unlockedCount;
           const isSelected = (selectedTheme || "rose") === theme.id;
@@ -40,6 +43,7 @@ export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePicker
             <button
               key={theme.id}
               type="button"
+              aria-pressed={isSelected}
               onClick={() => {
                 if (!isUnlocked) return;
                 onSelect(theme.id);
@@ -63,7 +67,7 @@ export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePicker
               {/* Lock icon for locked themes */}
               {!isUnlocked && (
                 <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-surface-alt border border-border rounded-full flex items-center justify-center">
-                  <svg className="w-2.5 h-2.5 text-text-tertiary" fill="currentColor" viewBox="0 0 20 20">
+                  <svg aria-hidden="true" className="w-2.5 h-2.5 text-text-tertiary" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -72,7 +76,7 @@ export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePicker
               {/* Checkmark for selected */}
               {isSelected && isUnlocked && (
                 <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
-                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+                  <svg aria-hidden="true" className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                   </svg>
                 </div>

@@ -431,13 +431,14 @@ function ProfileInner() {
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-bold text-text-primary">Public profile</p>
+                        <p id="public-profile-label" className="text-sm font-bold text-text-primary">Public profile</p>
                         <p className="text-xs text-text-secondary mt-0.5">When enabled, your creator page is discoverable by anyone</p>
                       </div>
                       <button
                         type="button"
                         role="switch"
                         aria-checked={profile.isPublic}
+                        aria-labelledby="public-profile-label"
                         onClick={() => setProfile({ ...profile, isPublic: !profile.isPublic })}
                         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${profile.isPublic ? "bg-accent" : "bg-border"}`}
                       >

@@ -160,16 +160,19 @@ function EditableCalcEntry({
           rows={1}
           spellCheck={false}
         />
-      ) : (
-        <span
-          className={`flex-1 text-sm sm:text-base text-text-primary leading-relaxed ${!isReadOnly ? "cursor-text" : ""}`}
+      ) : !isReadOnly && onEdit ? (
+        <button
+          type="button"
           onClick={() => {
-            if (!isReadOnly && onEdit) {
-              setEditText(entry.text);
-              setEditing(true);
-            }
+            setEditText(entry.text);
+            setEditing(true);
           }}
+          className="flex-1 text-left text-sm sm:text-base text-text-primary leading-relaxed cursor-text bg-transparent border-none p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-surface rounded-sm"
         >
+          {entry.text}
+        </button>
+      ) : (
+        <span className="flex-1 text-sm sm:text-base text-text-primary leading-relaxed">
           {entry.text}
         </span>
       )}

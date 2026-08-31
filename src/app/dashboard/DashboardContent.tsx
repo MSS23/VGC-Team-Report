@@ -203,6 +203,7 @@ function DashboardInner() {
               <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
                 <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{myReports.length} reports</span>
                 <select
+                  aria-label="Sort reports"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "views" | "name")}
                   className="px-2.5 py-1.5 bg-surface border border-border rounded-lg text-[11px] sm:text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer"
