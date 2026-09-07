@@ -1,8 +1,9 @@
 /**
- * Champions format (Regulation M-A) legality validator.
+ * Champions format (Regulation M-A / M-B / M-C) legality validator.
  *
- * Validates a parsed team against Reg M-A rules:
- * - Species must be in the Champions dex
+ * Validates a parsed team against Champions rules:
+ * - Species must be in the Champions dex (skipped for Reg M-C until its
+ *   official roster is published)
  * - Max 2 restricted Pokemon
  * - Any number of Mega Stones allowed on the team (only one Pokemon can
  *   actually Mega Evolve per battle — that's an in-battle constraint, not
@@ -133,16 +134,27 @@ function getSpeciesClauseKey(species: string): string {
 
 // ── Main validation ─────────────────────────────────────────────────────────
 
+/** Champions regulations this validator understands. M-A ⊂ M-B ⊂ M-C. */
+export type ChampionsRegulation = "Reg M-A" | "Reg M-B" | "Reg M-C";
+
 export function validateChampionsTeam(
   pokemon: ParsedPokemon[],
-  regulation: "Reg M-A" | "Reg M-B" = "Reg M-A",
+  regulation: ChampionsRegulation = "Reg M-A",
 ): LegalityResult {
   const issues: LegalityIssue[] = [];
 
-  // Reg M-B is a superset of M-A — same rules, wider species pool.
-  const isMb = regulation === "Reg M-B";
-  const dex = isMb ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
-  const regLabel = isMb ? "Reg M-B" : "Reg M-A";
+  // Reg M-B / M-C are supersets of M-A — same rules, wider species pool.
+  const isMa = regulation === "Reg M-A";
+  // Reg M-C's official roster has not been published, so we have no dex for
+  // it. Skip the roster check entirely for M-C (see hasRoster below) rather
+  // than validate against the narrower M-B pool, which would flag legitimate
+  // M-C-only picks as illegal. Every other rule (clauses, restricted count,
+  // Z-Crystals, SP/EV budgets) is reg-independent and still runs.
+  // TODO: drop this once the official Reg M-C dex is published and added to
+  // champions-dex.ts.
+  const hasRoster = regulation !== "Reg M-C";
+  const dex = isMa ? CHAMPIONS_DEX : CHAMPIONS_MB_DEX;
+  const regLabel = regulation;
 
   // Team size
   if (pokemon.length < 6) {
@@ -190,6 +202,7 @@ export function validateChampionsTeam(
   // Base forms are also legal if their mega form is in the dex (e.g.
   // "Salamence" is legal because "salamence-mega" is in the dex).
   for (const p of pokemon) {
+    if (!hasRoster) break;
     const key = normalizeSpecies(p.species);
     const base = getRestrictedBase(p.species);
     const inDex = dex.has(key);

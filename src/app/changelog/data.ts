@@ -16,6 +16,20 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "September 2026",
+    version: "5.30",
+    title: "Regulation M-C Support & an Accessibility Pass",
+    emoji: "🆕",
+    highlight: true,
+    items: [
+      { type: "new", text: "Pokémon Champions Regulation M-C is now supported, ready for its 8 September start. Tag a team Reg M-C and it renders the way a Champions team should — Stat Points instead of EVs, Mega Evolution, Champions speed tiers, and no Tera section. Previously an M-C team fell through to the classic rules and displayed as an ordinary EV team. One caveat while the official roster is still unpublished: M-C teams aren't checked against a species list yet, so an unfamiliar Pokémon is left unvalidated rather than being wrongly flagged as illegal, and M-C has to be selected by hand rather than detected automatically." },
+      { type: "improved", text: "The EV to SP converter no longer describes itself as a Reg M-A tool. Its explanations now cover the whole Champions family, so the page is accurate for M-B and M-C players too." },
+      { type: "improved", text: "Accessibility: the app's shared icons are now correctly marked as decorative. Screen readers had been announcing all 31 of them as meaningless 'graphic' items scattered through menus and report controls, and in some browsers they could take keyboard focus. Every icon-only button was checked and all already carried a proper label, so nothing lost its name in the process." },
+      { type: "fixed", text: "A test that guards draft-saving no longer fails at random when the machine is busy. It was waiting on a large file loading rather than on the app itself, which made the build fail unpredictably and told us nothing when it did." },
+      { type: "improved", text: "Under the hood: an automated check now blocks any commit that would add a real API key, webhook address, or database password to the codebase — file and line reported, never the value itself." },
+    ],
+  },
+  {
     date: "August 2026",
     version: "5.27",
     title: "Sounder Saves, Honest Drafts & a Security Sweep",
