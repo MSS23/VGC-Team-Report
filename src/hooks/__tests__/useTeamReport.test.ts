@@ -6,6 +6,15 @@ import { useTeamReport, readRestorableDraft } from "@/hooks/useTeamReport";
 
 const PASTE = "Pikachu @ Light Ball\nAbility: Static\n- Protect";
 
+// parseTeam lazy-loads analyze-team, which drags pokemon.ts (~243 kB) and
+// dex-subset.json (~130 kB) through vite's transform on first use. On an idle
+// machine that lands well inside vi.waitFor's 1000 ms default, but under a
+// contended worker pool it does not, so the whole file went red only when the
+// full suite ran busy — the classic "passes alone, fails in CI" shape. The
+// wait is for a lazy chunk, not for application logic, so give it real
+// headroom rather than letting load decide whether the suite is green.
+const CHUNK_LOAD_TIMEOUT = { timeout: 15_000 };
+
 beforeEach(() => {
   localStorage.clear();
   window.history.replaceState(null, "", "/");
@@ -24,7 +33,7 @@ describe("useTeamReport paste persistence", () => {
       expect(localStorage.getItem("vgc-team-paste-source-v2")).toBe("user");
       // Save timestamp gates restore — entries without one are evicted.
       expect(Number(localStorage.getItem("vgc-team-paste-saved-at-v2"))).toBeGreaterThan(0);
-    });
+    }, CHUNK_LOAD_TIMEOUT);
   });
 
   // Regression: a published report resurfaced as a local "draft" on the next
@@ -37,7 +46,7 @@ describe("useTeamReport paste persistence", () => {
     });
     await vi.waitFor(() => {
       expect(localStorage.getItem("vgc-team-paste-v2")).toBe(PASTE);
-    });
+    }, CHUNK_LOAD_TIMEOUT);
     act(() => {
       hook.current.markPastePublished();
     });
