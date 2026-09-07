@@ -17,7 +17,7 @@ const PAGE_URL = "https://pokemonvgcteamreport.com/tools/ev-to-sp";
 // inside Google's ~60-character SERP title budget.
 const TITLE = "EV to SP Converter for Pokémon Champions";
 const DESCRIPTION =
-  "Free EV to SP converter for Pokémon Champions Regulation M-A. Convert EV spreads to Stat Points (and back) against the 66 SP budget and 32 SP per-stat cap, with a full conversion table.";
+  "Free EV to SP converter for Pokémon Champions — Regulation M-A, M-B and M-C. Convert EV spreads to Stat Points (and back) against the 66 SP budget and 32 SP per-stat cap, with a full conversion table.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -32,6 +32,7 @@ export const metadata: Metadata = {
     "66 SP budget",
     "32 SP per stat",
     "Regulation M-A SP spread",
+    "Regulation M-C SP spread",
     "Pokemon Champions EV spread",
     "VGC 2026",
   ],
@@ -104,7 +105,7 @@ const FAQ_ITEMS = [
   {
     question: "Can a stat go over 32 SP in Pokémon Champions?",
     answer:
-      `No. ${CHAMPIONS_MAX_SP_PER_STAT} SP is a hard per-stat cap in Regulation M-A and M-B, in the same way 252 is a hard per-stat EV cap in the classic games. A spread that puts more than ${CHAMPIONS_MAX_SP_PER_STAT} SP into a single stat, or more than ${CHAMPIONS_TOTAL_SP} SP in total, is illegal and will be rejected.`,
+      `No. ${CHAMPIONS_MAX_SP_PER_STAT} SP is a hard per-stat cap in every Champions regulation (M-A, M-B and M-C), in the same way 252 is a hard per-stat EV cap in the classic games. A spread that puts more than ${CHAMPIONS_MAX_SP_PER_STAT} SP into a single stat, or more than ${CHAMPIONS_TOTAL_SP} SP in total, is illegal and will be rejected.`,
   },
 ];
 
@@ -211,7 +212,7 @@ export default function EvToSpPage() {
               with a point to put wherever you like. Spending more than{" "}
               {CHAMPIONS_TOTAL_SP} SP in total, or more than{" "}
               {CHAMPIONS_MAX_SP_PER_STAT} SP in a single stat, is illegal in
-              Regulation M-A and M-B.
+              every Champions regulation (M-A, M-B and M-C).
             </p>
           </div>
         </section>
@@ -342,7 +343,7 @@ export default function EvToSpPage() {
           <p className="text-sm text-text-secondary mb-4">
             Paste your Showdown export and VGC Team Report converts every spread to
             Champions Stat Points automatically, then checks the whole team against
-            Regulation M-A legality.
+            Champions legality rules.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link

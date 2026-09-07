@@ -153,7 +153,8 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   // rebuilds the whole meta-threat speed table.
   const META_THREATS = useMemo(() => {
     if (!isChampionsFormat(regulation)) return META_THREATS_DEFAULT;
-    const championsDex = regulation === "Reg M-B" ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
+    // M-A ⊂ M-B ⊂ M-C: anything past M-A uses the widest known pool.
+    const championsDex = regulation === "Reg M-A" ? CHAMPIONS_DEX : CHAMPIONS_MB_DEX;
     return META_THREATS_CHAMPIONS.filter(k => lookupPokemon(k) && championsDex.has(k));
   }, [regulation]);
   const { t } = useTranslation();

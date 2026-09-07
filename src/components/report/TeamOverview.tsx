@@ -14,7 +14,7 @@ import { encodeSectionKey } from "@/lib/utils/version-diff";
 import { hapticMedium, hapticSuccess } from "@/lib/utils/haptics";
 import { detectImportSource } from "@/lib/utils/multi-import";
 import { fetchPokePaste } from "@/lib/utils/pokepaste";
-import { validateChampionsTeam, type LegalityResult, type LegalityIssue } from "@/lib/validation/champions-legality";
+import { validateChampionsTeam, type ChampionsRegulation, type LegalityResult, type LegalityIssue } from "@/lib/validation/champions-legality";
 
 /** Wraps a card with tap and long-press gestures. Tap navigates instantly on touch; long-press (500ms hold) also navigates + haptic. */
 function LongPressWrapper({
@@ -381,13 +381,16 @@ function TeamOverviewBase({
   const hasTournamentInfo = !!(teamName || tournamentName || placement || record);
   const hasCreatorInfo = !!creatorName;
 
-  // Champions legality validation — runs for both Champions regs (M-A / M-B)
+  // Champions legality validation — runs for every Champions reg (M-A/B/C)
   const legality = useMemo(() => {
     if (!isChampionsFormat(tags?.regulation)) return null;
-    return validateChampionsTeam(
-      pokemon.map((p) => p.parsed),
-      tags?.regulation === "Reg M-B" ? "Reg M-B" : "Reg M-A",
-    );
+    const reg: ChampionsRegulation =
+      tags?.regulation === "Reg M-C"
+        ? "Reg M-C"
+        : tags?.regulation === "Reg M-B"
+          ? "Reg M-B"
+          : "Reg M-A";
+    return validateChampionsTeam(pokemon.map((p) => p.parsed), reg);
   }, [tags?.regulation, pokemon]);
   const [rentalCopied, setRentalCopied] = useState(false);
   const [summaryExpanded, setSummaryExpanded] = useState(false);
