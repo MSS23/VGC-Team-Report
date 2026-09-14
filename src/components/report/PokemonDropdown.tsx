@@ -34,8 +34,9 @@ export function PokemonDropdown({
   const [open, setOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Close on outside click
+  // Close on outside click or Escape
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
@@ -43,8 +44,18 @@ export function PokemonDropdown({
         setOpen(false);
       }
     }
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    }
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, [open]);
 
   const selected = selectedIndex !== null ? yourPokemon[selectedIndex] : null;
@@ -70,6 +81,7 @@ export function PokemonDropdown({
     <div ref={wrapperRef} className="relative">
       <button
         type="button"
+        ref={triggerRef}
         onClick={() => {
           if (!open && wrapperRef.current) {
             const rect = wrapperRef.current.getBoundingClientRect();
@@ -81,7 +93,7 @@ export function PokemonDropdown({
         draggable={draggable}
         onDragStart={onDragStart}
         aria-label={selected ? `${speciesLabels?.[selectedIndex!] ?? selected.parsed.species} selected — click to change` : "Select a Pokémon to bring"}
-        aria-haspopup="listbox"
+        aria-haspopup="true"
         aria-expanded={open}
         className={`flex flex-col items-center gap-1 w-[72px] sm:w-[88px] min-h-[60px] sm:min-h-[72px] justify-center rounded-xl border border-border-subtle hover:border-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all bg-surface p-1.5 hover:shadow-sm ${
           draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
@@ -106,7 +118,7 @@ export function PokemonDropdown({
 
       {open && (
         <div
-          role="listbox"
+          role="group"
           aria-label="Select a Pokémon"
           className={`absolute z-50 left-0 sm:left-1/2 sm:-translate-x-1/2 bg-surface border border-border rounded-xl shadow-xl min-w-[160px] sm:min-w-[180px] py-1 overflow-y-auto max-h-[320px] ${
             openUpward ? "bottom-full mb-1" : "top-full mt-1"
@@ -119,7 +131,7 @@ export function PokemonDropdown({
                 onChange(null);
                 setOpen(false);
               }}
-              className="w-full px-3 py-2 text-left text-xs text-red-400 hover:bg-surface-alt transition-colors border-b border-border"
+              className="w-full px-3 py-2 text-left text-xs text-danger hover:bg-surface-alt transition-colors border-b border-border"
             >
               {t.clearSelection}
             </button>

@@ -151,6 +151,7 @@ function EditableCalcEntry({
           ref={inputRef}
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
+          aria-label={t.editCalc}
           onBlur={commitEdit}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commitEdit(); }
@@ -160,16 +161,20 @@ function EditableCalcEntry({
           rows={1}
           spellCheck={false}
         />
-      ) : (
-        <span
-          className={`flex-1 text-sm sm:text-base text-text-primary leading-relaxed ${!isReadOnly ? "cursor-text" : ""}`}
+      ) : !isReadOnly && onEdit ? (
+        <button
+          type="button"
           onClick={() => {
-            if (!isReadOnly && onEdit) {
-              setEditText(entry.text);
-              setEditing(true);
-            }
+            setEditText(entry.text);
+            setEditing(true);
           }}
+          aria-label={`${t.editCalc}: ${entry.text}`}
+          className="flex-1 text-left text-sm sm:text-base text-text-primary leading-relaxed cursor-text bg-transparent border-0 p-0 m-0 font-normal focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-1 focus-visible:ring-offset-surface rounded-sm"
         >
+          {entry.text}
+        </button>
+      ) : (
+        <span className="flex-1 text-sm sm:text-base text-text-primary leading-relaxed">
           {entry.text}
         </span>
       )}
@@ -862,6 +867,7 @@ function PokemonDetailSlideBase({
         <textarea
           value={note}
           onChange={(e) => onNoteChange(e.target.value)}
+          aria-label={`${isPresentationMode ? t.notes : t.yourExplanation} — ${parsed.species}`}
           placeholder={t.notesPlaceholder.replace("{species}", parsed.species)}
           className="w-full min-h-[4rem] sm:min-h-[10rem] p-3 sm:p-6 bg-surface border-2 border-border rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
           spellCheck={false}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { useTranslation } from "@/lib/i18n";
 
@@ -108,7 +108,7 @@ function PopularCardSprite({ species }: { species: string }) {
   return (
     <img
       src={urls[Math.min(idx, urls.length - 1)]}
-      alt={species}
+      alt=""
       width={28}
       height={28}
       className="w-7 h-7 object-contain"
@@ -120,6 +120,7 @@ function PopularCardSprite({ species }: { species: string }) {
 
 export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect }: PasteInputProps) {
   const { t } = useTranslation();
+  const shouldReduceMotion = useReducedMotion();
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -256,9 +257,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
               width={64}
               height={64}
               className="w-11 h-11 sm:w-16 sm:h-16 object-contain drop-shadow-lg"
-              initial={{ opacity: 0, y: 12, scale: 0.9 }}
+              initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.05 + i * 0.04, duration: 0.25, ease: "easeOut" }}
+              transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.05 + i * 0.04, duration: 0.25, ease: "easeOut" }}
               loading="eager"
             />
           </picture>
@@ -268,9 +269,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {/* Title — bold, distinctive */}
       <motion.div
         className="text-center mb-3 sm:mb-6"
-        initial={{ opacity: 0, y: 16 }}
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }}
       >
         <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight leading-tight">
           {t.appTitle}
@@ -286,48 +287,52 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
       {/* Champions announcement banner */}
       {!championsBannerDismissed && (
-        <motion.a
-          href="/champions"
-          className="group flex items-center gap-3 mb-4 sm:mb-6 px-4 py-3 rounded-xl bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 hover:border-accent/40 transition-all relative"
-          initial={{ opacity: 0, y: 8 }}
+        <motion.div
+          className="relative mb-4 sm:mb-6"
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.4 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.15, duration: 0.4 }}
         >
-          <div className="w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-              <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs sm:text-sm font-bold text-text-primary leading-snug">
-              Pok&eacute;mon Champions is here!
-            </p>
-            <p className="text-[10px] sm:text-xs text-text-secondary mt-0.5">
-              Build your Mega Evolution team report for the new format.
-            </p>
-          </div>
-          <span className="text-xs font-bold text-accent group-hover:translate-x-0.5 transition-transform flex-shrink-0 hidden sm:inline">
-            Learn more &rarr;
-          </span>
+          <Link
+            href="/champions"
+            className="group flex items-center gap-3 px-4 py-3 pr-12 sm:pr-14 rounded-xl bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 hover:border-accent/40 transition-all"
+          >
+            <div className="w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent" aria-hidden="true" focusable="false">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-bold text-text-primary leading-snug">
+                Pok&eacute;mon Champions is here!
+              </p>
+              <p className="text-[10px] sm:text-xs text-text-secondary mt-0.5">
+                Build your Mega Evolution team report for the new format.
+              </p>
+            </div>
+            <span className="text-xs font-bold text-accent group-hover:translate-x-0.5 transition-transform flex-shrink-0 hidden sm:inline">
+              Learn more &rarr;
+            </span>
+          </Link>
           <button
             type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); dismissChampionsBanner(); }}
-            className="absolute top-2 right-2 p-1 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+            onClick={() => dismissChampionsBanner()}
+            className="absolute top-1/2 -translate-y-1/2 right-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
             aria-label="Dismiss"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-        </motion.a>
+        </motion.div>
       )}
 
       {/* How it works — collapsible for returning mobile users */}
       <motion.div
         className="mb-4 sm:mb-8"
-        initial={{ opacity: 0 }}
+        initial={shouldReduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.4 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.2, duration: 0.4 }}
       >
         {isReturningUser && !howItWorksOpen ? (
           <button
@@ -368,17 +373,17 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {/* Textarea with accent glow */}
       <motion.p
         className="text-xs text-text-tertiary font-medium mb-2 px-1"
-        initial={{ opacity: 0 }}
+        initial={shouldReduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.3 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.2, duration: 0.3 }}
       >
         {t.appInputHint}
       </motion.p>
       <motion.div
         className="relative"
-        initial={{ opacity: 0, y: 12 }}
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15, duration: 0.4, ease: "easeOut" }}
+        transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.15, duration: 0.4, ease: "easeOut" }}
       >
         <div
           className={`absolute -inset-px rounded-xl transition-all duration-500 ${
@@ -419,7 +424,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         />
         {isUrl && (
           <motion.span
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="absolute top-3 right-3 px-2.5 py-1 bg-accent text-white text-[10px] font-extrabold rounded-md uppercase tracking-widest shadow-sm"
           >
@@ -431,7 +436,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {/* Contextual paste hint for new users */}
       {showPasteHint && (
         <motion.p
-          initial={{ opacity: 0, y: -4 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           aria-live="polite"
@@ -445,7 +450,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {/* Error */}
       {(fetchError || validationError) && (
         <motion.p
-          initial={{ opacity: 0, y: -4 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           role="alert"
           className="text-sm text-danger font-semibold mt-3 px-1"
@@ -457,15 +462,15 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {/* Actions */}
       <motion.div
         className="flex flex-col gap-3 mt-5"
-        initial={{ opacity: 0 }}
+        initial={shouldReduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.25, duration: 0.3 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.25, duration: 0.3 }}
       >
         {isUrl ? (
           <motion.button
             onClick={handleFetchPaste}
             disabled={isFetching}
-            whileTap={{ scale: 0.97 }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
             className="min-h-11 px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 shadow-md shadow-accent/30 cursor-pointer tracking-wide"
           >
             {isFetching ? (
@@ -484,7 +489,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           <motion.button
             onClick={handleAnalyze}
             disabled={!hasContent}
-            whileTap={hasContent ? { scale: 0.97 } : undefined}
+            whileTap={!shouldReduceMotion && hasContent ? { scale: 0.97 } : undefined}
             className={`min-h-11 px-6 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer tracking-wide ${
               hasContent
                 ? "bg-accent text-white hover:brightness-110 shadow-md shadow-accent/30"
@@ -517,7 +522,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
                 <motion.button
                   key={team.id}
                   type="button"
-                  whileTap={{ scale: 0.96 }}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.96 }}
                   onClick={() => { onPasteChange(team.paste); onAnalyze(team.paste); }}
                   className="flex-shrink-0 snap-start flex flex-col items-center justify-center gap-1.5 min-w-[140px] min-h-[88px] px-3 py-3 rounded-xl border border-accent/30 bg-accent/[0.08] hover:bg-accent/15 hover:border-accent/50 transition-all cursor-pointer text-center"
                   aria-label={`Try ${team.name} sample team`}
@@ -548,9 +553,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {spotlight && (
         <motion.div
           className="mt-6 sm:mt-8"
-          initial={{ opacity: 0, y: 16 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.4, duration: 0.5 }}
         >
           <div className="flex items-center gap-2 mb-3">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
@@ -566,9 +571,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {latestReports.length > 0 && (
         <motion.div
           className="mt-6 sm:mt-8"
-          initial={{ opacity: 0, y: 12 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
+          transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.5, duration: 0.4 }}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -612,9 +617,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {/* Feedback callout */}
       <motion.div
         className="mt-6 sm:mt-8"
-        initial={{ opacity: 0, y: 8 }}
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.45, duration: 0.4 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.45, duration: 0.4 }}
       >
         <a
           href="/feedback"
@@ -640,9 +645,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
       {/* Footer */}
       <motion.div
         className="mt-8 sm:mt-10 space-y-3"
-        initial={{ opacity: 0 }}
+        initial={shouldReduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.5, duration: 0.5 }}
       >
         <div className="flex items-center justify-center gap-3">
           <Link href="/feedback" className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all">

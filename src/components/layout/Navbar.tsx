@@ -203,6 +203,7 @@ export function Navbar(props: NavbarProps) {
   const [versionPanelOpen, setVersionPanelOpen] = useState(false);
   const [pasteCopied, setPasteCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
   // ── Save toggle for shared-view non-owner menu item ───────────────
   // Replaces the deleted FloatingReactionDock's bookmark control AND the
@@ -268,8 +269,18 @@ export function Navbar(props: NavbarProps) {
         setMenuOpen(false);
       }
     };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        menuTriggerRef.current?.focus();
+      }
+    };
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, [menuOpen]);
 
   const isLocalDraft = !isSharedView && !isPresentationStyle;
@@ -608,11 +619,12 @@ export function Navbar(props: NavbarProps) {
           <div className="relative" ref={menuRef}>
             <button
               type="button"
+              ref={menuTriggerRef}
               onClick={() => setMenuOpen(!menuOpen)}
               className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Settings"
               aria-expanded={menuOpen}
-              aria-haspopup="menu"
+              aria-haspopup="true"
             >
               {showUser ? (
                 <div className="w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center text-accent">
@@ -628,7 +640,7 @@ export function Navbar(props: NavbarProps) {
             </button>
 
             {menuOpen && (
-              <div role="menu" className="absolute right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl py-2 min-w-[240px] z-50 animate-fade-in">
+              <div role="group" aria-label="Settings menu" className="absolute right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl py-2 min-w-[240px] z-50 animate-fade-in">
                 {/* Account section */}
                 {showUser && (
                   <>

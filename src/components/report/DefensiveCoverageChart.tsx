@@ -120,9 +120,10 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
       {/* Heatmap grid */}
       <div className="overflow-x-auto -mx-2 px-2 scrollbar-none" style={{ touchAction: "pan-x" }}>
         <table className="w-full table-fixed sm:table-auto border-collapse text-center min-w-[40rem]">
+          <caption className="sr-only">Defensive type coverage: how each attacking type fares against every Pokémon on the team</caption>
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[9px] sm:text-xs font-bold text-text-tertiary uppercase tracking-wider w-14 sm:w-32">
+              <th scope="col" className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[9px] sm:text-xs font-bold text-text-tertiary uppercase tracking-wider w-14 sm:w-32">
                 Pok&eacute;mon
               </th>
               {ALL_TYPES.map((type) => {
@@ -130,6 +131,7 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
                 return (
                   <th
                     key={type}
+                    scope="col"
                     className="px-0.5 py-2 cursor-pointer select-none"
                     onClick={() => {
                       hapticLight();
@@ -151,9 +153,9 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
           <tbody>
             {profiles.map((p) => (
               <tr key={p.species} className="border-t border-border/30 hover:bg-surface-alt/40 transition-colors">
-                <td className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[10px] sm:text-sm font-bold text-text-primary truncate max-w-[3.5rem] sm:max-w-[8rem]">
+                <th scope="row" className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[10px] sm:text-sm font-bold text-text-primary truncate max-w-[3.5rem] sm:max-w-[8rem]">
                   {p.species}
-                </td>
+                </th>
                 {ALL_TYPES.map((attackType) => {
                   const mult = p.profile[attackType];
                   const label = effectivenessLabel(mult);
@@ -178,9 +180,9 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
             ))}
             {/* Team summary row */}
             <tr className="border-t-2 border-border/60">
-              <td className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[9px] sm:text-xs font-extrabold text-text-tertiary uppercase tracking-tight sm:tracking-wider">
+              <th scope="row" className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[9px] sm:text-xs font-extrabold text-text-tertiary uppercase tracking-tight sm:tracking-wider">
                 Team Weak
-              </td>
+              </th>
               {teamSummary.map(({ type, weakCount }) => {
                 const isHighlighted = highlightedType === type;
                 const isDimmed = highlightedType !== null && !isHighlighted;

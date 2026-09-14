@@ -362,6 +362,7 @@ Examples:
           type="text"
           value={calcInput}
           onChange={(e) => setCalcInput(e.target.value)}
+          aria-label={`${t.add}: ${catLabelMap[CATEGORY_CONFIG[calcCategory].label] ?? CATEGORY_CONFIG[calcCategory].label}`}
           placeholder={
             calcCategory === "offensive"
               ? "e.g. 252+ Atk Flare Blitz vs 252 HP Rillaboom: 81-96%"
@@ -374,7 +375,7 @@ Examples:
         <button
           type="submit"
           disabled={!calcInput.trim()}
-          className="px-3 sm:px-4 py-2.5 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 min-h-[40px]"
+          className="px-3 sm:px-4 py-2.5 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 min-h-[44px]"
         >
           {t.add}
         </button>

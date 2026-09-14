@@ -231,6 +231,7 @@ const fr: TranslationKeys = {
   pasteCalcsPlaceholder: "Collez les resultats de calculs de degats ici — un par ligne.",
   changeCategory: "Changer de categorie",
   removeCalc: "Supprimer le calcul",
+  editCalc: "Modifier le calcul",
 
   tera: "Tera",
 
