@@ -1,22 +1,37 @@
-# Swarm Run Meta — 2026-08-10
+# Swarm run meta — 14 Sep 2026
 
-- Branch: `swarm-nightly-2026-08-10`
-- REMOTE_EXISTS at start: 0 (fresh branch, cut from origin/main)
-- Cut from: a70d924 origin/main
-- Run start (UK): Mon Aug 10 01:14:32 BST 2026
-- History mode: unpublished until first push (rebase permitted pre-push; merge-only after)
+## Branch decision (DEVIATION — read this)
+The stored swarm prompt specifies `swarm-nightly-$(date +%Y-%m-%d)`.
+The session harness designates `claude/loving-sagan-8ryraw` and states pushing
+elsewhere is forbidden without explicit permission.
 
-## Credential preflight
-- LINEAR_API_KEY: present (GraphQL via .claude/scripts/linear.sh)
-- DISCORD_BUILDS_WEBHOOK: present
-- POSTHOG_API_KEY / POSTHOG_PROJECT_ID: MISSING — PostHog data pull skipped this run
-- VERCEL_TOKEN / Vercel MCP: not available — Vercel env-var + log checks skipped
-- Linear MCP server: requires interactive OAuth, unavailable headless — using REST/GraphQL via linear.sh instead
-- gh CLI: not installed in this environment — GitHub operations go through the GitHub MCP server
+Resolved in favour of the harness branch. Justification:
+- Every prior nightly run in this repo used the `claude/loving-sagan-*` pattern
+  (PRs #72, #74, #75, #76, #77) — the harness branch IS the established convention.
+- The 24 `swarm-nightly-*` refs on origin are older/abandoned.
+- Both satisfy the real guardrail: never push to `main`.
 
-## History mode change
-- First push completed at the pre-flight-notes commit. The branch is now
-  PUBLISHED on origin. From this point: **merge only, never rebase, never force-push.**
-- Tip commit of this push is `.swarm/*.md` only (docs). Per CLAUDE.md's Ignored
-  Build Step rule, Vercel diffs only the tip commit and excludes `*.md`, so this
-  push is expected to CANCEL rather than consume build minutes. Intentional.
+BRANCH=claude/loving-sagan-8ryraw
+REMOTE_EXISTS=1 (harness-created; history published -> MERGE ONLY, never rebase)
+Base: exactly at origin/main (ahead 0, behind 0) at run start.
+
+## Preflight
+- Linear API (GraphQL, direct): OK — viewer resolves to Manraj Sidhu
+- Linear MCP: UNAVAILABLE (needs OAuth, non-interactive session) -> using direct API
+- Discord webhook: OK — resolves to channel 1487202217298493493 "VGC Team Report Build"
+- PostHog: POSTHOG_API_KEY / POSTHOG_PROJECT_ID MISSING -> Step 1 data pull SKIPPED for whole run
+- Vercel MCP / VERCEL_TOKEN: UNAVAILABLE -> cannot read env vars or invocation logs
+- GITHUB_TOKEN is a proxy placeholder; GitHub ops go through MCP tools (no gh CLI)
+- Baseline gate at run start: tsc PASS, next build PASS
+
+## Board state at run start (108 open issues)
+- In Review: 32   <- STALE, from 5 unmerged draft PRs
+- Backlog:   62   (46 auto-research, 24 no-claude)
+- Todo:      13
+- Bugs outside In Review: 0
+- In Progress: 0
+
+## Systemic finding
+5 open draft PRs (#72, #74, #75, #76, #77) dating back to 03-08-26 are unmerged.
+The 32 In Review tickets belong to them. The board is not stalled on implementation
+throughput — it is stalled on the human merge step. Surfaced in PR body + Discord.
