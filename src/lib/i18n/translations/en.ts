@@ -255,6 +255,7 @@ const en = {
   pasteCalcsPlaceholder: "Paste damage calc results here — one per line.",
   changeCategory: "Change category",
   removeCalc: "Remove calc",
+  editCalc: "Edit calc",
 
   // PokemonDetailSlide / PokemonCard
   tera: "Tera",

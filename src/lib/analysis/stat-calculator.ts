@@ -187,6 +187,42 @@ function trimSpToBudget(sp: StatSpread, stats: StatName[]): StatSpread {
 }
 
 /**
+ * True when a stat spread parsed out of a Showdown `EVs:` line should be read
+ * as Champions **Stat Points**, not as EVs.
+ *
+ * This is the exact rule `convertToChampionsSp` keys its SP-passthrough fast
+ * path on, extracted so the UI, the archetype detector and the legality
+ * validator all ask the same question and can never disagree about which
+ * scale a team is on:
+ *
+ *     some investment (total > 0)
+ *   AND total <= CHAMPIONS_TOTAL_SP (66)
+ *   AND every stat <= CHAMPIONS_MAX_SP_PER_STAT (32)
+ *
+ * What it CAN distinguish: anything that could not possibly be a legal SP
+ * spread — a stat over 32, or a total over 66 — is EVs. A 252 HP / 252 Atk /
+ * 4 Spe paste is unambiguously EVs and returns false.
+ *
+ * What it CANNOT distinguish, and honestly cannot be made to: Showdown has no
+ * `SPs:` line, so Champions spreads travel inside the `EVs:` line and small
+ * spreads are **genuinely ambiguous**. Any spread whose values are all ≤ 32
+ * and sum to ≤ 66 — `4 HP / 4 Def`, say, or `32 Atk / 32 Spe` — is a valid
+ * reading on either scale, and this predicate calls all of them SP. That is
+ * the deliberate choice `convertToChampionsSp` already makes: reading such a
+ * spread as EVs and running ceil(ev/8) over it would collapse `5 Spe` to 1 SP
+ * and silently break the stat math for real Champions teams, whereas a tiny
+ * EV-scale spread misread as SP shifts nothing a player would notice. An
+ * all-zero spread carries no signal at all and returns false; callers that
+ * need to treat "no investment" as "no opinion" must special-case it.
+ */
+export function isChampionsSpSpread(evs: StatSpread): boolean {
+  const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
+  const total = stats.reduce((sum, s) => sum + (evs[s] ?? 0), 0);
+  if (total <= 0 || total > CHAMPIONS_TOTAL_SP) return false;
+  return stats.every((s) => (evs[s] ?? 0) <= CHAMPIONS_MAX_SP_PER_STAT);
+}
+
+/**
  * Convert a traditional EV spread to a Champions SP spread.
  *
  * Preserves the intent of the original spread and nothing more:
@@ -210,9 +246,7 @@ export function convertToChampionsSp(evs: StatSpread): StatSpread {
   // the only consistent reading is "these are SP" — treating them as
   // EVs and running ceil(ev/8) would collapse "5 Spe" to 1 SP and
   // break downstream stat math (e.g. Choice Scarf on Primarina).
-  const totalInput = stats.reduce((sum, s) => sum + evs[s], 0);
-  const anyOverMax = stats.some((s) => evs[s] > CHAMPIONS_MAX_SP_PER_STAT);
-  if (totalInput > 0 && totalInput <= CHAMPIONS_TOTAL_SP && !anyOverMax) {
+  if (isChampionsSpSpread(evs)) {
     return { ...evs };
   }
 

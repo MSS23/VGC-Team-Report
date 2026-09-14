@@ -86,11 +86,11 @@ Shared reports are read-only for visitors. The owner (or collaborators with the 
 
 ### What is the difference between SP and EVs?
 
-**EVs (Effort Values)** are the underlying game mechanic in Pokémon. Each Pokémon can hold a maximum of 508 total EVs, with a cap of 252 in any single stat. 4 EVs = 1 stat point at level 50 (for most stats). EVs are the standard way to describe a Pokémon's training in Showdown format and PokePaste.
+**EVs (Effort Values)** are the stat-investment mechanic used by the standard VGC formats. Each Pokémon has a budget of 510 total EVs, with a cap of 252 in any single stat. VGC is played at level 50, where 8 EVs buy 1 point of a stat (it is 4 EVs at level 100), which is why spreads are written in multiples of 4. EVs are the standard way to describe a Pokémon's training in Showdown format and PokePaste.
 
-**SP (Stat Points or Standard Points)** is an alternative notation sometimes used in team reports and competitive coaching content — particularly in some international communities — where 1 SP = 1 EV. The terms are interchangeable. If you see a Pokémon listed with "252 SP Atk" it means the same thing as "252 EVs in Attack" (i.e., 252 Attack EVs).
+**SP (Stat Points)** is the stat-investment system used by Pokémon Champions (Regulation M-A/M-B) **in place of** EVs. It is a different system, not an alternative notation for EVs, and the two are not interchangeable. The budget is 66 SP total per Pokémon with a maximum of 32 SP per stat, compared to the 510-EV / 252-per-stat budget of standard VGC formats. The conversion is not 1:1 — the first SP in a stat costs 4 EVs and every SP after that costs 8, so 32 SP = 248+ EVs. Because 32 SP is the per-stat ceiling, an EV-sized figure in a single stat is never a legal SP value; a fully invested stat in Champions is 32, not 252.
 
-VGC Team Report accepts both notations when importing and displays EVs in the standard Showdown format on all report pages.
+VGC Team Report handles both systems on import. Classic-format teams keep their EV spreads in standard Showdown notation; Champions teams are shown in SP, with the running `n/66` budget counter and legality checks against the 32-per-stat cap.
 
 ### How do I embed a team report?
 
@@ -110,6 +110,7 @@ For Discord, the `/s/[id]` link automatically generates a rich Open Graph previe
 
 - **Team report:** A structured document covering a VGC team's six Pokémon builds (moves, item, EVs/IVs, nature, tera type), overall team strategy, matchup plans against common threats, damage calculations, and speed tier comparisons.
 - **Regulation set / Format:** VGC rotates its legal Pokémon list seasonally. Regulation G and Regulation H are recent standard formats from the Scarlet & Violet era. Regulation M-A (Champions) is the 2026 format adding Mega Evolutions.
+- **SP (Stat Points) vs EVs:** SP is the stat-investment system used by Pokémon Champions (Regulation M-A/M-B) in place of EVs. The conversion is not 1:1 — the first SP in a stat costs 4 EVs and every SP after that costs 8 (so 32 SP = 248+ EVs). The budget is 66 SP total per Pokémon with a maximum of 32 SP per stat, compared to the 510-EV / 252-per-stat budget of standard VGC formats.
 - **Restricted Legendary:** High-power Legendary Pokémon that are legal in limited quantities per team (usually two in recent formats).
 - **Speed tier:** A comparison of a Pokémon's Speed stat relative to common threats to determine who moves first without Trick Room or priority moves.
 - **Damage calc / Calculation:** A computation of how much damage a specific move deals from one Pokémon to another under specific conditions (EVs, stat boosts, weather, terrain, etc.). Essential for EV spread decisions.

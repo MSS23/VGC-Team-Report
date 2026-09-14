@@ -107,6 +107,23 @@ export async function generateMetadata({
       ? undefined
       : { index: false as const, follow: false as const };
 
+    // ── oEmbed discovery. /api/oembed is a working endpoint (rich payload +
+    // iframe html + thumbnail) but consumers can only find it if the shared
+    // page advertises it in <head>. Next resolves `alternates.types` against
+    // the app-wide `metadataBase`, so the relative path below is emitted as an
+    // absolute href without repeating the domain here.
+    //
+    // Two details are load-bearing:
+    //  - `url` must be the canonical /s/<id> URL: the route matches
+    //    /\/s\/([A-Za-z0-9]{6,12})/ against it and 400s if it can't.
+    //  - encodeURIComponent is required. Next joins relative alternates with
+    //    path.posix.join, which would collapse a raw "https://" in the query
+    //    into "https:/"; percent-encoding keeps the round-trip exact.
+    // Only advertised for public shares — the oEmbed route selects on
+    // `is_public = TRUE`, so an unlisted share would hand consumers a 404.
+    const canonicalUrl = `https://pokemonvgcteamreport.com/s/${id}`;
+    const oembedHref = `/api/oembed?url=${encodeURIComponent(canonicalUrl)}&format=json`;
+
     // Embed images for shared reports are intentionally suppressed. We have
     // tried this twice now (an opengraph-image.tsx convention file, then
     // wiring /api/team-graphic into og:image) — both produced "image failed
@@ -131,7 +148,12 @@ export async function generateMetadata({
         images: [],
       },
       alternates: {
-        canonical: `https://pokemonvgcteamreport.com/s/${id}`,
+        canonical: canonicalUrl,
+        ...(isPublic && {
+          types: {
+            "application/json+oembed": [{ url: oembedHref, title }],
+          },
+        }),
       },
       twitter: {
         card: "summary",

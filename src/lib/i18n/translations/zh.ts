@@ -231,6 +231,7 @@ const zh: TranslationKeys = {
   pasteCalcsPlaceholder: "在此粘贴伤害计算结果 — 每行一个。",
   changeCategory: "更改类别",
   removeCalc: "删除计算",
+  editCalc: "编辑计算",
 
   tera: "太晶",
 

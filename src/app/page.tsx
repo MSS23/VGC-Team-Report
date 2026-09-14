@@ -865,17 +865,17 @@ function HomeContent() {
             </button>
           </div>
         ) : (
-          <div className="w-full max-w-5xl animate-fade-in px-4">
+          <div className="w-full max-w-5xl animate-fade-in px-4" role="status" aria-live="polite">
             {/* Skeleton: Tournament info */}
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-6" aria-hidden="true">
               <div className="skeleton h-7 w-48" />
               <div className="skeleton h-6 w-20" />
               <div className="skeleton h-6 w-16" />
             </div>
             {/* Skeleton: Team summary */}
-            <div className="skeleton h-32 w-full mb-8 rounded-xl" />
+            <div className="skeleton h-32 w-full mb-8 rounded-xl" aria-hidden="true" />
             {/* Skeleton: Pokemon grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-hidden="true">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="rounded-2xl border border-border p-5 flex flex-col gap-4">
                   <div className="flex items-start gap-3">

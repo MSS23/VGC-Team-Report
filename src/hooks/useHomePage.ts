@@ -689,13 +689,16 @@ export function useHomePage() {
     if (tags?.regulation) return; // user already set regulation
     regulationDetected.current = true;
     void import("@/lib/analysis/detect-regulation").then(({ detectRegulation }) => {
-      const detected = detectRegulation(analysis.pokemon);
+      // The raw paste is passed so an explicit `=== [gen9vgc2026regmc] … ===`
+      // header can name its Champions regulation outright — the only way to
+      // recognise Reg M-C, which adds no species signal over M-B.
+      const detected = detectRegulation(analysis.pokemon, paste);
       mergeTags({
         regulation: detected ?? "Custom",
         regulationAutoDetected: true,
       });
     });
-  }, [analysis, share.isSharedView, tags, mergeTags]);
+  }, [analysis, paste, share.isSharedView, tags, mergeTags]);
 
   // ── Draft hydration (parallel to shared-view hydration above) ────
   // The /?draft=ID flow used to call only handleAnalyze(paste), which

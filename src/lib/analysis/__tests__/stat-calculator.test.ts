@@ -6,6 +6,7 @@ import {
   convertToChampionsSp,
   evToChampionsSp,
   championsSpToEv,
+  isChampionsSpSpread,
   CHAMPIONS_TOTAL_SP,
   CHAMPIONS_MAX_SP_PER_STAT,
   MAX_EV_PER_STAT,
@@ -380,5 +381,89 @@ describe("calculateChampionsStat", () => {
   it("uninvested stat gets no SP bonus", () => {
     // base 130 Atk, 0 SP, neutral: 145 + 5 = 150
     expect(calculateChampionsStat("atk", 130, 0, "Serious")).toBe(150);
+  });
+});
+
+describe("isChampionsSpSpread", () => {
+  it("accepts the native SP paste from convertToChampionsSp's own doc comment", () => {
+    // "EVs: 22 HP / 11 Def / 24 SpA / 4 SpD / 5 Spe" — sums to 66, nothing over 32.
+    expect(
+      isChampionsSpSpread(spread({ hp: 22, def: 11, spa: 24, spd: 4, spe: 5 })),
+    ).toBe(true);
+  });
+
+  it("rejects a classic 252/252/4 EV spread (total over 66)", () => {
+    expect(isChampionsSpSpread(spread({ hp: 252, atk: 252, spe: 4 }))).toBe(false);
+  });
+
+  it("rejects a spread under the 66 total but over the 32 per-stat cap", () => {
+    // Regression: detect-archetype used a total-only test and scored this on
+    // the SP scale while convertToChampionsSp converted it on the EV scale.
+    expect(isChampionsSpSpread(spread({ hp: 36 }))).toBe(false);
+    expect(isChampionsSpSpread(spread({ hp: 33, atk: 33 }))).toBe(false);
+  });
+
+  it("returns false for an all-zero spread (no signal either way)", () => {
+    expect(isChampionsSpSpread(spread())).toBe(false);
+  });
+
+  it("accepts the exact boundary: 32 in a stat, 66 total", () => {
+    expect(isChampionsSpSpread(spread({ hp: 32, atk: 32, spe: 2 }))).toBe(true);
+    expect(isChampionsSpSpread(spread({ hp: 32, atk: 32, spe: 3 }))).toBe(false); // 67
+  });
+
+  it("agrees with convertToChampionsSp's passthrough path on every input", () => {
+    // The predicate IS the fast-path condition; whenever it is true the
+    // conversion must be the identity, and whenever false it must not be.
+    const cases: StatSpread[] = [
+      spread({ hp: 22, def: 11, spa: 24, spd: 4, spe: 5 }),
+      spread({ hp: 4, def: 4 }),
+      spread({ hp: 252, spe: 252, atk: 4 }),
+      spread({ hp: 36 }),
+      spread({ hp: 32, atk: 32, spe: 2 }),
+      spread(),
+    ];
+    for (const evs of cases) {
+      const converted = convertToChampionsSp(evs);
+      if (isChampionsSpSpread(evs)) {
+        expect(converted).toEqual(evs);
+      } else {
+        // Non-passthrough inputs went through evToChampionsSp; the all-zero
+        // spread converts to itself but takes the conversion path, not the
+        // fast path, so it is excluded from the strict inequality below.
+        const total = Object.values(evs).reduce((a, b) => a + b, 0);
+        if (total > 0) expect(converted).not.toEqual(evs);
+      }
+    }
+  });
+});
+
+describe("VGC Champions SP badge regression", () => {
+  // The bug: PokemonCard tested raw `parsed.evs` against the EV ladder
+  // (0, 4, 12, 20, …) to decide whether to show "Auto-converted from EVs".
+  // A native SP paste sits off that ladder by design, so a Champions team
+  // that was never converted at all was badged as auto-converted. The badge
+  // condition must consult isChampionsSpSpread first.
+  const isValidChampionsEv = (ev: number) => ev === 0 || (ev >= 4 && (ev - 4) % 8 === 0);
+  const badgeShown = (evs: StatSpread) =>
+    !isChampionsSpSpread(evs) &&
+    (["hp", "atk", "def", "spa", "spd", "spe"] as const).some(
+      (s) => !isValidChampionsEv(evs[s]) && evs[s] > 0,
+    );
+
+  it("a native SP paste is NOT labelled auto-converted", () => {
+    const nativeSp = spread({ hp: 22, def: 11, spa: 24, spd: 4, spe: 5 });
+    // It really is off the EV ladder — that is why the old check fired.
+    expect(isValidChampionsEv(nativeSp.hp)).toBe(false);
+    expect(badgeShown(nativeSp)).toBe(false);
+  });
+
+  it("a ladder-aligned EV paste is not labelled auto-converted either", () => {
+    expect(badgeShown(spread({ hp: 252, atk: 252, spe: 4 }))).toBe(false);
+  });
+
+  it("an off-ladder EV paste IS still labelled auto-converted", () => {
+    // 200 EVs is not on the 4/12/20/… ladder, so SP is lost in conversion.
+    expect(badgeShown(spread({ hp: 200, atk: 252, spe: 56 }))).toBe(true);
   });
 });

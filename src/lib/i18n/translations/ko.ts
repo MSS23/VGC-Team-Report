@@ -231,6 +231,7 @@ const ko: TranslationKeys = {
   pasteCalcsPlaceholder: "데미지 계산 결과를 여기에 붙여넣기 — 한 줄에 하나씩.",
   changeCategory: "카테고리 변경",
   removeCalc: "계산 삭제",
+  editCalc: "계산 편집",
 
   tera: "테라스탈",
 

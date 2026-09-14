@@ -392,7 +392,7 @@ export function SlideNavControls({
             onShowShortcuts();
             setSheetOpen(false);
           }}
-          className="hidden sm:flex w-full items-center gap-2.5 min-h-[40px] px-2.5 rounded-lg text-sm font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
+          className="hidden sm:flex w-full items-center gap-2.5 min-h-[44px] px-2.5 rounded-lg text-sm font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
         >
           <KeyboardIcon width="16" height="16" />
           Keyboard shortcuts

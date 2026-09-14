@@ -8,6 +8,12 @@
  *
  * Signal hierarchy (highest priority first):
  *
+ *   0. Explicit Champions regulation tag in the paste header → that reg
+ *      A header like `=== [gen9vgc2026regmc] My Team ===` states the
+ *      format outright, which beats every inferred signal. This is the
+ *      only way to recognise Reg M-C: M-C is additive over M-B, so an
+ *      M-C team carries no species signal that M-B lacks (VGC-41).
+ *
  *   1. Mega / Primal / Champions-exclusive form → "Reg M-A"
  *      Pokémon Champions format. Catches Mega Stone held, Mega species,
  *      Primal Orb held, Primal species suffix, and event-only forms
@@ -43,6 +49,7 @@
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { detectMegaFromItem, isMegaForm, getMegaEntryFromSpecies } from "@/lib/utils/mega-detect";
 import { CHAMPIONS_REG_MB_ONLY_MEGAS } from "@/lib/data/mega-pokemon";
+import { isChampionsFormat, type ChampionsRegulation } from "@/lib/data/tags";
 import {
   RESTRICTED_LEGENDARIES,
   PARADOX_POKEMON,
@@ -54,6 +61,32 @@ import {
 } from "@/lib/data/gen9-regulation-signals";
 
 const PRIMAL_ORB_ITEMS = new Set(["red orb", "blue orb"]);
+
+/**
+ * Champions regulation tag as it appears inside a Showdown paste header's
+ * format bracket: `regma` / `reg-m-b` / `Regulation M-C`, etc. Only the
+ * bracketed format id is scanned so a nickname or team name containing
+ * "Reg M-C" can never flip the detection.
+ */
+const PASTE_FORMAT_BRACKET = /^===\s*\[([^\]]*)\]/m;
+const CHAMPIONS_TAG = /reg(?:ulation)?[\s_-]*m[\s_-]*([abc])\b/i;
+
+/**
+ * Read an explicit Champions regulation out of a raw Showdown paste header.
+ * Returns null when the paste has no format bracket or the bracket names a
+ * non-Champions format (those still go through species-signal detection).
+ */
+export function detectChampionsRegulationTag(
+  paste?: string | null,
+): ChampionsRegulation | null {
+  if (!paste) return null;
+  const bracket = paste.match(PASTE_FORMAT_BRACKET);
+  if (!bracket) return null;
+  const tag = bracket[1].match(CHAMPIONS_TAG);
+  if (!tag) return null;
+  const reg = `Reg M-${tag[1].toUpperCase()}`;
+  return isChampionsFormat(reg) ? (reg as ChampionsRegulation) : null;
+}
 
 /**
  * Detection result. Callers can use `regulation` for the tag and
@@ -71,12 +104,25 @@ interface RegulationDetection {
  */
 function detectRegulationWithSignals(
   pokemon: AnalyzedPokemon[],
+  paste?: string | null,
 ): RegulationDetection {
   if (pokemon.length === 0) {
     return { regulation: null, signals: [] };
   }
 
   const signals: string[] = [];
+
+  // ── Signal -1: explicit Champions tag in the paste header ────────
+  // A `=== [gen9vgc2026regmc] … ===` header states the format outright,
+  // so it outranks every inferred signal. Required for Reg M-C: M-C is
+  // additive over M-B, so no species can positively identify it.
+  const taggedChampionsReg = detectChampionsRegulationTag(paste);
+  if (taggedChampionsReg) {
+    return {
+      regulation: taggedChampionsReg,
+      signals: [`Paste header declares the ${taggedChampionsReg} format`],
+    };
+  }
 
   // ── Signal 0: Reg M-B (Pokémon Champions, newer format) ──────────
   // M-B is a superset of M-A, so the only unambiguous "this is M-B, not
@@ -234,6 +280,9 @@ function detectRegulationWithSignals(
  * Convenience wrapper returning just the regulation tag (or null) with
  * no diagnostic info. This is the function the home-page effect calls.
  */
-export function detectRegulation(pokemon: AnalyzedPokemon[]): string | null {
-  return detectRegulationWithSignals(pokemon).regulation;
+export function detectRegulation(
+  pokemon: AnalyzedPokemon[],
+  paste?: string | null,
+): string | null {
+  return detectRegulationWithSignals(pokemon, paste).regulation;
 }

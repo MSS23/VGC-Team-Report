@@ -231,6 +231,7 @@ const ja: TranslationKeys = {
   pasteCalcsPlaceholder: "ダメージ計算結果をここに貼り付け — 1行に1つ。",
   changeCategory: "カテゴリを変更",
   removeCalc: "計算を削除",
+  editCalc: "計算を編集",
 
   tera: "テラスタル",
 

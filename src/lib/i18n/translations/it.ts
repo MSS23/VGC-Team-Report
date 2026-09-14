@@ -231,6 +231,7 @@ const it: TranslationKeys = {
   pasteCalcsPlaceholder: "Incolla i risultati dei calcoli danni qui — uno per riga.",
   changeCategory: "Cambia categoria",
   removeCalc: "Rimuovi calcolo",
+  editCalc: "Modifica calcolo",
 
   tera: "Tera",
 
