@@ -24,7 +24,7 @@ import { getRegulationLookupKey } from "@/lib/data/gen9-regulation-signals";
 import { usesRegMbPool, type ChampionsRegulation } from "@/lib/data/tags";
 import {
   CHAMPIONS_TOTAL_SP,
-  CHAMPIONS_MAX_SP_PER_STAT,
+  isChampionsSpSpread,
 } from "@/lib/analysis/stat-calculator";
 
 // ── Severity levels ─────────────────────────────────────────────────────────
@@ -252,8 +252,9 @@ export function validateChampionsTeam(
   // Reg M-A is natively an SP (Stat Points) format: 66 total, 32 per stat.
   // Showdown has no "SPs:" line yet, so Champions pastes ship SP values
   // inside the EVs line — a spread whose total ≤ 66 and whose per-stat
-  // values are ≤ 32 can only coherently be SP (same detection used by
-  // convertToChampionsSp). Validate those as SP.
+  // values are ≤ 32 can only coherently be SP. That test lives in
+  // `isChampionsSpSpread`, shared with convertToChampionsSp and the report
+  // UI so all three stay on the same scale. Validate those as SP.
   //
   // Traditional EV spreads (512 total, 252 per stat) are still accepted
   // because the rest of the app converts them to SP on display, but are
@@ -261,8 +262,7 @@ export function validateChampionsTeam(
   // still surface.
   for (const p of pokemon) {
     const total = Object.values(p.evs).reduce((a, b) => a + b, 0);
-    const maxPerStat = Math.max(...Object.values(p.evs));
-    const looksLikeSp = total > 0 && total <= CHAMPIONS_TOTAL_SP && maxPerStat <= CHAMPIONS_MAX_SP_PER_STAT;
+    const looksLikeSp = isChampionsSpSpread(p.evs);
 
     if (looksLikeSp) {
       // looksLikeSp guarantees every stat ≤ 32, so per-stat cap is already

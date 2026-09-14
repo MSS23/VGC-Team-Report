@@ -1,6 +1,6 @@
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { detectMegaFromItem } from "@/lib/utils/mega-detect";
-import { CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT } from "@/lib/analysis/stat-calculator";
+import { CHAMPIONS_MAX_SP_PER_STAT, isChampionsSpSpread } from "@/lib/analysis/stat-calculator";
 
 /**
  * Auto-detect team archetypes based on abilities, moves, and Pokemon composition.
@@ -82,12 +82,22 @@ export function detectArchetypes(pokemon: AnalyzedPokemon[]): string[] {
   // Champions (SP) spreads cap at 32 per stat / 66 total, so the EV-scale
   // investment thresholds below (100/200) could never trigger and every
   // Champions team fell through to "Goodstuffs". Scale thresholds by the
-  // per-stat max of whichever system the team is using. All-zero spreads
-  // trip the SP branch harmlessly (no threshold fires on zeros either way).
+  // per-stat max of whichever system the team is using.
+  //
+  // Use the shared `isChampionsSpSpread` rather than a local total-only test:
+  // this previously omitted the per-stat ≤ 32 check that convertToChampionsSp
+  // and the legality validator both apply, so a spread like "36 HP" (total 36,
+  // but 36 > 32) was scored on the SP scale here while being converted on the
+  // EV scale everywhere else. Uninvested spreads carry no signal, so they
+  // neither confirm nor deny the scale (no threshold fires on zeros either
+  // way) — otherwise one Pokémon with no EVs line would drag a genuine
+  // Champions team back onto the EV scale.
   const isSpScale = pokemon.length > 0 && pokemon.every((p) => {
     const evs = p.parsed.evs;
     if (!evs) return true;
-    return Object.values(evs).reduce((a, b) => a + (b ?? 0), 0) <= CHAMPIONS_TOTAL_SP;
+    const total = Object.values(evs).reduce((a, b) => a + (b ?? 0), 0);
+    if (total <= 0) return true;
+    return isChampionsSpSpread(evs);
   });
   const evScale = isSpScale ? CHAMPIONS_MAX_SP_PER_STAT / 252 : 1;
 

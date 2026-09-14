@@ -25,7 +25,7 @@ import { translateMove } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
 import { detectMegaFromItem, isMegaForm, getMegaEntryFromSpecies } from "@/lib/utils/mega-detect";
 import { lookupPokemon } from "@/lib/data/pokemon";
-import { calculateAllStats, calculateAllChampionsStats, CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
+import { calculateAllStats, calculateAllChampionsStats, CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT, convertToChampionsSp, isChampionsSpSpread } from "@/lib/analysis/stat-calculator";
 
 interface PokemonCardProps {
   pokemon: AnalyzedPokemon;
@@ -418,8 +418,15 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
         const totalEvs = Object.values(parsed.evs).reduce((a, b) => a + b, 0);
         const spSpread = convertToChampionsSp(parsed.evs);
         const totalSp = (["hp", "atk", "def", "spa", "spd", "spe"] as const).reduce((sum, s) => sum + spSpread[s], 0);
+        // "Auto-converted from EVs" may only be shown for spreads that were
+        // actually converted. convertToChampionsSp has an SP-passthrough path
+        // for pastes already written in SP, and a native SP spread (e.g.
+        // "22 HP / 11 Def / 24 SpA / 4 SpD / 5 Spe") sits off the EV ladder by
+        // design — testing the raw EV values without asking isChampionsSpSpread
+        // first badged every such team with a conversion that never happened.
+        const isSpNative = isChampionsSpSpread(parsed.evs);
         const isValidChampionsEv = (ev: number) => ev === 0 || (ev >= 4 && (ev - 4) % 8 === 0);
-        const hasWastedEvs = isChampions && (["hp", "atk", "def", "spa", "spd", "spe"] as const).some((s) => !isValidChampionsEv(parsed.evs[s]) && parsed.evs[s] > 0);
+        const hasWastedEvs = isChampions && !isSpNative && (["hp", "atk", "def", "spa", "spd", "spe"] as const).some((s) => !isValidChampionsEv(parsed.evs[s]) && parsed.evs[s] > 0);
         const overSp = isChampions && totalSp > CHAMPIONS_TOTAL_SP;
 
         return (
