@@ -7,7 +7,7 @@ import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
 import { lookupPokemon } from "@/lib/data/pokemon";
 import { CHAMPIONS_DEX, CHAMPIONS_MB_DEX } from "@/lib/data/champions-dex";
-import { isChampionsFormat } from "@/lib/data/tags";
+import { isChampionsFormat, usesRegMbPool } from "@/lib/data/tags";
 import { calculateStat, calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import { detectMegaFromItem } from "@/lib/utils/mega-detect";
@@ -153,7 +153,8 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   // rebuilds the whole meta-threat speed table.
   const META_THREATS = useMemo(() => {
     if (!isChampionsFormat(regulation)) return META_THREATS_DEFAULT;
-    const championsDex = regulation === "Reg M-B" ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
+    // M-C inherits M-B's pool until its own dex is verified (see tags.ts).
+    const championsDex = usesRegMbPool(regulation) ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
     return META_THREATS_CHAMPIONS.filter(k => lookupPokemon(k) && championsDex.has(k));
   }, [regulation]);
   const { t } = useTranslation();

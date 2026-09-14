@@ -1,7 +1,7 @@
 /**
- * Champions format (Regulation M-A) legality validator.
+ * Champions format (Regulation M-A / M-B / M-C) legality validator.
  *
- * Validates a parsed team against Reg M-A rules:
+ * Validates a parsed team against Champions rules:
  * - Species must be in the Champions dex
  * - Max 2 restricted Pokemon
  * - Any number of Mega Stones allowed on the team (only one Pokemon can
@@ -21,6 +21,7 @@ import { CHAMPIONS_DEX, CHAMPIONS_MB_DEX } from "@/lib/data/champions-dex";
 import { getSpecies } from "@/lib/data/dex-subset";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import { getRegulationLookupKey } from "@/lib/data/gen9-regulation-signals";
+import { usesRegMbPool, type ChampionsRegulation } from "@/lib/data/tags";
 import {
   CHAMPIONS_TOTAL_SP,
   CHAMPIONS_MAX_SP_PER_STAT,
@@ -135,14 +136,16 @@ function getSpeciesClauseKey(species: string): string {
 
 export function validateChampionsTeam(
   pokemon: ParsedPokemon[],
-  regulation: "Reg M-A" | "Reg M-B" = "Reg M-A",
+  regulation: ChampionsRegulation = "Reg M-A",
 ): LegalityResult {
   const issues: LegalityIssue[] = [];
 
-  // Reg M-B is a superset of M-A — same rules, wider species pool.
-  const isMb = regulation === "Reg M-B";
-  const dex = isMb ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
-  const regLabel = isMb ? "Reg M-B" : "Reg M-A";
+  // Each Champions reg is a superset of the one before it — same rules, wider
+  // species pool. Reg M-C inherits M-B's pool until the M-C dex is verified
+  // (see usesRegMbPool's ponytail note); over-inclusive beats falsely flagging
+  // a legal Pokemon as illegal.
+  const dex = usesRegMbPool(regulation) ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
+  const regLabel = regulation;
 
   // Team size
   if (pokemon.length < 6) {

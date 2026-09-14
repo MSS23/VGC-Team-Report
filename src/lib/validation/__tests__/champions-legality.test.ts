@@ -215,4 +215,50 @@ describe("validateChampionsTeam", () => {
     const result = validateChampionsTeam(team);
     expect(result.issues.some((i) => i.severity === "error" && i.message.includes("510"))).toBe(true);
   });
+
+  // VGC-41: Reg M-C shipped 8 Sept 2026. Before the fix it wasn't a Champions
+  // regulation at all, and the legality call fell back to the narrow Reg M-A
+  // dex — flagging M-B-legal species as illegal on an M-C team.
+  describe("Reg M-C (VGC-41)", () => {
+    it("accepts M-B-pool species on an M-C team", () => {
+      for (const species of ["Gholdengo", "Metagross", "Annihilape"]) {
+        const team = makeTeam();
+        team[0] = makePokemon({ species, item: "Sitrus Berry" });
+        const result = validateChampionsTeam(team, "Reg M-C");
+        const dexErrors = result.issues.filter(
+          (i) => i.severity === "error" && i.message.includes("not available in Champions"),
+        );
+        expect(dexErrors, `${species} must be legal in Reg M-C`).toHaveLength(0);
+      }
+    });
+
+    it("still rejects those species under Reg M-A", () => {
+      const team = makeTeam();
+      team[0] = makePokemon({ species: "Gholdengo", item: "Sitrus Berry" });
+      const result = validateChampionsTeam(team, "Reg M-A");
+      expect(result.legal).toBe(false);
+      expect(
+        result.issues.some((i) =>
+          i.message.includes("not available in Champions format (Reg M-A)"),
+        ),
+      ).toBe(true);
+    });
+
+    it("labels its issues Reg M-C, not Reg M-A", () => {
+      const result = validateChampionsTeam(makeTeam(), "Reg M-C");
+      expect(result.issues.some((i) => i.message.includes("Reg M-C"))).toBe(true);
+      expect(result.issues.some((i) => i.message.includes("Reg M-A"))).toBe(false);
+    });
+
+    it("validates an M-C spread as SP, not EVs", () => {
+      const team = makeTeam();
+      // 60 of 66 SP, max 32 in a stat — unmistakably an SP spread, not EVs.
+      team[0] = makePokemon({ evs: { hp: 32, atk: 0, def: 0, spa: 0, spd: 0, spe: 28 } });
+      const result = validateChampionsTeam(team, "Reg M-C");
+      const forMon = result.issues.filter((i) => i.pokemon === team[0].species);
+      expect(forMon.some((i) => i.message.includes("60/66 SP allocated"))).toBe(true);
+      expect(forMon.some((i) => i.message.includes("EVs allocated"))).toBe(false);
+      expect(forMon.filter((i) => i.severity === "error")).toHaveLength(0);
+    });
+  });
 });

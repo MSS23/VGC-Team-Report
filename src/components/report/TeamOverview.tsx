@@ -7,7 +7,7 @@ import type { SpriteConfig } from "@/lib/types/sprites";
 import { PokemonCard } from "./PokemonCard";
 import { TeamStats } from "./TeamStats";
 import { useTranslation } from "@/lib/i18n";
-import { ARCHETYPES, REGULATIONS, EVENT_TYPES, isChampionsFormat } from "@/lib/data/tags";
+import { ARCHETYPES, REGULATIONS, EVENT_TYPES, isChampionsFormat, toChampionsRegulation } from "@/lib/data/tags";
 import type { ReportTags } from "@/lib/data/tags";
 import { FieldDiffHighlight } from "./TeamReport";
 import { encodeSectionKey } from "@/lib/utils/version-diff";
@@ -381,12 +381,12 @@ function TeamOverviewBase({
   const hasTournamentInfo = !!(teamName || tournamentName || placement || record);
   const hasCreatorInfo = !!creatorName;
 
-  // Champions legality validation — runs for both Champions regs (M-A / M-B)
+  // Champions legality validation — runs for every Champions reg (M-A / M-B / M-C)
   const legality = useMemo(() => {
     if (!isChampionsFormat(tags?.regulation)) return null;
     return validateChampionsTeam(
       pokemon.map((p) => p.parsed),
-      tags?.regulation === "Reg M-B" ? "Reg M-B" : "Reg M-A",
+      toChampionsRegulation(tags?.regulation),
     );
   }, [tags?.regulation, pokemon]);
   const [rentalCopied, setRentalCopied] = useState(false);
