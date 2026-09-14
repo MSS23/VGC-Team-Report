@@ -16,6 +16,23 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "September 2026",
+    version: "5.28",
+    title: "Regulation M-C, Keyboard-Friendly Reports & an Honest Explore Feed",
+    emoji: "🆕",
+    highlight: true,
+    items: [
+      { type: "new", text: "Pokémon Champions Regulation M-C is now a supported format. Tag a team Reg M-C, or paste one whose header names the M-C format, and you get the full Champions report — Stat Points instead of EVs, Mega Evolution, locked IVs and no Tera — rather than the silently wrong EV-style report it produced before. One caveat while we confirm the M-C species list against a primary source: legality is currently checked against the Reg M-B pool, so a Pokémon that is new in M-C may still be flagged as unavailable. We'd rather briefly under-report a legal pick than invent a list and wrongly call your team illegal." },
+      { type: "fixed", text: "Champions teams pasted directly in Stat Points no longer get a misleading \"Auto-converted from EVs\" badge, and archetype detection now reads the SP scale the same way the rest of the report does — so a team can no longer be scored on one stat system while being displayed in another." },
+      { type: "fixed", text: "Browsing Explore no longer skips teams. When several reports were shared in the same instant — common when a tournament's teams all go up at once — loading more results could quietly drop some of them or show the same team twice. It was worst under \"Most popular\" and \"Most viewed\", where the vast majority of reports are tied together on zero likes or zero views. Every sort order now pages through the full list, each team exactly once." },
+      { type: "improved", text: "The report viewer is now fully usable without a mouse: damage calcs can be opened for editing from the keyboard, the notes and calc boxes announce what they are to screen readers, the coverage tables read out as \"Incineroar, Fighting, 2×\" instead of a bare \"2×\", dropdowns and the settings menu close with Escape, and the homepage entrance animations hold still if you've asked your device for reduced motion." },
+      { type: "fixed", text: "Eight controls on the Speed Tiers chart were missing both their intended 44px tap target and their font size — two class names had been accidentally joined together, so neither ever applied. Easier to hit on a phone now." },
+      { type: "new", text: "Paste a shared report link into Discord, Slack, Notion or WordPress and it now unfurls as a proper rich card instead of a bare URL. The preview data was already being generated; nothing could find it until now." },
+      { type: "fixed", text: "The long-form reference file we serve to AI assistants was still teaching the old \"1 SP = 1 EV\" myth that the FAQ had already dropped. It now explains the real Champions maths — 66 SP per Pokémon, 32 per stat, the first point costs 4 EVs and each one after costs 8 — and the automated check that keeps these documents honest now covers it too, so it can't drift again." },
+      { type: "improved", text: "Housekeeping: removed five unused graphics and a dead helper function left behind by earlier work. No change to how anything looks or behaves." },
+    ],
+  },
+  {
     date: "August 2026",
     version: "5.27",
     title: "Sounder Saves, Honest Drafts & a Security Sweep",
