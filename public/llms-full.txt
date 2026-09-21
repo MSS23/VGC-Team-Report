@@ -88,9 +88,9 @@ Shared reports are read-only for visitors. The owner (or collaborators with the 
 
 **EVs (Effort Values)** are the underlying game mechanic in Pokémon. Each Pokémon can hold a maximum of 508 total EVs, with a cap of 252 in any single stat. 4 EVs = 1 stat point at level 50 (for most stats). EVs are the standard way to describe a Pokémon's training in Showdown format and PokePaste.
 
-**SP (Stat Points or Standard Points)** is an alternative notation sometimes used in team reports and competitive coaching content — particularly in some international communities — where 1 SP = 1 EV. The terms are interchangeable. If you see a Pokémon listed with "252 SP Atk" it means the same thing as "252 EVs in Attack" (i.e., 252 Attack EVs).
+**SP (Stat Points)** is the stat-investment system Pokémon Champions uses (Regulation M-A/M-B) in place of EVs. It is not alternative notation for EVs and the conversion is not 1:1: the first SP in a stat costs 4 EVs and every SP after that costs 8, so 32 SP is worth 248+ EVs. The budget is 66 SP total per Pokémon with a maximum of 32 SP per stat, which is a much tighter constraint than the EV budget described above. A Pokémon listed with "32 SP Atk" is therefore at the per-stat cap, not at "32 Attack EVs".
 
-VGC Team Report accepts both notations when importing and displays EVs in the standard Showdown format on all report pages.
+VGC Team Report accepts both notations when importing. Champions reports are displayed in SP; standard VGC reports are displayed as EVs in Showdown format. The free converter at /tools/ev-to-sp translates between the two in either direction.
 
 ### How do I embed a team report?
 
