@@ -301,6 +301,7 @@ export function TeamReport({
     return (
         <PokemonDetailSlide
           pokemon={pokemon}
+          team={analysis.pokemon.map((entry) => entry.parsed)}
           note={notes[key] ?? ""}
           onNoteChange={handleDetailNoteChange}
           calcs={calcs[key] ?? EMPTY_CALCS}

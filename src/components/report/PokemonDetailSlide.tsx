@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
+import dynamic from "next/dynamic";
+import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { hapticLight } from "@/lib/utils/haptics";
 import { isChampionsFormat } from "@/lib/data/tags";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
@@ -27,8 +29,13 @@ import { FieldDiffHighlight } from "./TeamReport";
 import { encodeSectionKey } from "@/lib/utils/version-diff";
 import { useIsPrintMode } from "@/components/ui/print-context";
 
+const InlineDamageCalculator = dynamic(() => import("./InlineDamageCalculator"), {
+  loading: () => <p role="status" className="p-4 text-sm text-text-secondary">Loading damage calculator…</p>,
+});
+
 interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;
+  team?: ParsedPokemon[];
   note: string;
   onNoteChange: (text: string) => void;
   calcs: CalcEntry[];
@@ -321,6 +328,7 @@ function CollapsibleCalcGroup({
 
 function PokemonDetailSlideBase({
   pokemon,
+  team = [],
   note,
   onNoteChange,
   calcs,
@@ -337,6 +345,7 @@ function PokemonDetailSlideBase({
   isMega,
   onToggleMega,
 }: PokemonDetailSlideProps) {
+  const [showCalculator, setShowCalculator] = useState(false);
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
 
@@ -905,10 +914,21 @@ function PokemonDetailSlideBase({
         </p>
       )}
       {!isReadOnly && (
+        <div className="space-y-4">
+          <button type="button" onClick={() => setShowCalculator((value) => !value)} aria-expanded={showCalculator} className="min-h-11 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-text-primary cursor-pointer hover:bg-surface-alt active:bg-surface-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+            {showCalculator ? "Close damage calculator" : "Open damage calculator"}
+          </button>
+          {showCalculator && <InlineDamageCalculator
+            pokemon={{ ...parsed, species: spriteSpecies, ability: displayAbility?.replace(/ \*$/, "") ?? null }}
+            team={team}
+            regulation={regulation}
+            onAddCalc={onAddCalc}
+          />}
         <CalcInput
           pokemonSpecies={parsed.species}
           onAddCalc={onAddCalc}
         />
+        </div>
       )}
     </div>
     </FieldDiffHighlight>
