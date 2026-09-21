@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const CACHE_KEY = "champions:meta:snapshot";
+const CACHE_KEY = "champions:meta:snapshot:v2";
 const CACHE_TTL = 300; // 5 minutes
 const MIN_REPORTS = 5;
 const TOP_N = 20;
@@ -53,7 +53,9 @@ export async function GET(request: Request) {
         WHERE is_public = TRUE
           AND deleted_at IS NULL
           AND (
-            data->>'regulation' ILIKE '%champion%'
+            data->>'regulation' IN ('Reg M-A', 'Reg M-B')
+            OR data->'tags'->>'regulation' IN ('Reg M-A', 'Reg M-B')
+            OR data->>'regulation' ILIKE '%champion%'
             OR data->>'regulation' ILIKE '%reg-m%'
             OR data->'tags'->>'regulation' ILIKE '%champion%'
             OR data->'tags'->>'regulation' ILIKE '%reg-m%'
