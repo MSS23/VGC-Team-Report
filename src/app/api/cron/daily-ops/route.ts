@@ -300,6 +300,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Guest links are unreadable at expiry; daily cleanup reclaims their storage.
+  // Claimed rows keep only the redirect and ownership hash, not a second paste.
+  try {
+    const sql = getDb();
+    await sql`DELETE FROM quick_shares WHERE id IN (
+      SELECT id FROM quick_shares WHERE claimed_share_id IS NULL AND expires_at <= NOW() LIMIT 5000
+    )`;
+  } catch (error) { console.warn("Guest-share cleanup failed:", error); }
+
   const [health, tickets, seo, db] = await Promise.all([
     runHealthCheck(),
     runStaleTicketCheck(),

@@ -1,5 +1,5 @@
 // Bump version to push updates to all installed PWA users
-const CACHE_NAME = "vgc-team-report-v25";
+const CACHE_NAME = "vgc-team-report-v26";
 const SHARE_CACHE = "vgc-shares-v6";
 const API_CACHE = "vgc-api-v6";
 
@@ -217,6 +217,10 @@ self.addEventListener("fetch", (event) => {
 
   // Skip all cross-origin requests — let the browser handle them natively
   if (url.origin !== self.location.origin) return;
+
+  // Guest reports expire and contain browser-specific claim controls. Never
+  // retain their HTML in the offline cache or bypass server expiry checks.
+  if (url.pathname.startsWith("/q/")) return;
 
   // ── Share API data ──
   // Network-first with cache fallback: online viewers always see current

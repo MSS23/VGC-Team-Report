@@ -137,6 +137,18 @@ export async function ensureTable(): Promise<void> {
   await run(sql`CREATE INDEX IF NOT EXISTS idx_follows_creator ON follows(creator_name)`);
 
   // Notifications
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS quick_shares (
+      id TEXT PRIMARY KEY,
+      owner_hash TEXT NOT NULL,
+      paste TEXT NOT NULL,
+      expires_at TIMESTAMPTZ,
+      claimed_by TEXT,
+      claimed_share_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_quick_shares_expiry ON quick_shares(expires_at) WHERE claimed_share_id IS NULL`);
   // One small row per account, updated only when a user saves their choices.
   await run(sql`
     CREATE TABLE IF NOT EXISTS user_preferences (

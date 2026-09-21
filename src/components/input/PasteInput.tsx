@@ -12,6 +12,7 @@ import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { resolveSlug, getSpriteUrls } from "@/lib/utils/sprite-slug";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
+import { QuickShare } from "./QuickShare";
 
 const WhatsNewModal = dynamic(
   () => import("@/components/ui/WhatsNewModal").then(m => ({ default: m.WhatsNewModal })),
@@ -497,6 +498,8 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             </span>
           </motion.button>
         )}
+
+        <QuickShare paste={paste} />
 
         {/* Archetype sample team picker — 3 cards, horizontally scrollable on mobile */}
         <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-xs text-text-tertiary">
