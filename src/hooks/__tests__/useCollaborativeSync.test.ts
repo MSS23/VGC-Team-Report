@@ -71,7 +71,7 @@ describe("useCollaborativeSync echo suppression", () => {
 
     act(() => es.emit("version", { version: 2, state: { summary: "remote" } }));
     expect(onRemoteUpdate).toHaveBeenCalledTimes(1);
-    expect(onRemoteUpdate).toHaveBeenCalledWith({ summary: "remote" });
+    expect(onRemoteUpdate).toHaveBeenCalledWith({ summary: "remote" }, 2);
   });
 
   it("suppresses the echo of our own in-flight save (markSaving)", () => {
@@ -86,7 +86,7 @@ describe("useCollaborativeSync echo suppression", () => {
     expect(onRemoteUpdate).not.toHaveBeenCalled();
   });
 
-  it("keeps suppressing self-echoes for the window after a save resolves", () => {
+  it("does not discard a teammate save just after our own save resolves", () => {
     const onRemoteUpdate = vi.fn();
     const hook = mountSync(onRemoteUpdate);
     const es = FakeEventSource.instances[0];
@@ -96,7 +96,7 @@ describe("useCollaborativeSync echo suppression", () => {
     // A lagging echo of that same save arrives after the POST resolved.
     act(() => es.emit("version", { version: 3, state: { summary: "lagging-echo" } }));
 
-    expect(onRemoteUpdate).not.toHaveBeenCalled();
+    expect(onRemoteUpdate).toHaveBeenCalledWith({ summary: "lagging-echo" }, 3);
   });
 
   it("ignores stale version events that are not newer than what we know", () => {
@@ -108,4 +108,14 @@ describe("useCollaborativeSync echo suppression", () => {
     act(() => es.emit("version", { version: 5, state: { summary: "stale" } }));
     expect(onRemoteUpdate).not.toHaveBeenCalled();
   });
+});
+
+it("replays a queued teammate update after the exact own-save echo is discarded", () => {
+  const onRemoteUpdate = vi.fn();
+  const hook = mountSync(onRemoteUpdate);
+  act(() => hook.current.markSaving());
+  act(() => FakeEventSource.instances[0].emit("version", { version: 3, state: { paste: "remote" } }));
+  act(() => hook.current.updateVersion(2));
+  expect(onRemoteUpdate).toHaveBeenCalledWith({ paste: "remote" }, 3);
+  hook.unmount();
 });

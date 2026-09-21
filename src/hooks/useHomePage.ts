@@ -289,7 +289,7 @@ export function useHomePage() {
   const syncControlsRef = useRef<{ markSaving: () => void; updateVersion: (v?: number) => void } | null>(null);
   const activeDraftIdRef = useRef<string | null>(null);
   const handleSaveStart = useCallback(() => { syncControlsRef.current?.markSaving(); }, []);
-  const handleSaveEnd = useCallback(() => { syncControlsRef.current?.updateVersion(); }, []);
+  const handleSaveEnd = useCallback((version?: number) => { syncControlsRef.current?.updateVersion(version); }, []);
   const getActiveDraftId = useCallback(() => activeDraftIdRef.current, []);
 
   // ── Share flow (extracted) ───────────────────────────────────────
@@ -445,7 +445,7 @@ export function useHomePage() {
   }, [analysis, isSampleTeam, share.isSharedView, share.hasExistingShare, summary, teamName, tournamentName, notes, calcs]);
 
   // ── Real-time collaborative sync (SSE) ──────────────────────────
-  const handleRemoteUpdate = useCallback((state: import("@/lib/sharing/url-codec").ShareableState) => {
+  const applyRemoteState = useCallback((state: import("@/lib/sharing/url-codec").ShareableState) => {
     setPaste(state.paste);
     parseTeam(state.paste);
     setNotesFull(state.notes ?? {});
@@ -486,8 +486,17 @@ export function useHomePage() {
         };
       }),
     );
-    if (Array.isArray(state.hiddenSlides)) setHiddenFull(state.hiddenSlides);
-  }, [plans, setPaste, parseTeam, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
+    setHiddenFull(state.hiddenSlides ?? []);
+    share.setAllowComments(state.allowComments ?? false);
+  }, [share.setAllowComments, plans, setPaste, parseTeam, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
+
+  const handleRemoteUpdate = useCallback((state: import("@/lib/sharing/url-codec").ShareableState, version: number) => {
+    if (share.receiveRemote(state, version, { ...buildShareState(), allowComments: share.allowComments })) applyRemoteState(state);
+  }, [share.receiveRemote, share.allowComments, buildShareState, applyRemoteState]);
+  const resolveCollaborationConflict = useCallback((choice: "remote" | "local") => {
+    const state = share.resolveConflict(choice);
+    if (state) applyRemoteState(state);
+  }, [share.resolveConflict, applyRemoteState]);
 
   const canEditSharedReport = share.isEditingUnlocked && isSignedIn === true;
 
@@ -495,6 +504,7 @@ export function useHomePage() {
     shareId: share.activeShareId,
     enabled: canEditSharedReport,
     onRemoteUpdate: handleRemoteUpdate,
+    getVersion: share.getVersion,
   });
   // markSaving/updateVersion are stable (useCallback []), so this runs once.
   syncControlsRef.current = { markSaving, updateVersion };
@@ -850,6 +860,8 @@ export function useHomePage() {
     forkReport: share.forkReport,
 
     // Collaborative sync
+    collaborationConflict: share.conflict,
+    resolveCollaborationConflict,
     collaborators,
     syncStatus,
 

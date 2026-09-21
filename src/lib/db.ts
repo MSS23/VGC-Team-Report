@@ -12,6 +12,22 @@ export async function ensureTable(): Promise<void> {
     try { await query; } catch (e: unknown) { console.warn("Migration statement skipped:", e); }
   };
 
+  // Presence: at most 5,000 small rows, 45s visibility, 2min cleanup; no snapshots.
+  // Storage checked 2026-09-21: existing database ~17MB. Budget <10MB for this
+  // bounded table and indexes, with aggressive vacuum of heartbeat updates.
+  await run(sql`CREATE TABLE IF NOT EXISTS collaboration_presence (
+    share_id TEXT NOT NULL, user_id TEXT NOT NULL, display_name VARCHAR(80) NOT NULL,
+    section VARCHAR(160) NOT NULL, field VARCHAR(100) NOT NULL, caret INTEGER,
+    seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (share_id, user_id)
+  ) WITH (autovacuum_vacuum_scale_factor = 0.02, autovacuum_vacuum_threshold = 50)`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_collaboration_presence_seen ON collaboration_presence(seen_at)`);
+  await run(sql`CREATE TABLE IF NOT EXISTS collaboration_comments (
+    id SERIAL PRIMARY KEY, share_id TEXT NOT NULL, section VARCHAR(160) NOT NULL,
+    body VARCHAR(2000) NOT NULL, user_id TEXT NOT NULL, display_name VARCHAR(80) NOT NULL,
+    parent_id INTEGER REFERENCES collaboration_comments(id), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_collaboration_comments_thread ON collaboration_comments(share_id, section, id)`);
+
   await run(sql`
     CREATE TABLE IF NOT EXISTS shares (
       id TEXT PRIMARY KEY,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { editorFingerprint } from "@/lib/sharing/collaboration";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import {
@@ -77,6 +78,26 @@ export function useShareUrl() {
 
   const [isSharedView, setIsSharedView] = useState(false);
   const [sharedState, setSharedState] = useState<ShareableState | null>(null);
+  const versionRef = useRef(0);
+  const baselineRef = useRef<ShareableState | null>(null);
+  const conflictRef = useRef<{ state: ShareableState; version: number } | null>(null);
+  const [conflict, setConflictState] = useState<typeof conflictRef.current>(null);
+  const setConflict = useCallback((value: typeof conflictRef.current) => { conflictRef.current = value; setConflictState(value); }, []);
+  const getVersion = useCallback(() => versionRef.current, []);
+  const receiveRemote = useCallback((state: ShareableState, version: number, local: ShareableState) => {
+    if (version <= versionRef.current) return false;
+    if (conflictRef.current || (baselineRef.current && editorFingerprint(local) !== editorFingerprint(baselineRef.current))) {
+      setConflict({ state, version }); return false;
+    }
+    versionRef.current = version; baselineRef.current = state; return true;
+  }, [setConflict]);
+  const resolveConflict = useCallback((choice: "remote" | "local") => {
+    const latest = conflictRef.current;
+    if (!latest) return null;
+    versionRef.current = latest.version; baselineRef.current = latest.state;
+    setConflict(null);
+    return choice === "remote" ? latest.state : null;
+  }, [setConflict]);
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
   const [urlWarning, setUrlWarning] = useState<string | null>(null);
   const [decodeFailed, setDecodeFailed] = useState(false);
@@ -121,6 +142,7 @@ export function useShareUrl() {
     if (shareId || inlineData) return;
     activeEditTokenRef.current = null;
     activeShareIdRef.current = null;
+    versionRef.current = 0; baselineRef.current = null; setConflict(null);
     setSessionShareId(null);
     setSharedState(null);
     setIsSharedView(false);
@@ -141,6 +163,7 @@ export function useShareUrl() {
     // authenticated refetch below is the only path that can unlock it again.
     activeEditTokenRef.current = null;
     activeShareIdRef.current = null;
+    versionRef.current = 0; baselineRef.current = null; setConflict(null);
     setSessionShareId(null);
     setIsEditingUnlocked(false);
     setIsOwner(false);
@@ -197,7 +220,8 @@ export function useShareUrl() {
           const ownerEditToken = data._editToken as string | undefined;
           // Strip internal flags before treating as ShareableState
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, _forkedFrom: _ff, _redactedFields: _rf, ...state } = data;
+          const { _editable, _isPublic: _ip, _isUnlisted: _iu, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, _forkedFrom: _ff, _redactedFields: _rf, ...state } = data;
+          versionRef.current = Number(_v) || 1; baselineRef.current = state as ShareableState;
           if (Array.isArray(_c)) setFetchedCollaborators(_c as string[]);
           // Set active edit session — only from server-provided token (authenticated)
           if (editable && ownerEditToken) {
@@ -244,7 +268,8 @@ export function useShareUrl() {
     isPublic?: boolean,
     isUnlisted?: boolean,
     draftId?: string | null,
-  ): Promise<{ ok: boolean; error?: string }> => {
+  ): Promise<{ ok: boolean; error?: string; version?: number }> => {
+    if (conflictRef.current) return { ok: false, error: "Resolve the collaboration conflict first." };
     setShareStatus("copying");
     setUrlWarning(null);
     setLastShareResult(null);
@@ -260,6 +285,7 @@ export function useShareUrl() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             state,
+            expectedVersion: active ? versionRef.current || undefined : undefined,
             existingId: active?.shareId,
             editToken: active?.editToken,
             draftId: draftId ?? undefined,
@@ -275,6 +301,7 @@ export function useShareUrl() {
           let errorMessage: string | undefined;
           try {
             const body = await res.json();
+            if (res.status === 409 && body.state && Number.isInteger(Number(body.version))) setConflict({ state: body.state, version: Number(body.version) });
             if (body && typeof body.error === "string") errorMessage = body.error;
           } catch { /* non-JSON */ }
           setShareStatus("error");
@@ -282,7 +309,8 @@ export function useShareUrl() {
           timerRef.current = setTimeout(() => setShareStatus("idle"), 3000);
           return { ok: false, error: errorMessage ?? `Share failed (${res.status})` };
         }
-        const { id, editToken, updated } = await res.json();
+        const { id, editToken, updated, version } = await res.json();
+        if ((Number(version) || 1) >= versionRef.current) { versionRef.current = Number(version) || 1; baselineRef.current = state; }
         publicUrl = `${window.location.origin}/s/${id}`;
 
         activeEditTokenRef.current = editToken;
@@ -308,14 +336,14 @@ export function useShareUrl() {
       timerRef.current = setTimeout(() => {
         setShareStatus("idle");
       }, 5000);
-      return { ok: true };
+      return { ok: true, version: versionRef.current };
     } catch {
       setShareStatus("error");
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setShareStatus("idle"), 2000);
       return { ok: false, error: "Could not copy the share link." };
     }
-  }, [getActiveShare]);
+  }, [getActiveShare, setConflict]);
 
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const autoSaveResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -334,7 +362,8 @@ export function useShareUrl() {
     state: ShareableState,
     isPublic?: boolean,
     isUnlisted?: boolean
-  ): Promise<{ ok: boolean; error?: string; status?: number }> => {
+  ): Promise<{ ok: boolean; error?: string; status?: number; version?: number }> => {
+    if (conflictRef.current) return { ok: false, status: 409, error: "Resolve the collaboration conflict first." };
     const active = getActiveShare();
     if (!active) {
       return { ok: false, error: "No active share session to update." };
@@ -347,6 +376,7 @@ export function useShareUrl() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           state,
+          expectedVersion: versionRef.current || undefined,
           existingId: active.shareId,
           editToken: active.editToken,
           isPublic,
@@ -354,14 +384,17 @@ export function useShareUrl() {
         }),
       });
       if (res.ok) {
+        const data = await res.json();
+        if ((Number(data.version) || versionRef.current) >= versionRef.current) { versionRef.current = Number(data.version) || versionRef.current; baselineRef.current = state; }
         setAutoSaveStatus("saved");
         autoSaveResetRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
-        return { ok: true, status: res.status };
+        return { ok: true, status: res.status, version: versionRef.current };
       }
       // Parse server error message if provided so the UI can surface it
       let errorMessage: string | undefined;
       try {
         const body = await res.json();
+        if (res.status === 409 && body.state && Number.isInteger(Number(body.version))) setConflict({ state: body.state, version: Number(body.version) });
         if (body && typeof body.error === "string") errorMessage = body.error;
       } catch { /* non-JSON response */ }
       setAutoSaveStatus("error");
@@ -372,7 +405,7 @@ export function useShareUrl() {
       autoSaveResetRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
       return { ok: false, error: e instanceof Error ? e.message : "Network error" };
     }
-  }, [getActiveShare]);
+  }, [getActiveShare, setConflict]);
 
   /**
    * Pre-populate lastShareResult with a known URL so a caller can open the
@@ -386,7 +419,7 @@ export function useShareUrl() {
   /** Whether this session has an active share. */
   const hasExistingShare = useCallback((): boolean => {
     return !!getActiveShare();
-  }, [getActiveShare]);
+  }, [getActiveShare, setConflict]);
 
   /**
    * Fork an existing share: creates a new report owned by the current user
@@ -419,10 +452,12 @@ export function useShareUrl() {
     }
     activeEditTokenRef.current = null;
     activeShareIdRef.current = null;
+    versionRef.current = 0; baselineRef.current = null; setConflict(null);
     setSessionShareId(null);
   }, []);
 
   return {
+    conflict, getVersion, receiveRemote, resolveConflict,
     isSharedView,
     isSharePending,
     sharedState,

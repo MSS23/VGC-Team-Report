@@ -1,4 +1,5 @@
 "use client";
+import { matchupSectionKey } from "@/lib/sharing/collaboration";
 import { LimitlessImport } from "@/components/input/LimitlessImport";
 
 import { type ReactNode, useState, useCallback, useEffect, useRef, useMemo } from "react";
@@ -38,6 +39,8 @@ import {
 const DoubleTapLikeOverlay = dynamic(() => import("@/components/social/DoubleTapLikeOverlay").then(m => ({ default: m.DoubleTapLikeOverlay })), { ssr: false });
 import { CreatorLink } from "@/components/social/CreatorLink";
 import { ViewCount } from "@/components/social/ViewCount";
+const CollaborationWorkspace = dynamic(() => import("@/components/social/CollaborationWorkspace").then(m => ({ default: m.CollaborationWorkspace })));
+const CollaborationConflict = dynamic(() => import("@/components/social/CollaborationConflict").then(m => ({ default: m.CollaborationConflict })));
 const EditChangelog = dynamic(() => import("@/components/social/EditChangelog").then(m => ({ default: m.EditChangelog })));
 const CollaboratorPanel = dynamic(() => import("@/components/social/CollaboratorPanel").then(m => ({ default: m.CollaboratorPanel })));
 import { getSessionId } from "@/lib/utils/session-id";
@@ -112,6 +115,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
     collaboratorNames,
     collaborators,
     syncStatus,
+    collaborationConflict, resolveCollaborationConflict,
     activeShareId,
     sessionShareId,
     editKeyFromUrl,
@@ -882,6 +886,14 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
     );
   }
 
+  const collaborationSections = [
+    { key: "overview", label: "Team overview" },
+    ...speciesKeys.map((key, index) => ({ key: `pokemon:${key}`, label: analysis?.pokemon[index]?.parsed.species ?? key })),
+    ...plans.map((plan, index) => ({ key: matchupSectionKey(plan.opponentPaste), label: `Matchup: ${plan.opponentLabel || index + 1}` })),
+  ].filter((item, index, items) => items.findIndex((other) => other.key === item.key) === index);
+  const activeCollaborationSection = isPokemonSlide ? `pokemon:${speciesKeys[physicalSlide - firstPokemonPhys]}`
+    : isMatchupPlanSlide ? matchupSectionKey(plans[physicalSlide - firstMatchupPhys].opponentPaste) : "overview";
+
   // Show report
   return (
     <>
@@ -1210,6 +1222,8 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
             </button>
           </div>
         )}
+        {isEditingUnlocked && activeShareId && <CollaborationWorkspace shareId={activeShareId} activeSection={activeCollaborationSection} sections={collaborationSections} />}
+        {collaborationConflict && <CollaborationConflict local={{ ...buildShareState(), allowComments }} remote={collaborationConflict.state} onResolve={resolveCollaborationConflict} />}
         <TeamReport
           analysis={analysis!}
           creatorMode={creatorMode}

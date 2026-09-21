@@ -19,13 +19,14 @@ interface ShareFlowOptions {
    *  collaborative-sync layer can suppress the resulting self-echo. */
   onSaveStart?: () => void;
   /** Called after a save POST resolves (success or failure). */
-  onSaveEnd?: () => void;
+  onSaveEnd?: (version?: number) => void;
 }
 
 export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiveDraftId, t, onSaveStart, onSaveEnd }: ShareFlowOptions) {
   const { isSignedIn } = useAuth();
   const posthog = usePostHog();
   const {
+    conflict, getVersion, receiveRemote, resolveConflict,
     isSharedView, isSharePending, sharedState, shareId: activeShareId,
     editKeyFromUrl, copyShareUrl, autoSave, shareStatus,
     urlWarning, decodeFailed, isEditingUnlocked, isOwner,
@@ -84,10 +85,13 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
   const withSaveSuppression = useCallback(
     async <T>(fn: () => Promise<T>): Promise<T> => {
       onSaveStart?.();
+      let savedVersion: number | undefined;
       try {
-        return await fn();
+        const result = await fn();
+        savedVersion = (result as { version?: number } | undefined)?.version;
+        return result;
       } finally {
-        onSaveEnd?.();
+        onSaveEnd?.(savedVersion);
       }
     },
     [onSaveStart, onSaveEnd],
@@ -127,15 +131,15 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!analysis || !isEditingUnlocked || !isSignedIn) return;
+    if (!analysis || !isEditingUnlocked || !isSignedIn || conflict) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
-      withSaveSuppression(() => autoSave(buildStateWithComments(), isPublic, isUnlisted));
+      withSaveSuppression(() => autoSave(buildStateWithComments()));
     }, 3000);
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [analysis, isEditingUnlocked, isSignedIn, buildStateWithComments, autoSave, isPublic, isUnlisted, withSaveSuppression]);
+  }, [analysis, isEditingUnlocked, isSignedIn, conflict, buildStateWithComments, autoSave, isPublic, isUnlisted, withSaveSuppression]);
 
   // Monotonic token so that if two visibility changes overlap, a stale earlier
   // response can't revert the UI to a value the user has since moved past.
@@ -184,6 +188,7 @@ export function useShareFlow({ analysis, isSampleTeam, buildShareState, getActiv
           : t.share;
 
   return {
+    conflict, getVersion, receiveRemote, resolveConflict,
     isSharedView, isSharePending, sharedState, activeShareId, editKeyFromUrl,
     shareStatus, urlWarning, decodeFailed, isEditingUnlocked, isOwner,
     sessionShareId, lastShareResult, openShareSheetForUrl, hasExistingShare, clearStoredShare,

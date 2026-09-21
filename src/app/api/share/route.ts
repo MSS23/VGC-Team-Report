@@ -1,3 +1,4 @@
+import { reportFingerprint } from "@/lib/sharing/collaboration";
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { getClientIp } from "@/lib/security/input-validation";
@@ -72,6 +73,7 @@ const ShareBodySchema = z.object({
     privateFields: z.array(z.string()).optional(),
     genTheme: z.string().optional(),
   }).strip(),
+  expectedVersion: z.number().int().positive().optional(),
   existingId: z.string().optional(),
   editToken: z.string().optional(),
   draftId: z.string().min(1).max(128).optional(),
@@ -111,7 +113,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const { state, existingId, editToken, draftId, isPublic, isUnlisted, isPublish } = parsed.data;
+    const { state, existingId, editToken, draftId, isPublic, isUnlisted, isPublish, expectedVersion } = parsed.data;
 
     // Require authentication for ALL writes — both create and update. An edit
     // token in localStorage alone must never grant mutation rights to an
@@ -181,6 +183,11 @@ export async function POST(request: Request) {
           { error: "Only the report owner or an accepted collaborator can edit this report." },
           { status: 403 }
         );
+      }
+
+      const observedVersion = Number(oldRows[0].version);
+      if (expectedVersion !== undefined && expectedVersion !== observedVersion) {
+        return NextResponse.json({ error: "A teammate saved a newer version. Review the conflict before saving.", version: observedVersion, state: oldRows[0].data }, { status: 409 });
       }
 
       // Detect actual changes before creating a version
@@ -330,7 +337,7 @@ export async function POST(request: Request) {
       const rows = await sql`
         UPDATE shares
         SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(),
-            version = COALESCE(version, 1) + ${hasDataChanges || visibilityChanged ? 1 : 0},
+            version = COALESCE(version, 1) + ${reportFingerprint(oldState) !== reportFingerprint(state) || visibilityChanged ? 1 : 0},
             is_public = ${effectiveIsPublic},
             is_unlisted = ${effectiveIsUnlisted},
             search_vector =
@@ -338,7 +345,8 @@ export async function POST(request: Request) {
               setweight(to_tsvector('english', ${searchTournament}), 'A') ||
               setweight(to_tsvector('english', ${searchPaste}), 'B') ||
               setweight(to_tsvector('english', ${searchSummary}), 'C')
-        WHERE id = ${existingId} AND edit_token = ${editToken}
+        WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
+          AND COALESCE(version, 1) = ${observedVersion}
         RETURNING id, COALESCE(version, 1) AS version, is_public, is_unlisted
       `;
       if (rows.length > 0) {
@@ -397,7 +405,10 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ id: existingId, editToken, updated: true, version: rows[0].version, isPublic: rows[0].is_public, isUnlisted: rows[0].is_unlisted });
       }
-      // Token mismatch or not found — fall through to create new
+      // Another update won between SELECT and UPDATE. Never create a duplicate
+      // or overwrite it: return the newest state for explicit reconciliation.
+      const latest = await sql`SELECT data, COALESCE(version, 1) AS version FROM shares WHERE id = ${existingId} AND deleted_at IS NULL`;
+      return NextResponse.json({ error: "A teammate saved at the same time. Review the conflict before saving.", version: latest[0]?.version, state: latest[0]?.data }, { status: 409 });
     }
 
     // Create new share — auth was already enforced at the top of this handler.

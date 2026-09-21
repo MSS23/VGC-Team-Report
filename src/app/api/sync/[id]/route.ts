@@ -6,36 +6,6 @@ import { z } from "zod";
 
 const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
 
-// ── In-memory presence tracking ──────────────────────────────────────
-// Maps shareId → Set of { sessionId, lastSeen }
-const presence = new Map<string, Map<string, number>>();
-const PRESENCE_TIMEOUT = 30_000; // 30 seconds
-
-function cleanPresence(shareId: string) {
-  const sessions = presence.get(shareId);
-  if (!sessions) return;
-  const now = Date.now();
-  for (const [sid, lastSeen] of sessions) {
-    if (now - lastSeen > PRESENCE_TIMEOUT) sessions.delete(sid);
-  }
-  if (sessions.size === 0) presence.delete(shareId);
-}
-
-function touchPresence(shareId: string, sessionId: string) {
-  if (!presence.has(shareId)) presence.set(shareId, new Map());
-  presence.get(shareId)!.set(sessionId, Date.now());
-}
-
-function getCollaboratorCount(shareId: string): number {
-  cleanPresence(shareId);
-  return presence.get(shareId)?.size ?? 0;
-}
-
-// No module-scope sweeper interval: it kept the Lambda warm and defeated
-// scale-to-zero (the exact pattern the views route documents as a past
-// incident). cleanPresence already runs on every poll cycle via
-// getCollaboratorCount, and lambda recycling clears the map anyway.
-
 // Cap each SSE stream. The client's EventSource reconnects automatically
 // (with ?since=version, so nothing is missed) — without a cap, a tab left
 // open overnight polls Postgres every 5s indefinitely.
@@ -66,7 +36,6 @@ export async function GET(
   const shareId = idResult.data;
 
   const url = new URL(request.url);
-  const sessionId = url.searchParams.get("session") ?? "anon";
   const sinceParam = url.searchParams.get("since");
 
   const { userId } = await auth();
@@ -95,8 +64,6 @@ export async function GET(
 
   let knownVersion = sinceParam ? parseInt(sinceParam, 10) : 0;
 
-  // Register presence
-  touchPresence(shareId, sessionId);
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -112,8 +79,7 @@ export async function GET(
         }
       };
 
-      // Send initial presence count
-      send("presence", { collaborators: getCollaboratorCount(shareId) });
+
 
       // Poll for version changes every 5 seconds. Each cycle first reads only the
       // lightweight `version`/`is_public` columns; the full `data` JSONB blob is
@@ -122,7 +88,11 @@ export async function GET(
       const pollInterval = setInterval(async () => {
         if (closed) { clearInterval(pollInterval); return; }
         try {
-          touchPresence(shareId, sessionId);
+          // Recheck access throughout a long-lived stream after revocation.
+          const allowed = await sql`SELECT 1 FROM shares s WHERE s.id = ${shareId} AND s.deleted_at IS NULL
+            AND (s.owner_id = ${userId} OR EXISTS (SELECT 1 FROM collaborators c WHERE c.share_id = s.id
+              AND c.user_id = ${userId} AND COALESCE(c.status, 'accepted') = 'accepted'))`;
+          if (!allowed.length) { shutdown(); return; }
 
           const metaRows = await sql`
             SELECT COALESCE(version, 1) AS version, is_public
@@ -132,22 +102,17 @@ export async function GET(
 
           const serverVersion = Number(metaRows[0].version);
 
-          // First check — record version
-          if (knownVersion === 0) {
-            knownVersion = serverVersion;
-            return;
-          }
 
           // Newer version detected — fetch the full data blob and push to client
           if (serverVersion > knownVersion) {
-            knownVersion = serverVersion;
             const dataRows = await sql`
-              SELECT data FROM shares WHERE id = ${shareId} AND deleted_at IS NULL
+              SELECT data, COALESCE(version, 1) AS version FROM shares WHERE id = ${shareId} AND deleted_at IS NULL
             `;
             if (dataRows.length > 0) {
               const data = dataRows[0].data as Record<string, unknown>;
+              knownVersion = Number(dataRows[0].version);
               send("version", {
-                version: serverVersion,
+                version: knownVersion,
                 state: data,
                 isPublic: !!metaRows[0].is_public,
               });
@@ -155,7 +120,8 @@ export async function GET(
           }
 
           // Send presence updates
-          send("presence", { collaborators: getCollaboratorCount(shareId) });
+          const active = await sql`SELECT COUNT(*) AS count FROM collaboration_presence WHERE share_id = ${shareId} AND seen_at > NOW() - INTERVAL '45 seconds'`;
+          send("presence", { collaborators: Number(active[0]?.count ?? 0) });
         } catch {
           // DB error — skip this cycle
         }
@@ -172,12 +138,6 @@ export async function GET(
         clearInterval(pollInterval);
         clearInterval(pingInterval);
         clearTimeout(deadline);
-        // Remove from presence
-        const sessions = presence.get(shareId);
-        if (sessions) {
-          sessions.delete(sessionId);
-          if (sessions.size === 0) presence.delete(shareId);
-        }
         try { controller.close(); } catch { /* already closed */ }
       };
 

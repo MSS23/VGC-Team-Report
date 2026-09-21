@@ -11,7 +11,8 @@ interface UseCollaborativeSyncOptions {
   /** Whether collaborative sync is enabled (must be in an editable shared view) */
   enabled: boolean;
   /** Called when a newer version is available from the server */
-  onRemoteUpdate: (state: ShareableState) => void;
+  onRemoteUpdate: (state: ShareableState, version: number) => void;
+  getVersion?: () => number;
 }
 
 /**
@@ -24,38 +25,34 @@ export function useCollaborativeSync({
   shareId,
   enabled,
   onRemoteUpdate,
+  getVersion,
 }: UseCollaborativeSyncOptions) {
   const [collaborators, setCollaborators] = useState(0);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [lastRemoteUpdate, setLastRemoteUpdate] = useState<number | null>(null);
   const versionRef = useRef<number>(0);
-  const isSaving = useRef(false);
-  // Timestamp until which incoming version events are treated as our own
-  // save being echoed back (and therefore consumed, not re-applied). The
-  // server polls every ~5s, so a self-save can echo up to a full poll cycle
-  // after the POST resolves — we keep suppressing briefly past `isSaving`.
-  const suppressEchoUntil = useRef(0);
+  const savesInFlight = useRef(0);
+  const pendingRemote = useRef<{ version: number; state: ShareableState } | null>(null);
   const onRemoteUpdateRef = useRef(onRemoteUpdate);
   onRemoteUpdateRef.current = onRemoteUpdate;
-
-  /** Mark that we're about to save — the resulting version bump is our own,
-   *  so its echo must not be re-applied (re-applying regenerates IDs and
-   *  retriggers autosave: the runaway loop that produced 98k version rows). */
-  const markSaving = useCallback(() => {
-    isSaving.current = true;
+  const getVersionRef = useRef(getVersion);
+  getVersionRef.current = getVersion;
+  const applyRemote = useCallback((event: { version: number; state: ShareableState }) => {
+    if (event.version <= versionRef.current) return;
+    versionRef.current = event.version;
+    setLastRemoteUpdate(Date.now());
+    onRemoteUpdateRef.current(event.state, event.version);
+    setSyncStatus("synced");
   }, []);
-
-  /** Call after a save resolves. Clears the in-flight flag, optionally
-   *  advances our known version, and keeps suppressing self-echoes for one
-   *  poll interval so the server's lagging version echo is consumed rather
-   *  than applied back into local state. */
+  const markSaving = useCallback(() => { savesInFlight.current++; }, []);
   const updateVersion = useCallback((version?: number) => {
-    isSaving.current = false;
-    if (typeof version === "number" && version > versionRef.current) {
-      versionRef.current = version;
+    savesInFlight.current = Math.max(0, savesInFlight.current - 1);
+    if (typeof version === "number") versionRef.current = Math.max(versionRef.current, version);
+    if (!savesInFlight.current && pendingRemote.current) {
+      const pending = pendingRemote.current; pendingRemote.current = null;
+      applyRemote(pending);
     }
-    suppressEchoUntil.current = Date.now() + 8000;
-  }, []);
+  }, [applyRemote]);
 
   /** Generate a stable session ID for presence tracking */
   const sessionIdRef = useRef<string>("");
@@ -70,6 +67,8 @@ export function useCollaborativeSync({
       return;
     }
 
+    versionRef.current = getVersionRef.current?.() ?? 0;
+    pendingRemote.current = null; savesInFlight.current = 0;
     let eventSource: EventSource | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let retryCount = 0;
@@ -94,25 +93,13 @@ export function useCollaborativeSync({
           const { version, state } = JSON.parse(e.data);
           if (version <= versionRef.current) return; // already known — nothing new
 
-          // Self-echo suppression: while a save is in flight, or shortly after
-          // one resolved, an incoming version bump is our own write coming back
-          // from the server. Advance our pointer so we stay in sync, but do NOT
-          // re-apply it — re-applying re-parses the paste and mints new plan IDs,
-          // which makes local state differ and fires another autosave. That
-          // feedback loop is what created 98,905 versions on a single share.
-          if (isSaving.current || Date.now() < suppressEchoUntil.current) {
-            versionRef.current = version;
+          // Queue while saving. Once the POST returns its exact version, discard
+          // only that version's echo; another editor's newer save must survive.
+          if (savesInFlight.current) {
+            if (!pendingRemote.current || version > pendingRemote.current.version) pendingRemote.current = { version, state };
             return;
           }
-
-          versionRef.current = version;
-          setSyncStatus("syncing");
-          setLastRemoteUpdate(Date.now());
-          onRemoteUpdateRef.current(state as ShareableState);
-          setSyncStatus("synced");
-          setTimeout(() => {
-            if (!disposed) setSyncStatus("idle");
-          }, 3000);
+          applyRemote({ version, state });
         } catch {
           // Malformed event — ignore
         }
@@ -155,7 +142,7 @@ export function useCollaborativeSync({
       eventSource?.close();
       if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [enabled, shareId]);
+  }, [enabled, shareId, applyRemote]);
 
   return { collaborators, syncStatus, lastRemoteUpdate, markSaving, updateVersion };
 }
