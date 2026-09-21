@@ -45,7 +45,7 @@ import { clearRandomAccent } from "@/lib/utils/random-accent";
 import { setViewOverrideTheme, reapplyCurrentTheme, type GenTheme } from "@/hooks/useTheme";
 import { teamToShowdown, teamToOpenSheet } from "@/lib/utils/export-paste";
 import { createPokePaste } from "@/lib/utils/pokepaste";
-import { replacePokemonSpecies } from "@/lib/utils/paste-edit";
+import { replacePokemonSpecies, replacePokemonSpread } from "@/lib/utils/paste-edit";
 import { I18nProvider } from "@/lib/i18n";
 import { FAQPageJsonLd, HowToSchema } from "@/components/seo/JsonLd";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
@@ -1293,6 +1293,11 @@ function HomeContent() {
           onReorderPokemon={isReadOnly ? undefined : reorderPokemon}
           onPokemonLongPress={handlePokemonLongPress}
           onUpdatePaste={isReadOnly ? undefined : handleUpdatePaste}
+          onUpdateSpread={isReadOnly ? undefined : (index, spread, reasoning) => {
+            handleUpdatePaste(replacePokemonSpread(paste, index, spread));
+            const key = speciesKeys[index];
+            setNote(key, [notes[key], reasoning].filter(Boolean).join("\n\n"));
+          }}
           onReplacePokemon={isReadOnly ? undefined : handleReplacePokemon}
           megaStates={resolvedMegaStates}
           onToggleMega={isReadOnly ? undefined : toggleMega}

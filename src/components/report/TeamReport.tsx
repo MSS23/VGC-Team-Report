@@ -89,6 +89,7 @@ interface TeamReportProps {
   onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
   onPokemonLongPress?: (index: number) => void;
   onUpdatePaste?: (paste: string) => void;
+  onUpdateSpread?: (index: number, spread: import("@/lib/types/pokemon").StatSpread, reasoning: string) => void;
   onReplacePokemon?: (index: number, newSpecies: string) => void;
   megaStates?: Record<number, boolean>;
   onToggleMega?: (index: number) => void;
@@ -175,6 +176,7 @@ export function TeamReport({
   onReorderPokemon,
   onPokemonLongPress,
   onUpdatePaste,
+  onUpdateSpread,
   onReplacePokemon,
   megaStates,
   onToggleMega,
@@ -303,6 +305,7 @@ export function TeamReport({
         <PokemonDetailSlide
           pokemon={pokemon}
           team={analysis.pokemon.map((entry) => entry.parsed)}
+          onApplySpread={onUpdateSpread ? (spread, reasoning) => onUpdateSpread(pokemonIndex, spread, reasoning) : undefined}
           note={notes[key] ?? ""}
           onNoteChange={handleDetailNoteChange}
           calcs={calcs[key] ?? EMPTY_CALCS}

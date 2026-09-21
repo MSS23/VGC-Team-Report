@@ -96,7 +96,9 @@ export function useSlideSystem(opts: SlideSystemOptions) {
   } = useSlideNavigation({
     totalSlides,
     enabled: !!analysis,
-    resetKey: paste,
+    // Applying an investment-only edit should keep the builder and keyboard
+    // focus on the current Pokémon. Other team edits still reset navigation.
+    resetKey: paste.replace(/\r/g, "").split("\n").filter((line) => !/^\s*EVs:/i.test(line)).join("\n"),
     bypassFocusGuard: presentationMode,
     onEscape: presentationMode ? () => setPresentationMode(false) : undefined,
     onToggleDarkMode: () => setDarkMode(!darkMode),

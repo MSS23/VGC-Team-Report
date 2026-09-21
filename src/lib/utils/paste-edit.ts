@@ -97,3 +97,15 @@ export function replacePokemonSpecies(
   next[index] = replaceSpeciesInBlock(blocks[index], newSpecies);
   return joinPaste(header, next);
 }
+
+/** Update only one slot's investment line; preserve team header and all other fields. */
+export function replacePokemonSpread(paste: string, index: number, spread: import("@/lib/types/pokemon").StatSpread): string {
+  const { header, blocks } = splitPaste(paste);
+  if (index < 0 || index >= blocks.length) return paste;
+  const labels = { hp: "HP", atk: "Atk", def: "Def", spa: "SpA", spd: "SpD", spe: "Spe" };
+  const line = Object.entries(spread).filter(([, value]) => value > 0).map(([stat, value]) => `${value} ${labels[stat as keyof typeof labels]}`).join(" / ");
+  const lines = blocks[index].split("\n").filter((value) => !/^\s*EVs:/i.test(value));
+  if (line) lines.splice(1, 0, `EVs: ${line}`);
+  blocks[index] = lines.join("\n");
+  return joinPaste(header, blocks);
+}

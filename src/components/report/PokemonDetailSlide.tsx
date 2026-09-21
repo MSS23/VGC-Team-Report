@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import dynamic from "next/dynamic";
-import type { ParsedPokemon } from "@/lib/types/pokemon";
+import type { ParsedPokemon, StatSpread } from "@/lib/types/pokemon";
 import { hapticLight } from "@/lib/utils/haptics";
 import { isChampionsFormat } from "@/lib/data/tags";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
@@ -32,10 +32,12 @@ import { useIsPrintMode } from "@/components/ui/print-context";
 const InlineDamageCalculator = dynamic(() => import("./InlineDamageCalculator"), {
   loading: () => <p role="status" className="p-4 text-sm text-text-secondary">Loading damage calculator…</p>,
 });
+const SpreadBuilder = dynamic(() => import("./SpreadBuilder"));
 
 interface PokemonDetailSlideProps {
   pokemon: AnalyzedPokemon;
   team?: ParsedPokemon[];
+  onApplySpread?: (spread: StatSpread, reasoning: string) => void;
   note: string;
   onNoteChange: (text: string) => void;
   calcs: CalcEntry[];
@@ -329,6 +331,7 @@ function CollapsibleCalcGroup({
 function PokemonDetailSlideBase({
   pokemon,
   team = [],
+  onApplySpread,
   note,
   onNoteChange,
   calcs,
@@ -346,6 +349,7 @@ function PokemonDetailSlideBase({
   onToggleMega,
 }: PokemonDetailSlideProps) {
   const [showCalculator, setShowCalculator] = useState(false);
+  const [showSpreadBuilder, setShowSpreadBuilder] = useState(false);
   const { t, language } = useTranslation();
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
 
@@ -924,6 +928,10 @@ function PokemonDetailSlideBase({
             regulation={regulation}
             onAddCalc={onAddCalc}
           />}
+          {onApplySpread && <>
+            <button type="button" onClick={() => setShowSpreadBuilder((value) => !value)} aria-expanded={showSpreadBuilder} className="min-h-11 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-text-primary cursor-pointer hover:bg-surface-alt focus-visible:ring-2 focus-visible:ring-accent">{showSpreadBuilder ? "Close spread builder" : "Open spread builder"}</button>
+            {showSpreadBuilder && <SpreadBuilder key={`${speciesKey}-${regulation}`} pokemon={{ ...parsed, species: spriteSpecies, ability: displayAbility?.replace(/ \*$/, "") ?? null }} regulation={regulation} onApply={onApplySpread} />}
+          </>}
         <CalcInput
           pokemonSpecies={parsed.species}
           onAddCalc={onAddCalc}
