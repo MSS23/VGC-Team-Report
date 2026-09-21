@@ -657,6 +657,12 @@ function TeamOverviewBase({
       )}
 
       {/* Team Summary */}
+      {tags?.tournamentUrl && /^https:\/\/limitlessvgc\.com\/tournaments\/\d+$/.test(tags.tournamentUrl) && (
+        <aside className="rounded-xl border border-border bg-surface p-4 text-sm text-text-secondary">
+          <a href={tags.tournamentUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center font-semibold text-text-primary underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">{tournamentName || "Tournament result"} on Limitless</a>
+          <p>{[tags.tournamentDate, tags.tournamentRegion, tags.tournamentPlayers ? `${tags.tournamentPlayers} players` : ""].filter(Boolean).join(" · ")}</p>
+        </aside>
+      )}
       <FieldDiffHighlight field="teamSummary" label="Summary changed">
       <div>
         <h3 className="text-[10px] sm:text-sm font-extrabold uppercase tracking-widest text-text-tertiary mb-1 sm:mb-3 presenting:text-base presenting:mb-4" data-walkthrough="team-summary">

@@ -764,6 +764,11 @@ export function useHomePage() {
   }, [analysis, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
 
   // ── Actions ──────────────────────────────────────────────────────
+  const importTeam = (state: import("@/lib/sharing/url-codec").ShareableState) => {
+    clearDraft();
+    share.clearStoredShare();
+    loadDraft(state);
+  };
   const handleAnalyze = (directPaste?: string) => {
     const teamPaste = directPaste ?? paste;
     // Analyzing an entirely different team must start its own draft. The
@@ -911,5 +916,6 @@ export function useHomePage() {
     // Drafts
     clearDraft,
     loadDraft,
+    importTeam,
   };
 }

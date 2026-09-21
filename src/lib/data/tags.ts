@@ -33,6 +33,10 @@ export type Regulation = (typeof REGULATIONS)[number];
 type EventType = (typeof EVENT_TYPES)[number];
 
 export interface ReportTags {
+  tournamentUrl?: string;
+  tournamentDate?: string;
+  tournamentPlayers?: number;
+  tournamentRegion?: string;
   archetype?: string[];
   regulation?: string;
   eventType?: string;

@@ -1,4 +1,5 @@
 "use client";
+import { LimitlessImport } from "@/components/input/LimitlessImport";
 
 import { Suspense, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -235,6 +236,7 @@ function HomeContent() {
     setPendingTemplateId,
     handleAnalyze,
     loadDraft,
+    importTeam,
     isSampleTeam,
     handleReset,
     handleDecodeFailed,
@@ -805,6 +807,7 @@ function HomeContent() {
           selectedTemplate={pendingTemplateId}
           onTemplateSelect={setPendingTemplateId}
         />
+        <LimitlessImport onImport={importTeam} />
       </main>
     );
   }

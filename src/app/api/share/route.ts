@@ -56,6 +56,10 @@ const ShareBodySchema = z.object({
     hiddenSlides: z.array(z.union([z.number(), z.string()])).optional(),
     allowComments: z.boolean().optional(),
     tags: z.object({
+      tournamentUrl: z.string().regex(/^https:\/\/limitlessvgc\.com\/tournaments\/\d+$/).optional(),
+      tournamentDate: z.string().max(100).optional(),
+      tournamentPlayers: z.number().int().positive().optional(),
+      tournamentRegion: z.string().max(100).optional(),
       regulation: z.string().optional(),
       eventType: z.string().optional(),
       archetype: z.array(z.string()).optional(),

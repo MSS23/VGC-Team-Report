@@ -3,6 +3,10 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 
 export interface ReportTags {
+  tournamentUrl?: string;
+  tournamentDate?: string;
+  tournamentPlayers?: number;
+  tournamentRegion?: string;
   archetype?: string[];
   regulation?: string;
   eventType?: string;

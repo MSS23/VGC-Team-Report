@@ -63,7 +63,7 @@ export interface ShareableState {
   spriteSettings?: Record<string, { shiny?: boolean; animated?: boolean }>;
   hiddenSlides?: string[];
   allowComments?: boolean;
-  tags?: { archetype?: string[]; regulation?: string; eventType?: string; regulationAutoDetected?: boolean };
+  tags?: import("@/lib/data/tags").ReportTags;
   templateId?: string;
   privateFields?: string[];
   /**
