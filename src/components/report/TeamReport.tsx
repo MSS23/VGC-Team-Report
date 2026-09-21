@@ -19,6 +19,7 @@ const SpeedTierChart = dynamic(() => import("./SpeedTierChart").then(m => ({ def
 const OffensiveCoverageChart = dynamic(() => import("./OffensiveCoverageChart").then(m => ({ default: m.OffensiveCoverageChart })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-48" />,
 });
+const ThreatMatrix = dynamic(() => import("./ThreatMatrix"));
 const DefensiveCoverageChart = dynamic(() => import("./DefensiveCoverageChart").then(m => ({ default: m.DefensiveCoverageChart })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" />,
 });
@@ -340,6 +341,7 @@ export function TeamReport({
     return (
         <div className="animate-fade-in">
           <OffensiveCoverageChart pokemon={analysis.pokemon} />
+          <ThreatMatrix team={analysis.pokemon.map((p) => p.parsed)} regulation={tags?.regulation} />
         </div>
     );
   }
