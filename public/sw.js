@@ -1,7 +1,27 @@
 // Bump version to push updates to all installed PWA users
-const CACHE_NAME = "vgc-team-report-v26";
+const CACHE_NAME = "vgc-team-report-v27";
 const SHARE_CACHE = "vgc-shares-v6";
 const API_CACHE = "vgc-api-v6";
+
+self.addEventListener("push", (event) => {
+  // Keep lock-screen content generic even if a payload includes report details.
+  event.waitUntil(self.registration.showNotification("VGC Team Report", {
+    body: "You have new activity. Open your dashboard to see it.",
+    icon: "/icon-192.png", badge: "/icon-192.png", tag: "vgc-social",
+    data: { url: "/dashboard" },
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const target = new URL("/dashboard", self.location.origin).href;
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const existing = windows.find((client) => new URL(client.url).origin === self.location.origin);
+    if (existing) { await existing.navigate(target); await existing.focus(); }
+    else await self.clients.openWindow(target);
+  })());
+});
 
 const PRECACHE_URLS = [
   "/",

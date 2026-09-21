@@ -1,10 +1,29 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 export function ServiceWorkerRegistration() {
+  const { userId, isLoaded } = useAuth();
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const waitingWorkerRef = useRef<ServiceWorker | null>(null);
+
+  useEffect(() => {
+    if (!isLoaded || !("serviceWorker" in navigator)) return;
+    let disposed = false;
+    async function detachPreviousAccount() {
+      try {
+        const owner = localStorage.getItem("vgc-push-owner");
+        if (!owner || owner === userId) return;
+        const subscription = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();
+        if (disposed || localStorage.getItem("vgc-push-owner") !== owner) return;
+        await subscription?.unsubscribe();
+        localStorage.removeItem("vgc-push-owner");
+      } catch { /* Generic push copy contains no private report information. */ }
+    }
+    void detachPreviousAccount();
+    return () => { disposed = true; };
+  }, [userId, isLoaded]);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;

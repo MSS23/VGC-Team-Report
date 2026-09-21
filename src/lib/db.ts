@@ -138,6 +138,16 @@ export async function ensureTable(): Promise<void> {
 
   // Notifications
   await run(sql`
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      endpoint TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id)`);
+  await run(sql`
     CREATE TABLE IF NOT EXISTS quick_shares (
       id TEXT PRIMARY KEY,
       owner_hash TEXT NOT NULL,

@@ -5,6 +5,7 @@ import { Show, SignInButton, useAuth } from "@clerk/nextjs";
 import { I18nProvider } from "@/lib/i18n";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { PageFooter } from "@/components/layout/PageFooter";
+import { BrowserPushSettings } from "@/components/ui/BrowserPushSettings";
 import { DEFAULT_NOTIFICATION_PREFS, readNotificationPrefs, type NotificationPrefs } from "@/lib/notification-preferences";
 
 const LEGACY_KEY = "vgc-notification-preferences";
@@ -87,6 +88,7 @@ function NotificationsInner({ userId }: { userId: string | null | undefined }) {
         </fieldset>
         <div className="flex flex-wrap items-center gap-4"><button onClick={() => void save(prefs)} disabled={!ready || saving} className="min-h-11 cursor-pointer rounded-xl bg-text-primary px-6 font-bold text-background disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">{saving ? "Saving…" : "Save preferences"}</button><p role="status" className="text-sm">{saved ? "Preferences saved to your account." : ""}</p></div>
         <hr className="my-8 border-border" /><p className="text-sm text-text-secondary">Want to stop all emails?</p><button onClick={() => void save({ welcomeSeries: false, weeklyDigest: false, socialActivity: false, productUpdates: false })} disabled={!ready || saving} className="min-h-11 cursor-pointer text-sm font-semibold underline underline-offset-4 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-accent">Unsubscribe from all</button>
+        <BrowserPushSettings />
       </Show>
     </main><PageFooter />
   </div>;

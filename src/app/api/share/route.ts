@@ -531,9 +531,9 @@ export async function POST(request: Request) {
       console.error("explore cache invalidate failed:", err);
     }
 
-    // Notify followers when a new public (non-unlisted) report is created (fire-and-forget)
+    // Finish follower notifications before the serverless function returns
     if (isPublic && !isUnlisted && state.creatorName) {
-      notifyFollowers(state.creatorName as string, id, ownerId ?? undefined);
+      await notifyFollowers(state.creatorName as string, id, ownerId ?? undefined);
     }
 
     // Track server-side

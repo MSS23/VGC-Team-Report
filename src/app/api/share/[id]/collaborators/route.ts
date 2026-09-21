@@ -133,7 +133,7 @@ export async function POST(
     const reportRows = await sql`SELECT data FROM shares WHERE id = ${shareId}`;
     const reportName = (reportRows[0]?.data as Record<string, unknown>)?.tournamentName as string || "a team report";
 
-    createNotification(
+    await createNotification(
       targetUserId,
       "collab_invite",
       shareId,
