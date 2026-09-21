@@ -16,6 +16,18 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "September 2026",
+    version: "5.28",
+    title: "Private Reports Really Are Private Now",
+    emoji: "🔒",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "A report marked Private could still be downloaded as a picture by anyone who had its link. The report page itself correctly refused to open, but the team-card image it generates never checked the privacy setting — so the sprites, held items, abilities and Tera types came out anyway. The image now follows exactly the same rule as the report: public and unlisted links work, private ones don't. Held items you've hidden from public viewers are also stripped from the image, which they previously weren't." },
+      { type: "fixed", text: "Corrected the Stat Points explanation in the long-form reference file we publish for AI assistants. It still described SP as just another word for EVs at a 1:1 rate — the shorter reference file was fixed in August, but this one was missed, so assistants reading it were being taught the wrong maths for Champions. It now matches the real system: 66 SP total, 32 per stat, first point costs 4 EVs and every one after costs 8. Both files are now checked automatically against the calculator, so they can't drift apart again." },
+      { type: "improved", text: "Security and dependency maintenance: patched the framework against a published critical vulnerability, cleared a related high-severity image-processing advisory, and brought the analytics SDKs up to current. No change to how anything works — this is upkeep." },
+    ],
+  },
+  {
     date: "August 2026",
     version: "5.27",
     title: "Sounder Saves, Honest Drafts & a Security Sweep",
