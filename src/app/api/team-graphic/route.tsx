@@ -4,6 +4,10 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { NextResponse } from "next/server";
 import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
 import { POKEMON_TYPES_MAP } from "@/lib/data/pokemon-types-map";
+import {
+  normalizePrivateFields,
+  redactPasteFields,
+} from "@/lib/sharing/redact-paste";
 
 export const runtime = "edge";
 
@@ -93,13 +97,35 @@ export async function GET(request: Request) {
   }
 
   const sql = getDb();
-  const rows = await sql`SELECT data FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
+  const rows = await sql`SELECT data, is_public, is_unlisted FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
   if (rows.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // VGC-246: this endpoint is unauthenticated, so it must apply the same
+  // visibility rule as GET /api/share/[id] for a non-owner: public and
+  // unlisted reports are renderable, a truly private one is not. Without
+  // this, any 8-character share ID rendered a private team as a PNG —
+  // sprites, items, abilities and Tera types — straight past the privacy
+  // setting. Owners and collaborators are unaffected: every caller of this
+  // route (the /s/[id] download CTA and the oEmbed thumbnail) is a
+  // public-sharing surface.
+  const isPublic = !!rows[0].is_public;
+  const isUnlisted = !!rows[0].is_unlisted;
+  if (!isPublic && !isUnlisted) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const data = rows[0].data as Record<string, unknown>;
-  const paste = (data.paste as string) ?? "";
+
+  // VGC-246: honour tiered publishing (VGC-142). "item" is a redactable
+  // field and the graphic renders held items, so a creator who hid items
+  // from public viewers had them leak out through the PNG while the JSON
+  // API correctly withheld them.
+  const privateFields = normalizePrivateFields(
+    data.privateFields as string[] | undefined,
+  );
+  const paste = redactPasteFields((data.paste as string) ?? "", privateFields);
   const tournamentName = (data.tournamentName as string) ?? "";
   const placement = (data.placement as string) ?? "";
   const creatorName = (data.creatorName as string) ?? "";
