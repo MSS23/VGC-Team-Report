@@ -21,6 +21,8 @@ const ROOT = join(__dirname, "..", "..");
 
 const EAGER_HOMEPAGE_FILES = [
   "app/page.tsx",
+  "components/home/HomePageServer.tsx",
+  "components/home/HomePageClient.tsx",
   "hooks/useHomePage.ts",
   "hooks/useTeamReport.ts",
 ];

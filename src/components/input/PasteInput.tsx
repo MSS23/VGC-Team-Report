@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { motion } from "motion/react";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
 import { useTranslation } from "@/lib/i18n";
 
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
 import { applyRandomAccent } from "@/lib/utils/random-accent";
-import { resolveSlug, getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 import { QuickShare } from "./QuickShare";
 
@@ -82,6 +81,9 @@ IVs: 0 Spe
 - Protect`;
 
 interface PasteInputProps {
+  sprites: ReactNode;
+  steps: ReactNode;
+  feedback: ReactNode;
   paste: string;
   onPasteChange: (value: string) => void;
   onAnalyze: (directPaste?: string) => void;
@@ -98,10 +100,6 @@ function looksLikeShowdownPaste(text: string): boolean {
   return [hasAbility, hasEVs, hasMove].filter(Boolean).length >= 2;
 }
 
-const POKEMON_SPRITES = [
-  "kangaskhan-mega", "salamence-mega", "incineroar",
-  "charizard-megay", "groudon-primal", "metagross-mega",
-];
 
 function PopularCardSprite({ species }: { species: string }) {
   const urls = getSpriteUrls(species);
@@ -119,10 +117,18 @@ function PopularCardSprite({ species }: { species: string }) {
   );
 }
 
-export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect }: PasteInputProps) {
+export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect }: PasteInputProps) {
   const { t } = useTranslation();
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [loadWhatsNew, setLoadWhatsNew] = useState(false);
+  useEffect(() => {
+    try {
+      const eligible = !!localStorage.getItem("vgc-has-visited") && !localStorage.getItem("vgc-whats-new-v10");
+      if (eligible) setLoadWhatsNew(true);
+      else localStorage.setItem("vgc-has-visited", "1");
+    } catch { /* Storage can be blocked in private browsing. */ }
+  }, []);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [showPasteHint, setShowPasteHint] = useState(false);
@@ -244,34 +250,14 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
 
       {/* Static sprites on mobile save bandwidth and battery; desktop keeps
           the animated Showdown artwork with a short entrance only. */}
-      <div className="flex justify-center gap-3 sm:gap-5 mb-4 sm:mb-8 overflow-hidden">
-        {POKEMON_SPRITES.map((name, i) => (
-          <picture key={name}>
-            <source
-              media="(max-width: 639px), (prefers-reduced-motion: reduce)"
-              srcSet={`https://play.pokemonshowdown.com/sprites/home/${resolveSlug(name)}.png`}
-            />
-            <motion.img
-              src={`https://play.pokemonshowdown.com/sprites/ani/${resolveSlug(name)}.gif`}
-              alt=""
-              width={64}
-              height={64}
-              className="w-11 h-11 sm:w-16 sm:h-16 object-contain drop-shadow-lg"
-              initial={{ opacity: 0, y: 12, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.05 + i * 0.04, duration: 0.25, ease: "easeOut" }}
-              loading="eager"
-            />
-          </picture>
-        ))}
-      </div>
+      {sprites}
 
       {/* Title — bold, distinctive */}
-      <motion.div
+      <div
         className="text-center mb-3 sm:mb-6"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+
+
+
       >
         <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight leading-tight">
           {t.appTitle}
@@ -283,16 +269,16 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         <p className="text-xs sm:text-sm text-text-tertiary mt-2 leading-relaxed max-w-lg mx-auto">
           {t.appMission}
         </p>
-      </motion.div>
+      </div>
 
       {/* Champions announcement banner */}
       {!championsBannerDismissed && (
-        <motion.a
+        <a
           href="/champions"
           className="group flex items-center gap-3 mb-4 sm:mb-6 px-4 py-3 rounded-xl bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 hover:border-accent/40 transition-all relative"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.4 }}
+
+
+
         >
           <div className="w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
@@ -320,15 +306,15 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-        </motion.a>
+        </a>
       )}
 
       {/* How it works — collapsible for returning mobile users */}
-      <motion.div
+      <div
         className="mb-4 sm:mb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.4 }}
+
+
+
       >
         {isReturningUser && !howItWorksOpen ? (
           <button
@@ -343,43 +329,24 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           </button>
         ) : null}
         <div className={`flex flex-col sm:flex-row items-stretch gap-3 ${isReturningUser && !howItWorksOpen ? "hidden sm:flex" : "flex"}`}>
-          {[
-            { step: "1", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", title: "Paste your team", desc: "Import any PokéPaste URL, rental code, or Showdown export" },
-            { step: "2", icon: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z", title: "Add your notes", desc: "Damage calcs, matchup plans, and strategy" },
-            { step: "3", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", title: "Share with anyone", desc: "Public link, presentation mode, or PDF export" },
-          ].map((item) => (
-            <div
-              key={item.step}
-              className="flex-1 flex items-start gap-3 p-3 rounded-xl bg-surface border border-border"
-            >
-              <div className="w-7 h-7 rounded-lg bg-accent-surface flex items-center justify-center flex-shrink-0">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                  <path d={item.icon} />
-                </svg>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-text-primary">{item.title}</p>
-                <p className="text-[10px] text-text-tertiary leading-snug mt-0.5">{item.desc}</p>
-              </div>
-            </div>
-          ))}
+          {steps}
         </div>
-      </motion.div>
+      </div>
 
       {/* Textarea with accent glow */}
-      <motion.p
+      <p
         className="text-xs text-text-tertiary font-medium mb-2 px-1"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.3 }}
+
+
+
       >
         {t.appInputHint}
-      </motion.p>
-      <motion.div
+      </p>
+      <div
         className="relative"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15, duration: 0.4, ease: "easeOut" }}
+
+
+
       >
         <div
           className={`absolute -inset-px rounded-xl transition-all duration-500 ${
@@ -419,55 +386,53 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
           spellCheck={false}
         />
         {isUrl && (
-          <motion.span
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
+          <span
+
+
             className="absolute top-3 right-3 px-2.5 py-1 bg-accent text-white text-[10px] font-extrabold rounded-md uppercase tracking-widest shadow-sm"
           >
             {t.pokePaste}
-          </motion.span>
+          </span>
         )}
-      </motion.div>
+      </div>
 
       {/* Contextual paste hint for new users */}
       {showPasteHint && (
-        <motion.p
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
+        <p
+
           aria-live="polite"
           className="text-xs text-text-secondary mt-2 px-1"
         >
           Paste your full 6-Pok&eacute;mon Showdown export, or a{" "}
           <span className="font-semibold text-text-primary">pokepast.es</span> URL
-        </motion.p>
+        </p>
       )}
 
       {/* Error */}
       {(fetchError || validationError) && (
-        <motion.p
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
+        <p
+
+
           role="alert"
           className="text-sm text-danger font-semibold mt-3 px-1"
         >
           {fetchError || validationError}
-        </motion.p>
+        </p>
       )}
 
       {/* Actions */}
-      <motion.div
+      <div
         className="flex flex-col gap-3 mt-5"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.25, duration: 0.3 }}
+
+
+
       >
         {isUrl ? (
-          <motion.button
+          <button
             onClick={handleFetchPaste}
             disabled={isFetching}
-            whileTap={{ scale: 0.97 }}
-            className="min-h-11 px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 shadow-md shadow-accent/30 cursor-pointer tracking-wide"
+
+            className="min-h-11 active:brightness-90 px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:brightness-110 shadow-md shadow-accent/30 cursor-pointer tracking-wide"
           >
             {isFetching ? (
               <span className="flex items-center gap-2">
@@ -480,13 +445,13 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
                 <kbd className="text-[10px] opacity-60 hidden sm:inline font-[family-name:var(--font-mono)]">Ctrl+Enter</kbd>
               </span>
             )}
-          </motion.button>
+          </button>
         ) : (
-          <motion.button
+          <button
             onClick={handleAnalyze}
             disabled={!hasContent}
-            whileTap={hasContent ? { scale: 0.97 } : undefined}
-            className={`min-h-11 px-6 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer tracking-wide ${
+
+            className={`min-h-11 active:brightness-90 px-6 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer tracking-wide ${
               hasContent
                 ? "bg-accent text-white hover:brightness-110 shadow-md shadow-accent/30"
                 : "bg-surface-alt text-text-tertiary border-2 border-border cursor-not-allowed"
@@ -496,7 +461,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
               {t.analyzeTeam}
               <kbd className="text-[10px] opacity-60 hidden sm:inline font-[family-name:var(--font-mono)]">Ctrl+Enter</kbd>
             </span>
-          </motion.button>
+          </button>
         )}
 
         <QuickShare paste={paste} />
@@ -511,18 +476,18 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
         </p>
 
         {!hasContent && (
-          <motion.div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <p className="text-xs font-bold text-text-tertiary uppercase tracking-widest px-0.5">
               Try a sample team:
             </p>
             <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-none -mx-1 px-1">
               {CHAMPIONS_SAMPLE_TEAMS.map((team) => (
-                <motion.button
+                <button
                   key={team.id}
                   type="button"
-                  whileTap={{ scale: 0.96 }}
+
                   onClick={() => { onPasteChange(team.paste); onAnalyze(team.paste); }}
-                  className="flex-shrink-0 snap-start flex flex-col items-center justify-center gap-1.5 min-w-[140px] min-h-[88px] px-3 py-3 rounded-xl border border-accent/30 bg-accent/[0.08] hover:bg-accent/15 hover:border-accent/50 transition-all cursor-pointer text-center"
+                  className="active:brightness-90 flex-shrink-0 snap-start flex flex-col items-center justify-center gap-1.5 min-w-[140px] min-h-[88px] px-3 py-3 rounded-xl border border-accent/30 bg-accent/[0.08] hover:bg-accent/15 hover:border-accent/50 transition-all cursor-pointer text-center"
                   aria-label={`Try ${team.name} sample team`}
                 >
                   <div className="flex flex-wrap justify-center gap-0.5 w-full max-w-[96px]">
@@ -533,7 +498,7 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
                   <span className="text-xs font-bold text-accent leading-tight mt-0.5 px-1">
                     {team.name}
                   </span>
-                </motion.button>
+                </button>
               ))}
             </div>
             <p className="text-xs text-text-tertiary text-center leading-relaxed">
@@ -542,18 +507,18 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
               /{" "}
               <a href="https://play.pokemonshowdown.com" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-accent hover:underline font-semibold">Showdown</a>
             </p>
-          </motion.div>
+          </div>
         )}
-      </motion.div>
+      </div>
 
 
       {/* Spotlight report */}
       {spotlight && (
-        <motion.div
+        <div
           className="mt-6 sm:mt-8"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
+
+
+
         >
           <div className="flex items-center gap-2 mb-3">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
@@ -562,16 +527,16 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Featured Team Report</span>
           </div>
           <SpotlightCard report={spotlight} />
-        </motion.div>
+        </div>
       )}
 
       {/* Popular reports rail */}
       {latestReports.length > 0 && (
-        <motion.div
+        <div
           className="mt-6 sm:mt-8"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
+
+
+
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -609,43 +574,17 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
               </Link>
             ))}
           </div>
-        </motion.div>
+        </div>
       )}
 
-      {/* Feedback callout */}
-      <motion.div
-        className="mt-6 sm:mt-8"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.45, duration: 0.4 }}
-      >
-        <a
-          href="/feedback"
-          className="group flex items-start gap-3 p-4 rounded-xl bg-surface border border-border hover:border-accent/30 transition-all"
-        >
-          <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/15 transition-colors">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">Got a feature idea or found a bug?</p>
-            <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">
-              Your feedback shapes this tool. Suggest features, report issues, or tell us what you&apos;d improve.
-            </p>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1">
-            <polyline points="9,18 15,12 9,6" />
-          </svg>
-        </a>
-      </motion.div>
+      {feedback}
 
       {/* Footer */}
-      <motion.div
+      <div
         className="mt-8 sm:mt-10 space-y-3"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
+
+
+
       >
         <div className="flex items-center justify-center gap-3">
           <Link href="/feedback" className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-bold text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all">
@@ -671,9 +610,9 @@ export function PasteInput({ paste, onPasteChange, onAnalyze, selectedTemplate, 
             Manraj Sidhu
           </a>
         </p>
-      </motion.div>
+      </div>
 
-      <WhatsNewModal />
+      {loadWhatsNew && <WhatsNewModal />}
       </div>
     </>
   );
