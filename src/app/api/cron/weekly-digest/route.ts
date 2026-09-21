@@ -247,6 +247,11 @@ export async function GET(request: Request) {
       WHERE owner_id IS NOT NULL
         AND deleted_at IS NULL
         AND created_at < NOW() - INTERVAL '7 days'
+        AND NOT EXISTS (
+          SELECT 1 FROM user_preferences prefs
+          WHERE prefs.user_id = shares.owner_id
+            AND prefs.preferences->>'weeklyDigest' = 'false'
+        )
       LIMIT ${MAX_USERS + 1}
     `;
     userIds = rows.map((r) => r.owner_id as string);

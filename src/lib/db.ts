@@ -137,6 +137,14 @@ export async function ensureTable(): Promise<void> {
   await run(sql`CREATE INDEX IF NOT EXISTS idx_follows_creator ON follows(creator_name)`);
 
   // Notifications
+  // One small row per account, updated only when a user saves their choices.
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS user_preferences (
+      user_id TEXT PRIMARY KEY,
+      preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
   await run(sql`
     CREATE TABLE IF NOT EXISTS notifications (
       id SERIAL PRIMARY KEY,

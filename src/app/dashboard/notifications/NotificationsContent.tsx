@@ -1,213 +1,93 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Show, SignInButton, useAuth } from "@clerk/nextjs";
 import { I18nProvider } from "@/lib/i18n";
-
 import { applyRandomAccent } from "@/lib/utils/random-accent";
-import { Show, SignInButton } from "@clerk/nextjs";
-
 import { PageFooter } from "@/components/layout/PageFooter";
-import { Toggle } from "@/components/ui/Toggle";
+import { DEFAULT_NOTIFICATION_PREFS, readNotificationPrefs, type NotificationPrefs } from "@/lib/notification-preferences";
 
-const STORAGE_KEY = "vgc-notification-preferences";
-
-interface NotificationPrefs {
-  welcomeSeries: boolean;
-  weeklyDigest: boolean;
-  socialActivity: boolean;
-  productUpdates: boolean;
+const LEGACY_KEY = "vgc-notification-preferences";
+const choices: { key: keyof NotificationPrefs; title: string; description: string }[] = [
+  { key: "welcomeSeries", title: "Welcome Series", description: "Onboarding emails when you first join" },
+  { key: "weeklyDigest", title: "Weekly Digest", description: "Weekly meta updates and trending teams" },
+  { key: "socialActivity", title: "Social Activity", description: "When someone reacts, comments, or follows you" },
+  { key: "productUpdates", title: "Product Updates", description: "New features and announcements" },
+];
+async function savePreferences(preferences: NotificationPrefs, signal?: AbortSignal, initialize = false) {
+  const response = await fetch(`/api/user/preferences${initialize ? "?initialize=true" : ""}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(preferences), signal });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? "Preferences were not saved.");
+  return readNotificationPrefs(data.preferences);
 }
-
-const DEFAULT_PREFS: NotificationPrefs = {
-  welcomeSeries: true,
-  weeklyDigest: true,
-  socialActivity: true,
-  productUpdates: true,
-};
 
 export function NotificationsContent() {
-  return (
-    <I18nProvider>
-      <NotificationsInner />
-    </I18nProvider>
-  );
+  const { userId } = useAuth();
+  return <I18nProvider><NotificationsInner key={userId ?? "signed-out"} userId={userId} /></I18nProvider>;
 }
 
-function NotificationsInner() {
-  useEffect(() => { applyRandomAccent(); }, []);
-
-  const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
+function NotificationsInner({ userId }: { userId: string | null | undefined }) {
+  const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_NOTIFICATION_PREFS);
+  const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-
-  // Load from localStorage on mount
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
+  useEffect(() => { applyRandomAccent(); }, []);
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<NotificationPrefs>;
-        setPrefs({ ...DEFAULT_PREFS, ...parsed });
-      }
-    } catch { /* silent — use defaults */ }
-  }, []);
+    if (!userId) return;
+    const controller = new AbortController();
+    setLoading(true); setReady(false); setError("");
+    async function load() {
+      try {
+        const response = await fetch("/api/user/preferences", { cache: "no-store", signal: controller.signal });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error ?? "Could not load preferences.");
+        let preferences = readNotificationPrefs(data.preferences);
+        // Migrate existing device choices once. Saved account choices always win.
+        if (!data.initialized) {
+          let legacy: string | null = null;
+          try { legacy = localStorage.getItem(LEGACY_KEY); } catch { /* Storage is optional. */ }
+          if (legacy) {
+            let value: unknown;
+            try { value = JSON.parse(legacy); } catch { value = null; }
+            if (value && typeof value === "object" && !Array.isArray(value)) preferences = await savePreferences(readNotificationPrefs(value), controller.signal, true);
+          }
+        }
+        if (controller.signal.aborted) return;
+        setPrefs(preferences); setReady(true);
+        try { localStorage.removeItem(LEGACY_KEY); } catch { /* Account preferences are authoritative. */ }
+      } catch (error) {
+        if (!controller.signal.aborted) setError(error instanceof Error ? error.message : "Could not load preferences.");
+      } finally { if (!controller.signal.aborted) setLoading(false); }
+    }
+    void load();
+    return () => controller.abort();
+  }, [userId, retry]);
 
-  const handleSave = () => {
-    setSaving(true);
-    setSaved(false);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch { /* silent */ }
+  async function save(next: NotificationPrefs) {
+    setSaving(true); setSaved(false); setError("");
+    try { setPrefs(await savePreferences(next)); setSaved(true); }
+    catch (error) { setError(error instanceof Error ? error.message : "Preferences were not saved."); }
     finally { setSaving(false); }
-  };
+  }
 
-  const handleUnsubAll = () => {
-    const allOff: NotificationPrefs = {
-      welcomeSeries: false,
-      weeklyDigest: false,
-      socialActivity: false,
-      productUpdates: false,
-    };
-    setPrefs(allOff);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(allOff));
-    } catch { /* silent */ }
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
-
-  return (
-    <div className="min-h-screen bg-background text-text-primary">
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
-        <Show when="signed-out">
-          <div className="text-center py-20">
-            <h1 className="text-2xl font-extrabold mb-3">Sign in to manage notifications</h1>
-            <SignInButton mode="modal">
-              <button className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer">
-                Sign In
-              </button>
-            </SignInButton>
-          </div>
-        </Show>
-
-        <Show when="signed-in">
-          {/* Back link */}
-          <a
-            href="/dashboard"
-            className="inline-flex items-center gap-1 text-xs text-text-tertiary hover:text-text-primary mb-6 transition-colors"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-            Back to Dashboard
-          </a>
-
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Notification Preferences</h1>
-          <p className="text-xs sm:text-sm text-text-secondary mt-0.5 mb-8">
-            Choose which emails you want to receive from VGC Team Report.
-          </p>
-
-          {/* Preference rows */}
-          <div className="bg-surface border border-border rounded-2xl overflow-hidden divide-y divide-border mb-6">
-            {/* Welcome Series */}
-            <div className="flex items-center justify-between gap-4 px-5 py-4">
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-text-primary">Welcome Series</p>
-                <p className="text-xs text-text-secondary mt-0.5">Onboarding emails when you first join</p>
-              </div>
-              <div className="flex-shrink-0">
-                <Toggle
-                  checked={prefs.welcomeSeries}
-                  onChange={(v) => setPrefs({ ...prefs, welcomeSeries: v })}
-                  label="Welcome Series"
-                />
-              </div>
-            </div>
-
-            {/* Weekly Digest */}
-            <div className="flex items-center justify-between gap-4 px-5 py-4">
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-text-primary">Weekly Digest</p>
-                <p className="text-xs text-text-secondary mt-0.5">Weekly meta updates and trending teams</p>
-              </div>
-              <div className="flex-shrink-0">
-                <Toggle
-                  checked={prefs.weeklyDigest}
-                  onChange={(v) => setPrefs({ ...prefs, weeklyDigest: v })}
-                  label="Weekly Digest"
-                />
-              </div>
-            </div>
-
-            {/* Social Activity */}
-            <div className="flex items-center justify-between gap-4 px-5 py-4">
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-text-primary">Social Activity</p>
-                <p className="text-xs text-text-secondary mt-0.5">When someone reacts, comments, or follows you</p>
-              </div>
-              <div className="flex-shrink-0">
-                <Toggle
-                  checked={prefs.socialActivity}
-                  onChange={(v) => setPrefs({ ...prefs, socialActivity: v })}
-                  label="Social Activity"
-                />
-              </div>
-            </div>
-
-            {/* Product Updates */}
-            <div className="flex items-center justify-between gap-4 px-5 py-4">
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-text-primary">Product Updates</p>
-                <p className="text-xs text-text-secondary mt-0.5">New features and announcements</p>
-              </div>
-              <div className="flex-shrink-0">
-                <Toggle
-                  checked={prefs.productUpdates}
-                  onChange={(v) => setPrefs({ ...prefs, productUpdates: v })}
-                  label="Product Updates"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Save button */}
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed tracking-wide cursor-pointer focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2"
-            >
-              {saving ? "Saving..." : "Save preferences"}
-            </button>
-            {saved && (
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-fade-in">
-                Preferences saved!
-              </span>
-            )}
-          </div>
-
-          <hr className="border-border my-8" />
-
-          {/* Unsubscribe from all */}
-          <div>
-            <p className="text-xs text-text-secondary mb-2">
-              Want to stop all emails?
-            </p>
-            <button
-              type="button"
-              onClick={handleUnsubAll}
-              className="text-xs font-semibold text-text-tertiary hover:text-red-500 underline underline-offset-2 transition-colors cursor-pointer"
-            >
-              Unsubscribe from all
-            </button>
-          </div>
-        </Show>
-      </main>
-
-      <PageFooter />
-    </div>
-  );
+  return <div className="min-h-screen bg-background text-text-primary">
+    <main className="mx-auto max-w-5xl px-4 py-8 pb-24 sm:px-6 sm:py-12">
+      <Show when="signed-out"><div className="py-20 text-center"><h1 className="mb-4 text-2xl font-bold">Sign in to manage notifications</h1><SignInButton mode="modal"><button className="min-h-11 cursor-pointer rounded-xl bg-text-primary px-6 font-bold text-background focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">Sign In</button></SignInButton></div></Show>
+      <Show when="signed-in">
+        <a href="/dashboard" className="mb-4 inline-flex min-h-11 items-center text-sm text-text-secondary underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-accent">Back to Dashboard</a>
+        <h1 className="text-2xl font-bold sm:text-3xl">Notification Preferences</h1>
+        <p className="mt-2 mb-6 text-sm text-text-secondary">Choose which emails you receive. Your choices are saved to your account and apply across devices.</p>
+        {loading && <p role="status" className="mb-4">Loading preferences…</p>}
+        {error && <div className="mb-4 rounded-lg border border-danger p-4"><p role="alert">{error}</p>{!ready && !loading && <button onClick={() => setRetry((n) => n + 1)} className="mt-2 min-h-11 cursor-pointer rounded-lg border border-border px-4 focus-visible:ring-2 focus-visible:ring-accent">Retry loading</button>}</div>}
+        <fieldset disabled={!ready || saving} className="mb-6 divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface disabled:opacity-60"><legend className="sr-only">Email preferences</legend>
+          {choices.map(({ key, title, description }) => <label key={key} className="flex cursor-pointer items-center justify-between gap-4 p-4 sm:p-6"><span><span className="block font-semibold">{title}</span><span className="mt-1 block text-sm text-text-secondary">{description}</span></span><span className="flex min-h-11 min-w-11 items-center justify-center"><input type="checkbox" role="switch" aria-label={title} checked={prefs[key]} onChange={(e) => { setPrefs({ ...prefs, [key]: e.target.checked }); setSaved(false); }} className="h-6 w-6 accent-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2" /></span></label>)}
+        </fieldset>
+        <div className="flex flex-wrap items-center gap-4"><button onClick={() => void save(prefs)} disabled={!ready || saving} className="min-h-11 cursor-pointer rounded-xl bg-text-primary px-6 font-bold text-background disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">{saving ? "Saving…" : "Save preferences"}</button><p role="status" className="text-sm">{saved ? "Preferences saved to your account." : ""}</p></div>
+        <hr className="my-8 border-border" /><p className="text-sm text-text-secondary">Want to stop all emails?</p><button onClick={() => void save({ welcomeSeries: false, weeklyDigest: false, socialActivity: false, productUpdates: false })} disabled={!ready || saving} className="min-h-11 cursor-pointer text-sm font-semibold underline underline-offset-4 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-accent">Unsubscribe from all</button>
+      </Show>
+    </main><PageFooter />
+  </div>;
 }
