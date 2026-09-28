@@ -84,3 +84,18 @@ still work.
 - Linear MCP: needs OAuth -> used direct GraphQL throughout
 - WebFetch: egress-blocked; Reddit refuses Anthropic's crawler -> community sentiment
   returned ZERO quotes rather than fabricated ones. Unevidenced, not absent.
+
+### Discord: sent ✅ — but note the User-Agent gotcha for future runs
+
+Posted successfully to channel `1487202217298493493` (verified from the `?wait=true`
+response's `channel_id`), message id `1553940613274140786`, via
+`DISCORD_BUILDS_WEBHOOK`. Note `DISCORD_WEBHOOK_URL` and `DISCORD_BOT_TOKEN` (the
+two names the task spec lists) are **not** set in this container; `linear.sh`'s
+`DISCORD_BUILDS_WEBHOOK` is the one that exists.
+
+**Gotcha:** the first attempt used Python `urllib` and got `HTTP 403, Discord error
+code 1010` — Cloudflare blocking the default `Python-urllib/3.x` User-Agent. The
+proxy recorded **no** relay failure, confirming egress was fine and the rejection
+was Discord's. Retrying the identical payload with `curl` and a descriptive
+User-Agent returned 200. Future runs should post via curl with a real UA, or set
+one explicitly; a 1010 here is not a bad webhook and not an egress block.
