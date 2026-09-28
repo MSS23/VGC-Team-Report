@@ -129,7 +129,7 @@ function SideModifierToggle({
               key={key}
               type="button"
               onClick={() => onToggle(side, key)}
-              className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 min-h-11text-[10px] sm:text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 min-h-11 text-[10px] sm:text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 active
                   ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
                   : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
@@ -479,7 +479,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                 type="button"
                 onClick={() => setShowMegaTiers(!showMegaTiers)}
                 title="Adds a separate purple Mega-speed row for each team member that has a matching Mega Stone equipped. A Mega that shares its base form's Speed shows the same number — that's expected, not a bug."
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                   showMegaTiers
                     ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
                     : "bg-surface-alt/50 text-text-secondary border-border hover:border-purple-500/30 hover:text-purple-400"
@@ -497,7 +497,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                 setShowMetaThreats(!showMetaThreats);
                 if (showMetaThreats) setOpponentModifiers(new Set());
               }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 showMetaThreats
                   ? "bg-blue-500/15 text-blue-500 border-blue-500/30"
                   : "bg-surface-alt/50 text-text-secondary border-border hover:border-blue-500/30 hover:text-blue-500"
