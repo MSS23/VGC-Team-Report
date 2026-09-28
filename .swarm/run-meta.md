@@ -1,22 +1,101 @@
-# Swarm Run Meta — 2026-08-10
+# Swarm run meta — 28 Sep 2026
 
-- Branch: `swarm-nightly-2026-08-10`
-- REMOTE_EXISTS at start: 0 (fresh branch, cut from origin/main)
-- Cut from: a70d924 origin/main
-- Run start (UK): Mon Aug 10 01:14:32 BST 2026
-- History mode: unpublished until first push (rebase permitted pre-push; merge-only after)
+## Branch
+- Branch: `claude/loving-sagan-c7sclx`
+- REMOTE_EXISTS at start: 0 (fresh, not on origin) — cut from `origin/main` @ 70c4633
+- AHEAD=0 BEHIND=0 vs origin/main at start
+- **Naming deviation (deliberate):** the scheduled prompt specifies
+  `swarm-nightly-YYYY-MM-DD`, but this session's harness config designates
+  `claude/loving-sagan-c7sclx` and forbids pushing elsewhere. All 7 existing open
+  swarm PRs (#72-#79) also use `claude/loving-sagan-*`, so this name matches the
+  established precedent. Functional requirements are unchanged: one fresh branch
+  off main, never main, one draft PR.
 
-## Credential preflight
-- LINEAR_API_KEY: present (GraphQL via .claude/scripts/linear.sh)
-- DISCORD_BUILDS_WEBHOOK: present
-- POSTHOG_API_KEY / POSTHOG_PROJECT_ID: MISSING — PostHog data pull skipped this run
-- VERCEL_TOKEN / Vercel MCP: not available — Vercel env-var + log checks skipped
-- Linear MCP server: requires interactive OAuth, unavailable headless — using REST/GraphQL via linear.sh instead
-- gh CLI: not installed in this environment — GitHub operations go through the GitHub MCP server
+## Integration availability (preflight)
+- LINEAR_API_KEY: PRESENT -> Linear ops via direct GraphQL (Linear MCP needs OAuth, unavailable)
+- DISCORD_BUILDS_WEBHOOK: PRESENT -> Discord notify available
+- POSTHOG_API_KEY / POSTHOG_PROJECT_ID: **MISSING** -> all PostHog steps SKIPPED for whole run
+- VERCEL_TOKEN / Vercel MCP: **MISSING/absent** -> cannot read prod env vars or invocation logs
+- gh CLI: absent -> PR via GitHub MCP
 
-## History mode change
-- First push completed at the pre-flight-notes commit. The branch is now
-  PUBLISHED on origin. From this point: **merge only, never rebase, never force-push.**
-- Tip commit of this push is `.swarm/*.md` only (docs). Per CLAUDE.md's Ignored
-  Build Step rule, Vercel diffs only the tip commit and excludes `*.md`, so this
-  push is expected to CANCEL rather than consume build minutes. Intentional.
+## Baseline gate (green before any change)
+- tsc --noEmit --incremental false: PASS (16s)
+- npm run build: PASS (42s)
+- vitest: PASS (41 files / 417 tests)
+
+## HEADLINE FINDING: merge backlog, not implementation backlog
+7 open DRAFT swarm PRs, none merged:
+#72 (03-08), #74 (17-08), #75 (24-08), #76 (31-08), #77 (07-09), #78 (14-09), #79 (21-09)
+- 200 distinct source files changed across them
+- `src/app/changelog/data.ts` is touched by ALL SEVEN -> they already conflict with each other
+- 32 Linear tickets sit In Review because their code is in these unmerged PRs
+=> Tonight's run keeps its diff deliberately small and avoids the 200-file
+   overlap set where possible, so it is reviewable rather than adding to the pile.
+
+## Outcome — 28 Sep 2026
+
+- Branch: `claude/loving-sagan-c7sclx`, pushed via guarded refspec `$BRANCH:refs/heads/$BRANCH`
+- **Zero pushes to main.** Push guard asserted before every push.
+- PR: https://github.com/MSS23/VGC-Team-Report/pull/80 — created once, as a DRAFT
+- 8 commits. Final gate: tsc 0 errors, vitest 45 files / 476 tests, build exit 0, eslint clean
+- Post-commit sync: `origin/main` had not moved (BEHIND=0) -> merge was a no-op. No conflicts all run.
+- Rejected changes: none (nothing failed the gate)
+- Subagents dispatched: 8 of the 25 cap (all Wave 1, read-only). Wave 2 ran inline — see below.
+
+### Subagent budget: why 8 and not 25
+
+Wave 1 trimmed 13 -> 8. The board holds 46 unactioned `auto-research` tickets and
+`.swarm/drafts/` holds ~40 unsent marketing drafts from prior runs (five separate
+Reddit outreach drafts, four creator-outreach). More research would have added to a
+pile nobody is drawing down, against Goal A's stated priority.
+
+Wave 2 dispatched **zero** implementation subagents, because there was nothing to
+dispatch them at:
+
+- **Zero bugs were implementable.** All 7 open Bug tickets are already In Review —
+  i.e. already fixed in the 7 unmerged PRs.
+- The remaining eligible pool (53 tickets) is large features (damage calculator,
+  i18n scaffold, Stripe, realtime collab, native app), human-gated infra (run SQL
+  against production; set Vercel env vars), or marketing/outreach which is
+  draft-only by guardrail.
+- The one big product gap — Reg M-C — is **already implemented on PR #78**.
+  Re-doing it is the exact waste VGC-265 describes.
+
+So the work that mattered came from the Wave 1 audits, and was implemented inline
+(6 fixes) rather than delegated. Every fix's regression test was verified to FAIL
+against the old code before being accepted.
+
+### Linear: Goal B blocked by workspace limit
+
+`issueCreate` returns `USAGE_LIMIT_EXCEEDED` — the workspace has exceeded its free
+issue limit, so **no new issues can be created at all**. Commenting and transitions
+still work.
+
+- 0 new tickets filed (11 written up in `tickets-to-file-28-09-26.md` instead)
+- 0 PostHog-sourced tickets (no credentials — VGC-220)
+- Comments posted: **VGC-213** (webhook root cause + fix + what still needs a human),
+  **VGC-253** (three exploits from one schema gap), **VGC-265** (measured merge graph)
+- **0 status transitions**, correctly: no board ticket was implemented this run, so
+  nothing was eligible to move to In Review. Nothing was moved to Done (never).
+
+### Integrations skipped for the whole run (per preflight, not retried)
+- PostHog: no POSTHOG_API_KEY / POSTHOG_PROJECT_ID
+- Vercel: no VERCEL_TOKEN, no Vercel MCP -> prod env vars and invocation logs unreadable
+- Linear MCP: needs OAuth -> used direct GraphQL throughout
+- WebFetch: egress-blocked; Reddit refuses Anthropic's crawler -> community sentiment
+  returned ZERO quotes rather than fabricated ones. Unevidenced, not absent.
+
+### Discord: sent ✅ — but note the User-Agent gotcha for future runs
+
+Posted successfully to channel `1487202217298493493` (verified from the `?wait=true`
+response's `channel_id`), message id `1553940613274140786`, via
+`DISCORD_BUILDS_WEBHOOK`. Note `DISCORD_WEBHOOK_URL` and `DISCORD_BOT_TOKEN` (the
+two names the task spec lists) are **not** set in this container; `linear.sh`'s
+`DISCORD_BUILDS_WEBHOOK` is the one that exists.
+
+**Gotcha:** the first attempt used Python `urllib` and got `HTTP 403, Discord error
+code 1010` — Cloudflare blocking the default `Python-urllib/3.x` User-Agent. The
+proxy recorded **no** relay failure, confirming egress was fine and the rejection
+was Discord's. Retrying the identical payload with `curl` and a descriptive
+User-Agent returned 200. Future runs should post via curl with a real UA, or set
+one explicitly; a 1010 here is not a bad webhook and not an egress block.

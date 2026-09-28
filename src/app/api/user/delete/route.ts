@@ -22,7 +22,23 @@ export async function DELETE(request: Request) {
       FROM shares WHERE owner_id = ${userId}
     `;
     const shareIds = userShares.map((r) => r.id as string);
-    const creatorName = (userShares[0]?.creator_name as string) ?? null;
+
+    // Every distinct creator name this user published under — not just the
+    // first row. The old code read userShares[0] only, which both missed the
+    // other names (leaving their profiles behind) and picked an arbitrary row,
+    // since the SELECT has no ORDER BY.
+    // Deduped case-insensitively (the DELETE below matches on LOWER(name)),
+    // keeping the first spelling seen so the queued statements are stable.
+    const creatorNames: string[] = [];
+    const seenNames = new Set<string>();
+    for (const row of userShares) {
+      const name = (row.creator_name as string | null)?.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (seenNames.has(key)) continue;
+      seenNames.add(key);
+      creatorNames.push(name);
+    }
 
     // Ordering decision: delete the Clerk account FIRST, then purge the DB in a
     // single atomic transaction.
@@ -76,9 +92,35 @@ export async function DELETE(request: Request) {
     `);
     // Delete ALL shares (including soft-deleted with deleted_at IS NOT NULL)
     statements.push(sql`DELETE FROM shares WHERE owner_id = ${userId}`);
-    // creator_profiles (by creator name from shares)
-    if (creatorName) {
-      statements.push(sql`DELETE FROM creator_profiles WHERE LOWER(name) = LOWER(${creatorName})`);
+    // creator_profiles (by creator name from shares).
+    //
+    // `creatorName` is unbound free text on the share payload
+    // (api/share/route.ts) — anyone can publish a share claiming ANY creator
+    // name — and creator_profiles is keyed on that name alone, with no owner
+    // column (see VGC-253). Deleting purely by name therefore let one account
+    // destroy another creator's profile: publish a share carrying the victim's
+    // creator name, then delete your own account, and their bio, socials and
+    // avatar went with it. Two requests, irreversible, cross-tenant.
+    //
+    // Guard: only drop the profile if NO share under that name survives this
+    // transaction. The user's own shares are deleted by the statement above, so
+    // anything still matching belongs to someone else — which means the name is
+    // not exclusively this user's and the profile is not theirs to delete. The
+    // owner_id clause keeps that true even if the statement order changes.
+    //
+    // ponytail: a victim who holds a creator_profiles row but currently has no
+    // shares under that name is still exposed. Closing that needs the owner
+    // column from VGC-253; this guard covers every case reachable today.
+    for (const name of creatorNames) {
+      statements.push(sql`
+        DELETE FROM creator_profiles
+        WHERE LOWER(name) = LOWER(${name})
+          AND NOT EXISTS (
+            SELECT 1 FROM shares
+            WHERE LOWER(data->>'creatorName') = LOWER(${name})
+              AND owner_id IS DISTINCT FROM ${userId}
+          )
+      `);
     }
 
     await sql.transaction(statements);

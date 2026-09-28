@@ -16,6 +16,20 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "September 2026",
+    version: "5.28",
+    title: "Readable Type Badges, Whole Teams & Two Security Fixes",
+    emoji: "🛠️",
+    items: [
+      { type: "fixed", text: "Type badges are now readable. Nine of the eighteen types \u2014 Grass, Bug, Normal, Rock, Flying, Fire, Fairy, Water and Psychic \u2014 printed white text on a light background, as low as 2.08:1 where the accessibility standard asks for 4.5:1. Those nine now use the same dark text Electric, Ice, Ground and Steel already used, which puts every badge between 5.4:1 and 8.2:1. The type colours themselves haven't changed. An automated check now computes the real contrast of every badge, so a future type can't slip back under the line." },
+      { type: "fixed", text: "Teams exported from Showdown's backup format no longer lose a Pok\u00e9mon. If the \"=== [format] Team Name ===\" header wasn't followed by a blank line, the first Pok\u00e9mon was silently dropped \u2014 a team of six showed five, everywhere the species list appears: the Explore filter, sprites, the shared report and embed pages, creator profiles and collections. Social preview images had the same gap and could even print the header line itself as a Pok\u00e9mon." },
+      { type: "fixed", text: "Security: deleting your account can no longer delete someone else's creator profile. Because a published report can claim any creator name, and creator profiles are stored under that name alone, publishing a report in another creator's name and then deleting your own account removed their bio, socials and avatar. Account deletion now only removes a creator profile when no one else's reports are published under that name \u2014 and it now clears every name you published under, rather than just the first one it found." },
+      { type: "fixed", text: "Security: comments can no longer be deleted by anyone who can change their IP address. Three flags removed a comment permanently, and for signed-out visitors a flag was counted per IP address \u2014 which a modern internet connection hands out by the thousand. Removal now requires three flags from three signed-in accounts. Signed-out flags are still recorded for moderation; they just can't delete a comment on their own." },
+      { type: "fixed", text: "Speed-tier filter buttons are the right size to tap again. A missing space in the styling meant two rules \u2014 the minimum 44-pixel tap height and the small text size \u2014 both silently did nothing, leaving the pills fiddly on a phone. Exactly the situation the speed-tier chart exists for, at an event on a handset." },
+      { type: "improved", text: "The Linear webhook that keeps development tickets in sync stopped disabling itself. Replay protection added in August answered a delayed delivery with an error, and because a retry always looks delayed, every retry failed and the failures compounded until the webhook switched itself off. Delayed deliveries are now acknowledged and discarded instead \u2014 still ignored, but no longer counted as failures." },
+    ],
+  },
+  {
     date: "August 2026",
     version: "5.27",
     title: "Sounder Saves, Honest Drafts & a Security Sweep",

@@ -3,10 +3,18 @@ export function extractSpecies(paste: string): string[] {
   const blocks = paste.trim().split(/\n\s*\n/);
   const species: string[] = [];
   for (const block of blocks) {
-    const firstLine = block.trim().split("\n")[0]?.trim();
+    // Showdown backup format wraps teams in "=== [format] Name ===" headers.
+    // The header is usually its own block, but it is only separated from the
+    // first Pokemon by a blank line that not every export (or hand-edit)
+    // includes. Skipping the whole block on a header dropped the Pokemon
+    // sharing it, silently returning 5 species for a 6-mon team — so skip the
+    // header LINES and keep reading the block.
+    const firstLine = block
+      .trim()
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.length > 0 && !line.startsWith("==="));
     if (!firstLine) continue;
-    // Showdown backup format wraps teams in "=== [format] Name ===" headers
-    if (firstLine.startsWith("===")) continue;
     let namePart = firstLine.split(" @ ")[0].trim();
     namePart = namePart.replace(/\s*\([MF]\)\s*$/, "");
     const nicknameMatch = namePart.match(/^.+\((.+)\)$/);

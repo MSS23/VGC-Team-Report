@@ -43,6 +43,48 @@ describe("extractSpecies", () => {
     expect(species[5]).toBe("Mon6");
   });
 
+  // Regression: the header check used to `continue` past the whole block, so a
+  // backup export whose header is NOT followed by a blank line lost the first
+  // Pokemon — 5 species for a 6-mon team, silently. This feeds Explore's
+  // species filter, sprites, embeds and the OG image, so the loss is visible.
+  it("keeps the first Pokemon when a backup header has no blank line after it", () => {
+    const blocks = Array.from({ length: 6 }, (_, i) =>
+      `Mon${i + 1} @ Leftovers\nAbility: Test\n- Tackle`
+    );
+    // Header glued onto the first block: only ONE newline after the header.
+    const paste = `=== [gen9vgc2026] My Team ===\n${blocks.join("\n\n")}`;
+    const species = extractSpecies(paste);
+    expect(species).toEqual(["Mon1", "Mon2", "Mon3", "Mon4", "Mon5", "Mon6"]);
+  });
+
+  it("keeps a nicknamed first Pokemon glued to a backup header", () => {
+    const paste = "=== [gen9vgc2026] T ===\nBig Boy (Garchomp) @ Life Orb\nAbility: Rough Skin";
+    expect(extractSpecies(paste)).toEqual(["Garchomp"]);
+  });
+
+  it("never emits a header line as a species", () => {
+    const paste = "=== [gen9vgc2026] My Team ===\nGarchomp @ Life Orb";
+    expect(extractSpecies(paste)).not.toContain("=== [gen9vgc2026] My Team ===");
+    expect(extractSpecies(paste)).toEqual(["Garchomp"]);
+  });
+
+  it("handles several teams in one backup export, headers glued or not", () => {
+    const paste = [
+      "=== [gen9vgc2026] Team A ===",
+      "Garchomp @ Life Orb",
+      "",
+      "=== [gen9vgc2026] Team B ===",
+      "",
+      "Flutter Mane @ Choice Specs",
+    ].join("\n");
+    expect(extractSpecies(paste)).toEqual(["Garchomp", "Flutter Mane"]);
+  });
+
+  it("skips a block that is nothing but a header", () => {
+    const paste = "=== [gen9vgc2026] Empty ===\n\nGarchomp @ Life Orb";
+    expect(extractSpecies(paste)).toEqual(["Garchomp"]);
+  });
+
   it("handles empty paste", () => {
     expect(extractSpecies("")).toEqual([]);
   });
