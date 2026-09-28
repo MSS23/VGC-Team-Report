@@ -14,11 +14,12 @@ export const runtime = "nodejs";
  * LINEAR_WEBHOOK_SECRET still accepted to avoid breaking existing Vercel
  * env configuration).
  *
- * Returns 200 for valid signatures (including unknown event types) and for
- * the empty-body setup ping Linear sends when first configuring a webhook.
- * Returns 200 in the catch block as well so Linear does not auto-disable the
- * webhook on a transient error. Returns 400 for a missing signature and 401
- * for an invalid signature or missing signing secret.
+ * Returns 200 for valid signatures (including unknown event types), for the
+ * empty-body setup ping Linear sends when first configuring a webhook, and for
+ * a signed-but-stale payload (acknowledged and dropped — see the replay note
+ * below). Returns 200 in the catch block as well so Linear does not
+ * auto-disable the webhook on a transient error. Returns 400 for a missing
+ * signature and 401 for an invalid signature or missing signing secret.
  */
 export async function POST(request: Request) {
   try {
@@ -61,14 +62,26 @@ export async function POST(request: Request) {
     const body = JSON.parse(rawBody);
 
     // Replay protection: the signed payload carries webhookTimestamp (Unix
-    // ms). A captured request stays validly signed forever, so reject
-    // anything outside a one-minute window (Linear's own recommendation).
+    // ms). A captured request stays validly signed forever, so we refuse to
+    // ACT on anything outside a one-minute window (Linear's own
+    // recommendation).
+    //
+    // This is acknowledged with 200, not 401. Linear retries a failed delivery
+    // with backoff, and a retry carries the ORIGINAL webhookTimestamp — so by
+    // the time it arrives it is always outside the window. Answering 401 made
+    // every retry fail permanently, driving the failure count up until Linear
+    // auto-disabled the webhook: one transient blip became terminal. A replayed
+    // payload can never become fresh, so there is nothing to retry and 200 is
+    // the honest transport answer.
+    //
+    // Dropping the event is what enforces replay protection, not the status
+    // code — so this stays safe even if the handler later mutates state.
     // ponytail: no delivery-id dedupe — within the window a replay is
     // possible; add a seen-id cache if this webhook ever mutates state.
     if (typeof body.webhookTimestamp === "number") {
       const ageMs = Math.abs(Date.now() - body.webhookTimestamp);
       if (ageMs > 60_000) {
-        return NextResponse.json({ error: "Stale webhook" }, { status: 401 });
+        return NextResponse.json({ ok: true, ignored: "stale" });
       }
     }
 
