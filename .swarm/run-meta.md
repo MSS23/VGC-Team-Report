@@ -1,22 +1,33 @@
-# Swarm Run Meta — 2026-08-10
+# Swarm run meta — 28 Sep 2026
 
-- Branch: `swarm-nightly-2026-08-10`
-- REMOTE_EXISTS at start: 0 (fresh branch, cut from origin/main)
-- Cut from: a70d924 origin/main
-- Run start (UK): Mon Aug 10 01:14:32 BST 2026
-- History mode: unpublished until first push (rebase permitted pre-push; merge-only after)
+## Branch
+- Branch: `claude/loving-sagan-c7sclx`
+- REMOTE_EXISTS at start: 0 (fresh, not on origin) — cut from `origin/main` @ 70c4633
+- AHEAD=0 BEHIND=0 vs origin/main at start
+- **Naming deviation (deliberate):** the scheduled prompt specifies
+  `swarm-nightly-YYYY-MM-DD`, but this session's harness config designates
+  `claude/loving-sagan-c7sclx` and forbids pushing elsewhere. All 7 existing open
+  swarm PRs (#72-#79) also use `claude/loving-sagan-*`, so this name matches the
+  established precedent. Functional requirements are unchanged: one fresh branch
+  off main, never main, one draft PR.
 
-## Credential preflight
-- LINEAR_API_KEY: present (GraphQL via .claude/scripts/linear.sh)
-- DISCORD_BUILDS_WEBHOOK: present
-- POSTHOG_API_KEY / POSTHOG_PROJECT_ID: MISSING — PostHog data pull skipped this run
-- VERCEL_TOKEN / Vercel MCP: not available — Vercel env-var + log checks skipped
-- Linear MCP server: requires interactive OAuth, unavailable headless — using REST/GraphQL via linear.sh instead
-- gh CLI: not installed in this environment — GitHub operations go through the GitHub MCP server
+## Integration availability (preflight)
+- LINEAR_API_KEY: PRESENT -> Linear ops via direct GraphQL (Linear MCP needs OAuth, unavailable)
+- DISCORD_BUILDS_WEBHOOK: PRESENT -> Discord notify available
+- POSTHOG_API_KEY / POSTHOG_PROJECT_ID: **MISSING** -> all PostHog steps SKIPPED for whole run
+- VERCEL_TOKEN / Vercel MCP: **MISSING/absent** -> cannot read prod env vars or invocation logs
+- gh CLI: absent -> PR via GitHub MCP
 
-## History mode change
-- First push completed at the pre-flight-notes commit. The branch is now
-  PUBLISHED on origin. From this point: **merge only, never rebase, never force-push.**
-- Tip commit of this push is `.swarm/*.md` only (docs). Per CLAUDE.md's Ignored
-  Build Step rule, Vercel diffs only the tip commit and excludes `*.md`, so this
-  push is expected to CANCEL rather than consume build minutes. Intentional.
+## Baseline gate (green before any change)
+- tsc --noEmit --incremental false: PASS (16s)
+- npm run build: PASS (42s)
+- vitest: PASS (41 files / 417 tests)
+
+## HEADLINE FINDING: merge backlog, not implementation backlog
+7 open DRAFT swarm PRs, none merged:
+#72 (03-08), #74 (17-08), #75 (24-08), #76 (31-08), #77 (07-09), #78 (14-09), #79 (21-09)
+- 200 distinct source files changed across them
+- `src/app/changelog/data.ts` is touched by ALL SEVEN -> they already conflict with each other
+- 32 Linear tickets sit In Review because their code is in these unmerged PRs
+=> Tonight's run keeps its diff deliberately small and avoids the 200-file
+   overlap set where possible, so it is reviewable rather than adding to the pile.
