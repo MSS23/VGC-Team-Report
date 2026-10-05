@@ -1,64 +1,56 @@
-# Linear Webhook Health Check — 2026-08-10
+# Step 0C — Linear webhook health check (static audit only)
 
-## Verdict: handler code is CORRECT and the fix is already on `main`. No code change needed this run.
+**Verdict: ✅ handler code is correct. No P0 fix required. No commit made.**
 
-`git diff origin/main -- src/app/api/webhooks/linear/route.ts` is empty, so the
-handler on main is the audited version below. This is the same conclusion as
-previous runs — the code fix landed; what remains is env/config verification,
-which requires human action in Vercel + Linear settings.
+CLAUDE.md states the Linear-webhook-fix P0 is stale and was merged on main back in
+May; this audit confirms that from the source. `git log` also shows the most recent
+hardening landed as `a099f97 VGC-274: Linear webhook replay window + drop CORS
+Allow-Credentials`.
 
-## Step 0C audit checklist vs `src/app/api/webhooks/linear/route.ts`
+## Audit of `src/app/api/webhooks/linear/route.ts` against the Step 0C checklist
 
 | Check | Result |
 |---|---|
-| Reads secret from `process.env.LINEAR_WEBHOOK_SIGNING_SECRET` | PASS (line 33; legacy `LINEAR_WEBHOOK_SECRET` accepted as fallback, line 34) |
-| No literal secret in source | PASS — no hardcoded secret anywhere in repo |
-| Raw body read via `await request.text()` before JSON parse | PASS (line 25; `JSON.parse` only at line 61, after HMAC) |
-| HMAC-SHA256 over raw bytes | PASS (lines 49-51) |
-| `linear-signature` header | PASS (line 40; `x-linear-signature` also accepted) |
-| Constant-time compare via `timingSafeEqual` | PASS (lines 52-57, with a length guard so it cannot throw) |
-| 200 on valid signature | PASS (line 67) |
-| 401 on invalid signature | PASS (line 58) |
-| 400 on missing header | PASS (lines 42-47) |
-| 200 (not 500) on unknown event types | PASS — falls through to `{ ok: true }` at line 67 |
-| Setup-time verification ping / empty body handled | PASS (lines 27-30) and `url_verification` challenge echoed (lines 63-65) |
-| No secret / signature / PII logged | PASS — route logs nothing at all |
-| App Router `POST` export + `force-dynamic` | PASS (lines 4, 23) |
+| Secret read from `process.env.LINEAR_WEBHOOK_SIGNING_SECRET` | ✅ (with a documented legacy `LINEAR_WEBHOOK_SECRET` fallback) |
+| No literal secret in source | ✅ none anywhere in the repo (verified by grep, see `.swarm/c4-security.md`) |
+| Raw body read via `await request.text()` before any JSON parse | ✅ HMAC is computed over the raw string, `JSON.parse` happens after verification |
+| HMAC-SHA256 + `crypto.timingSafeEqual` constant-time compare | ✅ with an explicit length guard first (`timingSafeEqual` throws on length mismatch) |
+| `linear-signature` header | ✅ (plus an `x-linear-signature` alias) |
+| 200 valid / 401 invalid / 400 missing header | ✅ exactly as specified |
+| 200 (not 500) for unknown event types | ✅ falls through to `{ ok: true }` |
+| Setup-time verification ping tolerated | ✅ empty body short-circuits to 200; `url_verification` echoes the challenge |
+| No secret / signature / PII logging | ✅ the handler logs nothing at all |
+| App Router: exports `POST`, `dynamic = 'force-dynamic'` | ✅ both, plus `runtime = 'nodejs'` (required — `crypto` is unavailable on edge) |
 
-One deliberate design note: the `catch` returns 200 rather than 500 so a
-transient error cannot cause Linear to auto-disable the webhook. That is
-intentional and documented in the route's own docblock.
+It also adds replay protection beyond the checklist: a ±60s `webhookTimestamp`
+window, with an honest in-code note that there is no delivery-id dedupe.
 
-## What could NOT be verified this run
+## Could not verify (integrations unavailable this run)
 
-- **Vercel env vars** — no `VERCEL_TOKEN` in the container and no Vercel MCP
-  server connected. Cannot confirm `LINEAR_WEBHOOK_SIGNING_SECRET` exists in
-  the Production environment or that its value matches Linear's webhook config.
-- **Recent invocation logs** — same reason (no Vercel access).
-- **Live probe of the endpoint** — the container's egress proxy blocks
-  `pokemonvgcteamreport.com` (`EGRESS_BLOCKED`). See VGC-255.
-- **PostHog cross-reference** — `POSTHOG_API_KEY` / `POSTHOG_PROJECT_ID` are not
-  set in this container. See VGC-220.
+- **Vercel env var state** — no Vercel MCP and no `VERCEL_TOKEN`, so whether
+  `LINEAR_WEBHOOK_SIGNING_SECRET` is actually populated in Production is unknown.
+- **Recent invocation logs** — same reason; no 401/500 pattern analysis possible.
+- **PostHog cross-reference** — `POSTHOG_API_KEY` unset, skipped for the whole run.
 
-## Existing tickets already covering the remaining work — no duplicates filed
+Because the code is correct, a *delivery* failure (if one is still occurring) can
+only be env-var configuration, which the swarm must never touch. Pre-existing
+tickets already cover this exact human action — **VGC-213**, **VGC-222** and
+**VGC-236** are all open in Backlog. No new duplicate ticket was filed.
 
-- **VGC-213** (P2) `[INFRA] Verify Linear webhook delivery + re-enable in Linear settings after handler fix`
-- **VGC-222** (P2) `[INFRA] Linear webhook handler header bug fixed — re-enable in Linear settings`
-- **VGC-236** (P2) `[INFRA] Standardise on LINEAR_WEBHOOK_SIGNING_SECRET, drop the legacy LINEAR_WEBHOOK_SECRET`
+## Finding: VGC-236 is blocked, not implementable tonight
 
-## Deliberately NOT actioned: VGC-236
+VGC-236 asks to drop the legacy `LINEAR_WEBHOOK_SECRET` fallback and standardise on
+`LINEAR_WEBHOOK_SIGNING_SECRET`. **This run deliberately did not implement it.**
+Removing the fallback is only safe once someone has confirmed which name is
+actually set in Vercel Production. With no Vercel access, shipping that change
+could silently break webhook delivery — the precise failure the ticket exists to
+prevent. Commented on the ticket with this blocker instead.
 
-VGC-236 asks to drop the legacy `LINEAR_WEBHOOK_SECRET` fallback. The swarm is
-NOT doing that this run. The ticket's own description gates it on "once the user
-has confirmed via Vercel that the env var is set under the SIGNING_SECRET name".
-Since Vercel is unreachable from this container, removing the fallback could
-silently break a currently-working webhook if Production is still configured
-under the legacy name. Left for a run (or a human) that can read Vercel env.
+## Observation (not acted on): the catch-all swallows real crashes
 
-## Human action required
-
-1. In Vercel → Production env, confirm `LINEAR_WEBHOOK_SIGNING_SECRET` exists and
-   matches the signing secret shown in Linear's webhook settings.
-2. In Linear → Settings → API → Webhooks, re-enable the webhook if Linear has
-   auto-disabled it, then trigger any issue event and confirm a 200.
-3. Then close VGC-213 / VGC-222, and VGC-236 becomes safe to action.
+The outer `catch { return 200 }` is a sound anti-auto-disable measure, but it
+discards the error entirely, so a genuine handler crash is indistinguishable from
+success in both Vercel logs and PostHog. Worth a `console.error` before the 200 —
+left alone this run because it touches the hot path of a webhook that has a
+history of being fragile, and the value is observability rather than correctness.
+Filed as a low-priority Backlog ticket.

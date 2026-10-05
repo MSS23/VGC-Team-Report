@@ -198,7 +198,7 @@ export function MatchupPlanSlide({
             variant="ghost"
             size="sm"
             onClick={() => onRemove(plan.id)}
-            className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-400/10"
           >
             {t.remove}
           </Button>
@@ -496,68 +496,76 @@ function GamePlanSection({
 
   return (
     <div className={`bg-surface border border-border rounded-2xl border-l-[3px] ${color.accent} shadow-sm transition-shadow hover:shadow-md`}>
-      {/* Header — always visible */}
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 sm:px-5 py-3.5 hover:bg-surface-alt/30 transition-colors rounded-t-2xl"
-      >
-        <div className="flex items-center gap-3">
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 10 10"
-            fill="currentColor"
-            className="text-text-tertiary/60 transition-transform flex-shrink-0"
-            style={{ transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
-          >
-            <polygon points="0,0 10,5 0,10" />
-          </svg>
-          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold border ${color.badge}`}>
-            {index + 1}
-          </span>
-          <span className="text-sm font-semibold text-text-primary">
-            {t.gameN} {index + 1}
-          </span>
-          {/* Show lead/back sprites inline when collapsed */}
-          {isCollapsed && (
-            <div className="flex items-center gap-2 ml-1">
-              {/* Lead indicators */}
-              {gamePlan.bring.slice(0, 2).some((idx) => idx !== null) && (
-                <div className="flex items-center gap-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400/70">L</span>
-                  {([0, 1] as const).map((i) => {
-                    const idx = gamePlan.bring[i];
-                    return idx !== null && yourPokemon[idx] ? (
-                      <PokemonSprite key={i} species={yourPokemon[idx].parsed.species} size={18} />
-                    ) : null;
-                  })}
-                </div>
-              )}
-              {/* Back indicators */}
-              {gamePlan.bring.slice(2, 4).some((idx) => idx !== null) && (
-                <div className="flex items-center gap-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/70">B</span>
-                  {([2, 3] as const).map((i) => {
-                    const idx = gamePlan.bring[i];
-                    return idx !== null && yourPokemon[idx] ? (
-                      <PokemonSprite key={i} species={yourPokemon[idx].parsed.species} size={18} />
-                    ) : null;
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+      {/* Header row. The collapse toggle and the destructive Delete are
+          SIBLINGS: nesting Delete inside the toggle made it unreachable by
+          keyboard and folded the word "Delete" into the toggle's name. */}
+      <div className="w-full flex items-center justify-between rounded-t-2xl">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={!isCollapsed}
+          aria-label={`${t.gameN} ${index + 1}`}
+          className="flex-1 min-w-0 flex items-center justify-between px-4 sm:px-5 py-3.5 hover:bg-surface-alt/30 transition-colors rounded-tl-2xl"
+        >
+          <div className="flex items-center gap-3">
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 10 10"
+              fill="currentColor"
+              className="text-text-tertiary transition-transform flex-shrink-0"
+              style={{ transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
+            >
+              <polygon points="0,0 10,5 0,10" />
+            </svg>
+            <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold border ${color.badge}`}>
+              {index + 1}
+            </span>
+            <span className="text-sm font-semibold text-text-primary">
+              {t.gameN} {index + 1}
+            </span>
+            {/* Show lead/back sprites inline when collapsed */}
+            {isCollapsed && (
+              <div className="flex items-center gap-2 ml-1">
+                {/* Lead indicators */}
+                {gamePlan.bring.slice(0, 2).some((idx) => idx !== null) && (
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400/70">L</span>
+                    {([0, 1] as const).map((i) => {
+                      const idx = gamePlan.bring[i];
+                      return idx !== null && yourPokemon[idx] ? (
+                        <PokemonSprite key={i} species={yourPokemon[idx].parsed.species} size={18} />
+                      ) : null;
+                    })}
+                  </div>
+                )}
+                {/* Back indicators */}
+                {gamePlan.bring.slice(2, 4).some((idx) => idx !== null) && (
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400/70">B</span>
+                    {([2, 3] as const).map((i) => {
+                      const idx = gamePlan.bring[i];
+                      return idx !== null && yourPokemon[idx] ? (
+                        <PokemonSprite key={i} species={yourPokemon[idx].parsed.species} size={18} />
+                      ) : null;
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </button>
         {!isReadOnly && canDelete && (
-          <span
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="text-text-tertiary hover:text-red-400 text-xs px-2 py-1 rounded-md hover:bg-red-400/10 transition-colors"
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label={`${t.delete} ${t.gameN} ${index + 1}`}
+            className="flex-shrink-0 mr-4 sm:mr-5 text-text-tertiary hover:text-red-600 dark:hover:text-red-400 text-xs px-2 py-1 rounded-md hover:bg-red-400/10 transition-colors"
           >
             {t.delete}
-          </span>
+          </button>
         )}
-      </button>
+      </div>
 
       {/* Content — collapsible */}
       {!isCollapsed && (
@@ -568,10 +576,10 @@ function GamePlanSection({
               {/* Lead */}
               <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 sm:p-4 border border-border-subtle">
                 <div className="flex items-center gap-2 mb-2.5">
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-500/20 text-blue-400">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-500/20 text-blue-700 dark:text-blue-400">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /></svg>
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-widest text-blue-400">{t.lead}</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">{t.lead}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {([0, 1] as const).map((bringIdx) => {
@@ -626,10 +634,10 @@ function GamePlanSection({
               {/* Back */}
               <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 sm:p-4 border border-border-subtle">
                 <div className="flex items-center gap-2 mb-2.5">
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-500/20 text-amber-400">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-500/20 text-amber-800 dark:text-amber-400">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-widest text-amber-400">{t.back}</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">{t.back}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {([2, 3] as const).map((bringIdx) => {

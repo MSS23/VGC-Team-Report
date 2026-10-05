@@ -79,10 +79,23 @@ export function lookupPokemonFromDex(species: string): PokemonData | null {
   }
 
   // Narrow to the [T] | [T, T] tuple our PokemonData type expects.
+  //
+  // The empty case is reachable: `decodeSpecies` builds `types` with
+  // `splitList`, which returns `[]` for an empty pipe-joined string by
+  // contract. Without this guard `[types[0]]` is `[undefined]` *typed* as
+  // `[PokemonType]`, and that `undefined` then flows into the type badges and
+  // `getEffectiveness`. `PokemonData["types"]` cannot represent "no types", so
+  // a species with none is treated as unresolvable — same as the baseStats
+  // guard above, and the caller (`lookupPokemon`) already handles null.
   const types = entry.types as PokemonType[];
-  const typesTuple: PokemonData["types"] = types.length >= 2
-    ? [types[0], types[1]]
-    : [types[0]];
+  const [firstType, secondType] = types;
+  if (!firstType) {
+    pokemonCache.set(key, null);
+    return null;
+  }
+  const typesTuple: PokemonData["types"] = secondType
+    ? [firstType, secondType]
+    : [firstType];
 
   const data: PokemonData = {
     name: entry.name,
@@ -135,10 +148,18 @@ export function getMegaEntryFromDex(species: string): MegaPokemonEntry | null {
     }
   }
 
+  // Same empty-types hazard as `lookupPokemonFromDex` above: a Mega with no
+  // decodable types is broken data, so fail the lookup (and cache the miss)
+  // rather than hand callers a `[undefined]` types array.
   const megaTypes = entry.types as PokemonType[];
-  const megaTypesTuple: MegaPokemonEntry["types"] = megaTypes.length >= 2
-    ? [megaTypes[0], megaTypes[1]]
-    : [megaTypes[0]];
+  const [firstMegaType, secondMegaType] = megaTypes;
+  if (!firstMegaType) {
+    megaEntryCache.set(key, null);
+    return null;
+  }
+  const megaTypesTuple: MegaPokemonEntry["types"] = secondMegaType
+    ? [firstMegaType, secondMegaType]
+    : [firstMegaType];
 
   const built: MegaPokemonEntry = {
     slug: megaSlugFromDataKey(key),

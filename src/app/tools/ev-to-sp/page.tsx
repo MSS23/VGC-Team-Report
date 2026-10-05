@@ -16,8 +16,12 @@ const PAGE_URL = "https://pokemonvgcteamreport.com/tools/ev-to-sp";
 // Kept short so the root layout's "%s | VGC Team Report" template still fits
 // inside Google's ~60-character SERP title budget.
 const TITLE = "EV to SP Converter for Pokémon Champions";
+// Deliberately names no single regulation. Every Champions regulation so far
+// (M-A, M-B) uses the same Stat Point system and the same 66 / 32 budget, so
+// pinning the copy to one of them goes stale on each rotation — the same
+// problem /champions was already un-pinned from (VGC-258).
 const DESCRIPTION =
-  "Free EV to SP converter for Pokémon Champions Regulation M-A. Convert EV spreads to Stat Points (and back) against the 66 SP budget and 32 SP per-stat cap, with a full conversion table.";
+  "Free EV to SP converter for Pokémon Champions. Convert EV spreads to Stat Points (and back) against the 66 SP budget and 32 SP per-stat cap, with a full conversion table.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -31,7 +35,9 @@ export const metadata: Metadata = {
     "Champions SP calculator",
     "66 SP budget",
     "32 SP per stat",
+    "Champions SP spread",
     "Regulation M-A SP spread",
+    "Regulation M-B SP spread",
     "Pokemon Champions EV spread",
     "VGC 2026",
   ],
@@ -74,7 +80,7 @@ const FAQ_ITEMS = [
   {
     question: "How do you convert EVs to SP in Pokémon Champions?",
     answer:
-      `Any investment at all costs at least 1 Stat Point, and after that every further 8 EVs buys 1 more SP — so the conversion is SP = ceil(EVs / 8), with a minimum of 1 SP for a non-zero EV value. In practice the first Stat Point costs 4 EVs and each Stat Point after it costs 8 EVs: 4 EVs = 1 SP, 12 EVs = 2 SP, 20 EVs = 3 SP, and so on. Anything from 248 EVs upward hits the ${CHAMPIONS_MAX_SP_PER_STAT} SP per-stat cap, which is why a maxed 252 EV stat becomes ${CHAMPIONS_MAX_SP_PER_STAT} SP.`,
+      `Any investment at all costs at least 1 Stat Point, and after that every further 8 EVs buys 1 more SP — so the conversion is SP = ceil(EVs / 8), with a minimum of 1 SP for a non-zero EV value. In practice the first Stat Point costs 4 EVs and each Stat Point after it costs 8 EVs: 4 EVs = 1 SP, 12 EVs = 2 SP, 20 EVs = 3 SP, and so on. The nth Stat Point costs 8n - 4 EVs, so the ${CHAMPIONS_MAX_SP_PER_STAT}nd and last one costs a full ${MAX_EV_PER_STAT} EVs — which is why a maxed ${MAX_EV_PER_STAT} EV stat becomes exactly ${CHAMPIONS_MAX_SP_PER_STAT} SP, and why 248 EVs stops one point short at 31 SP.`,
   },
   {
     question: "Why does the EV to SP math not add up?",
@@ -89,7 +95,7 @@ const FAQ_ITEMS = [
   {
     question: "What is 252 EVs in SP?",
     answer:
-      `252 EVs is ${CHAMPIONS_MAX_SP_PER_STAT} SP — the per-stat cap. So is 248 EVs, which means the classic "248 HP" bulk-optimising trick converts to exactly the same Stat Point cost as a full 252 investment.`,
+      `${MAX_EV_PER_STAT} EVs is ${CHAMPIONS_MAX_SP_PER_STAT} SP — the per-stat cap. 248 EVs is 31 SP, not ${CHAMPIONS_MAX_SP_PER_STAT}: every Stat Point after the first costs 8 EVs, so 244 EVs buys the 31st and the ${CHAMPIONS_MAX_SP_PER_STAT}nd needs the full ${MAX_EV_PER_STAT}. The classic "248 HP" bulk-optimising trick therefore saves a Stat Point as well as 4 EVs.`,
   },
   {
     question: "What is 4 EVs in SP?",
@@ -188,7 +194,7 @@ export default function EvToSpPage() {
               investment at all costs at least 1 SP, and every further 8 EVs buys 1
               more SP.</strong> Written as a formula, SP = ceil(EVs &divide; 8), with a
               floor of 1 SP whenever the EV value is not zero, and a ceiling of{" "}
-              {CHAMPIONS_MAX_SP_PER_STAT} SP once the EV value reaches 248.
+              {CHAMPIONS_MAX_SP_PER_STAT} SP, reached only at a full {MAX_EV_PER_STAT} EVs.
             </p>
             <p>
               That floor is the whole reason people say the math does not add up.
@@ -197,10 +203,11 @@ export default function EvToSpPage() {
               12 EVs, not 8. So the curve reads as{" "}
               <strong className="text-text-primary font-semibold">the first SP costs 4
               EVs and every SP after it costs 8</strong>: 4 &rarr; 1 SP, 12 &rarr; 2 SP,
-              20 &rarr; 3 SP, 28 &rarr; 4 SP, and onward in steps of eight. Anything
-              from 248 EVs up is already at the {CHAMPIONS_MAX_SP_PER_STAT} SP cap,
-              which is why the familiar 248 HP bulk trick and a full 252 investment
-              cost exactly the same in Champions.
+              20 &rarr; 3 SP, 28 &rarr; 4 SP, and onward in steps of eight. The nth
+              Stat Point costs 8n &minus; 4 EVs, so the last one costs a full{" "}
+              {MAX_EV_PER_STAT} EVs: 244 EVs buys 31 SP and only {MAX_EV_PER_STAT}{" "}
+              reaches the {CHAMPIONS_MAX_SP_PER_STAT} SP cap. The familiar 248 HP bulk
+              trick lands on 31 SP, one point cheaper than a maxed stat.
             </p>
             <p>
               The budget works out slightly kinder than the classic 508 EV limit.
@@ -266,7 +273,7 @@ export default function EvToSpPage() {
                         : row.ev === 4
                           ? "Minimum investment — the first SP costs only 4 EVs"
                           : row.sp === CHAMPIONS_MAX_SP_PER_STAT
-                            ? `Per-stat cap (${CHAMPIONS_MAX_SP_PER_STAT} SP) — 248 EVs and ${MAX_EV_PER_STAT} EVs cost the same`
+                            ? `Per-stat cap (${CHAMPIONS_MAX_SP_PER_STAT} SP) — only a full ${MAX_EV_PER_STAT} EVs gets here`
                             : `Leaves ${CHAMPIONS_TOTAL_SP - row.sp} SP for the other five stats`}
                     </td>
                   </tr>
@@ -342,7 +349,7 @@ export default function EvToSpPage() {
           <p className="text-sm text-text-secondary mb-4">
             Paste your Showdown export and VGC Team Report converts every spread to
             Champions Stat Points automatically, then checks the whole team against
-            Regulation M-A legality.
+            Champions legality rules.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link

@@ -70,3 +70,58 @@ describe("isDifferentTeam", () => {
     expect(isDifferentTeam(["Garchomp"], "")).toBe(false);
   });
 });
+
+describe("regression: an attached '=== header ===' line ate the first Pokemon", () => {
+  // extractSpecies skipped the whole *block* whose first line began with
+  // "===", so a header exported with no blank line after it took the first
+  // team member down with it: ['Rillaboom'] for a team led by Incineroar.
+  // Headers are now stripped before the paste is split, exactly as
+  // showdown-parser.ts does it.
+  const incineroar = "Incineroar @ Safety Goggles\nAbility: Intimidate\n- Fake Out";
+  const rillaboom = "Rillaboom @ Assault Vest\nAbility: Grassy Surge\n- Grassy Glide";
+
+  it("keeps the first Pokemon when the header is attached to it (no blank line)", () => {
+    const paste = `=== [gen9vgc2026] Folder/Name ===\n${incineroar}\n\n${rillaboom}`;
+    expect(extractSpecies(paste)).toEqual(["Incineroar", "Rillaboom"]);
+  });
+
+  it("still keeps both when a blank line follows the header", () => {
+    const paste = `=== [gen9vgc2026] Folder/Name ===\n\n${incineroar}\n\n${rillaboom}`;
+    expect(extractSpecies(paste)).toEqual(["Incineroar", "Rillaboom"]);
+  });
+
+  it("handles a CRLF export with an attached header", () => {
+    // Windows line endings would otherwise leave a \r on the header line, so
+    // the `=== … ===$` strip would miss it and the first mon would vanish.
+    const paste = `=== [gen9vgc2026] Folder/Name ===\n${incineroar}\n\n${rillaboom}`.replace(
+      /\n/g,
+      "\r\n",
+    );
+    expect(extractSpecies(paste)).toEqual(["Incineroar", "Rillaboom"]);
+  });
+
+  it("handles a header with no [format] tag and trailing whitespace", () => {
+    const paste = `=== My Team ===   \n${incineroar}\n\n${rillaboom}`;
+    expect(extractSpecies(paste)).toEqual(["Incineroar", "Rillaboom"]);
+  });
+
+  it("handles several teams in one backup file without losing a leader", () => {
+    const paste = [
+      "=== [gen9vgc2026] Team A ===",
+      incineroar,
+      "",
+      rillaboom,
+      "",
+      "=== [gen9vgc2026] Team B ===",
+      "Garchomp @ Life Orb\nAbility: Rough Skin\n- Earthquake",
+    ].join("\n");
+    expect(extractSpecies(paste)).toEqual(["Incineroar", "Rillaboom", "Garchomp"]);
+  });
+
+  it("isDifferentTeam no longer calls an edit of the same team a new team", () => {
+    // The draft-loss path: prev species came from a header-less paste, the new
+    // paste is the same team re-exported with an attached header.
+    const paste = `=== [gen9vgc2026] Folder/Name ===\n${incineroar}\n\n${rillaboom}`;
+    expect(isDifferentTeam(["Incineroar"], paste)).toBe(false);
+  });
+});

@@ -6,6 +6,7 @@ import {
   convertToChampionsSp,
   evToChampionsSp,
   championsSpToEv,
+  isSpFormSpread,
   CHAMPIONS_TOTAL_SP,
   CHAMPIONS_MAX_SP_PER_STAT,
   MAX_EV_PER_STAT,
@@ -276,19 +277,22 @@ describe("convertToChampionsSp", () => {
         for (const c of steps) {
           const evs = spread({ hp: a, atk: b, spe: c });
           const sp = convertToChampionsSp(evs);
+          // Spreads already written in SP units take the passthrough path and
+          // are returned verbatim — including when they are over budget, which
+          // is what makes the "Over budget by N SP" warning reachable. The
+          // budget/cap invariants below describe the EV→SP *conversion*, so
+          // they only apply to the spreads that are actually converted.
+          if (isSpFormSpread(evs)) {
+            expect(sp).toEqual(evs);
+            continue;
+          }
           const total = totalOf(sp);
-          const inputTotal = totalOf(evs);
-          // Spreads that are already in SP form take the passthrough path.
-          const isSpForm =
-            inputTotal > 0 &&
-            inputTotal <= CHAMPIONS_TOTAL_SP &&
-            STAT_KEYS.every((k) => evs[k] <= CHAMPIONS_MAX_SP_PER_STAT);
           expect(total).toBeLessThanOrEqual(CHAMPIONS_TOTAL_SP);
           for (const k of STAT_KEYS) {
             expect(sp[k]).toBeGreaterThanOrEqual(0);
             expect(sp[k]).toBeLessThanOrEqual(CHAMPIONS_MAX_SP_PER_STAT);
             if (evs[k] === 0) expect(sp[k]).toBe(0);
-            if (!isSpForm) expect(sp[k]).toBeLessThanOrEqual(evToChampionsSp(evs[k]));
+            expect(sp[k]).toBeLessThanOrEqual(evToChampionsSp(evs[k]));
           }
         }
       }
@@ -316,10 +320,17 @@ describe("evToChampionsSp", () => {
     }
   });
 
-  it("caps at 32 SP from 248 EVs upward", () => {
+  it("reaches the 32 SP cap only at a full 252 EVs", () => {
+    // Was "caps at 32 SP from 248 EVs upward", asserting evToChampionsSp(248)
+    // === 32. That expectation encoded the `if (ev >= 248) return 32` guard,
+    // not the documented ladder: cost(n) = 8n - 4, so cost(31) = 244 and
+    // cost(32) = 252. 248 EVs is 4 short of the 32nd point, so it buys 31 SP
+    // with 4 EVs left over — and 248 HP is one of the most common values in
+    // real VGC pastes.
     expect(evToChampionsSp(244)).toBe(31);
-    expect(evToChampionsSp(248)).toBe(CHAMPIONS_MAX_SP_PER_STAT);
+    expect(evToChampionsSp(248)).toBe(31);
     expect(evToChampionsSp(MAX_EV_PER_STAT)).toBe(CHAMPIONS_MAX_SP_PER_STAT);
+    expect(evToChampionsSp(508)).toBe(CHAMPIONS_MAX_SP_PER_STAT);
   });
 
   it("never returns more than the per-stat cap", () => {
@@ -351,7 +362,10 @@ describe("championsSpToEv", () => {
     expect(championsSpToEv(2)).toBe(12);
     expect(championsSpToEv(3)).toBe(20);
     expect(championsSpToEv(31)).toBe(244);
-    expect(championsSpToEv(CHAMPIONS_MAX_SP_PER_STAT)).toBe(248);
+    // Was 248. championsSpToEv searches evToChampionsSp, so it inherited the
+    // off-by-one from the deleted 248 guard: the 32nd Stat Point costs
+    // 8 * 32 - 4 = 252 EVs, which is what the converter page must quote.
+    expect(championsSpToEv(CHAMPIONS_MAX_SP_PER_STAT)).toBe(MAX_EV_PER_STAT);
   });
 
   it("clamps SP above the per-stat cap to the 32 SP EV cost", () => {
@@ -380,5 +394,106 @@ describe("calculateChampionsStat", () => {
   it("uninvested stat gets no SP bonus", () => {
     // base 130 Atk, 0 SP, neutral: 145 + 5 = 150
     expect(calculateChampionsStat("atk", 130, 0, "Serious")).toBe(150);
+  });
+});
+
+describe("regression: the EV→SP ladder handed out the 32nd Stat Point from 248 EVs", () => {
+  // The ladder is cost(n) = 4 + 8(n - 1) = 8n - 4, so cost(31) = 244 and
+  // cost(32) = 252. A `if (ev >= 248) return 32` guard used to hand the 32nd
+  // point out 4 EVs early, and championsSpToEv — which searches
+  // evToChampionsSp — inherited the error and quoted 248 for a maxed stat.
+  it("charges 248 EVs 31 SP, not 32 (the 32nd point costs 252)", () => {
+    expect(evToChampionsSp(244)).toBe(31);
+    expect(evToChampionsSp(248)).toBe(31);
+    expect(evToChampionsSp(249)).not.toBe(31); // ceil(ev/8) rounds 249-251 up
+    expect(evToChampionsSp(MAX_EV_PER_STAT)).toBe(32);
+  });
+
+  it("prices the 32nd Stat Point at 252 EVs in the reverse direction", () => {
+    expect(championsSpToEv(CHAMPIONS_MAX_SP_PER_STAT)).toBe(252);
+    expect(championsSpToEv(31)).toBe(244);
+  });
+
+  it("is an exact inverse at 0, 1, 2, 4, 31 and 32 SP", () => {
+    for (const n of [0, 1, 2, 4, 31, 32]) {
+      const ev = championsSpToEv(n);
+      expect(ev).toBe(n === 0 ? 0 : 8 * n - 4); // 0, 4, 12, 28, 244, 252
+      expect(evToChampionsSp(ev)).toBe(n);
+    }
+  });
+
+  it("does not over-charge the 4-EV steps between ladder rungs", () => {
+    // Every multiple of 4 strictly between cost(n) and cost(n+1) must still
+    // buy exactly n SP — i.e. the remainder is kept, never rounded up a rung.
+    for (let n = 1; n < CHAMPIONS_MAX_SP_PER_STAT; n++) {
+      for (let ev = 8 * n - 4; ev < 8 * (n + 1) - 4; ev += 4) {
+        expect(evToChampionsSp(ev)).toBe(n);
+      }
+    }
+  });
+
+  it("stops charging a 248 HP Incineroar for a full 32 SP", () => {
+    // EVs: 248 HP / 8 Atk / 252 SpD — 31 + 1 + 32 = 64 SP, not 65.
+    const sp = convertToChampionsSp(spread({ hp: 248, atk: 8, spd: 252 }));
+    expect(sp).toEqual(spread({ hp: 31, atk: 1, spd: 32 }));
+    expect(totalOf(sp)).toBe(64);
+    // Incineroar base 95 HP: floor((190 + 31) * 50 / 100) + 60 + 31 = 201.
+    expect(calculateChampionsStat("hp", 95, sp.hp, "Careful")).toBe(201);
+  });
+
+  it("no longer reports a 248/248/4/8 spread as fully allocated", () => {
+    // Was 66/66 ("nothing left to spend") when the true cost is 64/66.
+    const sp = convertToChampionsSp(spread({ hp: 248, atk: 248, def: 4, spe: 8 }));
+    expect(sp).toEqual(spread({ hp: 31, atk: 31, def: 1, spe: 1 }));
+    expect(totalOf(sp)).toBe(64);
+  });
+});
+
+describe("regression: an over-budget SP spread was silently re-converted as EVs", () => {
+  // The old detection asked "is this spread already *legal* as SP?"
+  // (total <= 66 && every value <= 32), so an over-budget SP spread failed the
+  // test and went through the EV→SP conversion a second time — and because the
+  // output was always back inside budget, every over-budget warning in the
+  // report UI and the 66-SP check in validateChampionsTeam were unreachable.
+  it("decides units by per-stat magnitude, never by budget compliance", () => {
+    expect(isSpFormSpread(spread({ hp: 22, def: 11, spa: 24, spd: 4, spe: 5 }))).toBe(true);
+    expect(isSpFormSpread(spread({ hp: 32, atk: 32, spe: 3 }))).toBe(true); // 67 SP, illegal but still SP
+    expect(isSpFormSpread(spread({ hp: 32, atk: 32, def: 32, spa: 32 }))).toBe(true); // 128 SP
+    expect(isSpFormSpread(spread({ hp: 252, spd: 252, spe: 4 }))).toBe(false); // EVs
+    expect(isSpFormSpread(spread())).toBe(false); // no investment at all
+  });
+
+  it("keeps a 67 SP Incineroar at 32 HP instead of rewriting it to 4", () => {
+    // EVs: 32 HP / 32 Atk / 3 Spe. Shipped behaviour: {hp: 4, atk: 4, spe: 1},
+    // a 9/66 SP card and 174 HP for a mon the author built at 202.
+    const sp = convertToChampionsSp(spread({ hp: 32, atk: 32, spe: 3 }));
+    expect(sp).toEqual(spread({ hp: 32, atk: 32, spe: 3 }));
+    expect(totalOf(sp)).toBe(67);
+    expect(totalOf(sp)).toBeGreaterThan(CHAMPIONS_TOTAL_SP); // the UI warning is reachable again
+    expect(calculateChampionsStat("hp", 95, sp.hp, "Careful")).toBe(202);
+    expect(calculateChampionsStat("hp", 95, 4, "Careful")).toBe(174); // the old, wrong number
+  });
+
+  it("does not change how any in-budget or EV-form spread is read", () => {
+    // SP form, within budget — untouched, as before.
+    const legalSp = spread({ hp: 22, def: 11, spa: 24, spd: 4, spe: 5 });
+    expect(convertToChampionsSp(legalSp)).toEqual(legalSp);
+    // Classic EV spreads still convert (any value over 32 proves EV units).
+    expect(convertToChampionsSp(spread({ hp: 252, def: 4 }))).toEqual(spread({ hp: 32, def: 1 }));
+    expect(convertToChampionsSp(spread({ atk: 252, spd: 4, spe: 252 }))).toEqual(
+      spread({ atk: 32, spd: 1, spe: 32 })
+    );
+    // A partial EV line is still read as EVs, not as a 60 SP investment.
+    expect(convertToChampionsSp(spread({ hp: 60 }))).toEqual(spread({ hp: 8 }));
+  });
+
+  it("documents the residual: a single over-cap value still reads as EVs", () => {
+    // `EVs: 33 HP / 10 Atk` is genuinely ambiguous from the numbers alone, and
+    // the per-stat cap cannot be enforced without the unit being carried
+    // explicitly from the parser (statForm: "ev" | "sp" on ParsedPokemon).
+    // Locked in deliberately: any rule that read 33 as SP would also have to
+    // read the ordinary partial EV line `60 HP` above as 60 SP.
+    expect(isSpFormSpread(spread({ hp: 33, atk: 10 }))).toBe(false);
+    expect(convertToChampionsSp(spread({ hp: 33, atk: 10 }))).toEqual(spread({ hp: 5, atk: 2 }));
   });
 });

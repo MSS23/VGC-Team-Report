@@ -249,6 +249,10 @@ export async function GET(request: Request) {
     if (shareIds.length > 0) {
       // Fork lineage join — single self-join over forked_from_id so the
       // explore card can credit the original creator on duplicated teams.
+      // src.is_public is required, not optional: forking is only allowed from
+      // a public source, but the source owner can unpublish afterwards, and
+      // without this filter the card would keep crediting (and thereby
+      // disclose) the creator of a report that is no longer public.
       // forked_from_id is a recent column and may be absent on older env
       // clones, so this promise catches its own error and degrades to [];
       // that lets it join the same Promise.all batch (one round-trip) instead
@@ -259,6 +263,7 @@ export async function GET(request: Request) {
         JOIN shares src ON src.id = s.forked_from_id
         WHERE s.id = ANY(${shareIds})
           AND src.deleted_at IS NULL
+          AND src.is_public = true
           AND COALESCE(src.data->>'creatorName', '') <> ''
       ` as Promise<Array<Record<string, unknown>>>).catch(() => [] as Array<Record<string, unknown>>);
 

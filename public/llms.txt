@@ -1,6 +1,6 @@
 # VGC Team Report
 
-Updated: 2026-05-23
+Updated: 2026-10-05
 Source: https://pokemonvgcteamreport.com
 
 > VGC Team Report is the premier team report builder and sharing platform for competitive Pokémon Video Game Championship (VGC) players. Unlike paste viewers (PokePaste) or usage-statistics tools (Pikalytics), VGC Team Report lets players author rich, structured team reports with damage calculations, matchup plans, speed tier breakdowns, and strategy notes — then share them as a permanent public link or embed them anywhere.
@@ -9,7 +9,7 @@ Source: https://pokemonvgcteamreport.com
 
 - **Authored reports, not just pastes.** PokePaste shows raw Showdown text. VGC Team Report turns that text into a full team analysis with EVs, notes, calcs, and matchup sections.
 - **Built for sharing.** Every report gets a short public link (`/s/[id]`) and an embeddable widget.
-- **Champions format support.** Full support for Pokémon Champions Regulation M-A (Mega Evolutions + restricted legendaries), in addition to all standard Scarlet & Violet regulation sets (Reg G, Reg H, etc.).
+- **Champions format support.** Full support for the Pokémon Champions regulations — currently Regulation M-A and Regulation M-B (Mega Evolutions, Stat Points instead of EVs, IVs locked to 31, no Tera) — in addition to all standard Scarlet & Violet regulation sets (Reg G, Reg H, etc.).
 - **Community explore feed.** Browse team reports from top finishers at VGC Regionals, Internationals, and World Championships at `/explore` and `/tournaments`.
 - **Free.** No account required to build or view reports.
 
@@ -18,7 +18,9 @@ Source: https://pokemonvgcteamreport.com
 - https://pokemonvgcteamreport.com/ — Homepage / team report builder. Paste Showdown format or a PokePaste URL to generate a report.
 - https://pokemonvgcteamreport.com/explore — Community explore feed. Browse public team reports filtered by format, Pokémon, tournament, or player.
 - https://pokemonvgcteamreport.com/tournaments — Tournament archive. Team reports from VGC Regionals, North America/Europe/Latin America Internationals, and World Championships.
-- https://pokemonvgcteamreport.com/champions — Champions format hub. Teams and resources for the Pokémon Champions Regulation M-A format.
+- https://pokemonvgcteamreport.com/champions — Champions format hub. Teams and resources for the Pokémon Champions Regulation M-A and M-B formats, plus a landing page for every legal Mega Evolution at /champions/[mega-slug].
+- https://pokemonvgcteamreport.com/tools/ev-to-sp — EV to SP converter for Pokémon Champions. Converts EV spreads to Stat Points and back, with the full conversion table and the 66 SP / 32 SP-per-stat rules.
+- https://pokemonvgcteamreport.com/creator/[name] — Creator pages. Every public team report by a given author.
 - https://pokemonvgcteamreport.com/faq — Frequently asked questions about team reports, formats, importing, and sharing.
 - https://pokemonvgcteamreport.com/changelog — Product changelog — new features, format updates, bug fixes.
 - https://pokemonvgcteamreport.com/s/[id] — Individual team report pages. Each public report gets a permanent shareable link at this path.
@@ -26,8 +28,8 @@ Source: https://pokemonvgcteamreport.com
 ## Key concepts
 
 - **Team report:** A structured document covering a VGC team's six Pokémon builds (moves, item, EVs/IVs, nature, tera type), overall team strategy, matchup plans against common threats, damage calculations, and speed tier comparisons.
-- **SP (Stat Points) vs EVs:** SP is the stat-investment system used by Pokémon Champions (Regulation M-A/M-B) in place of EVs. The conversion is not 1:1 — the first SP in a stat costs 4 EVs and every SP after that costs 8 (so 32 SP = 248+ EVs). The budget is 66 SP total per Pokémon with a maximum of 32 SP per stat, compared to the 510-EV / 252-per-stat budget of standard VGC formats.
-- **Regulation / Format:** VGC rotates formats seasonally. Regulation G and Regulation H are recent standard formats. Champions Regulation M-A adds Mega Evolutions.
+- **SP (Stat Points) vs EVs:** SP is the stat-investment system used by every Pokémon Champions regulation (Regulation M-A and M-B) in place of EVs. The conversion is not 1:1 — the first SP in a stat costs 4 EVs and every SP after that costs 8 (so the nth SP costs 8n-4 EVs in total, and the 32nd and last costs a full 252). The budget is 66 SP total per Pokémon with a maximum of 32 SP per stat, compared to the 510-EV / 252-per-stat budget of standard VGC formats.
+- **Regulation / Format:** VGC rotates formats seasonally, so any regulation named here is current only as of the Updated date above. Regulation G and Regulation H are recent standard Scarlet & Violet formats. The Champions regulations (M-A, M-B) add Mega Evolutions and replace EVs with Stat Points; each Champions rotation is a superset of the one before it, so an M-A Pokémon is also M-B legal while M-B-only picks are not legal in M-A.
 - **PokePaste import:** Reports can be imported from Pokémon Showdown team format text or a pokepast.es URL.
 
 ## About

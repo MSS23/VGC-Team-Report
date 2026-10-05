@@ -59,14 +59,22 @@ export async function generateMetadata({
   if (!mega) return {};
 
   // Title targets the highest-volume long-tail queries: "{Pokemon} VGC",
-  // "{Pokemon} SP spread", "{Pokemon} moveset". Keeping it under ~60 chars
-  // so Google doesn't truncate in SERPs.
+  // "{Pokemon} SP spread", "{Pokemon} moveset".
+  //
+  // It is emitted as `title.absolute` so the root layout's
+  // "%s | VGC Team Report" template does NOT append. With the 18-character
+  // suffix the rendered title was 73-76 chars (76 for the longest Mega name,
+  // "Mega Crabominable"), so Google truncated every one of the 72 pages and
+  // the "Teams" keyword fell off the end. Absolute keeps it at 54-58 chars
+  // — inside the ~60-char SERP budget for every Mega in the data. If you
+  // lengthen this string, re-check it against the LONGEST displayName in
+  // MEGA_POKEMON_LIST, not a typical one.
   const title = `${mega.displayName} VGC Guide — SP Spreads, Movesets & Teams`;
   const reg = regulationCopy(mega.dataKey);
   const description = `Complete ${mega.displayName} VGC guide for Pokemon Champions ${reg.legalIn}: best SP spreads, movesets, damage calcs, and top competitive teams. ${mega.ability} with ${mega.megaStone}.`;
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: {
       canonical: `https://pokemonvgcteamreport.com/champions/${mega.slug}`,
@@ -228,11 +236,16 @@ export default async function MegaPokemonPage({
     pokemonData.baseStats.spa + pokemonData.baseStats.spd + pokemonData.baseStats.spe;
   const typeLine = mega.types.join(" / ");
 
-  // FAQ schema — Google surfaces these as rich snippets for long-tail
-  // queries. Every answer below is grounded in first-party data (stats,
-  // ability, mega stone, live team count) — NO hallucinated "best spread"
-  // claims that we can't back up. Adding fake answers here would be a
-  // manual-action risk for structured-data spam.
+  // FAQ content — rendered visibly by MegaLandingContent AND emitted as
+  // FAQPage JSON-LD below, from this one source. Both are required: an
+  // FAQPage node describing copy that is not on the page is hidden
+  // structured data and a Google policy violation, which is exactly what
+  // these 72 pages shipped while the visible section was removed.
+  //
+  // Every answer is grounded in first-party data (stats, ability, mega stone,
+  // live team count) — NO hallucinated "best spread" claims that we can't
+  // back up. Adding fake answers here would be a manual-action risk for
+  // structured-data spam.
   const reg = regulationCopy(mega.dataKey);
   const faqItems = [
     {
@@ -277,6 +290,7 @@ export default async function MegaPokemonPage({
         data={{
           "@context": "https://schema.org",
           "@type": "WebPage",
+          // Same string as the <title> (see generateMetadata) — keep in sync.
           name: `${mega.displayName} VGC Guide — SP Spreads, Movesets & Teams`,
           description: mega.description,
           url: `https://pokemonvgcteamreport.com/champions/${mega.slug}`,
@@ -325,6 +339,7 @@ export default async function MegaPokemonPage({
         relatedMegas={relatedMegas}
         regulationLabel={reg.mbOnly ? "Regulation M-B only" : "Regulation M-A and M-B"}
         exploreRegulation={reg.exploreRegulation}
+        faqs={faqItems}
       />
     </>
   );

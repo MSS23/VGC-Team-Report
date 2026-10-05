@@ -78,7 +78,13 @@ interface MegaLandingContentProps {
   regulationLabel: string;
   /** Matching `regulation` filter value for /explore deep links. */
   exploreRegulation: string;
-  // faqs removed from the visible UI — JSON-LD still generated server-side.
+  /**
+   * Q&A pairs built server-side from first-party data. These MUST be rendered
+   * visibly: the page also emits them as FAQPage JSON-LD, and structured data
+   * describing content a visitor cannot see violates Google's structured-data
+   * policy. Render and schema read from the same array so they cannot drift.
+   */
+  faqs: { q: string; a: string }[];
 }
 
 export function MegaLandingContent({
@@ -88,6 +94,7 @@ export function MegaLandingContent({
   relatedMegas,
   regulationLabel,
   exploreRegulation,
+  faqs,
 }: MegaLandingContentProps) {
   const bst = Object.values(baseStats).reduce((a, b) => a + b, 0);
 
@@ -202,13 +209,30 @@ export function MegaLandingContent({
           )}
         </section>
 
-        {/* "Using X in VGC" and visible FAQ sections were removed — generic
-            filler that duplicated hero info (types, ability, stone, BST)
-            and pushed the actually useful Featured Teams section down.
-            Google deprecated FAQ rich snippets for non-authoritative sites
-            in Aug 2023, so the SEO justification is gone. The FAQPage
-            JSON-LD in <head> is still emitted for AI scrapers and other
-            structured-data consumers — it just isn't rendered visibly. */}
+        {/* FAQ — must stay rendered.
+            The generic "Using X in VGC" filler section is still gone (it
+            duplicated the hero's types/ability/stone/BST), but the FAQ itself
+            is back: the page emits these exact Q&As as FAQPage JSON-LD, and
+            an FAQPage node with no visible counterpart is hidden structured
+            data under Google's policy — a manual-action risk multiplied
+            across all 72 Mega pages. It sits below Featured Teams so it
+            doesn't push the useful content down. If you remove this section,
+            remove the FAQPage JSON-LD in page.tsx in the same change. */}
+        {faqs.length > 0 && (
+          <section className="max-w-5xl mx-auto px-4 py-8" aria-labelledby="mega-faq-heading">
+            <h2 id="mega-faq-heading" className="text-xl font-extrabold text-text-primary mb-4">
+              {mega.displayName} FAQ
+            </h2>
+            <dl className="bg-surface rounded-xl border border-border divide-y divide-border">
+              {faqs.map((faq) => (
+                <div key={faq.q} className="p-4 sm:p-6">
+                  <dt className="text-sm font-bold text-text-primary">{faq.q}</dt>
+                  <dd className="mt-1.5 text-sm text-text-secondary leading-relaxed">{faq.a}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
 
         {/* Related Megas */}
         {relatedMegas.length > 0 && (

@@ -771,7 +771,16 @@ export function useHomePage() {
     // autosave would overwrite the previous team's draft with the new team —
     // silent data loss for anyone keeping multiple drafts in the dashboard.
     // Editing the current team (any species overlap) keeps updating its draft.
-    if (draftId && (!analysis || isDifferentTeam(analysis.pokemon.map((p) => p.parsed.species), teamPaste))) {
+    // `analysis` resolves asynchronously (415a281 moved the parser + Pokemon
+    // data tables into a lazy chunk), so it is transiently null for as long as
+    // that chunk takes to load — including right after a draft is opened from
+    // /dashboard, while that very draft is still being analyzed. The paste
+    // screen renders during that window with the draft's paste already in the
+    // textarea, so a click on Analyze used to read "no team loaded" and detach
+    // the draft. pendingDraftRef is non-null for exactly that window: set in
+    // loadDraft, cleared only once hydration sees a resolved `analysis`.
+    const draftLoadPending = !analysis && pendingDraftRef.current !== null;
+    if (draftId && !draftLoadPending && (!analysis || isDifferentTeam(analysis.pokemon.map((p) => p.parsed.species), teamPaste))) {
       clearDraft();
     }
     setIsSampleTeam(teamPaste.trim() === SAMPLE_PASTE.trim());

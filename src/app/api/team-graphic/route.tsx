@@ -1,6 +1,8 @@
 import { ImageResponse } from "next/og";
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { normalizePrivateFields, redactPasteFields } from "@/lib/sharing/redact-paste";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
 import { POKEMON_TYPES_MAP } from "@/lib/data/pokemon-types-map";
@@ -76,9 +78,34 @@ function getPlacementStyle(placement: string) {
   return { bg: "rgba(244,63,94,0.08)", border: "rgba(244,63,94,0.25)", text: "#FDA4AF" };
 }
 
+/** Share ids are 8 alphanumerics — same shape /api/share/[id] enforces. */
+const SHARE_ID_RE = /^[A-Za-z0-9]{8}$/;
+
+/**
+ * Apply tiered-publishing redaction (VGC-142) before the paste is ever
+ * parsed into the graphic. Mirrors `applyPrivateFieldRedaction` in
+ * `src/app/api/share/[id]/route.ts` — same helpers, same semantics — so a
+ * field the creator marked private (item, EVs, IVs, nature) cannot reach the
+ * rendered PNG for a non-owner viewer. Only `item` is visually present in
+ * this graphic today, but redacting the paste (rather than the parsed object)
+ * keeps the two paths from drifting if more fields get rendered later.
+ */
+function redactForViewer(data: Record<string, unknown>): Record<string, unknown> {
+  const fields = normalizePrivateFields(data.privateFields as string[] | undefined);
+  if (fields.length === 0) return data;
+  const paste = (data.paste as string) ?? "";
+  return { ...data, paste: redactPasteFields(paste, fields) };
+}
+
 /**
  * GET /api/team-graphic?id=SHARE_ID&style=compact|wide
  * Generates a downloadable team graphic PNG for content creators.
+ *
+ * Access control mirrors GET /api/share/[id]: the owner and accepted
+ * collaborators get the full graphic; everyone else may render only a public
+ * or unlisted report (unlisted = link-possession grants view), and gets the
+ * creator's private fields redacted first. A genuinely private report is a
+ * 404 for outsiders so the endpoint never confirms that the id exists.
  */
 export async function GET(request: Request) {
   const guard = await apiGuard(request, { rateLimit: { key: "graphic", max: 10 } });
@@ -92,13 +119,65 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
+  if (!SHARE_ID_RE.test(shareId)) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const sql = getDb();
-  const rows = await sql`SELECT data FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
+  const rows = await sql`
+    SELECT data, is_public, is_unlisted, owner_id
+    FROM shares WHERE id = ${shareId} AND deleted_at IS NULL
+  `;
   if (rows.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const data = rows[0].data as Record<string, unknown>;
+  // Resolve the caller. Clerk's auth() is cookie/header based and runs under
+  // the edge runtime (clerkMiddleware already wraps this path), but an
+  // unauthenticated request can throw rather than resolve, so treat any
+  // failure as "anonymous" exactly like the share route does.
+  let userId: string | null = null;
+  try {
+    const { userId: uid } = await auth();
+    userId = uid;
+  } catch { /* not authenticated */ }
+
+  const ownerId = (rows[0].owner_id as string | null) ?? null;
+  const isOwner = !!userId && !!ownerId && ownerId === userId;
+  let isCollaborator = false;
+  if (userId && !isOwner) {
+    const collabRows = await sql`
+      SELECT 1 FROM collaborators WHERE share_id = ${shareId} AND user_id = ${userId}
+        AND COALESCE(status, 'accepted') = 'accepted'
+    `;
+    isCollaborator = collabRows.length > 0;
+  }
+  const isPrivileged = isOwner || isCollaborator;
+
+  const isPublic = !!rows[0].is_public;
+  const isUnlisted = !!rows[0].is_unlisted;
+
+  // Outsiders may only render public or unlisted reports. A private report
+  // returns 404 (not 403) so the response doesn't leak that the id is real.
+  if (!isPrivileged && !isPublic && !isUnlisted) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const rawData = rows[0].data as Record<string, unknown>;
+  const hasPrivateFields =
+    normalizePrivateFields(rawData.privateFields as string[] | undefined).length > 0;
+  const data = isPrivileged ? rawData : redactForViewer(rawData);
+
+  // A shared cache is keyed by URL only (Vercel's CDN does not vary on
+  // Cookie), so an entry may be replayed to any caller. Caching is therefore
+  // only safe when every allowed caller gets byte-identical output: a public
+  // report with no private fields. Unlisted reports, private-field reports
+  // and owner/collaborator renders are per-viewer and must not be stored.
+  const shareableAtEdge = isPublic && !hasPrivateFields;
+  const imageHeaders: Record<string, string> = shareableAtEdge
+    ? { "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800" }
+    : { "Cache-Control": "private, no-store" };
+
   const paste = (data.paste as string) ?? "";
   const tournamentName = (data.tournamentName as string) ?? "";
   const placement = (data.placement as string) ?? "";
@@ -365,9 +444,7 @@ export async function GET(request: Request) {
       ),
       {
         ...sz,
-        headers: {
-          "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
-        },
+        headers: imageHeaders,
       },
     );
   }
@@ -515,12 +592,12 @@ export async function GET(request: Request) {
     ),
     {
       ...sz,
-      // Cache aggressively at the edge — share data is stable, and unfurlers
-      // (Twitter/Discord/Slack/iMessage) cache OG images for hours-to-days
-      // so a stale image never appears once a share is published.
-      headers: {
-        "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
-      },
+      // Public reports are cached aggressively at the edge — share data is
+      // stable, and unfurlers (Twitter/Discord/Slack/iMessage) cache OG
+      // images for hours-to-days so a stale image never appears once a share
+      // is published. Owner/collaborator and unlisted renders are not cached
+      // (see `imageHeaders`).
+      headers: imageHeaders,
     },
   );
 }
