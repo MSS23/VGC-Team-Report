@@ -45,8 +45,29 @@ export const NATURES: Record<string, NatureData> = {
   Careful: { name: "Careful", plus: "spd", minus: "spa" },
 };
 
+/**
+ * Case/whitespace-insensitive index over NATURES.
+ *
+ * The parser stores the nature line verbatim (`"careful"` from a lowercase
+ * Showdown export), while NATURES is keyed `"Careful"`, so the raw lookup
+ * returned undefined and this function silently handed back a 1.0 modifier —
+ * a Careful Incineroar showed 142 SpD where the truth is 156, with no ▲/▼
+ * marker to hint that anything had been dropped. Normalising here rather than
+ * in the parser fixes every consumer at once, including the inline set editor
+ * and any rehydrated shared report.
+ */
+const NATURE_BY_KEY = new Map(
+  Object.entries(NATURES).map(([key, value]) => [key.toLowerCase(), value]),
+);
+
+/** Look a nature up regardless of the case/spacing a paste used. */
+export function getNature(nature: string | null | undefined): NatureData | undefined {
+  if (!nature) return undefined;
+  return NATURE_BY_KEY.get(nature.trim().toLowerCase());
+}
+
 export function getNatureModifier(nature: string, stat: StatName): number {
-  const data = NATURES[nature];
+  const data = getNature(nature);
   if (!data) return 1;
   if (data.plus === stat) return 1.1;
   if (data.minus === stat) return 0.9;

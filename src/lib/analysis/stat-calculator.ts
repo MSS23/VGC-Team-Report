@@ -208,6 +208,49 @@ function trimSpToBudget(sp: StatSpread, stats: StatName[]): StatSpread {
 }
 
 /**
+ * Does this stat line hold **Stat Points** or **EVs**?
+ *
+ * Showdown has no "SPs:" line yet, so a Champions paste carries its SP values
+ * inside the `EVs:` line (e.g. "EVs: 22 HP / 11 Def / 24 SpA / 4 SpD / 5 Spe",
+ * 66 SP). Everything that calls this is already behind
+ * `isChampionsFormat(regulation)`, so the question is never "is this a
+ * Champions team" — it is only "which unit are these six numbers in".
+ *
+ * **The discriminator is per-stat magnitude, not budget compliance.** A value
+ * above `CHAMPIONS_MAX_SP_PER_STAT` cannot be a Stat Point value — 32 is the
+ * hard per-stat cap — so it proves the line is in EV units. Below that, inside
+ * a Champions report, the SP reading is the author's. The *total* is
+ * deliberately not consulted: a total above 66 means the spread is an
+ * **illegal** SP spread, not an EV spread, and conflating those two is what
+ * this function exists to stop.
+ *
+ * That conflation was the bug. The old predicate asked "is this spread already
+ * legal as SP?" (`total <= 66 && every value <= 32`), so an over-budget SP
+ * spread failed the test and was run through the EV→SP conversion a second
+ * time: `EVs: 32 HP / 32 Atk / 3 Spe` (67 SP) became 4/4/1 and an Incineroar
+ * rendered at 174 HP instead of the author's 202, with no warning anywhere —
+ * and because the output was always back inside budget, every "Over budget by
+ * N SP" warning in the report UI, plus the 66-total check in
+ * `validateChampionsTeam`, was unreachable code.
+ *
+ * `validateChampionsTeam` shares this one function so the display and the
+ * legality sheet can never disagree about which unit they are reading.
+ *
+ * Known residual: a spread with a *single* value just over the cap and a small
+ * total (`EVs: 33 HP / 10 Atk`) is read as EVs here, so the 32 SP per-stat cap
+ * cannot be enforced from the numbers alone. Any rule that caught it would
+ * also have to re-read ordinary partial EV lines such as `EVs: 60 HP` as a
+ * 60 SP investment, which is worse. The real fix is to carry the unit
+ * explicitly (a `statForm: "ev" | "sp"` on `ParsedPokemon`, set by the
+ * parser), which removes the guess entirely.
+ */
+export function isSpFormSpread(evs: StatSpread): boolean {
+  const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
+  if (stats.every((s) => evs[s] <= 0)) return false;
+  return stats.every((s) => evs[s] <= CHAMPIONS_MAX_SP_PER_STAT);
+}
+
+/**
  * Convert a traditional EV spread to a Champions SP spread.
  *
  * Preserves the intent of the original spread and nothing more:
@@ -219,23 +262,19 @@ function trimSpToBudget(sp: StatSpread, stats: StatName[]): StatSpread {
  * paste converts to 32 HP / 1 Def and leaves 33 of the 66 SP unspent, because
  * the player did not pay for more than that. (The report UI shows the
  * `n/66` counter and the legality validator surfaces the shortfall.)
- * Over-budget spreads are trimmed proportionally; see `trimSpToBudget`.
+ * Over-budget spreads are trimmed proportionally; see `trimSpToBudget`. That
+ * applies only to spreads being *converted* from EVs — a spread that is
+ * already in SP form (see `isSpFormSpread`) is returned exactly as written,
+ * so an over-budget SP spread stays visibly over budget.
  */
 export function convertToChampionsSp(evs: StatSpread): StatSpread {
   const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
 
-  // Fast path — pastes that are already in SP form. Showdown has no "SP:"
-  // prefix yet, so Champions teams carry SP values inside the EV line
-  // (e.g. "EVs: 22 HP / 11 Def / 24 SpA / 4 SpD / 5 Spe" sums to 66).
-  // If every value fits inside [0, 32] and the total fits inside 66,
-  // the only consistent reading is "these are SP" — treating them as
-  // EVs and running ceil(ev/8) would collapse "5 Spe" to 1 SP and
-  // break downstream stat math (e.g. Choice Scarf on Primarina).
-  const totalInput = stats.reduce((sum, s) => sum + evs[s], 0);
-  const anyOverMax = stats.some((s) => evs[s] > CHAMPIONS_MAX_SP_PER_STAT);
-  if (totalInput > 0 && totalInput <= CHAMPIONS_TOTAL_SP && !anyOverMax) {
-    return { ...evs };
-  }
+  // Fast path — pastes that are already in SP form are returned verbatim,
+  // over budget or not. See `isSpFormSpread`: the decision is about *units*,
+  // never about budget compliance, so an over-budget SP spread is no longer
+  // silently re-scaled into a legal-looking one.
+  if (isSpFormSpread(evs)) return { ...evs };
 
   // Step 1: Direct per-stat conversion (already capped at 32 by evToChampionsSp).
   const sp: StatSpread = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };

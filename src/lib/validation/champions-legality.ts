@@ -23,7 +23,7 @@ import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import { getRegulationLookupKey } from "@/lib/data/gen9-regulation-signals";
 import {
   CHAMPIONS_TOTAL_SP,
-  CHAMPIONS_MAX_SP_PER_STAT,
+  isSpFormSpread,
 } from "@/lib/analysis/stat-calculator";
 
 // ── Severity levels ─────────────────────────────────────────────────────────
@@ -262,29 +262,43 @@ export function validateChampionsTeam(
   //
   // Reg M-A is natively an SP (Stat Points) format: 66 total, 32 per stat.
   // Showdown has no "SPs:" line yet, so Champions pastes ship SP values
-  // inside the EVs line — a spread whose total ≤ 66 and whose per-stat
-  // values are ≤ 32 can only coherently be SP (same detection used by
-  // convertToChampionsSp). Validate those as SP.
+  // inside the EVs line. Which unit a stat line is written in is decided by
+  // `isSpFormSpread` — shared with convertToChampionsSp so the legality sheet
+  // and the rendered stats can never read the same paste differently.
   //
-  // Traditional EV spreads (512 total, 252 per stat) are still accepted
+  // Crucially the unit test is about magnitude, not legality: it used to ask
+  // "is this spread already within the 66/32 SP budget?", which meant the SP
+  // branch was only ever entered by spreads that could not possibly violate
+  // the budget. The 66-total cap CLAUDE.md names as a Champions rule therefore
+  // had no code path that could emit an error — a 67 SP spread validated clean
+  // and was even told it had "443 more available".
+  //
+  // Traditional EV spreads (510 total, 252 per stat) are still accepted
   // because the rest of the app converts them to SP on display, but are
   // validated against the EV budget so obvious typos (e.g. 300 in a stat)
   // still surface.
   for (const p of pokemon) {
     const total = Object.values(p.evs).reduce((a, b) => a + b, 0);
-    const maxPerStat = Math.max(...Object.values(p.evs));
-    const looksLikeSp = total > 0 && total <= CHAMPIONS_TOTAL_SP && maxPerStat <= CHAMPIONS_MAX_SP_PER_STAT;
 
-    if (looksLikeSp) {
-      // looksLikeSp guarantees every stat ≤ 32, so per-stat cap is already
-      // satisfied — only the total-budget hint is worth surfacing.
-      if (total < CHAMPIONS_TOTAL_SP) {
+    if (isSpFormSpread(p.evs)) {
+      if (total > CHAMPIONS_TOTAL_SP) {
+        issues.push({
+          severity: "error",
+          message: `${p.species}: ${total}/${CHAMPIONS_TOTAL_SP} SP — over budget by ${total - CHAMPIONS_TOTAL_SP} SP`,
+          pokemon: p.species,
+        });
+      } else if (total < CHAMPIONS_TOTAL_SP) {
         issues.push({
           severity: "info",
           message: `${p.species}: ${total}/${CHAMPIONS_TOTAL_SP} SP allocated — ${CHAMPIONS_TOTAL_SP - total} more available`,
           pokemon: p.species,
         });
       }
+      // No per-stat cap check here: `isSpFormSpread` only reads a line as SP
+      // when every value is already ≤ CHAMPIONS_MAX_SP_PER_STAT, so the cap
+      // cannot be violated on this branch. Enforcing it needs the unit to be
+      // carried explicitly from the parser rather than inferred — see the
+      // residual documented on `isSpFormSpread`.
     } else {
       // The game's EV budget is 510, not 512 — the parser already warns at
       // 510, and disagreeing with it here let 512-EV spreads validate clean.

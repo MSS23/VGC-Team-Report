@@ -170,6 +170,58 @@ describe("validateChampionsTeam", () => {
     ).toBe(true);
   });
 
+  describe("regression: the 66 SP budget had no code path that could emit an error", () => {
+    // The SP branch was only entered when the spread was *already* within
+    // budget (total <= 66 && every value <= 32), so the cap CLAUDE.md names as
+    // a Champions rule could never fire: 67 SP validated clean and was even
+    // told it had "443 more available" EVs. Unit detection is now shared with
+    // convertToChampionsSp and decides units, not legality.
+    it("flags a 67 SP spread as over budget by 1 SP", () => {
+      const team = makeTeam();
+      // 32 + 32 + 3 = 67 SP — one point over.
+      team[0] = makePokemon({ evs: { hp: 32, atk: 32, def: 0, spa: 0, spd: 0, spe: 3 } });
+      const result = validateChampionsTeam(team);
+      expect(result.legal).toBe(false);
+      expect(
+        result.issues.some(
+          (i) => i.severity === "error" && i.message.includes("67/66 SP — over budget by 1 SP"),
+        ),
+      ).toBe(true);
+      // And the old tell is gone: no EV-budget advice on this SP spread
+      // (it used to read "67 EVs allocated — 443 more available").
+      const incineroar = result.issues.filter((i) => i.pokemon === "Incineroar");
+      expect(incineroar.some((i) => i.message.includes("EVs allocated"))).toBe(false);
+    });
+
+    it("flags a 96 SP spread as over budget by 30 SP", () => {
+      const team = makeTeam();
+      team[0] = makePokemon({ evs: { hp: 32, atk: 32, def: 0, spa: 0, spd: 0, spe: 32 } });
+      const result = validateChampionsTeam(team);
+      expect(result.legal).toBe(false);
+      expect(
+        result.issues.some(
+          (i) => i.severity === "error" && i.message.includes("96/66 SP — over budget by 30 SP"),
+        ),
+      ).toBe(true);
+    });
+
+    it("still accepts an exactly-66 SP spread with no issue at all", () => {
+      const team = makeTeam();
+      team[0] = makePokemon({ evs: { hp: 32, atk: 32, def: 0, spa: 0, spd: 0, spe: 2 } });
+      const result = validateChampionsTeam(team);
+      expect(result.legal).toBe(true);
+      expect(result.issues.some((i) => i.message.includes("SP"))).toBe(false);
+    });
+
+    it("leaves a classic EV spread on the EV path", () => {
+      const team = makeTeam();
+      team[0] = makePokemon({ evs: { hp: 252, atk: 0, def: 0, spa: 0, spd: 252, spe: 4 } });
+      const result = validateChampionsTeam(team);
+      expect(result.legal).toBe(true);
+      expect(result.issues.some((i) => i.message.includes("over budget"))).toBe(false);
+    });
+  });
+
   it("treats Mega forms as same species for Species Clause", () => {
     const team = makeTeam();
     team[0] = makePokemon({ species: "Kangaskhan", item: "Kangaskhanite" });
