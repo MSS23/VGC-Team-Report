@@ -78,11 +78,20 @@ async function fetchForkedFromMeta(
   if (!sourceId) return null;
   try {
     const rows = await sql`
-      SELECT data, deleted_at FROM shares WHERE id = ${sourceId}
+      SELECT data, deleted_at, is_public FROM shares WHERE id = ${sourceId}
     `;
     if (rows.length === 0) {
       return { id: sourceId, creatorName: null, tournamentName: null, species: [], deleted: true };
     }
+    // Forking is restricted to public sources (see /api/share/[id]/fork), but
+    // that is only enforced at fork time — the source owner can unpublish
+    // afterwards. Attribution must not then become a side channel: this
+    // metadata (creator, event, full species list) and the source's very
+    // existence would otherwise be disclosed to anyone holding the fork's
+    // link, including viewers who get a 404 on /s/{sourceId} itself. Once the
+    // source is no longer public, omit the lineage and let the banner hide
+    // itself, exactly as it does for a report that was never forked.
+    if (!rows[0].is_public) return null;
     const data = rows[0].data as Record<string, unknown>;
     const deleted = rows[0].deleted_at !== null;
     return {

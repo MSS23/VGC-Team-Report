@@ -286,20 +286,23 @@ export async function POST(request: Request) {
       // Only the owner can change visibility — collaborators keep the existing value
       const effectiveIsPublic = isPublic ?? currentIsPublic;
       const effectiveIsUnlisted = isUnlisted ?? currentIsUnlisted;
-      if (isPublic !== undefined) {
-        if (isPublic !== currentIsPublic) {
-          // Visibility is changing — verify caller is the owner
-          if (!isOwner) {
-            // Not the owner — return an explicit error so the client can surface
-            // it and the user isn't left staring at a "saved" toggle that didn't
-            // actually publish. Previously this silently reverted the value,
-            // which caused "I clicked List on Explore but it didn't appear".
-            return NextResponse.json(
-              { error: "Only the report owner can change visibility." },
-              { status: 403 }
-            );
-          }
-        }
+      // isUnlisted is a visibility decision exactly like isPublic — flipping it
+      // changes who can reach the report through /s/{id} — so it sits behind the
+      // same owner-only gate. Content edits are untouched: a collaborator that
+      // omits both flags, or echoes back the values already stored, requests no
+      // visibility change and passes straight through to the update below.
+      const visibilityChangeRequested =
+        (isPublic !== undefined && isPublic !== currentIsPublic) ||
+        (isUnlisted !== undefined && isUnlisted !== currentIsUnlisted);
+      if (visibilityChangeRequested && !isOwner) {
+        // Not the owner — return an explicit error so the client can surface
+        // it and the user isn't left staring at a "saved" toggle that didn't
+        // actually publish. Previously this silently reverted the value,
+        // which caused "I clicked List on Explore but it didn't appear".
+        return NextResponse.json(
+          { error: "Only the report owner can change visibility." },
+          { status: 403 }
+        );
       }
 
       // Require tags to publish — only block when going from private → public
