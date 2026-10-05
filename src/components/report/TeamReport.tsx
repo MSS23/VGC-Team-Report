@@ -343,7 +343,11 @@ export function TeamReport({
   if (currentSlide === pokemonCount + 3) {
     return (
         <div className="animate-fade-in">
-          <OffensiveCoverageChart pokemon={analysis.pokemon} />
+          <OffensiveCoverageChart
+            pokemon={analysis.pokemon}
+            speciesKeys={speciesKeys}
+            megaStates={megaStates}
+          />
           <ThreatMatrix team={analysis.pokemon.map((p) => p.parsed)} regulation={tags?.regulation} />
         </div>
     );
@@ -353,7 +357,11 @@ export function TeamReport({
   if (currentSlide === pokemonCount + 4) {
     return (
         <div className="animate-fade-in">
-          <DefensiveCoverageChart pokemon={analysis.pokemon} />
+          <DefensiveCoverageChart
+            pokemon={analysis.pokemon}
+            speciesKeys={speciesKeys}
+            megaStates={megaStates}
+          />
         </div>
     );
   }
