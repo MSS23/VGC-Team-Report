@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useState, useEffect, useMemo, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { hapticLight } from "@/lib/utils/haptics";
 import {
@@ -85,6 +85,7 @@ export function SlideNavControls({
 }: SlideNavControlsProps) {
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
   const hiddenCount = hiddenStates?.filter(Boolean).length ?? 0;
 
   // ── Section model (key-based so it survives any physical reordering) ──
@@ -161,14 +162,60 @@ export function SlideNavControls({
   const hasSheetDesktop = hasSheetMobile || !!onShowShortcuts;
   const showOverflow = hasSheetMobile || hasSheetDesktop;
 
-  // Close the overflow sheet on Escape (the backdrop handles outside clicks).
+  // Focus management for the overflow sheet, mirroring the ShareModal trap
+  // (ShareModal.tsx): move focus in on open, keep Tab inside, close on Escape,
+  // and hand focus back to the trigger on close. The sheet renders *before* the
+  // nav that opens it, so without a trap its controls (hide-slide, Base/Mega)
+  // sit behind the entire page in the tab order and are unreachable.
   useEffect(() => {
     if (!sheetOpen) return;
+
+    const focusableSelectors =
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const frame = requestAnimationFrame(() => {
+      sheetRef.current?.querySelector<HTMLElement>(focusableSelectors)?.focus();
+    });
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSheetOpen(false);
+      if (e.key === "Escape") {
+        setSheetOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const sheet = sheetRef.current;
+      if (!sheet) return;
+      const focusable = Array.from(sheet.querySelectorAll<HTMLElement>(focusableSelectors));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
+
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKey);
+      // Prefer whatever had focus when the sheet opened; fall back to the
+      // visible overflow trigger (there is one per breakpoint, the other is
+      // display:none and cannot take focus).
+      if (previouslyFocused && document.contains(previouslyFocused) && previouslyFocused !== document.body) {
+        previouslyFocused.focus();
+        return;
+      }
+      Array.from(document.querySelectorAll<HTMLElement>("[data-overflow-trigger]"))
+        .find((el) => el.offsetParent !== null)
+        ?.focus();
+    };
   }, [sheetOpen]);
 
   // Auto-close the sheet if everything that fed it disappears (e.g. leaving
@@ -431,7 +478,9 @@ export function SlideNavControls({
             className="fixed inset-0 z-[55] bg-black/30 sm:bg-transparent animate-fade-in"
           />
           <div
+            ref={sheetRef}
             role="dialog"
+            aria-modal="true"
             aria-label="Slide options"
             className="fixed z-[60] bottom-0 left-0 right-0 rounded-t-2xl border-t border-border bg-surface shadow-2xl pb-[max(0.75rem,env(safe-area-inset-bottom))] animate-fade-in
                        sm:left-auto sm:right-4 sm:bottom-[calc(var(--bottom-nav-height,3.5rem)+0.75rem)] sm:w-72 sm:rounded-2xl sm:border sm:pb-0"
@@ -533,7 +582,7 @@ export function SlideNavControls({
             {/* Current label + counter */}
             <span className="text-[11px] text-text-tertiary font-semibold tabular-nums flex-shrink-0 max-w-[180px] truncate">
               <span className="font-bold text-text-secondary">{currentLabel}</span>
-              <span className="ml-1.5 text-text-tertiary/70">
+              <span className="ml-1.5 text-text-tertiary">
                 {currentSlide + 1}/{totalSlides}
               </span>
             </span>

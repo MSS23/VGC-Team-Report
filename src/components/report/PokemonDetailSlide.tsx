@@ -71,7 +71,7 @@ const CATEGORY_CONFIG = {
     tagBg: "bg-red-500/15",
     tagText: "text-red-500 dark:text-red-400",
     iconColor: "text-red-400",
-    bulletColor: "text-red-400/70",
+    bulletColor: "text-red-700 dark:text-red-400/70",
   },
   defensive: {
     label: "Defensive",
@@ -83,7 +83,7 @@ const CATEGORY_CONFIG = {
     tagBg: "bg-emerald-500/15",
     tagText: "text-emerald-600 dark:text-emerald-400",
     iconColor: "text-emerald-400",
-    bulletColor: "text-emerald-400/70",
+    bulletColor: "text-emerald-700 dark:text-emerald-400/70",
   },
   speed: {
     label: "Speed Tier",
@@ -95,7 +95,7 @@ const CATEGORY_CONFIG = {
     tagBg: "bg-amber-500/15",
     tagText: "text-amber-600 dark:text-amber-400",
     iconColor: "text-amber-400",
-    bulletColor: "text-amber-400/70",
+    bulletColor: "text-amber-700 dark:text-amber-400/70",
   },
 } as const;
 
@@ -683,7 +683,7 @@ function PokemonDetailSlideBase({
     <div>
       <div className="flex items-center gap-2 sm:gap-3 mb-2.5 sm:mb-3 flex-wrap">
         <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary">
-          {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70">({parsed.nature})</span>
+          {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary">({parsed.nature})</span>
         </h3>
 
         {isChampions ? (() => {
@@ -697,6 +697,7 @@ function PokemonDetailSlideBase({
           return (
             <div
               className="inline-flex h-8 sm:h-9 items-center rounded-lg bg-surface-alt border border-border px-2.5 sm:px-3 gap-1.5 ml-auto"
+              role="group"
               aria-label={`Stat Points: ${totalSp} of ${CHAMPIONS_TOTAL_SP}`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${spDot}`} aria-hidden />
@@ -711,14 +712,17 @@ function PokemonDetailSlideBase({
              510 total but the last 2 EVs in a 252 slot provide no stat gain,
              so 508 is the correctly optimized target (e.g. 252/252/4 = 508). */
           <span className={`text-xs sm:text-sm font-bold ml-auto tabular-nums ${
-            totalEvs > 508 ? "text-danger" : totalEvs < 508 ? "text-amber-500" : "text-text-tertiary/50"
+            totalEvs > 508 ? "text-danger" : totalEvs < 508 ? "text-amber-500" : "text-text-tertiary"
           }`}>
             {totalEvs}/508{totalEvs < 508 && ` · ${508 - totalEvs} left`}
           </span>
         ) : null}
       </div>
 
-      <div className="space-y-1 sm:space-y-1.5 stagger-stats">
+      {/* role="list"/"listitem" so each row's aria-label is actually exposed:
+          aria-label on a bare <div> computes a generic role and is discarded.
+          Same shape as PokemonCard.tsx. */}
+      <div className="space-y-1 sm:space-y-1.5 stagger-stats" role="list" aria-label={`${displaySpecies} stats`}>
         {(["hp", "atk", "def", "spa", "spd", "spe"] as const).filter((stat) => relevantStats.has(stat)).map(
           (stat) => {
             const value = displayStats[stat];
@@ -750,13 +754,20 @@ function PokemonDetailSlideBase({
             const hasNerf = natureDown;
 
             return (
-              <div key={stat} className="flex items-center gap-2" aria-label={`${statLabels[stat]}: ${displayValue}${natureUp ? ", boosted by nature" : ""}${natureDown ? ", reduced by nature" : ""}${isBoosted ? ", boosted by item" : ""}`}>
+              <div key={stat} className="flex items-center gap-2" role="listitem" aria-label={`${statLabels[stat]}: ${displayValue}${natureUp ? ", boosted by nature" : ""}${natureDown ? ", reduced by nature" : ""}${isBoosted ? ", boosted by item" : ""}`}>
                 <span className="text-xs font-bold w-11 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5 flex-shrink-0">
-                  {natureUp && <span className="text-[12px] text-emerald-500 dark:text-emerald-400 leading-none" aria-label="boosted by nature">{"\u25B2"}</span>}
-                  {natureDown && <span className="text-[12px] text-rose-500 dark:text-rose-400 leading-none" aria-label="reduced by nature">{"\u25BC"}</span>}
+                  {natureUp && <span className="text-[12px] text-emerald-500 dark:text-emerald-400 leading-none" aria-hidden="true">{"\u25B2"}</span>}
+                  {natureDown && <span className="text-[12px] text-rose-500 dark:text-rose-400 leading-none" aria-hidden="true">{"\u25BC"}</span>}
                   {statLabels[stat]}
                 </span>
-                <div className="flex-1 h-3 sm:h-3.5 bg-surface-alt rounded-full overflow-hidden shadow-inner">
+                <div
+                  className="flex-1 h-3 sm:h-3.5 bg-surface-alt rounded-full overflow-hidden shadow-inner"
+                  role="progressbar"
+                  aria-valuenow={displayValue}
+                  aria-valuemin={0}
+                  aria-valuemax={maxStat}
+                  aria-label={`${statLabels[stat]} stat bar${isBoosted ? " (item boosted)" : ""}`}
+                >
                   <div
                     className="h-full rounded-full animate-bar-fill"
                     style={{
@@ -808,17 +819,18 @@ function PokemonDetailSlideBase({
         );
         if (changed.length === 0) return null;
         return (
-          <div className="mt-3 pt-3 border-t border-border-subtle" aria-label="Mega stat changes">
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-purple-400/70 mb-2 presenting:text-xs">
+          <div className="mt-3 pt-3 border-t border-border-subtle" role="group" aria-label="Mega stat changes">
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-purple-600 dark:text-purple-400/70 mb-2 presenting:text-xs">
               Mega boosts
             </p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5" role="list">
               {changed.map((stat) => {
                 const delta = megaForDelta[stat] - baseStatsForComparison[stat];
                 const positive = delta > 0;
                 return (
                   <span
                     key={stat}
+                    role="listitem"
                     className={`inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold px-2 py-1 rounded-md presenting:text-sm ${
                       positive
                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"

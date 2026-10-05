@@ -49,7 +49,7 @@ function StatCell({ label, value, boosted, reduced, isStats }: { label: string; 
         {label}{boosted ? "\u2191" : reduced ? "\u2193" : ""}
       </span>
       <span className={`text-sm font-extrabold tabular-nums leading-tight mt-0.5 ${
-        isStats ? "text-text-primary" : value > 0 ? "text-text-primary" : "text-text-tertiary/40"
+        isStats ? "text-text-primary" : value > 0 ? "text-text-primary" : "text-text-tertiary"
       }`}>
         {value}
       </span>
@@ -109,7 +109,7 @@ function CompactCard({
               ))}
               {showTera && parsed.teraType && (
                 <>
-                  <span className="text-text-tertiary/30 mx-0.5 text-[8px]">{"\u2192"}</span>
+                  <span className="text-text-tertiary mx-0.5 text-[8px]">{"\u2192"}</span>
                   <span
                     className="text-[8px] font-extrabold px-1 py-0.5 rounded border"
                     style={{ color: TYPE_COLORS[parsed.teraType].bg, backgroundColor: `${TYPE_COLORS[parsed.teraType].bg}20`, borderColor: `${TYPE_COLORS[parsed.teraType].bg}40` }}
@@ -156,7 +156,7 @@ function CompactCard({
             ))}
             {showTera && parsed.teraType && (
               <>
-                <span className="text-text-tertiary/30 mx-0.5 text-[10px]">{"\u2192"}</span>
+                <span className="text-text-tertiary mx-0.5 text-[10px]">{"\u2192"}</span>
                 <span
                   className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border"
                   style={{ backgroundColor: `${TYPE_COLORS[parsed.teraType].bg}20`, borderColor: `${TYPE_COLORS[parsed.teraType].bg}40` }}
