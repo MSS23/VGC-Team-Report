@@ -57,6 +57,63 @@ function detectInlineData(): string | null {
   return null;
 }
 
+/**
+ * Keys that `POST /api/share` deliberately stores looser than
+ * `ShareableStateSchema` accepts: `hiddenSlides` is written as
+ * `(number | string)[]` (legacy numeric slide ids) and `spriteSettings` as an
+ * unchecked `unknown`. Both are view preferences rather than report content —
+ * `hiddenSlides` feeds a `Set<string>` of slide keys and `spriteSettings` has
+ * no reader left in the client — so a legacy value in one of them must not
+ * make a legitimate report unopenable.
+ */
+const LEGACY_TOLERANT_KEYS = ["hiddenSlides", "spriteSettings"] as const;
+
+/**
+ * Runtime-validate a `/api/share/{id}` body before it becomes report state.
+ *
+ * VGC-146 added `ShareableStateSchema` and wired it into the URL-decode path
+ * (`decodeShareState`), which runs `safeParse` and fails closed. The fetch
+ * path — the one every `/s/{id}` view actually takes — kept an unchecked
+ * `as ShareableState` cast, so a malformed row or a tampered response could
+ * push arbitrary shapes into the report viewer. That blows up inside React's
+ * render pass, where the `.catch()` on the fetch chain cannot see it, and the
+ * viewer gets a white screen instead of the existing error state.
+ *
+ * Mirrors the codec exactly: `null` on shape mismatch, which `settle()` turns
+ * into the "corrupt link" screen the hook already shows. No new error UX.
+ *
+ * The schemas are loaded with `await import()` on purpose — a static import
+ * would pull ~63 kB gzip of zod back into the homepage bundle and undo
+ * VGC-256 (see the rules block in `url-codec.schemas.ts`).
+ */
+export async function parseFetchedShareState(
+  raw: unknown,
+): Promise<ShareableState | null> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const { ShareableStateSchema } = await import("@/lib/sharing/url-codec.schemas");
+
+  const parsed = ShareableStateSchema.safeParse(raw);
+  if (parsed.success) return parsed.data as ShareableState;
+
+  // Retry once with the legacy-tolerant keys removed, but only when every
+  // complaint is about one of them. Anything structural — paste, notes,
+  // matchupPlans, tags… — still fails closed.
+  const offending = parsed.error.issues.map((issue) => issue.path[0]);
+  const onlyTolerable =
+    offending.length > 0 &&
+    offending.every(
+      (key) =>
+        typeof key === "string" &&
+        (LEGACY_TOLERANT_KEYS as readonly string[]).includes(key),
+    );
+  if (!onlyTolerable) return null;
+
+  const relaxed: Record<string, unknown> = { ...(raw as Record<string, unknown>) };
+  for (const key of LEGACY_TOLERANT_KEYS) delete relaxed[key];
+  const retry = ShareableStateSchema.safeParse(relaxed);
+  return retry.success ? (retry.data as ShareableState) : null;
+}
+
 export function useShareUrl() {
   const { isLoaded: isAuthLoaded, userId } = useAuth();
   // Use Next.js searchParams (works correctly across SSR and hydration)
@@ -185,8 +242,8 @@ export function useShareUrl() {
 
       fetch(fetchUrl, { signal: controller.signal })
         .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (!data) return settle(null);
+        .then(async (data) => {
+          if (!data || typeof data !== "object") return settle(null);
           const editable = data._editable === true;
           if (data._isPublic !== undefined) setFetchedIsPublic(!!data._isPublic);
           if (data._isUnlisted !== undefined) setFetchedIsUnlisted(!!data._isUnlisted);
@@ -199,13 +256,19 @@ export function useShareUrl() {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, _forkedFrom: _ff, _redactedFields: _rf, ...state } = data;
           if (Array.isArray(_c)) setFetchedCollaborators(_c as string[]);
-          // Set active edit session — only from server-provided token (authenticated)
-          if (editable && ownerEditToken) {
+          // Runtime-validated instead of cast — a malformed body fails closed
+          // into the same error screen a corrupt link already produces.
+          const validated = await parseFetchedShareState(state);
+          // Set active edit session — only from server-provided token
+          // (authenticated), and only for a report that actually validated: a
+          // rejected body must not leave an editable session pointing at that
+          // share, or the next save would overwrite it from memory.
+          if (validated && editable && ownerEditToken) {
             activeEditTokenRef.current = ownerEditToken;
             activeShareIdRef.current = shareId;
             setSessionShareId(shareId);
           }
-          settle(state as ShareableState, editable);
+          settle(validated, editable);
         })
         .catch(() => settle(null));
 
