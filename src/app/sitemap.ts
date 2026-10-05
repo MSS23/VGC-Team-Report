@@ -8,28 +8,45 @@ const BASE = "https://pokemonvgcteamreport.com";
 // waiting for the next production deployment.
 export const revalidate = 3600;
 
+// Content revision dates for the hand-authored routes.
+//
+// These are deliberately CONSTANTS, not `new Date()`. The sitemap revalidates
+// hourly, so a render-clock timestamp would tell crawlers that all 83
+// hand-authored URLs changed every hour — Google learns to ignore
+// `lastModified` when it is obviously not a real change signal. They are also
+// not read from Postgres: Neon is on the 512MB free tier and these pages have
+// no per-page row to query, so a DB round-trip would buy nothing.
+//
+// Bump the relevant constant when you actually change that content.
+const STATIC_PAGES_REVISED = new Date("2026-10-05");
+// Covers the Mega landing pages as a cluster — bump it when
+// MEGA_POKEMON_LIST or the landing-page template changes (e.g. a new
+// regulation's Megas being added).
+const MEGA_PAGES_REVISED = new Date("2026-10-05");
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE, changeFrequency: "weekly", priority: 1.0 },
-    { url: `${BASE}/explore`, changeFrequency: "daily", priority: 0.9 },
-    { url: `${BASE}/champions`, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${BASE}/faq`, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/tools/ev-to-sp`, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/feedback`, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${BASE}/tournaments`, changeFrequency: "weekly", priority: 0.7 },
+    { url: BASE, lastModified: STATIC_PAGES_REVISED, changeFrequency: "weekly", priority: 1.0 },
+    { url: `${BASE}/explore`, lastModified: STATIC_PAGES_REVISED, changeFrequency: "daily", priority: 0.9 },
+    { url: `${BASE}/champions`, lastModified: STATIC_PAGES_REVISED, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${BASE}/faq`, lastModified: STATIC_PAGES_REVISED, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE}/tools/ev-to-sp`, lastModified: STATIC_PAGES_REVISED, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE}/feedback`, lastModified: STATIC_PAGES_REVISED, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/tournaments`, lastModified: STATIC_PAGES_REVISED, changeFrequency: "weekly", priority: 0.7 },
     // /compare is intentionally noindex (robots: { index: false }) — do not
     // re-add it here; sitemapping a noindex page sends crawlers
     // contradictory signals. (VGC-272)
-    { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3 },
-    { url: `${BASE}/support`, changeFrequency: "monthly", priority: 0.4 },
-    { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1 },
-    { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1 },
+    { url: `${BASE}/changelog`, lastModified: STATIC_PAGES_REVISED, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${BASE}/support`, lastModified: STATIC_PAGES_REVISED, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${BASE}/privacy`, lastModified: STATIC_PAGES_REVISED, changeFrequency: "yearly", priority: 0.1 },
+    { url: `${BASE}/terms`, lastModified: STATIC_PAGES_REVISED, changeFrequency: "yearly", priority: 0.1 },
     // Reg M-B is the current Champions regulation and a superset of M-A, so
     // this covers every legal Mega with a usable sprite (72), not just the 58
     // that were M-A legal. Sprite-less Megas are deliberately excluded — they
     // have no landing page to point at.
     ...getRegMBMegasWithSprites().map((m) => ({
       url: `${BASE}/champions/${m.slug}`,
+      lastModified: MEGA_PAGES_REVISED,
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),

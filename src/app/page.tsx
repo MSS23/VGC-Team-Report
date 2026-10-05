@@ -46,7 +46,6 @@ import { teamToShowdown, teamToOpenSheet } from "@/lib/utils/export-paste";
 import { createPokePaste } from "@/lib/utils/pokepaste";
 import { replacePokemonSpecies } from "@/lib/utils/paste-edit";
 import { I18nProvider } from "@/lib/i18n";
-import { FAQPageJsonLd, HowToSchema } from "@/components/seo/JsonLd";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
 import { computeVersionDiff, summarizeChangedFields, getNavigableChanges, type VersionDiff, type DiffChange } from "@/lib/utils/version-diff";
@@ -63,34 +62,19 @@ const PrintableReport = dynamic(() => import("@/components/ui/PdfExport").then(m
 import type { ExportMode } from "@/components/ui/PdfExport";
 const OTSSheetModal = dynamic(() => import("@/components/ui/OTSSheetModal").then(m => ({ default: m.OTSSheetModal })), { ssr: false });
 
-const HOW_TO_STEPS = [
-  {
-    name: "Export your team",
-    text: "Open Pokémon Showdown or PokéPaste and export your team as a text paste (Showdown format).",
-  },
-  {
-    name: "Paste your team into VGC Team Report",
-    text: "Go to pokemonvgcteamreport.com, paste your Showdown export or PokéPaste URL into the input field, and click Analyze.",
-  },
-  {
-    name: "Add notes, damage calcs, and speed tiers",
-    text: "Fill in your team overview, per-Pokémon role notes, key damage calculations, and speed tier comparisons using the built-in editor.",
-  },
-  {
-    name: "Add matchup plans",
-    text: "Document your matchup plans against common threats and tournament meta picks so viewers understand your game plan.",
-  },
-  {
-    name: "Share your report",
-    text: "Click the Share button to generate a permanent public link. Optionally publish it to the Explore page so the community can discover your report.",
-  },
-];
+// No FAQPage / HowTo JSON-LD here on purpose.
+//
+// The homepage is the paste-and-analyse tool; it renders no FAQ and no
+// step-by-step instructions. Emitting FAQPage/HowTo nodes for copy that a
+// visitor cannot see is a hidden-content violation of Google's
+// structured-data policy and a manual-action risk, and it also made "/" and
+// "/faq" compete with two same-named HowTo entities. Both schemas now live
+// only on /faq, which renders the matching copy. Do not re-add them here
+// without first rendering the content on the page.
 
 export default function Home() {
   return (
     <I18nProvider>
-      <FAQPageJsonLd />
-      <HowToSchema steps={HOW_TO_STEPS} />
       <Suspense>
         <HomeContent />
       </Suspense>

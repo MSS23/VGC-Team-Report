@@ -38,14 +38,30 @@ export interface HowToStep {
   text: string;
 }
 
-export function HowToSchema({ steps }: { steps: HowToStep[] }) {
+/**
+ * HowTo JSON-LD.
+ *
+ * `name` and `description` are per-page, not site-wide: two pages shipping a
+ * HowTo with the identical name cannibalise each other in search. Pass the
+ * name that matches the steps (and the visible copy those steps mirror) —
+ * the defaults only describe the report-building flow.
+ */
+export function HowToSchema({
+  steps,
+  name = "How to Create a VGC Team Report",
+  description = "Step-by-step guide to building and sharing a competitive Pokemon VGC team report.",
+}: {
+  steps: HowToStep[];
+  name?: string;
+  description?: string;
+}) {
   return (
     <JsonLd
       data={{
         "@context": "https://schema.org",
         "@type": "HowTo",
-        name: "How to Create a VGC Team Report",
-        description: "Step-by-step guide to building and sharing a competitive Pokemon VGC team report.",
+        name,
+        description,
         step: steps.map((step, i) => ({
           "@type": "HowToStep",
           position: i + 1,
@@ -145,32 +161,13 @@ export interface BreadcrumbItem {
 }
 
 /**
- * Emits a schema.org BreadcrumbList JSON-LD script.
- * Pass items in order from root to current page, e.g.:
+ * BreadcrumbList JSON-LD for SERP breadcrumb display.
+ * Pass items in order from root → current page, e.g.:
  *   [{ name: "Home", url: "https://pokemonvgcteamreport.com" },
  *    { name: "Explore", url: "https://pokemonvgcteamreport.com/explore" }]
- */
-export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
-  if (items.length === 0) return null;
-  return (
-    <JsonLd
-      data={{
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        itemListElement: items.map((item, i) => ({
-          "@type": "ListItem",
-          position: i + 1,
-          name: item.name,
-          item: item.url,
-        })),
-      }}
-    />
-  );
-}
-
-/**
- * BreadcrumbList JSON-LD for SERP breadcrumb display.
- * Pass items in order from root → current page (e.g. [Home, Explore]).
+ *
+ * This is the single implementation. There used to be a byte-identical
+ * `BreadcrumbJsonLd` alongside it, which is now just an alias below.
  */
 export function BreadcrumbListJsonLd({ items }: { items: BreadcrumbItem[] }) {
   if (items.length === 0) return null;
@@ -190,47 +187,34 @@ export function BreadcrumbListJsonLd({ items }: { items: BreadcrumbItem[] }) {
   );
 }
 
+/**
+ * @deprecated Alias of {@link BreadcrumbListJsonLd}, kept so existing call
+ * sites keep working. Import `BreadcrumbListJsonLd` in new code.
+ */
+export const BreadcrumbJsonLd = BreadcrumbListJsonLd;
+
 export interface FAQItem {
   question: string;
   answer: string;
 }
 
-const DEFAULT_FAQ_ITEMS: FAQItem[] = [
-  {
-    question: "What is a VGC team report?",
-    answer:
-      "A VGC team report is a detailed breakdown of a competitive Pokemon Video Game Championship (VGC) team. It includes each Pokemon's build (moves, item, EVs, nature), the team's overall strategy, matchup plans against common threats, damage calculations, and speed tier comparisons. Coaches and players share these reports to document and analyze their tournament teams.",
-  },
-  {
-    question: "How do I share a VGC team report?",
-    answer:
-      "After building your team report on VGC Team Report, click Share to create a permanent viewer link. Keep it private or unlisted, or publish it to Explore. To co-edit securely, invite collaborators by account from Manage Access.",
-  },
-  {
-    question: "What is Pokemon Champions Regulation M-A?",
-    answer:
-      "Pokemon Champions Regulation M-A (Reg M-A) is a competitive VGC format that re-introduces Mega Evolutions alongside modern Pokemon. Teams can include two restricted legendaries and Mega Pokemon, creating a unique format distinct from the standard Scarlet & Violet regulation sets. VGC Team Report fully supports building and sharing team reports in this format.",
-  },
-  {
-    question: "How do I import a PokePaste into VGC Team Report?",
-    answer:
-      "On the VGC Team Report homepage, paste your team's Showdown-format text (or a pokepast.es URL) into the import box and click Analyze. The tool will automatically parse your team's Pokemon, moves, items, EVs, IVs, and natures. You can also import directly from a PokePaste link by pasting the URL into the input field.",
-  },
-  {
-    question: "Is VGC Team Report free to use?",
-    answer:
-      "Yes, VGC Team Report is completely free to use. You can build, analyze, and share team reports without an account. Creating a free account unlocks additional features like saving reports permanently, real-time collaboration with teammates, version history, and publishing your report to the community Explore page.",
-  },
-];
-
-export function FAQPageJsonLd({ items }: { items?: FAQItem[] } = {}) {
-  const entries = items ?? DEFAULT_FAQ_ITEMS;
+/**
+ * FAQPage JSON-LD.
+ *
+ * `items` is required and has no default on purpose. It used to fall back to a
+ * built-in five-question list, which let "/" emit an FAQPage for copy that was
+ * nowhere on the page — hidden structured data, i.e. a Google
+ * structured-data policy violation. Only pass questions that the page also
+ * renders visibly.
+ */
+export function FAQPageJsonLd({ items }: { items: FAQItem[] }) {
+  if (items.length === 0) return null;
   return (
     <JsonLd
       data={{
         "@context": "https://schema.org",
         "@type": "FAQPage",
-        mainEntity: entries.map((item) => ({
+        mainEntity: items.map((item) => ({
           "@type": "Question",
           name: item.question,
           acceptedAnswer: {
