@@ -6,6 +6,13 @@ import { useTeamReport, readRestorableDraft } from "@/hooks/useTeamReport";
 
 const PASTE = "Pikachu @ Light Ball\nAbility: Static\n- Protect";
 
+// `vi.waitFor` inherits vitest's 5s test timeout. `parseTeam` lazily imports the
+// analyze-team chunk, and the first such import in a fresh worker can take
+// longer than that — which is why these two waits pass in the full suite (where
+// another file has already warmed the module cache) but time out when this file
+// runs on its own. The explicit budget below makes them independent of test
+// ordering; it is a ceiling, not a delay.
+
 beforeEach(() => {
   localStorage.clear();
   window.history.replaceState(null, "", "/");
@@ -24,7 +31,7 @@ describe("useTeamReport paste persistence", () => {
       expect(localStorage.getItem("vgc-team-paste-source-v2")).toBe("user");
       // Save timestamp gates restore — entries without one are evicted.
       expect(Number(localStorage.getItem("vgc-team-paste-saved-at-v2"))).toBeGreaterThan(0);
-    });
+    }, { timeout: 15_000 });
   });
 
   // Regression: a published report resurfaced as a local "draft" on the next
@@ -37,7 +44,7 @@ describe("useTeamReport paste persistence", () => {
     });
     await vi.waitFor(() => {
       expect(localStorage.getItem("vgc-team-paste-v2")).toBe(PASTE);
-    });
+    }, { timeout: 15_000 });
     act(() => {
       hook.current.markPastePublished();
     });
