@@ -9,6 +9,7 @@ import { TYPE_COLORS } from "@/lib/utils/type-colors";
 import { hapticLight } from "@/lib/utils/haptics";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
+import { resolveEffectiveTyping } from "@/lib/utils/effective-typing";
 
 const ALL_TYPES: PokemonType[] = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -33,6 +34,8 @@ const SOUND_MOVE_SLUGS = new Set([
 
 interface OffensiveCoverageChartProps {
   pokemon: AnalyzedPokemon[];
+  speciesKeys?: string[];
+  megaStates?: Record<number, boolean>;
 }
 
 interface MoveCoverageResult {
@@ -66,10 +69,21 @@ function applyTypeChangingAbility(
   return { effectiveType: printedType, conversion: null };
 }
 
-/** For a single Pokemon, get its best offensive multiplier against each defender type. */
-function getOffensiveProfile(mon: AnalyzedPokemon): Record<PokemonType, MoveCoverageResult> {
+/**
+ * For a single Pokemon, get its best offensive multiplier against each defender type.
+ *
+ * `ability` and `pokemonTypes` come from the form currently on screen: Mega
+ * Evolution can hand a Pokemon a type-changing ability it does not have in its
+ * base form (Mega Pinsir's Aerilate, Mega Altaria's Pixilate), which changes
+ * what its Normal-type moves actually hit.
+ */
+function getOffensiveProfile(
+  mon: AnalyzedPokemon,
+  ability: string | null,
+  pokemonTypes: PokemonType[],
+): Record<PokemonType, MoveCoverageResult> {
   const profile = {} as Record<PokemonType, MoveCoverageResult>;
-  const abilityKey = (mon.parsed.ability ?? "").toLowerCase().replace(/[\s-]+/g, "-");
+  const abilityKey = (ability ?? "").toLowerCase().replace(/[\s-]+/g, "-");
 
   // Get the Pokemon's damaging moves with effective types applied
   const moveTypes: { effectiveType: PokemonType; name: string; slug: string; conversion: string | null }[] = [];
@@ -81,9 +95,6 @@ function getOffensiveProfile(mon: AnalyzedPokemon): Record<PokemonType, MoveCove
       moveTypes.push({ effectiveType, name: moveData.name, slug, conversion });
     }
   }
-
-  // Also include STAB types (in case a move isn't in the DB but the Pokemon has STAB)
-  const pokemonTypes = mon.data?.types ?? [];
 
   for (const defType of ALL_TYPES) {
     let bestMult = 0;
@@ -136,19 +147,26 @@ function offensiveLabel(mult: number): string {
   return `${mult}x`;
 }
 
-export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps) {
+export function OffensiveCoverageChart({ pokemon, speciesKeys, megaStates }: OffensiveCoverageChartProps) {
   const { language } = useTranslation();
   const [highlightedType, setHighlightedType] = useState<PokemonType | null>(null);
 
-  const profiles = pokemon.map((mon) => ({
-    species: mon.parsed.species,
-    profile: getOffensiveProfile(mon),
-    hasTypeChangingAbility: !!(mon.parsed.ability && (
-      ATE_ABILITIES[(mon.parsed.ability.toLowerCase().replace(/[\s-]+/g, "-"))] ||
-      mon.parsed.ability.toLowerCase() === "normalize" ||
-      mon.parsed.ability.toLowerCase() === "liquid voice"
-    )),
-  }));
+  const profiles = pokemon.map((mon, i) => {
+    const { types, ability } = resolveEffectiveTyping(
+      mon,
+      speciesKeys?.[i] ?? mon.parsed.species,
+      megaStates?.[i] === true,
+    );
+    return {
+      species: mon.parsed.species,
+      profile: getOffensiveProfile(mon, ability, types),
+      hasTypeChangingAbility: !!(ability && (
+        ATE_ABILITIES[(ability.toLowerCase().replace(/[\s-]+/g, "-"))] ||
+        ability.toLowerCase() === "normalize" ||
+        ability.toLowerCase() === "liquid voice"
+      )),
+    };
+  });
 
   // Team-wide coverage summary: how many Pokemon hit each type SE
   const teamSummary = ALL_TYPES.map((defType) => {
@@ -185,14 +203,14 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
             return (
               <span
                 key={`gap-${type}`}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/25 text-xs font-bold text-red-400"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/25 text-xs font-bold text-red-700 dark:text-red-400"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                   <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
                 </svg>
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: tc.bg }} />
                 {type}
-                <span className="text-red-400/70">&mdash; no SE coverage</span>
+                <span className="text-red-700 dark:text-red-400/70">&mdash; no SE coverage</span>
               </span>
             );
           })}
@@ -201,14 +219,14 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
             return (
               <span
                 key={`strong-${type}`}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-xs font-bold text-emerald-400"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-xs font-bold text-emerald-700 dark:text-emerald-400"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: tc.bg }} />
                 {type}
-                <span className="text-emerald-400/70">&mdash; {seCount} hit SE</span>
+                <span className="text-emerald-700 dark:text-emerald-400/70">&mdash; {seCount} hit SE</span>
               </span>
             );
           })}
@@ -220,27 +238,34 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
         <table className="w-full table-fixed sm:table-auto border-collapse text-center min-w-[40rem]">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[9px] sm:text-xs font-bold text-text-tertiary uppercase tracking-wider w-14 sm:w-32">
+              <th scope="col" className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[9px] sm:text-xs font-bold text-text-tertiary uppercase tracking-wider w-14 sm:w-32">
                 Pok&eacute;mon
               </th>
               {ALL_TYPES.map((type) => {
                 const tc = TYPE_COLORS[type];
                 return (
-                  <th
-                    key={type}
-                    className="px-0.5 py-2 cursor-pointer select-none"
-                    onClick={() => {
-                      hapticLight();
-                      setHighlightedType((prev) => (prev === type ? null : type));
-                    }}
-                  >
-                    <span
-                      className={`inline-block w-full px-0.5 sm:px-1 py-1 text-[10px] sm:text-[11px] font-bold uppercase rounded-md leading-tight transition-opacity ${highlightedType && highlightedType !== type ? "opacity-50" : ""}`}
-                      style={{ backgroundColor: tc.bg, color: tc.text }}
-                      title={type}
+                  <th key={type} scope="col" className="px-0.5 py-2">
+                    {/* The highlight filter lives on a real <button> inside the
+                        header cell (never on the <th> itself) so it is
+                        keyboard-operable and exposes its on/off state. */}
+                    <button
+                      type="button"
+                      aria-pressed={highlightedType === type}
+                      aria-label={`Highlight ${type} column`}
+                      onClick={() => {
+                        hapticLight();
+                        setHighlightedType((prev) => (prev === type ? null : type));
+                      }}
+                      className="block w-full rounded-md cursor-pointer select-none"
                     >
-                      {type.slice(0, 3)}
-                    </span>
+                      <span
+                        className={`inline-block w-full px-0.5 sm:px-1 py-1 text-[10px] sm:text-[11px] font-bold uppercase rounded-md leading-tight transition-opacity ${highlightedType && highlightedType !== type ? "opacity-50" : ""}`}
+                        style={{ backgroundColor: tc.bg, color: tc.text }}
+                        title={type}
+                      >
+                        {type.slice(0, 3)}
+                      </span>
+                    </button>
                   </th>
                 );
               })}
@@ -292,11 +317,11 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
                   <td key={type} className={`px-0.5 py-1 transition-opacity ${isDimmed ? "opacity-50" : ""}`}>
                     <span className={`inline-flex items-center justify-center w-full h-8 rounded-md text-[10px] sm:text-xs font-extrabold tabular-nums ${
                       seCount === 0
-                        ? "bg-red-500/30 text-red-300 ring-1 ring-red-500/40"
+                        ? "bg-red-500/30 text-red-800 dark:text-red-300 ring-1 ring-red-500/40"
                         : seCount === 1
-                          ? "bg-amber-500/20 text-amber-400"
+                          ? "bg-amber-500/20 text-amber-800 dark:text-amber-400"
                           : seCount >= 4
-                            ? "bg-emerald-500/25 text-emerald-300"
+                            ? "bg-emerald-500/25 text-emerald-800 dark:text-emerald-300"
                             : "text-text-secondary"
                     } ${isHighlighted ? "ring-2 ring-accent/40" : ""}`}>
                       {seCount > 0 ? seCount : "\u2013"}
