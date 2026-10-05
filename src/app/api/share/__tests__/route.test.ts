@@ -133,3 +133,55 @@ describe("POST /api/share — bounded bring combinations", () => {
     expect(response.status).toBe(400);
   });
 });
+
+/**
+ * Visibility is an owner-only decision. The stored row below is
+ * `is_public: false, is_unlisted: true`, so sending `isUnlisted: false` is a
+ * real flip and sending `isUnlisted: true` is a no-op echo.
+ *
+ * Regression: the owner-only guard covered `isPublic` but not `isUnlisted`, so
+ * an accepted collaborator could flip the unlisted flag and change who could
+ * reach the report through /s/{id} — a visibility decision, not a content edit.
+ */
+describe("POST /api/share — only the owner can change visibility", () => {
+  it("rejects a collaborator flipping isUnlisted", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "collab-1" } as never);
+    vi.mocked(getDb).mockReturnValue(makeSql(true) as never);
+
+    const response = await POST(request({ ...body, isUnlisted: false }));
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "Only the report owner can change visibility.",
+    });
+  });
+
+  it("rejects a collaborator flipping isPublic", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "collab-1" } as never);
+    vi.mocked(getDb).mockReturnValue(makeSql(true) as never);
+
+    const response = await POST(request({ ...body, isPublic: true }));
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "Only the report owner can change visibility.",
+    });
+  });
+
+  it("lets the owner change isUnlisted", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "owner-1" } as never);
+    vi.mocked(getDb).mockReturnValue(makeSql(false) as never);
+
+    const response = await POST(request({ ...body, isUnlisted: false }));
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ id: "abcd1234", updated: true });
+  });
+
+  it("lets a collaborator save content while echoing the current flags back", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "collab-1" } as never);
+    vi.mocked(getDb).mockReturnValue(makeSql(true) as never);
+
+    // Same values as stored => no visibility change requested => allowed.
+    const response = await POST(request({ ...body, isPublic: false, isUnlisted: true }));
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ id: "abcd1234", updated: true });
+  });
+});
