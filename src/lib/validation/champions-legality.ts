@@ -17,7 +17,7 @@
  */
 
 import type { ParsedPokemon } from "@/lib/types/pokemon";
-import { CHAMPIONS_DEX, CHAMPIONS_MB_DEX } from "@/lib/data/champions-dex";
+import { getChampionsDex } from "@/lib/data/champions-dex";
 import { getSpecies } from "@/lib/data/dex-subset";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import { getRegulationLookupKey } from "@/lib/data/gen9-regulation-signals";
@@ -76,9 +76,11 @@ const RESTRICTED_BASE_NAMES = new Set([
 
 // ── Mega Stones set ─────────────────────────────────────────────────────────
 
-const MEGA_STONES = new Set(
-  MEGA_POKEMON_LIST.map((m) => m.megaStone.toLowerCase()),
+/** Mega Stone (lowercase) → the Mega's dataKey, for per-reg stone legality. */
+const MEGA_STONE_TO_KEY = new Map(
+  MEGA_POKEMON_LIST.map((m) => [m.megaStone.toLowerCase(), m.dataKey]),
 );
+const MEGA_STONES = new Set(MEGA_STONE_TO_KEY.keys());
 
 // ── Z-Crystal detection ─────────────────────────────────────────────────────
 
@@ -128,21 +130,20 @@ function getSpeciesClauseKey(species: string): string {
   const entry = getSpecies(species);
   if (entry) return normalizeSpecies(entry.baseSpecies ?? entry.name);
   const key = normalizeSpecies(species);
-  return key.replace(/-mega(-[xy])?$/, "").replace(/-primal$/, "");
+  return key.replace(/-mega(-[xyz])?$/, "").replace(/-primal$/, "");
 }
 
 // ── Main validation ─────────────────────────────────────────────────────────
 
 export function validateChampionsTeam(
   pokemon: ParsedPokemon[],
-  regulation: "Reg M-A" | "Reg M-B" = "Reg M-A",
+  regulation: "Reg M-A" | "Reg M-B" | "Reg M-C" = "Reg M-A",
 ): LegalityResult {
   const issues: LegalityIssue[] = [];
 
-  // Reg M-B is a superset of M-A — same rules, wider species pool.
-  const isMb = regulation === "Reg M-B";
-  const dex = isMb ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
-  const regLabel = isMb ? "Reg M-B" : "Reg M-A";
+  // Each Champions reg is a superset of the last — same rules, wider pool.
+  const dex = getChampionsDex(regulation);
+  const regLabel = regulation;
 
   // Team size
   if (pokemon.length < 6) {
@@ -197,11 +198,24 @@ export function validateChampionsTeam(
     // Check if a mega form of this base Pokemon is in the dex
     const megaInDex = dex.has(`${key}-mega`) ||
       dex.has(`${key}-mega-x`) ||
-      dex.has(`${key}-mega-y`);
+      dex.has(`${key}-mega-y`) ||
+      dex.has(`${key}-mega-z`);
     if (!inDex && !isRestricted && !megaInDex) {
       issues.push({
         severity: "error",
         message: `${p.species} is not available in Champions format (${regLabel})`,
+        pokemon: p.species,
+      });
+    }
+  }
+
+  // Mega Stones from a later rotation (e.g. Garchompite Z in Reg M-B).
+  for (const p of pokemon) {
+    const megaKey = p.item ? MEGA_STONE_TO_KEY.get(p.item.toLowerCase()) : undefined;
+    if (megaKey && !dex.has(megaKey)) {
+      issues.push({
+        severity: "error",
+        message: `${p.item} is not legal in ${regLabel}`,
         pokemon: p.species,
       });
     }

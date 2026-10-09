@@ -16,6 +16,20 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "October 2026",
+    version: "5.28",
+    title: "Pokémon Champions Regulation M-C & the Z Megas",
+    emoji: "⚡",
+    highlight: true,
+    items: [
+      { type: "new", text: "Regulation M-C support. Pick Reg M-C as your format, or just paste — a team with Mega Garchomp Z, Mega Lucario Z, Mega Absol Z, Mega Salamence, Mega Baxcalibur or Mega Golisopod is auto-tagged M-C. All the new M-C Pokémon (Rillaboom, Cinderace, Inteleon, Indeedee, Toxtricity, Sirfetch'd, Squawkabilly and the rest) pass the legality check, with correct Mega stats, speed tiers and guide pages for every new Mega." },
+      { type: "fixed", text: "Auto-detect now picks the earliest Champions regulation your whole team fits. A Mega Kangaskhan team with Rillaboom used to be tagged Reg M-A and then flagged as illegal; it's now correctly tagged Reg M-C." },
+      { type: "fixed", text: "The legality check now catches Mega Stones from a later rotation, e.g. Garchompite Z in a Reg M-B report." },
+      { type: "fixed", text: "Mega Raichu X, Mega Raichu Y and Mega Meowstic finally have sprites and guide pages — Showdown had them all along, we were asking for the wrong file name." },
+      { type: "fixed", text: "The Champions FAQ no longer claims Reg M-A allowed restricted legendaries." },
+    ],
+  },
+  {
     date: "August 2026",
     version: "5.27",
     title: "Sounder Saves, Honest Drafts & a Security Sweep",

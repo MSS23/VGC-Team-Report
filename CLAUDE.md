@@ -2,7 +2,7 @@
 
 Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, vitest + Cypress. Vercel (Pro), Neon Postgres, Clerk auth, PostHog analytics.
 
-Paste a Pokémon Showdown team → get a shareable VGC team report. Supports classic VGC formats and Pokémon Champions Reg M-A/M-B, which uses **SP (Stat Points: 66 total, max 32 per stat)** instead of EVs.
+Paste a Pokémon Showdown team → get a shareable VGC team report. Supports classic VGC formats and Pokémon Champions Reg M-A/M-B/M-C (nested supersets; M-C is current, Sep 9 – Dec 2 2026), which uses **SP (Stat Points: 66 total, max 32 per stat)** instead of EVs.
 
 ## Environment quirks (read first)
 
@@ -27,7 +27,7 @@ node node_modules/next/dist/bin/next build        # prod build
 |------|------------------|
 | `src/lib/parser/showdown-parser.ts` | Showdown paste → `ParsedTeam`. No EVs line ⇒ all-zero spread. |
 | `src/lib/analysis/stat-calculator.ts` | Stat formulas + Champions SP: `convertToChampionsSp` (EV→SP, passthrough for SP-form pastes), budget constants. |
-| `src/lib/validation/champions-legality.ts` | Reg M-A/M-B legality: dex, restricted (max 2), item/species clauses, SP/EV budgets. |
+| `src/lib/validation/champions-legality.ts` | Reg M-A/M-B/M-C legality (`getChampionsDex(reg)`): dex, per-reg Mega Stones, restricted (max 2), item/species clauses, SP/EV budgets. |
 | `src/lib/data/` | Champions dexes, mega list, natures, base stats. |
 | `src/components/report/` | Report UI — `PokemonCard`, `PokemonDetailSlide`, `SpeedTierChart` all derive SP via `convertToChampionsSp`. |
 | `src/app/champions/[pokemon]/` | SSG mega guide pages (SEO-critical). |

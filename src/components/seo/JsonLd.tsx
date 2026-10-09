@@ -207,9 +207,9 @@ const DEFAULT_FAQ_ITEMS: FAQItem[] = [
       "After building your team report on VGC Team Report, click Share to create a permanent viewer link. Keep it private or unlisted, or publish it to Explore. To co-edit securely, invite collaborators by account from Manage Access.",
   },
   {
-    question: "What is Pokemon Champions Regulation M-A?",
+    question: "What is Pokemon Champions Regulation M-C?",
     answer:
-      "Pokemon Champions Regulation M-A (Reg M-A) is a competitive VGC format that re-introduces Mega Evolutions alongside modern Pokemon. Teams can include two restricted legendaries and Mega Pokemon, creating a unique format distinct from the standard Scarlet & Violet regulation sets. VGC Team Report fully supports building and sharing team reports in this format.",
+      "Pokemon Champions Regulation M-C (Reg M-C, Sep 9 – Dec 2 2026) is the current Champions VGC format. It keeps every Pokemon and Mega from Regulation M-A and M-B and adds new Pokemon such as Rillaboom, Indeedee and Baxcalibur plus six Megas, including the Z Megas Garchomp Z, Lucario Z and Absol Z. Restricted legendaries are banned, item clause applies, and you can Mega Evolve once per battle. VGC Team Report supports Reg M-A, M-B and M-C, including auto-detection and legality checks.",
   },
   {
     question: "How do I import a PokePaste into VGC Team Report?",

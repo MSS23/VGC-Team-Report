@@ -55,7 +55,7 @@ const FAQ_ITEMS = [
   {
     question: "Does VGC Team Report support Pokémon Champions and Mega Evolution?",
     answer:
-      "Yes. VGC Team Report fully supports Pokémon Champions — the official competitive format for the 2026 Play! Pokémon Championship Series — including Mega Evolution detection and display. When you import a Pokémon Champions team, Mega Evolutions are automatically recognized and displayed with their Mega form stats. VGC Team Report also supports the Regulation M-A format used for Indianapolis Regionals and the 2026 World Championships.",
+      "Yes. VGC Team Report fully supports Pokémon Champions — the official competitive format for the 2026 Play! Pokémon Championship Series — including Mega Evolution detection and display. When you import a Pokémon Champions team, Mega Evolutions are automatically recognized and displayed with their Mega form stats. VGC Team Report supports every Champions regulation — M-A, M-B and the current Regulation M-C, including the new Z Mega Evolutions.",
   },
   {
     question: "How is VGC Team Report different from PokéPaste or VGC.tools?",
@@ -70,7 +70,7 @@ const FAQ_ITEMS = [
   {
     question: "What competitive Pokémon formats does VGC Team Report support?",
     answer:
-      "VGC Team Report supports Pokémon Champions 2026 (Regulation M-A with Mega Evolution), Pokémon Scarlet and Violet (all Regulation sets including H, I, and earlier), and standard Pokémon Showdown export format for any generation. When new regulation sets launch for Pokémon Champions, the tool is updated to recognize the expanded Pokédex and new mechanics.",
+      "VGC Team Report supports Pokémon Champions 2026 (Regulations M-A, M-B and M-C with Mega Evolution), Pokémon Scarlet and Violet (all Regulation sets including H, I, and earlier), and standard Pokémon Showdown export format for any generation. When new regulation sets launch for Pokémon Champions, the tool is updated to recognize the expanded Pokédex and new mechanics.",
   },
   {
     question: "What are damage calculations, and why do they belong in a team report?",
@@ -93,9 +93,9 @@ const FAQ_ITEMS = [
       "In the Pokémon Champions format, Stat Points (SP) replace the traditional EV (Effort Value) system. Each Pokémon has 66 total SP to distribute across the six stats (HP, Attack, Defense, Sp. Atk, Sp. Def, Speed), with a maximum of 32 SP per individual stat. The conversion from EVs is not 1:1 — the first SP in a stat costs 4 EVs and each SP after that costs 8, so 32 SP corresponds to a fully invested 252-EV stat in traditional VGC. VGC Team Report automatically detects Champions format teams and displays SP values correctly when you import a team paste.",
   },
   {
-    question: "What is Regulation M-A in Pokémon Champions?",
+    question: "What is Regulation M-C in Pokémon Champions?",
     answer:
-      "Regulation M-A is the current competitive ruleset for Pokémon Champions, the official format for the 2026 Play! Pokémon Championship Series. It features a Mega Evolution mechanic — each player can have one Mega Evolution per team, activated by giving a Pokémon a Mega Stone held item. Regulation M-A is used for the 2026 Regional Championships (including Indianapolis Regionals) and the 2026 World Championships. VGC Team Report fully supports Regulation M-A, including auto-detection of Mega Evolutions from team pastes and SP spread display.",
+      "Regulation M-C is the current competitive ruleset for Pokémon Champions (September 9 – December 2, 2026). It is a superset of Regulation M-B and M-A: nothing was removed, and it adds Pokémon such as Rillaboom, Cinderace, Inteleon, Indeedee, Salamence and Baxcalibur plus six new Mega Evolutions — Mega Garchomp Z, Mega Lucario Z, Mega Absol Z, Mega Salamence, Mega Baxcalibur and Mega Golisopod. You can still only Mega Evolve once per battle, restricted legendaries are banned, and item clause applies. VGC Team Report auto-detects the right Champions regulation from your paste and checks legality against it.",
   },
   {
     question: "How do I get my VGC team report discovered by other players?",

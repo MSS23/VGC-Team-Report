@@ -782,6 +782,70 @@ export const MEGA_POKEMON_LIST: MegaPokemonEntry[] = [
     megaStone: "Falinksite",
     description: "Mega Falinks is a Defiant physical attacker, a Champions-original Mega in Regulation M-B.",
   },
+
+  // ── Regulation M-C Megas (Pokémon Champions, Sep–Dec 2026) ────────────
+  // Newly legal in Reg M-C, NOT in M-A/M-B. Verified against Victory Road,
+  // Game8 and Stratadex (Oct 2026); stats from @smogon/calc.
+  {
+    slug: "mega-garchomp-z",
+    dataKey: "garchomp-mega-z",
+    displayName: "Mega Garchomp Z",
+    baseName: "Garchomp",
+    types: ["Dragon"],
+    ability: "Levitate",
+    megaStone: "Garchompite Z",
+    description: "Mega Garchomp Z is a 151-Speed mixed Dragon attacker with Levitate, newly legal in Pokemon Champions Regulation M-C.",
+  },
+  {
+    slug: "mega-lucario-z",
+    dataKey: "lucario-mega-z",
+    displayName: "Mega Lucario Z",
+    baseName: "Lucario",
+    types: ["Fighting", "Steel"],
+    ability: "Aura Guard",
+    megaStone: "Lucarionite Z",
+    description: "Mega Lucario Z is a 164 Special Attack, 151-Speed special sweeper with Aura Guard, newly legal in Pokemon Champions Regulation M-C.",
+  },
+  {
+    slug: "mega-absol-z",
+    dataKey: "absol-mega-z",
+    displayName: "Mega Absol Z",
+    baseName: "Absol",
+    types: ["Dark", "Ghost"],
+    ability: "Sharpness",
+    megaStone: "Absolite Z",
+    description: "Mega Absol Z is a Dark/Ghost Sharpness slicer with 151 Speed, newly legal in Pokemon Champions Regulation M-C.",
+  },
+  {
+    slug: "mega-salamence",
+    dataKey: "salamence-mega",
+    displayName: "Mega Salamence",
+    baseName: "Salamence",
+    types: ["Dragon", "Flying"],
+    ability: "Aerilate",
+    megaStone: "Salamencite",
+    description: "Mega Salamence turns Double-Edge and Hyper Voice into Aerilate-boosted Flying spread damage, newly legal in Pokemon Champions Regulation M-C.",
+  },
+  {
+    slug: "mega-baxcalibur",
+    dataKey: "baxcalibur-mega",
+    displayName: "Mega Baxcalibur",
+    baseName: "Baxcalibur",
+    types: ["Dragon", "Ice"],
+    ability: "Thermal Exchange",
+    megaStone: "Baxcalibrite",
+    description: "Mega Baxcalibur is a 175 Attack Dragon/Ice wallbreaker immune to burns via Thermal Exchange, newly legal in Pokemon Champions Regulation M-C.",
+  },
+  {
+    slug: "mega-golisopod",
+    dataKey: "golisopod-mega",
+    displayName: "Mega Golisopod",
+    baseName: "Golisopod",
+    types: ["Bug", "Steel"],
+    ability: "Tough Claws",
+    megaStone: "Golisopite",
+    description: "Mega Golisopod is a 175 Defense Bug/Steel Tough Claws attacker for Trick Room, newly legal in Pokemon Champions Regulation M-C.",
+  },
 ];
 
 /**
@@ -842,9 +906,24 @@ export const CHAMPIONS_REG_MB_MEGAS = new Set<string>([
   ...CHAMPIONS_REG_MB_ONLY_MEGAS,
 ]);
 
-/** Filtered list of MEGA_POKEMON_LIST entries that are legal in Reg M-B. */
-export function getRegMBMegas(): MegaPokemonEntry[] {
-  return MEGA_POKEMON_LIST.filter((m) => CHAMPIONS_REG_MB_MEGAS.has(m.dataKey));
+/**
+ * Megas introduced in Regulation M-C (Sep 9 – Dec 2 2026) that are NOT legal
+ * in M-A or M-B — the unambiguous "this team is Reg M-C" detection signal.
+ */
+export const CHAMPIONS_REG_MC_ONLY_MEGAS = new Set<string>([
+  "garchomp-mega-z", "lucario-mega-z", "absol-mega-z",
+  "salamence-mega", "baxcalibur-mega", "golisopod-mega",
+]);
+
+/** Full set of Mega dataKeys legal in Reg M-C (superset of M-B). */
+export const CHAMPIONS_REG_MC_MEGAS = new Set<string>([
+  ...CHAMPIONS_REG_MB_MEGAS,
+  ...CHAMPIONS_REG_MC_ONLY_MEGAS,
+]);
+
+/** Filtered list of MEGA_POKEMON_LIST entries that are legal in Reg M-C. */
+export function getRegMCMegas(): MegaPokemonEntry[] {
+  return MEGA_POKEMON_LIST.filter((m) => CHAMPIONS_REG_MC_MEGAS.has(m.dataKey));
 }
 
 /**
@@ -895,7 +974,13 @@ export const MEGAS_WITH_SPRITES = new Set<string>([
   "metagross-mega", "staraptor-mega", "scolipede-mega", "scrafty-mega",
   "eelektross-mega", "pyroar-mega", "malamar-mega", "barbaracle-mega",
   "dragalge-mega", "falinks-mega",
-  // Genuinely 404 across all paths: meowstic-mega, raichu-mega-x, raichu-mega-y
+  // Were "missing" only because our slug lacked Showdown's joined suffix
+  // (raichu-megax, meowstic-mmega) — fixed in resolveSlug (Oct 2026).
+  "raichu-mega-x", "raichu-mega-y", "meowstic-mega",
+  // Reg M-C Megas (probed Oct 2026): Salamence fully animated, the rest
+  // static gen5 PNG only.
+  "salamence-mega", "garchomp-mega-z", "lucario-mega-z", "absol-mega-z",
+  "baxcalibur-mega", "golisopod-mega",
 ]);
 
 /** Reg M-A Megas that have sprites on Showdown — the only ones we link to. */
@@ -904,27 +989,38 @@ export function getRegMAMegasWithSprites(): MegaPokemonEntry[] {
 }
 
 /**
- * Reg M-B Megas that have sprites on Showdown. This is the set the public
+ * Reg M-C Megas that have sprites on Showdown. This is the set the public
  * /champions surfaces build from — index grid links, generateStaticParams,
- * relatedMegas, and the sitemap — because M-B is the current (and widest)
- * Champions regulation. Sprite-less Megas (Meowstic, Raichu X/Y) are still
- * shown on the index as non-clickable "Coming Soon" cards.
+ * relatedMegas, and the sitemap — because M-C is the current (and widest)
+ * Champions regulation. Sprite-less Megas are still shown on the index as
+ * non-clickable "Coming Soon" cards.
  */
-export function getRegMBMegasWithSprites(): MegaPokemonEntry[] {
-  return getRegMBMegas().filter((m) => MEGAS_WITH_SPRITES.has(m.dataKey));
+export function getRegMCMegasWithSprites(): MegaPokemonEntry[] {
+  return getRegMCMegas().filter((m) => MEGAS_WITH_SPRITES.has(m.dataKey));
 }
 
+export type ChampionsReg = "M-A" | "M-B" | "M-C";
+
 /**
- * Earliest Champions regulation a Mega is legal in. M-B is a superset of M-A,
- * so an M-A Mega is legal in BOTH regulations while an M-B-only Mega is legal
- * in M-B alone.
+ * Earliest Champions regulation a Mega is legal in. Each reg is a superset of
+ * the last (M-A ⊂ M-B ⊂ M-C), so a Mega is legal from this reg onward.
  *
  * SEO-critical: the /champions/[pokemon] pages are statically generated, so a
  * hard-coded "legal in Regulation M-A" string would publish a factually false
- * legality claim on all 16 M-B-only Megas. Always derive the label from here.
+ * legality claim on every later-rotation Mega. Always derive the label here.
  */
-export function getMegaRegulation(dataKey: string): "M-A" | "M-B" {
-  return CHAMPIONS_REG_MA_MEGAS.has(dataKey) ? "M-A" : "M-B";
+export function getMegaRegulation(dataKey: string): ChampionsReg {
+  if (CHAMPIONS_REG_MA_MEGAS.has(dataKey)) return "M-A";
+  if (CHAMPIONS_REG_MB_ONLY_MEGAS.has(dataKey)) return "M-B";
+  return "M-C";
+}
+
+/** "Regulation M-A, M-B and M-C" style prose for the regs a Mega is legal in. */
+export function getMegaLegalInLabel(dataKey: string): string {
+  const all: ChampionsReg[] = ["M-A", "M-B", "M-C"];
+  const regs = all.slice(all.indexOf(getMegaRegulation(dataKey)));
+  if (regs.length === 1) return `Regulation ${regs[0]}`;
+  return `Regulation ${regs.slice(0, -1).join(", ")} and ${regs[regs.length - 1]}`;
 }
 
 /** Whether a Mega entry currently has a usable sprite on Showdown. */

@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
 import { ChampionsContent } from "./ChampionsContent";
 import { JsonLd, BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
-import { getRegMBMegas } from "@/lib/data/mega-pokemon";
+import { getRegMCMegas } from "@/lib/data/mega-pokemon";
 
 // Metadata tracks the CURRENT Champions regulation. It used to be pinned to
 // "Regulation M-A", which went stale the moment the format rotated to M-B and
 // left the hub page invisible for every "Reg M-B" query (VGC-258).
 const HUB_DESCRIPTION =
-  "Explore Pokemon Champions team reports for Regulation M-B and M-A. All 75 legal Mega Evolutions, matchup analysis, SP spreads, and team breakdowns from the competitive community.";
+  `Explore Pokemon Champions team reports for Regulation M-C, M-B and M-A. All ${getRegMCMegas().length} legal Mega Evolutions including the new Z Megas, matchup analysis, SP spreads, and team breakdowns from the competitive community.`;
 
 export const metadata: Metadata = {
-  title: "Pokemon Champions Format | Reg M-B & M-A Mega Teams",
+  title: "Pokemon Champions Format | Reg M-C Mega Teams & Z Megas",
   description: HUB_DESCRIPTION,
   alternates: { canonical: "https://pokemonvgcteamreport.com/champions" },
   openGraph: {
-    title: "Pokemon Champions Format | Reg M-B & M-A Mega Teams — VGC Team Report",
+    title: "Pokemon Champions Format | Reg M-C Mega Teams & Z Megas — VGC Team Report",
     description: HUB_DESCRIPTION,
     type: "website",
     siteName: "VGC Team Report",
@@ -22,16 +22,18 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pokemon Champions Format | Reg M-B & M-A Mega Teams — VGC Team Report",
+    title: "Pokemon Champions Format | Reg M-C Mega Teams & Z Megas — VGC Team Report",
     description: HUB_DESCRIPTION,
   },
   keywords: [
     "Pokemon Champions",
     "VGC team report",
     "Pokemon Champions team builder",
+    "Regulation M-C",
+    "Reg M-C Megas",
+    "Mega Garchomp Z",
     "Regulation M-B",
     "Regulation M-A",
-    "Reg M-B Megas",
     "Mega Evolution VGC",
     "Pokemon Champions competitive",
     "VGC 2026",
@@ -40,14 +42,14 @@ export const metadata: Metadata = {
 };
 
 export default function ChampionsPage() {
-  // Reg M-B is a superset of M-A, so this ItemList covers every Mega legal in
-  // either Champions regulation (75), not just the 59 that were M-A legal.
-  const champMegas = getRegMBMegas();
+  // Reg M-C is a superset of M-B and M-A, so this ItemList covers every Mega
+  // legal in any Champions regulation.
+  const champMegas = getRegMCMegas();
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "VGC Champions Format Pokémon — Regulation M-B",
-    description: "All Mega Evolution Pokémon legal in the Pokemon Champions Regulation M-B competitive format (VGC 2026). Reg M-B is a superset of Reg M-A.",
+    name: "VGC Champions Format Pokémon — Regulation M-C",
+    description: "All Mega Evolution Pokémon legal in the Pokemon Champions Regulation M-C competitive format (VGC 2026). Reg M-C is a superset of Reg M-B and M-A.",
     url: "https://pokemonvgcteamreport.com/champions",
     numberOfItems: champMegas.length,
     itemListElement: champMegas.map((mega, index) => ({

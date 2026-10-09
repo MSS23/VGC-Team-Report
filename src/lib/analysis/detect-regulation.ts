@@ -8,10 +8,11 @@
  *
  * Signal hierarchy (highest priority first):
  *
- *   1. Mega / Primal / Champions-exclusive form → "Reg M-A"
+ *   1. Mega / Primal / Champions-exclusive form → "Reg M-A" | "M-B" | "M-C"
  *      Pokémon Champions format. Catches Mega Stone held, Mega species,
  *      Primal Orb held, Primal species suffix, and event-only forms
- *      like Floette-Eternal that only exist in the Champions dex.
+ *      like Floette-Eternal that only exist in the Champions dex. Picks
+ *      the earliest Champions reg whose dex fits the whole team.
  *
  *   2. Restricted Legendary present → "Reg G"
  *      Reg G and Reg I are the only Gen 9 regs that permit Restricted
@@ -41,8 +42,8 @@
  */
 
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
-import { detectMegaFromItem, isMegaForm, getMegaEntryFromSpecies } from "@/lib/utils/mega-detect";
-import { CHAMPIONS_REG_MB_ONLY_MEGAS } from "@/lib/data/mega-pokemon";
+import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
+import { getChampionsDex } from "@/lib/data/champions-dex";
 import {
   RESTRICTED_LEGENDARIES,
   PARADOX_POKEMON,
@@ -54,6 +55,22 @@ import {
 } from "@/lib/data/gen9-regulation-signals";
 
 const PRIMAL_ORB_ITEMS = new Set(["red orb", "blue orb"]);
+
+const CHAMPIONS_REGS = ["Reg M-A", "Reg M-B", "Reg M-C"] as const;
+
+/** Every species (or its Mega) and every held Mega Stone's Mega is in `dex`.
+ *  Restricted legends aren't dex-listed but don't vary between M-regs. */
+function teamFitsDex(pokemon: AnalyzedPokemon[], dex: Set<string>): boolean {
+  return pokemon.every((p) => {
+    const key = getRegulationLookupKey(p.parsed.species);
+    const raw = p.parsed.species.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const speciesOk =
+      dex.has(raw) || dex.has(key) || dex.has(`${raw}-mega`) ||
+      RESTRICTED_LEGENDARIES.has(key);
+    const stone = detectMegaFromItem(p.parsed.item, p.parsed.species);
+    return speciesOk && (!stone || dex.has(stone.dataKey));
+  });
+}
 
 /**
  * Detection result. Callers can use `regulation` for the tag and
@@ -78,65 +95,28 @@ function detectRegulationWithSignals(
 
   const signals: string[] = [];
 
-  // ── Signal 0: Reg M-B (Pokémon Champions, newer format) ──────────
-  // M-B is a superset of M-A, so the only unambiguous "this is M-B, not
-  // M-A" signal is a Mega that's exclusive to M-B (Mega Metagross, Mega
-  // Staraptor, etc.). Megas only exist in the Champions formats, and these
-  // specific ones aren't M-A legal — so their presence pins the team to
-  // M-B. Checked across the whole team before the M-A pass so an M-B Mega
-  // in any slot wins. (The new M-B *base* forms — Gholdengo, Annihilape,
-  // etc. — are NOT used as signals: they're also legal in SV Reg F/G/H/I.)
-  for (const p of pokemon) {
-    const megaEntry =
-      (isMegaForm(p.parsed.species) ? getMegaEntryFromSpecies(p.parsed.species) : null) ??
-      detectMegaFromItem(p.parsed.item, p.parsed.species);
-    if (megaEntry && CHAMPIONS_REG_MB_ONLY_MEGAS.has(megaEntry.dataKey)) {
-      return {
-        regulation: "Reg M-B",
-        signals: [`${megaEntry.displayName} is a Reg M-B Mega Evolution (not legal in Reg M-A)`],
-      };
-    }
-  }
-
-  // ── Signal 1: Reg M-A (Pokémon Champions) ────────────────────────
+  // ── Signal 1: Pokémon Champions (Reg M-A / M-B / M-C) ────────────
   // Any Mega Stone, Mega form, Primal Orb, Primal species, or
-  // Champions-exclusive event form (e.g. Floette-Eternal) means the
-  // team can only battle in Reg M-A.
+  // Champions-exclusive event form (e.g. Floette-Eternal) means the team
+  // is a Champions team. The regs are nested (M-A ⊂ M-B ⊂ M-C), so tag the
+  // EARLIEST reg whose dex fits every species and held Mega Stone — a
+  // Mega Kangaskhan + Rillaboom team is M-C, not an "illegal" M-A team.
+  let championsSignal: string | null = null;
   for (const p of pokemon) {
     const species = p.parsed.species;
     const item = p.parsed.item;
     const rawKey = species.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-
-    if (isMegaForm(species)) {
-      return {
-        regulation: "Reg M-A",
-        signals: [`${species} is a Mega Evolution (Reg M-A only)`],
-      };
-    }
-    if (detectMegaFromItem(item, species)) {
-      return {
-        regulation: "Reg M-A",
-        signals: [`${species} holds ${item} (Mega Stone — Reg M-A only)`],
-      };
-    }
-    if (item && PRIMAL_ORB_ITEMS.has(item.toLowerCase())) {
-      return {
-        regulation: "Reg M-A",
-        signals: [`${species} holds ${item} (Primal Reversion — Reg M-A only)`],
-      };
-    }
-    if (/-primal$/i.test(species)) {
-      return {
-        regulation: "Reg M-A",
-        signals: [`${species} is a Primal form (Reg M-A only)`],
-      };
-    }
-    if (CHAMPIONS_EXCLUSIVE_SPECIES.has(rawKey)) {
-      return {
-        regulation: "Reg M-A",
-        signals: [`${species} is a Champions-exclusive form (Reg M-A only)`],
-      };
-    }
+    if (isMegaForm(species)) championsSignal = `${species} is a Mega Evolution`;
+    else if (detectMegaFromItem(item, species)) championsSignal = `${species} holds ${item} (Mega Stone)`;
+    else if (item && PRIMAL_ORB_ITEMS.has(item.toLowerCase())) championsSignal = `${species} holds ${item} (Primal Reversion)`;
+    else if (/-primal$/i.test(species)) championsSignal = `${species} is a Primal form`;
+    else if (CHAMPIONS_EXCLUSIVE_SPECIES.has(rawKey)) championsSignal = `${species} is a Champions-exclusive form`;
+    if (championsSignal) break;
+  }
+  if (championsSignal) {
+    const regulation =
+      CHAMPIONS_REGS.find((reg) => teamFitsDex(pokemon, getChampionsDex(reg))) ?? "Reg M-C";
+    return { regulation, signals: [`${championsSignal} (Pokémon Champions — earliest fitting reg: ${regulation})`] };
   }
 
   // ── Signal 2: Restricted Legendary ──────────────────────────────

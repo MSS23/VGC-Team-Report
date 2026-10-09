@@ -6,7 +6,7 @@ import { PokemonSprite } from "./PokemonSprite";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
 import { lookupPokemon } from "@/lib/data/pokemon";
-import { CHAMPIONS_DEX, CHAMPIONS_MB_DEX } from "@/lib/data/champions-dex";
+import { getChampionsDex } from "@/lib/data/champions-dex";
 import { isChampionsFormat } from "@/lib/data/tags";
 import { calculateStat, calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
@@ -39,7 +39,7 @@ const META_THREATS_DEFAULT = [
   "pelipper", "torkoal", "porygon2", "dusclops",
 ] as const;
 
-/** Champions meta threats — only Pokemon legal in Reg M-A */
+/** Champions meta threats — filtered per reg through getChampionsDex(). */
 const META_THREATS_CHAMPIONS = [
   // Key Megas
   "kangaskhan-mega", "salamence-mega", "metagross-mega",
@@ -47,6 +47,9 @@ const META_THREATS_CHAMPIONS = [
   "gardevoir-mega", "lucario-mega", "aerodactyl-mega",
   "alakazam-mega", "lopunny-mega", "tyranitar-mega",
   "garchomp-mega", "scizor-mega", "venusaur-mega",
+  // Reg M-C additions (dex-filtered out of M-A/M-B reports)
+  "garchomp-mega-z", "lucario-mega-z", "absol-mega-z", "baxcalibur-mega",
+  "rillaboom", "cinderace", "indeedee-f",
   // Top base forms
   "incineroar", "kingambit", "archaludon", "dragonite",
   "tyranitar", "garchomp", "excadrill", "whimsicott",
@@ -153,7 +156,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   // rebuilds the whole meta-threat speed table.
   const META_THREATS = useMemo(() => {
     if (!isChampionsFormat(regulation)) return META_THREATS_DEFAULT;
-    const championsDex = regulation === "Reg M-B" ? CHAMPIONS_MB_DEX : CHAMPIONS_DEX;
+    const championsDex = getChampionsDex(regulation);
     return META_THREATS_CHAMPIONS.filter(k => lookupPokemon(k) && championsDex.has(k));
   }, [regulation]);
   const { t } = useTranslation();
@@ -423,11 +426,11 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   const oppModSummary = Array.from(opponentModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
 
   // Which meta benchmark list is in play, derived from the report's regulation.
-  // Champions formats (Reg M-A/M-B) pull META_THREATS_CHAMPIONS; everything else
+  // Champions formats (Reg M-A/M-B/M-C) pull META_THREATS_CHAMPIONS; everything else
   // uses the standard list. Surface this so the source is never a mystery.
   const metaSourceLabel = regulation
     ? `${regulation} meta`
-    : isChampions ? "Reg M-A meta" : "Standard meta";
+    : isChampions ? "Champions meta" : "Standard meta";
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
@@ -513,7 +516,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             {showMetaThreats && (
               <span
                 className="text-[10px] sm:text-xs text-text-tertiary font-medium"
-                title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag \u2014 Champions formats use the Reg M-A meta, everything else uses the standard meta."
+                title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag \u2014 Champions formats use the Champions meta for that reg, everything else uses the standard meta."
               >
                 * {metaSourceLabel}
               </span>
@@ -534,7 +537,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
               {teamMegaEntries.length === 0 ? (
                 <>
                   No Mega forms to show \u2014 a team member needs a matching Mega Stone equipped.
-                  {regulation && !isChampionsFormat(regulation) && " Mega Evolution is only legal in Reg M-A."}
+                  {regulation && !isChampionsFormat(regulation) && " Mega Evolution is only legal in Pokémon Champions (Reg M-A/M-B/M-C)."}
                 </>
               ) : (
                 "Mega Forms adds a separate purple row for each eligible Mega. A Mega that shares its base form's Speed shows the same number \u2014 that's expected, not a bug."

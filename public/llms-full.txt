@@ -26,7 +26,7 @@ No account is required to build or view a report. Creating a free account unlock
 
 ### https://pokemonvgcteamreport.com/explore
 The community explore feed. All public reports appear here. Visitors can filter by:
-- Format / regulation set (Reg G, Reg H, Champions Reg M-A, etc.)
+- Format / regulation set (Reg G, Reg H, Champions Reg M-A / M-B / M-C, etc.)
 - Specific Pokémon (e.g. "show me all reports that run Calyrex-Ice")
 - Tournament (e.g. "top teams from 2025 Worlds")
 - Player name or creator handle
@@ -43,7 +43,7 @@ Tournament archive. Curated collection of team reports from top finishers at off
 Each tournament card shows the event name, date, location, format, number of team reports, and the most-used Pokémon in the field.
 
 ### https://pokemonvgcteamreport.com/champions
-Dedicated hub for the Pokémon Champions format (Regulation M-A). Covers:
+Dedicated hub for the Pokémon Champions format (Regulations M-A, M-B and the current M-C). Covers:
 - What the Champions format is and how it differs from standard VGC
 - Featured team reports in the Champions format
 - Commonly used Mega Evolutions and restricted legendaries in the format
@@ -72,7 +72,7 @@ Key rules:
 
 The format creates a dramatically different meta from previous regulation sets because Mega Evolutions bypass the standard Ability system while active, enabling combinations not seen in recent VGC history (e.g., Mega Kangaskhan's Parental Bond, Mega Salamence's Aerilate, Mega Gengar's Shadow Tag).
 
-VGC Team Report supports Champions Regulation M-A fully: import a team with Mega Stones, build your report, and filter the Explore page by this format.
+VGC Team Report supports Champions Regulations M-A, M-B and M-C (current, Sep 9 – Dec 2 2026, adding the Z Megas Garchomp Z, Lucario Z and Absol Z plus Mega Salamence, Baxcalibur and Golisopod) fully: import a team with Mega Stones, build your report, and filter the Explore page by this format.
 
 ### How do I share a team report?
 
@@ -109,7 +109,7 @@ For Discord, the `/s/[id]` link automatically generates a rich Open Graph previe
 ## Key concepts glossary
 
 - **Team report:** A structured document covering a VGC team's six Pokémon builds (moves, item, EVs/IVs, nature, tera type), overall team strategy, matchup plans against common threats, damage calculations, and speed tier comparisons.
-- **Regulation set / Format:** VGC rotates its legal Pokémon list seasonally. Regulation G and Regulation H are recent standard formats from the Scarlet & Violet era. Regulation M-A (Champions) is the 2026 format adding Mega Evolutions.
+- **Regulation set / Format:** VGC rotates its legal Pokémon list seasonally. Regulation G and Regulation H are recent standard formats from the Scarlet & Violet era. Regulations M-A, M-B and M-C (Champions) are the 2026 formats adding Mega Evolutions; M-C is current.
 - **Restricted Legendary:** High-power Legendary Pokémon that are legal in limited quantities per team (usually two in recent formats).
 - **Speed tier:** A comparison of a Pokémon's Speed stat relative to common threats to determine who moves first without Trick Room or priority moves.
 - **Damage calc / Calculation:** A computation of how much damage a specific move deals from one Pokémon to another under specific conditions (EVs, stat boosts, weather, terrain, etc.). Essential for EV spread decisions.

@@ -104,7 +104,7 @@ const FAQ_ITEMS = [
   {
     question: "Can a stat go over 32 SP in Pokémon Champions?",
     answer:
-      `No. ${CHAMPIONS_MAX_SP_PER_STAT} SP is a hard per-stat cap in Regulation M-A and M-B, in the same way 252 is a hard per-stat EV cap in the classic games. A spread that puts more than ${CHAMPIONS_MAX_SP_PER_STAT} SP into a single stat, or more than ${CHAMPIONS_TOTAL_SP} SP in total, is illegal and will be rejected.`,
+      `No. ${CHAMPIONS_MAX_SP_PER_STAT} SP is a hard per-stat cap in Regulation M-A, M-B and M-C, in the same way 252 is a hard per-stat EV cap in the classic games. A spread that puts more than ${CHAMPIONS_MAX_SP_PER_STAT} SP into a single stat, or more than ${CHAMPIONS_TOTAL_SP} SP in total, is illegal and will be rejected.`,
   },
 ];
 
@@ -211,7 +211,7 @@ export default function EvToSpPage() {
               with a point to put wherever you like. Spending more than{" "}
               {CHAMPIONS_TOTAL_SP} SP in total, or more than{" "}
               {CHAMPIONS_MAX_SP_PER_STAT} SP in a single stat, is illegal in
-              Regulation M-A and M-B.
+              Regulation M-A, M-B and M-C.
             </p>
           </div>
         </section>

@@ -216,3 +216,33 @@ describe("validateChampionsTeam", () => {
     expect(result.issues.some((i) => i.severity === "error" && i.message.includes("510"))).toBe(true);
   });
 });
+
+describe("validateChampionsTeam — Reg M-C", () => {
+  const notAvailable = (r: ReturnType<typeof validateChampionsTeam>) =>
+    r.issues.filter((i) => i.message.includes("not available")).map((i) => i.pokemon);
+
+  it("accepts the new M-C species and Z Megas only in Reg M-C", () => {
+    const team = [
+      makePokemon({ species: "Incineroar", item: "Sitrus Berry" }),
+      makePokemon({ species: "Rillaboom", item: "Miracle Seed" }),
+      makePokemon({ species: "Garchomp-Mega-Z", item: "Garchompite Z" }),
+      makePokemon({ species: "Indeedee-F", item: "Psychic Seed" }),
+    ];
+
+    expect(notAvailable(validateChampionsTeam(team, "Reg M-C"))).toEqual([]);
+    expect(notAvailable(validateChampionsTeam(team, "Reg M-B"))).toEqual(
+      expect.arrayContaining(["Rillaboom", "Garchomp-Mega-Z", "Indeedee-F"]),
+    );
+  });
+
+  it("flags a later-reg Mega Stone held by an otherwise-legal species", () => {
+    const team = [makePokemon({ species: "Garchomp", item: "Garchompite Z" })];
+    expect(validateChampionsTeam(team, "Reg M-B").legal).toBe(false);
+    expect(validateChampionsTeam(team, "Reg M-C").legal).toBe(true);
+  });
+
+  it("does not mistake a Z Mega Stone for a banned Z-Crystal", () => {
+    const r = validateChampionsTeam([makePokemon({ species: "Lucario", item: "Lucarionite Z" })], "Reg M-C");
+    expect(r.issues.some((i) => i.message.includes("Z-Crystal"))).toBe(false);
+  });
+});

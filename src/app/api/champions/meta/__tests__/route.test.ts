@@ -11,7 +11,7 @@ import { GET } from "../route";
 beforeEach(() => vi.resetAllMocks());
 
 describe("Champions usage snapshot", () => {
-  it("includes the Reg M-A and Reg M-B labels saved by the report editor", async () => {
+  it("includes the Reg M-A, M-B and M-C labels saved by the report editor", async () => {
     const sql = vi.fn(async () => [
       { name: "Incineroar", count: "4", total_reports: "5" },
     ]);
@@ -20,8 +20,8 @@ describe("Champions usage snapshot", () => {
     // Guard the database filter, where the old '%reg-m%' pattern silently
     // excluded every report with the editor's space-separated format labels.
     const query = (sql.mock.calls[0] as unknown as [TemplateStringsArray])[0].join("?");
-    expect(query).toContain("data->>'regulation' IN ('Reg M-A', 'Reg M-B')");
-    expect(query).toContain("data->'tags'->>'regulation' IN ('Reg M-A', 'Reg M-B')");
+    expect(query).toContain("data->>'regulation' IN ('Reg M-A', 'Reg M-B', 'Reg M-C')");
+    expect(query).toContain("data->'tags'->>'regulation' IN ('Reg M-A', 'Reg M-B', 'Reg M-C')");
     expect(query).toContain("is_public = TRUE");
     expect(query).toContain("deleted_at IS NULL");
     await expect(response.json()).resolves.toEqual({

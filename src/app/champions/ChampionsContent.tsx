@@ -13,9 +13,12 @@ import { INDY_TOP_CUT } from "@/data/indy-top-cut";
 
 import {
   CHAMPIONS_REG_MB_ONLY_MEGAS,
+  CHAMPIONS_REG_MC_ONLY_MEGAS,
   getRegMAMegas,
-  getRegMBMegas,
+  getRegMCMegas,
+  getMegaRegulation,
   hasMegaSprite,
+  type ChampionsReg,
   type MegaPokemonEntry,
 } from "@/lib/data/mega-pokemon";
 import { MetaSnapshot } from "@/components/champions/MetaSnapshot";
@@ -26,18 +29,18 @@ interface MegaCard {
   types: string[];
   slug: string;
   hasSprite: boolean;
-  /** Added in the Reg M-B rotation — NOT legal in Reg M-A. */
-  mbOnly: boolean;
+  /** Rotation the Mega was added in; legal from that reg onward. */
+  reg: ChampionsReg;
 }
 
 function toCard(m: MegaPokemonEntry): MegaCard {
   return {
-    name: m.displayName.replace(/^Mega /, "") + "-Mega",
+    name: m.displayName,
     ability: m.ability,
     types: m.types as string[],
     slug: m.slug,
     hasSprite: hasMegaSprite(m.dataKey),
-    mbOnly: CHAMPIONS_REG_MB_ONLY_MEGAS.has(m.dataKey),
+    reg: getMegaRegulation(m.dataKey),
   };
 }
 
@@ -47,8 +50,7 @@ function toCard(m: MegaPokemonEntry): MegaCard {
 // to a Mega detail page, and building it from getRegMAMegas() alone is what left
 // the 16 Reg M-B Megas with zero inbound links (VGC-258).
 //
-// M-B-only Megas lead because they're the newest additions and the ones the
-// index previously omitted entirely.
+// Newest rotation leads.
 const MEGA_GROUPS: {
   id: string;
   heading: string;
@@ -56,19 +58,28 @@ const MEGA_GROUPS: {
   megas: MegaCard[];
 }[] = [
   {
-    id: "megas-reg-m-b",
-    heading: "New in Regulation M-B",
+    id: "megas-reg-m-c",
+    heading: "New in Regulation M-C",
     blurb:
-      "Mega Evolutions added when the Champions format rotated to Regulation M-B. These are not legal in Regulation M-A.",
-    megas: getRegMBMegas()
+      "Added in the current rotation (Sep 9 – Dec 2, 2026), including the three Z Megas. Not legal in Regulation M-A or M-B.",
+    megas: getRegMCMegas()
+      .filter((m) => CHAMPIONS_REG_MC_ONLY_MEGAS.has(m.dataKey))
+      .map(toCard),
+  },
+  {
+    id: "megas-reg-m-b",
+    heading: "Added in Regulation M-B",
+    blurb:
+      "Added when Champions rotated to Regulation M-B. Legal in M-B and M-C, not in M-A.",
+    megas: getRegMCMegas()
       .filter((m) => CHAMPIONS_REG_MB_ONLY_MEGAS.has(m.dataKey))
       .map(toCard),
   },
   {
     id: "megas-reg-m-a",
-    heading: "Legal in Regulation M-A and M-B",
+    heading: "Legal in every Champions regulation",
     blurb:
-      "The launch-format Mega pool. Regulation M-B is a superset of Regulation M-A, so every one of these is legal in both.",
+      "The launch-format Mega pool. Each regulation is a superset of the last, so every one of these is legal in M-A, M-B and M-C.",
     megas: getRegMAMegas().map(toCard),
   },
 ];
@@ -166,11 +177,13 @@ export function ChampionsContent() {
               picks — and allowed one Mega Evolution per battle from a pool of 59 legal Mega forms.
             </p>
             <p>
-              Champions has since rotated to <strong className="text-text-primary">Regulation M-B</strong>,
-              a superset of Reg M-A. The Restricted ban and the one-Mega-per-battle rule are unchanged,
-              but the legal Mega pool grows to {TOTAL_MEGAS} forms — 16 new additions including Mega
-              Metagross, Mega Mawile, Mega Blaziken, Mega Swampert, and Mega Sceptile, none of which
-              were legal in Reg M-A. Every Reg M-A Mega is still legal in Reg M-B.
+              <strong className="text-text-primary">Regulation M-B</strong> added 16 Megas including Mega
+              Metagross, Mawile and Blaziken. The current format,{" "}
+              <strong className="text-text-primary">Regulation M-C</strong> (Sep 9 – Dec 2, 2026), keeps
+              everything from M-B and adds the Galar starters, Indeedee, Baxcalibur and more, plus six
+              Megas — the new Z Megas (Garchomp Z, Lucario Z, Absol Z) and Mega Salamence, Baxcalibur
+              and Golisopod — for {TOTAL_MEGAS} legal Mega forms. Restricted Pokemon stay banned, item
+              clause applies, and you can still only Mega Evolve once per battle.
             </p>
           </div>
         </section>
@@ -211,9 +224,9 @@ export function ChampionsContent() {
                           <h4 className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">
                             {mon.name}
                           </h4>
-                          {mon.mbOnly && (
+                          {mon.reg !== "M-A" && (
                             <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent-surface text-accent border border-accent/20 whitespace-nowrap">
-                              Reg M-B
+                              Reg {mon.reg}
                             </span>
                           )}
                         </div>
@@ -442,7 +455,7 @@ export function ChampionsContent() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
               { step: "1", title: "Paste Your Team", desc: "Export your team from Pokemon Showdown or PokePaste and paste it into the editor. Mega Evolutions are automatically detected." },
-              { step: "2", title: "Add Notes & Calcs", desc: "Add strategy notes, damage calculations, spread notes, and matchup plans for each Pokemon. Tag with Reg M-A or Reg M-B." },
+              { step: "2", title: "Add Notes & Calcs", desc: "Add strategy notes, damage calculations, spread notes, and matchup plans for each Pokemon. Tag with Reg M-A, M-B or M-C." },
               { step: "3", title: "Share & Discover", desc: "Share your report with a link, embed it on Discord, or make it public for the community to explore and learn from." },
             ].map((item) => (
               <div key={item.step} className="text-center">

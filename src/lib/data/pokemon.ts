@@ -1873,6 +1873,40 @@ export const POKEMON_DATA: Record<string, PokemonData> = {
     abilities: ["Defiant"],
   },
 
+  // ── Regulation M-C Megas (Pokémon Champions) ──────────────────────────
+  // Newly legal in Reg M-C. Stats/types/abilities match @smogon/calc 0.12
+  // (Legends Z-A Mega Dimension data). Mega Salamence lives further down.
+  "golisopod-mega": {
+    name: "Golisopod-Mega",
+    types: ["Bug", "Steel"],
+    baseStats: { hp: 75, atk: 150, def: 175, spa: 70, spd: 120, spe: 40 },
+    abilities: ["Tough Claws"],
+  },
+  "baxcalibur-mega": {
+    name: "Baxcalibur-Mega",
+    types: ["Dragon", "Ice"],
+    baseStats: { hp: 115, atk: 175, def: 117, spa: 105, spd: 101, spe: 87 },
+    abilities: ["Thermal Exchange"],
+  },
+  "absol-mega-z": {
+    name: "Absol-Mega-Z",
+    types: ["Dark", "Ghost"],
+    baseStats: { hp: 65, atk: 154, def: 60, spa: 75, spd: 60, spe: 151 },
+    abilities: ["Sharpness"],
+  },
+  "garchomp-mega-z": {
+    name: "Garchomp-Mega-Z",
+    types: ["Dragon"],
+    baseStats: { hp: 108, atk: 130, def: 85, spa: 141, spd: 85, spe: 151 },
+    abilities: ["Levitate"],
+  },
+  "lucario-mega-z": {
+    name: "Lucario-Mega-Z",
+    types: ["Fighting", "Steel"],
+    baseStats: { hp: 70, atk: 100, def: 70, spa: 164, spd: 70, spe: 151 },
+    abilities: ["Aura Guard"],
+  },
+
   "charizard-mega-x": {
     name: "Charizard-Mega-X",
     types: ["Fire", "Dragon"],

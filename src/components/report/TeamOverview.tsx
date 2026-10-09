@@ -381,12 +381,12 @@ function TeamOverviewBase({
   const hasTournamentInfo = !!(teamName || tournamentName || placement || record);
   const hasCreatorInfo = !!creatorName;
 
-  // Champions legality validation — runs for both Champions regs (M-A / M-B)
+  // Champions legality validation — runs for every Champions reg (M-A/B/C)
   const legality = useMemo(() => {
     if (!isChampionsFormat(tags?.regulation)) return null;
     return validateChampionsTeam(
       pokemon.map((p) => p.parsed),
-      tags?.regulation === "Reg M-B" ? "Reg M-B" : "Reg M-A",
+      tags?.regulation === "Reg M-C" || tags?.regulation === "Reg M-B" ? tags.regulation : "Reg M-A",
     );
   }, [tags?.regulation, pokemon]);
   const [rentalCopied, setRentalCopied] = useState(false);

@@ -72,7 +72,7 @@ interface MegaLandingContentProps {
   relatedMegas: { slug: string; displayName: string; types: string[] }[];
   /**
    * Human-readable legality, derived server-side from the Mega's actual
-   * regulation (e.g. "Regulation M-A and M-B" vs "Regulation M-B only").
+   * regulation (e.g. "Regulation M-A, M-B and M-C" vs "Regulation M-C").
    * Never hard-code this — M-B-only Megas are not M-A legal.
    */
   regulationLabel: string;

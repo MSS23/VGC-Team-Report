@@ -1,4 +1,4 @@
-import { CHAMPIONS_REG_MA_MEGAS, CHAMPIONS_REG_MB_MEGAS } from "./mega-pokemon";
+import { CHAMPIONS_REG_MA_MEGAS, CHAMPIONS_REG_MB_MEGAS, CHAMPIONS_REG_MC_MEGAS } from "./mega-pokemon";
 
 /**
  * Base-form Pokemon available in the Champions format (Regulation M-A).
@@ -298,3 +298,32 @@ export const CHAMPIONS_MB_DEX = new Set<string>([
   ...CHAMPIONS_MB_BASE_ADDITIONS,
   ...CHAMPIONS_REG_MB_MEGAS,
 ]);
+
+/**
+ * Base-form Pokemon NEWLY added in Regulation M-C (Sep 9 – Dec 2 2026).
+ * Source: The Pokémon Company announcement as listed by Game8 / Stratadex /
+ * Victory Road (cross-referenced Oct 2026). Megas live in
+ * CHAMPIONS_REG_MC_MEGAS (mega-pokemon.ts).
+ */
+const CHAMPIONS_MC_BASE_ADDITIONS = new Set<string>([
+  "wigglytuff", "persian", "persian-alola", "mr-mime", "swalot", "salamence",
+  "gogoat", "golisopod", "rillaboom", "cinderace", "inteleon", "thievul",
+  "toxtricity", "toxtricity-low-key", "grapploct", "perrserker", "pincurchin",
+  "indeedee", "indeedee-f", "pawmot", "arboliva", "squawkabilly",
+  "squawkabilly-blue", "squawkabilly-yellow", "squawkabilly-white",
+  "mabosstiff", "baxcalibur", "farfetchd", "sirfetchd",
+]);
+
+/** Full Champions Regulation M-C dex — a superset of M-B (nothing rotated out). */
+export const CHAMPIONS_MC_DEX = new Set<string>([
+  ...CHAMPIONS_MB_DEX,
+  ...CHAMPIONS_MC_BASE_ADDITIONS,
+  ...CHAMPIONS_REG_MC_MEGAS,
+]);
+
+/** Dex for a Champions regulation tag; unknown tags fall back to M-A. */
+export function getChampionsDex(regulation?: string | null): Set<string> {
+  if (regulation === "Reg M-C") return CHAMPIONS_MC_DEX;
+  if (regulation === "Reg M-B") return CHAMPIONS_MB_DEX;
+  return CHAMPIONS_DEX;
+}

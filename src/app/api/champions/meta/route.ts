@@ -53,8 +53,8 @@ export async function GET(request: Request) {
         WHERE is_public = TRUE
           AND deleted_at IS NULL
           AND (
-            data->>'regulation' IN ('Reg M-A', 'Reg M-B')
-            OR data->'tags'->>'regulation' IN ('Reg M-A', 'Reg M-B')
+            data->>'regulation' IN ('Reg M-A', 'Reg M-B', 'Reg M-C')
+            OR data->'tags'->>'regulation' IN ('Reg M-A', 'Reg M-B', 'Reg M-C')
             OR data->>'regulation' ILIKE '%champion%'
             OR data->>'regulation' ILIKE '%reg-m%'
             OR data->'tags'->>'regulation' ILIKE '%champion%'

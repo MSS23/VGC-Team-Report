@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MEGA_BY_SLUG, getMegaRegulation, getRegMBMegasWithSprites } from "@/lib/data/mega-pokemon";
+import { MEGA_BY_SLUG, getMegaRegulation, getMegaLegalInLabel, getRegMCMegasWithSprites } from "@/lib/data/mega-pokemon";
 import { lookupPokemon } from "@/lib/data/pokemon";
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
@@ -25,27 +25,29 @@ export function generateStaticParams() {
   // getRegMAMegasWithSprites() the 14 sprited Reg M-B Megas were never
   // prerendered, never sitemapped and never linked (VGC-258) — they only
   // resolved on demand via dynamicParams, i.e. invisible to crawlers.
-  return getRegMBMegasWithSprites().map((m) => ({ pokemon: m.slug }));
+  return getRegMCMegasWithSprites().map((m) => ({ pokemon: m.slug }));
 }
 
 /**
  * Regulation phrasing for a single Mega, derived from its actual legality.
  *
- * Reg M-B is a superset of Reg M-A, so an M-A Mega is legal in BOTH, while the
- * 16 Megas added in the M-B rotation are legal in M-B ONLY. These pages are
- * statically generated, so hard-coding "Regulation M-A" (as this file used to)
- * would publish a false legality claim on every M-B-only Mega.
+ * Regs are nested (M-A ⊂ M-B ⊂ M-C), so a Mega is legal from the rotation that
+ * introduced it onward. These pages are statically generated, so hard-coding
+ * "Regulation M-A" (as this file used to) would publish a false legality claim
+ * on every later-rotation Mega.
  */
 function regulationCopy(dataKey: string) {
-  const mbOnly = getMegaRegulation(dataKey) === "M-B";
+  const since = getMegaRegulation(dataKey);
+  const regs = (["M-A", "M-B", "M-C"] as const).filter((r) => r >= since);
   return {
-    mbOnly,
-    /** Prose form, e.g. "Regulation M-A and M-B". */
-    legalIn: mbOnly ? "Regulation M-B" : "Regulation M-A and M-B",
+    /** Rotation that introduced this Mega. */
+    since,
+    /** Prose form, e.g. "Regulation M-A, M-B and M-C". */
+    legalIn: getMegaLegalInLabel(dataKey),
     /** Narrowest set of regulation keywords that is actually true. */
-    keywords: mbOnly ? ["Regulation M-B"] : ["Regulation M-A", "Regulation M-B"],
-    /** Explore deep-link filter value — the regulation this Mega can be played in. */
-    exploreRegulation: mbOnly ? "Reg M-B" : "Reg M-A",
+    keywords: regs.map((r) => `Regulation ${r}`),
+    /** Explore deep-link filter value — the regulation this Mega debuted in. */
+    exploreRegulation: `Reg ${since}`,
   };
 }
 
@@ -216,7 +218,7 @@ export default async function MegaPokemonPage({
   // siblings, so link equity piled onto those 8 and the rest of the cluster
   // (including every newly-linked Reg M-B page) got inbound links from the
   // index only.
-  const spritedMegas = getRegMBMegasWithSprites();
+  const spritedMegas = getRegMCMegasWithSprites();
   const selfIndex = Math.max(spritedMegas.findIndex((m) => m.slug === mega.slug), 0);
   const relatedPool = spritedMegas.filter((m) => m.slug !== mega.slug);
   const relatedMegas = Array.from(
@@ -251,18 +253,15 @@ export default async function MegaPokemonPage({
       q: `What are ${mega.displayName}'s base stats?`,
       a: `${mega.displayName} has base stats of ${pokemonData.baseStats.hp} HP / ${pokemonData.baseStats.atk} Atk / ${pokemonData.baseStats.def} Def / ${pokemonData.baseStats.spa} SpA / ${pokemonData.baseStats.spd} SpD / ${pokemonData.baseStats.spe} Spe, for a Base Stat Total of ${bst}.`,
     },
-    // Legality must be derived, never asserted. Reg M-B is a superset of M-A:
-    // an M-A Mega is legal in both, an M-B-only Mega is legal in M-B alone and
+    // Legality must be derived, never asserted. Regs are nested (M-A ⊂ M-B ⊂
+    // M-C): a Mega is legal from the rotation that introduced it onward, and
     // saying otherwise would be a false claim baked into prerendered HTML.
-    reg.mbOnly
-      ? {
-          q: `Is ${mega.displayName} legal in VGC 2026 Regulation M-B?`,
-          a: `Yes — ${mega.displayName} is legal in VGC 2026 Regulation M-B, the Pokemon Champions Mega rotation that introduced it. It is not legal in Regulation M-A.`,
-        }
-      : {
-          q: `Is ${mega.displayName} legal in VGC 2026 Regulation M-A?`,
-          a: `Yes — ${mega.displayName} is legal in VGC 2026 Regulation M-A, the Pokemon Champions format that reintroduces Mega Evolution to competitive VGC, and it remains legal in Regulation M-B.`,
-        },
+    {
+      q: `Is ${mega.displayName} legal in VGC 2026 Regulation M-C?`,
+      a: reg.since === "M-A"
+        ? `Yes — ${mega.displayName} has been legal since Regulation M-A, the Pokemon Champions launch format, and remains legal in Regulation M-B and the current Regulation M-C.`
+        : `Yes — ${mega.displayName} is legal in ${reg.legalIn}. It was added in the Regulation ${reg.since} rotation and is not legal in earlier Champions regulations.`,
+    },
     ...(teams.length > 0
       ? [{
           q: `Where can I find competitive ${mega.displayName} VGC teams?`,
@@ -323,7 +322,7 @@ export default async function MegaPokemonPage({
         baseStats={pokemonData.baseStats}
         teams={teams}
         relatedMegas={relatedMegas}
-        regulationLabel={reg.mbOnly ? "Regulation M-B only" : "Regulation M-A and M-B"}
+        regulationLabel={reg.legalIn}
         exploreRegulation={reg.exploreRegulation}
       />
     </>

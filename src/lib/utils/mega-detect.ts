@@ -26,8 +26,7 @@ export function detectMegaFromItem(
   if (entry) {
     // For dual-mega Pokemon (Charizard X/Y), verify the stone matches the base form
     const baseSpecies = species
-      .replace(/-Mega(-[XY])?$/i, "")
-      .replace(/-mega(-[xy])?$/i, "");
+      .replace(/-Mega(-[XYZ])?$/i, "");
     if (entry.baseName.toLowerCase() === baseSpecies.toLowerCase()) return entry;
   }
   // Dynamic fallback — covers mega stones not yet in our static list.
