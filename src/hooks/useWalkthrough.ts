@@ -331,7 +331,8 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     };
   }, [filteredSteps, currentStepIndex, randomPokemonName]);
 
-  // Auto-trigger on first visit (including shared views via Discord links)
+  // First visit (including shared views via Discord links): offer the tour
+  // with a non-blocking prompt instead of dimming a report the user just made.
   useEffect(() => {
     if (!enabled || hasAutoTriggered) return;
     if (getSeenFlag()) {
@@ -341,14 +342,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
 
     const timer = setTimeout(() => {
       setHasAutoTriggered(true);
-      // Enable creator mode for the tour so all targets exist
-      if (!isSharedView && onCreatorModeChange) {
-        creatorModeBeforeTour.current = creatorMode ?? false;
-        onCreatorModeChange(true);
-      }
       setIsFirstTime(true);
-      setIsActive(true);
-      setCurrentStepIndex(0);
     }, 400);
 
     return () => clearTimeout(timer);
@@ -372,6 +366,11 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     endTour();
   }, [endTour]);
 
+  const dismissPrompt = useCallback(() => {
+    setIsFirstTime(false);
+    setSeenFlag();
+  }, []);
+
   const start = useCallback(() => {
     setCurrentStepIndex(0);
     // Enable creator mode for the tour so all targets exist
@@ -393,7 +392,8 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
     skip,
     start,
     guidePokemon: randomPokemonName,
-    /** True when this is the first-time auto-triggered tour (mandatory — no skip allowed) */
-    isFirstTime,
+    /** First visit: show the non-blocking "Take the tour" prompt. */
+    isFirstTime: isFirstTime && enabled && !isActive,
+    dismissPrompt,
   };
 }

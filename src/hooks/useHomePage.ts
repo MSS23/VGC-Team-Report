@@ -555,6 +555,7 @@ export function useHomePage() {
     start: startWalkthrough,
     guidePokemon: walkthroughGuidePokemon,
     isFirstTime: walkthroughIsFirstTime,
+    dismissPrompt: dismissWalkthroughPrompt,
   } = useWalkthrough({
     enabled: !!analysis && !presentationMode,
     pokemonNames,
@@ -910,7 +911,7 @@ export function useHomePage() {
     // Walkthrough
     walkthroughActive, walkthroughStep, walkthroughStepIndex,
     walkthroughTotalSteps, walkthroughNext, walkthroughPrev, walkthroughSkip,
-    startWalkthrough, walkthroughGuidePokemon, walkthroughIsFirstTime,
+    startWalkthrough, walkthroughGuidePokemon, walkthroughIsFirstTime, dismissWalkthroughPrompt,
 
     // Undo / redo
     canUndo: undoRedo.canUndo,

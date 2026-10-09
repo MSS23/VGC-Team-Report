@@ -137,7 +137,7 @@ export function WhatsNewModal() {
         tabIndex={-1}
       >
         <motion.div
-          className="relative bg-surface border border-border rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden"
+          className="relative bg-surface border border-border rounded-2xl shadow-2xl max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}

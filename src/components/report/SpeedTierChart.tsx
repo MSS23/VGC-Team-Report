@@ -132,7 +132,7 @@ function SideModifierToggle({
               key={key}
               type="button"
               onClick={() => onToggle(side, key)}
-              className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 min-h-11text-[10px] sm:text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 min-h-11 text-[10px] sm:text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 active
                   ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
                   : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
@@ -140,8 +140,7 @@ function SideModifierToggle({
               title={`${cfg.label} on ${label}: ${cfg.description}`}
             >
               <span className="text-xs sm:text-sm">{cfg.icon}</span>
-              <span className="hidden sm:inline">{cfg.label}</span>
-              <span className="sm:hidden">{cfg.label.slice(0, 2)}</span>
+              <span>{cfg.label}</span>
             </button>
           );
         })}
@@ -219,8 +218,8 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   // EVs/SPs carry over to the Mega form, so Speed is recomputed using the
   // Mega's base stat with the same spread the player specified.
   const teamMegaEntries = useMemo(() => {
-    // Mega forms are only legal in Reg M-A. For any explicit non-M-A
-    // regulation, never include Mega tier entries even if a stale toggle
+    // Mega forms are only legal in Champions regs. For any explicit
+    // non-Champions regulation, never include Mega tier entries even if a stale toggle
     // state lingered from a prior regulation switch.
     if (!showMegaTiers) return [];
     if (regulation && !isChampionsFormat(regulation)) return [];
@@ -482,7 +481,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                 type="button"
                 onClick={() => setShowMegaTiers(!showMegaTiers)}
                 title="Adds a separate purple Mega-speed row for each team member that has a matching Mega Stone equipped. A Mega that shares its base form's Speed shows the same number — that's expected, not a bug."
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                   showMegaTiers
                     ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
                     : "bg-surface-alt/50 text-text-secondary border-border hover:border-purple-500/30 hover:text-purple-400"
@@ -500,7 +499,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                 setShowMetaThreats(!showMetaThreats);
                 if (showMetaThreats) setOpponentModifiers(new Set());
               }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 showMetaThreats
                   ? "bg-blue-500/15 text-blue-500 border-blue-500/30"
                   : "bg-surface-alt/50 text-text-secondary border-border hover:border-blue-500/30 hover:text-blue-500"
@@ -516,7 +515,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             {showMetaThreats && (
               <span
                 className="text-[10px] sm:text-xs text-text-tertiary font-medium"
-                title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag \u2014 Champions formats use the Champions meta for that reg, everything else uses the standard meta."
+                title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag — Champions formats use the Champions meta for that reg, everything else uses the standard meta."
               >
                 * {metaSourceLabel}
               </span>
@@ -535,10 +534,14 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           {showMegaTiers && (
             <p className="text-[10px] sm:text-xs text-text-tertiary leading-relaxed">
               {teamMegaEntries.length === 0 ? (
+                Object.values(megaStates ?? {}).some(Boolean) ? (
+                  "Your Mega is already shown in its Mega form above. Switch it back to its base form on its card to compare both speeds."
+                ) : (
                 <>
-                  No Mega forms to show \u2014 a team member needs a matching Mega Stone equipped.
+                  No Mega forms to show — a team member needs a matching Mega Stone equipped.
                   {regulation && !isChampionsFormat(regulation) && " Mega Evolution is only legal in Pokémon Champions (Reg M-A/M-B/M-C)."}
                 </>
+                )
               ) : (
                 "Mega Forms adds a separate purple row for each eligible Mega. A Mega that shares its base form's Speed shows the same number \u2014 that's expected, not a bug."
               )}

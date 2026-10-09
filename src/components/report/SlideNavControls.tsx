@@ -197,7 +197,7 @@ export function SlideNavControls({
             aria-disabled={!tab.avail}
             disabled={!tab.avail}
             onClick={() => jumpToPhysical(tab.target)}
-            className={`${compact ? "px-4 text-xs" : "flex-1 min-w-0 px-1 text-[10px]"} min-h-[44px] sm:min-h-0 sm:py-1.5 rounded-full font-bold transition-colors active:scale-[0.97] ${
+            className={`${compact ? "px-4 text-xs" : "flex-auto min-w-0 px-1.5 text-[11px]"} min-h-[44px] sm:pointer-fine:min-h-0 sm:py-1.5 rounded-full font-bold transition-colors active:scale-[0.97] ${
               active
                 ? "bg-accent text-white shadow-sm shadow-accent/30"
                 : "text-text-secondary hover:text-text-primary"
@@ -220,7 +220,7 @@ export function SlideNavControls({
       }}
       disabled={isFirst}
       aria-label="Previous slide"
-      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
+      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:pointer-fine:min-w-0 sm:pointer-fine:min-h-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
     >
       <ChevronLeftIcon width="18" height="18" strokeWidth="2.5" />
     </button>
@@ -229,7 +229,7 @@ export function SlideNavControls({
   const nextButton = isLast ? (
     <span
       aria-label="End of report"
-      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 rounded-full text-accent cursor-default select-none"
+      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:pointer-fine:min-w-0 sm:pointer-fine:min-h-0 sm:w-9 sm:h-9 rounded-full text-accent cursor-default select-none"
     >
       <CheckIcon width="18" height="18" strokeWidth="2.5" />
     </span>
@@ -241,7 +241,7 @@ export function SlideNavControls({
         onNext();
       }}
       aria-label="Next slide"
-      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all"
+      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:pointer-fine:min-w-0 sm:pointer-fine:min-h-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all"
     >
       <ChevronRightIcon width="18" height="18" strokeWidth="2.5" />
     </button>
@@ -255,7 +255,7 @@ export function SlideNavControls({
       aria-haspopup="dialog"
       aria-expanded={sheetOpen}
       aria-label="More slide options"
-      className={`relative flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all ${
+      className={`relative flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:pointer-fine:min-w-0 sm:pointer-fine:min-h-0 sm:w-9 sm:h-9 rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all ${
         hasSheetMobile ? "flex" : "hidden sm:flex"
       }`}
     >
@@ -462,9 +462,9 @@ export function SlideNavControls({
                 style={{ width: `${sectionProgress * 100}%` }}
               />
             </div>
-            {/* Row 1 — chevrons + tabs + overflow */}
+            {/* Row 1 — tabs + next + overflow. No prev chevron on phone:
+                swipe covers it, and the space keeps tab labels untruncated. */}
             <div className="flex items-center gap-1.5 py-1">
-              {prevButton}
               <div className="flex-1 min-w-0 flex flex-col items-center gap-0.5">
                 {renderTabs()}
                 <span className="max-w-full truncate text-[10px] leading-none font-semibold text-text-tertiary">
@@ -508,7 +508,7 @@ export function SlideNavControls({
                     onKeyDown={(event) => handleSlideTabKeyDown(event, i)}
                     title={`${slideLabels[i]}${isHidden ? ` ${t.hiddenFromViewers}` : ""}${hasChanges ? " (changed)" : ""}`}
                     aria-label={`Go to ${slideLabels[i]}`}
-                    className="relative flex items-center justify-center w-5 h-5 flex-shrink-0"
+                    className="relative flex items-center justify-center w-5 h-5 pointer-coarse:w-7 pointer-coarse:h-11 flex-shrink-0"
                   >
                     <span
                       className={`block rounded-full transition-all duration-200 ${

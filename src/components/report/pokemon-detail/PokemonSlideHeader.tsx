@@ -17,17 +17,25 @@ const { parsed, spriteSpecies, displaySpecies, showMegaToggle, showMega, types, 
           animated={animated}
           shiny={shiny}
         />
+        {/* Smaller on tablet so the name column isn't squeezed to ~120px. */}
         <PokemonSprite
           species={spriteSpecies}
-          size={isPresentationMode ? 160 : 160}
-          className="hidden sm:block"
+          size={112}
+          className="hidden sm:block lg:hidden"
+          animated={animated}
+          shiny={shiny}
+        />
+        <PokemonSprite
+          species={spriteSpecies}
+          size={160}
+          className="hidden lg:block"
           animated={animated}
           shiny={shiny}
         />
       </div>
       <div className="flex flex-col gap-1.5 sm:gap-2 pt-0.5 sm:pt-2 min-w-0">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary presenting:text-4xl truncate tracking-tight">
+          <h2 className="text-2xl lg:text-3xl font-extrabold text-text-primary presenting:text-4xl line-clamp-2 break-words min-w-0 tracking-tight" title={displaySpecies}>
             {displaySpecies}
           </h2>
           {/* Mega toggle — same control covers base+stone AND already-Mega

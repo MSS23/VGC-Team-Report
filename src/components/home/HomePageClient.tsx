@@ -195,6 +195,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
     startWalkthrough,
     walkthroughGuidePokemon,
     walkthroughIsFirstTime,
+    dismissWalkthroughPrompt,
     canUndo,
     canRedo,
     handleUndo,
@@ -1551,6 +1552,33 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         <div className="max-w-5xl mx-auto px-2 sm:px-4">
           {isOwner && <CollaboratorPanel shareId={activeShareId} />}
           <EditChangelog shareId={activeShareId} />
+        </div>
+      )}
+
+      {/* First-visit tour offer — non-blocking, clears the slide nav and swipe hint */}
+      {walkthroughIsFirstTime && (
+        <div
+          role="status"
+          className="fixed left-1/2 -translate-x-1/2 bottom-[calc(10rem+env(safe-area-inset-bottom))] sm:bottom-20 z-50 flex items-center gap-1 rounded-full border border-border bg-surface shadow-lg pl-4 pr-1 py-1"
+        >
+          <span className="text-sm text-text-secondary whitespace-nowrap">New here?</span>
+          <button
+            type="button"
+            onClick={startWalkthrough}
+            className="min-h-11 px-3 text-sm font-semibold text-accent rounded-full hover:bg-accent-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer whitespace-nowrap"
+          >
+            Take the tour
+          </button>
+          <button
+            type="button"
+            onClick={dismissWalkthroughPrompt}
+            aria-label="Dismiss tour offer"
+            className="min-h-11 min-w-11 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
       )}
 
