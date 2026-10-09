@@ -24,7 +24,9 @@ describe("useTeamReport paste persistence", () => {
       expect(localStorage.getItem("vgc-team-paste-source-v2")).toBe("user");
       // Save timestamp gates restore — entries without one are evicted.
       expect(Number(localStorage.getItem("vgc-team-paste-saved-at-v2"))).toBeGreaterThan(0);
-    });
+    // First test to touch the lazy analyze-team chunk pays its import cost
+    // (>1s on a cold Windows run), so give the default 1s waitFor more room.
+    }, { timeout: 5000 });
   });
 
   // Regression: a published report resurfaced as a local "draft" on the next
