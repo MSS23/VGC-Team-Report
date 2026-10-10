@@ -6,6 +6,7 @@ import {
   convertToChampionsSp,
   evToChampionsSp,
   championsSpToEv,
+  calcBattleSpeed,
   CHAMPIONS_TOTAL_SP,
   CHAMPIONS_MAX_SP_PER_STAT,
   MAX_EV_PER_STAT,
@@ -380,5 +381,23 @@ describe("calculateChampionsStat", () => {
   it("uninvested stat gets no SP bonus", () => {
     // base 130 Atk, 0 SP, neutral: 145 + 5 = 150
     expect(calculateChampionsStat("atk", 130, 0, "Serious")).toBe(150);
+  });
+});
+
+describe("calcBattleSpeed", () => {
+  it("chains Scarf and Tailwind into one modifier (101 Spe -> 303, not 302)", () => {
+    expect(calcBattleSpeed(101, 1.5, { tailwind: true })).toBe(303);
+  });
+  it("applies paralysis after Tailwind (101 Spe -> 101, not 100)", () => {
+    expect(calcBattleSpeed(101, 1, { tailwind: true, paralysis: true })).toBe(101);
+  });
+  it("rounds a .5 boost result down, like the game", () => {
+    expect(calcBattleSpeed(101, 1.5, {})).toBe(151);
+  });
+  it("applies the Icy Wind stage before the boost", () => {
+    expect(calcBattleSpeed(150, 1.5, { icyWind: true })).toBe(150);
+  });
+  it("is identity with no modifiers", () => {
+    expect(calcBattleSpeed(137, 1, {})).toBe(137);
   });
 });
