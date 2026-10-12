@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
 
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 
@@ -35,12 +34,11 @@ function StatBar({ label, value, color, max = 230 }: { label: string; value: num
     <div className="flex items-center gap-2">
       <span className="w-8 text-xs font-bold text-text-secondary text-right">{label}</span>
       <div className="flex-1 h-3 bg-surface-alt rounded-full overflow-hidden">
-        <motion.div
-          className="h-full rounded-full"
-          style={{ backgroundColor: color }}
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+        {/* Same CSS fill as the report stat bars: `animate-bar-fill` scales the
+            bar out from the left, so no motion runtime on these SSG pages. */}
+        <div
+          className="h-full rounded-full animate-bar-fill"
+          style={{ width: `${pct}%`, backgroundColor: color }}
         />
       </div>
       <span className="w-8 text-xs font-bold text-text-primary text-right">{value}</span>
@@ -177,16 +175,11 @@ export function MegaLandingContent({
           </div>
 
           {teams.length > 0 ? (
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-              initial="hidden"
-              animate="visible"
-              variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
               {teams.map((report) => (
                 <ReportCard key={report.id} report={report} />
               ))}
-            </motion.div>
+            </div>
           ) : (
             <div className="text-center py-12 bg-surface rounded-xl border border-border">
               <p className="text-sm text-text-secondary mb-3">
