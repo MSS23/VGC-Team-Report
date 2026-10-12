@@ -77,8 +77,15 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch {
-    // Return 200 so Linear does not auto-disable the webhook on a transient error.
+  } catch (error) {
+    // Return 200 so Linear does not auto-disable the webhook on a transient
+    // error — but log first. Swallowing the error silently made a genuine
+    // handler crash indistinguishable from success in both Vercel logs and
+    // PostHog (VGC-299). The message only; no payload, signature or secret.
+    console.error(
+      "[linear-webhook] handler threw, acknowledging with 200 anyway:",
+      error instanceof Error ? error.message : String(error),
+    );
     return NextResponse.json({ ok: true });
   }
 }
