@@ -13,6 +13,24 @@ import {
 
 export const dynamic = "force-dynamic";
 
+// A keyset cursor has to describe its boundary row exactly: Postgres stores
+// created_at/updated_at at microsecond precision, but a JS Date — and so
+// serializeChronologicalCursor, which normalises through one — only carries
+// milliseconds. Comparing a millisecond-truncated cursor against the
+// untruncated ORDER BY key is what let Explore skip or repeat rows whose
+// timestamps shared a millisecond across a page edge (VGC-295). The queries
+// below therefore select the sort column as a microsecond ISO string
+// (cursor_ts) and join it to the row id with the separator the cursor parser
+// expects — keep in sync with CURSOR_SEPARATOR in
+// @/lib/explore/chronological-cursor.
+const CURSOR_ID_SEPARATOR = "~";
+
+function keysetCursor(microsecondTimestamp: unknown, fallback: Date, id: string): string {
+  return typeof microsecondTimestamp === "string" && microsecondTimestamp
+    ? `${microsecondTimestamp}${CURSOR_ID_SEPARATOR}${id}`
+    : serializeChronologicalCursor(fallback, id);
+}
+
 export async function GET(request: Request) {
   try {
     const guard = await apiGuard(request, { rateLimit: { key: "explore", max: 30 } });
@@ -157,21 +175,27 @@ export async function GET(request: Request) {
 
     // Composite cursors for popular / views: the sort key has heavy ties
     // (most teams have 0 likes / 0 views), so a single-column `<` cursor
-    // skips the entire tied tail. Encode both the metric value AND
-    // created_at, then paginate via tuple comparison so ties are walked
-    // by created_at DESC just like the ORDER BY does.
-    const parseCompositeCursor = (raw: string | null): { value: number; createdAt: string } | null => {
+    // skips the entire tied tail. Encode the metric value, created_at AND the
+    // row id, then paginate via tuple comparison so ties are walked by
+    // created_at DESC, id DESC just like the ORDER BY does.
+    // Accepted shapes, newest first: "value:timestamp~id" (current),
+    // "value:timestamp" and "value" (both still live in bookmarked links and
+    // in mid-pagination clients, so they keep their previous behaviour).
+    const parseCompositeCursor = (raw: string | null): { value: number; createdAt: string; id: string | null } | null => {
       if (!raw) return null;
       const sep = raw.indexOf(":");
       if (sep < 0) {
         // Legacy single-int cursor — treat as value-only with no created_at tiebreak
         const v = parseInt(raw, 10);
-        return Number.isFinite(v) ? { value: v, createdAt: new Date(0).toISOString() } : null;
+        return Number.isFinite(v) ? { value: v, createdAt: new Date(0).toISOString(), id: null } : null;
       }
       const value = parseInt(raw.slice(0, sep), 10);
-      const createdAt = raw.slice(sep + 1);
-      if (!Number.isFinite(value) || !createdAt) return null;
-      return { value, createdAt };
+      // The tail is "timestamp" or "timestamp~id" — the same grammar as the
+      // chronological cursor, so reuse its parser instead of re-splitting on
+      // ":" (an ISO timestamp is full of colons).
+      const tail = parseChronologicalCursor(raw.slice(sep + 1));
+      if (!Number.isFinite(value) || !tail) return null;
+      return { value, createdAt: tail.timestamp, id: tail.id };
     };
 
     if (sort === "popular") {
@@ -179,7 +203,8 @@ export async function GET(request: Request) {
       // Sort by total reaction (like) count, with created_at as deterministic tiebreaker.
       rows = await sql`
         SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count,
-               COALESCE(rc.like_count, 0) as like_count
+               COALESCE(rc.like_count, 0) as like_count,
+               to_char(s.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as cursor_ts
         FROM shares s
         LEFT JOIN (
           SELECT share_id, COUNT(*)::int as like_count
@@ -190,22 +215,31 @@ export async function GET(request: Request) {
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${c ? sql`AND (COALESCE(rc.like_count, 0), date_trunc('milliseconds', s.created_at)) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
-        ORDER BY COALESCE(rc.like_count, 0) DESC, s.created_at DESC
+          ${c?.id
+            ? sql`AND (COALESCE(rc.like_count, 0), s.created_at, s.id) < (${c.value}, ${c.createdAt}::timestamptz, ${c.id})`
+            : c
+              ? sql`AND (COALESCE(rc.like_count, 0), s.created_at) < (${c.value}, ${c.createdAt}::timestamptz)`
+              : sql``}
+        ORDER BY COALESCE(rc.like_count, 0) DESC, s.created_at DESC, s.id DESC
         LIMIT ${limit + 1}
       `;
     } else if (sort === "views") {
       const c = parseCompositeCursor(cursor);
       // Sort by view count, with created_at tiebreaker for tied counts (e.g. 0 views).
       rows = await sql`
-        SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
+        SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count,
+               to_char(s.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as cursor_ts
         FROM shares s
         WHERE s.is_public = TRUE AND s.deleted_at IS NULL
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${c ? sql`AND (COALESCE(s.view_count, 0), date_trunc('milliseconds', s.created_at)) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
-        ORDER BY COALESCE(s.view_count, 0) DESC, s.created_at DESC
+          ${c?.id
+            ? sql`AND (COALESCE(s.view_count, 0), s.created_at, s.id) < (${c.value}, ${c.createdAt}::timestamptz, ${c.id})`
+            : c
+              ? sql`AND (COALESCE(s.view_count, 0), s.created_at) < (${c.value}, ${c.createdAt}::timestamptz)`
+              : sql``}
+        ORDER BY COALESCE(s.view_count, 0) DESC, s.created_at DESC, s.id DESC
         LIMIT ${limit + 1}
       `;
     } else {
@@ -213,16 +247,17 @@ export async function GET(request: Request) {
       const chronologicalCursor = parseChronologicalCursor(cursor);
 
       rows = await sql`
-        SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
+        SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count,
+               to_char(${col} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as cursor_ts
         FROM shares s
         WHERE s.is_public = TRUE AND s.deleted_at IS NULL
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
           ${chronologicalCursor?.id
-            ? sql`AND (date_trunc('milliseconds', ${col}), s.id) < (${chronologicalCursor.timestamp}::timestamptz, ${chronologicalCursor.id})`
+            ? sql`AND (${col}, s.id) < (${chronologicalCursor.timestamp}::timestamptz, ${chronologicalCursor.id})`
             : chronologicalCursor
-              ? sql`AND date_trunc('milliseconds', ${col}) < ${chronologicalCursor.timestamp}::timestamptz`
+              ? sql`AND ${col} < ${chronologicalCursor.timestamp}::timestamptz`
               : sql``}
         ORDER BY ${col} DESC, s.id DESC
         LIMIT ${limit + 1}
@@ -331,11 +366,17 @@ export async function GET(request: Request) {
     let nextCursor: string | null = null;
     if (hasMore) {
       const last = items[items.length - 1];
-      const lastCreatedAt = (last.created_at as Date).toISOString();
-      if (sort === "popular") nextCursor = `${last.like_count ?? 0}:${lastCreatedAt}`;
-      else if (sort === "views") nextCursor = `${last.view_count ?? 0}:${lastCreatedAt}`;
-      else if (sort === "updated") nextCursor = serializeChronologicalCursor(last.updated_at as Date, last.id as string);
-      else nextCursor = serializeChronologicalCursor(last.created_at as Date, last.id as string);
+      // cursor_ts is the sort column at microsecond precision, so the next page
+      // resumes on exactly the row this one stopped at even when neighbouring
+      // rows share its millisecond (VGC-295).
+      const boundary = keysetCursor(
+        last.cursor_ts,
+        (sort === "updated" ? last.updated_at : last.created_at) as Date,
+        last.id as string,
+      );
+      if (sort === "popular") nextCursor = `${last.like_count ?? 0}:${boundary}`;
+      else if (sort === "views") nextCursor = `${last.view_count ?? 0}:${boundary}`;
+      else nextCursor = boundary;
     }
 
     const result = { reports, nextCursor };
