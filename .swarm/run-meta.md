@@ -1,22 +1,35 @@
-# Swarm Run Meta — 2026-08-10
+# Nightly swarm run — 12 Oct 2026
 
-- Branch: `swarm-nightly-2026-08-10`
-- REMOTE_EXISTS at start: 0 (fresh branch, cut from origin/main)
-- Cut from: a70d924 origin/main
-- Run start (UK): Mon Aug 10 01:14:32 BST 2026
-- History mode: unpublished until first push (rebase permitted pre-push; merge-only after)
+## Branch
+- **Branch used: `claude/loving-sagan-7q3dvw`** (NOT `swarm-nightly-2026-10-12`).
+  The session harness designates `claude/loving-sagan-7q3dvw` as the only branch this
+  session is permitted to push to ("NEVER push to a different branch without explicit
+  permission"). That instruction is more specific to this session than the routine's
+  branch-naming convention, and it satisfies the routine's actual guardrail (never push
+  to `main`, one fresh branch per run, one PR per run). Deviation logged here, in the PR
+  body, in Discord, and in the final report.
+- `REMOTE_EXISTS` = 0 (branch not on origin at run start) — fresh branch, never pushed.
+- HEAD at run start == `origin/main` exactly (0 ahead, 0 behind). No sync needed.
 
-## Credential preflight
-- LINEAR_API_KEY: present (GraphQL via .claude/scripts/linear.sh)
-- DISCORD_BUILDS_WEBHOOK: present
-- POSTHOG_API_KEY / POSTHOG_PROJECT_ID: MISSING — PostHog data pull skipped this run
-- VERCEL_TOKEN / Vercel MCP: not available — Vercel env-var + log checks skipped
-- Linear MCP server: requires interactive OAuth, unavailable headless — using REST/GraphQL via linear.sh instead
-- gh CLI: not installed in this environment — GitHub operations go through the GitHub MCP server
+## Preflight
+- `LINEAR_API_KEY` ✅ present — Linear used via GraphQL API directly (the Linear **MCP
+  server** in this session is unauthenticated and unusable; the API key path works).
+- `DISCORD_BUILDS_WEBHOOK` ✅ present. `DISCORD_WEBHOOK_URL` ❌ missing — using
+  `DISCORD_BUILDS_WEBHOOK` (the name `linear.sh` actually resolves).
+- `POSTHOG_API_KEY` / `POSTHOG_PROJECT_ID` ❌ missing — no PostHog pull possible this run.
+  Already tracked as VGC-220; no duplicate ticket filed.
+- No `VERCEL_TOKEN` and no Vercel MCP server — Vercel env vars and runtime logs are not
+  reachable this run.
+- No `DATABASE_URL` — nothing touching the DB can be exercised at runtime.
+- `npm install` succeeded with the container proxy left intact (`CYPRESS_INSTALL_BINARY=0`).
+  `scripts/swarm-setup.sh` was deliberately NOT sourced: it unsets `HTTPS_PROXY`, which
+  this container requires for all outbound traffic.
 
-## History mode change
-- First push completed at the pre-flight-notes commit. The branch is now
-  PUBLISHED on origin. From this point: **merge only, never rebase, never force-push.**
-- Tip commit of this push is `.swarm/*.md` only (docs). Per CLAUDE.md's Ignored
-  Build Step rule, Vercel diffs only the tip commit and excludes `*.md`, so this
-  push is expected to CANCEL rather than consume build minutes. Intentional.
+## Baseline gate (before any change)
+- `npm run typecheck` (cold, `--incremental false`) ✅ clean
+- `vitest run` ✅ 60 files / 501 tests passing
+- `npm run build` — see below
+
+## Existing PR for this branch
+- None at run start.
+- `npm run build` ✅ passing (baseline green across all three gates).
