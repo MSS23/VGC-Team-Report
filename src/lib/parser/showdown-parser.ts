@@ -1,4 +1,6 @@
-import type { ParsedPokemon, ParsedTeam, PokemonType, StatSpread } from "@/lib/types/pokemon";
+import type { ParsedPokemon, ParsedTeam, PokemonType, StatForm, StatSpread } from "@/lib/types/pokemon";
+import { isChampionsFormat } from "@/lib/data/tags";
+import { resolveTeamStatForm } from "@/lib/analysis/stat-calculator";
 
 const POKEMON_TYPES: PokemonType[] = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -164,7 +166,34 @@ function parsePokemonBlock(block: string): { pokemon: ParsedPokemon; warnings: s
   };
 }
 
-export function parseShowdownPaste(paste: string): ParsedTeam {
+/**
+ * Decide the unit the paste's `EVs:` lines are written in (VGC-291).
+ *
+ * Regulation first, shape second:
+ *  - A non-Champions regulation is conclusive — Reg A–I are EV formats, so
+ *    even a tiny spread like `EVs: 20 Atk / 12 Spe` is EVs, not 32 SP.
+ *  - A Champions regulation still needs the shape, because the app accepts
+ *    traditional EV spreads in Champions formats and converts them on display
+ *    (`convertToChampionsSp`); only a spread that fits 66/32 is actual SP.
+ *  - With no regulation (the Compare page, opponent pastes) the shape is all
+ *    there is, so this reproduces the old heuristic — but computes it once,
+ *    team-wide, and records the answer instead of leaving every consumer to
+ *    re-derive it per Pokemon.
+ */
+function resolvePasteStatForm(pokemon: ParsedPokemon[], regulation?: string | null): StatForm {
+  if (regulation != null && regulation !== "" && !isChampionsFormat(regulation)) return "ev";
+  return resolveTeamStatForm(pokemon);
+}
+
+export interface ParseOptions {
+  /**
+   * The team's regulation (e.g. `"Reg G"`, `"Reg M-C"`) when the caller knows
+   * it. Supplying it removes the guess from `statForm` entirely.
+   */
+  regulation?: string | null;
+}
+
+export function parseShowdownPaste(paste: string, options: ParseOptions = {}): ParsedTeam {
   const allWarnings: string[] = [];
   let teamName: string | undefined;
 
@@ -210,8 +239,18 @@ export function parseShowdownPaste(paste: string): ParsedTeam {
     allWarnings.push(`Found ${pokemon.length} Pokemon, but a VGC team has 6. Showing first 6.`);
   }
 
+  const roster = pokemon.slice(0, 6);
+
+  // Stamp the unit on every member. Decided from the whole roster so one
+  // paste is always read in one unit, then recorded per Pokemon so no
+  // downstream consumer has to re-infer it (see VGC-291).
+  const statForm = resolvePasteStatForm(roster, options.regulation);
+  for (const mon of roster) {
+    mon.statForm = statForm;
+  }
+
   return {
-    pokemon: pokemon.slice(0, 6),
+    pokemon: roster,
     warnings: allWarnings,
     teamName,
   };

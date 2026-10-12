@@ -8,8 +8,7 @@ import {
   calculateAllStats,
   calculateChampionsStat,
   convertToChampionsSp,
-  CHAMPIONS_MAX_SP_PER_STAT,
-  CHAMPIONS_TOTAL_SP,
+  resolveTeamStatForm,
 } from "@/lib/analysis/stat-calculator";
 import { getItemStatBoost } from "@/lib/analysis/item-boosts";
 import { getDefensiveProfile } from "@/lib/data/type-chart";
@@ -116,32 +115,14 @@ interface CompareAnalyzedPokemon extends AnalyzedPokemon {
   spriteSpecies: string;
 }
 
-/**
- * Champions-format detection for a parsed team.
- *
- * The Compare page receives raw pastes without regulation metadata, so we
- * infer the format from the spread shape. Champions (Reg M-A) pastes carry
- * SP values in the EV line — total ≤ 66, no stat > 32 — which is
- * unambiguous vs. Reg G (total up to 508). Applied team-wide so every
- * Pokemon in the same paste is read consistently.
- */
-function looksLikeChampionsTeam(pokemon: { evs: import("@/lib/types/pokemon").StatSpread }[]): boolean {
-  if (pokemon.length === 0) return false;
-  for (const p of pokemon) {
-    const stats = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
-    const total = stats.reduce((sum, s) => sum + p.evs[s], 0);
-    if (total === 0) continue; // uninvested — inconclusive
-    if (total > CHAMPIONS_TOTAL_SP) return false;
-    if (stats.some((s) => p.evs[s] > CHAMPIONS_MAX_SP_PER_STAT)) return false;
-  }
-  return true;
-}
-
 function analyzePaste(paste: string): CompareAnalyzedPokemon[] | null {
   if (!paste.trim()) return null;
   const parsed = parseShowdownPaste(paste);
   if (parsed.pokemon.length === 0) return null;
-  const isChampions = looksLikeChampionsTeam(parsed.pokemon);
+  // The parser already decided the unit of this paste (VGC-291) — the
+  // Compare page gets raw pastes with no regulation metadata, so it reads the
+  // recorded `statForm` rather than re-deriving the format from spread shape.
+  const isChampions = resolveTeamStatForm(parsed.pokemon) === "sp";
   return parsed.pokemon.map((p) => {
     let data = lookupPokemon(p.species);
     let displaySpecies = p.species;

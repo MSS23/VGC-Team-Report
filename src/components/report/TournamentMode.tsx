@@ -9,11 +9,29 @@ import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { TYPE_COLORS } from "@/lib/utils/type-colors";
 import { NATURES } from "@/lib/data/natures";
 import { isChampionsFormat } from "@/lib/data/tags";
+import { calculateAllChampionsStats, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
 import { useTranslation } from "@/lib/i18n";
 import { translateMove } from "@/lib/utils/translate-move";
-import type { PokemonType } from "@/lib/types/pokemon";
+import type { PokemonType, StatSpread } from "@/lib/types/pokemon";
 
 export type StatView = "evs" | "stats";
+
+/**
+ * Stats as the rest of the report shows them.
+ *
+ * Champions regs budget Stat Points, so stats must be rebuilt from the SP
+ * spread the way `PokemonCard` / `PokemonDetailSlide` / `SpeedTierChart` do —
+ * `calculatedStats` is always the classic EV formula. Reading it here made
+ * Tournament Mode disagree with the cards and the speed-tier chart about the
+ * same Pokemon (VGC-292: Dragapult showed 182 Speed here and 213 there).
+ */
+export function tournamentDisplayStats(mon: AnalyzedPokemon, regulation?: string): StatSpread {
+  if (isChampionsFormat(regulation) && mon.data) {
+    const sp = convertToChampionsSp(mon.parsed.evs);
+    return calculateAllChampionsStats(mon.data.baseStats, sp, mon.parsed.nature);
+  }
+  return mon.calculatedStats;
+}
 
 interface TournamentModeProps {
   analysis: TeamAnalysis;
@@ -63,15 +81,18 @@ function CompactCard({
   getSpriteConfig,
   statView,
   hideTera,
+  regulation,
 }: {
   pokemon: AnalyzedPokemon;
   speciesKey: string;
   getSpriteConfig?: (key: string) => SpriteConfig;
   statView: StatView;
   hideTera?: boolean;
+  regulation?: string;
 }) {
   const { language } = useTranslation();
-  const { parsed, data, calculatedStats } = pokemon;
+  const { parsed, data } = pokemon;
+  const displayStats = tournamentDisplayStats(pokemon, regulation);
   const types = data?.types ?? [];
   const sc = getSpriteConfig?.(speciesKey);
   const natureData = NATURES[parsed.nature];
@@ -83,7 +104,7 @@ function CompactCard({
 
   const stats = statKeys.map((key) => ({
     label: statLabels[key],
-    value: statView === "stats" ? (calculatedStats[key] ?? 0) : evs[key],
+    value: statView === "stats" ? (displayStats[key] ?? 0) : evs[key],
     key,
   }));
 
@@ -219,7 +240,7 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig, regulat
 
   // Sort by speed for the speed tier section
   const speedTiers = [...pokemon]
-    .map((mon, i) => ({ mon, key: speciesKeys[i], speed: mon.calculatedStats.spe }))
+    .map((mon, i) => ({ mon, key: speciesKeys[i], speed: tournamentDisplayStats(mon, regulation).spe }))
     .sort((a, b) => b.speed - a.speed);
 
   return (
@@ -271,6 +292,7 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig, regulat
             getSpriteConfig={getSpriteConfig}
             statView={statView}
             hideTera={hideTera}
+            regulation={regulation}
           />
         ))}
       </div>
@@ -329,7 +351,7 @@ export function PrintableTournamentMode({
   const hideTera = isChampionsFormat(regulation);
 
   const speedTiers = [...pokemon]
-    .map((mon, i) => ({ mon, key: speciesKeys[i], speed: mon.calculatedStats.spe }))
+    .map((mon, i) => ({ mon, key: speciesKeys[i], speed: tournamentDisplayStats(mon, regulation).spe }))
     .sort((a, b) => b.speed - a.speed);
 
   return (
@@ -360,6 +382,7 @@ export function PrintableTournamentMode({
             getSpriteConfig={getSpriteConfig}
             statView={statView}
             hideTera={hideTera}
+            regulation={regulation}
           />
         ))}
       </div>

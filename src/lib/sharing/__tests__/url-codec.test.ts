@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import type { ShareableState } from "@/lib/sharing/url-codec";
+import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
+import { convertToChampionsSp } from "@/lib/analysis/stat-calculator";
 import zlib from "node:zlib";
 
 // The production code uses CompressionStream/DecompressionStream which behave
@@ -275,5 +277,27 @@ describe("decodeShareState (real implementation, lazy zod)", () => {
   it("still decodes legacy links carrying the removed `replays` key (keys are stripped, not rejected)", async () => {
     const withLegacyKey = encodeRaw({ ...MINIMAL_STATE, replays: ["https://example.com/r/1"] });
     await expect(decodeShareState(withLegacyKey)).resolves.toEqual(MINIMAL_STATE);
+  });
+
+  // VGC-291 added an explicit `statForm` ("ev" | "sp") to ParsedPokemon. The
+  // shared wire format deliberately persists only the raw paste — never a
+  // ParsedPokemon — so there is no schema field to version and a link shared
+  // before VGC-291 must decode identically and render the same numbers. This
+  // pins that contract: if anyone ever starts persisting parsed Pokemon, the
+  // optional-with-fallback requirement has to be handled here.
+  it("decodes a pre-VGC-291 Champions link unchanged — statForm is never on the wire", async () => {
+    const CHAMPIONS_PASTE =
+      "Venusaur @ Venusaurite\nAbility: Overgrow\nEVs: 22 HP / 11 Def / 24 SpA / 4 SpD / 5 Spe\nModest Nature\n- Giga Drain";
+    const legacy: ShareableState = { paste: CHAMPIONS_PASTE, notes: {}, matchupPlans: [] };
+
+    const decoded = await decodeShareState(encodeRaw(legacy));
+    expect(decoded).toEqual(legacy);
+    expect(JSON.stringify(decoded)).not.toContain("statForm");
+
+    // Re-parsing the stored paste recovers the SP reading the old magnitude
+    // heuristic produced, so the rendered spread is byte-identical.
+    const team = parseShowdownPaste(decoded!.paste);
+    expect(team.pokemon.map((p) => p.statForm)).toEqual(["sp"]);
+    expect(convertToChampionsSp(team.pokemon[0].evs)).toEqual(team.pokemon[0].evs);
   });
 });

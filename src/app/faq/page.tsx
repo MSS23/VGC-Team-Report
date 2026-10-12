@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BreadcrumbListJsonLd, FAQPageJsonLd, HowToSchema } from "@/components/seo/JsonLd";
+import { BreadcrumbListJsonLd, FAQPageJsonLd, HowToSchema, type HowToStep } from "@/components/seo/JsonLd";
 import { PageFooter } from "@/components/layout/PageFooter";
 
 export const metadata: Metadata = {
@@ -106,7 +106,13 @@ const FAQ_ITEMS = [
 
 // "How to share a VGC team" — wired from .swarm/drafts/r7-content-brief-share-vgc-team-howto.md.
 // HowTo schema is the highest-yield AEO win per R7 audit; steps must match the FAQ answer.
-const SHARE_VGC_TEAM_HOW_TO_STEPS = [
+// VGC-298: these steps are rendered visibly in the section below. The HowTo
+// JSON-LD must only ever describe content a visitor can actually see on the
+// page — hidden structured data risks a manual action. The heading tracks the
+// `name` on the HowTo node in HowToSchema.
+const SHARE_VGC_TEAM_HOW_TO_TITLE = "How to create and share a VGC team report";
+
+const SHARE_VGC_TEAM_HOW_TO_STEPS: HowToStep[] = [
   {
     name: "Export your team from Pokémon Showdown",
     text: "Open Pokémon Showdown's team builder, select the team you want to share, and click Export. Copy the resulting Showdown-format text, or copy a pokepast.es URL if your team is already uploaded there.",
@@ -177,6 +183,39 @@ export default function FAQPage() {
             </div>
           ))}
         </div>
+
+        {/* How to share a VGC team — the visible source for the HowTo JSON-LD above */}
+        <section className="mt-12" aria-labelledby={slugify(SHARE_VGC_TEAM_HOW_TO_TITLE)}>
+          <h2
+            id={slugify(SHARE_VGC_TEAM_HOW_TO_TITLE)}
+            className="text-base sm:text-lg font-semibold text-text-primary mb-3 leading-snug"
+          >
+            {SHARE_VGC_TEAM_HOW_TO_TITLE}
+          </h2>
+          <p className="text-sm sm:text-base text-text-secondary leading-relaxed mb-6">
+            The full five-step walkthrough, from Showdown export to a permanent shareable link.
+          </p>
+          <ol className="space-y-6">
+            {SHARE_VGC_TEAM_HOW_TO_STEPS.map((step, index) => (
+              <li key={step.name} className="flex gap-4">
+                <span
+                  className="flex-none flex items-center justify-center w-8 h-8 rounded-full bg-surface-alt border border-border text-sm font-bold text-text-primary"
+                  aria-hidden="true"
+                >
+                  {index + 1}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-semibold text-text-primary mb-1 leading-snug">
+                    {step.name}
+                  </h3>
+                  <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
+                    {step.text}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
 
         {/* Bottom CTA */}
         <div className="mt-12 p-5 sm:p-6 rounded-2xl bg-surface border border-border">

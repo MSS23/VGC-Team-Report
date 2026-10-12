@@ -30,6 +30,9 @@ const VersionHistoryPanel = dynamic(
   { ssr: false },
 );
 
+/** id of the overflow settings panel, referenced by its trigger's aria-controls. */
+const NAV_MENU_ID = "navbar-settings-menu";
+
 interface NavbarProps {
   // Mode flags
   isPresentationStyle: boolean;
@@ -203,6 +206,7 @@ export function Navbar(props: NavbarProps) {
   const [versionPanelOpen, setVersionPanelOpen] = useState(false);
   const [pasteCopied, setPasteCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   // ── Save toggle for shared-view non-owner menu item ───────────────
   // Replaces the deleted FloatingReactionDock's bookmark control AND the
@@ -268,8 +272,20 @@ export function Navbar(props: NavbarProps) {
         setMenuOpen(false);
       }
     };
+    // Escape closes the overflow panel and returns focus to the trigger, so a
+    // keyboard user is never left with focus inside a collapsed container.
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+    };
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [menuOpen]);
 
   const isLocalDraft = !isSharedView && !isPresentationStyle;
@@ -604,15 +620,18 @@ export function Navbar(props: NavbarProps) {
 
           {/* PDF export, version history, tournament mode — all in overflow menu now */}
 
-          {/* ── Overflow menu (settings, auth, theme) ── */}
+          {/* ── Overflow menu (settings, auth, theme) ──
+              aria-controls is set only while the panel is open, since the panel
+              is unmounted when closed and the idref would otherwise dangle. */}
           <div className="relative" ref={menuRef}>
             <button
+              ref={menuButtonRef}
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
               className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Settings"
               aria-expanded={menuOpen}
-              aria-haspopup="menu"
+              aria-controls={menuOpen ? NAV_MENU_ID : undefined}
             >
               {showUser ? (
                 <div className="w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center text-accent">
@@ -628,7 +647,17 @@ export function Navbar(props: NavbarProps) {
             </button>
 
             {menuOpen && (
-              <div role="menu" className="absolute right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl py-2 min-w-[240px] z-50 animate-fade-in">
+              /* Not role="menu": this panel holds switches, a <select>, a
+                 Clerk widget and links, none of which are valid menuitems.
+                 A labelled disclosure group (aria-expanded/aria-controls on
+                 the trigger) describes it correctly and keeps every native
+                 control's own semantics and keyboard behaviour intact. */
+              <div
+                id={NAV_MENU_ID}
+                role="group"
+                aria-label="Settings menu"
+                className="absolute right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl py-2 min-w-[240px] z-50 animate-fade-in"
+              >
                 {/* Account section */}
                 {showUser && (
                   <>

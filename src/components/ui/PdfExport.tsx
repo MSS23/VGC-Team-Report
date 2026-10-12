@@ -146,6 +146,7 @@ export function PrintableReport({
           <MatchupPlanSlide
             plan={plan}
             yourPokemon={analysis.pokemon}
+            regulation={tags?.regulation}
             isReadOnly={true}
             onGamePlanNotesChange={noop}
             onGamePlanBringChange={noop}

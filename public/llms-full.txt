@@ -1,6 +1,6 @@
 # VGC Team Report
 
-Updated: 2026-05-23
+Updated: 2026-10-12
 Source: https://pokemonvgcteamreport.com
 
 > VGC Team Report is the premier team report builder and sharing platform for competitive Pokémon Video Game Championship (VGC) players. Unlike paste viewers (PokePaste) or usage-statistics tools (Pikalytics), VGC Team Report lets players author rich, structured team reports with damage calculations, matchup plans, speed tier breakdowns, and strategy notes — then share them as a permanent public link or embed them anywhere.
@@ -48,6 +48,9 @@ Dedicated hub for the Pokémon Champions format (Regulations M-A, M-B and the cu
 - Featured team reports in the Champions format
 - Commonly used Mega Evolutions and restricted legendaries in the format
 
+### https://pokemonvgcteamreport.com/tools/ev-to-sp
+EV to SP converter for Pokémon Champions. Converts a classic EV spread into Stat Points and back against the 66 SP budget and the 32 SP per-stat cap, with a full conversion table of the EV values players actually type into Showdown. It runs the same conversion functions the report pages use, so the table cannot drift from the app.
+
 ### https://pokemonvgcteamreport.com/faq
 Answers to common questions about the platform, team reports, VGC formats, importing teams, and sharing reports. See the FAQ section below for a summary.
 
@@ -61,14 +64,14 @@ Individual team report pages. Each public report is accessible at a permanent sh
 
 ### What is the Champions format?
 
-Pokémon Champions is a VGC format introduced for the 2026 competitive season under the name "Regulation M-A." It reintroduces Mega Evolutions — a mechanic last seen in standard competitive play in Generation 6/7 — alongside the modern Pokémon Scarlet & Violet roster.
+Pokémon Champions is a VGC format introduced for the 2026 competitive season, starting with "Regulation M-A." It reintroduces Mega Evolutions — a mechanic last seen in standard competitive play in Generation 6/7 — alongside the modern Pokémon Scarlet & Violet roster. The current regulation is **M-C** (September 9 – December 2, 2026); each Champions regulation is a superset of the one before it (M-A ⊂ M-B ⊂ M-C), so nothing is ever removed, but a later-regulation pick is not legal in an earlier regulation.
 
 Key rules:
 - Teams of 6, bring 4 to battle (standard VGC doubles format)
-- Two restricted Legendary Pokémon are allowed (same as Regulation G/H)
 - Mega Evolutions are legal — one Pokémon per team can Mega Evolve in battle
-- All Scarlet & Violet Pokémon in the Home-compatible Pokédex are legal, including past-gen Pokémon transferred via Pokémon Home
-- Tera Types are still available (one Tera per battle)
+- Each regulation has its own curated Pokédex; VGC Team Report checks a pasted team against the dex for the regulation it detects
+- There is no Terastallization in Champions, and IVs are locked to 31 across the board
+- Stat investment uses **SP (Stat Points)** instead of EVs: 66 SP per Pokémon, maximum 32 SP in any one stat (see "What is the difference between SP and EVs?" below)
 
 The format creates a dramatically different meta from previous regulation sets because Mega Evolutions bypass the standard Ability system while active, enabling combinations not seen in recent VGC history (e.g., Mega Kangaskhan's Parental Bond, Mega Salamence's Aerilate, Mega Gengar's Shadow Tag).
 
@@ -86,11 +89,13 @@ Shared reports are read-only for visitors. The owner (or collaborators with the 
 
 ### What is the difference between SP and EVs?
 
-**EVs (Effort Values)** are the underlying game mechanic in Pokémon. Each Pokémon can hold a maximum of 508 total EVs, with a cap of 252 in any single stat. 4 EVs = 1 stat point at level 50 (for most stats). EVs are the standard way to describe a Pokémon's training in Showdown format and PokePaste.
+**EVs (Effort Values)** are the stat-investment mechanic of the standard Scarlet & Violet VGC formats. The budget is 510 EVs per Pokémon with a cap of 252 in any single stat. EVs are how a Pokémon's training is written in Showdown format and on PokePaste.
 
-**SP (Stat Points or Standard Points)** is an alternative notation sometimes used in team reports and competitive coaching content — particularly in some international communities — where 1 SP = 1 EV. The terms are interchangeable. If you see a Pokémon listed with "252 SP Atk" it means the same thing as "252 EVs in Attack" (i.e., 252 Attack EVs).
+**SP (Stat Points)** is a different system — not a different notation — and it is what Pokémon Champions (Regulation M-A/M-B/M-C) uses in place of EVs. The conversion is not 1:1 — the first SP in a stat costs 4 EVs and every SP after that costs 8 (so 32 SP = 248+ EVs). The budget is 66 SP total per Pokémon with a maximum of 32 SP per stat, compared to the 510-EV / 252-per-stat budget of standard VGC formats.
 
-VGC Team Report accepts both notations when importing and displays EVs in the standard Showdown format on all report pages.
+Because 248 EVs and a maxed 252 EVs both land on the 32 SP per-stat cap, the classic 252 / 252 / 4 EV spread converts to 32 / 32 / 1 — 65 of the 66 available Stat Points, leaving one point spare.
+
+VGC Team Report auto-detects Champions teams and shows SP on report cards, the per-Pokémon detail view, and the speed tier chart; standard-format teams keep showing EVs. The `/tools/ev-to-sp` converter does the maths in both directions with the same function the reports use.
 
 ### How do I embed a team report?
 
@@ -109,7 +114,8 @@ For Discord, the `/s/[id]` link automatically generates a rich Open Graph previe
 ## Key concepts glossary
 
 - **Team report:** A structured document covering a VGC team's six Pokémon builds (moves, item, EVs/IVs, nature, tera type), overall team strategy, matchup plans against common threats, damage calculations, and speed tier comparisons.
-- **Regulation set / Format:** VGC rotates its legal Pokémon list seasonally. Regulation G and Regulation H are recent standard formats from the Scarlet & Violet era. Regulations M-A, M-B and M-C (Champions) are the 2026 formats adding Mega Evolutions; M-C is current.
+- **Regulation set / Format:** VGC rotates its legal Pokémon list seasonally. Regulation G and Regulation H are recent standard formats from the Scarlet & Violet era. Regulations M-A, M-B and M-C (Champions) are the 2026 formats adding Mega Evolutions; M-C is current (Sep 9 – Dec 2 2026) and each regulation is a superset of the last (M-A ⊂ M-B ⊂ M-C).
+- **SP (Stat Points) vs EVs:** SP is the stat-investment system used by Pokémon Champions (Regulation M-A/M-B/M-C) in place of EVs. The conversion is not 1:1 — the first SP in a stat costs 4 EVs and every SP after that costs 8 (so 32 SP = 248+ EVs). The budget is 66 SP total per Pokémon with a maximum of 32 SP per stat, compared to the 510-EV / 252-per-stat budget of standard VGC formats.
 - **Restricted Legendary:** High-power Legendary Pokémon that are legal in limited quantities per team (usually two in recent formats).
 - **Speed tier:** A comparison of a Pokémon's Speed stat relative to common threats to determine who moves first without Trick Room or priority moves.
 - **Damage calc / Calculation:** A computation of how much damage a specific move deals from one Pokémon to another under specific conditions (EVs, stat boosts, weather, terrain, etc.). Essential for EV spread decisions.

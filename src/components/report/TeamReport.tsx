@@ -368,6 +368,7 @@ export function TeamReport({
           <MatchupPlanSlide
             plan={plan}
             yourPokemon={analysis.pokemon}
+            regulation={tags?.regulation}
             isReadOnly={isReadOnly}
             onGamePlanNotesChange={onGamePlanNotesChange ?? (() => {})}
             onGamePlanBringChange={onGamePlanBringChange ?? (() => {})}

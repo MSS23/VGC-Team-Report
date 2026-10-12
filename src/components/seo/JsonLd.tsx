@@ -149,6 +149,12 @@ export interface BreadcrumbItem {
  * Pass items in order from root to current page, e.g.:
  *   [{ name: "Home", url: "https://pokemonvgcteamreport.com" },
  *    { name: "Explore", url: "https://pokemonvgcteamreport.com/explore" }]
+ *
+ * @deprecated Use {@link BreadcrumbListJsonLd} instead — it emits the same
+ * BreadcrumbList node and is the name the rest of the app uses. As of
+ * 2026-10-12 this duplicate has **zero** callers in `src/` (the last one,
+ * `app/creator/[name]/page.tsx`, moved off it in VGC-298) and is kept only so
+ * its removal can be a separate, reviewable commit. Do not add new callers.
  */
 export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
   if (items.length === 0) return null;

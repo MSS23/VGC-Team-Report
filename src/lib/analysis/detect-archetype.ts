@@ -1,6 +1,6 @@
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { detectMegaFromItem } from "@/lib/utils/mega-detect";
-import { CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT } from "@/lib/analysis/stat-calculator";
+import { CHAMPIONS_MAX_SP_PER_STAT, MAX_EV_PER_STAT, resolveStatForm } from "@/lib/analysis/stat-calculator";
 
 /**
  * Auto-detect team archetypes based on abilities, moves, and Pokemon composition.
@@ -62,10 +62,16 @@ export function detectArchetypes(pokemon: AnalyzedPokemon[]): string[] {
   }
 
   // Trick Room
+  //
+  // Only Pokemon we actually recognise can vote. A typo'd or unrecognised
+  // species has no dex entry, so `calculatedStats.spe` is 0 — which used to
+  // read as "very slow" and count toward the threshold, tagging a team of
+  // three misspelled names plus one real TR user as "Trick Room".
   const hasTrickRoom = allMoves.includes("trick room");
   const slowCount = pokemon.filter((p) => {
-    const spe = p.data?.baseStats?.spe ?? p.calculatedStats.spe;
-    return spe <= 50;
+    const baseSpe = p.data?.baseStats?.spe;
+    if (baseSpe === undefined) return false;
+    return baseSpe <= 50;
   }).length;
 
   if (hasTrickRoom && slowCount >= 3) {
@@ -81,18 +87,20 @@ export function detectArchetypes(pokemon: AnalyzedPokemon[]): string[] {
 
   // Champions (SP) spreads cap at 32 per stat / 66 total, so the EV-scale
   // investment thresholds below (100/200) could never trigger and every
-  // Champions team fell through to "Goodstuffs". Scale thresholds by the
-  // per-stat max of whichever system the team is using. All-zero spreads
-  // trip the SP branch harmlessly (no threshold fires on zeros either way).
-  const isSpScale = pokemon.length > 0 && pokemon.every((p) => {
-    const evs = p.parsed.evs;
-    if (!evs) return true;
-    return Object.values(evs).reduce((a, b) => a + (b ?? 0), 0) <= CHAMPIONS_TOTAL_SP;
-  });
-  const evScale = isSpScale ? CHAMPIONS_MAX_SP_PER_STAT / 252 : 1;
+  // Champions team fell through to "Goodstuffs". Scale the thresholds by the
+  // per-stat max of whichever unit the spread is actually written in.
+  //
+  // The unit comes from the explicit `statForm` the parser recorded, read per
+  // Pokemon (VGC-291 / VGC-299). This used to be a team-wide
+  // `every(total <= 66)` guess, which meant one classic-EV member among five
+  // Champions SP members flipped the whole team to EV scale and made the SP
+  // members' investment invisible.
+  const scaleOf = (p: AnalyzedPokemon) =>
+    resolveStatForm(p.parsed) === "sp" ? CHAMPIONS_MAX_SP_PER_STAT / MAX_EV_PER_STAT : 1;
 
   // Hyper Offense: lots of max speed/attack investment, few defensive moves
   const offensiveCount = pokemon.filter((p) => {
+    const evScale = scaleOf(p);
     const atkEvs = (p.parsed.evs?.atk ?? 0) + (p.parsed.evs?.spa ?? 0);
     const speEvs = p.parsed.evs?.spe ?? 0;
     return atkEvs >= 200 * evScale && speEvs >= 200 * evScale;
@@ -106,6 +114,7 @@ export function detectArchetypes(pokemon: AnalyzedPokemon[]): string[] {
 
   // Bulky Offense: mix of investment
   const bulkyOffenseCount = pokemon.filter((p) => {
+    const evScale = scaleOf(p);
     const hpEvs = p.parsed.evs?.hp ?? 0;
     const atkEvs = (p.parsed.evs?.atk ?? 0) + (p.parsed.evs?.spa ?? 0);
     return hpEvs >= 100 * evScale && atkEvs >= 100 * evScale;
@@ -125,13 +134,13 @@ export function detectArchetypes(pokemon: AnalyzedPokemon[]): string[] {
     );
     const hasOffense = pokemon.some((p) => {
       const atkEvs = (p.parsed.evs?.atk ?? 0) + (p.parsed.evs?.spa ?? 0);
-      return atkEvs >= 200 * evScale;
+      return atkEvs >= 200 * scaleOf(p);
     });
+    // No "already covered" check needed: the enclosing guard only lets us in
+    // when `detected` is empty or exactly ["Tailwind"], so it can never
+    // contain Bulky/Hyper Offense here.
     if (hasSupport && hasOffense) {
-      // Only add if not already covered
-      if (!detected.includes("Bulky Offense") && !detected.includes("Hyper Offense")) {
-        detected.push("Balance");
-      }
+      detected.push("Balance");
     }
   }
 

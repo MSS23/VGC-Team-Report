@@ -17,7 +17,7 @@ const PAGE_URL = "https://pokemonvgcteamreport.com/tools/ev-to-sp";
 // inside Google's ~60-character SERP title budget.
 const TITLE = "EV to SP Converter for Pokémon Champions";
 const DESCRIPTION =
-  "Free EV to SP converter for Pokémon Champions Regulation M-A. Convert EV spreads to Stat Points (and back) against the 66 SP budget and 32 SP per-stat cap, with a full conversion table.";
+  "Free EV to SP converter for Pokémon Champions (Regulation M-A, M-B and the current M-C). Convert EV spreads to Stat Points (and back) against the 66 SP budget and 32 SP per-stat cap, with a full conversion table.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     "Champions SP calculator",
     "66 SP budget",
     "32 SP per stat",
-    "Regulation M-A SP spread",
+    "Regulation M-C SP spread",
     "Pokemon Champions EV spread",
     "VGC 2026",
   ],

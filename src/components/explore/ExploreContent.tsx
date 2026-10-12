@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion } from "motion/react";
 import { useAuth } from "@clerk/nextjs";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { useSessionId } from "@/hooks/useSessionId";
@@ -259,15 +258,16 @@ function ExploreInner() {
           />
         ) : (
           <>
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: {},
-                visible: { transition: { staggerChildren: 0.05 } },
-              }}
-            >
+            {/*
+              `stagger-children` (globals.css) is the CSS equivalent of the
+              motion staggerChildren this used to orchestrate. ReportCard is no
+              longer a motion child (VGC-296 took the motion runtime off the
+              champions pages and /dashboard), and motion variants only
+              propagate to motion children — so without this the whole grid
+              faded in at once. The CSS utility also picks up the global
+              prefers-reduced-motion rule for free.
+            */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 stagger-children">
               {reports.map((report) => (
                 <ReportCard
                   key={report.id}
@@ -276,7 +276,7 @@ function ExploreInner() {
                   initialSaved={savedIds ? savedIds.has(report.id) : undefined}
                 />
               ))}
-            </motion.div>
+            </div>
 
             {nextCursor && (
               <div className="flex justify-center mt-10">

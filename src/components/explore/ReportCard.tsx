@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { motion } from "motion/react";
 import { useAuth, useUser, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
 import { useTranslation } from "@/lib/i18n";
@@ -159,14 +158,17 @@ export function ReportCard({
 
   const hasTagsSection = !!report.tags?.eventType;
 
+  // Entrance animation is plain CSS (the `fade-in` keyframe is opacity 0 +
+  // translateY(12px), identical to the old motion variant) so this card —
+  // rendered on /explore, /dashboard, /creator and all 72 champions pages —
+  // doesn't drag the motion runtime into those bundles. The global
+  // prefers-reduced-motion rule in globals.css neutralises it for users who
+  // ask for less motion. Grids that want a cascade add `stagger-children`,
+  // which overrides this entrance with the staggered one.
   return (
-    <motion.a
+    <a
       href={`/s/${report.id}`}
-      className="relative block bg-surface rounded-xl border border-border shadow-sm hover:shadow-md hover:border-accent/30 overflow-hidden group card-hover"
-      variants={{
-        hidden: { opacity: 0, y: 12 },
-        visible: { opacity: 1, y: 0 },
-      }}
+      className="relative block bg-surface rounded-xl border border-border shadow-sm hover:shadow-md hover:border-accent/30 overflow-hidden group card-hover animate-[fade-in_0.3s_ease-out]"
     >
       {report.tags?.regulation && (
         <span
@@ -384,6 +386,6 @@ export function ReportCard({
           </span>
         </div>
       </div>
-    </motion.a>
+    </a>
   );
 }
