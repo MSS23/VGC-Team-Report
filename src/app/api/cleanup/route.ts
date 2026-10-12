@@ -1,6 +1,7 @@
 import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
+import { purgeSatellites } from "@/lib/db/purge-satellites";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -21,29 +22,10 @@ async function runCleanup(days: number): Promise<NextResponse> {
   try {
     const sql = getDb();
 
-    // Delete every satellite row tied to a set of share ids that are about to
-    // be hard-deleted. share_versions + edit_changelog were previously leaked
-    // here (only reactions/comments/saved_reports were cleaned), which is a big
-    // part of why share_versions accumulated orphans (§1-B / Finding 5.8).
-    const purgeSatellites = async (ids: string[]) => {
-      // comment_flags reference comments by id — purge them before the
-      // comments they point at are gone.
-      await sql`
-        DELETE FROM comment_flags
-        WHERE comment_id IN (SELECT id FROM comments WHERE share_id = ANY(${ids}))
-      `;
-      await sql`DELETE FROM reactions WHERE share_id = ANY(${ids})`;
-      await sql`DELETE FROM comments WHERE share_id = ANY(${ids})`;
-      await sql`DELETE FROM saved_reports WHERE share_id = ANY(${ids})`;
-      await sql`DELETE FROM share_versions WHERE share_id = ANY(${ids})`;
-      await sql`DELETE FROM edit_changelog WHERE share_id = ANY(${ids})`;
-      await sql`DELETE FROM collection_items WHERE share_id = ANY(${ids})`;
-      await sql`DELETE FROM collaborators WHERE share_id = ANY(${ids})`;
-      await sql`DELETE FROM notifications WHERE source_share_id = ANY(${ids})`;
-      // match_logs are the USER'S match history — keep the rows, drop the
-      // reference to the now-deleted report.
-      await sql`UPDATE match_logs SET share_id = NULL WHERE share_id = ANY(${ids})`;
-    };
+    // The satellite purge sequence (share_versions + edit_changelog were
+    // previously leaked here, which is a big part of why share_versions
+    // accumulated orphans — §1-B / Finding 5.8) lives in @/lib/db/purge-satellites
+    // so /api/user/delete runs the exact same sequence (VGC-288).
 
     // 1. Purge soft-deleted reports older than TRASH_TTL_DAYS
     const trashIds = await sql`
@@ -55,7 +37,7 @@ async function runCleanup(days: number): Promise<NextResponse> {
     let trashPurged = 0;
     if (trashIds.length > 0) {
       const ids = trashIds.map((r) => r.id as string);
-      await purgeSatellites(ids);
+      await purgeSatellites(sql, ids);
       const purged = await sql`DELETE FROM shares WHERE id = ANY(${ids}) RETURNING id`;
       trashPurged = purged.length;
     }
@@ -75,7 +57,7 @@ async function runCleanup(days: number): Promise<NextResponse> {
     let deleted = 0;
     if (staleIds.length > 0) {
       const ids = staleIds.map((r) => r.id as string);
-      await purgeSatellites(ids);
+      await purgeSatellites(sql, ids);
       const purged = await sql`DELETE FROM shares WHERE id = ANY(${ids}) RETURNING id`;
       deleted = purged.length;
     }

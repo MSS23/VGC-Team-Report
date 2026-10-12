@@ -1,6 +1,7 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { satellitePurgeStatements } from "@/lib/db/purge-satellites";
 import { apiGuard } from "@/lib/security/api-guard";
 import { cacheInvalidatePrefix } from "@/lib/cache";
 
@@ -59,16 +60,25 @@ export async function DELETE(request: Request) {
       sql`DELETE FROM share_versions WHERE editor_id = ${userId}`,
     ];
 
-    // comments & reactions on user's shares — guard against empty array to avoid
-    // SQL error with ANY('{}'::text[])
+    // Satellite rows on the user's shares (comment_flags, reactions, comments,
+    // saved_reports, share_versions, edit_changelog, collection_items,
+    // collaborators, notifications, match_logs). Shared with /api/cleanup so the
+    // two hard-delete paths can't drift — this path used to purge only comments
+    // and reactions and left the rest behind (VGC-288). Guard against an empty
+    // array to avoid a SQL error with ANY('{}').
     if (shareIds.length > 0) {
-      statements.push(sql`DELETE FROM comments WHERE share_id = ANY(${shareIds}::text[])`);
-      statements.push(sql`DELETE FROM reactions WHERE share_id = ANY(${shareIds}::text[])`);
+      statements.push(...satellitePurgeStatements(sql, shareIds));
     }
 
     statements.push(sql`DELETE FROM saved_reports WHERE user_id = ${userId}`);
     statements.push(sql`DELETE FROM follows WHERE user_id = ${userId}`);
     statements.push(sql`DELETE FROM notifications WHERE user_id = ${userId}`);
+    // The deleting user's OWN match history (notes, tournament_name). The shared
+    // satellite purge above only nulls match_logs.share_id, because for report
+    // cleanup another user's logged match must survive the report going away —
+    // but on account deletion these rows are this user's personal data and have
+    // to go (VGC-288).
+    statements.push(sql`DELETE FROM match_logs WHERE user_id = ${userId}`);
     // ANONYMIZE feedback (preserve rows, wipe PII only)
     statements.push(sql`
       UPDATE feedback SET submitter_id = NULL, submitter_name = NULL
