@@ -24,6 +24,7 @@ import { getRegulationLookupKey } from "@/lib/data/gen9-regulation-signals";
 import {
   CHAMPIONS_TOTAL_SP,
   CHAMPIONS_MAX_SP_PER_STAT,
+  resolveStatForm,
 } from "@/lib/analysis/stat-calculator";
 
 // ── Severity levels ─────────────────────────────────────────────────────────
@@ -272,13 +273,34 @@ export function validateChampionsTeam(
   // still surface.
   for (const p of pokemon) {
     const total = Object.values(p.evs).reduce((a, b) => a + b, 0);
-    const maxPerStat = Math.max(...Object.values(p.evs));
-    const looksLikeSp = total > 0 && total <= CHAMPIONS_TOTAL_SP && maxPerStat <= CHAMPIONS_MAX_SP_PER_STAT;
+    // The unit comes from the explicit `statForm` the parser recorded
+    // (VGC-291), which replaces the fourth copy of the magnitude heuristic
+    // that used to live here. `resolveStatForm` falls back to that heuristic
+    // only for a ParsedPokemon from before the field existed.
+    const isSpSpread = total > 0 && resolveStatForm(p) === "sp";
 
-    if (looksLikeSp) {
-      // looksLikeSp guarantees every stat ≤ 32, so per-stat cap is already
-      // satisfied — only the total-budget hint is worth surfacing.
-      if (total < CHAMPIONS_TOTAL_SP) {
+    if (isSpSpread) {
+      // These two checks could never fire while the unit was inferred from
+      // magnitude — the old `looksLikeSp` only called a spread SP once it had
+      // already proved total ≤ 66 and every stat ≤ 32, so the cap it then
+      // "checked" was true by construction (VGC-291). With the unit carried
+      // explicitly, an over-cap SP spread is finally reachable.
+      for (const [stat, value] of Object.entries(p.evs)) {
+        if (value > CHAMPIONS_MAX_SP_PER_STAT) {
+          issues.push({
+            severity: "error",
+            message: `${p.species}: ${stat.toUpperCase()} SP (${value}) exceeds the per-stat maximum of ${CHAMPIONS_MAX_SP_PER_STAT}`,
+            pokemon: p.species,
+          });
+        }
+      }
+      if (total > CHAMPIONS_TOTAL_SP) {
+        issues.push({
+          severity: "error",
+          message: `${p.species}: SP total ${total} exceeds maximum of ${CHAMPIONS_TOTAL_SP}`,
+          pokemon: p.species,
+        });
+      } else if (total < CHAMPIONS_TOTAL_SP) {
         issues.push({
           severity: "info",
           message: `${p.species}: ${total}/${CHAMPIONS_TOTAL_SP} SP allocated — ${CHAMPIONS_TOTAL_SP - total} more available`,

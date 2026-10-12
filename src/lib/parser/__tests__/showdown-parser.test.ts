@@ -241,3 +241,55 @@ describe("parseShowdownPaste", () => {
     });
   });
 });
+
+// VGC-291: the stat unit is now carried explicitly on every ParsedPokemon
+// instead of being re-inferred from per-stat magnitude by each consumer.
+describe("statForm (explicit stat unit)", () => {
+  const CHAMPIONS_PASTE = [
+    `Venusaur @ Venusaurite\nAbility: Overgrow\nEVs: 22 HP / 11 Def / 24 SpA / 4 SpD / 5 Spe\nModest Nature\n- Giga Drain\n- Sludge Bomb\n- Protect\n- Sleep Powder`,
+    `Kyogre @ Mystic Water\nAbility: Drizzle\nEVs: 20 HP / 26 SpA / 20 Spe\nModest Nature\n- Water Spout\n- Origin Pulse\n- Ice Beam\n- Protect`,
+  ].join("\n\n");
+
+  it("tags a classic EV paste as 'ev'", () => {
+    const result = parseShowdownPaste(GARCHOMP_BLOCK);
+    expect(result.pokemon[0].statForm).toBe("ev");
+  });
+
+  it("tags an SP-form Champions paste as 'sp'", () => {
+    const result = parseShowdownPaste(CHAMPIONS_PASTE);
+    expect(result.pokemon.map((p) => p.statForm)).toEqual(["sp", "sp"]);
+  });
+
+  it("stamps one unit across the whole roster", () => {
+    const result = parseShowdownPaste(FULL_TEAM_PASTE);
+    expect(result.pokemon).toHaveLength(6);
+    expect(new Set(result.pokemon.map((p) => p.statForm))).toEqual(new Set(["ev"]));
+  });
+
+  it("regression: a small partial EV line in an EV regulation is not mistaken for SP", () => {
+    // 20 Atk / 12 Spe fits the 66/32 SP budget, so shape alone cannot tell it
+    // from a Champions spread. The regulation settles it.
+    const paste = `Garchomp @ Life Orb\nAbility: Rough Skin\nEVs: 20 Atk / 12 Spe\nJolly Nature\n- Earthquake`;
+    expect(parseShowdownPaste(paste, { regulation: "Reg G" }).pokemon[0].statForm).toBe("ev");
+    // Without the regulation the shape is all there is, and it reads as SP.
+    expect(parseShowdownPaste(paste).pokemon[0].statForm).toBe("sp");
+  });
+
+  it("still reads traditional EV spreads in a Champions regulation as EVs", () => {
+    // Champions formats accept EV spreads and convert them for display, so the
+    // regulation alone must not force 'sp'.
+    const result = parseShowdownPaste(GARCHOMP_BLOCK, { regulation: "Reg M-C" });
+    expect(result.pokemon[0].statForm).toBe("ev");
+  });
+
+  it("reads an SP paste as 'sp' under every Champions regulation", () => {
+    for (const reg of ["Reg M-A", "Reg M-B", "Reg M-C"]) {
+      expect(parseShowdownPaste(CHAMPIONS_PASTE, { regulation: reg }).pokemon[0].statForm).toBe("sp");
+    }
+  });
+
+  it("defaults a spreadless paste to 'ev' (0 EVs and 0 SP give identical stats)", () => {
+    const paste = `Garchomp @ Life Orb\nAbility: Rough Skin\nJolly Nature\n- Earthquake`;
+    expect(parseShowdownPaste(paste).pokemon[0].statForm).toBe("ev");
+  });
+});

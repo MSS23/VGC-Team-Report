@@ -245,4 +245,64 @@ describe("validateChampionsTeam — Reg M-C", () => {
     const r = validateChampionsTeam([makePokemon({ species: "Lucario", item: "Lucarionite Z" })], "Reg M-C");
     expect(r.issues.some((i) => i.message.includes("Z-Crystal"))).toBe(false);
   });
+  // ── SP budget, now that the unit is explicit (VGC-291) ──────────────────
+  //
+  // These three cases were unreachable before `statForm` existed. The old
+  // detection only called a spread SP after proving total <= 66 AND every stat
+  // <= 32, so the per-stat cap error it then "checked" was true by
+  // construction and could never fire.
+
+  it("errors on an SP spread that exceeds the 32 SP per-stat cap", () => {
+    const team = makeTeam();
+    team[0] = makePokemon({
+      species: "Incineroar",
+      statForm: "sp",
+      evs: { hp: 40, atk: 0, def: 0, spa: 0, spd: 10, spe: 0 },
+    });
+    const result = validateChampionsTeam(team, "Reg M-C");
+    expect(
+      result.issues.some(
+        (i) => i.severity === "error" && /HP SP \(40\) exceeds the per-stat maximum of 32/.test(i.message),
+      ),
+    ).toBe(true);
+  });
+
+  it("errors on an SP spread that exceeds the 66 SP total budget", () => {
+    const team = makeTeam();
+    team[0] = makePokemon({
+      species: "Incineroar",
+      statForm: "sp",
+      evs: { hp: 32, atk: 32, def: 32, spa: 0, spd: 0, spe: 0 },
+    });
+    const result = validateChampionsTeam(team, "Reg M-C");
+    expect(
+      result.issues.some((i) => i.severity === "error" && /SP total 96 exceeds maximum of 66/.test(i.message)),
+    ).toBe(true);
+  });
+
+  it("still accepts a classic EV spread in a Champions reg without SP errors", () => {
+    // The app deliberately accepts EV spreads in Champions formats and converts
+    // them on display, so an explicit "ev" spread must not be measured against
+    // the 66/32 SP budget.
+    const team = makeTeam();
+    team[0] = makePokemon({
+      species: "Incineroar",
+      statForm: "ev",
+      evs: { hp: 252, atk: 0, def: 0, spa: 0, spd: 252, spe: 4 },
+    });
+    const result = validateChampionsTeam(team, "Reg M-C");
+    expect(result.issues.some((i) => i.severity === "error" && i.message.includes("SP"))).toBe(false);
+  });
+
+  it("falls back to the magnitude heuristic for a pre-statForm ParsedPokemon", () => {
+    // Legacy object with no statForm at all: a 66/32-shaped spread still reads
+    // as SP, so the budget info line appears rather than EV-budget advice.
+    const team = makeTeam();
+    team[0] = makePokemon({
+      species: "Incineroar",
+      evs: { hp: 32, atk: 0, def: 0, spa: 0, spd: 20, spe: 0 },
+    });
+    const result = validateChampionsTeam(team, "Reg M-C");
+    expect(result.issues.some((i) => /52\/66 SP allocated/.test(i.message))).toBe(true);
+  });
 });

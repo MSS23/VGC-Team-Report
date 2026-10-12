@@ -7,6 +7,9 @@ import {
   evToChampionsSp,
   championsSpToEv,
   calcBattleSpeed,
+  isSpFormSpread,
+  resolveStatForm,
+  resolveTeamStatForm,
   CHAMPIONS_TOTAL_SP,
   CHAMPIONS_MAX_SP_PER_STAT,
   MAX_EV_PER_STAT,
@@ -399,5 +402,89 @@ describe("calcBattleSpeed", () => {
   });
   it("is identity with no modifiers", () => {
     expect(calcBattleSpeed(137, 1, {})).toBe(137);
+  });
+});
+
+// VGC-291: the stat unit used to be inferred from per-stat magnitude, and the
+// inference could never be completed — `EVs: 33 HP / 10 Atk` reads as EVs only
+// because of the 33, while `20 Atk / 12 Spe` is a legal reading in either
+// unit. `ParsedPokemon.statForm` carries the unit explicitly instead; these
+// tests pin both the heuristic's limits and the precedence rules around it.
+describe("isSpFormSpread", () => {
+  it("accepts a spread that fits the SP budget (66 total, 32 per stat)", () => {
+    expect(isSpFormSpread(spread({ hp: 22, def: 11, spa: 24, spd: 4, spe: 5 }))).toBe(true);
+  });
+
+  it("rejects a spread with any stat over the per-stat SP cap", () => {
+    // 33 HP is impossible in SP, so this is proof of EV units.
+    expect(isSpFormSpread(spread({ hp: 33, atk: 10 }))).toBe(false);
+  });
+
+  it("rejects a spread whose total exceeds the SP budget", () => {
+    expect(isSpFormSpread(spread({ hp: 32, atk: 32, def: 32 }))).toBe(false);
+  });
+
+  it("rejects an all-zero spread (no investment proves nothing)", () => {
+    expect(isSpFormSpread(spread())).toBe(false);
+  });
+
+  it("cannot tell a small partial EV spread from SP — which is why statForm exists", () => {
+    // A real speed-creep EV line and a real SP line are indistinguishable.
+    expect(isSpFormSpread(spread({ spe: 36 }))).toBe(false); // 36 > 32, provably EVs
+    expect(isSpFormSpread(spread({ hp: 60 }))).toBe(false); // 60 > 32, provably EVs
+    expect(isSpFormSpread(spread({ atk: 20, spe: 12 }))).toBe(true); // genuinely ambiguous
+  });
+});
+
+describe("resolveStatForm", () => {
+  it("trusts an explicit statForm over the spread's shape", () => {
+    // Shape says "could be SP"; the parser says these are EVs. Parser wins.
+    expect(resolveStatForm({ evs: spread({ atk: 20, spe: 12 }), statForm: "ev" })).toBe("ev");
+    // Shape says "must be EVs" (252 > 32); the explicit tag still wins.
+    expect(resolveStatForm({ evs: spread({ atk: 252 }), statForm: "sp" })).toBe("sp");
+  });
+
+  it("falls back to the magnitude heuristic when statForm is absent (legacy payloads)", () => {
+    expect(resolveStatForm({ evs: spread({ hp: 22, spa: 24, spe: 20 }) })).toBe("sp");
+    expect(resolveStatForm({ evs: spread({ hp: 4, atk: 252, spe: 252 }) })).toBe("ev");
+  });
+});
+
+describe("resolveTeamStatForm", () => {
+  const sp = (over: Partial<StatSpread> = {}) => ({ evs: spread(over) });
+
+  it("uses the explicit statForm the parser stamped on the roster", () => {
+    const team = [
+      { evs: spread({ hp: 22, spa: 24, spe: 20 }), statForm: "sp" as const },
+      { evs: spread({ hp: 22, spa: 24, spe: 20 }), statForm: "sp" as const },
+    ];
+    expect(resolveTeamStatForm(team)).toBe("sp");
+  });
+
+  it("regression (VGC-299): one classic-EV member no longer flips five SP members to EV scale", () => {
+    // Old rule was `every(total <= 66)`, so the 508-EV member below dragged
+    // the whole team onto the EV scale and hid the SP members' investment.
+    const team = [
+      { evs: spread({ hp: 22, spa: 24, spe: 20 }), statForm: "sp" as const },
+      { evs: spread({ hp: 20, atk: 26, spe: 20 }), statForm: "sp" as const },
+      { evs: spread({ hp: 22, def: 22, spd: 22 }), statForm: "sp" as const },
+      { evs: spread({ hp: 24, spd: 20, spe: 22 }), statForm: "sp" as const },
+      { evs: spread({ hp: 20, atk: 24, def: 22 }), statForm: "sp" as const },
+      { evs: spread({ hp: 4, atk: 252, spe: 252 }), statForm: "sp" as const },
+    ];
+    expect(resolveTeamStatForm(team)).toBe("sp");
+  });
+
+  it("reads a legacy SP roster as SP, skipping uninvested members", () => {
+    expect(resolveTeamStatForm([sp({ hp: 22, spa: 24, spe: 20 }), sp()])).toBe("sp");
+  });
+
+  it("reads a legacy EV roster as EV", () => {
+    expect(resolveTeamStatForm([sp({ hp: 4, atk: 252, spe: 252 }), sp()])).toBe("ev");
+  });
+
+  it("defaults an empty or all-zero roster to EV (both units compute the same stats)", () => {
+    expect(resolveTeamStatForm([])).toBe("ev");
+    expect(resolveTeamStatForm([sp(), sp()])).toBe("ev");
   });
 });

@@ -1,4 +1,4 @@
-import type { StatSpread, StatName } from "@/lib/types/pokemon";
+import type { StatSpread, StatName, StatForm } from "@/lib/types/pokemon";
 import { getNatureModifier } from "@/lib/data/natures";
 
 export function calculateStat(
@@ -101,6 +101,80 @@ export const CHAMPIONS_TOTAL_SP = 66;
 
 /** Highest EV value that can be placed in a single stat. */
 export const MAX_EV_PER_STAT = 252;
+
+const ALL_STATS: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
+
+/**
+ * The legacy magnitude heuristic, in one place.
+ *
+ * Showdown has no `SPs:` line, so a Champions paste ships its Stat Points
+ * inside the `EVs:` line (e.g. `EVs: 22 HP / 11 Def / 24 SpA / 4 SpD / 5 Spe`,
+ * which sums to 66). This answers the only question magnitude can answer:
+ * "could this spread be SP?" — total within 66 and no stat over 32.
+ *
+ * It is deliberately **incomplete**, and that is why `ParsedPokemon.statForm`
+ * exists. A spread like `33 HP / 10 Atk` is proven to be EVs by the 33, but
+ * `20 Atk / 12 Spe` is a legal reading in either unit, so this function cannot
+ * tell an SP spread from a small partial EV spread. Use it only as the
+ * fallback for payloads that predate `statForm` — `resolveStatForm` and
+ * `resolveTeamStatForm` are the entry points consumers should call.
+ *
+ * Previously this logic was copy-pasted into `convertToChampionsSp`,
+ * `detect-archetype`, `CompareContent` and the Champions legality validator,
+ * which let the four copies disagree.
+ */
+export function isSpFormSpread(evs: StatSpread): boolean {
+  const total = ALL_STATS.reduce((sum, s) => sum + (evs[s] ?? 0), 0);
+  if (total <= 0 || total > CHAMPIONS_TOTAL_SP) return false;
+  return !ALL_STATS.some((s) => (evs[s] ?? 0) > CHAMPIONS_MAX_SP_PER_STAT);
+}
+
+/** Minimal shape `resolveStatForm` needs — any `ParsedPokemon` satisfies it. */
+export interface StatFormCarrier {
+  evs: StatSpread;
+  statForm?: StatForm;
+}
+
+/**
+ * The unit a single spread is expressed in.
+ *
+ * The explicit `statForm` the parser recorded wins outright. Only payloads
+ * that predate it (already-shared reports, older fixtures) fall through to
+ * `isSpFormSpread`, which keeps their rendered numbers exactly as they were.
+ */
+export function resolveStatForm(mon: StatFormCarrier): StatForm {
+  if (mon.statForm) return mon.statForm;
+  return isSpFormSpread(mon.evs) ? "sp" : "ev";
+}
+
+/**
+ * The unit a whole team's spreads are expressed in.
+ *
+ * A paste is exported from one game in one unit, so the unit is a property of
+ * the team rather than of each member. The parser tags every member of a paste
+ * identically, so the first explicit tag speaks for the team.
+ *
+ * The legacy fallback is applied team-wide for the same reason — but note it
+ * must **not** be `every(total <= 66)`. That is the VGC-299 bug: a single
+ * classic-EV member among five SP members flipped the whole team to EV scale
+ * and made the SP members' investment invisible. Uninvested members are
+ * inconclusive and are skipped instead of voting.
+ */
+export function resolveTeamStatForm(team: readonly StatFormCarrier[]): StatForm {
+  for (const mon of team) {
+    if (mon.statForm) return mon.statForm;
+  }
+  let sawInvestment = false;
+  for (const mon of team) {
+    const total = ALL_STATS.reduce((sum, s) => sum + (mon.evs?.[s] ?? 0), 0);
+    if (total === 0) continue; // uninvested — tells us nothing
+    if (!isSpFormSpread(mon.evs)) return "ev";
+    sawInvestment = true;
+  }
+  // An all-zero team reads the same either way (0 EVs and 0 SP produce
+  // identical level-50/31-IV stats), so "ev" is the safe default.
+  return sawInvestment ? "sp" : "ev";
+}
 
 /**
  * Per-stat EV → SP cost. The single source of truth for the conversion curve;
@@ -224,16 +298,12 @@ function trimSpToBudget(sp: StatSpread, stats: StatName[]): StatSpread {
 export function convertToChampionsSp(evs: StatSpread): StatSpread {
   const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
 
-  // Fast path — pastes that are already in SP form. Showdown has no "SP:"
-  // prefix yet, so Champions teams carry SP values inside the EV line
-  // (e.g. "EVs: 22 HP / 11 Def / 24 SpA / 4 SpD / 5 Spe" sums to 66).
-  // If every value fits inside [0, 32] and the total fits inside 66,
-  // the only consistent reading is "these are SP" — treating them as
-  // EVs and running ceil(ev/8) would collapse "5 Spe" to 1 SP and
-  // break downstream stat math (e.g. Choice Scarf on Primarina).
-  const totalInput = stats.reduce((sum, s) => sum + evs[s], 0);
-  const anyOverMax = stats.some((s) => evs[s] > CHAMPIONS_MAX_SP_PER_STAT);
-  if (totalInput > 0 && totalInput <= CHAMPIONS_TOTAL_SP && !anyOverMax) {
+  // Fast path — pastes that are already in SP form, so there is nothing to
+  // convert. Treating those values as EVs and running ceil(ev/8) would
+  // collapse "5 Spe" to 1 SP and break downstream stat math (e.g. Choice
+  // Scarf on Primarina). The shape test itself lives in `isSpFormSpread`;
+  // callers that know the unit should consult `statForm` instead.
+  if (isSpFormSpread(evs)) {
     return { ...evs };
   }
 
