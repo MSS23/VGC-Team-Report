@@ -123,6 +123,7 @@ function SideModifierToggle({
               key={key}
               type="button"
               onClick={() => onToggle(side, key)}
+              aria-pressed={active}
               className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 min-h-11 text-[10px] sm:text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 active
                   ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
@@ -130,7 +131,7 @@ function SideModifierToggle({
               }`}
               title={`${cfg.label} on ${label}: ${cfg.description}`}
             >
-              <span className="text-xs sm:text-sm">{cfg.icon}</span>
+              <span className="text-xs sm:text-sm" aria-hidden="true">{cfg.icon}</span>
               <span>{cfg.label}</span>
             </button>
           );
@@ -471,6 +472,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
               <button
                 type="button"
                 onClick={() => setShowMegaTiers(!showMegaTiers)}
+                aria-pressed={showMegaTiers}
                 title="Adds a separate purple Mega-speed row for each team member that has a matching Mega Stone equipped. A Mega that shares its base form's Speed shows the same number — that's expected, not a bug."
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                   showMegaTiers
@@ -490,6 +492,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                 setShowMetaThreats(!showMetaThreats);
                 if (showMetaThreats) setOpponentModifiers(new Set());
               }}
+              aria-pressed={showMetaThreats}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 showMetaThreats
                   ? "bg-blue-500/15 text-blue-500 border-blue-500/30"
@@ -540,8 +543,9 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           )}
         </div>
 
-        {/* Speed bars */}
-        <div className="flex flex-col gap-2">
+        {/* Speed bars — exposed as a list so screen readers announce the row
+            count and can step through the tiers one entry at a time. */}
+        <div className="flex flex-col gap-2" role="list" aria-label={`${t.speedTiers} — fastest to slowest`}>
           {allEntries.map((entry, i) => {
             const sc = entry.isYours ? getSpriteConfig?.(entry.speciesKey) : undefined;
             const percent = Math.max(Math.min((entry.displaySpeed / maxDisplaySpeed) * 100, 100), 6);
@@ -561,24 +565,31 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             return (
               <div
                 key={entryKey}
+                role="listitem"
                 className={`flex items-center gap-1.5 sm:gap-3 transition-all duration-300 ${!entry.isYours ? "opacity-70" : ""}`}
               >
                 {/* Name column */}
                 <div className="flex items-center gap-1.5 sm:gap-2 w-[6.5rem] sm:w-40 lg:w-48 flex-shrink-0 min-w-0">
-                  <PokemonSprite
-                    species={entry.species}
-                    size={isPresentationMode ? 36 : 24}
-                    className="sm:hidden flex-shrink-0"
-                    animated={sc?.animated}
-                    shiny={sc?.shiny}
-                  />
-                  <PokemonSprite
-                    species={entry.species}
-                    size={isPresentationMode ? 36 : 28}
-                    className="hidden sm:block flex-shrink-0"
-                    animated={sc?.animated}
-                    shiny={sc?.shiny}
-                  />
+                  {/* Purely decorative: the species name is the visible text
+                      right next to it, and the mobile/desktop pair would
+                      otherwise announce the same name twice per row.
+                      `contents` keeps the flex layout byte-identical. */}
+                  <span className="contents" aria-hidden="true">
+                    <PokemonSprite
+                      species={entry.species}
+                      size={isPresentationMode ? 36 : 24}
+                      className="sm:hidden flex-shrink-0"
+                      animated={sc?.animated}
+                      shiny={sc?.shiny}
+                    />
+                    <PokemonSprite
+                      species={entry.species}
+                      size={isPresentationMode ? 36 : 28}
+                      className="hidden sm:block flex-shrink-0"
+                      animated={sc?.animated}
+                      shiny={sc?.shiny}
+                    />
+                  </span>
                   <span className={`text-xs sm:text-sm lg:text-base font-bold truncate ${
                     entry.isMega ? "text-purple-400" : entry.isYours ? "text-text-primary" : "text-text-tertiary"
                   }`}>
@@ -677,9 +688,9 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                         posChange > 0 ? "text-emerald-500" : "text-red-400"
                       }`} title={`Moved ${Math.abs(posChange)} position${Math.abs(posChange) > 1 ? "s" : ""} ${posChange > 0 ? "up" : "down"}`}>
                         {posChange > 0 ? (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15" /></svg>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><polyline points="18 15 12 9 6 15" /></svg>
                         ) : (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><polyline points="6 9 12 15 18 9" /></svg>
                         )}
                         <span className="hidden sm:inline">{Math.abs(posChange)}</span>
                       </span>

@@ -91,6 +91,9 @@ interface PasteInputProps {
   onTemplateSelect?: (id: string) => void;
 }
 
+/** id of the textarea's error message, referenced by its aria-describedby. */
+const PASTE_ERROR_ID = "paste-input-error";
+
 function looksLikeShowdownPaste(text: string): boolean {
   const trimmed = text.trim();
   if (!trimmed) return false;
@@ -208,6 +211,9 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
 
   const isUrl = isPokePasteUrl(paste);
   const hasContent = paste.trim().length > 0;
+  // Single source of truth for the textarea's error state so the <p> below and
+  // the field's aria-invalid / aria-describedby can never drift apart.
+  const pasteError = fetchError || validationError;
 
   const handleAnalyze = () => {
     if (paste.trim() && !isUrl && !looksLikeShowdownPaste(paste)) {
@@ -281,7 +287,7 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
 
         >
           <div className="w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent" aria-hidden="true" focusable="false">
               <path d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
@@ -302,7 +308,7 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
             className="absolute top-2 right-2 p-1 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
             aria-label="Dismiss"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
@@ -322,7 +328,7 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
             onClick={() => setHowItWorksOpen(true)}
             className="sm:hidden w-full min-h-11 flex items-center justify-center gap-1.5 py-2 text-xs font-bold text-text-tertiary hover:text-text-secondary active:text-text-primary transition-colors cursor-pointer"
           >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
               <polyline points="6,9 12,15 18,9" />
             </svg>
             How it works
@@ -382,7 +388,9 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
             "Incineroar @ Sitrus Berry\nAbility: Intimidate\nLevel: 50\nEVs: 252 HP / 4 Atk / 252 Spe\nCareful Nature\n- Fake Out\n- Knock Off\n- Flare Blitz\n- Parting Shot"
           }
           aria-label="Paste your Showdown team export, PokéPaste URL, or replay URL"
-          className="relative w-full h-40 sm:h-56 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none focus:border-accent/50 transition-all duration-300"
+          aria-invalid={pasteError ? true : undefined}
+          aria-describedby={pasteError ? PASTE_ERROR_ID : undefined}
+          className="relative w-full h-40 sm:h-56 p-4 sm:p-5 bg-surface border-2 border-border rounded-xl text-sm font-[family-name:var(--font-mono)] text-text-primary placeholder:text-text-tertiary/40 resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus:border-accent/50 transition-all duration-300"
           spellCheck={false}
         />
         {isUrl && (
@@ -408,15 +416,15 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
         </p>
       )}
 
-      {/* Error */}
-      {(fetchError || validationError) && (
+      {/* Error — linked back to the textarea via aria-describedby so the
+          message is announced with the field, not just as a standalone alert. */}
+      {pasteError && (
         <p
-
-
+          id={PASTE_ERROR_ID}
           role="alert"
           className="text-sm text-danger font-semibold mt-3 px-1"
         >
-          {fetchError || validationError}
+          {pasteError}
         </p>
       )}
 
@@ -521,7 +529,7 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
 
         >
           <div className="flex items-center gap-2 mb-3">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-accent" aria-hidden="true" focusable="false">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
             <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Featured Team Report</span>
@@ -540,7 +548,7 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent" aria-hidden="true" focusable="false">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
               </svg>
               <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest">Latest Public Reports</span>

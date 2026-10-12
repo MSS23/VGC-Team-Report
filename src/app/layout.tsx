@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { DeferredLayoutExtras } from "@/components/ui/DeferredLayoutExtras";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ClarityProvider } from "@/components/providers/ClarityProvider";
+import { MotionProvider } from "@/components/providers/MotionProvider";
 import { CookieBanner } from "@/components/providers/CookieBanner";
 import { JsonLd, OrganizationJsonLd, WebSiteSchema } from "@/components/seo/JsonLd";
 import { PersistentNavbar } from "@/components/layout/PersistentNavbar";
@@ -131,10 +132,13 @@ export default function RootLayout({
           }}
         />
         <PostHogProvider>
-          <Suspense fallback={null}>
-            <PersistentNavbar />
-          </Suspense>
-          <div id="main-content">{children}</div>
+          {/* Single reduced-motion gate for every motion/react animation below. */}
+          <MotionProvider>
+            <Suspense fallback={null}>
+              <PersistentNavbar />
+            </Suspense>
+            <div id="main-content">{children}</div>
+          </MotionProvider>
         </PostHogProvider>
         <ClarityProvider />
         <DeferredLayoutExtras />
