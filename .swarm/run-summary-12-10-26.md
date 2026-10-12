@@ -64,3 +64,18 @@ got worse. Evidence it is costing real work: VGC-293's prescribed fix told tonig
 agent to reuse `resolveEffectiveTyping` from `src/lib/utils/effective-typing.ts` —
 **that file does not exist on `main`**, only on unmerged PR #81. The constraint on
 this project is merge throughput, not implementation capacity.
+
+## ⚠️ Linear hit its free-tier issue cap mid-run
+
+`issueCreate` started returning `USAGE_LIMIT_EXCEEDED` (`activeIssueCount`) at
+exactly **250** issues. Four tickets were filed before the cap (VGC-300 to
+VGC-303); the fifth is preserved in `unfiled-tickets-12-10-26.md`.
+
+**136 of the 250 are closed** (130 Done, 4 Canceled, 2 Won't Do) and still count
+because they were never archived. Archiving them frees capacity immediately — no
+upgrade needed, and archived issues stay searchable.
+
+This compounds VGC-265: 49 issues sit In Review because their PRs are unmerged,
+so they can never reach Done and be archived, and the queue permanently occupies
+cap that would otherwise recycle. **GOAL B — "compound the board" — is now hard
+capped by the Linear plan, not by the swarm.**
