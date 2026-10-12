@@ -17,6 +17,22 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "October 2026",
+    version: "5.29",
+    title: "Consistent Champions Speed, a Reduced-Motion Switch & a Security Patch",
+    emoji: "\u26a1",
+    items: [
+      { type: "fixed", text: "Champions reports now show the same Speed everywhere. The team stats bar, Tournament Mode and the match-up game plans were still using the EV formula, so a Dragapult read 182 Speed in those places and 213 on its own card and in the speed tier chart \u2014 the chart was right. Speed decides games, so these now all agree." },
+      { type: "fixed", text: "Pasted spreads now carry whether they are EVs or Stat Points instead of being guessed from the numbers. A Champions team with one classic EV spread among five SP spreads used to be read as all-EV, hiding the SP members' investment from archetype detection; small partial spreads in standard formats could be misread the other way. As a result the 32 SP per-stat limit is finally enforced \u2014 previously nothing could ever trigger it." },
+      { type: "fixed", text: "Deleting your account now clears everything attached to your reports \u2014 saved copies, comments and their flags, version history, the edit log, collection entries, notifications and your own logged matches \u2014 instead of leaving stray rows behind." },
+      { type: "improved", text: "Animations across the site now follow your device's \u201creduce motion\u201d setting. The speed tier chart and the type coverage tables read properly in a screen reader, the paste box has a visible keyboard focus ring with its error announced alongside the field, and the settings menu closes with Escape and returns focus where you left it." },
+      { type: "improved", text: "Mega Evolution guide pages, your dashboard and the explore feed each load around 37 KB less JavaScript \u2014 card entrances and stat bars now run on plain CSS instead of an animation library, so they look the same and arrive sooner." },
+      { type: "fixed", text: "Fixed a rare explore-feed paging bug where two reports saved in the same instant could be shown twice, or one skipped, as you scrolled." },
+      { type: "fixed", text: "The FAQ now shows the full step-by-step guide to building and sharing a report. Those steps previously existed only in the page's markup, where search engines could read them but you could not. Archetype detection also no longer counts a misspelled Pok\u00e9mon name as a very slow Pok\u00e9mon when deciding whether a team is Trick Room." },
+      { type: "improved", text: "Security: updated the framework to clear three published critical vulnerabilities, two of which affected image generation \u2014 the code path behind every shared report's preview image. Also refreshed the reference files served to AI assistants, which still described Champions as Regulation M-A and taught the wrong Stat Points maths." },
+    ],
+  },
+  {
+    date: "October 2026",
     version: "5.28",
     title: "Pokémon Champions Regulation M-C & the Z Megas",
     emoji: "⚡",
