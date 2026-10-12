@@ -3,10 +3,11 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import type { MatchupPlan, GamePlan, GameResult } from "@/hooks/useMatchupPlans";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
-import type { StatSpread } from "@/lib/types/pokemon";
+import type { ParsedPokemon, PokemonData, StatSpread } from "@/lib/types/pokemon";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { lookupPokemon } from "@/lib/data/pokemon";
-import { calculateAllStats } from "@/lib/analysis/stat-calculator";
+import { calculateAllChampionsStats, calculateAllStats, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
+import { isChampionsFormat } from "@/lib/data/tags";
 import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
 import { ItemIcon } from "./ItemIcon";
@@ -46,25 +47,52 @@ interface MatchupPlanSlideProps {
   onAddGamePlan: (matchupId: string) => void;
   onRemoveGamePlan: (matchupId: string, gamePlanId: string) => void;
   onRemove: (id: string) => void;
+  /** Current regulation — Champions regs (Reg M-A/M-B/M-C) derive stats from SP. */
+  regulation?: string;
 }
 
 function totalEvs(evs: StatSpread): number {
   return evs.hp + evs.atk + evs.def + evs.spa + evs.spd + evs.spe;
 }
 
+/**
+ * Stats as the rest of the report shows them.
+ *
+ * Champions regs budget Stat Points, so stats must be rebuilt from the SP
+ * spread the way `PokemonCard` / `PokemonDetailSlide` / `SpeedTierChart` do —
+ * `calculateAllStats` / `calculatedStats` are always the classic EV formula.
+ * Using the EV formula here made this slide disagree with the cards and the
+ * speed-tier chart about the same Pokemon (VGC-292: Dragapult showed 182 Speed
+ * here and 213 there).
+ */
+export function matchupDisplayStats(
+  parsed: ParsedPokemon,
+  data: PokemonData | null,
+  regulation?: string,
+): StatSpread | null {
+  if (!data) return null;
+  if (isChampionsFormat(regulation)) {
+    return calculateAllChampionsStats(data.baseStats, convertToChampionsSp(parsed.evs), parsed.nature);
+  }
+  return calculateAllStats(data.baseStats, parsed.ivs, parsed.evs, parsed.level, parsed.nature);
+}
+
 /** Side-by-side speed tiers: your team vs opponent */
 function SpeedComparison({
   yourPokemon,
   opponentPokemon,
+  regulation,
 }: {
   yourPokemon: AnalyzedPokemon[];
   opponentPokemon: OpponentPokemonInfo[];
+  regulation?: string;
 }) {
   // Build combined speed entries
   const entries: Array<{ species: string; speed: number; isYours: boolean }> = [];
 
   yourPokemon.forEach((p) => {
-    entries.push({ species: p.parsed.species, speed: p.calculatedStats.spe, isYours: true });
+    const speed = matchupDisplayStats(p.parsed, p.data, regulation)?.spe ?? p.calculatedStats.spe;
+    entries.push({ species: p.parsed.species, speed, isYours: true });
   });
 
   opponentPokemon.forEach((p) => {
@@ -141,6 +169,7 @@ export function MatchupPlanSlide({
   onAddGamePlan,
   onRemoveGamePlan,
   onRemove,
+  regulation,
 }: MatchupPlanSlideProps) {
   const { t } = useTranslation();
   const STAT_LABELS = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe } as const;
@@ -166,13 +195,10 @@ export function MatchupPlanSlide({
     return parsed.pokemon.map((p) => {
       const data = lookupPokemon(p.species);
       const hasEvs = totalEvs(p.evs) > 0;
-      const calculatedStats =
-        hasEvs && data
-          ? calculateAllStats(data.baseStats, p.ivs, p.evs, p.level, p.nature)
-          : null;
+      const calculatedStats = hasEvs ? matchupDisplayStats(p, data, regulation) : null;
       return { parsed: p, data, calculatedStats, hasEvs };
     });
-  }, [plan.opponentPaste]);
+  }, [plan.opponentPaste, regulation]);
 
   const anyHasEvs = opponentPokemon.some((p) => p.hasEvs);
 
@@ -322,7 +348,7 @@ export function MatchupPlanSlide({
 
       {/* Speed Comparison */}
       {opponentPokemon.length > 0 && (
-        <SpeedComparison yourPokemon={yourPokemon} opponentPokemon={opponentPokemon} />
+        <SpeedComparison yourPokemon={yourPokemon} opponentPokemon={opponentPokemon} regulation={regulation} />
       )}
 
       {/* Game Plans */}

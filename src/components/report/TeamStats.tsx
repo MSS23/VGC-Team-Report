@@ -2,11 +2,43 @@
 
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { isChampionsFormat } from "@/lib/data/tags";
+import { calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
 
 interface TeamStatsProps {
   pokemon: AnalyzedPokemon[];
   /** Current regulation — Reg M-A (Champions) has no Tera, so the count is hidden. */
   regulation?: string;
+}
+
+/**
+ * Fastest/slowest Speed across the team, in the same unit the rest of the
+ * report shows.
+ *
+ * Champions regs budget Stat Points, not EVs, so Speed has to be rebuilt from
+ * the SP spread exactly the way `PokemonCard` / `PokemonDetailSlide` /
+ * `SpeedTierChart` do. `calculatedStats` is always the classic EV formula, and
+ * reading it here made this panel disagree with the speed-tier chart about the
+ * same Pokemon (VGC-292: Dragapult showed 182 here and 213 there).
+ */
+export function teamSpeedRange(
+  pokemon: AnalyzedPokemon[],
+  regulation?: string,
+): { minSpeed: number; maxSpeed: number } {
+  const isChampions = isChampionsFormat(regulation);
+  const speeds = pokemon
+    .map((p) => {
+      if (isChampions && p.data) {
+        const sp = convertToChampionsSp(p.parsed.evs);
+        return calculateChampionsStat("spe", p.data.baseStats.spe, sp.spe, p.parsed.nature);
+      }
+      return p.calculatedStats.spe;
+    })
+    .filter((s) => s > 0)
+    .sort((a, b) => a - b);
+  return {
+    minSpeed: speeds[0] ?? 0,
+    maxSpeed: speeds[speeds.length - 1] ?? 0,
+  };
 }
 
 export function TeamStats({ pokemon, regulation }: TeamStatsProps) {
@@ -18,13 +50,8 @@ export function TeamStats({ pokemon, regulation }: TeamStatsProps) {
     if (p.data?.types) p.data.types.forEach((t) => allTypes.add(t));
   });
 
-  // Speed range
-  const speeds = pokemon
-    .map((p) => p.calculatedStats.spe)
-    .filter((s) => s > 0)
-    .sort((a, b) => a - b);
-  const minSpeed = speeds[0] ?? 0;
-  const maxSpeed = speeds[speeds.length - 1] ?? 0;
+  // Speed range — SP-derived in Champions regs
+  const { minSpeed, maxSpeed } = teamSpeedRange(pokemon, regulation);
 
   // Average base stat total
   const bstValues = pokemon
