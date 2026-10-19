@@ -21,7 +21,7 @@ import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
 import { NATURES } from "@/lib/data/natures";
 import { isChampionsFormat } from "@/lib/data/tags";
 import { useTranslation } from "@/lib/i18n";
-import { translateMove } from "@/lib/utils/translate-move";
+import { translateMove, useMoveNames } from "@/lib/utils/translate-move";
 import { getRelevantStats } from "@/lib/utils/stat-relevance";
 import { detectMegaFromItem, isMegaForm, getMegaEntryFromSpecies } from "@/lib/utils/mega-detect";
 import { lookupPokemon } from "@/lib/data/pokemon";
@@ -58,6 +58,7 @@ const STAT_COLORS: Record<string, string> = {
 
 export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation, onReplaceSpecies, priority = false }: PokemonCardProps) {
   const { t, language } = useTranslation();
+  useMoveNames(language);
   const { parsed, data, calculatedStats, itemBoost } = pokemon;
   const isPrint = useIsPrintMode();
   const posthog = usePostHog();

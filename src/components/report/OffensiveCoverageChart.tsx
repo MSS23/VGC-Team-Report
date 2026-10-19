@@ -8,7 +8,7 @@ import { lookupMove } from "@/lib/data/moves";
 import { TYPE_COLORS } from "@/lib/utils/type-colors";
 import { hapticLight } from "@/lib/utils/haptics";
 import { useTranslation } from "@/lib/i18n";
-import { translateMove } from "@/lib/utils/translate-move";
+import { translateMove, useMoveNames } from "@/lib/utils/translate-move";
 
 const ALL_TYPES: PokemonType[] = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -138,6 +138,7 @@ function offensiveLabel(mult: number): string {
 
 export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps) {
   const { language } = useTranslation();
+  useMoveNames(language);
   const [highlightedType, setHighlightedType] = useState<PokemonType | null>(null);
 
   const profiles = pokemon.map((mon) => ({

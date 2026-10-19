@@ -38,16 +38,62 @@ const FORBIDDEN_STATIC_IMPORTS = [
   "@/lib/utils/mega-detect",
 ];
 
+/**
+ * Tripwire for the move-name catalogue (VGC-303, 2026-10-19).
+ *
+ * `@/lib/data/move-names` is a ~127KB generated table of localised move
+ * names. It used to be a static import in translate-move.ts, so every chunk
+ * that rendered a move label shipped it — the whole report view, for every
+ * user, even though only the six non-English languages can read it. It now
+ * loads through a dynamic `import()` inside `loadMoveNames()`.
+ *
+ * Listed below are translate-move.ts plus its direct consumers; none of them
+ * may reach the table statically. Types come in via type-position
+ * `import()` (`typeof import("...").MOVE_NAMES`), which is erased at build
+ * time and deliberately not matched here.
+ */
+const MOVE_NAME_CONSUMERS = [
+  "lib/utils/translate-move.ts",
+  "components/report/PokemonCard.tsx",
+  "components/report/TournamentMode.tsx",
+  "components/report/OffensiveCoverageChart.tsx",
+  "components/report/pokemon-detail/MovesPanel.tsx",
+  "components/ui/OTSSheetModal.tsx",
+];
+
+const FORBIDDEN_MOVE_NAME_IMPORT = "@/lib/data/move-names";
+
+// Static: `import ... from "x"` / `export ... from "x"`.
+// Dynamic `import("x")` is the sanctioned lazy path and is allowed.
+function staticImportSpecifiers(source: string): string[] {
+  return [...source.matchAll(/^\s*(?:import|export)\s[^;]*?from\s+["']([^"']+)["']/gm)].map((m) => m[1]);
+}
+
 describe("homepage eager import graph stays free of heavy data modules", () => {
   for (const file of EAGER_HOMEPAGE_FILES) {
     it(`${file} has no static import of the heavy modules`, () => {
       const source = readFileSync(join(ROOT, file), "utf8");
-      // Static: `import ... from "x"` / `export ... from "x"`.
-      // Dynamic `import("x")` is the sanctioned lazy path and is allowed.
-      const staticImports = [...source.matchAll(/^\s*(?:import|export)\s[^;]*?from\s+["']([^"']+)["']/gm)]
-        .map((m) => m[1]);
-      const offending = staticImports.filter((spec) => FORBIDDEN_STATIC_IMPORTS.includes(spec));
+      const offending = staticImportSpecifiers(source)
+        .filter((spec) => FORBIDDEN_STATIC_IMPORTS.includes(spec));
       expect(offending, `${file} statically imports: ${offending.join(", ")}`).toEqual([]);
     });
   }
+});
+
+describe("move-name catalogue stays behind a dynamic import", () => {
+  for (const file of MOVE_NAME_CONSUMERS) {
+    it(`${file} has no static import of ${FORBIDDEN_MOVE_NAME_IMPORT}`, () => {
+      const source = readFileSync(join(ROOT, file), "utf8");
+      const offending = staticImportSpecifiers(source)
+        .filter((spec) => spec === FORBIDDEN_MOVE_NAME_IMPORT || spec.endsWith("/data/move-names"));
+      expect(offending, `${file} statically imports: ${offending.join(", ")}`).toEqual([]);
+    });
+  }
+
+  it("translate-move.ts still loads the catalogue lazily", () => {
+    const source = readFileSync(join(ROOT, "lib/utils/translate-move.ts"), "utf8");
+    // A real (non type-position) dynamic import must still be present —
+    // otherwise the lazy path was deleted rather than kept.
+    expect(source).toMatch(/(?<!typeof\s)import\("@\/lib\/data\/move-names"\)/);
+  });
 });

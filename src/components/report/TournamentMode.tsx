@@ -10,7 +10,7 @@ import { TYPE_COLORS } from "@/lib/utils/type-colors";
 import { NATURES } from "@/lib/data/natures";
 import { isChampionsFormat } from "@/lib/data/tags";
 import { useTranslation } from "@/lib/i18n";
-import { translateMove } from "@/lib/utils/translate-move";
+import { translateMove, useMoveNames } from "@/lib/utils/translate-move";
 import type { PokemonType } from "@/lib/types/pokemon";
 
 export type StatView = "evs" | "stats";
@@ -71,6 +71,7 @@ function CompactCard({
   hideTera?: boolean;
 }) {
   const { language } = useTranslation();
+  useMoveNames(language);
   const { parsed, data, calculatedStats } = pokemon;
   const types = data?.types ?? [];
   const sc = getSpriteConfig?.(speciesKey);

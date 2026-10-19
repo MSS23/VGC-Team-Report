@@ -8,7 +8,7 @@ import { resolveSlug, getSpriteUrls } from "@/lib/utils/sprite-slug";
 import { getHtml2Canvas } from "@/lib/dynamic-imports/html2canvas";
 import { useTranslation } from "@/lib/i18n";
 import type { LanguageCode } from "@/lib/i18n";
-import { translateMove } from "@/lib/utils/translate-move";
+import { translateMove, useMoveNames } from "@/lib/utils/translate-move";
 
 interface OTSSheetModalProps {
   pokemon: ParsedPokemon[];
@@ -79,6 +79,7 @@ function PokemonCard({ mon, language }: { mon: ParsedPokemon; language: Language
 
 export function OTSSheetModal({ pokemon, shareUrl, tournamentName, teamName, onClose }: OTSSheetModalProps) {
   const { language } = useTranslation();
+  useMoveNames(language);
   const sheetRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const titleId = "ots-sheet-modal-title";

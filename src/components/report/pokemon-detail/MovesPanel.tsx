@@ -2,9 +2,10 @@
 import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { useTranslation } from "@/lib/i18n";
 import { getMoveTypeStyle } from "@/lib/utils/move-type-style";
-import { translateMove } from "@/lib/utils/translate-move";
+import { translateMove, useMoveNames } from "@/lib/utils/translate-move";
 export function MovesPanel({ parsed }: { parsed: ParsedPokemon }) {
 const { t, language } = useTranslation();
+  useMoveNames(language);
   return (
     <div>
       <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-2 sm:mb-3" data-walkthrough="pokemon-moves">
