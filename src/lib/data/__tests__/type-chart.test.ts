@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getDefensiveProfile } from "../type-chart";
+import { getDefensiveProfile, getEffectiveness, TYPE_CHART } from "../type-chart";
+import type { PokemonType } from "@/lib/types/pokemon";
 
 describe("getDefensiveProfile type chart", () => {
   it("Poison resists Bug (regression: Amoonguss showed a phantom Bug weakness)", () => {
@@ -30,5 +31,32 @@ describe("getDefensiveProfile ability immunities", () => {
   it("other abilities leave the profile unchanged", () => {
     expect(getDefensiveProfile(["Ghost", "Poison"], "Cursed Body").Ground).toBe(2);
     expect(getDefensiveProfile(["Ghost", "Poison"], null).Ground).toBe(2);
+  });
+});
+
+// VGC-294: Stellar is a legal Tera type, but it is not a battle type — a
+// Stellar-Terastallized Pokemon keeps its original defensive typing. Stellar
+// must therefore never appear in the chart or in a defensive profile.
+describe("Stellar is not a defensive type", () => {
+  it("has no row or column in the type chart", () => {
+    expect(Object.keys(TYPE_CHART)).toHaveLength(18);
+    expect(TYPE_CHART).not.toHaveProperty("Stellar");
+    for (const row of Object.values(TYPE_CHART)) {
+      expect(row).not.toHaveProperty("Stellar");
+    }
+  });
+
+  it("does not alter a Pokemon's defensive profile", () => {
+    // Dragonite Tera Stellar is still Dragon/Flying on defence: Ice stays 4x
+    // and Stellar is not an attacking type the chart knows about.
+    const profile = getDefensiveProfile(["Dragon", "Flying"]);
+    expect(profile.Ice).toBe(4);
+    expect(Object.keys(profile)).toHaveLength(18);
+    expect(profile).not.toHaveProperty("Stellar");
+  });
+
+  it("is neutral even if a Stellar value leaks into getEffectiveness", () => {
+    // Belt and braces: no copied row means no accidental effectiveness.
+    expect(getEffectiveness("Stellar" as PokemonType, ["Dragon", "Flying"])).toBe(1);
   });
 });

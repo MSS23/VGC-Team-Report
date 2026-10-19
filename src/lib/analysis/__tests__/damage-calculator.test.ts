@@ -29,6 +29,16 @@ describe("report damage calculator", () => {
     expect(calc.teraType).toBeUndefined();
     expect(calc.level).toBe(50);
   });
+  // VGC-294: Stellar is a legal Tera type. It changes offence only — a Stellar
+  // Terastallized defender keeps its original typing, unlike the Fire Tera above.
+  it("treats a Stellar Tera type as offence-only", () => {
+    const stellar = { ...defender, teraType: "Stellar" as const };
+    expect(createCalcPokemon(stellar, undefined, true).teraType).toBe("Stellar");
+    const normal = calculateReportDamage(attacker, stellar, "Flare Blitz");
+    const tera = calculateReportDamage(attacker, stellar, "Flare Blitz", { defenderTera: true });
+    expect(tera.min).toBe(normal.min);
+    expect(tera.max).toBe(normal.max);
+  });
   it("reports ability immunities as zero damage", () => {
     const ghost = parseShowdownPaste("Gengar\nAbility: Cursed Body\n- Shadow Ball").pokemon[0];
     expect(calculateReportDamage(attacker, ghost, "Fake Out").max).toBe(0);

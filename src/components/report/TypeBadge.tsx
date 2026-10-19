@@ -1,8 +1,8 @@
-import type { PokemonType } from "@/lib/types/pokemon";
+import type { TeraType } from "@/lib/types/pokemon";
 import { TYPE_COLORS } from "@/lib/utils/type-colors";
 
 interface TypeBadgeProps {
-  type: PokemonType;
+  type: TeraType;
   className?: string;
 }
 

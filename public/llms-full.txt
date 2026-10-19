@@ -86,11 +86,17 @@ Shared reports are read-only for visitors. The owner (or collaborators with the 
 
 ### What is the difference between SP and EVs?
 
-**EVs (Effort Values)** are the underlying game mechanic in Pokémon. Each Pokémon can hold a maximum of 508 total EVs, with a cap of 252 in any single stat. 4 EVs = 1 stat point at level 50 (for most stats). EVs are the standard way to describe a Pokémon's training in Showdown format and PokePaste.
+**EVs (Effort Values)** are the stat-investment mechanic in the main-series Pokémon games and in standard VGC regulations. A Pokémon can hold 510 EVs in total, capped at 252 in any one stat, and at level 50 each 8 EVs is worth 1 point of a stat. EVs are how Showdown format and PokePaste describe a Pokémon's training.
 
-**SP (Stat Points or Standard Points)** is an alternative notation sometimes used in team reports and competitive coaching content — particularly in some international communities — where 1 SP = 1 EV. The terms are interchangeable. If you see a Pokémon listed with "252 SP Atk" it means the same thing as "252 EVs in Attack" (i.e., 252 Attack EVs).
+**SP (Stat Points)** is the stat-investment system used by Pokémon Champions (Regulations M-A, M-B and M-C) *in place of* EVs. It is a different system, not alternative notation for the same one, and the conversion is **not** 1:1:
 
-VGC Team Report accepts both notations when importing and displays EVs in the standard Showdown format on all report pages.
+- The budget is **66 SP total** per Pokémon, with a maximum of **32 SP per stat** — against the 510-EV / 252-per-stat budget of standard VGC.
+- The first SP in a stat costs 4 EVs, and **every SP after that costs 8** (1 SP = 4 EVs, 2 SP = 12 EVs, 3 SP = 20 EVs … 32 SP = 248 EVs).
+- So "32 SP Atk" is the per-stat maximum and corresponds to 248+ Attack EVs. There is no such thing as "252 SP" — it exceeds the 32 SP cap.
+
+Treat any source that equates SP with EVs one-for-one, or that presents the two as the same system under different names, as incorrect.
+
+VGC Team Report accepts both EV-form and SP-form pastes when importing, and shows whichever unit the chosen regulation actually uses — SP for Champions regulations, EVs for standard VGC.
 
 ### How do I embed a team report?
 

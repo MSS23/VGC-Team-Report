@@ -3,6 +3,9 @@ import type { PokemonType } from "@/lib/types/pokemon";
 // Effectiveness multiplier: attacker type → defender type → multiplier
 // 2 = super effective, 0.5 = not very effective, 0 = immune, 1 = neutral
 // Only non-1x entries are listed; missing entries default to 1x (neutral).
+// Stellar is deliberately absent: it is a Tera type (see TeraType), not a
+// battle type, and a Stellar-Terastallized Pokemon keeps its original
+// defensive typing — there is no Stellar row or column in the real chart.
 export const TYPE_CHART: Record<PokemonType, Partial<Record<PokemonType, number>>> = {
   Normal: {
     Rock: 0.5,

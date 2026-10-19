@@ -202,6 +202,20 @@ describe("parseShowdownPaste", () => {
       expect(result.pokemon[0].teraType).toBe("Fairy");
     });
 
+    // VGC-294: "Tera Type: Stellar" was dropped on the floor because the
+    // PokemonType union had no Stellar member, so the report showed no Tera type.
+    it("parses Tera Type: Stellar", () => {
+      const paste = `Garchomp @ Life Orb\nAbility: Rough Skin\nTera Type: Stellar\n- Earthquake`;
+      const result = parseShowdownPaste(paste);
+      expect(result.pokemon[0].teraType).toBe("Stellar");
+    });
+
+    it("ignores an unknown Tera Type", () => {
+      const paste = `Garchomp @ Life Orb\nAbility: Rough Skin\nTera Type: Cosmic\n- Earthquake`;
+      const result = parseShowdownPaste(paste);
+      expect(result.pokemon[0].teraType).toBeNull();
+    });
+
     it("sets teraType to null when not specified", () => {
       const paste = `Garchomp @ Life Orb\nAbility: Rough Skin\n- Earthquake`;
       const result = parseShowdownPaste(paste);
