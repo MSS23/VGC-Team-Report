@@ -17,6 +17,20 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "October 2026",
+    version: "5.30",
+    title: "Stellar Tera, a Faster Explore & a Privacy Fix",
+    emoji: "\u2728",
+    items: [
+      { type: "fixed", text: "Private team graphics are private again. The team-graphic image endpoint looked reports up by ID without checking who was asking, so anyone with a report's link could render a private team as a PNG \u2014 and any build you'd hidden (item, EVs, IVs or nature) showed up in that image. The endpoint now only renders public or unlisted reports for other people, hides the fields you marked private, and no longer caches a personalised image where someone else could be served it." },
+      { type: "fixed", text: "Pastes that use Tera Type: Stellar now work. Stellar was silently dropped on import, so the Tera type just vanished from your report; it now imports, shows a Stellar badge and survives an export back to Showdown format. It also correctly leaves your weaknesses and resistances alone \u2014 Terastallizing to Stellar doesn't change what your Pok\u00e9mon is weak to." },
+      { type: "improved", text: "Explore loads faster. Sorting public teams by newest or by most viewed was scanning and re-sorting every public report on each request; both orderings are now indexed." },
+      { type: "improved", text: "Reports load faster if you use the site in English. The table of translated move names \u2014 French, Italian, Spanish, Japanese, Korean and Chinese \u2014 is about 46KB compressed and used to download for everyone who opened a team. It now only downloads if you actually switch languages." },
+      { type: "fixed", text: "Corrected the Stat Points explanation in the long reference file served to AI assistants. It still claimed SP and EVs were interchangeable at 1 SP = 1 EV \u2014 the same error already fixed in the short file months ago \u2014 so assistants asking about Champions SP were being taught the wrong maths. Both files are now covered by the automated check that locks them to the real calculator." },
+      { type: "fixed", text: "Updated Next.js to a patched release, clearing several security advisories affecting image generation and page caching." },
+    ],
+  },
+  {
+    date: "October 2026",
     version: "5.28",
     title: "Pokémon Champions Regulation M-C & the Z Megas",
     emoji: "⚡",
