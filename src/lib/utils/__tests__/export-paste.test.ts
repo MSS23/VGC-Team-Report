@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { pokemonToShowdown, teamToShowdown } from "@/lib/utils/export-paste";
+import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import type { ParsedPokemon } from "@/lib/types/pokemon";
 
 const GARCHOMP: ParsedPokemon = {
@@ -65,6 +66,27 @@ describe("pokemonToShowdown", () => {
       ivs: { hp: 31, atk: 0, def: 31, spa: 31, spd: 31, spe: 31 },
     });
     expect(output).toContain("IVs: 0 Atk");
+  });
+});
+
+// VGC-294: a Stellar paste used to lose its Tera Type line on the way in, so
+// the export came back without one. Guard the whole round trip.
+describe("Stellar Tera Type round trip", () => {
+  it("re-emits Tera Type: Stellar after parsing a Stellar paste", () => {
+    const paste = `Garchomp @ Life Orb
+Ability: Rough Skin
+Tera Type: Stellar
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Earthquake`;
+    const parsed = parseShowdownPaste(paste);
+    expect(parsed.pokemon[0].teraType).toBe("Stellar");
+    expect(pokemonToShowdown(parsed.pokemon[0])).toContain("Tera Type: Stellar");
+  });
+
+  it("exports Tera Type: Stellar from a Pokemon built in code", () => {
+    const output = pokemonToShowdown({ ...GARCHOMP, teraType: "Stellar" });
+    expect(output).toContain("Tera Type: Stellar");
   });
 });
 

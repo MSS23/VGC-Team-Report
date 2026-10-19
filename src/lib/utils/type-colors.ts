@@ -1,6 +1,9 @@
-import type { PokemonType } from "@/lib/types/pokemon";
+import type { TeraType } from "@/lib/types/pokemon";
 
-export const TYPE_COLORS: Record<PokemonType, { bg: string; text: string; border: string }> = {
+// Keyed by TeraType, not PokemonType: Stellar is only ever rendered as a Tera
+// type (a single cosmic indigo stands in for its prismatic in-game look), and
+// reading a PokemonType key out of this map still type-checks.
+export const TYPE_COLORS: Record<TeraType, { bg: string; text: string; border: string }> = {
   Normal:   { bg: "#A8A77A", text: "#FFFFFF", border: "#9C9B6E" },
   Fire:     { bg: "#EE8130", text: "#FFFFFF", border: "#E27524" },
   Water:    { bg: "#6390F0", text: "#FFFFFF", border: "#5784E4" },
@@ -19,4 +22,5 @@ export const TYPE_COLORS: Record<PokemonType, { bg: string; text: string; border
   Dark:     { bg: "#705746", text: "#FFFFFF", border: "#644B3A" },
   Steel:    { bg: "#B7B7CE", text: "#1A1A2E", border: "#ABABC2" },
   Fairy:    { bg: "#D685AD", text: "#FFFFFF", border: "#CA79A1" },
+  Stellar:  { bg: "#3C5CA8", text: "#FFFFFF", border: "#30509C" },
 };
