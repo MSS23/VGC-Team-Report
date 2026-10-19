@@ -201,6 +201,17 @@ export async function ensureTable(): Promise<void> {
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_deleted ON shares(deleted_at) WHERE deleted_at IS NOT NULL`);
 
+  // Explore feed ordering (VGC-302). Both indexes are partial on the exact
+  // Explore predicate (is_public = TRUE AND deleted_at IS NULL) so they stay
+  // small on the Neon free tier, and their column order/direction mirrors the
+  // ORDER BY in /api/explore so Postgres can drop the Sort and stop at LIMIT.
+  //   sort=newest : ORDER BY created_at DESC, id DESC          (also the keyset cursor)
+  //   sort=views  : ORDER BY COALESCE(view_count, 0) DESC, created_at DESC
+  // sort=updated is already served by idx_shares_public_updated; sort=popular
+  // orders by a joined reactions aggregate, which no shares-only index can order.
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_public_created_id ON shares(created_at DESC, id DESC) WHERE is_public = TRUE AND deleted_at IS NULL`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_public_views_created ON shares((COALESCE(view_count, 0)) DESC, created_at DESC) WHERE is_public = TRUE AND deleted_at IS NULL`);
+
   // Collections (team archive / folders)
   await run(sql`
     CREATE TABLE IF NOT EXISTS collections (
