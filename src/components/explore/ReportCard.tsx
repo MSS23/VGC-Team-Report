@@ -168,25 +168,9 @@ export function ReportCard({
         visible: { opacity: 1, y: 0 },
       }}
     >
-      {report.tags?.regulation && (
-        <span
-          className={`absolute top-3 right-3 text-xs font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-800 dark:text-blue-400 z-10 inline-flex items-center gap-1 ${
- report.tags.regulationAutoDetected ? "border border-dashed border-blue-500/40" : ""
-          }`}
-          title={report.tags.regulationAutoDetected
-            ? "Auto-detected from team composition, not confirmed by the creator"
-            : undefined}
-        >
-          {report.tags.regulation}
-          {report.tags.regulationAutoDetected && (
-            <span className="text-xs opacity-70 ">auto</span>
-          )}
-        </span>
-      )}
-
       <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-1.5 sm:pb-2">
         <div className="bg-surface-alt/30 rounded-lg py-2">
-          <div className="flex items-center justify-center gap-0.5 sm:gap-1">
+          <div className="grid grid-cols-6 items-center justify-items-center gap-0.5 px-1 sm:gap-1">
             {report.species.map((species, i) => (
               <CardSprite key={i} species={species} />
             ))}
@@ -207,6 +191,22 @@ export function ReportCard({
           <h3 className="text-xs sm:text-sm font-bold text-text-primary leading-tight group-hover:text-accent transition-colors line-clamp-2 sm:line-clamp-1 min-w-0">
             {report.tournamentName || report.species.join(" / ")}
           </h3>
+          <span className="flex flex-shrink-0 items-center gap-1">
+          {report.tags?.regulation && (
+            <span
+              className={`text-xs font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-800 dark:text-blue-400 inline-flex items-center gap-1 ${
+ report.tags.regulationAutoDetected ? "border border-dashed border-blue-500/40" : ""
+              }`}
+              title={report.tags.regulationAutoDetected
+                ? "Auto-detected from team composition, not confirmed by the creator"
+                : undefined}
+            >
+              {report.tags.regulation}
+              {report.tags.regulationAutoDetected && (
+                <span className="text-xs opacity-70 ">auto</span>
+              )}
+            </span>
+          )}
           {report.placement && (
             <span className={`flex-shrink-0 inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 text-xs sm:text-xs font-bold rounded-md ${getPlacementStyle(report.placement)}`}>
               {(report.placement === "1st" || report.placement === "Top 4") && (
@@ -217,6 +217,7 @@ export function ReportCard({
               {report.placement}
             </span>
           )}
+          </span>
         </div>
 
         {visibleArchetypes.length > 0 && (

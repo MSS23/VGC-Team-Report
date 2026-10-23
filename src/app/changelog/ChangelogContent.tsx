@@ -290,7 +290,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                           v{entry.version}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <h2 className="font-display text-title font-bold tracking-tight text-text-primary group-hover:text-accent transition-colors truncate">
+                          <h2 className="font-display text-title font-bold tracking-tight text-text-primary group-hover:text-accent transition-colors line-clamp-2 sm:truncate">
                             {entry.title}
                           </h2>
                           <span className="text-xs text-text-tertiary ">{entry.date}</span>

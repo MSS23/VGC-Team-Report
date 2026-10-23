@@ -42,7 +42,7 @@ export function HomePageServer() {
 }
 
 function LandingSprites() { return (
-      <div className="mb-8 flex flex-wrap gap-3 sm:gap-4">
+      <div className="mb-8 flex flex-nowrap gap-2 sm:flex-wrap sm:gap-4">
         {POKEMON_SPRITES.map((name) => (
           <picture key={name}>
             <source
@@ -54,7 +54,7 @@ function LandingSprites() { return (
               alt=""
               width={64}
               height={64}
-              className="h-12 w-12 object-contain sm:h-16 sm:w-16"
+              className="h-11 w-11 object-contain sm:h-16 sm:w-16"
               loading="eager"
             />
           </picture>

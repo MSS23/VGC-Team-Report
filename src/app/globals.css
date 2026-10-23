@@ -335,6 +335,14 @@ body {
   display: none;
 }
 
+/* A chip row that scrolls sideways on phones: fade the clipped edge instead of a hard cut */
+@media (max-width: 639px) {
+  .scroll-row {
+    overscroll-behavior-x: contain;
+    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent);
+  }
+}
+
 /* Better text input sizing on iOS (prevents zoom on focus) */
 @media (max-width: 639px) {
   input, textarea, select {

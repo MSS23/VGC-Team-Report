@@ -200,7 +200,7 @@ export function ExploreFilters({
       {/* ------------------------------------------------------------------ */}
       {/* ROW 1: Search bar with category tabs integrated                    */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         {/* Search input */}
         <div className="relative flex-1 min-w-0">
           <SearchIcon
@@ -241,7 +241,7 @@ export function ExploreFilters({
             value={sort}
             onChange={(e) => onSortChange(e.target.value as "newest" | "updated" | "popular" | "views")}
             aria-label="Sort reports by"
-            className="min-h-11 pl-3 pr-7 py-2 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition appearance-none cursor-pointer"
+            className="w-full min-h-11 pl-3 pr-7 py-2 bg-surface border border-border rounded-lg text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition appearance-none cursor-pointer sm:w-auto"
           >
             {SORT_KEYS.map((key) => (
               <option key={key} value={key}>{sortLabel[key] ?? key}</option>
@@ -258,7 +258,7 @@ export function ExploreFilters({
       {/* used overflow-x-auto and the right-most chips got cut off behind  */}
       {/* the container edge on wide screens with no obvious scroll UX.     */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex items-center gap-2 mt-2 -mx-4 px-4 overflow-x-auto scrollbar-none sm:mx-0 sm:px-0 sm:overflow-visible sm:flex-wrap" aria-label="Quick filters">
+      <div className="scroll-row flex items-center gap-2 mt-2 -mx-4 px-4 overflow-x-auto scrollbar-none sm:mx-0 sm:px-0 sm:overflow-visible sm:flex-wrap" aria-label="Quick filters">
         {/* Search category chips */}
         {CATEGORY_KEYS.map((key) => (
           <button
@@ -322,7 +322,7 @@ export function ExploreFilters({
       {/* Also wraps, active-filter pills would otherwise clip when several */}
       {/* are applied at once.                                               */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex items-center gap-2 mt-2 -mx-4 px-4 overflow-x-auto scrollbar-none sm:mx-0 sm:px-0 sm:overflow-visible sm:flex-wrap" aria-label="Active filters">
+      <div className="scroll-row flex items-center gap-2 mt-2 -mx-4 px-4 overflow-x-auto scrollbar-none sm:mx-0 sm:px-0 sm:overflow-visible sm:flex-wrap" aria-label="Active filters">
         {/* More filters toggle */}
         <button
           type="button"

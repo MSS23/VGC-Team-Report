@@ -17,7 +17,7 @@ function AnimatedSprite({ species, size = 56 }: { species: string; size?: number
       alt={species}
       width={size}
       height={size}
-      className="object-contain"
+      className="h-auto w-full max-w-[52px] object-contain"
       onError={() => setSrcIdx((i) => Math.min(i + 1, urls.length - 1))}
     />
   );
@@ -85,17 +85,17 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
 
       {/* Animated team sprites with species names */}
       <div className="px-4 sm:px-6 pt-5 pb-3">
-        <div className="flex items-end justify-between gap-2 overflow-hidden sm:justify-around sm:gap-5">
+        <div className="grid grid-cols-6 items-end gap-1 sm:flex sm:justify-around sm:gap-5">
           {report.species.map((species, i) => (
             <div
               key={i}
-              className="flex flex-col items-center gap-1"
+              className="flex min-w-0 flex-col items-center gap-1"
 
 
 
             >
               <AnimatedSprite species={species} size={52} />
-              <span className="text-xs sm:text-xs font-semibold text-text-tertiary text-center leading-tight max-w-[56px] sm:max-w-[72px] truncate">
+              <span className="hidden text-xs font-semibold text-text-tertiary text-center leading-tight max-w-[96px] truncate sm:block">
                 {species}
               </span>
             </div>
@@ -145,7 +145,7 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
               {relativeTime(report.createdAt)}
             </span>
           </div>
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-accent group-hover:underline flex-shrink-0">
+          <span className="inline-flex min-h-11 items-center gap-1.5 text-xs font-bold text-accent group-hover:underline flex-shrink-0">
             View Report
             <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="5" y1="12" x2="19" y2="12" />

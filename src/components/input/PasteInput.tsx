@@ -395,10 +395,10 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
                 </button>
             </div>
           )}
-          <ul className="mt-12 grid gap-(--gap-columns) sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-8 grid gap-(--gap-columns) sm:mt-12 sm:grid-cols-2 lg:grid-cols-3">
             {CHAMPIONS_SAMPLE_TEAMS.map((team) => (
-              <li key={team.id} className="group relative flex h-full flex-col gap-6 rounded-card border border-border bg-surface p-6 transition-[border-color] duration-(--dur-short) hover:border-accent focus-within:border-accent">
-                  <div className="grid grid-cols-3 gap-2">
+              <li key={team.id} className="group relative flex h-full flex-col gap-4 rounded-card border border-border bg-surface p-4 transition-[border-color] duration-(--dur-short) hover:border-accent focus-within:border-accent sm:gap-6 sm:p-6">
+                  <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-3 sm:gap-2">
                     {team.pokemon.map((species) => (
                       <span key={species} className="flex aspect-square items-center justify-center rounded-lg bg-surface-alt">
                         <PopularCardSprite species={species} />

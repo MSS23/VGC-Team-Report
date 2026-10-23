@@ -161,7 +161,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
 
       {/* Mobile bottom tab bar, always render all 5 tabs to prevent layout shift */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-(--z-sticky-nav) bg-surface border-t border-border safe-bottom safe-x" aria-label="Mobile navigation">
-        <div className="flex items-center justify-around px-0.5 pt-1 pb-0.5">
+        <div className="flex items-stretch px-0.5 pt-1 pb-0.5">
           {[
             { href: "/", label: "Create", key: "home", icon: "M12 5v14M5 12h14" },
             ...NAV_LINKS.filter((l) => l.key === "explore" || l.key === "champions" || l.key === "compare"),
@@ -173,14 +173,14 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
                 key={link.key}
                 href={link.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`relative flex min-h-12 min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 py-1 transition-colors duration-(--dur-short) ${
+                className={`relative flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 py-1 transition-colors duration-(--dur-short) ${
  isActive ? "text-accent" : "text-text-secondary"
                 }`}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isActive ? "2.5" : "1.8"} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d={link.icon} />
                 </svg>
-                <span className="text-xs font-semibold leading-none">{link.label}</span>
+                <span className="w-full truncate text-center text-[11px] font-semibold leading-none tracking-normal">{link.label}</span>
               </Link>
             );
           })}

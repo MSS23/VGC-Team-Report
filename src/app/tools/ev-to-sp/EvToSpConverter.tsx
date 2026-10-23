@@ -106,7 +106,7 @@ export function EvToSpConverter() {
       </p>
 
       {/* Presets */}
-      <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
+      <div className="scroll-row flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
         {PRESETS.map((preset) => (
           <button
             key={preset.id}
