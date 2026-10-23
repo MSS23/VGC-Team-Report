@@ -49,9 +49,13 @@ export function getNextTier(totalViews: number): { views: number; unlocks: numbe
 export function applyAccentTheme(theme: AccentTheme): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.style.setProperty("--accent", theme.accent);
+  // Inline custom properties outrank the [data-dark-mode] rule, so the dark variant is chosen here
+  const isDark = root.hasAttribute("data-dark-mode");
+  root.style.setProperty("--accent", isDark ? theme.darkAccent : theme.accent);
   root.style.setProperty("--accent-light", theme.accentLight);
-  root.style.setProperty("--accent-surface", theme.accentSurface);
+  root.style.setProperty("--accent-surface", isDark ? theme.darkSurface : theme.accentSurface);
   root.style.setProperty("--accent-dark", theme.darkAccent);
   root.style.setProperty("--accent-surface-dark", theme.darkSurface);
+  root.style.setProperty("--signal", isDark ? theme.darkAccent : theme.accent);
+  root.style.setProperty("--signal-dark", theme.darkAccent);
 }

@@ -116,6 +116,8 @@ const STORAGE_KEY = "vgc-gen-theme";
 const listeners = new Set<() => void>();
 
 let currentTheme: GenTheme = "gen9";
+// The stylesheet opens in Coral. A gen palette is applied only once the visitor has picked one (stored), or a shared view pins one.
+let hasStoredTheme = false;
 
 // View override: when set (e.g. on a shared report view), this theme is
 // applied to the DOM regardless of the viewer's own `currentTheme`. This
@@ -127,7 +129,7 @@ let viewOverrideTheme: GenTheme | null = null;
 if (typeof window !== "undefined") {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && stored in GEN_PRESETS) currentTheme = stored as GenTheme;
+    if (stored && stored in GEN_PRESETS) { currentTheme = stored as GenTheme; hasStoredTheme = true; }
   } catch {}
 }
 
@@ -147,13 +149,18 @@ function getServerSnapshot(): GenTheme {
 function applyTheme(themeId: GenTheme) {
   // View override takes precedence, so shared reports stay on the creator's
   // theme even when the MutationObserver re-fires on dark-mode toggles.
-  const effective = viewOverrideTheme ?? themeId;
-  const preset = GEN_PRESETS[effective];
+  const effective = viewOverrideTheme ?? (hasStoredTheme ? themeId : null);
   const root = document.documentElement;
+  if (!effective) {
+    for (const prop of ["--accent", "--accent-light", "--accent-surface", "--signal"]) root.style.removeProperty(prop);
+    return;
+  }
+  const preset = GEN_PRESETS[effective];
   const isDark = root.hasAttribute("data-dark-mode");
   root.style.setProperty("--accent", isDark ? preset.accentDark : preset.accent);
   root.style.setProperty("--accent-light", preset.accentLight);
   root.style.setProperty("--accent-surface", isDark ? preset.accentSurfaceDark : preset.accentSurface);
+  root.style.setProperty("--signal", isDark ? preset.accentDark : preset.accent);
 }
 
 /**
@@ -179,6 +186,7 @@ export function reapplyCurrentTheme() {
 function setTheme(theme: GenTheme) {
   if (theme === currentTheme) return;
   currentTheme = theme;
+  hasStoredTheme = true;
   try { localStorage.setItem(STORAGE_KEY, theme); } catch {}
   if (typeof document !== "undefined") applyTheme(theme);
   listeners.forEach((fn) => fn());

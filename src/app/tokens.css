@@ -1,4 +1,4 @@
-/* Hallmark tokens · theme: brand · the roles alias the project's runtime tokens (dark mode and the gen-theme picker swap them live) */
+/* Hallmark tokens · theme: Coral (deal 2/3) · redesign: restyle · the roles alias the project's runtime tokens, whose values are now Coral's; dark mode and the optional gen-theme picker still swap them live */
 @theme inline {
   --color-paper: var(--background);
   --color-paper-2: var(--surface);
@@ -9,10 +9,13 @@
   --color-rule: var(--border);
   --color-rule-2: var(--border-subtle);
   --color-accent-ink: var(--accent-ink);
-  --color-focus: var(--accent);
+  --color-focus: var(--signal);
+  --color-signal: var(--signal);
+  --color-cotton: var(--surface);
+  --color-desk: var(--desk);
   --color-error: var(--danger);
-  --font-display: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
-  --font-body: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sans);
+  --font-body: var(--font-sans);
   --font-outlier: var(--font-mono), ui-monospace, monospace;
 }
 @theme static {
@@ -28,10 +31,17 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --radius-card: 10px;
+  --radius-card: 8px;
+  --radius-input: 6px;
+  --radius-stock: 8px;
   --radius-pill: 999px;
-  --shadow-card: none;
-  --tracking-display: -0.025em;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --radius-2xl: 10px;
+  --radius-3xl: 12px;
+  --shadow-card: var(--edge-stock), var(--cast-stock);
+  --tracking-display: -0.03em;
 }
 :root {
   --space-3xs: 2px;
@@ -62,6 +72,15 @@
   --z-toast: 500;
   --z-tooltip: 600;
   --rule-hair: 1px;
+  --display-weight: 600;
+  /* Coral: one light from the left; every paper object takes a lit edge top-left, a shade edge bottom-right and a cast falling right */
+  --shade: 32% 0.03 50; --lit: 100% 0.005 80; --deep: 7% 0.01 40;
+  --edge-stock: inset 0 1px 0 oklch(var(--lit) / 0.9), inset 0 -1px 0 oklch(var(--shade) / 0.07), 0 0 0 0.5px oklch(var(--shade) / 0.22), 0 1px 0 oklch(var(--shade) / 0.12);
+  --cast-stock: 6px 5px 10px -6px oklch(var(--shade) / 0.3);
+  --cast-stock-lift: 12px 10px 18px -8px oklch(var(--shade) / 0.3);
+  --press-groove: inset 1px 1.5px 2px oklch(var(--shade) / 0.16), inset -1px -1px 0 oklch(var(--lit) / 0.9), 0 0 0 0.5px oklch(var(--shade) / 0.2);
+  --tex-felt: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.018' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.38 0 0 0 0 0.3 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='360' height='360' filter='url(%23f)'/%3E%3C/svg%3E");
+  --tex-cotton: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.34 0 0 0 0 0.28 0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='360' height='360' filter='url(%23c)'/%3E%3C/svg%3E");
 }
 @media (max-width: 60rem) { :root { --gutter: 24px; --section-gap-s: 80px; --section-gap: 96px; --section-gap-l: 120px; } }
 @media (max-width: 40rem) { :root { --gutter: 16px; --section-gap-s: 56px; --section-gap: 72px; --section-gap-l: 96px; --gap-columns: 16px; } }

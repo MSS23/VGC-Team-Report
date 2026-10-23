@@ -1,6 +1,45 @@
 [
  {
   "mode": "redesign",
+  "depth": "restyle",
+  "scope": "site",
+  "shape": "Workbench",
+  "theme": "coral",
+  "axes": "light/grotesk-sans/warm",
+  "hero": "Counter",
+  "nav": "edge-aligned",
+  "footer": "mast",
+  "imagery": "product",
+  "photos": [],
+  "entry": "the paste box on the desk",
+  "fingerprint": "workbench-counter-edge-mast-product-coral",
+  "sections": [
+   "Hero (paste box on the desk)",
+   "Grid (sample teams)",
+   "Steps (how it works)",
+   "Showcase (featured report)",
+   "Rail (latest reports)",
+   "Band (feedback)",
+   "Footer"
+  ],
+  "signature": "the paste box on a felt desk with a real Showdown set in it",
+  "waived": [
+   "74",
+   "47b",
+   "8",
+   "77",
+   "44c",
+   "59",
+   "78",
+   "39b",
+   "23"
+  ],
+  "prompt": "VGC Team Report restyled in Coral: ink board primary, coral signal, General Sans and Geist Mono, cotton sheets on warm grey paper",
+  "date": "2026-10-23",
+  "dealt": "2/3, seed vgc-team-report-web-f538"
+ },
+ {
+  "mode": "redesign",
   "depth": "full",
   "scope": "site",
   "shape": "Workbench",

@@ -249,7 +249,8 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
   return (
     <>
       {/* Hero · Counter posture: the action is the visual. Head on five columns, the paste box on seven. */}
-      <section className="mx-auto max-w-(--container) px-(--gutter) pt-10 pb-(--section-gap-s) sm:pt-14 lg:min-h-[calc(100dvh-4rem)] lg:pt-0 lg:flex lg:items-center">
+      <section className="desk">
+      <div className="mx-auto max-w-(--container) px-(--gutter) pt-10 pb-(--section-gap-s) sm:pt-14 lg:min-h-[calc(100dvh-4rem)] lg:pt-0 lg:flex lg:items-center">
         <div className="grid w-full gap-12 lg:grid-cols-12 lg:gap-(--gap-columns)">
           <div className="lg:col-span-5">
             {/* Static sprites on mobile save bandwidth and battery; desktop keeps
@@ -367,6 +368,7 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
             <QuickShare paste={paste} />
           </div>
         </div>
+      </div>
       </section>
 
       {/* Sample teams · Grid of three */}

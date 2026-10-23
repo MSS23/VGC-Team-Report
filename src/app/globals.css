@@ -1,8 +1,14 @@
-/* Hallmark · shape: Workbench (/), kept (app screens) · genre: modern-minimal · theme: brand · redesign: full
- * paper: oklch(98% 0.004 80) · accent: oklch(55% 0.22 15), the project's rose and its gen-theme picker · display: Sora · body: Sora · hero: Counter (/), Banner (/explore, /champions, /champions/[pokemon], /faq, /support, /tools/ev-to-sp, /tournaments, /changelog, /compare, /feedback) · nav: edge-aligned, wordmark and links at the left, sign-in at the right edge, a hairline under · footer: mast, the wordmark over one row of links · signature: the paste box doing its one job on the first screen, a real Showdown set already in it
- * axes: light/grotesk-sans/warm · posture: restrained · surface: absolute · contrast: pass · fold: pass · v2.0.0 */
-/* Hallmark · pre-emit critique: P4 H4 E3 S4 R4 V3 · weakest: E, 140 files carry the old transition-all and tracked-caps labels; swept them with one rule each instead of rewriting components */
-/* Hallmark · waive 74 · #E11D48 and the gen palette sit in globals.css :root and layout.tsx · the gen-theme accent picker is the product's own brand, kept */
+/* Hallmark · shape: kept (Workbench on /, Banner elsewhere, app screens kept) · genre: modern-minimal · theme: Coral (deal 2/3, seed vgc-team-report-web-f538·d02091a4·2026-10-23·r0) · redesign: restyle
+ * paper: oklch(97% 0.006 55), cotton sheets at 98.8% on it · accent: the ink board oklch(22% 0.011 40) for the one primary, coral oklch(45% 0.16 29) as the signal (links, focus, the pressed states) · display: General Sans · body: General Sans · figures: Geist Mono · hero: kept (Counter on /, Banner on the list, tool and form routes) · nav: kept, edge-aligned · footer: kept, mast · imagery: the product · signature: the paste box on a felt desk, a real Showdown set in it
+ * axes: light/grotesk-sans/warm · posture: restrained · surface: absolute · modes: light+dark · colours: Coral by request, replacing the rose · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 · weakest: E, 80 components carry their controls as utility strings; the Coral controls (board, cotton card, lit edge, cast) are applied by four unlayered rules on the shared classes rather than rewriting each file */
+/* Hallmark · waive 74 · the gen-theme, random-accent and view-milestone presets keep their hex literals in useTheme.ts, random-accent.ts, accent-themes.ts and layout.tsx · they are the product's optional palettes, applied only after a visitor picks one; the page itself opens in Coral */
+/* Hallmark · colours: Coral by request · the rose accent is gone; the primary is the ink board, coral is spent on links, focus and the pressed states */
+/* Hallmark · waive 23 · the primary is the ink board, oklch(22% 0.011 40), one lightness step from the ink text · the render tier reads the display head's pixels as accent; the board paints one control a screen */
+/* Hallmark · dismissed 41 · --accent-ink is the board's light type, measured here against the surface it never sits on · the label sits on the board, 13:1 */
+/* Hallmark · dismissed 11 · the hover lift on the board and the cotton card is Coral's one control signal, a card rising 1px into its cast · no card or image lifts */
+/* Hallmark · retired the random accent and the view-milestone palettes as colour pickers · applyRandomAccent now applies the one Coral set, dark-aware; the gen-theme picker still recolours the board when a visitor picks a generation, and keeps choosing the sprite style */
+/* Hallmark · fonts: General Sans from Fontshare's CSS (self-host it under public/fonts when the licence download is in hand), Geist Mono through next/font */
 /* Hallmark · waive 47b · one frame, the paste box, a real Showdown set inside · the paste box is the product doing its job */
 /* Hallmark · waive 8 · kept sequence: paste, samples, how it works, spotlight, latest · the order is the job's own, recomposed as Counter, Grid, Steps, Showcase, Rail */
 /* Hallmark · waive 44c · hero: Banner on the list, tool and form routes (/explore, /compare, /changelog, /feedback, /tournaments, /tools/ev-to-sp, /faq, /support, /champions/[pokemon]) · the list, the form or the converter is the reason to come, so it starts above the fold */
@@ -26,6 +32,8 @@
 
 @custom-variant creator (&:where([data-creator-mode] *));
 @custom-variant presenting (&:where([data-presentation-mode] *));
+/* dark: utilities follow the site's own toggle (the attribute), not only the OS preference */
+@custom-variant dark (&:where([data-dark-mode], [data-dark-mode] *));
 
 :root {
   --nav-height: 6rem;
@@ -34,18 +42,22 @@
      iOS gesture-bar safe area. Consumers read it via
      var(--bottom-nav-height, 3.5rem). */
   --bottom-nav-height: 3.5rem;
-  --background: #FAF9F6;
-  --foreground: #1A1A2E;
-  --surface: #FFFFFF;
-  --surface-alt: #F2F0EB;
-  --border: #E0DDD5;
-  --border-subtle: #F0EDE6;
-  --text-primary: #1A1A2E;
-  --text-secondary: #4A4A68;
-  --text-tertiary: #5E5E7A;
-  --accent: #E11D48;
-  --accent-light: #FDA4AF;
-  --accent-surface: #FFF1F2;
+  --background: var(--light-background-83);
+  --foreground: var(--light-foreground);
+  --surface: var(--light-surface-33);
+  --surface-alt: var(--light-surface-alt-77);
+  --border: var(--light-border-98);
+  --border-subtle: var(--light-border-subtle);
+  --text-primary: var(--light-text-primary);
+  --text-secondary: var(--light-text-secondary);
+  --text-tertiary: var(--light-text-tertiary);
+  --accent: var(--light-accent);
+  --accent-light: var(--light-accent-light);
+  --accent-surface: var(--light-accent-surface);
+  --accent-ink: var(--light-accent-ink);
+  --signal: var(--light-signal);
+  --desk: var(--light-desk);
+  --press-shadow: 0 -0.75px 0 var(--text-primary);
   --success: #16A34A;
   --warning: #D97706;
   --danger: #DC2626;
@@ -73,22 +85,25 @@
 
 /* Fixed light and dark values, declared once so the export, print, creator and dark blocks reference tokens */
 :root {
-  --light-background: #ffffff;
-  --light-surface: #ffffff;
-  --light-surface-alt: #FAFAF7;
-  --light-border: #E5E2DA;
-  --light-background-83: #FAF9F6;
-  --light-foreground: #1A1A2E;
-  --light-surface-33: #FFFFFF;
-  --light-surface-alt-77: #F2F0EB;
-  --light-border-98: #E0DDD5;
-  --light-border-subtle: #F0EDE6;
-  --light-text-primary: #1A1A2E;
-  --light-text-secondary: #4A4A68;
-  --light-text-tertiary: #5E5E7A;
-  --light-accent: #E11D48;
-  --light-accent-light: #FDA4AF;
-  --light-accent-surface: #FFF1F2;
+  --light-background: oklch(98.8% 0.0045 80);
+  --light-surface: oklch(98.8% 0.0045 80);
+  --light-surface-alt: oklch(96% 0.006 60);
+  --light-border: oklch(87% 0.009 55);
+  --light-background-83: oklch(97% 0.006 55);
+  --light-foreground: oklch(21% 0.012 38);
+  --light-surface-33: oklch(98.8% 0.0045 80);
+  --light-surface-alt-77: oklch(94.5% 0.007 55);
+  --light-border-98: oklch(87% 0.009 55);
+  --light-border-subtle: oklch(91.5% 0.009 55);
+  --light-text-primary: oklch(21% 0.012 38);
+  --light-text-secondary: oklch(29% 0.013 40);
+  --light-text-tertiary: oklch(44% 0.013 45);
+  --light-accent: oklch(22% 0.011 40);
+  --light-accent-light: oklch(74% 0.125 30);
+  --light-accent-surface: oklch(95.5% 0.025 40);
+  --light-accent-ink: oklch(96.5% 0.006 70);
+  --light-signal: oklch(45% 0.16 29);
+  --light-desk: oklch(94.3% 0.008 64);
   --light-success: #16A34A;
   --light-warning: #D97706;
   --light-danger: #DC2626;
@@ -118,19 +133,21 @@
   --dark-cell-dse-text: #FFFFFF;
   --dark-def-4x: rgba(220, 38, 38, 0.5);
   --dark-def-4x-text: #FFFFFF;
-  --dark-background: #0B0B1A;
-  --dark-foreground: #F0EDE6;
-  --dark-surface: #141428;
-  --dark-surface-alt: #1C1C38;
-  --dark-border: #2A2A52;
-  --dark-border-subtle: #222244;
-  --dark-text-primary: #F0EDE6;
-  --dark-text-secondary: #C0C0D8;
-  --dark-text-tertiary: #9898B8;
-  --dark-accent-light: #FDA4AF;
-  --dark-accent: #FB7185;
-  --dark-accent-surface: #3B1525;
-  --accent-ink: #FFFFFF;
+  --dark-background: oklch(15% 0.012 45);
+  --dark-foreground: oklch(94% 0.008 60);
+  --dark-surface: oklch(18% 0.012 45);
+  --dark-surface-alt: oklch(21% 0.012 45);
+  --dark-border: oklch(30% 0.012 45);
+  --dark-border-subtle: oklch(25% 0.012 45);
+  --dark-text-primary: oklch(94% 0.008 60);
+  --dark-text-secondary: oklch(80% 0.01 55);
+  --dark-text-tertiary: oklch(68% 0.012 50);
+  --dark-accent-light: oklch(74% 0.125 30);
+  --dark-accent: oklch(90% 0.012 70);
+  --dark-accent-surface: oklch(26% 0.04 35);
+  --dark-accent-ink: oklch(21% 0.012 38);
+  --dark-signal: oklch(78% 0.12 30);
+  --dark-desk: oklch(17% 0.012 50);
   --print-ink: #111827;
   --print-rule: #E5E7EB;
   --stripe: rgba(255, 255, 255, 0.15);
@@ -176,7 +193,7 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
-  --font-sans: var(--font-sora);
+  --font-sans: "General Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono);
 }
 
@@ -200,7 +217,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sora), system-ui, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: clip;
@@ -218,7 +235,7 @@ body {
    horizontal scroll revealing the banner offscreen. Constrain it.
    ==================================================================== */
 #cc-main {
-  --cc-font-family: var(--font-sora), system-ui, sans-serif;
+  --cc-font-family: var(--font-sans);
 }
 #cc-main .cm,
 #cc-main .pm {
@@ -298,19 +315,6 @@ body {
   }
 }
 
-/* Subtle dot grid — only on large screens for performance */
-@media (min-width: 1024px) {
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    opacity: 0.3;
-    background-image: radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0);
-    background-size: 32px 32px;
-    pointer-events: none;
-  }
-}
 
 /* Safe area padding for notched/dynamic island devices */
 @supports (padding: env(safe-area-inset-bottom)) {
@@ -368,7 +372,7 @@ body {
 
 ::selection {
   background: var(--accent);
-  color: white;
+  color: var(--accent-ink);
 }
 
 [data-creator-mode] {
@@ -401,11 +405,21 @@ body {
   --accent: var(--accent-dark, var(--dark-accent));
   --accent-light: var(--dark-accent-light);
   --accent-surface: var(--accent-surface-dark, var(--dark-accent-surface));
+  --accent-ink: var(--dark-accent-ink);
+  --signal: var(--signal-dark, var(--dark-signal));
+  --desk: var(--dark-desk);
+  /* dark: elevation is lightness, not shadow; the light falls on nothing */
+  --lit: 96% 0.006 70; --shade: 8% 0.01 40;
+  --cast-stock: 0 0 0 0 transparent;
+  --cast-stock-lift: 0 0 0 0 transparent;
+  --press-shadow: 0.5px 0.75px 0 var(--accent);
 }
 
-[data-dark-mode] body::before {
-  opacity: 0.15;
+/* dark: the primary is a light stock card, so the legacy white labels on it take the board's ink */
+[data-dark-mode] :is(.bg-accent, .hover\:bg-accent:hover):is(.text-white, .hover\:text-white:hover) {
+  color: var(--accent-ink);
 }
+
 
 /* ====================================================================
    EXPORT THEME OVERRIDES — force light/dark on print container
@@ -944,7 +958,7 @@ body {
    outline-offset ensures the ring doesn't overlap element borders. */
 @layer base {
   *:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--signal);
     outline-offset: 2px;
   }
 }
@@ -955,12 +969,43 @@ body {
   border-color: var(--text-tertiary);
 }
 
-/* Accent as text: a step toward the ink so every gen accent and the random accent clear 4.5:1 on paper and on the accent surface */
+/* Accent as text is the signal: deep coral by default; a picked gen or random accent sets --signal beside --accent */
 :root {
-  --accent-text: color-mix(in oklab, var(--accent) 82%, var(--text-primary));
+  --accent-text: var(--signal);
 }
 .text-accent {
   color: var(--accent-text);
+}
+
+/* Coral controls and surfaces, applied on the shared classes so every route takes them (unlayered: they outrank the utilities) */
+:is(.rounded-card, .rounded-lg, .rounded-xl, .rounded-2xl).bg-surface:not(input, textarea, select) {
+  box-shadow: var(--edge-stock), var(--cast-stock);
+}
+:is(button, a, summary).bg-accent {
+  text-shadow: var(--press-shadow);
+  box-shadow: var(--cast-stock);
+}
+:is(button, a, summary).bg-accent:hover:not(:active):not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--cast-stock-lift);
+}
+:is(button, a, summary).border-text-primary {
+  border-color: transparent;
+  background-color: var(--surface);
+  background-image: var(--tex-cotton);
+  text-shadow: 0.5px 0.75px 0 var(--surface);
+  box-shadow: var(--edge-stock), var(--cast-stock);
+}
+:is(button, a, summary).border-text-primary:hover:not(:active):not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--edge-stock), var(--cast-stock-lift);
+}
+.desk {
+  background-color: var(--desk);
+  background-image: radial-gradient(90% 120% at 0% 30%, var(--surface), transparent 62%), var(--tex-felt);
+}
+h1, h2, h3 {
+  font-weight: var(--display-weight);
 }
 
 /* Disabled controls: three channels, the native attribute included */
