@@ -146,6 +146,15 @@ function getServerSnapshot(): GenTheme {
   return "gen9";
 }
 
+// Whether the visitor has picked a generation. Until they do, the page sits in the stylesheet's default and no generation is "active".
+function getStoredSnapshot(): boolean {
+  return hasStoredTheme;
+}
+
+function getStoredServerSnapshot(): boolean {
+  return false;
+}
+
 function applyTheme(themeId: GenTheme) {
   // View override takes precedence, so shared reports stay on the creator's
   // theme even when the MutationObserver re-fires on dark-mode toggles.
@@ -201,6 +210,7 @@ if (typeof window !== "undefined") {
 
 export function useTheme() {
   const genTheme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const hasGenTheme = useSyncExternalStore(subscribe, getStoredSnapshot, getStoredServerSnapshot);
   const setGenTheme = useCallback((theme: GenTheme) => setTheme(theme), []);
-  return { genTheme, setGenTheme };
+  return { genTheme, hasGenTheme, setGenTheme };
 }

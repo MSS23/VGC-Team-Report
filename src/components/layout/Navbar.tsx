@@ -7,7 +7,7 @@ import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
-import { GEN_THEMES } from "@/hooks/useTheme";
+import { GEN_THEMES, useTheme } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
 import type { DraftSaveStatus } from "@/hooks/useAutoDraft";
 import { NotificationBell } from "@/components/ui/NotificationBell";
@@ -195,6 +195,7 @@ export function Navbar(props: NavbarProps) {
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode, onEditPresentation,
     onReset, onStartTour,
   } = props;
+  const { hasGenTheme } = useTheme();
 
   const { t } = useTranslation();
   const { isLoaded, isSignedIn } = useAuth();
@@ -708,7 +709,7 @@ export function Navbar(props: NavbarProps) {
                       <span className="text-xs font-bold text-text-tertiary mb-2 block">Theme</span>
                       <div className="flex items-center gap-1">
                         {GEN_THEMES.map((theme) => {
-                          const isActive = genTheme === theme.id;
+                          const isActive = hasGenTheme && genTheme === theme.id;
                           return (
                             <button
                               key={theme.id}
