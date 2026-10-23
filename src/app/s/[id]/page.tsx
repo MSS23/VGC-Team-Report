@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { ShareRedirectClient } from "./redirect";
@@ -26,7 +27,8 @@ export async function generateMetadata({
       sql`SELECT data, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
       sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
     ]);
-    if (rows.length === 0) return { title: { absolute: "VGC Team Report" } };
+    // Deleted/unknown IDs were a soft 404 (200 + indexable homepage canonical).
+    if (rows.length === 0) notFound();
 
     // Private reports (neither public nor unlisted) must not leak even their
     // title/description into <head>, that's the same data we gate at the API.
@@ -140,7 +142,8 @@ export async function generateMetadata({
         images: [],
       },
     };
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err); // let notFound() through; DB errors fall back below
     return { title: { absolute: "VGC Team Report" } };
   }
 }
@@ -167,7 +170,8 @@ export default async function SharePage({
       sql`SELECT data, is_public, is_unlisted, created_at, updated_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
       sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
     ]);
-    // Skip JSON-LD entirely for private reports, don't expose their structured
+    if (shareRows.length === 0) notFound();
+    // Skip JSON-LD entirely for private reports — don't expose their structured
     // metadata. Unlisted/public still get rich structured data for unfurls/SEO.
     const visibleForLd =
       shareRows.length > 0 &&
@@ -217,8 +221,9 @@ export default async function SharePage({
         },
       };
     }
-  } catch {
-    // Non-critical, skip JSON-LD
+  } catch (err) {
+    unstable_rethrow(err);
+    // Non-critical — skip JSON-LD
   }
 
   return (

@@ -8,7 +8,7 @@ import { useTranslation } from "@/lib/i18n";
 import { lookupPokemon } from "@/lib/data/pokemon";
 import { getChampionsDex } from "@/lib/data/champions-dex";
 import { isChampionsFormat } from "@/lib/data/tags";
-import { calculateStat, calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
+import { calculateStat, calculateChampionsStat, convertToChampionsSp, calcBattleSpeed } from "@/lib/analysis/stat-calculator";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import { detectMegaFromItem } from "@/lib/utils/mega-detect";
 import { resolveSpeedTierForm } from "@/lib/utils/speed-tier-form";
@@ -67,21 +67,12 @@ const MODIFIER_CONFIG: Record<SpeedModifier, { label: string; icon: string; desc
   icywind: { label: "Icy Wind", icon: "\u{2744}\u{FE0F}", description: "-1 stage" },
 };
 
-/**
- * Calculate speed after battle modifiers using correct Pokemon rounding.
- * Order matches the game engine:
- *  1. Stat stage modifiers (Icy Wind -1), applied to base stat
- *  2. Ability/item boost (Quark Drive, Choice Scarf), reapplied after stages
- *  3. Paralysis (×0.5, Gen 7+)
- *  4. Tailwind (×2)
- */
 function calcSpeed(baseSpe: number, boostMultiplier: number, mod: Set<SpeedModifier>): number {
-  let speed = baseSpe;
-  if (mod.has("icywind")) speed = Math.floor(speed * 2 / 3);
-  if (boostMultiplier !== 1) speed = Math.floor(speed * boostMultiplier);
-  if (mod.has("paralysis")) speed = Math.floor(speed * 0.5);
-  if (mod.has("tailwind")) speed = speed * 2;
-  return speed;
+  return calcBattleSpeed(baseSpe, boostMultiplier, {
+    icyWind: mod.has("icywind"),
+    tailwind: mod.has("tailwind"),
+    paralysis: mod.has("paralysis"),
+  });
 }
 
 /** Calculate max speed at level 50 for a given base stat (31 IV, 252 EV, +nature) */

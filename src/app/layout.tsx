@@ -75,13 +75,10 @@ export const metadata: Metadata = {
   other: {
     "mobile-web-app-capable": "yes",
   },
-  alternates: {
-    canonical: "https://pokemonvgcteamreport.com",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  // No site-wide canonical/robots here: every page without its own inherited
+  // canonical=homepage (telling Google it is a duplicate of /), and 404s got
+  // "index, follow" alongside Next's automatic "noindex". Indexable is the
+  // default; the homepage sets its own canonical in app/page.tsx.
 };
 
 export default function RootLayout({

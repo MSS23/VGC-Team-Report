@@ -74,6 +74,27 @@ export function calculateAllChampionsStats(
   return result as StatSpread;
 }
 
+/**
+ * In-battle Speed, following the game engine (Showdown `getActionSpeed`):
+ *  1. stat stage (Icy Wind -1 → floor(stat × 2/3))
+ *  2. every Speed modifier chained into ONE multiply — item/ability boost
+ *     (Choice Scarf, Booster Energy ×1.5) and Tailwind ×2 — rounded half-down
+ *  3. paralysis ×0.5 floored last (Gen 7+ applies it after all other modifiers)
+ * Applying Tailwind/paralysis as separate floored steps is off by one for odd
+ * speeds: 101 Spe Scarf + Tailwind is 303, not 302.
+ */
+export function calcBattleSpeed(
+  speed: number,
+  boostMultiplier: number,
+  mods: { icyWind?: boolean; tailwind?: boolean; paralysis?: boolean },
+): number {
+  let s = mods.icyWind ? Math.floor((speed * 2) / 3) : speed;
+  const chained = boostMultiplier * (mods.tailwind ? 2 : 1);
+  if (chained !== 1) s = Math.ceil(s * chained - 0.5); // pokeRound: .5 rounds down
+  if (mods.paralysis) s = Math.floor(s / 2);
+  return s;
+}
+
 /** Champions SP budget constants. */
 export const CHAMPIONS_MAX_SP_PER_STAT = 32;
 export const CHAMPIONS_TOTAL_SP = 66;
