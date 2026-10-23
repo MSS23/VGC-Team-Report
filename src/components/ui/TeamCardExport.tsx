@@ -68,7 +68,7 @@ export function TeamCardExport({
         className="absolute -left-[9999px] top-0 w-[600px] h-[338px] rounded-2xl overflow-hidden"
         style={{
           background:
-            "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+            "linear-gradient(135deg, var(--light-text-primary) 0%, var(--night-2) 50%, var(--night-3) 100%)",
         }}
         aria-hidden="true"
       >
@@ -78,7 +78,7 @@ export function TeamCardExport({
             style={{
               color: "rgba(255,255,255,0.5)",
               fontSize: "10px",
-              textTransform: "uppercase",
+              textTransform: "",
               letterSpacing: "0.2em",
               fontWeight: 700,
             }}
@@ -88,7 +88,7 @@ export function TeamCardExport({
           {playerName && (
             <div
               style={{
-                color: "#fff",
+                color: "var(--light-surface)",
                 fontSize: "20px",
                 fontWeight: 800,
                 marginTop: "2px",
@@ -119,7 +119,7 @@ export function TeamCardExport({
                 color: "rgba(255,255,255,0.8)",
                 fontSize: "10px",
                 fontWeight: 700,
-                textTransform: "uppercase",
+                textTransform: "",
                 letterSpacing: "0.1em",
               }}
             >
@@ -192,7 +192,7 @@ export function TeamCardExport({
       </div>
       )}
 
-      {/* Compact visible preview — shown in-flow at ~280px wide.
+      {/* Compact visible preview, shown in-flow at ~280px wide.
           Uses CSS transform-scale on the full 600px card so layout stays
           identical to the exported image. No download button. */}
       {compact && (
@@ -210,7 +210,7 @@ export function TeamCardExport({
               transform: "scale(0.4667)",
               transformOrigin: "top left",
               background:
-                "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+                "linear-gradient(135deg, var(--light-text-primary) 0%, var(--night-2) 50%, var(--night-3) 100%)",
               position: "relative",
             }}
           >
@@ -220,7 +220,7 @@ export function TeamCardExport({
                 style={{
                   color: "rgba(255,255,255,0.5)",
                   fontSize: "10px",
-                  textTransform: "uppercase",
+                  textTransform: "",
                   letterSpacing: "0.2em",
                   fontWeight: 700,
                 }}
@@ -230,7 +230,7 @@ export function TeamCardExport({
               {playerName && (
                 <div
                   style={{
-                    color: "#fff",
+                    color: "var(--light-surface)",
                     fontSize: "20px",
                     fontWeight: 800,
                     marginTop: "2px",
@@ -261,7 +261,7 @@ export function TeamCardExport({
                     color: "rgba(255,255,255,0.8)",
                     fontSize: "10px",
                     fontWeight: 700,
-                    textTransform: "uppercase",
+                    textTransform: "",
                     letterSpacing: "0.1em",
                   }}
                 >
@@ -340,17 +340,17 @@ export function TeamCardExport({
         <p role="alert" className="text-xs text-red-500 mb-2 px-1">{exportError}</p>
       )}
 
-      {/* Export button — rendered in-flow (hidden in compact mode) */}
+      {/* Export button, rendered in-flow (hidden in compact mode) */}
       {!compact && (
       <button
         type="button"
         onClick={handleExport}
         disabled={exporting}
         aria-busy={exporting}
-        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-alt border border-border hover:bg-surface-alt/80 hover:border-accent/40 transition-all text-left w-full group cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-alt border border-border hover:bg-surface-alt/80 hover:border-accent/40 transition text-left w-full group cursor-pointer disabled:opacity-60 disabled:cursor-wait"
       >
         <div className="w-9 h-9 rounded-lg bg-surface border border-border flex items-center justify-center flex-shrink-0">
-          <svg
+          <svg aria-hidden="true"
             width="16"
             height="16"
             viewBox="0 0 24 24"
@@ -373,7 +373,7 @@ export function TeamCardExport({
             {exporting ? "Please wait" : "Save as PNG image"}
           </div>
         </div>
-        <svg
+        <svg aria-hidden="true"
           width="14"
           height="14"
           viewBox="0 0 24 24"

@@ -20,7 +20,7 @@ interface SpeciesSuggestion {
 }
 
 // Build the searchable index once per module load from the pre-extracted dex
-// subset (see scripts/build-dex-subset.mjs). 1500+ entries — fine to iterate
+// subset (see scripts/build-dex-subset.mjs). 1500+ entries, fine to iterate
 // per keystroke since we filter down to a tiny prefix list, but caching the
 // full list avoids the rebuild cost on every search.
 let SPECIES_INDEX: SpeciesSuggestion[] | null = null;
@@ -135,7 +135,7 @@ export function InlinePokemonEditor({
       <div className="bg-surface border border-border rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-fade-in">
         <div className="px-5 pt-5 pb-3 border-b border-border-subtle">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-extrabold text-text-primary tracking-tight">
+            <h3 className="text-base font-bold text-text-primary tracking-tight">
               Replace Pokemon
             </h3>
             <button
@@ -144,16 +144,16 @@ export function InlinePokemonEditor({
               className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Close"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </div>
           <p className="text-xs text-text-tertiary mb-3">
-            Currently <span className="font-bold text-text-secondary">{currentSpecies}</span> — search for a replacement. Item, ability, moves, EVs and IVs are preserved (you can fix any mismatches after).
+            Currently <span className="font-bold text-text-secondary">{currentSpecies}</span>, search for a replacement. Item, ability, moves, EVs and IVs are preserved (you can fix any mismatches after).
           </p>
           <div className="relative">
-            <svg
+            <svg aria-hidden="true"
               width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
               className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none"
             >
@@ -190,7 +190,7 @@ export function InlinePokemonEditor({
                 onClick={() => onReplace(s.name)}
                 onMouseEnter={() => setHighlighted(i)}
                 className={`w-full flex items-center gap-3 px-5 py-2.5 text-left transition-colors cursor-pointer ${
-                  i === highlighted ? "bg-accent-surface/40" : "hover:bg-surface-alt"
+ i === highlighted ? "bg-accent-surface/40" : "hover:bg-surface-alt"
                 }`}
               >
                 <PokemonSprite species={s.name} size={36} animated={false} />
@@ -200,16 +200,16 @@ export function InlinePokemonEditor({
                     {s.types.map((t) => (
                       <span
                         key={t}
-                        className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-px rounded text-white"
-                        style={{ backgroundColor: TYPE_BG[t] ?? "#666" }}
+                        className="text-[11px] font-bold px-1.5 py-px rounded text-white"
+                        style={{ backgroundColor: TYPE_BG[t] ?? "var(--editor-muted)" }}
                       >
                         {t}
                       </span>
                     ))}
-                    <span className="text-[10px] text-text-tertiary ml-1 tabular-nums">BST {s.baseStatTotal}</span>
+                    <span className="text-[11px] text-text-tertiary ml-1 tabular-nums">BST {s.baseStatTotal}</span>
                   </div>
                 </div>
-                <svg
+                <svg aria-hidden="true"
                   width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
                   className={`flex-shrink-0 transition-opacity ${i === highlighted ? "text-accent opacity-100" : "opacity-0"}`}
                 >
@@ -221,7 +221,7 @@ export function InlinePokemonEditor({
         </ul>
 
         <div className="px-5 py-3 bg-surface-alt/40 border-t border-border-subtle flex items-center justify-between text-[11px] text-text-tertiary">
-          <span><kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[10px] font-mono">↑↓</kbd> navigate · <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[10px] font-mono">Enter</kbd> pick · <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[10px] font-mono">Esc</kbd> close</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[11px] font-mono">↑↓</kbd> navigate <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[11px] font-mono">Enter</kbd> pick <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[11px] font-mono">Esc</kbd> close</span>
         </div>
       </div>
     </div>,

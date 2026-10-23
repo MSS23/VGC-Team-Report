@@ -6,12 +6,12 @@ import { CompareContent } from "@/components/compare/CompareContent";
 export const metadata: Metadata = {
   title: "Compare VGC Teams",
   description:
-    "Compare two VGC team reports side by side — see differences in Pokémon, movesets, items, and EV spreads.",
+    "Compare two VGC team reports side by side, see differences in Pokémon, movesets, items, and EV spreads.",
   robots: { index: false, follow: true },
   openGraph: {
     title: "Compare VGC Teams | VGC Team Report",
     description:
-      "Compare two VGC team reports side by side — see differences in Pokémon, movesets, items, and EV spreads.",
+      "Compare two VGC team reports side by side, see differences in Pokémon, movesets, items, and EV spreads.",
     type: "website",
     siteName: "VGC Team Report",
     url: "https://pokemonvgcteamreport.com/compare",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Compare VGC Teams | VGC Team Report",
     description:
-      "Compare two VGC team reports side by side — see differences in Pokémon, movesets, items, and EV spreads.",
+      "Compare two VGC team reports side by side, see differences in Pokémon, movesets, items, and EV spreads.",
     images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
   },
 };

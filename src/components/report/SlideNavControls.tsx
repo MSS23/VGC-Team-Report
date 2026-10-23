@@ -18,7 +18,7 @@ import {
 /**
  * Physical slide keys that describe the team as a whole (speed tiers +
  * coverage). They fold under the "Team" section tab rather than getting
- * their own — keeps the bottom nav to a clean three tabs.
+ * their own, keeps the bottom nav to a clean three tabs.
  */
 const COVERAGE_KEYS = ["speed-tiers", "offensive-coverage", "defensive-coverage"];
 
@@ -47,7 +47,7 @@ interface SlideNavControlsProps {
   changedSlides?: Set<number>;
   /** Physical indices currently shown (slides.visibleIndices). */
   visibleIndices: number[];
-  /** Full physical key list (slides.allSlideKeys) — key-based jumps survive reordering. */
+  /** Full physical key list (slides.allSlideKeys), key-based jumps survive reordering. */
   allSlideKeys: string[];
   /**
    * Optional Base/Mega display toggle. When present, the bottom-nav overflow
@@ -142,7 +142,7 @@ export function SlideNavControls({
   const jumpToPhysical = (physIdx: number) => {
     if (physIdx < 0) return;
     const v = visibleIndices.indexOf(physIdx);
-    if (v < 0) return; // section currently hidden — no-op
+    if (v < 0) return; // section currently hidden, no-op
     hapticLight();
     onGoTo(v);
   };
@@ -220,7 +220,7 @@ export function SlideNavControls({
       }}
       disabled={isFirst}
       aria-label="Previous slide"
-      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:pointer-fine:min-w-0 sm:pointer-fine:min-h-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition-all"
+      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:pointer-fine:min-w-0 sm:pointer-fine:min-h-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition"
     >
       <ChevronLeftIcon width="18" height="18" strokeWidth="2.5" />
     </button>
@@ -241,7 +241,7 @@ export function SlideNavControls({
         onNext();
       }}
       aria-label="Next slide"
-      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:pointer-fine:min-w-0 sm:pointer-fine:min-h-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all"
+      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:pointer-fine:min-w-0 sm:pointer-fine:min-h-0 sm:w-9 sm:h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition"
     >
       <ChevronRightIcon width="18" height="18" strokeWidth="2.5" />
     </button>
@@ -255,8 +255,8 @@ export function SlideNavControls({
       aria-haspopup="dialog"
       aria-expanded={sheetOpen}
       aria-label="More slide options"
-      className={`relative flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:pointer-fine:min-w-0 sm:pointer-fine:min-h-0 sm:w-9 sm:h-9 rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition-all ${
-        hasSheetMobile ? "flex" : "hidden sm:flex"
+      className={`relative flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:pointer-fine:min-w-0 sm:pointer-fine:min-h-0 sm:w-9 sm:h-9 rounded-full text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-95 transition ${
+ hasSheetMobile ? "flex" : "hidden sm:flex"
       }`}
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -265,7 +265,7 @@ export function SlideNavControls({
         <circle cx="19" cy="12" r="1.7" />
       </svg>
       {hiddenCount > 0 && (
-        <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] flex items-center justify-center px-0.5 rounded-full bg-amber-500 text-white text-[9px] font-extrabold leading-none">
+        <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] flex items-center justify-center px-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold leading-none">
           {hiddenCount}
         </span>
       )}
@@ -277,7 +277,7 @@ export function SlideNavControls({
     <div className="p-3 space-y-3">
       {/* Mobile sheet header */}
       <div className="flex items-center justify-between sm:hidden">
-        <span className="text-[11px] font-extrabold uppercase tracking-widest text-text-tertiary">
+        <span className="text-[11px] font-bold text-text-tertiary">
           Slide options
         </span>
         <button
@@ -293,7 +293,7 @@ export function SlideNavControls({
       {/* Display: Base / Mega */}
       {displayToggle?.hasMega && (
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary mb-1.5">
+          <div className="text-[11px] font-bold text-text-tertiary mb-1.5">
             Form
           </div>
           <div
@@ -307,7 +307,7 @@ export function SlideNavControls({
               aria-checked={displayToggle.mode === "base"}
               onClick={() => displayToggle.onChange("base")}
               className={`flex-1 h-full rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-                displayToggle.mode === "base"
+ displayToggle.mode === "base"
                   ? "bg-accent text-white shadow-sm"
                   : "text-text-secondary hover:text-text-primary"
               }`}
@@ -319,9 +319,9 @@ export function SlideNavControls({
               role="radio"
               aria-checked={displayToggle.mode === "mega"}
               onClick={() => displayToggle.onChange("mega")}
-              className={`flex-1 h-full rounded-md text-xs font-extrabold transition-colors cursor-pointer ${
-                displayToggle.mode === "mega"
-                  ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-sm shadow-purple-500/30"
+              className={`flex-1 h-full rounded-md text-xs font-bold transition-colors cursor-pointer ${
+ displayToggle.mode === "mega"
+                  ? "bg-accent text-accent-ink"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
@@ -334,7 +334,7 @@ export function SlideNavControls({
       {/* Creator tools */}
       {onToggleHide && (
         <div className="space-y-1">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-text-tertiary mb-1">
+          <div className="text-[11px] font-bold text-text-tertiary mb-1">
             Slide tools
           </div>
           <button
@@ -343,12 +343,12 @@ export function SlideNavControls({
             className="w-full flex items-center gap-2.5 min-h-[44px] px-2.5 rounded-lg text-sm font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
           >
             {isCurrentHidden ? (
-              <EyeOffIcon width="16" height="16" className="text-amber-500" />
+              <EyeOffIcon width="16" height="16" className="text-amber-800" />
             ) : (
               <EyeIcon width="16" height="16" />
             )}
             <span>{isCurrentHidden ? "Hidden from viewers" : "Visible to viewers"}</span>
-            <span className="ml-auto text-[11px] font-extrabold text-accent">
+            <span className="ml-auto text-[11px] font-bold text-accent">
               {isCurrentHidden ? "Show" : "Hide"}
             </span>
           </button>
@@ -377,14 +377,14 @@ export function SlideNavControls({
           )}
 
           {hiddenCount > 0 && (
-            <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 px-1">
+            <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-400 px-1">
               {hiddenCount} {hiddenCount === 1 ? "slide" : "slides"} hidden from viewers
             </p>
           )}
         </div>
       )}
 
-      {/* Keyboard shortcuts (desktop only — irrelevant on touch) */}
+      {/* Keyboard shortcuts (desktop only, irrelevant on touch) */}
       {onShowShortcuts && (
         <button
           type="button"
@@ -434,7 +434,7 @@ export function SlideNavControls({
             role="dialog"
             aria-label="Slide options"
             className="fixed z-[60] bottom-0 left-0 right-0 rounded-t-2xl border-t border-border bg-surface shadow-2xl pb-[max(0.75rem,env(safe-area-inset-bottom))] animate-fade-in
-                       sm:left-auto sm:right-4 sm:bottom-[calc(var(--bottom-nav-height,3.5rem)+0.75rem)] sm:w-72 sm:rounded-2xl sm:border sm:pb-0"
+ sm:left-auto sm:right-4 sm:bottom-[calc(var(--bottom-nav-height,3.5rem)+0.75rem)] sm:w-72 sm:rounded-2xl sm:border sm:pb-0"
           >
             {overflowBody}
           </div>
@@ -447,27 +447,27 @@ export function SlideNavControls({
         aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
         data-walkthrough="slide-nav"
         className={`fixed bottom-0 left-0 right-0 z-50 transition-opacity duration-200 safe-bottom safe-x ${
-          autoHide
-            ? "bg-surface/0 border-transparent opacity-0 hover:opacity-100 hover:bg-surface/95 hover:backdrop-blur-2xl"
+ autoHide
+ ? "bg-surface/0 border-transparent opacity-0 hover:opacity-100 hover:bg-surface/95 hover:backdrop-blur-2xl"
             : "bg-surface/95 backdrop-blur-2xl border-t border-border/60"
         }`}
       >
         <div className="max-w-5xl mx-auto px-3 sm:px-6">
           {/* ── MOBILE (< sm): two-row segmented bar ── */}
           <div className="sm:hidden">
-            {/* Row 0 — within-section progress */}
+            {/* Row 0, within-section progress */}
             <div className="h-1 w-full mt-1 rounded-full bg-text-tertiary/15 overflow-hidden">
               <div
-                className="h-full rounded-full bg-accent transition-[width] duration-150 ease-out"
+                className="h-full rounded-full bg-accent  duration-150 ease-out"
                 style={{ width: `${sectionProgress * 100}%` }}
               />
             </div>
-            {/* Row 1 — tabs + next + overflow. No prev chevron on phone:
+            {/* Row 1, tabs + next + overflow. No prev chevron on phone:
                 swipe covers it, and the space keeps tab labels untruncated. */}
             <div className="flex items-center gap-1.5 py-1">
               <div className="flex-1 min-w-0 flex flex-col items-center gap-0.5">
                 {renderTabs()}
-                <span className="max-w-full truncate text-[10px] leading-none font-semibold text-text-tertiary">
+                <span className="max-w-full truncate text-[11px] leading-none font-semibold text-text-tertiary">
                   <span className="text-text-secondary font-bold">{currentLabel}</span>
                   {secTotal > 1 && (
                     <span className="ml-1.5 tabular-nums opacity-70">
@@ -511,10 +511,10 @@ export function SlideNavControls({
                     className="relative flex items-center justify-center w-5 h-5 pointer-coarse:w-7 pointer-coarse:h-11 flex-shrink-0"
                   >
                     <span
-                      className={`block rounded-full transition-all duration-200 ${
-                        isCurrent
-                          ? isHidden
-                            ? "w-5 h-2 rounded bg-amber-400/70 shadow-sm shadow-amber-400/30"
+                      className={`block rounded-full transition duration-200 ${
+ isCurrent
+ ? isHidden
+ ? "w-5 h-2 rounded bg-amber-400/70 shadow-sm shadow-amber-400/30"
                             : hasChanges
                               ? "w-5 h-2 bg-blue-500 shadow-sm shadow-blue-500/40"
                               : "w-5 h-2 bg-accent shadow-sm shadow-accent/30"
@@ -543,7 +543,7 @@ export function SlideNavControls({
           </div>
         </div>
 
-        {/* Screen-reader live region — announces slide changes */}
+        {/* Screen-reader live region, announces slide changes */}
         <span className="sr-only" aria-live="polite" aria-atomic="true">
           Slide {currentSlide + 1} of {totalSlides}: {currentLabel}
         </span>

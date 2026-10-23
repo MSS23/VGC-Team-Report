@@ -12,6 +12,7 @@ import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 import type { MegaPokemonEntry } from "@/lib/data/mega-pokemon";
 import type { StatSpread } from "@/lib/types/pokemon";
 
+const LIGHT_INK_TYPES = new Set(["Dark", "Ghost", "Dragon", "Fighting", "Poison"]);
 const TYPE_COLORS: Record<string, string> = {
   Normal: "#A8A878", Fire: "#F08030", Water: "#6890F0", Electric: "#F8D030",
   Grass: "#78C850", Ice: "#98D8D8", Fighting: "#C03028", Poison: "#A040A0",
@@ -73,12 +74,12 @@ interface MegaLandingContentProps {
   /**
    * Human-readable legality, derived server-side from the Mega's actual
    * regulation (e.g. "Regulation M-A, M-B and M-C" vs "Regulation M-C").
-   * Never hard-code this — M-B-only Megas are not M-A legal.
+   * Never hard-code this, M-B-only Megas are not M-A legal.
    */
   regulationLabel: string;
   /** Matching `regulation` filter value for /explore deep links. */
   exploreRegulation: string;
-  // faqs removed from the visible UI — JSON-LD still generated server-side.
+  // faqs removed from the visible UI, JSON-LD still generated server-side.
 }
 
 export function MegaLandingContent({
@@ -99,21 +100,20 @@ export function MegaLandingContent({
     <>
       <main className="min-h-screen bg-background pb-24 sm:pb-0">
         {/* Hero */}
-        <section className="relative overflow-hidden py-12 sm:py-20 px-4">
-          <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-transparent" />
+        <section className="mx-auto max-w-(--container) px-(--gutter) pt-12 pb-8 sm:pt-20">
           <div className="relative max-w-5xl mx-auto">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-xs text-text-tertiary mb-6">
               <Link href="/champions" className="hover:text-accent transition-colors">Champions</Link>
               <span>/</span>
-              <span className="text-text-secondary font-medium">{mega.displayName}</span>
+              <span className="text-text-secondary ">{mega.displayName}</span>
             </nav>
 
             <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
               {/* Sprite */}
               <div className="flex-shrink-0">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-accent/10 rounded-full blur-2xl" />
+                  
                   <MegaSprite species={mega.dataKey} />
                 </div>
               </div>
@@ -124,14 +124,14 @@ export function MegaLandingContent({
                   {mega.types.map((t) => (
                     <span
                       key={t}
-                      className="text-[11px] font-bold text-white px-2.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full ${LIGHT_INK_TYPES.has(t) ? "text-white" : "text-(--night)"}`}
+                      style={{ backgroundColor: TYPE_COLORS[t] ?? "var(--sprite-fallback)" }}
                     >
                       {t}
                     </span>
                   ))}
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
+                <h1 className="font-display text-display-s font-bold tracking-display text-text-primary">
                   {mega.displayName}
                 </h1>
                 <p className="mt-1 text-sm text-accent font-bold">{mega.ability}</p>
@@ -139,10 +139,10 @@ export function MegaLandingContent({
                   {mega.description}
                 </p>
                 <p className="mt-2 text-xs text-text-tertiary">
-                  Mega Stone: <span className="font-medium text-text-secondary">{mega.megaStone}</span>
+                  Mega Stone: <span className=" text-text-secondary">{mega.megaStone}</span>
                 </p>
                 <p className="mt-1 text-xs text-text-tertiary">
-                  Legal in: <span className="font-medium text-text-secondary">{regulationLabel}</span>
+                  Legal in: <span className=" text-text-secondary">{regulationLabel}</span>
                 </p>
               </div>
             </div>
@@ -150,9 +150,9 @@ export function MegaLandingContent({
         </section>
 
         {/* Base Stats */}
-        <section className="max-w-5xl mx-auto px-4 py-8">
+        <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-extrabold text-text-primary">Base Stats</h2>
+            <h2 className="font-display text-section font-bold tracking-display text-text-primary">Base Stats</h2>
             <span className="text-xs font-bold text-text-tertiary">BST: {bst}</span>
           </div>
           <div className="bg-surface rounded-xl border border-border p-4 sm:p-6 space-y-2.5">
@@ -163,16 +163,16 @@ export function MegaLandingContent({
         </section>
 
         {/* Teams Using This Pokemon */}
-        <section className="max-w-5xl mx-auto px-4 py-8">
+        <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-extrabold text-text-primary">
+            <h2 className="font-display text-section font-bold tracking-display text-text-primary">
               {mega.displayName} SP Spreads & Competitive Teams
             </h2>
             <Link
               href={`/explore?species=${encodeURIComponent(mega.baseName)}&regulation=${encodeURIComponent(exploreRegulation)}`}
-              className="text-xs font-bold text-accent hover:brightness-110 transition-all"
+              className="text-xs font-bold text-accent hover:brightness-110 transition whitespace-nowrap"
             >
-              View all &rarr;
+              View all
             </Link>
           </div>
 
@@ -194,7 +194,7 @@ export function MegaLandingContent({
               </p>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition"
               >
                 Be the first to build one
               </Link>
@@ -202,18 +202,18 @@ export function MegaLandingContent({
           )}
         </section>
 
-        {/* "Using X in VGC" and visible FAQ sections were removed — generic
+        {/* "Using X in VGC" and visible FAQ sections were removed, generic
             filler that duplicated hero info (types, ability, stone, BST)
             and pushed the actually useful Featured Teams section down.
             Google deprecated FAQ rich snippets for non-authoritative sites
             in Aug 2023, so the SEO justification is gone. The FAQPage
             JSON-LD in <head> is still emitted for AI scrapers and other
-            structured-data consumers — it just isn't rendered visibly. */}
+            structured-data consumers, it just isn't rendered visibly. */}
 
         {/* Related Megas */}
         {relatedMegas.length > 0 && (
-          <section className="max-w-5xl mx-auto px-4 py-8">
-            <h2 className="text-xl font-extrabold text-text-primary mb-4">
+          <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
+            <h2 className="font-display text-section font-bold tracking-display text-text-primary mb-4">
               Other Mega Evolutions
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -230,8 +230,8 @@ export function MegaLandingContent({
                     {m.types.map((t) => (
                       <span
                         key={t}
-                        className="text-[9px] font-bold text-white px-1.5 py-0.5 rounded-full"
-                        style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
+                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${LIGHT_INK_TYPES.has(t) ? "text-white" : "text-(--night)"}`}
+                        style={{ backgroundColor: TYPE_COLORS[t] ?? "var(--sprite-fallback)" }}
                       >
                         {t}
                       </span>
@@ -244,8 +244,8 @@ export function MegaLandingContent({
         )}
 
         {/* CTA */}
-        <section className="max-w-5xl mx-auto px-4 py-12 text-center">
-          <h2 className="text-xl font-extrabold text-text-primary mb-3">
+        <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
+          <h2 className="font-display text-section font-bold tracking-display text-text-primary mb-3">
             Build a {mega.displayName} Team Report
           </h2>
           <p className="text-sm text-text-secondary mb-6 max-w-md mx-auto">
@@ -255,13 +255,13 @@ export function MegaLandingContent({
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition"
             >
               Start Building
             </Link>
             <Link
               href="/champions"
-              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-text-secondary hover:text-text-primary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-text-secondary hover:text-text-primary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition"
             >
               All Mega Evolutions
             </Link>

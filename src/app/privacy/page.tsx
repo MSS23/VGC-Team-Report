@@ -10,15 +10,15 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background">
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight mb-2">Privacy Policy</h1>
+      <main className="mx-auto max-w-(--container) px-(--gutter) py-8 sm:py-12">
+        <h1 className="font-display text-display-s font-bold tracking-display text-text-primary mb-3">Privacy Policy</h1>
         <p className="text-sm text-text-tertiary mb-10">Last updated: August 2026</p>
 
-        <div className="space-y-8 text-sm text-text-secondary leading-relaxed">
+        <div className="max-w-[65ch] space-y-10 text-text-secondary leading-relaxed">
 
           {/* 1. Introduction / Data Controller */}
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">What is this Privacy Policy?</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">What is this Privacy Policy?</h2>
             <p>
               This Privacy Policy explains how <strong>VGC Team Report</strong>, operated by Manraj Sidhu
               (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), collects, uses, stores, and protects your personal data when you
@@ -43,24 +43,24 @@ export default function PrivacyPage() {
 
           {/* 2. Data Categories + Legal Bases */}
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">What data do we collect?</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">What data do we collect?</h2>
             <p>We collect only the data necessary to provide and improve VGC Team Report. Below is each category of data, what it includes, and the legal basis under GDPR Article 6 for processing it.</p>
 
             <ul className="list-disc pl-5 mt-3 space-y-3">
               <li>
-                <strong>Account data</strong> (email address, OAuth identity via Clerk) &mdash;
+                <strong>Account data</strong> (email address, OAuth identity via Clerk) ,
                 Collected when you sign in. Used to link reports to your account and provide authentication.
                 <br />
-                <span className="text-text-tertiary">Legal basis: Art 6(1)(b) &mdash; necessary for contract performance (providing the service you signed up for).</span>
+                <span className="text-text-tertiary">Legal basis: Art 6(1)(b) , necessary for contract performance (providing the service you signed up for).</span>
               </li>
               <li>
-                <strong>Team report data</strong> (team pastes, notes, matchup plans) &mdash;
+                <strong>Team report data</strong> (team pastes, notes, matchup plans) ,
                 Stored when you create or share a report so others can view it via its unique URL.
                 <br />
-                <span className="text-text-tertiary">Legal basis: Art 6(1)(b) &mdash; necessary for contract performance (delivering the core functionality you requested).</span>
+                <span className="text-text-tertiary">Legal basis: Art 6(1)(b) , necessary for contract performance (delivering the core functionality you requested).</span>
               </li>
               <li>
-                <strong>Analytics data</strong> (page views, feature usage, referrer, country via PostHog) &mdash;
+                <strong>Analytics data</strong> (page views, feature usage, referrer, country via PostHog) ,
                 Usage data collected to understand traffic patterns, feature adoption, and improve the app.
                 Before you make a cookie choice, PostHog runs in a restricted mode: it sets no analytics
                 cookies and writes nothing to your browser storage (data is held in memory for the current
@@ -68,36 +68,36 @@ export default function PrivacyPage() {
                 account when signed in (identified profiles only) to provide a better experience;
                 anonymous visitors are not tracked individually.
                 <br />
-                <span className="text-text-tertiary">Legal basis: Art 6(1)(f) &mdash; legitimate interest (understanding usage to improve the service); Art 6(1)(a) &mdash; consent when cookie consent is granted for non-essential analytics cookies.</span>
+                <span className="text-text-tertiary">Legal basis: Art 6(1)(f) , legitimate interest (understanding usage to improve the service); Art 6(1)(a) , consent when cookie consent is granted for non-essential analytics cookies.</span>
               </li>
               <li>
                 <strong>Session recording data</strong> (clicks and taps, scrolling, mouse movement,
                 page navigation, screen size, and a replayable reconstruction of the pages you view,
-                via Microsoft Clarity and PostHog) &mdash;
+                via Microsoft Clarity and PostHog) ,
                 Recorded <strong>only after you grant analytics consent</strong> through our cookie banner.
                 Neither Microsoft Clarity nor PostHog session recording is started until consent is given,
                 and withdrawing consent stops new recording. We use recordings to find interface problems
-                and reproduce reported bugs &mdash; never for advertising or profiling.
+                and reproduce reported bugs , never for advertising or profiling.
                 In PostHog recordings, password fields are masked; other text you type into the app
                 (for example a team paste or a note) may be captured. Microsoft Clarity runs with its
                 default masking behaviour, which we do not modify.
                 <br />
-                <span className="text-text-tertiary">Legal basis: Art 6(1)(a) &mdash; consent, given through the cookie banner and withdrawable at any time via &quot;Cookie Settings&quot; in the footer.</span>
+                <span className="text-text-tertiary">Legal basis: Art 6(1)(a) , consent, given through the cookie banner and withdrawable at any time via &quot;Cookie Settings&quot; in the footer.</span>
               </li>
               <li>
-                <strong>Redis cache data</strong> (session tokens, rate-limit counters via Upstash) &mdash;
+                <strong>Redis cache data</strong> (session tokens, rate-limit counters via Upstash) ,
                 Temporary data used to manage sessions and prevent abuse.
                 <br />
-                <span className="text-text-tertiary">Legal basis: Art 6(1)(b) &mdash; necessary for contract performance (maintaining your session and protecting the service).</span>
+                <span className="text-text-tertiary">Legal basis: Art 6(1)(b) , necessary for contract performance (maintaining your session and protecting the service).</span>
               </li>
               <li>
-                <strong>Feedback submissions</strong> (bug reports, feature requests, ideas) &mdash;
+                <strong>Feedback submissions</strong> (bug reports, feature requests, ideas) ,
                 Collected when you voluntarily submit feedback through the app.
                 <br />
-                <span className="text-text-tertiary">Legal basis: Art 6(1)(f) &mdash; legitimate interest (improving the product based on user feedback).</span>
+                <span className="text-text-tertiary">Legal basis: Art 6(1)(f) , legitimate interest (improving the product based on user feedback).</span>
               </li>
               <li>
-                <strong>Local storage data</strong> (drafts, preferences, edit tokens) &mdash;
+                <strong>Local storage data</strong> (drafts, preferences, edit tokens) ,
                 Stored in your browser&apos;s local storage. This data never leaves your device
                 unless you choose to share a report. We do not process this data on our servers.
               </li>
@@ -106,44 +106,44 @@ export default function PrivacyPage() {
 
           {/* 3. Retention Periods */}
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">How long do we keep your data?</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">How long do we keep your data?</h2>
             <p>We retain your data only as long as necessary for the purposes described above. Here are the specific retention periods:</p>
 
             <ul className="list-disc pl-5 mt-3 space-y-2">
               <li>
-                <strong>Shared reports</strong> &mdash; Stored indefinitely while your account exists.
+                <strong>Shared reports</strong> , Stored indefinitely while your account exists.
                 Purged immediately when you delete your account.
               </li>
               <li>
-                <strong>Account data</strong> &mdash; Held for the life of your account. Deleted within
+                <strong>Account data</strong> , Held for the life of your account. Deleted within
                 30 days of an account deletion request.
               </li>
               <li>
-                <strong>Analytics data</strong> &mdash; Retained for 12 months by PostHog.
+                <strong>Analytics data</strong> , Retained for 12 months by PostHog.
                 We do not store analytics data independently outside this service.
               </li>
               <li>
-                <strong>Session recordings</strong> &mdash; Held by PostHog and by Microsoft Clarity
+                <strong>Session recordings</strong> , Held by PostHog and by Microsoft Clarity
                 under each provider&apos;s own retention schedule and deleted when that period expires.
                 We do not download, export, or store recordings ourselves.
               </li>
               <li>
-                <strong>Redis cache data</strong> &mdash; TTL-based, typically purged within 24 hours.
+                <strong>Redis cache data</strong> , TTL-based, typically purged within 24 hours.
               </li>
               <li>
-                <strong>Feedback submissions</strong> &mdash; Retained indefinitely for product improvement.
+                <strong>Feedback submissions</strong> , Retained indefinitely for product improvement.
                 Submitter identity is anonymised on account deletion (email and name nulled; feedback
                 content preserved).
               </li>
               <li>
-                <strong>Clerk authentication data</strong> &mdash; Deleted within 30 days of account deletion.
+                <strong>Clerk authentication data</strong> , Deleted within 30 days of account deletion.
               </li>
             </ul>
           </section>
 
           {/* 4. Third-Party Processors */}
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Who do we share your data with?</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Who do we share your data with?</h2>
             <p>
               We use the following third-party service providers (processors) to operate VGC Team Report.
               Each processor has signed a Data Processing Agreement (DPA) with Standard Contractual Clauses
@@ -152,43 +152,43 @@ export default function PrivacyPage() {
 
             <ul className="list-disc pl-5 mt-3 space-y-2">
               <li>
-                <strong>Clerk</strong> &mdash; Authentication and identity management.{" "}
+                <strong>Clerk</strong> , Authentication and identity management.{" "}
                 <a href="https://clerk.com/legal/dpa" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                   View Clerk DPA
                 </a>
               </li>
               <li>
-                <strong>Vercel</strong> &mdash; Hosting and deployment.{" "}
+                <strong>Vercel</strong> , Hosting and deployment.{" "}
                 <a href="https://vercel.com/legal/dpa" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                   View Vercel DPA
                 </a>
               </li>
               <li>
-                <strong>Neon</strong> &mdash; PostgreSQL database for storing shared reports and account data.{" "}
+                <strong>Neon</strong> , PostgreSQL database for storing shared reports and account data.{" "}
                 <a href="https://neon.tech/dpa" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                   View Neon DPA
                 </a>
               </li>
               <li>
-                <strong>Upstash</strong> &mdash; Redis cache for session management and rate limiting.{" "}
+                <strong>Upstash</strong> , Redis cache for session management and rate limiting.{" "}
                 <a href="https://upstash.com/trust/dpa.pdf" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                   View Upstash DPA
                 </a>
               </li>
               <li>
-                <strong>PostHog</strong> &mdash; Product analytics, feature usage tracking, and
+                <strong>PostHog</strong> , Product analytics, feature usage tracking, and
                 session recording (EU-hosted).{" "}
                 <a href="https://posthog.com/dpa" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                   View PostHog DPA
                 </a>
               </li>
               <li>
-                <strong>Microsoft Clarity</strong> &mdash; Session recording and heatmap analytics.
+                <strong>Microsoft Clarity</strong> , Session recording and heatmap analytics.
                 Loaded from Microsoft only after you grant analytics consent. Microsoft&apos;s handling
                 of this data is governed by its own published Clarity terms and privacy documentation.
               </li>
               <li>
-                <strong>Pokemon Showdown</strong> &mdash; Sprite images are loaded client-side from
+                <strong>Pokemon Showdown</strong> , Sprite images are loaded client-side from
                 play.pokemonshowdown.com. No personal data is transferred to this service.
               </li>
             </ul>
@@ -200,7 +200,7 @@ export default function PrivacyPage() {
 
           {/* 5. GDPR Rights */}
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">What are your rights?</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">What are your rights?</h2>
             <p>
               Under GDPR, you have the following rights regarding your personal data. We will respond
               to all requests within 30 days.
@@ -208,34 +208,34 @@ export default function PrivacyPage() {
 
             <ul className="list-disc pl-5 mt-3 space-y-2">
               <li>
-                <strong>Right to access (Art 15)</strong> &mdash; Request a copy of the personal data we
+                <strong>Right to access (Art 15)</strong> , Request a copy of the personal data we
                 hold about you. Email{" "}
                 <a href="mailto:privacy@pokemonvgcteamreport.com" className="text-accent hover:underline">
                   privacy@pokemonvgcteamreport.com
                 </a>.
               </li>
               <li>
-                <strong>Right to data portability (Art 20)</strong> &mdash; Export your data using the
+                <strong>Right to data portability (Art 20)</strong> , Export your data using the
                 data export feature in your account dashboard.
               </li>
               <li>
-                <strong>Right to erasure (Art 17)</strong> &mdash; Delete your account and all associated
+                <strong>Right to erasure (Art 17)</strong> , Delete your account and all associated
                 data using the account deletion feature in your account dashboard.
               </li>
               <li>
-                <strong>Right to rectification (Art 16)</strong> &mdash; Update your information via your
+                <strong>Right to rectification (Art 16)</strong> , Update your information via your
                 Clerk account settings, or email us to request corrections.
               </li>
               <li>
-                <strong>Right to restrict processing (Art 18)</strong> &mdash; Contact us to request that
+                <strong>Right to restrict processing (Art 18)</strong> , Contact us to request that
                 we limit how we process your data.
               </li>
               <li>
-                <strong>Right to object (Art 21)</strong> &mdash; Contact us to object to processing
+                <strong>Right to object (Art 21)</strong> , Contact us to object to processing
                 based on legitimate interest.
               </li>
               <li>
-                <strong>Right to lodge a complaint</strong> &mdash; You have the right to lodge a complaint
+                <strong>Right to lodge a complaint</strong> , You have the right to lodge a complaint
                 with a supervisory authority. In the UK, this is the Information Commissioner&apos;s Office
                 (ICO) at{" "}
                 <a href="https://ico.org.uk" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
@@ -248,19 +248,19 @@ export default function PrivacyPage() {
 
           {/* 6. CCPA / Do Not Sell */}
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Do we sell your personal information? (CCPA)</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Do we sell your personal information? (CCPA)</h2>
             <p>
               VGC Team Report does not sell, rent, or trade your personal information to third parties.
               If you are a California resident, we affirm that we do not sell personal information as
               defined under the California Consumer Privacy Act (CCPA). The processors listed above act
-              as service providers under CCPA &mdash; they process data on our behalf under written
+              as service providers under CCPA , they process data on our behalf under written
               agreements and are prohibited from using your data for their own commercial purposes.
             </p>
           </section>
 
           {/* 7. Pokemon Trademark */}
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Pok&eacute;mon Trademark Notice</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Pok&eacute;mon Trademark Notice</h2>
             <p>
               VGC Team Report is an independent fan project and is not affiliated with,
               endorsed by, or sponsored by The Pok&eacute;mon Company, Nintendo, Game Freak,
@@ -273,19 +273,19 @@ export default function PrivacyPage() {
 
           {/* 8. Cookies */}
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Cookies</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Cookies</h2>
             <p>
               VGC Team Report uses a cookie consent system to manage your preferences. We use the
               following types of cookies:
             </p>
             <ul className="list-disc pl-5 mt-3 space-y-2">
               <li>
-                <strong>Strictly necessary cookies</strong> &mdash; Authentication session cookies
+                <strong>Strictly necessary cookies</strong> , Authentication session cookies
                 managed by Clerk. These are essential for the service to function and are exempt
                 from consent requirements.
               </li>
               <li>
-                <strong>Analytics cookies</strong> &mdash; PostHog and Microsoft Clarity cookies are
+                <strong>Analytics cookies</strong> , PostHog and Microsoft Clarity cookies are
                 only set when you grant consent through our cookie banner. PostHog uses cookies to
                 link page views into sessions and identify returning users; Microsoft Clarity uses a
                 first-party cookie to join the pages of a single visit into one session recording.
@@ -298,7 +298,7 @@ export default function PrivacyPage() {
 
           {/* 9. Changes */}
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Changes to this policy</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Changes to this policy</h2>
             <p>
               We may update this Privacy Policy from time to time. Changes will be reflected on this page
               with an updated &quot;Last updated&quot; date. We encourage you to review this page periodically.
@@ -308,7 +308,7 @@ export default function PrivacyPage() {
 
           {/* 10. Contact */}
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Contact</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Contact</h2>
             <p>
               For any questions, concerns, or data rights requests related to this Privacy Policy, please
               contact us at{" "}

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 export const revalidate = 600;
 
-// Use canonical slug resolver — single source of truth for all sprite slugs
+// Use canonical slug resolver, single source of truth for all sprite slugs
 import { resolveSlug as toSpriteSlug } from "@/lib/utils/sprite-slug";
 
 export default async function EmbedPage({ params }: { params: Promise<{ id: string }> }) {
@@ -29,6 +29,8 @@ export default async function EmbedPage({ params }: { params: Promise<{ id: stri
         <meta name="robots" content="noindex, nofollow" />
         <title>{tournamentName || "VGC Team Report"}</title>
         <style>{`
+          :root { --accent: #E11D48; --muted: #8A8AA3; --ink-2: #C0C0D8; }
+          html, body { overflow-x: clip; }
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -40,16 +42,16 @@ export default async function EmbedPage({ params }: { params: Promise<{ id: stri
           }
           .header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
           .title { font-size: 16px; font-weight: 800; }
-          .placement { font-size: 12px; font-weight: 800; color: #E11D48; background: rgba(225,29,72,0.12); padding: 2px 8px; border-radius: 4px; }
-          .creator { font-size: 12px; color: #8A8AA3; }
+          .placement { font-size: 12px; font-weight: 800; color: var(--accent); background: rgba(225,29,72,0.12); padding: 2px 8px; border-radius: 4px; }
+          .creator { font-size: 12px; color: var(--muted); }
           .team { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
           .mon { display: flex; flex-direction: column; align-items: center; gap: 4px; }
           .mon img { width: 48px; height: 48px; object-fit: contain; }
-          .mon-name { font-size: 10px; font-weight: 700; color: #C0C0D8; text-align: center; }
-          .summary { font-size: 11px; color: #8A8AA3; line-height: 1.5; max-height: 3em; overflow: hidden; text-overflow: ellipsis; }
+          .mon-name { font-size: 10px; font-weight: 700; color: var(--ink-2); text-align: center; }
+          .summary { font-size: 11px; color: var(--muted); line-height: 1.5; max-height: 3em; overflow: hidden; text-overflow: ellipsis; }
           .cta {
             display: inline-flex; align-items: center; gap: 4px;
-            font-size: 10px; font-weight: 700; color: #E11D48;
+            font-size: 10px; font-weight: 700; color: var(--accent);
             text-decoration: none; margin-top: 8px;
           }
           .cta:hover { text-decoration: underline; }
@@ -58,8 +60,8 @@ export default async function EmbedPage({ params }: { params: Promise<{ id: stri
       <body>
         <div className="header" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
           {tournamentName && <span style={{ fontSize: 16, fontWeight: 800 }}>{tournamentName}</span>}
-          {placement && <span style={{ fontSize: 12, fontWeight: 800, color: "#E11D48", background: "rgba(225,29,72,0.12)", padding: "2px 8px", borderRadius: 4 }}>{placement}</span>}
-          {creatorName && <span style={{ fontSize: 12, color: "#8A8AA3" }}>by {creatorName}</span>}
+          {placement && <span style={{ fontSize: 12, fontWeight: 800, color: "var(--accent)", background: "rgba(225,29,72,0.12)", padding: "2px 8px", borderRadius: 4 }}>{placement}</span>}
+          {creatorName && <span style={{ fontSize: 12, color: "var(--muted)" }}>by {creatorName}</span>}
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           {species.map((name) => (
@@ -72,12 +74,12 @@ export default async function EmbedPage({ params }: { params: Promise<{ id: stri
                 height={48}
                 style={{ objectFit: "contain" }}
               />
-              <span style={{ fontSize: 10, fontWeight: 700, color: "#C0C0D8", textAlign: "center" }}>{name}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--ink-2)", textAlign: "center" }}>{name}</span>
             </div>
           ))}
         </div>
         {summary && (
-          <p style={{ fontSize: 11, color: "#8A8AA3", lineHeight: 1.5, maxHeight: "3em", overflow: "hidden" }}>
+          <p style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.5, maxHeight: "3em", overflow: "hidden" }}>
             {summary.slice(0, 200)}{summary.length > 200 ? "..." : ""}
           </p>
         )}
@@ -85,9 +87,9 @@ export default async function EmbedPage({ params }: { params: Promise<{ id: stri
           href={`https://pokemonvgcteamreport.com/s/${id}`}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: "#E11D48", textDecoration: "none", marginTop: 8 }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: "var(--accent)", textDecoration: "none", marginTop: 8 }}
         >
-          View full report &rarr;
+          View full report
         </a>
       </body>
     </html>

@@ -8,7 +8,7 @@ const { t } = useTranslation();
   return (
     <FieldDiffHighlight field={speciesKey ? [encodeSectionKey({ kind: "notes", speciesKey })] : []} label="Notes changed">
     <div className="flex flex-col gap-2">
-      <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="pokemon-notes">
+      <h3 className="text-xs font-bold text-text-tertiary presenting:text-sm" data-walkthrough="pokemon-notes">
         {isPresentationMode ? t.notes : isReadOnly ? t.aboutThisPokemon : t.yourExplanation}
       </h3>
       {isReadOnly ? (

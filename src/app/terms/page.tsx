@@ -10,13 +10,13 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-background">
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight mb-2">Terms of Service</h1>
+      <main className="mx-auto max-w-(--container) px-(--gutter) py-8 sm:py-12">
+        <h1 className="font-display text-display-s font-bold tracking-display text-text-primary mb-3">Terms of Service</h1>
         <p className="text-sm text-text-tertiary mb-10">Last updated: April 2026</p>
 
-        <div className="space-y-8 text-sm text-text-secondary leading-relaxed">
+        <div className="max-w-[65ch] space-y-10 text-text-secondary leading-relaxed">
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">What is this site?</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">What is this site?</h2>
             <p>
               VGC Team Report is a free, community tool for competitive Pok&eacute;mon VGC players
               to build, document, and share team reports. The site is operated by Manraj Sidhu as a
@@ -25,7 +25,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">What can you use this site for?</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">What can you use this site for?</h2>
             <p className="mb-3">You are welcome to use VGC Team Report for its intended purpose:</p>
             <ul className="list-disc pl-5 space-y-1.5">
               <li>Sharing competitive Pok&eacute;mon teams and team reports</li>
@@ -45,7 +45,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Who owns your content?</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Who owns your content?</h2>
             <ul className="list-disc pl-5 space-y-1.5">
               <li>
                 <strong>You retain full ownership</strong> of the team reports and notes you create.
@@ -62,7 +62,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Pok&eacute;mon trademark notice</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Pok&eacute;mon trademark notice</h2>
             <p>
               VGC Team Report is an independent fan project and is not affiliated with,
               endorsed by, or sponsored by The Pok&eacute;mon Company, Nintendo, Game Freak,
@@ -76,14 +76,14 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">What is our liability?</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">What is our liability?</h2>
             <ul className="list-disc pl-5 space-y-1.5">
               <li>
                 The site is provided <strong>&ldquo;as-is&rdquo;</strong> with no warranties of any
                 kind, whether express or implied.
               </li>
               <li>
-                Maximum liability to any user is <strong>$0.00</strong> &mdash; this is a free service
+                Maximum liability to any user is <strong>$0.00</strong> , this is a free service
                 with no paid tier.
               </li>
               <li>
@@ -98,7 +98,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Can accounts be terminated?</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Can accounts be terminated?</h2>
             <ul className="list-disc pl-5 space-y-1.5">
               <li>
                 We may suspend or terminate accounts that violate these terms, with reasonable
@@ -114,7 +114,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Which law governs these terms?</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Which law governs these terms?</h2>
             <p>
               These terms are governed by the laws of England and Wales. Any disputes arising from
               these terms or your use of the site are subject to the exclusive jurisdiction of the
@@ -123,7 +123,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Changes to these terms</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Changes to these terms</h2>
             <p>
               We may update these terms from time to time. Changes will be reflected on this page
               with an updated date. Continued use of the site after a change constitutes acceptance
@@ -132,7 +132,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Contact</h2>
+            <h2 className="font-display text-title font-bold tracking-tight text-text-primary mb-3">Contact</h2>
             <p>
               For questions about these terms, reach us at{" "}
               <a href="mailto:privacy@pokemonvgcteamreport.com" className="text-accent hover:underline">

@@ -29,7 +29,7 @@ export async function generateMetadata({
     if (rows.length === 0) return { title: { absolute: "VGC Team Report" } };
 
     // Private reports (neither public nor unlisted) must not leak even their
-    // title/description into <head> — that's the same data we gate at the API.
+    // title/description into <head>, that's the same data we gate at the API.
     const isPublicRow = (rows[0] as Record<string, unknown>).is_public === true;
     const isUnlistedRow = (rows[0] as Record<string, unknown>).is_unlisted === true;
     if (!isPublicRow && !isUnlistedRow) {
@@ -54,20 +54,20 @@ export async function generateMetadata({
     const speciesLine = species.length > 0 ? species.join(" / ") : "";
     let title: string;
     if (tournamentName && placement) {
-      title = `${tournamentName} — ${placement}`;
+      title = `${tournamentName}, ${placement}`;
     } else if (tournamentName) {
       title = speciesLine
         ? `${tournamentName} | ${speciesLine} VGC Team`
         : tournamentName;
     } else if (speciesLine && creatorName) {
-      title = `${speciesLine} — VGC Team by ${creatorName}`;
+      title = `${speciesLine}, VGC Team by ${creatorName}`;
     } else if (speciesLine) {
-      title = `${speciesLine} — VGC Team`;
+      title = `${speciesLine}, VGC Team`;
     } else {
       title = "VGC Team";
     }
 
-    // ── Description: the user's teamSummary always wins — it's their
+    // ── Description: the user's teamSummary always wins, it's their
     // voice. When absent, we auto-compose a description that actually
     // sells the click: lead with a placement/record hook if they exist,
     // list the full 6-mon team with bullet separators (better visual
@@ -100,7 +100,7 @@ export async function generateMetadata({
       description = "Build, share, and present professional VGC team reports with damage calcs, speed tiers, and matchup plans.";
     }
 
-    // Private / unlisted shares must not be indexed — thin content with no
+    // Private / unlisted shares must not be indexed, thin content with no
     // discovery value. Collaborator edit URLs (?key=…) must also be noindexed
     // so a leaked share doesn't leak the edit token via Google's snippet cache.
     const robotsMeta = isPublic && !hasEditKey
@@ -109,7 +109,7 @@ export async function generateMetadata({
 
     // Embed images for shared reports are intentionally suppressed. We have
     // tried this twice now (an opengraph-image.tsx convention file, then
-    // wiring /api/team-graphic into og:image) — both produced "image failed
+    // wiring /api/team-graphic into og:image), both produced "image failed
     // to load" unfurls in Discord and elsewhere. The edge runtime + sprite
     // CDN dependency + unfurler-side timeout combine to make a reliably-
     // rendering OG card unrealistic for now. A clean text-only unfurl
@@ -167,7 +167,7 @@ export default async function SharePage({
       sql`SELECT data, is_public, is_unlisted, created_at, updated_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
       sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
     ]);
-    // Skip JSON-LD entirely for private reports — don't expose their structured
+    // Skip JSON-LD entirely for private reports, don't expose their structured
     // metadata. Unlisted/public still get rich structured data for unfurls/SEO.
     const visibleForLd =
       shareRows.length > 0 &&
@@ -218,7 +218,7 @@ export default async function SharePage({
       };
     }
   } catch {
-    // Non-critical — skip JSON-LD
+    // Non-critical, skip JSON-LD
   }
 
   return (

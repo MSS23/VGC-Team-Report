@@ -69,12 +69,12 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-1">
+        <h3 className="text-sm font-semibold text-text-tertiary mb-1">
           Defensive Profile
         </h3>
         <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
           How each Pok&eacute;mon handles incoming attacks. Watch for
-          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded-md text-[10px] font-black ring-2 ring-red-500/80" style={{ backgroundColor: "var(--def-4x)", color: "var(--def-4x-text)" }}>4&times;</span>
+          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded-md text-[11px] font-bold ring-2 ring-red-500/80" style={{ backgroundColor: "var(--def-4x)", color: "var(--def-4x-text)" }}>4&times;</span>
           double weaknesses.
         </p>
       </div>
@@ -89,12 +89,12 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
                 key={`blind-${type}`}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/25 text-xs font-bold text-red-400"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                   <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
                 </svg>
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: tc.bg }} />
                 {type}
-                <span className="text-red-400/70">&mdash; {weakCount} weak</span>
+                <span className="text-red-400/70">, {weakCount} weak</span>
               </span>
             );
           })}
@@ -105,12 +105,12 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
                 key={`strong-${type}`}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-xs font-bold text-emerald-400"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: tc.bg }} />
                 {type}
-                <span className="text-emerald-400/70">&mdash; {resistCount + immuneCount} resist</span>
+                <span className="text-emerald-400/70">, {resistCount + immuneCount} resist</span>
               </span>
             );
           })}
@@ -122,7 +122,7 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
         <table className="w-full table-fixed sm:table-auto border-collapse text-center min-w-[40rem]">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[9px] sm:text-xs font-bold text-text-tertiary uppercase tracking-wider w-14 sm:w-32">
+              <th className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[11px] sm:text-xs font-bold text-text-tertiary w-14 sm:w-32">
                 Pok&eacute;mon
               </th>
               {ALL_TYPES.map((type) => {
@@ -137,7 +137,7 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
                     }}
                   >
                     <span
-                      className={`inline-block w-full px-0.5 sm:px-1 py-1 text-[10px] sm:text-[11px] font-bold uppercase rounded-md leading-tight transition-opacity ${highlightedType && highlightedType !== type ? "opacity-50" : ""}`}
+                      className={`inline-block w-full px-0.5 sm:px-1 py-1 text-[11px] sm:text-[11px] font-bold rounded-md leading-tight transition-opacity ${highlightedType && highlightedType !== type ? "opacity-50" : ""}`}
                       style={{ backgroundColor: tc.bg, color: tc.text }}
                       title={type}
                     >
@@ -151,7 +151,7 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
           <tbody>
             {profiles.map((p) => (
               <tr key={p.species} className="border-t border-border/30 hover:bg-surface-alt/40 transition-colors">
-                <td className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[10px] sm:text-sm font-bold text-text-primary truncate max-w-[3.5rem] sm:max-w-[8rem]">
+                <td className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[11px] sm:text-sm font-bold text-text-primary truncate max-w-[3.5rem] sm:max-w-[8rem]">
                   {p.species}
                 </td>
                 {ALL_TYPES.map((attackType) => {
@@ -163,8 +163,8 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
                   return (
                     <td key={attackType} className={`px-0.5 py-1 transition-opacity ${isDimmed ? "opacity-50" : ""}`}>
                       <span
-                        className={`inline-flex items-center justify-center w-full h-8 rounded-lg text-[10px] sm:text-xs tabular-nums ${cell.bg} ${cell.text} ${cell.ring ?? ""} ${
-                          mult >= 4 ? "font-black text-[11px] sm:text-sm" : mult >= 2 ? "font-extrabold" : "font-bold"
+                        className={`inline-flex items-center justify-center w-full h-8 rounded-lg text-[11px] sm:text-xs tabular-nums ${cell.bg} ${cell.text} ${cell.ring ?? ""} ${
+                          mult >= 4 ? "font-bold text-[11px] sm:text-sm" : mult >= 2 ? "font-bold" : "font-bold"
                         } ${isHighlighted ? "ring-2 ring-accent/40" : ""}`}
                         style={cell.style}
                         title={`${attackType} → ${p.species}: ${mult}x`}
@@ -178,7 +178,7 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
             ))}
             {/* Team summary row */}
             <tr className="border-t-2 border-border/60">
-              <td className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[9px] sm:text-xs font-extrabold text-text-tertiary uppercase tracking-tight sm:tracking-wider">
+              <td className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[11px] sm:text-xs font-bold text-text-tertiary tracking-tight sm:tracking-wider">
                 Team Weak
               </td>
               {teamSummary.map(({ type, weakCount }) => {
@@ -186,9 +186,9 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
                 const isDimmed = highlightedType !== null && !isHighlighted;
                 return (
                   <td key={type} className={`px-0.5 py-1 transition-opacity ${isDimmed ? "opacity-50" : ""}`}>
-                    <span className={`inline-flex items-center justify-center w-full h-8 rounded-md text-[10px] sm:text-xs font-extrabold tabular-nums ${
-                      weakCount >= 3
-                        ? "bg-red-500/30 text-red-300 ring-1 ring-red-500/40"
+                    <span className={`inline-flex items-center justify-center w-full h-8 rounded-md text-[11px] sm:text-xs font-bold tabular-nums ${
+ weakCount >= 3
+ ? "bg-red-500/30 text-red-300 ring-1 ring-red-500/40"
                         : weakCount === 2
                           ? "bg-amber-500/20 text-amber-400"
                           : weakCount === 1
@@ -208,11 +208,11 @@ export function DefensiveCoverageChart({ pokemon }: DefensiveCoverageChartProps)
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-text-secondary">
         <span className="flex items-center gap-1.5">
-          <span className="w-7 h-6 rounded-lg ring-2 ring-red-500/80 inline-flex items-center justify-center text-[11px] font-black" style={{ backgroundColor: "var(--def-4x)", color: "var(--def-4x-text)" }}>4&times;</span>
+          <span className="w-7 h-6 rounded-lg ring-2 ring-red-500/80 inline-flex items-center justify-center text-[11px] font-bold" style={{ backgroundColor: "var(--def-4x)", color: "var(--def-4x-text)" }}>4&times;</span>
           Double weak
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-extrabold" style={{ backgroundColor: "var(--cell-nve)", color: "var(--cell-nve-text)" }}>2&times;</span>
+          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-bold" style={{ backgroundColor: "var(--cell-nve)", color: "var(--cell-nve-text)" }}>2&times;</span>
           Weak
         </span>
         <span className="flex items-center gap-1.5">

@@ -119,10 +119,10 @@ function DashboardInner() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         <Show when="signed-out">
           <div className="text-center py-20">
-            <h1 className="text-2xl font-extrabold mb-3">Sign in to access your dashboard</h1>
+            <h1 className="text-2xl font-bold mb-3">Sign in to access your dashboard</h1>
             <p className="text-sm text-text-secondary mb-6">Manage your team reports, save favorites, and track your analytics.</p>
             <SignInButton mode="modal">
-              <button className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide cursor-pointer">
+              <button className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition cursor-pointer">
                 Sign In
               </button>
             </SignInButton>
@@ -134,24 +134,24 @@ function DashboardInner() {
             {/* Header */}
             <div className="mb-4 sm:mb-8 flex items-center justify-between gap-3">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
                   {isLoaded && user ? `${user.firstName || user.username || "Trainer"}'s Dashboard` : "Dashboard"}
                 </h1>
                 <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
                   Manage your reports and favorites.
                 </p>
               </div>
-              <a href="/dashboard/profile" aria-label="Edit Profile" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-accent bg-accent-surface/50 rounded-lg hover:bg-accent-surface transition-all">
+              <a href="/dashboard/profile" aria-label="Edit Profile" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-accent bg-accent-surface/50 rounded-lg hover:bg-accent-surface transition">
                 <UserIcon width="12" height="12" />
                 <span className="hidden sm:inline">Edit Profile</span>
                 <span className="sm:hidden">Profile</span>
               </a>
-              <a href="/dashboard/privacy" aria-label="Privacy" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
+              <a href="/dashboard/privacy" aria-label="Privacy" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition">
                 <ShieldIcon width="12" height="12" />
                 <span className="hidden sm:inline">Privacy</span>
                 <span className="sm:hidden">Data</span>
               </a>
-              <a href="/dashboard/notifications" aria-label="Notifications" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
+              <a href="/dashboard/notifications" aria-label="Notifications" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition">
                 <BellIcon width="12" height="12" />
                 <span className="hidden sm:inline">Notifications</span>
                 <span className="sm:hidden">Alerts</span>
@@ -168,26 +168,26 @@ function DashboardInner() {
                       key={t}
                       type="button"
                       onClick={() => setTab(t)}
-                      className={`px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-sm font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap flex-shrink-0 snap-start ${
-                        tab === t
-                          ? t === "trash" ? "bg-red-500/10 text-red-500 shadow-sm"
-                            : t === "analytics" ? "bg-blue-500/10 text-blue-500 shadow-sm"
-                            : t === "collections" ? "bg-purple-500/10 text-purple-500 shadow-sm"
-                            : t === "drafts" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-sm"
+                      className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-lg transition cursor-pointer whitespace-nowrap flex-shrink-0 snap-start ${
+ tab === t
+ ? t === "trash" ? "bg-red-500/10 text-red-500 shadow-sm"
+                            : t === "analytics" ? "bg-blue-500/10 text-blue-800 shadow-sm"
+                            : t === "collections" ? "bg-purple-500/10 text-purple-800 shadow-sm"
+                            : t === "drafts" ? "bg-amber-500/10 text-amber-800 dark:text-amber-400 shadow-sm"
                             : "bg-surface text-text-primary shadow-sm"
                           : "text-text-tertiary hover:text-text-primary active:scale-[0.97]"
                       }`}
                     >
                       {label}
                       {t === "drafts" && draftReports.length > 0 && (
-                        <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[9px] font-bold bg-amber-500 text-white rounded-full">
+                        <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-xs font-bold bg-amber-500 text-white rounded-full">
                           {draftReports.length}
                         </span>
                       )}
                       {t === "collab" && (() => {
                         const pendingCount = collabReports.filter(r => r.collabStatus === "pending").length;
                         return pendingCount > 0 ? (
-                          <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold bg-purple-500 text-white rounded-full">
+                          <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-xs font-bold bg-purple-500 text-white rounded-full">
                             {pendingCount}
                           </span>
                         ) : null;
@@ -201,11 +201,11 @@ function DashboardInner() {
             {/* Sort (separate row on mobile) */}
             {tab === "my" && myReports.length > 1 && (
               <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
-                <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{myReports.length} reports</span>
+                <span className="text-xs font-bold text-text-tertiary ">{myReports.length} reports</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "views" | "name")}
-                  className="px-2.5 py-1.5 bg-surface border border-border rounded-lg text-[11px] sm:text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer"
+                  className="px-2.5 py-1.5 bg-surface border border-border rounded-lg text-xs sm:text-xs font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer"
                 >
                   <option value="newest">Newest</option>
                   <option value="oldest">Oldest</option>
@@ -218,7 +218,7 @@ function DashboardInner() {
             {/* Bulk actions */}
             {tab === "my" && myReports.length > 1 && (
               <div className="flex items-center gap-1.5 mb-3">
-                <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">Bulk:</span>
+                <span className="text-xs font-bold text-text-tertiary ">Bulk:</span>
                 <button
                   type="button"
                   onClick={async () => {
@@ -227,34 +227,34 @@ function DashboardInner() {
                     }
                     setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: true, isUnlisted: false }));
                   }}
-                  className="px-2 py-1 text-[10px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition-all"
+                  className="px-2 py-1 text-xs font-bold rounded-md bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition"
                 >
                   All Public
                 </button>
                 <button
                   type="button"
                   onClick={async () => {
-                    // Include Unlisted reports (isPublic === false) — they were
+                    // Include Unlisted reports (isPublic === false), they were
                     // previously skipped, so "All Private" left them Unlisted.
                     for (const r of myReports.filter((r) => (r.isPublic || r.isUnlisted) && !r.isCollab)) {
                       await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: false, isUnlisted: false }) });
                     }
                     setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: false, isUnlisted: false }));
                   }}
-                  className="px-2 py-1 text-[10px] font-bold rounded-md bg-surface-alt text-text-tertiary border border-border cursor-pointer hover:bg-surface transition-all"
+                  className="px-2 py-1 text-xs font-bold rounded-md bg-surface-alt text-text-tertiary border border-border cursor-pointer hover:bg-surface transition"
                 >
                   All Private
                 </button>
               </div>
             )}
 
-            {/* Content — reserve viewport height during loading so the
+            {/* Content, reserve viewport height during loading so the
                 final content arriving doesn't reflow the page (CLS fix). */}
             {loading ? (
               <div className="flex justify-center items-start pt-16 min-h-[60vh]">
                 <div className="flex items-center gap-3 text-text-secondary">
                   <SpinnerIcon className="animate-spin h-5 w-5" />
-                  <span className="text-sm font-medium">Loading...</span>
+                  <span className="text-sm ">Loading...</span>
                 </div>
               </div>
             ) : (
@@ -262,18 +262,18 @@ function DashboardInner() {
                 {tab === "drafts" && draftReports.length === 0 && (
                   <div className="text-center py-10 sm:py-16">
                     <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-                      <PencilIcon width="24" height="24" className="text-amber-500" />
+                      <PencilIcon width="24" height="24" className="text-amber-800" />
                     </div>
                     <p className="text-sm text-text-secondary mb-1">No drafts yet.</p>
                     <p className="text-xs text-text-tertiary mb-4">Start building a team report and it will auto-save here.</p>
-                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition ">
                       Create Report
                     </Link>
                   </div>
                 )}
                 {tab === "drafts" && draftReports.length > 0 && (
                   <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3 mb-4">
-                    <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                    <p className="text-xs text-amber-800 dark:text-amber-400 font-semibold">
                       Drafts are auto-saved while you build. Resume editing or share when ready.
                     </p>
                   </div>
@@ -281,7 +281,7 @@ function DashboardInner() {
                 {tab === "my" && myReports.length === 0 && (
                   <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-4">No reports yet. Create a team report to get started.</p>
-                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition ">
                       Create Report
                     </Link>
                   </div>
@@ -289,7 +289,7 @@ function DashboardInner() {
                 {tab === "saved" && savedReports.length === 0 && (
                   <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-4">No saved reports yet. Browse the Explore page and save teams you like.</p>
-                    <a href="/explore" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <a href="/explore" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition ">
                       Explore Teams
                     </a>
                   </div>
@@ -298,7 +298,7 @@ function DashboardInner() {
                   <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-2">Your feed is empty.</p>
                     <p className="text-xs text-text-tertiary mb-4 max-w-sm mx-auto">Follow creators from the Explore page to see their new reports here.</p>
-                    <a href="/explore" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <a href="/explore" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition ">
                       Find Creators
                     </a>
                   </div>
@@ -311,7 +311,7 @@ function DashboardInner() {
                 )}
                 {tab === "collab" && collabReports.some((r) => r.collabStatus === "pending") && (
                   <div className="bg-purple-500/5 border border-purple-500/20 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 mb-4">
-                    <p className="text-xs font-bold text-purple-600 dark:text-purple-400">
+                    <p className="text-xs font-bold text-purple-800 dark:text-purple-400">
                       You have pending collaboration invites. Accept to get co-creator credit and edit access.
                     </p>
                   </div>
@@ -461,9 +461,9 @@ function DraftReportCard({ draft, onDelete }: { draft: DashboardReport; onDelete
   const timeAgo = getTimeAgo(draft.updatedAt ?? draft.createdAt);
 
   return (
-    <div className="group relative bg-surface border border-amber-500/20 rounded-xl overflow-hidden hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all">
+    <div className="group relative bg-surface border border-amber-500/20 rounded-xl overflow-hidden hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition">
       {/* Draft badge */}
-      <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-md border border-amber-500/20">
+      <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-400 rounded-md border border-amber-500/20">
         Draft
       </div>
 
@@ -482,19 +482,19 @@ function DraftReportCard({ draft, onDelete }: { draft: DashboardReport; onDelete
       {/* Info */}
       <div className="px-3 pb-2">
         {draft.tournamentName && (
-          <p className="text-[11px] sm:text-xs font-bold text-text-primary truncate">{draft.tournamentName}</p>
+          <p className="text-xs sm:text-xs font-bold text-text-primary truncate">{draft.tournamentName}</p>
         )}
         {draft.teamSummary && (
-          <p className="text-[10px] text-text-tertiary truncate mt-0.5">{draft.teamSummary}</p>
+          <p className="text-xs text-text-tertiary truncate mt-0.5">{draft.teamSummary}</p>
         )}
-        <p className="text-[10px] text-text-tertiary mt-1">{timeAgo}</p>
+        <p className="text-xs text-text-tertiary mt-1">{timeAgo}</p>
       </div>
 
       {/* Actions */}
       <div className="flex items-center gap-1.5 px-3 pb-3">
         <a
           href={`/?draft=${draft.id}`}
-          className="flex-1 px-3 py-1.5 text-[11px] font-bold text-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all"
+          className="flex-1 px-3 py-1.5 text-xs font-bold text-center rounded-lg bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition"
         >
           Resume
         </a>
@@ -502,7 +502,7 @@ function DraftReportCard({ draft, onDelete }: { draft: DashboardReport; onDelete
           type="button"
           onClick={handleDelete}
           disabled={deleting}
-          className="px-2.5 py-1.5 text-[11px] font-bold rounded-lg bg-surface-alt text-text-tertiary border border-border hover:text-danger hover:border-danger/30 transition-all disabled:opacity-40 cursor-pointer"
+          className="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-surface-alt text-text-tertiary border border-border hover:text-danger hover:border-danger/30 transition disabled:opacity-40 cursor-pointer"
         >
           {deleting ? "..." : "Delete"}
         </button>
@@ -616,7 +616,7 @@ function ManagedReportCard({
             {report.tournamentName || report.species.join(" / ")}
           </h3>
           {report.placement && (
-            <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold rounded-md tracking-wide bg-accent-surface text-accent mt-1">
+            <span className="inline-flex items-center px-1.5 py-0.5 text-xs sm:text-xs font-bold rounded-md bg-accent-surface text-accent mt-1">
               {report.placement}
             </span>
           )}
@@ -628,7 +628,7 @@ function ManagedReportCard({
         <div className="flex items-center justify-between gap-1.5">
           <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
             {report.isCollab ? (
-              <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+              <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-md bg-blue-500/10 text-blue-800 dark:text-blue-400 border border-blue-500/20">
                 Collab
               </span>
             ) : (
@@ -637,11 +637,11 @@ function ManagedReportCard({
                 onClick={toggleVisibility}
                 disabled={toggling}
                 title="Click to cycle: Private → Unlisted → Public"
-                className={`inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md border transition-all cursor-pointer ${
-                  report.isPublic
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-md border transition cursor-pointer ${
+ report.isPublic
+ ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border-emerald-500/20"
                     : report.isUnlisted
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                    ? "bg-amber-500/10 text-amber-800 dark:text-amber-400 border-amber-500/20"
                     : "bg-surface-alt text-text-tertiary border-border"
                 }`}
               >
@@ -650,7 +650,7 @@ function ManagedReportCard({
             )}
             <a
               href={editUrl}
-              className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition-all"
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-md bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition"
             >
               Edit
             </a>
@@ -659,7 +659,7 @@ function ManagedReportCard({
                 <button
                   type="button"
                   onClick={() => setShowCollectionMenu(!showCollectionMenu)}
-                  className="inline-flex items-center px-1.5 sm:px-2 py-1 text-[10px] font-bold rounded-md bg-purple-500/10 text-purple-500 border border-purple-500/20 hover:bg-purple-500/20 transition-all cursor-pointer"
+                  className="inline-flex items-center px-1.5 sm:px-2 py-1 text-xs font-bold rounded-md bg-purple-500/10 text-purple-800 border border-purple-500/20 hover:bg-purple-500/20 transition cursor-pointer"
                   title="Add to collection"
                   aria-label="Add to collection"
                 >
@@ -674,7 +674,7 @@ function ManagedReportCard({
                         type="button"
                         onClick={() => addToCollection(c.id)}
                         disabled={addingTo === c.id}
-                        className="w-full text-left px-3 py-2 text-xs font-medium text-text-primary hover:bg-surface-alt transition-colors cursor-pointer disabled:opacity-50"
+                        className="w-full text-left px-3 py-2 text-xs text-text-primary hover:bg-surface-alt transition-colors cursor-pointer disabled:opacity-50"
                       >
                         {addingTo === c.id ? "Adding..." : c.name}
                       </button>
@@ -687,19 +687,19 @@ function ManagedReportCard({
           {!report.isCollab && (
             deleteStep === 2 ? (
               <div className="flex items-center gap-1">
-                <span className="text-[10px] font-bold text-red-500 mr-0.5 hidden sm:inline">Sure?</span>
+                <span className="text-xs font-bold text-red-500 mr-0.5 hidden sm:inline">Sure?</span>
                 <button
                   type="button"
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="px-2 py-1 text-[10px] font-bold rounded-md bg-red-500 text-white cursor-pointer"
+                  className="px-2 py-1 text-xs font-bold rounded-md bg-red-500 text-white cursor-pointer"
                 >
                   {deleting ? "..." : "Delete"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setDeleteStep(0)}
-                  className="px-1.5 py-1 text-[10px] font-bold rounded-md text-text-tertiary cursor-pointer"
+                  className="px-1.5 py-1 text-xs font-bold rounded-md text-text-tertiary cursor-pointer"
                 >
                   No
                 </button>
@@ -709,14 +709,14 @@ function ManagedReportCard({
                 <button
                   type="button"
                   onClick={() => setDeleteStep(2)}
-                  className="px-2 py-1 text-[10px] font-bold rounded-md bg-red-500/10 text-red-500 border border-red-500/20 cursor-pointer"
+                  className="px-2 py-1 text-xs font-bold rounded-md bg-red-500/10 text-red-500 border border-red-500/20 cursor-pointer"
                 >
                   Confirm
                 </button>
                 <button
                   type="button"
                   onClick={() => setDeleteStep(0)}
-                  className="px-1.5 py-1 text-[10px] font-bold rounded-md text-text-tertiary cursor-pointer"
+                  className="px-1.5 py-1 text-xs font-bold rounded-md text-text-tertiary cursor-pointer"
                 >
                   No
                 </button>
@@ -780,7 +780,7 @@ function TrashReportCard({
         <h3 className="text-xs sm:text-sm font-bold text-text-primary leading-tight line-clamp-1">
           {report.tournamentName || report.species.join(" / ")}
         </h3>
-        <p className="text-[10px] text-red-500 dark:text-red-400 font-semibold mt-1">
+        <p className="text-xs text-red-500 dark:text-red-400 font-semibold mt-1">
           {daysRemaining > 0 ? `Permanently deleted in ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""}` : "Will be permanently deleted soon"}
         </p>
       </div>
@@ -789,7 +789,7 @@ function TrashReportCard({
           type="button"
           onClick={handleRestore}
           disabled={restoring}
-          className="px-3 py-1.5 text-[10px] font-bold rounded-md bg-accent/10 text-accent border border-accent/20 cursor-pointer hover:bg-accent/20 transition-all active:scale-[0.97]"
+          className="px-3 py-1.5 text-xs font-bold rounded-md bg-accent/10 text-accent border border-accent/20 cursor-pointer hover:bg-accent/20 transition active:scale-[0.97]"
         >
           {restoring ? "Restoring..." : "Restore"}
         </button>
@@ -842,7 +842,7 @@ function CollabReportCard({
             {report.tournamentName || report.species.join(" / ")}
           </h3>
           {report.creatorName && (
-            <p className="text-[10px] text-text-secondary mt-0.5">by {report.creatorName}</p>
+            <p className="text-xs text-text-secondary mt-0.5">by {report.creatorName}</p>
           )}
         </div>
       </a>
@@ -850,13 +850,13 @@ function CollabReportCard({
       <div className="px-2.5 sm:px-4 py-2 sm:py-3 border-t border-border bg-surface-alt/30">
         {isPending ? (
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Pending invite</span>
+            <span className="text-xs font-bold text-purple-800 dark:text-purple-400 ">Pending invite</span>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => handleAction("accept")}
                 disabled={acting !== null}
-                className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition-all disabled:opacity-40"
+                className="px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition disabled:opacity-40"
               >
                 {acting === "accept" ? "..." : "Accept"}
               </button>
@@ -864,7 +864,7 @@ function CollabReportCard({
                 type="button"
                 onClick={() => handleAction("decline")}
                 disabled={acting !== null}
-                className="px-2.5 py-1 text-[10px] font-bold rounded-md text-text-tertiary border border-border cursor-pointer hover:text-red-500 hover:border-red-500/20 transition-all disabled:opacity-40"
+                className="px-2.5 py-1 text-xs font-bold rounded-md text-text-tertiary border border-border cursor-pointer hover:text-red-500 hover:border-red-500/20 transition disabled:opacity-40"
               >
                 {acting === "decline" ? "..." : "Decline"}
               </button>
@@ -872,11 +872,11 @@ function CollabReportCard({
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400 flex items-center gap-1">
               <CheckIcon width="10" height="10" />
               Collaborator
             </span>
-            <a href={`/s/${report.id}`} className="text-[10px] font-bold text-accent hover:underline">
+            <a href={`/s/${report.id}`} className="text-xs font-bold text-accent hover:underline">
               View
             </a>
           </div>
@@ -908,9 +908,9 @@ interface AnalyticsData {
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-2.5 sm:py-3">
-      <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{label}</p>
-      <p className="text-lg sm:text-2xl font-extrabold text-text-primary mt-0.5 sm:mt-1">{value}</p>
-      {sub && <p className="text-[9px] sm:text-[10px] text-text-secondary mt-0.5 leading-tight">{sub}</p>}
+      <p className="text-xs sm:text-xs font-bold text-text-tertiary ">{label}</p>
+      <p className="text-lg sm:text-2xl font-bold text-text-primary mt-0.5 sm:mt-1">{value}</p>
+      {sub && <p className="text-xs sm:text-xs text-text-secondary mt-0.5 leading-tight">{sub}</p>}
     </div>
   );
 }
@@ -937,7 +937,7 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
       {/* Monthly activity chart */}
       {monthlyActivity.length > 0 && (
         <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Reports Created (Last 6 Months)</p>
+          <p className="text-xs sm:text-xs font-bold text-text-tertiary mb-2 sm:mb-3">Reports Created (Last 6 Months)</p>
           <div className="flex items-end gap-2 h-24">
             {monthlyActivity.map((m) => (
               <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
@@ -950,7 +950,7 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
                     style={{ height: `${(m.count / maxMonthCount) * 100}%` }}
                   />
                 </div>
-                <span className="text-[9px] text-text-tertiary font-bold">
+                <span className="text-xs text-text-tertiary font-bold">
                   {new Date(m.month + "-01").toLocaleDateString("en-GB", { month: "short" })}
                 </span>
               </div>
@@ -962,7 +962,7 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
       {/* Top reports by views */}
       {topByViews.length > 0 && (
         <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reports by Views</p>
+          <p className="text-xs sm:text-xs font-bold text-text-tertiary mb-2 sm:mb-3">Top Reports by Views</p>
           <div className="space-y-1 sm:space-y-2">
             {topByViews.map((report, i) => (
               <a
@@ -971,18 +971,18 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
                 className="flex items-center justify-between gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-surface-alt/50 transition-colors"
               >
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <span className="text-[10px] sm:text-xs font-extrabold text-text-tertiary w-4 sm:w-5 flex-shrink-0">{i + 1}</span>
+                  <span className="text-xs sm:text-xs font-bold text-text-tertiary w-4 sm:w-5 flex-shrink-0">{i + 1}</span>
                   <div className="hidden sm:flex items-center gap-0.5">
                     {report.species.slice(0, 3).map((s, j) => (
                       <DashboardSprite key={j} species={s} />
                     ))}
-                    {report.species.length > 3 && <span className="text-[10px] text-text-tertiary ml-1">+{report.species.length - 3}</span>}
+                    {report.species.length > 3 && <span className="text-xs text-text-tertiary ml-1">+{report.species.length - 3}</span>}
                   </div>
-                  <span className="text-[11px] sm:text-xs font-bold text-text-primary truncate">
+                  <span className="text-xs sm:text-xs font-bold text-text-primary truncate">
                     {report.tournamentName || report.species.join(" / ")}
                   </span>
                 </div>
-                <span className="text-[10px] sm:text-xs font-extrabold text-text-secondary whitespace-nowrap flex-shrink-0">
+                <span className="text-xs sm:text-xs font-bold text-text-secondary whitespace-nowrap flex-shrink-0">
                   {report.viewCount.toLocaleString()}
                 </span>
               </a>
@@ -994,12 +994,12 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
       {/* Top reactions */}
       {topReactions.length > 0 && (
         <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reactions</p>
+          <p className="text-xs sm:text-xs font-bold text-text-tertiary mb-2 sm:mb-3">Top Reactions</p>
           <div className="flex flex-wrap gap-3">
             {topReactions.map((r) => (
               <div key={r.type} className="flex items-center gap-1.5 bg-surface-alt/50 px-3 py-1.5 rounded-lg">
                 <span className="text-base">{r.type}</span>
-                <span className="text-xs font-extrabold text-text-secondary">{r.count}</span>
+                <span className="text-xs font-bold text-text-secondary">{r.count}</span>
               </div>
             ))}
           </div>
@@ -1086,7 +1086,7 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
     <div className="space-y-3 sm:space-y-4">
       {/* Create new collection */}
       <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-        <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">New Collection</p>
+        <p className="text-xs sm:text-xs font-bold text-text-tertiary mb-2 sm:mb-3">New Collection</p>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
@@ -1119,7 +1119,7 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
           <button
             onClick={handleCreate}
             disabled={!newName.trim() || creating}
-            className="px-4 py-2 bg-accent text-white text-sm font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 tracking-wide flex-shrink-0"
+            className="px-4 py-2 bg-accent text-white text-sm font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition disabled:opacity-40 flex-shrink-0"
           >
             {creating ? "Creating..." : "Create"}
           </button>
@@ -1130,7 +1130,7 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
       {collections.length === 0 && (
         <div className="text-center py-12">
           <p className="text-sm text-text-secondary mb-2">No collections yet.</p>
-          <p className="text-xs text-text-tertiary">Create a collection to organize your team reports — like playlists for teams.</p>
+          <p className="text-xs text-text-tertiary">Create a collection to organize your team reports, like playlists for teams.</p>
         </div>
       )}
 
@@ -1145,7 +1145,7 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-text-primary truncate">{c.name}</h3>
                 {c.regulation && (
-                  <span className="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-accent-surface text-accent tracking-wide flex-shrink-0">
+                  <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-accent-surface text-accent flex-shrink-0">
                     {c.regulation}
                   </span>
                 )}
@@ -1205,7 +1205,7 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
                 <button
                   type="button"
                   onClick={() => handleDelete(c.id)}
-                  className="px-3 py-1 text-[10px] font-bold rounded-md text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                  className="px-3 py-1 text-xs font-bold rounded-md text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
                 >
                   Delete Collection
                 </button>

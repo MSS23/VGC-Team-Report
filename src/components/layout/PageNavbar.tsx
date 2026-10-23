@@ -20,6 +20,16 @@ const NAV_LINKS = [
   { href: "/feedback", label: "Feedback", key: "feedback", icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" },
 ] as const;
 
+const linkClass = (active: boolean) =>
+  `inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold transition-colors duration-(--dur-short) ${
+    active ? "text-accent" : "text-text-secondary hover:text-text-primary"
+  }`;
+
+/**
+ * Edge-aligned nav: the wordmark and the page's destinations sit together at
+ * the left edge, the account and the two switches at the right edge, one
+ * hairline under. Every destination, handler and the mobile tab bar are kept.
+ */
 export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavbarProps) {
   const { isLoaded, isSignedIn } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -28,8 +38,8 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
   // Wait for Clerk to load before showing auth UI to prevent flash
   const showSignIn = isLoaded && !isSignedIn;
   const showUser = isLoaded && isSignedIn;
-  const compactLinks = NAV_LINKS.filter((link) => link.key === "explore");
-  const overflowLinks = NAV_LINKS.filter((link) => link.key !== "home" && link.key !== "explore");
+  const compactLinks = NAV_LINKS.filter((link) => link.key === "explore" || link.key === "champions");
+  const overflowLinks = NAV_LINKS.filter((link) => link.key !== "home" && link.key !== "explore" && link.key !== "champions");
   const overflowActive = overflowLinks.some((link) => link.key === activePage);
 
   useEffect(() => {
@@ -50,111 +60,73 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
 
   return (
     <>
-      <header className="sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 bg-surface/80 border-b border-border/60 shadow-[0_1px_8px_rgba(0,0,0,0.03)] sticky-header-standalone">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-12 sm:h-14 flex items-center justify-between">
-          {/* Left: logo */}
-          <Link href="/" className="flex min-h-11 items-center gap-1.5 font-bold text-sm hover:opacity-80 active:opacity-70 transition-opacity">
-            <span className="text-text-primary">VGC Team</span>
-            <span className="text-accent">Report</span>
-          </Link>
-
-          {/* Center: nav links (desktop) */}
-          <nav className="hidden sm:flex items-center gap-1 relative" aria-label="Primary navigation">
-            {/* Create Report CTA — always visible */}
-            <Link
-              href="/"
-              className={`inline-flex min-h-11 items-center px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                activePage === "home"
-                  ? "text-accent bg-accent-surface/50"
-                  : "text-accent hover:bg-accent-surface/30"
-              }`}
-            >
-              + Create
+      <header className="sticky top-0 z-(--z-sticky-nav) border-b border-border bg-background sticky-header-standalone">
+        <div className="mx-auto flex h-16 max-w-(--container) items-center justify-between gap-4 px-(--gutter)">
+          {/* Left edge: wordmark, then the destinations */}
+          <div className="flex min-w-0 items-center gap-2 sm:gap-6">
+            <Link href="/" aria-label="VGC Team Report, home" className="inline-flex min-h-11 items-center text-base font-bold tracking-tight text-text-primary hover:text-accent transition-colors duration-(--dur-short)">
+              VGC Team Report
             </Link>
-            <span className="w-px h-4 bg-border mx-0.5" />
-            {compactLinks.map((link) => (
-              <Link
-                key={link.key}
-                href={link.href}
-                className={`inline-flex min-h-11 items-center px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                  activePage === link.key
-                    ? "text-accent bg-accent-surface/50"
-                    : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
-                }`}
-              >
-                {link.label}
+
+            <nav className="hidden items-center gap-1 sm:flex" aria-label="Primary navigation">
+              <Link href="/" className={linkClass(activePage === "home")}>
+                Create
               </Link>
-            ))}
-            <div className="relative xl:hidden" ref={moreMenuRef}>
-              <button
-                type="button"
-                onClick={() => setMoreOpen((open) => !open)}
-                aria-haspopup="menu"
-                aria-expanded={moreOpen}
-                className={`min-h-11 px-3 text-xs font-bold rounded-lg transition-all ${
-                  overflowActive || moreOpen
-                    ? "text-accent bg-accent-surface/50"
-                    : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
-                }`}
-              >
-                More
-              </button>
-              {moreOpen && (
-                <div
-                  role="menu"
-                  aria-label="More navigation"
-                  className="absolute left-1/2 top-full z-50 mt-1.5 w-48 -translate-x-1/2 rounded-xl border border-border bg-surface p-1.5 shadow-2xl"
-                >
-                  {overflowLinks.map((link) => (
-                    <Link
-                      key={link.key}
-                      href={link.href}
-                      role="menuitem"
-                      onClick={() => setMoreOpen(false)}
-                      className={`flex min-h-11 items-center gap-2 rounded-lg px-3 text-xs font-bold transition-colors ${
-                        activePage === link.key
-                          ? "bg-accent-surface/50 text-accent"
-                          : "text-text-secondary hover:bg-surface-alt hover:text-text-primary"
-                      }`}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d={link.icon} />
-                      </svg>
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="hidden xl:contents">
-              {overflowLinks.map((link) => (
-                <Link
-                  key={link.key}
-                  href={link.href}
-                  className={`inline-flex min-h-11 items-center px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                    activePage === link.key
-                      ? "text-accent bg-accent-surface/50"
-                      : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
-                  }`}
-                >
+              {compactLinks.map((link) => (
+                <Link key={link.key} href={link.href} className={linkClass(activePage === link.key)}>
                   {link.label}
                 </Link>
               ))}
-            </div>
-          </nav>
-
-          {/* Right: auth + language + dark mode */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {showSignIn && (
-              <SignInButton mode="modal">
-                <button className="min-h-11 px-3 py-2 text-xs font-bold text-white bg-accent rounded-xl hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-sm shadow-accent/20">
-                  Sign In
+              <div className="relative xl:hidden" ref={moreMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen((open) => !open)}
+                  aria-haspopup="menu"
+                  aria-expanded={moreOpen}
+                  className={`${linkClass(overflowActive || moreOpen)} cursor-pointer`}
+                >
+                  More
                 </button>
-              </SignInButton>
-            )}
+                {moreOpen && (
+                  <div
+                    role="menu"
+                    aria-label="More navigation"
+                    className="absolute left-0 top-full z-(--z-dropdown) mt-2 w-48 rounded-card border border-border bg-surface p-1.5"
+                  >
+                    {overflowLinks.map((link) => (
+                      <Link
+                        key={link.key}
+                        href={link.href}
+                        role="menuitem"
+                        onClick={() => setMoreOpen(false)}
+                        className={`flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition-colors duration-(--dur-short) ${
+ activePage === link.key ? "text-accent" : "text-text-secondary hover:bg-surface-alt hover:text-text-primary"
+                        }`}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d={link.icon} />
+                        </svg>
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="hidden xl:contents">
+                {overflowLinks.map((link) => (
+                  <Link key={link.key} href={link.href} className={linkClass(activePage === link.key)}>
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </nav>
+          </div>
+
+          {/* Right edge: account, language, dark mode */}
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {showUser && (
               <>
-                <Link href="/dashboard" className="hidden xl:inline-flex min-h-11 items-center px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent hover:bg-surface-alt rounded-lg transition-all">
+                <Link href="/dashboard" className={`hidden xl:inline-flex ${linkClass(activePage === "dashboard")}`}>
                   Dashboard
                 </Link>
                 <UserButton appearance={{ elements: { userButtonTrigger: "min-w-11 min-h-11", avatarBox: "w-8 h-8" } }} />
@@ -164,22 +136,31 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
             <LanguageSelector />
 
             <button
+              type="button"
               onClick={onToggleDarkMode}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all cursor-pointer"
+              className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg text-text-secondary transition-colors duration-(--dur-short) hover:bg-surface-alt hover:text-text-primary"
               aria-label="Toggle dark mode"
             >
               {darkMode ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
               )}
             </button>
+
+            {showSignIn && (
+              <SignInButton mode="modal">
+                <button type="button" className="ml-1 inline-flex min-h-11 cursor-pointer items-center rounded-lg border border-text-primary px-4 text-sm font-semibold text-text-primary transition-colors duration-(--dur-short) hover:bg-surface-alt">
+                  Sign in
+                </button>
+              </SignInButton>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Mobile bottom tab bar — always render all 5 tabs to prevent layout shift */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-2xl backdrop-saturate-150 border-t border-border/60 safe-bottom safe-x" aria-label="Mobile navigation">
+      {/* Mobile bottom tab bar, always render all 5 tabs to prevent layout shift */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-(--z-sticky-nav) bg-surface border-t border-border safe-bottom safe-x" aria-label="Mobile navigation">
         <div className="flex items-center justify-around px-0.5 pt-1 pb-0.5">
           {[
             { href: "/", label: "Create", key: "home", icon: "M12 5v14M5 12h14" },
@@ -191,24 +172,15 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
               <Link
                 key={link.key}
                 href={link.href}
-                className={`relative flex min-h-12 flex-1 flex-col items-center justify-center gap-0 px-1.5 py-1 rounded-xl transition-all duration-200 min-w-[56px] active:scale-[0.94] active:opacity-70 ${
-                  isActive
-                    ? "text-accent"
-                    : "text-text-tertiary"
+                aria-current={isActive ? "page" : undefined}
+                className={`relative flex min-h-12 min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 py-1 transition-colors duration-(--dur-short) ${
+ isActive ? "text-accent" : "text-text-secondary"
                 }`}
               >
-                {/* Active pill indicator */}
-                {isActive && (
-                  <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full bg-accent animate-pop-in" />
-                )}
-                <span className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors duration-200 ${
-                  isActive ? "bg-accent/10" : ""
-                }`}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isActive ? "2.5" : "1.8"} strokeLinecap="round" strokeLinejoin="round">
-                    <path d={link.icon} />
-                  </svg>
-                </span>
-                <span className={`text-[10px] leading-none font-semibold transition-colors duration-200 ${isActive ? "text-accent" : ""}`}>{link.label}</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isActive ? "2.5" : "1.8"} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d={link.icon} />
+                </svg>
+                <span className="text-xs font-semibold leading-none">{link.label}</span>
               </Link>
             );
           })}

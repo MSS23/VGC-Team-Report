@@ -182,20 +182,20 @@ export function MatchTracker() {
   };
 
   const resultColor = (r: "win" | "loss" | "tie") => {
-    if (r === "win") return "text-emerald-600 dark:text-emerald-400";
+    if (r === "win") return "text-emerald-800 dark:text-emerald-400";
     if (r === "loss") return "text-red-500 dark:text-red-400";
-    return "text-amber-500 dark:text-amber-400";
+    return "text-amber-800 dark:text-amber-400";
   };
 
   const resultBg = (r: "win" | "loss" | "tie") => {
-    if (r === "win") return "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400";
+    if (r === "win") return "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-400";
     if (r === "loss") return "bg-red-500/10 border-red-500/30 text-red-500 dark:text-red-400";
-    return "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400";
+    return "bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-400";
   };
 
   const winRateColor = (rate: number) => {
-    if (rate >= 60) return "text-emerald-600 dark:text-emerald-400";
-    if (rate >= 40) return "text-amber-500 dark:text-amber-400";
+    if (rate >= 60) return "text-emerald-800 dark:text-emerald-400";
+    if (rate >= 40) return "text-amber-800 dark:text-amber-400";
     return "text-red-500 dark:text-red-400";
   };
 
@@ -205,21 +205,21 @@ export function MatchTracker() {
       <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-border">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
               <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
             </svg>
           </div>
           <div>
-            <h2 className="text-sm sm:text-base font-extrabold text-text-primary">Match Tracker</h2>
-            <p className="text-[10px] text-text-tertiary">Log results &amp; track your record</p>
+            <h2 className="text-sm sm:text-base font-bold text-text-primary">Match Tracker</h2>
+            <p className="text-xs text-text-tertiary">Log results &amp; track your record</p>
           </div>
         </div>
         <button
           type="button"
           onClick={() => setShowForm((v) => !v)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg bg-accent text-white hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-accent text-white hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition cursor-pointer"
         >
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Log Match
@@ -232,7 +232,7 @@ export function MatchTracker() {
           <form onSubmit={handleSubmit} className="space-y-3">
             {/* Opponent archetype input */}
             <div className="relative">
-              <label className="block text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-1">
+              <label className="block text-xs font-bold text-text-tertiary mb-1">
                 Opponent Archetype
               </label>
               <input
@@ -264,7 +264,7 @@ export function MatchTracker() {
 
             {/* Result toggle */}
             <div>
-              <label className="block text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-text-tertiary mb-1.5">
                 Result
               </label>
               <div className="flex gap-2">
@@ -274,8 +274,8 @@ export function MatchTracker() {
                     type="button"
                     onClick={() => setResult(r)}
                     aria-pressed={result === r}
-                    className={`flex-1 py-2 min-h-[44px] text-xs font-bold rounded-lg border capitalize transition-all cursor-pointer ${
-                      result === r ? resultBg(r) : "bg-surface border-border text-text-tertiary hover:text-text-primary"
+                    className={`flex-1 py-2 min-h-[44px] text-xs font-bold rounded-lg border capitalize transition cursor-pointer ${
+ result === r ? resultBg(r) : "bg-surface border-border text-text-tertiary hover:text-text-primary"
                     }`}
                   >
                     {r}
@@ -286,7 +286,7 @@ export function MatchTracker() {
 
             {/* Game count */}
             <div>
-              <label className="block text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-text-tertiary mb-1.5">
                 Games Played
               </label>
               <div className="flex gap-2">
@@ -295,9 +295,9 @@ export function MatchTracker() {
                     key={n}
                     type="button"
                     onClick={() => setGameCount(n)}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
-                      gameCount === n
-                        ? "bg-accent/10 border-accent/30 text-accent"
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+ gameCount === n
+ ? "bg-accent/10 border-accent/30 text-accent"
                         : "bg-surface border-border text-text-tertiary hover:text-text-primary"
                     }`}
                   >
@@ -310,7 +310,7 @@ export function MatchTracker() {
             {/* Optional fields in a row on larger screens */}
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1">
-                <label className="block text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-text-tertiary mb-1">
                   Tournament (optional)
                 </label>
                 <input
@@ -323,7 +323,7 @@ export function MatchTracker() {
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-text-tertiary mb-1">
                   Notes (optional)
                 </label>
                 <input
@@ -338,24 +338,24 @@ export function MatchTracker() {
             </div>
 
             {submitError && (
-              <p className="text-xs text-red-500 font-medium">{submitError}</p>
+              <p className="text-xs text-red-500 ">{submitError}</p>
             )}
             {submitSuccess && (
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">Match logged!</p>
+              <p className="text-xs text-emerald-800 dark:text-emerald-400 font-bold">Match logged!</p>
             )}
 
             <div className="flex gap-2 pt-0.5">
               <button
                 type="submit"
                 disabled={!archetype.trim() || !result || submitting}
-                className="flex-1 py-2 text-sm font-bold rounded-lg bg-accent text-white hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 cursor-pointer"
+                className="flex-1 py-2 text-sm font-bold rounded-lg bg-accent text-white hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition disabled:opacity-40 cursor-pointer"
               >
                 {submitting ? "Saving..." : "Log Result"}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm font-bold rounded-lg bg-surface-alt border border-border text-text-tertiary hover:text-text-primary transition-all cursor-pointer"
+                className="px-4 py-2 text-sm font-bold rounded-lg bg-surface-alt border border-border text-text-tertiary hover:text-text-primary transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -368,14 +368,14 @@ export function MatchTracker() {
       <div className="px-4 sm:px-5 py-3 sm:py-4">
         {loadingStats ? (
           <div className="flex justify-center py-6">
-            <svg className="animate-spin h-5 w-5 text-text-tertiary" viewBox="0 0 24 24" fill="none">
+            <svg aria-hidden="true" className="animate-spin h-5 w-5 text-text-tertiary" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           </div>
         ) : fetchError ? (
           <div className="flex flex-col items-center py-6 gap-2">
-            <p className="text-xs text-amber-500 dark:text-amber-400 font-medium text-center">{fetchError}</p>
+            <p className="text-xs text-amber-800 dark:text-amber-400 text-center">{fetchError}</p>
             <button
               type="button"
               onClick={fetchStats}
@@ -393,49 +393,49 @@ export function MatchTracker() {
           <div className="space-y-4">
             {/* Overall record */}
             <div>
-              <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">My Record</p>
+              <p className="text-xs font-bold text-text-tertiary mb-2">My Record</p>
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{summary.totalWins}</span>
+                  <span className="text-2xl font-bold text-emerald-800 dark:text-emerald-400">{summary.totalWins}</span>
                   <span className="text-xs font-bold text-text-tertiary">W</span>
                   <span className="text-text-tertiary mx-0.5">/</span>
-                  <span className="text-2xl font-extrabold text-red-500 dark:text-red-400">{summary.totalLosses}</span>
+                  <span className="text-2xl font-bold text-red-500 dark:text-red-400">{summary.totalLosses}</span>
                   <span className="text-xs font-bold text-text-tertiary">L</span>
                   {summary.totalTies > 0 && (
                     <>
                       <span className="text-text-tertiary mx-0.5">/</span>
-                      <span className="text-2xl font-extrabold text-amber-500 dark:text-amber-400">{summary.totalTies}</span>
+                      <span className="text-2xl font-bold text-amber-800 dark:text-amber-400">{summary.totalTies}</span>
                       <span className="text-xs font-bold text-text-tertiary">T</span>
                     </>
                   )}
                 </div>
-                <div className={`text-lg font-extrabold ${winRateColor(summary.overallWinRate)}`}>
+                <div className={`text-lg font-bold ${winRateColor(summary.overallWinRate)}`}>
                   {summary.overallWinRate}%
                 </div>
                 <span className="text-xs text-text-tertiary">{summary.totalGames} game{summary.totalGames !== 1 ? "s" : ""}</span>
               </div>
             </div>
 
-            {/* Archetype breakdown — top 5 */}
+            {/* Archetype breakdown, top 5 */}
             {archetypeStats.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">Top Matchups</p>
+                <p className="text-xs font-bold text-text-tertiary mb-2">Top Matchups</p>
                 <div className="space-y-1.5">
                   {archetypeStats.map((stat) => (
                     <div key={stat.archetype} className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-2 rounded-lg bg-surface-alt/50 hover:bg-surface-alt transition-colors">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-text-primary truncate">{stat.archetype}</p>
-                        <p className="text-[10px] text-text-tertiary mt-0.5">
-                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">{stat.wins}W</span>
+                        <p className="text-xs text-text-tertiary mt-0.5">
+                          <span className="text-emerald-800 dark:text-emerald-400 font-bold">{stat.wins}W</span>
                           {" / "}
                           <span className="text-red-500 dark:text-red-400 font-bold">{stat.losses}L</span>
                           {stat.ties > 0 && (
-                            <> / <span className="text-amber-500 dark:text-amber-400 font-bold">{stat.ties}T</span></>
+                            <> / <span className="text-amber-800 dark:text-amber-400 font-bold">{stat.ties}T</span></>
                           )}
                           <span className="ml-1">({stat.total} game{stat.total !== 1 ? "s" : ""})</span>
                         </p>
                       </div>
-                      <span className={`text-sm font-extrabold flex-shrink-0 ${winRateColor(stat.winRate)}`}>
+                      <span className={`text-sm font-bold flex-shrink-0 ${winRateColor(stat.winRate)}`}>
                         {stat.winRate}%
                       </span>
                     </div>
@@ -444,21 +444,21 @@ export function MatchTracker() {
               </div>
             )}
 
-            {/* Recent logs — last 5 */}
+            {/* Recent logs, last 5 */}
             {logs.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">Recent Matches</p>
+                <p className="text-xs font-bold text-text-tertiary mb-2">Recent Matches</p>
                 {deleteError && (
-                  <p role="alert" className="text-[10px] text-red-500 font-medium mb-1.5">{deleteError}</p>
+                  <p role="alert" className="text-xs text-red-500 mb-1.5">{deleteError}</p>
                 )}
                 <div className="space-y-1">
                   {logs.slice(0, 5).map((log) => (
                     <div key={log.id} className="group flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-1.5 rounded-lg hover:bg-surface-alt/50 transition-colors">
-                      <span className={`text-[10px] font-extrabold uppercase tracking-wider w-6 flex-shrink-0 ${resultColor(log.result)}`}>
+                      <span className={`text-xs font-bold w-6 flex-shrink-0 ${resultColor(log.result)}`}>
                         {log.result === "win" ? "W" : log.result === "loss" ? "L" : "T"}
                       </span>
                       <span className="flex-1 min-w-0 text-xs text-text-primary truncate">{log.opponentArchetype}</span>
-                      <span className="text-[10px] text-text-tertiary flex-shrink-0">
+                      <span className="text-xs text-text-tertiary flex-shrink-0">
                         {new Date(log.loggedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                       </span>
                       {pendingDeleteId === log.id ? (
@@ -468,7 +468,7 @@ export function MatchTracker() {
                             type="button"
                             onClick={() => handleDelete(log.id)}
                             aria-label="Confirm delete match entry"
-                            className="min-h-[32px] px-2 text-[10px] font-bold rounded bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500/20 transition-colors cursor-pointer"
+                            className="min-h-[32px] px-2 text-xs font-bold rounded bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500/20 transition-colors cursor-pointer"
                           >
                             Delete
                           </button>
@@ -481,7 +481,7 @@ export function MatchTracker() {
                               requestAnimationFrame(() => trashBtn?.focus());
                             }}
                             aria-label="Cancel delete"
-                            className="min-h-[32px] px-2 text-[10px] font-bold rounded bg-surface-alt border border-border text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
+                            className="min-h-[32px] px-2 text-xs font-bold rounded bg-surface-alt border border-border text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -495,9 +495,9 @@ export function MatchTracker() {
                           type="button"
                           onClick={() => setPendingDeleteId(log.id)}
                           aria-label="Delete match entry"
-                          className="sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-text-tertiary hover:text-red-500 transition-all cursor-pointer"
+                          className="sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 flex-shrink-0 p-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-text-tertiary hover:text-red-500 transition cursor-pointer"
                         >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="3 6 5 6 21 6" />
                             <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
                             <path d="M10 11v6M14 11v6" />

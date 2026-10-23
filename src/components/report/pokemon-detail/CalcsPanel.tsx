@@ -56,7 +56,7 @@ const { parsed, spriteSpecies, displayAbility } = model;
   return (
     <FieldDiffHighlight field={speciesKey ? [encodeSectionKey({ kind: "calcs", speciesKey })] : []} label="Calcs changed">
     <div className="flex flex-col gap-4">
-      <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm" data-walkthrough="notable-calcs">
+      <h3 className="text-xs font-bold text-text-tertiary presenting:text-sm" data-walkthrough="notable-calcs">
         {t.notableCalcs}
       </h3>
       {calcs.length > 0 ? (
@@ -67,8 +67,8 @@ const { parsed, spriteSpecies, displayAbility } = model;
               <span>
                 Auto-detected as offensive / defensive / speed.
                 Tap the <span className="text-red-500 dark:text-red-400">&#9876;</span>{" "}
-                <span className="text-emerald-500 dark:text-emerald-400">&#128737;</span>{" "}
-                <span className="text-amber-500 dark:text-amber-400">&#9889;</span>{" "}
+                <span className="text-emerald-800 dark:text-emerald-400">&#128737;</span>{" "}
+                <span className="text-amber-800 dark:text-amber-400">&#9889;</span>{" "}
                 icons on any calc to move it to a different group.
               </span>
             </p>
@@ -79,10 +79,10 @@ const { parsed, spriteSpecies, displayAbility } = model;
         </div>
       ) : isReadOnly ? (
         <div className="flex items-center justify-center py-6 sm:py-12 text-text-tertiary presenting:py-16 bg-surface-alt/50 rounded-xl border border-border-subtle">
-          <p className="text-sm presenting:text-base font-medium">{t.noNotableCalcs}</p>
+          <p className="text-sm presenting:text-base ">{t.noNotableCalcs}</p>
         </div>
       ) : (
-        <p className="text-sm text-text-tertiary italic font-medium">
+        <p className="text-sm text-text-tertiary italic ">
           {t.addDamageCalcsHint}
         </p>
       )}

@@ -80,7 +80,7 @@ function SpeedComparison({
 
   return (
     <div>
-      <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-3">
+      <h3 className="text-sm font-semibold text-text-tertiary mb-3">
         Speed Tiers
       </h3>
       <div className="bg-surface border border-border rounded-2xl p-3 sm:p-4">
@@ -93,21 +93,21 @@ function SpeedComparison({
                   <PokemonSprite species={entry.species} size={20} />
                 </div>
                 <span className={`text-xs font-semibold w-20 sm:w-24 truncate ${
-                  entry.isYours ? "text-accent" : "text-text-secondary"
+ entry.isYours ? "text-accent" : "text-text-secondary"
                 }`}>
                   {entry.species}
                 </span>
                 <div className="flex-1 h-4 bg-surface-alt rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all"
+                    className="h-full rounded-full transition"
                     style={{
                       width: `${pct}%`,
-                      backgroundColor: entry.isYours ? "var(--accent)" : "#64748b",
+                      backgroundColor: entry.isYours ? "var(--accent)" : "var(--chart-muted-2)",
                     }}
                   />
                 </div>
                 <span className={`text-xs font-mono font-bold w-8 text-right tabular-nums ${
-                  entry.isYours ? "text-accent" : "text-text-secondary"
+ entry.isYours ? "text-accent" : "text-text-secondary"
                 }`}>
                   {entry.speed}
                 </span>
@@ -116,11 +116,11 @@ function SpeedComparison({
           })}
         </div>
         <div className="flex items-center gap-4 mt-3 pt-2 border-t border-border-subtle">
-          <span className="flex items-center gap-1.5 text-[10px] font-semibold text-text-tertiary">
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-text-tertiary">
             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "var(--accent)" }} />
             Your team
           </span>
-          <span className="flex items-center gap-1.5 text-[10px] font-semibold text-text-tertiary">
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-text-tertiary">
             <span className="w-2.5 h-2.5 rounded-full bg-slate-500" />
             Opponent
           </span>
@@ -208,11 +208,11 @@ export function MatchupPlanSlide({
       {/* Opponent Team Overview */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary">
+          <h3 className="text-sm font-semibold text-text-tertiary">
             {t.opponentTeam}
           </h3>
           {anyHasEvs && (
-            <span className="text-xs text-accent font-medium px-2.5 py-0.5 bg-accent-surface rounded-full">
+            <span className="text-xs text-accent px-2.5 py-0.5 bg-accent-surface rounded-full">
               {t.fullSpreads}
             </span>
           )}
@@ -225,7 +225,7 @@ export function MatchupPlanSlide({
           >
             {opponentPokemon.map((mon, i) => (
               <div key={i} className="flex-shrink-0 w-[140px] sm:w-auto sm:flex-shrink-[unset] snap-center flex flex-col items-center text-center min-h-0">
-                {/* Sprite — fixed height container for alignment */}
+                {/* Sprite, fixed height container for alignment */}
                 <div className="h-[56px] sm:h-[72px] flex items-end justify-center mb-1">
                   <PokemonSprite species={mon.parsed.species} size={56} className="sm:hidden" />
                   <PokemonSprite species={mon.parsed.species} size={72} className="hidden sm:block" />
@@ -244,7 +244,7 @@ export function MatchupPlanSlide({
                 {mon.parsed.item && (
                   <div className="flex items-center gap-1 justify-center mt-1.5 w-full">
                     <ItemIcon item={mon.parsed.item} size={20} />
-                    <span className="text-xs font-medium text-text-primary truncate">
+                    <span className="text-xs text-text-primary truncate">
                       {mon.parsed.item}
                     </span>
                   </div>
@@ -270,7 +270,7 @@ export function MatchupPlanSlide({
                         <div className="flex items-center gap-2 mb-2">
                           <PokemonSprite species={mon.parsed.species} size={28} />
                           <span className="text-sm font-bold text-text-primary">{mon.parsed.species}</span>
-                          <span className="text-xs font-medium text-text-secondary">({mon.parsed.nature})</span>
+                          <span className="text-xs text-text-secondary">({mon.parsed.nature})</span>
                         </div>
                         <div className="space-y-1.5" role="list" aria-label="Stat values">
                           {(["hp", "atk", "def", "spa", "spd", "spe"] as const).map((stat) => {
@@ -280,15 +280,15 @@ export function MatchupPlanSlide({
                             const percentage = Math.min((value / maxStat) * 100, 100);
                             return (
                               <div key={stat} className="flex items-center gap-2" role="listitem" aria-label={`${STAT_LABELS[stat]}: ${value}${ev > 0 ? `, ${ev} EVs invested` : ""}`}>
-                                <span className="text-xs font-semibold w-8 text-right uppercase text-text-tertiary">
+                                <span className="text-xs font-semibold w-8 text-right text-text-tertiary">
                                   {STAT_LABELS[stat]}
                                 </span>
                                 <div className="flex-1 h-2 bg-surface-alt rounded-full overflow-hidden" role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${STAT_LABELS[stat]} stat bar`}>
                                   <div
-                                    className="h-full rounded-full transition-all"
+                                    className="h-full rounded-full transition"
                                     style={{
                                       width: `${percentage}%`,
-                                      backgroundColor: ev > 0 ? "var(--accent)" : "#94a3b8",
+                                      backgroundColor: ev > 0 ? "var(--accent)" : "var(--chart-muted)",
                                     }}
                                   />
                                 </div>
@@ -309,7 +309,7 @@ export function MatchupPlanSlide({
                       <div className="flex items-center gap-2 text-text-tertiary">
                         <PokemonSprite species={mon.parsed.species} size={28} />
                         <span className="text-sm">{mon.parsed.species}</span>
-                        <span className="text-xs">— {t.noSpreadData}</span>
+                        <span className="text-xs">, {t.noSpreadData}</span>
                       </div>
                     )}
                   </div>
@@ -328,7 +328,7 @@ export function MatchupPlanSlide({
       {/* Game Plans */}
       <div ref={gamePlansRef} className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary">
+          <h3 className="text-sm font-semibold text-text-tertiary">
             {t.gamePlans} ({plan.gamePlans.length}/3)
           </h3>
           {!isReadOnly && plan.gamePlans.length < 3 && (
@@ -360,8 +360,8 @@ export function MatchupPlanSlide({
                     hapticLight();
                   }}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    isActive
-                      ? "bg-surface border border-border shadow-sm"
+ isActive
+ ? "bg-surface border border-border shadow-sm"
                       : "text-text-tertiary hover:bg-surface-alt/50"
                   }`}
                 >
@@ -496,14 +496,14 @@ function GamePlanSection({
 
   return (
     <div className={`bg-surface border border-border rounded-2xl border-l-[3px] ${color.accent} shadow-sm transition-shadow hover:shadow-md`}>
-      {/* Header — always visible */}
+      {/* Header, always visible */}
       <button
         type="button"
         onClick={onToggle}
         className="w-full flex items-center justify-between px-4 sm:px-5 py-3.5 hover:bg-surface-alt/30 transition-colors rounded-t-2xl"
       >
         <div className="flex items-center gap-3">
-          <svg
+          <svg aria-hidden="true"
             width="10"
             height="10"
             viewBox="0 0 10 10"
@@ -525,7 +525,7 @@ function GamePlanSection({
               {/* Lead indicators */}
               {gamePlan.bring.slice(0, 2).some((idx) => idx !== null) && (
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400/70">L</span>
+                  <span className="text-[11px] font-bold text-blue-400/70">L</span>
                   {([0, 1] as const).map((i) => {
                     const idx = gamePlan.bring[i];
                     return idx !== null && yourPokemon[idx] ? (
@@ -537,7 +537,7 @@ function GamePlanSection({
               {/* Back indicators */}
               {gamePlan.bring.slice(2, 4).some((idx) => idx !== null) && (
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/70">B</span>
+                  <span className="text-[11px] font-bold text-amber-400/70">B</span>
                   {([2, 3] as const).map((i) => {
                     const idx = gamePlan.bring[i];
                     return idx !== null && yourPokemon[idx] ? (
@@ -559,19 +559,19 @@ function GamePlanSection({
         )}
       </button>
 
-      {/* Content — collapsible */}
+      {/* Content, collapsible */}
       {!isCollapsed && (
         <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-1">
           <div className="grid grid-cols-1 gap-4 sm:gap-5">
-            {/* Bring Four — Lead / Back split */}
+            {/* Bring Four, Lead / Back split */}
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Lead */}
               <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 sm:p-4 border border-border-subtle">
                 <div className="flex items-center gap-2 mb-2.5">
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-500/20 text-blue-400">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /></svg>
+                    <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /></svg>
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-widest text-blue-400">{t.lead}</span>
+                  <span className="text-xs font-bold text-blue-400">{t.lead}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {([0, 1] as const).map((bringIdx) => {
@@ -579,8 +579,8 @@ function GamePlanSection({
                     return (
                       <div
                         key={bringIdx}
-                        className={`flex flex-col items-center gap-1 transition-all rounded-xl ${
-                          dragOverIndex === bringIdx ? "ring-2 ring-blue-400/50 scale-105" : ""
+                        className={`flex flex-col items-center gap-1 transition rounded-xl ${
+ dragOverIndex === bringIdx ? "ring-2 ring-blue-400/50 scale-105" : ""
                         }`}
                         onDragOver={(e) => handleDragOver(e, bringIdx)}
                         onDragLeave={handleDragLeave}
@@ -611,10 +611,10 @@ function GamePlanSection({
                     onReorderBring(0 as 0 | 1 | 2 | 3, 2 as 0 | 1 | 2 | 3);
                     onReorderBring(1 as 0 | 1 | 2 | 3, 3 as 0 | 1 | 2 | 3);
                   }}
-                  className="self-center p-1.5 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/50 transition-all cursor-pointer lg:hidden"
+                  className="self-center p-1.5 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent-surface/50 transition cursor-pointer lg:hidden"
                   title="Swap lead and back"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="17 1 21 5 17 9" />
                     <path d="M3 11V9a4 4 0 014-4h14" />
                     <polyline points="7 23 3 19 7 15" />
@@ -627,9 +627,9 @@ function GamePlanSection({
               <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 sm:p-4 border border-border-subtle">
                 <div className="flex items-center gap-2 mb-2.5">
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-500/20 text-amber-400">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-widest text-amber-400">{t.back}</span>
+                  <span className="text-xs font-bold text-amber-400">{t.back}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {([2, 3] as const).map((bringIdx) => {
@@ -637,8 +637,8 @@ function GamePlanSection({
                     return (
                       <div
                         key={bringIdx}
-                        className={`flex flex-col items-center gap-1 transition-all rounded-xl ${
-                          dragOverIndex === bringIdx ? "ring-2 ring-amber-400/50 scale-105" : ""
+                        className={`flex flex-col items-center gap-1 transition rounded-xl ${
+ dragOverIndex === bringIdx ? "ring-2 ring-amber-400/50 scale-105" : ""
                         }`}
                         onDragOver={(e) => handleDragOver(e, bringIdx)}
                         onDragLeave={handleDragLeave}
@@ -664,7 +664,7 @@ function GamePlanSection({
             {/* Notes */}
             <div className="flex flex-col gap-4">
               <div>
-                <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3 presenting:text-base presenting:mb-4">
+                <span className="text-sm font-semibold text-text-tertiary block mb-3 presenting:text-base presenting:mb-4">
                   {t.notesLabel}
                 </span>
                 {isReadOnly ? (

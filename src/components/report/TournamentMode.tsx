@@ -19,7 +19,7 @@ interface TournamentModeProps {
   analysis: TeamAnalysis;
   speciesKeys: string[];
   getSpriteConfig?: (key: string) => SpriteConfig;
-  /** Current regulation — Reg M-A (Champions) has no Tera mechanic. */
+  /** Current regulation, Reg M-A (Champions) has no Tera mechanic. */
   regulation?: string;
 }
 
@@ -28,7 +28,7 @@ function TypeDot({ type }: { type: PokemonType }) {
   const colors = TYPE_COLORS[type];
   return (
     <span
-      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[7px] font-extrabold uppercase leading-none flex-shrink-0 shadow-sm"
+      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[7px] font-bold leading-none flex-shrink-0 shadow-sm"
       style={{ backgroundColor: colors.bg, color: colors.text }}
       title={type}
     >
@@ -41,15 +41,15 @@ function TypeDot({ type }: { type: PokemonType }) {
 function StatCell({ label, value, boosted, reduced, isStats }: { label: string; value: number; boosted: boolean; reduced: boolean; isStats?: boolean }) {
   return (
     <div className="flex flex-col items-center">
-      <span className={`text-[9px] font-extrabold uppercase tracking-wider leading-none ${
-        boosted ? "text-red-500 bg-red-500/15 px-1 rounded" :
-        reduced ? "text-blue-500 bg-blue-500/15 px-1 rounded" :
+      <span className={`text-[11px] font-bold leading-none ${
+ boosted ? "text-red-500 bg-red-500/15 px-1 rounded" :
+        reduced ? "text-blue-800 bg-blue-500/15 px-1 rounded" :
         "text-text-tertiary"
       }`}>
         {label}{boosted ? "\u2191" : reduced ? "\u2193" : ""}
       </span>
-      <span className={`text-sm font-extrabold tabular-nums leading-tight mt-0.5 ${
-        isStats ? "text-text-primary" : value > 0 ? "text-text-primary" : "text-text-tertiary/40"
+      <span className={`text-sm font-bold tabular-nums leading-tight mt-0.5 ${
+ isStats ? "text-text-primary" : value > 0 ? "text-text-primary" : "text-text-tertiary/40"
       }`}>
         {value}
       </span>
@@ -100,7 +100,7 @@ function CompactCard({
             shiny={sc?.shiny}
           />
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-extrabold text-text-primary tracking-tight truncate leading-tight">
+            <h3 className="text-sm font-bold text-text-primary tracking-tight truncate leading-tight">
               {parsed.species}
             </h3>
             <div className="flex items-center gap-1 mt-0.5">
@@ -109,9 +109,9 @@ function CompactCard({
               ))}
               {showTera && parsed.teraType && (
                 <>
-                  <span className="text-text-tertiary/30 mx-0.5 text-[8px]">{"\u2192"}</span>
+                  <span className="text-text-tertiary/30 mx-0.5 text-[11px]">{"\u2192"}</span>
                   <span
-                    className="text-[8px] font-extrabold px-1 py-0.5 rounded border"
+                    className="text-[11px] font-bold px-1 py-0.5 rounded border"
                     style={{ color: TYPE_COLORS[parsed.teraType].bg, backgroundColor: `${TYPE_COLORS[parsed.teraType].bg}20`, borderColor: `${TYPE_COLORS[parsed.teraType].bg}40` }}
                   >
                     {parsed.teraType}
@@ -120,16 +120,16 @@ function CompactCard({
               )}
             </div>
             {parsed.ability && (
-              <p className="text-[10px] font-bold text-text-secondary leading-tight truncate mt-0.5">{parsed.ability}</p>
+              <p className="text-[11px] font-bold text-text-secondary leading-tight truncate mt-0.5">{parsed.ability}</p>
             )}
           </div>
           {parsed.item && (
-            <span className="absolute top-1.5 right-1.5 px-1 py-0.5 text-[7px] font-extrabold bg-surface-alt/80 border border-border rounded text-text-tertiary truncate max-w-[70px]">
+            <span className="absolute top-1.5 right-1.5 px-1 py-0.5 text-[7px] font-bold bg-surface-alt/80 border border-border rounded text-text-tertiary truncate max-w-[70px]">
               {parsed.item}
             </span>
           )}
         </div>
-        {/* Moves — 2x2 grid */}
+        {/* Moves, 2x2 grid */}
         <div className="grid grid-cols-2 gap-x-1 gap-y-0.5 px-2 py-1.5">
           {parsed.moves.map((move, i) => {
             const style = getMoveTypeStyle(move);
@@ -137,7 +137,7 @@ function CompactCard({
             return (
               <div key={i} className="flex items-center gap-1 truncate">
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: style?.color ?? "var(--color-text-tertiary)", opacity: 0.8 }} />
-                <span className="text-[10px] font-bold truncate" style={{ color: style?.color ?? "var(--color-text-secondary)" }}>{translatedMove}</span>
+                <span className="text-[11px] font-bold truncate" style={{ color: style?.color ?? "var(--color-text-secondary)" }}>{translatedMove}</span>
               </div>
             );
           })}
@@ -147,7 +147,7 @@ function CompactCard({
       {/* ── Desktop: info left, sprite right (>= 640px) ── */}
       <div className="hidden sm:flex">
         <div className="flex-1 min-w-0 p-2.5 flex flex-col gap-1">
-          <h3 className="text-base font-extrabold text-text-primary tracking-tight truncate leading-tight">
+          <h3 className="text-base font-bold text-text-primary tracking-tight truncate leading-tight">
             {parsed.species}
           </h3>
           <div className="flex items-center gap-1">
@@ -156,12 +156,12 @@ function CompactCard({
             ))}
             {showTera && parsed.teraType && (
               <>
-                <span className="text-text-tertiary/30 mx-0.5 text-[10px]">{"\u2192"}</span>
+                <span className="text-text-tertiary/30 mx-0.5 text-[11px]">{"\u2192"}</span>
                 <span
                   className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border"
                   style={{ backgroundColor: `${TYPE_COLORS[parsed.teraType].bg}20`, borderColor: `${TYPE_COLORS[parsed.teraType].bg}40` }}
                 >
-                  <span className="text-[9px] font-extrabold tracking-wide" style={{ color: TYPE_COLORS[parsed.teraType].bg }}>
+                  <span className="text-[11px] font-bold " style={{ color: TYPE_COLORS[parsed.teraType].bg }}>
                     Tera {parsed.teraType}
                   </span>
                 </span>
@@ -188,7 +188,7 @@ function CompactCard({
         <div className="relative flex items-center justify-center w-28 flex-shrink-0 bg-surface-alt/30">
           <PokemonSprite species={parsed.species} size={80} animated={sc?.animated ?? true} shiny={sc?.shiny} />
           {parsed.item && (
-            <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 text-[8px] font-extrabold bg-surface/90 border border-border rounded-md text-text-secondary truncate max-w-[90px] backdrop-blur-sm">
+            <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 text-[11px] font-bold bg-surface/90 border border-border rounded-md text-text-secondary truncate max-w-[90px] backdrop-blur-sm">
               {parsed.item}
             </span>
           )}
@@ -226,13 +226,13 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig, regulat
     <div className="flex flex-col gap-2.5 sm:gap-3 animate-fade-in">
       {/* Tournament mode header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500 flex-shrink-0">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-800 flex-shrink-0">
           <path d="M6 9H4.5a2.5 2.5 0 010-5H6" />
           <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
           <path d="M4 22h16" />
           <path d="M10 22V2h4v20" />
         </svg>
-        <span className="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+        <span className="text-xs sm:text-sm font-bold text-amber-800 dark:text-amber-400 ">
           Tournament Mode
         </span>
 
@@ -240,9 +240,9 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig, regulat
         <div className="ml-auto flex items-center bg-surface border border-border rounded-lg overflow-hidden">
           <button
             onClick={() => setStatView("evs")}
-            className={`px-2.5 py-1 text-[10px] sm:text-xs font-bold transition-colors ${
-              statView === "evs"
-                ? "bg-amber-500/20 text-amber-500"
+            className={`px-2.5 py-1 text-[11px] sm:text-xs font-bold transition-colors ${
+ statView === "evs"
+                ? "bg-amber-500/20 text-amber-800"
                 : "text-text-tertiary hover:text-text-secondary"
             }`}
           >
@@ -250,9 +250,9 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig, regulat
           </button>
           <button
             onClick={() => setStatView("stats")}
-            className={`px-2.5 py-1 text-[10px] sm:text-xs font-bold transition-colors ${
-              statView === "stats"
-                ? "bg-amber-500/20 text-amber-500"
+            className={`px-2.5 py-1 text-[11px] sm:text-xs font-bold transition-colors ${
+ statView === "stats"
+                ? "bg-amber-500/20 text-amber-800"
                 : "text-text-tertiary hover:text-text-secondary"
             }`}
           >
@@ -277,7 +277,7 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig, regulat
 
       {/* Speed tier quick reference */}
       <div className="bg-surface border border-border rounded-xl px-3 py-2.5">
-        <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary mb-2">
+        <h3 className="text-[11px] font-bold text-text-tertiary mb-2">
           Speed Tiers
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-0.5">
@@ -300,8 +300,8 @@ export function TournamentMode({ analysis, speciesKeys, getSpriteConfig, regulat
                 <span className="text-xs font-bold text-text-primary flex-1 truncate">
                   {mon.parsed.species}
                 </span>
-                <span className={`text-xs font-extrabold tabular-nums ${
-                  isBoosted ? "text-red-500" : isReduced ? "text-blue-500" : "text-text-primary"
+                <span className={`text-xs font-bold tabular-nums ${
+ isBoosted ? "text-red-500" : isReduced ? "text-blue-800" : "text-text-primary"
                 }`}>
                   {speed}
                 </span>
@@ -336,21 +336,21 @@ export function PrintableTournamentMode({
     <div className="flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500 flex-shrink-0">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-800 flex-shrink-0">
           <path d="M6 9H4.5a2.5 2.5 0 010-5H6" />
           <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
           <path d="M4 22h16" />
           <path d="M10 22V2h4v20" />
         </svg>
-        <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+        <span className="text-xs font-bold text-amber-800 dark:text-amber-400 ">
           Tournament Mode
         </span>
-        <span className="ml-auto text-[10px] font-bold text-amber-500/60 uppercase tracking-wider">
+        <span className="ml-auto text-[11px] font-bold text-amber-500/60 ">
           {statView === "stats" ? "Stats" : "EVs"}
         </span>
       </div>
 
-      {/* Pokemon cards — 2-column grid */}
+      {/* Pokemon cards, 2-column grid */}
       <div className="grid grid-cols-2 gap-2">
         {pokemon.map((mon, i) => (
           <CompactCard
@@ -366,7 +366,7 @@ export function PrintableTournamentMode({
 
       {/* Speed tiers */}
       <div className="bg-surface border border-border rounded-xl px-3 py-2.5">
-        <h3 className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary mb-2">
+        <h3 className="text-[11px] font-bold text-text-tertiary mb-2">
           Speed Tiers
         </h3>
         <div className="grid grid-cols-3 gap-x-4 gap-y-0.5">
@@ -386,8 +386,8 @@ export function PrintableTournamentMode({
                 <span className="text-xs font-bold text-text-primary flex-1 truncate">
                   {mon.parsed.species}
                 </span>
-                <span className={`text-xs font-extrabold tabular-nums ${
-                  isBoosted ? "text-red-500" : isReduced ? "text-blue-500" : "text-text-primary"
+                <span className={`text-xs font-bold tabular-nums ${
+ isBoosted ? "text-red-500" : isReduced ? "text-blue-800" : "text-text-primary"
                 }`}>
                   {speed}
                 </span>

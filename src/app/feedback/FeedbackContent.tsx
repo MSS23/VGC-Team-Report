@@ -12,10 +12,10 @@ import { PageFooter } from "@/components/layout/PageFooter";
 import { SignInButton, useAuth } from "@clerk/nextjs";
 
 const TYPES = [
-  { value: "feature", label: "Feature Request", icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5", color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20", activeColor: "border-emerald-500/50 bg-emerald-500/15 shadow-emerald-500/10" },
+  { value: "feature", label: "Feature Request", icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5", color: "text-emerald-800 bg-emerald-500/10 border-emerald-500/20", activeColor: "border-emerald-500/50 bg-emerald-500/15 shadow-emerald-500/10" },
   { value: "bug", label: "Bug Report", icon: "M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01", color: "text-red-500 bg-red-500/10 border-red-500/20", activeColor: "border-red-500/50 bg-red-500/15 shadow-red-500/10" },
-  { value: "improvement", label: "Improvement", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8", color: "text-amber-500 bg-amber-500/10 border-amber-500/20", activeColor: "border-amber-500/50 bg-amber-500/15 shadow-amber-500/10" },
-  { value: "other", label: "Other", icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", color: "text-blue-500 bg-blue-500/10 border-blue-500/20", activeColor: "border-blue-500/50 bg-blue-500/15 shadow-blue-500/10" },
+  { value: "improvement", label: "Improvement", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8", color: "text-amber-800 bg-amber-500/10 border-amber-500/20", activeColor: "border-amber-500/50 bg-amber-500/15 shadow-amber-500/10" },
+  { value: "other", label: "Other", icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", color: "text-blue-800 bg-blue-500/10 border-blue-500/20", activeColor: "border-blue-500/50 bg-blue-500/15 shadow-blue-500/10" },
 ] as const;
 
 function detectDevice(): string {
@@ -127,16 +127,16 @@ function FeedbackInner() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-5">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+              <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-extrabold tracking-tight mb-2">Sign in to give feedback</h1>
+            <h1 className="text-2xl font-bold tracking-tight mb-2">Sign in to give feedback</h1>
             <p className="text-sm text-text-secondary mb-6 max-w-sm mx-auto leading-relaxed">
               We require sign-in so we can follow up on your feedback and keep submissions high quality.
             </p>
             <SignInButton mode="modal">
-              <button className="min-h-11 px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide">
+              <button className="min-h-11 px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition cursor-pointer ">
                 Sign in
               </button>
             </SignInButton>
@@ -154,21 +154,21 @@ function FeedbackInner() {
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
             >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500">
+              <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-800">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </motion.div>
-            <h1 className="text-2xl font-extrabold tracking-tight mb-2">Thank you!</h1>
+            <h1 className="text-2xl font-bold tracking-tight mb-2">Thank you!</h1>
             <p className="text-sm text-text-secondary mb-8 max-w-sm mx-auto leading-relaxed">
               Your feedback has been submitted. We review every submission and use it to improve VGC Team Report.
             </p>
             <div className="flex items-center justify-center gap-3">
-              <Link href="/" className="inline-flex min-h-11 items-center px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+              <Link href="/" className="inline-flex min-h-11 items-center px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition ">
                 Back to Home
               </Link>
               <button
                 onClick={() => { setSubmitted(false); setTitle(""); setDescription(""); setContact(""); }}
-                className="min-h-11 px-6 py-2.5 text-sm font-bold text-text-secondary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all cursor-pointer"
+                className="min-h-11 px-6 py-2.5 text-sm font-bold text-text-secondary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition cursor-pointer"
               >
                 Submit Another
               </button>
@@ -178,16 +178,11 @@ function FeedbackInner() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             {/* Hero */}
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-accent-surface flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                </svg>
-              </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                <h1 className="font-display text-display-s font-bold tracking-display text-text-primary">
                   Send Feedback
                 </h1>
-                <p className="text-sm text-text-secondary">
+                <p className="lead mt-5 text-text-secondary">
                   Help us make VGC Team Report better
                 </p>
               </div>
@@ -204,16 +199,16 @@ function FeedbackInner() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 + i * 0.05, duration: 0.35 }}
-                  className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                    type === t.value
-                      ? `${t.activeColor} shadow-sm`
+                  className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition cursor-pointer ${
+ type === t.value
+ ? `${t.activeColor} shadow-sm`
                       : "border-border hover:border-accent/20 bg-surface"
                   }`}
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                    type === t.value ? t.color : "text-text-tertiary bg-surface-alt/50"
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition ${
+ type === t.value ? t.color : "text-text-tertiary bg-surface-alt/50"
                   }`}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d={t.icon} />
                     </svg>
                   </div>
@@ -237,7 +232,7 @@ function FeedbackInner() {
             >
               {/* Title */}
               <div>
-                <label htmlFor="feedback-title" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
+                <label htmlFor="feedback-title" className="block text-xs font-bold text-text-secondary mb-1.5">
                   Title <span className="text-accent">*</span>
                 </label>
                 <input
@@ -247,13 +242,13 @@ function FeedbackInner() {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={type === "bug" ? "What went wrong?" : type === "feature" ? "What feature would you like?" : "Brief summary"}
                   maxLength={200}
-                  className="w-full px-4 py-3 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
+                  className="w-full px-4 py-3 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label htmlFor="feedback-description" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
+                <label htmlFor="feedback-description" className="block text-xs font-bold text-text-secondary mb-1.5">
                   Description <span className="text-accent">*</span>
                 </label>
                 <div className="relative">
@@ -270,10 +265,10 @@ function FeedbackInner() {
                     }
                     rows={6}
                     maxLength={2000}
-                    className="w-full px-4 py-3 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all resize-none"
+                    className="w-full px-4 py-3 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition resize-none"
                   />
-                  <span className={`absolute bottom-3 right-4 text-[10px] font-bold transition-colors ${
-                    description.length > 1800 ? "text-amber-500" : "text-text-tertiary"
+                  <span className={`absolute bottom-3 right-4 text-xs font-bold transition-colors ${
+ description.length > 1800 ? "text-amber-800" : "text-text-tertiary"
                   }`}>
                     {2000 - description.length}
                   </span>
@@ -282,7 +277,7 @@ function FeedbackInner() {
 
               {/* Auto-detected info */}
               <div className="bg-surface-alt/50 border border-border rounded-xl px-4 py-3">
-                <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">
+                <p className="text-xs font-bold text-text-tertiary mb-2">
                   Auto-detected (sent with your submission)
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -291,8 +286,8 @@ function FeedbackInner() {
                     { icon: "M12 2a10 10 0 100 20 10 10 0 000-20zM2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z", label: deviceInfo.browser },
                     { icon: "M2 3h20a2 2 0 012 2v14a2 2 0 01-2 2H2a2 2 0 01-2-2V5a2 2 0 012-2zM8 21h8M12 17v4", label: deviceInfo.screen },
                   ].map((info, idx) => (
-                    <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-surface border border-border text-text-secondary">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={info.icon} /></svg>
+                    <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-surface border border-border text-text-secondary">
+                      <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={info.icon} /></svg>
                       {info.label}
                     </span>
                   ))}
@@ -301,8 +296,8 @@ function FeedbackInner() {
 
               {/* Contact (optional) */}
               <div>
-                <label htmlFor="feedback-contact" className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
-                  Contact <span className="text-text-tertiary font-medium normal-case">(optional — for follow-up)</span>
+                <label htmlFor="feedback-contact" className="block text-xs font-bold text-text-secondary mb-1.5">
+                  Contact <span className="text-text-tertiary normal-case">(optional, for follow-up)</span>
                 </label>
                 <input
                   id="feedback-contact"
@@ -311,7 +306,7 @@ function FeedbackInner() {
                   onChange={(e) => setContact(e.target.value)}
                   placeholder="Discord tag, Twitter @, or email"
                   maxLength={200}
-                  className="w-full px-4 py-3 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
+                  className="w-full px-4 py-3 bg-surface border-2 border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition"
                 />
               </div>
 
@@ -331,8 +326,8 @@ function FeedbackInner() {
               <button
                 type="submit"
                 disabled={!title.trim() || !description.trim() || submitting}
-                className={`w-full px-5 py-3.5 text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.98] shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed tracking-wide flex items-center justify-center gap-2 ${
-                  selectedType.value === "bug"
+                className={`w-full px-5 py-3.5 text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.98] shadow-md transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+ selectedType.value === "bug"
                     ? "bg-red-500 shadow-red-500/30"
                     : selectedType.value === "improvement"
                       ? "bg-amber-500 shadow-amber-500/30"
@@ -343,12 +338,12 @@ function FeedbackInner() {
               >
                 {submitting ? (
                   <>
-                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" /><path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+                    <svg aria-hidden="true" className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" /><path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
                     Submitting...
                   </>
                 ) : (
                   <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="22" y1="2" x2="11" y2="13" />
                       <polygon points="22 2 15 22 11 13 2 9 22 2" />
                     </svg>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
-// QRCode loaded dynamically — only needed when rental code is present
+// QRCode loaded dynamically, only needed when rental code is present
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { PokemonCard } from "./PokemonCard";
@@ -108,7 +108,7 @@ function LongPressWrapper({
           handledTouchTap.current = false;
           return;
         }
-        // Desktop click fallback — touch devices use onTap above
+        // Desktop click fallback, touch devices use onTap above
         if (onTap && !(e.target as HTMLElement).closest('button, input, textarea, a, [role="button"], [contenteditable]')) {
           onTap();
         }
@@ -153,7 +153,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
         setInput("");
         setOpen(false);
       } catch {
-        setError("Failed to fetch — check the URL");
+        setError("Failed to fetch, check the URL");
       }
       setLoading(false);
     } else if (source === "showdown") {
@@ -171,9 +171,9 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold text-text-tertiary hover:text-accent border border-border-subtle hover:border-accent/30 rounded-lg transition-all cursor-pointer"
+        className="flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold text-text-tertiary hover:text-accent border border-border-subtle hover:border-accent/30 rounded-lg transition cursor-pointer"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="16 16 12 12 8 16" />
           <line x1="12" y1="12" x2="12" y2="21" />
           <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
@@ -186,7 +186,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
   return (
     <div className="bg-surface border border-border rounded-xl p-3 sm:p-4 flex flex-col gap-2 animate-fade-in">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-widest text-text-tertiary">Update Team</span>
+        <span className="text-xs font-bold text-text-tertiary">Update Team</span>
         <button type="button" aria-label="Close team update" onClick={() => { setOpen(false); setError(""); }} className="min-h-11 min-w-11 rounded-lg text-text-tertiary hover:bg-surface-alt hover:text-text-primary text-sm cursor-pointer">&#10005;</button>
       </div>
       <textarea
@@ -198,17 +198,17 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
         spellCheck={false}
         autoFocus
       />
-      {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
+      {error && <p className="text-xs text-red-400 ">{error}</p>}
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={handleSubmit}
           disabled={!input.trim() || loading}
-          className="min-h-11 px-3 py-2 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+          className="min-h-11 px-3 py-2 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
         >
           {loading ? "Fetching..." : "Apply"}
         </button>
-        <span className="text-[10px] text-text-tertiary">This will replace all Pokemon and reset calcs/notes</span>
+        <span className="text-[11px] text-text-tertiary">This will replace all Pokemon and reset calcs/notes</span>
       </div>
     </div>
   );
@@ -234,13 +234,13 @@ function LegalityBadge({ result }: { result: LegalityResult }) {
   const infos = result.issues.filter((i) => i.severity === "info");
 
   if (result.legal && errors.length === 0 && warnings.length === 0) {
-    // Legal with only info — show green badge, clickable for details
+    // Legal with only info, show green badge, clickable for details
     return (
       <div className="relative" ref={ref}>
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition-colors"
+          className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition-colors"
         >
           &#10003; Legal
         </button>
@@ -248,7 +248,7 @@ function LegalityBadge({ result }: { result: LegalityResult }) {
           <div className="absolute top-full left-0 mt-1.5 z-50 w-72 rounded-lg border border-border bg-surface shadow-lg p-3 space-y-2">
             {infos.map((issue, i) => (
               <div key={i} className="text-xs flex items-start gap-1.5">
-                <span className="text-blue-500 shrink-0 mt-px">&#9432;</span>
+                <span className="text-blue-800 shrink-0 mt-px">&#9432;</span>
                 <span className="text-text-secondary">{issue.message}</span>
               </div>
             ))}
@@ -267,9 +267,9 @@ function LegalityBadge({ result }: { result: LegalityResult }) {
         type="button"
         onClick={() => setOpen(!open)}
         className={`text-[11px] font-bold px-2 py-0.5 rounded-md cursor-pointer transition-colors ${
-          errors.length > 0
-            ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-500/20"
-            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
+ errors.length > 0
+ ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-500/20"
+            : "bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
         }`}
       >
         {errors.length > 0 ? "\u2716" : "\u26A0"} {issueCount} {issueCount === 1 ? "issue" : "issues"}
@@ -293,7 +293,7 @@ function LegalityBadge({ result }: { result: LegalityResult }) {
 
 function LegalityIssueRow({ issue }: { issue: LegalityIssue }) {
   const icon = issue.severity === "error" ? "\u2716" : issue.severity === "warning" ? "\u26A0" : "\u2139";
-  const color = issue.severity === "error" ? "text-red-500" : issue.severity === "warning" ? "text-amber-500" : "text-blue-500";
+  const color = issue.severity === "error" ? "text-red-500" : issue.severity === "warning" ? "text-amber-800" : "text-blue-800";
   return (
     <div className="text-xs flex items-start gap-1.5">
       <span className={`${color} shrink-0 mt-px`}>{icon}</span>
@@ -331,13 +331,13 @@ interface TeamOverviewProps {
   onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
   /** Long-press a Pokemon card to navigate to its detail slide (mobile gesture) */
   onPokemonLongPress?: (index: number) => void;
-  /** Re-import a team from a new paste/URL — replaces the entire team */
+  /** Re-import a team from a new paste/URL, replaces the entire team */
   onUpdatePaste?: (paste: string) => void;
-  /** Inline replace one Pokemon by index — drives the per-card pencil → search picker */
+  /** Inline replace one Pokemon by index, drives the per-card pencil → search picker */
   onReplacePokemon?: (index: number, newSpecies: string) => void;
   megaStates?: Record<number, boolean>;
   onToggleMega?: (index: number) => void;
-  /** Tiered publishing (VGC-142) — owner-only privacy toggles. */
+  /** Tiered publishing (VGC-142), owner-only privacy toggles. */
   privateFields?: string[];
   onPrivateFieldsChange?: (fields: string[]) => void;
 }
@@ -381,7 +381,7 @@ function TeamOverviewBase({
   const hasTournamentInfo = !!(teamName || tournamentName || placement || record);
   const hasCreatorInfo = !!creatorName;
 
-  // Champions legality validation — runs for every Champions reg (M-A/B/C)
+  // Champions legality validation, runs for every Champions reg (M-A/B/C)
   const legality = useMemo(() => {
     if (!isChampionsFormat(tags?.regulation)) return null;
     return validateChampionsTeam(
@@ -429,22 +429,22 @@ function TeamOverviewBase({
                 the team is still the page identity (the Pokemon grid below) —
                 we never promote a tournament name into the headline slot. */}
             {teamName && (
-              <h1 className="text-2xl sm:text-4xl font-black text-text-primary tracking-tight leading-tight presenting:text-5xl">
+              <h1 className="text-2xl sm:text-4xl font-bold text-text-primary tracking-tight leading-tight presenting:text-5xl">
                 {teamName}
               </h1>
             )}
-            {/* Tournament result — attached metadata ABOUT the team, not the
+            {/* Tournament result, attached metadata ABOUT the team, not the
                 report's headline. Framed per-result so the same team could
                 carry multiple results over time. Styled as muted chips. */}
             {(tournamentName || placement || record) && (
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap text-text-secondary">
                 {placement && (
-                  <span className="text-xs font-extrabold text-accent bg-accent-surface px-2.5 py-1 rounded-md border border-accent/20 tracking-wide">
+                  <span className="text-xs font-bold text-accent bg-accent-surface px-2.5 py-1 rounded-md border border-accent/20 ">
                     {placement}
                   </span>
                 )}
                 {tournamentName && (
-                  <span className="inline-flex items-baseline gap-1 text-xs sm:text-sm font-medium text-text-secondary">
+                  <span className="inline-flex items-baseline gap-1 text-xs sm:text-sm text-text-secondary">
                     <span className="text-text-tertiary">Used at</span>
                     <span className="font-bold text-text-primary">{tournamentName}</span>
                   </span>
@@ -458,13 +458,13 @@ function TeamOverviewBase({
               <div className="flex items-center gap-3 self-start">
                 <button
                   onClick={copyRentalCode}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-surface border-2 border-border rounded-lg hover:bg-surface-alt hover:border-accent/30 transition-all"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-surface border-2 border-border rounded-lg hover:bg-surface-alt hover:border-accent/30 transition"
                   title={t.copyRentalCode}
                 >
-                  <span className="text-sm font-[family-name:var(--font-mono)] font-extrabold text-text-primary tracking-widest">
+                  <span className="text-sm font-[family-name:var(--font-mono)] font-bold text-text-primary ">
                     {rentalCode}
                   </span>
-                  <span className={`text-xs font-semibold transition-colors duration-200 ${rentalCopied ? "text-emerald-500" : "text-text-tertiary"}`}>
+                  <span className={`text-xs font-semibold transition-colors duration-200 ${rentalCopied ? "text-emerald-800" : "text-text-tertiary"}`}>
                     {rentalCopied ? "\u2713 " + t.copied : t.copy}
                   </span>
                 </button>
@@ -480,7 +480,7 @@ function TeamOverviewBase({
               </div>
             )}
             {creatorName && (
-              <p className="text-sm text-text-secondary font-medium">
+              <p className="text-sm text-text-secondary ">
                 {t.by} <span className="text-text-primary font-bold">{creatorName}</span>
               </p>
             )}
@@ -488,13 +488,13 @@ function TeamOverviewBase({
               <div className="flex flex-wrap items-center gap-1.5 mt-1">
                 {tags?.regulation && (
                   <span
-                    className={`text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border inline-flex items-center gap-1 ${
-                      tags.regulationAutoDetected
-                        ? "border-blue-500/20 border-dashed"
+                    className={`text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-800 dark:text-blue-400 border inline-flex items-center gap-1 ${
+ tags.regulationAutoDetected
+ ? "border-blue-500/20 border-dashed"
                         : "border-blue-500/20"
                     }`}
                     title={tags.regulationAutoDetected
-                      ? "Auto-detected from team composition — not confirmed by the creator"
+                      ? "Auto-detected from team composition, not confirmed by the creator"
                       : undefined}
                   >
                     {tags.regulationAutoDetected && (
@@ -505,13 +505,13 @@ function TeamOverviewBase({
                     )}
                     {tags.regulation}
                     {tags.regulationAutoDetected && (
-                      <span className="text-[9px] font-semibold opacity-70 uppercase tracking-wide">auto</span>
+                      <span className="text-[11px] font-semibold opacity-70 ">auto</span>
                     )}
                   </span>
                 )}
                 {legality && <LegalityBadge result={legality} />}
                 {tags?.eventType && (
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-800 dark:text-purple-400 border border-purple-500/20">
                     {tags.eventType}
                   </span>
                 )}
@@ -528,10 +528,10 @@ function TeamOverviewBase({
       ) : (
         <FieldDiffHighlight field={["teamName", "tournamentName", "placement", "record", "rentalCode", "creatorName", "tags"]} label="Info changed">
         <div>
-          <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-1" data-walkthrough="tournament-info">
+          <h3 className="text-xs font-bold text-text-tertiary mb-1" data-walkthrough="tournament-info">
             Team Details
           </h3>
-          <p className="text-[10px] text-text-tertiary mb-3 font-medium">
+          <p className="text-[11px] text-text-tertiary mb-3 ">
             Name your team. Tournament results are optional metadata you can attach to it.
           </p>
           <div className="mb-2">
@@ -542,7 +542,7 @@ function TeamOverviewBase({
               placeholder={t.teamNamePlaceholder}
               aria-label={t.teamNamePlaceholder}
               maxLength={80}
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-surface border-2 border-border rounded-lg text-base sm:text-lg font-extrabold text-text-primary placeholder:text-text-tertiary placeholder:font-medium focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-tight"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-surface border-2 border-border rounded-lg text-base sm:text-lg font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-medium focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-tight"
             />
           </div>
           <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-3">
@@ -578,7 +578,7 @@ function TeamOverviewBase({
                 placeholder={t.rentalPlaceholder}
                 aria-label={t.rentalPlaceholder}
                 maxLength={20}
-                className="w-full sm:flex-none sm:w-[160px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm font-[family-name:var(--font-mono)] font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow tracking-widest"
+                className="w-full sm:flex-none sm:w-[160px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm font-[family-name:var(--font-mono)] font-bold text-text-primary placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow "
               />
             </div>
             <input
@@ -590,18 +590,18 @@ function TeamOverviewBase({
               className="w-full sm:flex-1 sm:min-w-[200px] px-3 sm:px-4 py-2 sm:py-2.5 bg-surface border-2 border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
             />
           </div>
-          <p className="text-[10px] text-text-tertiary mt-1.5 flex items-center gap-1">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+          <p className="text-[11px] text-text-tertiary mt-1.5 flex items-center gap-1">
+            <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
-            Optional — but filling these in helps your report appear in search results on the Explore page.
+            Optional, but filling these in helps your report appear in search results on the Explore page.
           </p>
 
           {/* Tags */}
           <div className="mt-3 flex flex-col gap-2">
-            <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">Tags</h4>
+            <h4 className="text-[11px] font-bold text-text-tertiary">Tags</h4>
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
               <select
                 aria-label="Tournament regulation"
@@ -609,7 +609,7 @@ function TeamOverviewBase({
                 onChange={(e) => onTagsChange?.({
                   ...(tags ?? {}),
                   regulation: e.target.value || undefined,
-                  // Manual pick overrides auto-detection — flip the flag off
+                  // Manual pick overrides auto-detection, flip the flag off
                   // so the UI stops calling this a machine guess.
                   regulationAutoDetected: false,
                 })}
@@ -640,9 +640,9 @@ function TeamOverviewBase({
                       const next = active ? current.filter((x) => x !== a) : [...current, a];
                       onTagsChange?.({ ...(tags ?? {}), archetype: next.length > 0 ? next : undefined });
                     }}
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-md border transition-all ${
-                      active
-                        ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-md border transition ${
+ active
+ ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
                         : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
                     }`}
                   >
@@ -665,7 +665,7 @@ function TeamOverviewBase({
       )}
       <FieldDiffHighlight field="teamSummary" label="Summary changed">
       <div>
-        <h3 className="text-[10px] sm:text-sm font-extrabold uppercase tracking-widest text-text-tertiary mb-1 sm:mb-3 presenting:text-base presenting:mb-4" data-walkthrough="team-summary">
+        <h3 className="text-[11px] sm:text-sm font-bold text-text-tertiary mb-1 sm:mb-3 presenting:text-base presenting:mb-4" data-walkthrough="team-summary">
           {t.teamSummary}
         </h3>
         {isReadOnly ? (
@@ -673,18 +673,18 @@ function TeamOverviewBase({
             <div className="relative">
               <div
                 className={`w-full p-3 sm:p-6 bg-surface border border-border border-l-[3px] border-l-accent/30 rounded-xl text-sm sm:text-lg text-text-primary whitespace-pre-wrap leading-relaxed shadow-sm presenting:text-xl presenting:leading-9 presenting:p-8 presenting:bg-surface-alt presenting:border-border-subtle presenting:tracking-wide ${
-                  !summaryExpanded && summary.length > 200 ? "sm:min-h-[8rem] max-h-24 sm:max-h-none overflow-hidden" : "sm:min-h-[8rem]"
+ !summaryExpanded && summary.length > 200 ? "sm:min-h-[8rem] max-h-24 sm:max-h-none overflow-hidden" : "sm:min-h-[8rem]"
                 }`}
               >
                 {summary}
               </div>
-              {/* Show more/less toggle — mobile only, for long summaries */}
+              {/* Show more/less toggle, mobile only, for long summaries */}
               {summary.length > 200 && (
                 <button
                   type="button"
                   onClick={() => setSummaryExpanded(!summaryExpanded)}
-                  className={`sm:hidden w-full text-center py-2 text-xs font-bold text-accent active:scale-[0.97] transition-all ${
-                    !summaryExpanded ? "-mt-8 relative z-10 bg-gradient-to-t from-surface via-surface/95 to-transparent pt-6 rounded-b-xl border-x border-b border-border" : "mt-1"
+                  className={`sm:hidden w-full text-center py-2 text-xs font-bold text-accent active:scale-[0.97] transition ${
+ !summaryExpanded ? "-mt-8 relative z-10 bg-gradient-to-t from-surface via-surface/95 to-transparent pt-6 rounded-b-xl border-x border-b border-border" : "mt-1"
                   }`}
                 >
                   {summaryExpanded ? "Show less" : "Show more"}
@@ -692,7 +692,7 @@ function TeamOverviewBase({
               )}
             </div>
           ) : (
-            <div className="w-full p-5 sm:p-6 bg-surface-alt/50 border border-border-subtle rounded-xl text-base text-text-tertiary italic font-medium presenting:text-lg presenting:p-8">
+            <div className="w-full p-5 sm:p-6 bg-surface-alt/50 border border-border-subtle rounded-xl text-base text-text-tertiary italic presenting:text-lg presenting:p-8">
               {t.noTeamSummary}
             </div>
           )
@@ -719,7 +719,7 @@ function TeamOverviewBase({
         <UpdateTeamPanel onUpdatePaste={onUpdatePaste} />
       )}
 
-      {/* Visibility controls — owner only. Lets the creator hide spread
+      {/* Visibility controls, owner only. Lets the creator hide spread
           internals from public viewers (VGC-142). Server enforces the
           redaction; this UI just persists the flags onto the share state. */}
       {!isReadOnly && onPrivateFieldsChange && (
@@ -731,8 +731,8 @@ function TeamOverviewBase({
 
       {/* Pokemon Grid */}
       <div data-walkthrough="pokemon-grid" className={`stagger-children grid gap-2.5 sm:gap-5 creator:gap-6 ${
-        creatorMode
-          ? "grid-cols-1 sm:grid-cols-2"
+ creatorMode
+ ? "grid-cols-1 sm:grid-cols-2"
           : "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3"
       }`}>
         {pokemon.map((mon, i) => {
@@ -782,8 +782,8 @@ function TeamOverviewBase({
                 setDragOverIndex(null);
                 dragCounter.current = 0;
               }}
-              className={`transition-all duration-200 rounded-2xl ${
-                canDrag ? "cursor-grab active:cursor-grabbing" : onPokemonLongPress ? "cursor-pointer" : ""
+              className={`transition duration-200 rounded-2xl ${
+ canDrag ? "cursor-grab active:cursor-grabbing" : onPokemonLongPress ? "cursor-pointer" : ""
               } ${isDragging ? "opacity-40 scale-95" : ""} ${
                 isDragOver ? "ring-2 ring-accent ring-offset-2 ring-offset-background scale-[1.02]" : ""
               }`}
@@ -819,7 +819,7 @@ function TeamOverviewBase({
 
       {/* App trademark */}
       <div className="text-center pt-4 sm:pt-6 mt-2 border-t border-border-subtle">
-        <p className="text-xs text-text-tertiary/60 font-medium">
+        <p className="text-xs text-text-tertiary/60 ">
           {t.builtWith}{" "}
           <a
             href="https://x.com/Manny64Official"
@@ -863,20 +863,20 @@ function PrivateFieldsPanel({
   return (
     <details className="group rounded-xl border border-border bg-surface px-4 py-3" open={anyOn}>
       <summary className="cursor-pointer flex items-center gap-2 text-sm font-bold text-text-primary">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary">
           <rect x="3" y="11" width="18" height="11" rx="2" />
           <path d="M7 11V7a5 5 0 0110 0v4" />
         </svg>
         <span>Hide fields from public viewers</span>
         {anyOn && (
-          <span className="ml-auto text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">
+          <span className="ml-auto text-[11px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-800 dark:text-amber-400">
             {value.length} hidden
           </span>
         )}
       </summary>
       <div className="mt-3 space-y-2">
         <p className="text-xs text-text-secondary leading-relaxed">
-          Anyone you haven&apos;t added as a collaborator will see the public shell — your 6 Pokemon and their moves. Selected fields are stripped server-side before the report is sent.
+          Anyone you haven&apos;t added as a collaborator will see the public shell, your 6 Pokemon and their moves. Selected fields are stripped server-side before the report is sent.
         </p>
         <div className="flex flex-wrap gap-2">
           {PRIVATE_FIELD_OPTIONS.map((opt) => {
@@ -887,9 +887,9 @@ function PrivateFieldsPanel({
                 type="button"
                 onClick={() => toggle(opt.value)}
                 aria-pressed={on}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
-                  on
-                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer active:scale-[0.97] ${
+ on
+ ? "bg-amber-500/15 text-amber-800 dark:text-amber-400 ring-1 ring-amber-500/30"
                     : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
                 }`}
               >

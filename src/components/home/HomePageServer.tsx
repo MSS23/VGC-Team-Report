@@ -42,7 +42,7 @@ export function HomePageServer() {
 }
 
 function LandingSprites() { return (
-      <div className="flex justify-center gap-3 sm:gap-5 mb-4 sm:mb-8 overflow-hidden">
+      <div className="mb-8 flex flex-wrap gap-3 sm:gap-4">
         {POKEMON_SPRITES.map((name) => (
           <picture key={name}>
             <source
@@ -54,66 +54,43 @@ function LandingSprites() { return (
               alt=""
               width={64}
               height={64}
-              className="w-11 h-11 sm:w-16 sm:h-16 object-contain drop-shadow-lg"
-
-
-
+              className="h-12 w-12 object-contain sm:h-16 sm:w-16"
               loading="eager"
             />
           </picture>
         ))}
       </div>
-
 ); }
-function LandingSteps() { return <>
-          {[
-            { step: "1", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2", title: "Paste your team", desc: "Import any PokéPaste URL, rental code, or Showdown export" },
-            { step: "2", icon: "M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z", title: "Add your notes", desc: "Damage calcs, matchup plans, and strategy" },
-            { step: "3", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", title: "Share with anyone", desc: "Public link, presentation mode, or PDF export" },
-          ].map((item) => (
-            <div
-              key={item.step}
-              className="flex-1 flex items-start gap-3 p-3 rounded-xl bg-surface border border-border"
-            >
-              <div className="w-7 h-7 rounded-lg bg-accent-surface flex items-center justify-center flex-shrink-0">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                  <path d={item.icon} />
-                </svg>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-text-primary">{item.title}</p>
-                <p className="text-[10px] text-text-tertiary leading-snug mt-0.5">{item.desc}</p>
-              </div>
-            </div>
-          ))}
-</>; }
-function LandingFeedback() { return <>
-      {/* Feedback callout */}
-      <div
-        className="mt-6 sm:mt-8"
-
-
-
-      >
-        <a
-          href="/feedback"
-          className="group flex items-start gap-3 p-4 rounded-xl bg-surface border border-border hover:border-accent/30 transition-all"
-        >
-          <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/15 transition-colors">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">Got a feature idea or found a bug?</p>
-            <p className="text-xs text-text-tertiary mt-0.5 leading-relaxed">
+function LandingSteps() { return (
+          <ol className="grid gap-8 sm:grid-cols-3 sm:gap-(--gap-columns)">
+            {[
+              { title: "Paste your team", desc: "Import any PokéPaste URL, rental code, or Showdown export" },
+              { title: "Add your notes", desc: "Damage calcs, matchup plans, and strategy" },
+              { title: "Share with anyone", desc: "Public link, presentation mode, or PDF export" },
+            ].map((item, i) => (
+              <li key={item.title} className="border-t border-border pt-5">
+                <span className="font-display text-3xl font-bold tabular-nums text-text-tertiary" aria-hidden="true">{i + 1}</span>
+                <h3 className="font-display mt-4 text-title font-bold tracking-tight text-text-primary">{item.title}</h3>
+                <p className="mt-2 text-text-secondary">{item.desc}</p>
+              </li>
+            ))}
+          </ol>
+); }
+function LandingFeedback() { return (
+      <section className="mx-auto max-w-(--container) px-(--gutter) pt-(--section-gap)" aria-label="Feedback">
+        <div className="flex flex-col gap-4 border-t border-border pt-8 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-display text-title font-bold tracking-tight text-text-primary">Got a feature idea or found a bug?</p>
+            <p className="mt-1 text-text-secondary">
               Your feedback shapes this tool. Suggest features, report issues, or tell us what you&apos;d improve.
             </p>
           </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0 mt-1">
-            <polyline points="9,18 15,12 9,6" />
-          </svg>
-        </a>
-      </div>
-
-</>; }
+          <a
+            href="/feedback"
+            className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-card border border-text-primary px-6 text-base font-semibold text-text-primary transition-colors duration-(--dur-short) hover:bg-surface-alt"
+          >
+            Send feedback
+          </a>
+        </div>
+      </section>
+); }

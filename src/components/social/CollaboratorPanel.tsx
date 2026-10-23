@@ -170,7 +170,7 @@ export function CollaboratorPanel({ shareId, panelId = "manage-access" }: Collab
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent active:scale-[0.98] transition-all cursor-pointer"
+        className="inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent active:scale-[0.98] transition cursor-pointer"
       >
         <svg
           width="14"
@@ -190,7 +190,7 @@ export function CollaboratorPanel({ shareId, panelId = "manage-access" }: Collab
         </svg>
         Manage Access
         {collaborators.length > 0 && (
-          <span className="ml-1 px-1.5 py-0.5 text-[10px] font-extrabold bg-accent-surface text-accent rounded-full">
+          <span className="ml-1 px-1.5 py-0.5 text-xs font-bold bg-accent-surface text-accent rounded-full">
             {collaborators.length}
           </span>
         )}
@@ -263,7 +263,7 @@ export function CollaboratorPanel({ shareId, panelId = "manage-access" }: Collab
                         type="button"
                         onClick={() => handleAdd(user)}
                         disabled={adding === user.id}
-                        className="min-h-11 min-w-14 px-2.5 py-2 text-xs font-bold rounded-md bg-accent text-white hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+                        className="min-h-11 min-w-14 px-2.5 py-2 text-xs font-bold rounded-md bg-accent text-white hover:brightness-110 active:scale-[0.98] transition cursor-pointer disabled:opacity-50"
                       >
                         {adding === user.id ? "..." : "Add"}
                       </button>
@@ -303,7 +303,7 @@ export function CollaboratorPanel({ shareId, panelId = "manage-access" }: Collab
                   <span className="text-xs font-bold text-text-primary block">
                     You
                   </span>
-                  <span className="text-[10px] text-accent font-semibold">
+                  <span className="text-xs text-accent font-semibold">
                     Owner
                   </span>
                 </div>
@@ -315,12 +315,12 @@ export function CollaboratorPanel({ shareId, panelId = "manage-access" }: Collab
                   key={collab.userId}
                   className="flex items-center gap-2 px-4 py-3"
                 >
-                  {/* Initials avatar — decorative since the name is shown in the adjacent span */}
+                  {/* Initials avatar, decorative since the name is shown in the adjacent span */}
                   <div
                     className="w-7 h-7 rounded-full bg-surface-alt flex items-center justify-center flex-shrink-0"
                     aria-hidden="true"
                   >
-                    <span className="text-[10px] font-extrabold text-text-secondary">
+                    <span className="text-xs font-bold text-text-secondary">
                       {collab.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
@@ -328,12 +328,12 @@ export function CollaboratorPanel({ shareId, panelId = "manage-access" }: Collab
                     <span className="text-xs font-bold text-text-primary truncate block">
                       {collab.name}
                       {collab.status === "pending" && (
-                        <span className="ml-1.5 px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        <span className="ml-1.5 px-1.5 py-0.5 text-xs font-bold rounded bg-amber-500/10 text-amber-800 dark:text-amber-400">
                           Pending
                         </span>
                       )}
                     </span>
-                    <span className="text-[10px] text-text-tertiary">
+                    <span className="text-xs text-text-tertiary">
                       {collab.status === "pending" ? "Invite sent" : "Can edit"}{" "}
                       &middot; Added{" "}
                       {new Date(collab.addedAt).toLocaleDateString(undefined, {

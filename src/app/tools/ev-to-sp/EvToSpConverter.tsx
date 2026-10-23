@@ -19,7 +19,7 @@ const STATS: { key: StatName; label: string; short: string }[] = [
   { key: "spe", label: "Speed", short: "Spe" },
 ];
 
-/** Highest SP the input accepts — above the 32 cap so the warning can fire. */
+/** Highest SP the input accepts, above the 32 cap so the warning can fire. */
 const SP_INPUT_MAX = 99;
 /** Total EVs a Pokemon may spend across all six stats. */
 const TOTAL_EV_BUDGET = 508;
@@ -87,7 +87,7 @@ export function EvToSpConverter() {
   const statusMessage = totals.overCapStats.length
     ? `Illegal spread: ${totals.overCapStats.map((s) => s.label).join(", ")} exceeds the ${CHAMPIONS_MAX_SP_PER_STAT} SP per-stat cap.`
     : totals.spOverBudget
-      ? `Over budget: ${totals.totalSp} SP used of ${CHAMPIONS_TOTAL_SP} available — remove ${totals.totalSp - CHAMPIONS_TOTAL_SP} SP.`
+      ? `Over budget: ${totals.totalSp} SP used of ${CHAMPIONS_TOTAL_SP} available, remove ${totals.totalSp - CHAMPIONS_TOTAL_SP} SP.`
       : `${totals.totalSp} SP used of ${CHAMPIONS_TOTAL_SP}. ${totals.remaining} SP left to spend.`;
 
   const hasError = totals.spOverBudget || totals.overCapStats.length > 0;
@@ -97,7 +97,7 @@ export function EvToSpConverter() {
       aria-labelledby={headingId}
       className="rounded-2xl border border-border bg-surface p-4 sm:p-6"
     >
-      <h2 id={headingId} className="text-lg sm:text-xl font-extrabold text-text-primary tracking-tight mb-1">
+      <h2 id={headingId} className="text-lg sm:text-xl font-bold text-text-primary tracking-tight mb-1">
         EV to SP Calculator
       </h2>
       <p className="text-sm text-text-secondary mb-5 leading-relaxed">
@@ -106,13 +106,13 @@ export function EvToSpConverter() {
       </p>
 
       {/* Presets */}
-      <div className="flex flex-wrap gap-2 mb-5">
+      <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
         {PRESETS.map((preset) => (
           <button
             key={preset.id}
             type="button"
             onClick={() => setRows(rowsFromEvs(preset.evs))}
-            className="inline-flex min-h-11 items-center px-3 py-2 rounded-xl bg-surface-alt border border-border text-xs font-semibold text-text-primary hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.97] transition-all"
+            className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap px-3 py-2 rounded-xl bg-surface-alt border border-border text-xs font-semibold text-text-primary hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.97] transition"
           >
             {preset.label}
           </button>
@@ -120,7 +120,7 @@ export function EvToSpConverter() {
         <button
           type="button"
           onClick={() => setRows(EMPTY_ROWS)}
-          className="inline-flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-alt border border-border text-xs font-semibold text-text-secondary hover:text-text-primary hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.97] transition-all"
+          className="inline-flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-alt border border-border text-xs font-semibold text-text-secondary hover:text-text-primary hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.97] transition"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
@@ -133,10 +133,10 @@ export function EvToSpConverter() {
       {/* Stat rows */}
       <div className="space-y-2">
         <div className="hidden sm:grid grid-cols-[7rem_1fr_1fr_auto] gap-3 px-1 pb-1">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-text-tertiary">Stat</span>
-          <span className="text-[11px] font-bold uppercase tracking-wide text-text-tertiary">EVs (0&ndash;{MAX_EV_PER_STAT})</span>
-          <span className="text-[11px] font-bold uppercase tracking-wide text-text-tertiary">SP (0&ndash;{CHAMPIONS_MAX_SP_PER_STAT})</span>
-          <span className="text-[11px] font-bold uppercase tracking-wide text-text-tertiary">Status</span>
+          <span className="text-xs font-bold text-text-tertiary">Stat</span>
+          <span className="text-xs font-bold text-text-tertiary">EVs (0-{MAX_EV_PER_STAT})</span>
+          <span className="text-xs font-bold text-text-tertiary">SP (0-{CHAMPIONS_MAX_SP_PER_STAT})</span>
+          <span className="text-xs font-bold text-text-tertiary">Status</span>
         </div>
 
         {STATS.map(({ key, label, short }) => {
@@ -185,8 +185,8 @@ export function EvToSpConverter() {
                   aria-invalid={overCap || undefined}
                   aria-describedby="ev-sp-budget-status"
                   className={`w-full min-h-11 px-3 py-2 bg-surface border rounded-xl text-sm font-semibold tabular-nums focus:outline-none focus:ring-2 focus:ring-accent/40 ${
-                    overCap
-                      ? "border-danger text-danger focus:border-danger"
+ overCap
+ ? "border-danger text-danger focus:border-danger"
                       : "border-border text-text-primary focus:border-accent"
                   }`}
                 />
@@ -213,7 +213,7 @@ export function EvToSpConverter() {
         role="status"
         aria-live="polite"
         className={`mt-5 p-4 rounded-xl border ${
-          hasError ? "border-danger bg-danger/10" : "border-border bg-surface-alt"
+ hasError ? "border-danger bg-danger/10" : "border-border bg-surface-alt"
         }`}
       >
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
@@ -239,7 +239,7 @@ export function EvToSpConverter() {
           aria-label="Stat Point budget used"
         >
           <div
-            className={`h-full rounded-full transition-all duration-200 ${hasError ? "bg-danger" : "bg-accent"}`}
+            className={`h-full rounded-full transition duration-200 ${hasError ? "bg-danger" : "bg-accent"}`}
             style={{ width: `${Math.min(100, (totals.totalSp / CHAMPIONS_TOTAL_SP) * 100)}%` }}
           />
         </div>

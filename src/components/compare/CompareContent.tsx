@@ -57,7 +57,7 @@ function getReportLabel(r: UserReport): string {
     parts.push(r.species.slice(0, 3).join(" / "));
   }
   if (parts.length === 0) parts.push(r.id);
-  return parts.join(" — ");
+  return parts.join(", ");
 }
 
 function ReportDropdown({
@@ -121,7 +121,7 @@ interface CompareAnalyzedPokemon extends AnalyzedPokemon {
  *
  * The Compare page receives raw pastes without regulation metadata, so we
  * infer the format from the spread shape. Champions (Reg M-A) pastes carry
- * SP values in the EV line — total ≤ 66, no stat > 32 — which is
+ * SP values in the EV line, total ≤ 66, no stat > 32, which is
  * unambiguous vs. Reg G (total up to 508). Applied team-wide so every
  * Pokemon in the same paste is read consistently.
  */
@@ -130,7 +130,7 @@ function looksLikeChampionsTeam(pokemon: { evs: import("@/lib/types/pokemon").St
   for (const p of pokemon) {
     const stats = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
     const total = stats.reduce((sum, s) => sum + p.evs[s], 0);
-    if (total === 0) continue; // uninvested — inconclusive
+    if (total === 0) continue; // uninvested, inconclusive
     if (total > CHAMPIONS_TOTAL_SP) return false;
     if (stats.some((s) => p.evs[s] > CHAMPIONS_MAX_SP_PER_STAT)) return false;
   }
@@ -148,7 +148,7 @@ function analyzePaste(paste: string): CompareAnalyzedPokemon[] | null {
     let spriteSpecies = p.species;
     let displayTypes: string[] = data?.types ?? [];
 
-    // Resolve mega evolution — either already mega or has mega stone
+    // Resolve mega evolution, either already mega or has mega stone
     const alreadyMega = isMegaForm(p.species);
     if (!alreadyMega) {
       const megaEntry = detectMegaFromItem(p.item, p.species);
@@ -205,7 +205,7 @@ function PokemonRow({ pokemon, shared }: { pokemon: CompareAnalyzedPokemon[]; sh
         return (
           <div key={i} className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 ${isShared ? "border-accent bg-accent/5" : "border-border bg-surface"}`}>
             <PokemonSprite species={mon.spriteSpecies} size={48} shiny={mon.parsed.shiny} />
-            <span className="text-[10px] font-bold text-text-primary text-center leading-tight w-full truncate">{mon.displaySpecies}</span>
+            <span className="text-xs font-bold text-text-primary text-center leading-tight w-full truncate">{mon.displaySpecies}</span>
             <div className="flex gap-0.5">
               {mon.displayTypes.map((t) => (
                 <TypeBadge key={t} type={t as PokemonType} />
@@ -229,9 +229,9 @@ function TypeWeaknessGrid({ label, weakMap, resistMap, color }: { label: string;
           return (
             <div key={t} className="flex flex-col items-center gap-0.5">
               <TypeBadge type={t} />
-              <div className="flex gap-1 text-[9px] font-bold">
+              <div className="flex gap-1 text-xs font-bold">
                 {weak > 0 && <span className="text-red-500">-{weak}</span>}
-                {resist > 0 && <span className="text-emerald-500">+{resist}</span>}
+                {resist > 0 && <span className="text-emerald-800">+{resist}</span>}
                 {weak === 0 && resist === 0 && <span className="text-text-tertiary">0</span>}
               </div>
             </div>
@@ -260,16 +260,16 @@ function SpeedComparison({ teamA, teamB }: { teamA: CompareAnalyzedPokemon[]; te
     <div className="space-y-1.5">
       {allSpeeds.map((entry, i) => (
         <div key={`${entry.species}-${entry.team}-${i}`} className="flex items-center gap-2">
-          <span className={`text-[10px] font-bold w-24 text-right truncate ${entry.team === "A" ? "text-blue-500" : "text-orange-500"}`}>
+          <span className={`text-xs font-bold w-24 text-right truncate ${entry.team === "A" ? "text-blue-800" : "text-orange-800"}`}>
             {entry.species}
           </span>
           <div className="flex-1 h-4 bg-surface-alt rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${entry.team === "A" ? "bg-blue-500/70" : "bg-orange-500/70"}`}
+              className={`h-full rounded-full transition ${entry.team === "A" ? "bg-blue-500/70" : "bg-orange-500/70"}`}
               style={{ width: `${(entry.speed / maxSpeed) * 100}%` }}
             />
           </div>
-          <span className="text-[10px] font-bold text-text-secondary w-8">{entry.speed}</span>
+          <span className="text-xs font-bold text-text-secondary w-8">{entry.speed}</span>
         </div>
       ))}
     </div>
@@ -327,7 +327,7 @@ export function CompareContent() {
   const weakA = useMemo(() => teamA ? getTeamWeaknesses(teamA) : null, [teamA]);
   const weakB = useMemo(() => teamB ? getTeamWeaknesses(teamB) : null, [teamB]);
 
-  /** Resolve a paste input — if it's a PokePaste or share URL, fetch it; otherwise return as-is */
+  /** Resolve a paste input, if it's a PokePaste or share URL, fetch it; otherwise return as-is */
   async function resolvePaste(input: string): Promise<string> {
     const trimmed = input.trim();
 
@@ -390,11 +390,11 @@ export function CompareContent() {
     <div className="min-h-screen bg-background text-text-primary">
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         {/* Hero */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Compare <span className="text-accent">Teams</span>
+        <div className="mb-12 max-w-3xl pt-4 sm:pt-8">
+          <h1 className="font-display text-display-s font-bold tracking-display text-text-primary">
+            Compare Teams
           </h1>
-          <p className="text-sm text-text-secondary mt-2">Paste two teams, PokePaste URLs, or share links to compare type coverage, speed tiers, and shared Pokemon.</p>
+          <p className="lead mt-5 text-text-secondary">Paste two teams, PokePaste URLs, or share links to compare type coverage, speed tiers, and shared Pokemon.</p>
         </div>
 
         {!compared || !teamA || !teamB ? (
@@ -402,7 +402,7 @@ export function CompareContent() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2 block">Team A</label>
+                <label className="text-xs font-bold text-blue-800 mb-2 block">Team A</label>
                 {isSignedIn && (
                   <ReportDropdown
                     reports={reports}
@@ -421,7 +421,7 @@ export function CompareContent() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2 block">Team B</label>
+                <label className="text-xs font-bold text-orange-800 mb-2 block">Team B</label>
                 {isSignedIn && (
                   <ReportDropdown
                     reports={reports}
@@ -447,7 +447,7 @@ export function CompareContent() {
               <button
                 onClick={handleCompare}
                 disabled={!pasteA.trim() || !pasteB.trim() || fetching}
-                className="px-8 py-3 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide"
+                className="px-8 py-3 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 shadow-md shadow-accent/30 transition cursor-pointer "
               >
                 {fetching ? (
                   <span className="flex items-center gap-2">
@@ -459,7 +459,7 @@ export function CompareContent() {
                 )}
               </button>
             </div>
-            <p className="text-[10px] text-text-tertiary text-center">
+            <p className="text-xs text-text-tertiary text-center">
               Supports Showdown pastes, pokepast.es URLs, and VGC Team Report share links (/s/...)
             </p>
           </div>
@@ -469,7 +469,7 @@ export function CompareContent() {
             <div className="flex justify-end">
               <button
                 onClick={handleReset}
-                className="text-xs font-bold text-text-secondary hover:text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent/30 transition-all cursor-pointer"
+                className="text-xs font-bold text-text-secondary hover:text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent/30 transition cursor-pointer"
               >
                 New Comparison
               </button>
@@ -478,11 +478,11 @@ export function CompareContent() {
             {/* Pokemon grids */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h3 className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-3">Team A</h3>
+                <h3 className="text-xs font-bold text-blue-800 mb-3">Team A</h3>
                 <PokemonRow pokemon={teamA} shared={sharedSpecies} />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-3">Team B</h3>
+                <h3 className="text-xs font-bold text-orange-800 mb-3">Team B</h3>
                 <PokemonRow pokemon={teamB} shared={sharedSpecies} />
               </div>
             </div>
@@ -490,7 +490,7 @@ export function CompareContent() {
             {/* Shared Pokemon */}
             {sharedSpecies.size > 0 && (
               <div className="bg-accent/5 border border-accent/20 rounded-xl p-4">
-                <h3 className="text-xs font-bold text-accent uppercase tracking-widest mb-2">
+                <h3 className="text-xs font-bold text-accent mb-2">
                   Shared Pokemon ({sharedSpecies.size})
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -505,22 +505,22 @@ export function CompareContent() {
 
             {/* Type coverage comparison */}
             <div>
-              <h3 className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-4">Defensive Type Coverage</h3>
+              <h3 className="text-xs font-bold text-text-tertiary mb-4">Defensive Type Coverage</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {weakA && <TypeWeaknessGrid label="Team A" weakMap={weakA.weakMap} resistMap={weakA.resistMap} color="text-blue-500" />}
-                {weakB && <TypeWeaknessGrid label="Team B" weakMap={weakB.weakMap} resistMap={weakB.resistMap} color="text-orange-500" />}
+                {weakA && <TypeWeaknessGrid label="Team A" weakMap={weakA.weakMap} resistMap={weakA.resistMap} color="text-blue-800" />}
+                {weakB && <TypeWeaknessGrid label="Team B" weakMap={weakB.weakMap} resistMap={weakB.resistMap} color="text-orange-800" />}
               </div>
             </div>
 
             {/* Speed tiers */}
             <div>
-              <h3 className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-4">Speed Tiers</h3>
+              <h3 className="text-xs font-bold text-text-tertiary mb-4">Speed Tiers</h3>
               <div className="bg-surface border border-border rounded-xl p-4 sm:p-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <span className="flex items-center gap-1.5 text-[10px] font-bold">
+                  <span className="flex items-center gap-1.5 text-xs font-bold">
                     <span className="w-3 h-3 rounded-sm bg-blue-500/70" /> Team A
                   </span>
-                  <span className="flex items-center gap-1.5 text-[10px] font-bold">
+                  <span className="flex items-center gap-1.5 text-xs font-bold">
                     <span className="w-3 h-3 rounded-sm bg-orange-500/70" /> Team B
                   </span>
                 </div>

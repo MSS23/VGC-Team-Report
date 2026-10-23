@@ -6,8 +6,8 @@ interface CardProps {
 
 export function Card({ children, className = "", glow = false }: CardProps) {
   return (
-    <div className={`bg-surface rounded-xl border border-border shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 ${
-      glow ? "border-accent/20 hover:border-accent/40 shadow-accent/5" : "hover:border-border"
+    <div className={`bg-surface rounded-xl border border-border shadow-sm hover:shadow-md active:scale-[0.98] transition duration-300 ${
+ glow ? "border-accent/20 hover:border-accent/40 shadow-accent/5" : "hover:border-border"
     } ${className}`}>
       {children}
     </div>

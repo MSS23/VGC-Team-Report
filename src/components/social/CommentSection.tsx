@@ -179,7 +179,7 @@ export function CommentSection({ shareId, canModerate = false }: CommentSectionP
           </svg>
           <span className="text-sm font-bold text-text-primary">Comments</span>
           {total > 0 && (
-            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-accent-surface text-accent">
+            <span className="inline-flex items-center px-2 py-0.5 text-xs font-bold rounded-full bg-accent-surface text-accent">
               {total}
             </span>
           )}
@@ -214,7 +214,7 @@ export function CommentSection({ shareId, canModerate = false }: CommentSectionP
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Display name (optional)"
                 maxLength={50}
-                className="flex-1 px-3 py-2 bg-surface border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
+                className="flex-1 px-3 py-2 bg-surface border border-border rounded-lg text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition"
               />
             </div>
             <div className="relative">
@@ -228,9 +228,9 @@ export function CommentSection({ shareId, canModerate = false }: CommentSectionP
                 placeholder="Share your thoughts on this team..."
                 rows={2}
                 maxLength={500}
-                className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all resize-none"
+                className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition resize-none"
               />
-              <span className="absolute bottom-2 right-3 text-[10px] text-text-tertiary">
+              <span className="absolute bottom-2 right-3 text-xs text-text-tertiary">
                 {500 - body.length}
               </span>
             </div>
@@ -238,7 +238,7 @@ export function CommentSection({ shareId, canModerate = false }: CommentSectionP
               type="button"
               onClick={handleSubmit}
               disabled={!body.trim() || submitting}
-              className="px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed tracking-wide"
+              className="px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition disabled:opacity-40 disabled:cursor-not-allowed "
             >
               {submitting ? "Posting..." : "Post Comment"}
             </button>
@@ -246,7 +246,7 @@ export function CommentSection({ shareId, canModerate = false }: CommentSectionP
               <span
                 role="status"
                 aria-live="polite"
-                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-fade-in"
+                className="text-xs font-bold text-emerald-800 dark:text-emerald-400 animate-fade-in"
               >
                 Comment posted!
               </span>
@@ -278,19 +278,19 @@ export function CommentSection({ shareId, canModerate = false }: CommentSectionP
                       <span className="text-xs font-bold text-text-primary">
                         {comment.displayName}
                       </span>
-                      <span className="text-[10px] text-text-tertiary">
+                      <span className="text-xs text-text-tertiary">
                         {relativeTime(comment.createdAt)}
                       </span>
                     </div>
                     <div
-                      className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-all"
+                      className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition"
                     >
                       {canDelete(comment) && (
                         <button
                           type="button"
                           onClick={() => handleDelete(comment.id)}
                           aria-label={`Delete comment by ${comment.displayName}`}
-                          className="text-[10px] text-text-tertiary hover:text-danger cursor-pointer"
+                          className="text-xs text-text-tertiary hover:text-danger cursor-pointer"
                         >
                           Delete
                         </button>
@@ -301,7 +301,7 @@ export function CommentSection({ shareId, canModerate = false }: CommentSectionP
                           onClick={() => handleFlag(comment.id)}
                           aria-label={`Flag comment by ${comment.displayName}`}
                           title="Flag this comment"
-                          className="text-[10px] text-text-tertiary hover:text-warning cursor-pointer"
+                          className="text-xs text-text-tertiary hover:text-warning cursor-pointer"
                         >
                           Flag
                         </button>

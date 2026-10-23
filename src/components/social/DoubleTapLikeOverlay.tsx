@@ -6,7 +6,7 @@ import { usePostHog } from "@/components/providers/PostHogProvider";
 
 interface DoubleTapLikeOverlayProps {
   shareId: string;
-  /** Don't fire the like for owners — they can't like their own report.
+  /** Don't fire the like for owners, they can't like their own report.
    *  Hide the gesture handler entirely when true. */
   isOwner: boolean;
   /** When false (no analysis / not a shared view), render nothing.
@@ -46,7 +46,7 @@ const INTERACTIVE_SELECTOR = [
 ].join(",");
 
 /** Selectors for the floating Share / Reactions docks. We never want a
- *  double-tap inside those pills to spawn a heart-burst — viewers are
+ *  double-tap inside those pills to spawn a heart-burst, viewers are
  *  interacting with the dock controls, not the report content. The dock
  *  wrappers tag themselves with `data-vgc-dock` so we can match the bare
  *  container background even when the user taps between buttons. */
@@ -88,7 +88,7 @@ function HeartBurstIcon() {
  * - On double-tap, bursts a large red heart at the pointer location with
  *   a scale-and-fade animation, vibrates the device briefly, and fires
  *   the like API once per session.
- * - The API is session-idempotent and TOGGLES — so before posting we
+ * - The API is session-idempotent and TOGGLES, so before posting we
  *   GET the current reactions once on mount, and skip the POST if the
  *   viewer has already liked. The heart-burst still plays for visual
  *   feedback, but we never accidentally un-like.
@@ -141,7 +141,7 @@ export function DoubleTapLikeOverlay({
         }
       })
       .catch(() => {
-        // Non-fatal — worst case we POST once and toggle. Keep silent.
+        // Non-fatal, worst case we POST once and toggle. Keep silent.
       });
 
     return () => {
@@ -185,7 +185,7 @@ export function DoubleTapLikeOverlay({
         }
       })
       .catch(() => {
-        // Swallow — visual feedback already happened. The user can
+        // Swallow, visual feedback already happened. The user can
         // still tap the heart button in the dock if it matters.
       })
       .finally(() => {
@@ -275,7 +275,7 @@ export function DoubleTapLikeOverlay({
       lastTapRef.current = { t: now, x, y };
     };
 
-    // `passive: true` keeps scrolling silky-smooth — we never call
+    // `passive: true` keeps scrolling silky-smooth, we never call
     // preventDefault from this listener.
     window.addEventListener("pointerdown", onPointerDown, { passive: true });
     return () => {
@@ -288,7 +288,7 @@ export function DoubleTapLikeOverlay({
   return (
     <div
       aria-hidden="true"
-      // The overlay never intercepts events — it's purely a visual canvas.
+      // The overlay never intercepts events, it's purely a visual canvas.
       // We fix it to the viewport so hearts sit on top of slide content
       // without disturbing layout.
       style={{
@@ -300,7 +300,7 @@ export function DoubleTapLikeOverlay({
         contain: "layout paint",
       }}
     >
-      {/* Inline keyframes for the burst — scoped to this overlay so we don't
+      {/* Inline keyframes for the burst, scoped to this overlay so we don't
           need a Tailwind config change or a separate CSS file. The reduced-
           motion branch uses a simpler fade-only keyframe. */}
       <style>{`

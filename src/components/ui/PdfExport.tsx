@@ -42,7 +42,7 @@ export interface PdfExportProps {
 }
 
 /* ------------------------------------------------------------------ */
-/*  PrintableReport – renders every slide in sequence                  */
+/*  PrintableReport, renders every slide in sequence                  */
 /* ------------------------------------------------------------------ */
 
 export function PrintableReport({

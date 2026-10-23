@@ -1,6 +1,7 @@
 "use client";
 import { matchupSectionKey } from "@/lib/sharing/collaboration";
 import { LimitlessImport } from "@/components/input/LimitlessImport";
+import { PageFooter } from "@/components/layout/PageFooter";
 
 import { type ReactNode, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -10,7 +11,7 @@ import { useHomePage } from "@/hooks/useHomePage";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 import { PasteInput } from "@/components/input/PasteInput";
-// Report-view components never render on the initial paste screen — lazy-load
+// Report-view components never render on the initial paste screen, lazy-load
 // them so first paint doesn't pay for the full report bundle.
 const TeamReport = dynamic(() => import("@/components/report/TeamReport").then(m => ({ default: m.TeamReport })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-64 max-w-5xl mx-auto" />,
@@ -234,7 +235,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
   // Resolve effective Mega state for every Pokemon index up front so the
   // existing TeamReport / TeamOverview / PokemonCard chain doesn't need
   // to know about the new override-vs-default split. Per-card explicit
-  // values still win — that logic lives inside `effectiveMega`.
+  // values still win, that logic lives inside `effectiveMega`.
   const resolvedMegaStates = useMemo(() => {
     if (!analysis) return undefined;
     const out: Record<number, boolean> = {};
@@ -263,7 +264,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
     }
     let cancelled = false;
     void import("@/lib/utils/mega-detect").then(({ detectMegaFromItem }) => {
-      // The pill drives the per-card Mega flip — which itself requires an
+      // The pill drives the per-card Mega flip, which itself requires an
       // actual Mega Stone equipped. An already-Mega species name without
       // its Stone (e.g. `Kangaskhan-Mega @ Sitrus Berry`) can't flip in
       // battle, so we don't surface the toggle for it here either.
@@ -306,7 +307,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
 
   // ── Load Champions sample team from ?sample=ID ────────────────────
   // Triggered by "Try this team" buttons on the /champions page.
-  // Loads the pre-built paste directly — no server round-trip needed.
+  // Loads the pre-built paste directly, no server round-trip needed.
   const sampleLoaded = useRef(false);
   useEffect(() => {
     if (sampleLoaded.current || analysis || isSharePending) return;
@@ -320,7 +321,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
     const url = new URL(window.location.href);
     url.searchParams.delete("sample");
     window.history.replaceState({}, "", url.pathname + url.search);
-    // Load the paste — marks it as a sample team so it doesn't persist
+    // Load the paste, marks it as a sample team so it doesn't persist
     // to localStorage or auto-draft (same flag as the SAMPLE_PASTE path).
     setPaste(sampleTeam.paste);
     handleAnalyze(sampleTeam.paste);
@@ -378,7 +379,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
   const exportThemeDialogRef = useRef<HTMLDivElement>(null);
 
   // Move focus into the export theme modal when it opens so keyboard users
-  // and screen readers start inside the dialog (WCAG 2.1 AA — focus management).
+  // and screen readers start inside the dialog (WCAG 2.1 AA, focus management).
   useEffect(() => {
     if (!showExportThemePicker) return;
     const dialog = exportThemeDialogRef.current;
@@ -453,7 +454,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         try {
           await navigator.clipboard.writeText(url);
         } catch {
-          // Clipboard may be unavailable (iframe, insecure ctx) — still open tab
+          // Clipboard may be unavailable (iframe, insecure ctx), still open tab
         }
         window.open(url, "_blank", "noopener,noreferrer");
       } catch (err) {
@@ -520,7 +521,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
     const waitForContent = () => {
       const container = document.getElementById("print-container");
       if (!cancelled && container && container.children.length > 0) {
-        // Content rendered — wait for all images to finish loading
+        // Content rendered, wait for all images to finish loading
         const images = Array.from(container.querySelectorAll("img"));
         const unloaded = images.filter((img) => !img.complete);
         if (unloaded.length > 0) {
@@ -536,7 +537,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
             img.addEventListener("load", checkDone, { once: true });
             img.addEventListener("error", checkDone, { once: true });
           });
-          // Safety timeout — finish anyway after 3s even if images fail
+          // Safety timeout, finish anyway after 3s even if images fail
           setTimeout(() => { if (!cancelled) finish(); }, 3000);
         } else {
           // All images already loaded
@@ -598,7 +599,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
   // Restore the correct accent theme once a team is loaded. The random
   // landing-page accent and the creator-provided shared theme both get
   // reconciled here so the viewer sees the report in the appearance the
-  // creator built it in — not whatever random color happened to apply
+  // creator built it in, not whatever random color happened to apply
   // during the paste screen.
   useEffect(() => {
     if (!analysis) return;
@@ -640,7 +641,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
       const stored = localStorage.getItem(`vgc-share-cta-dismissed:${activeShareId}`);
       setShareCtaDismissed(stored === "1");
     } catch {
-      // localStorage may be blocked — fall back to in-session state.
+      // localStorage may be blocked, fall back to in-session state.
       setShareCtaDismissed(false);
     }
   }, [isSharedView, activeShareId]);
@@ -676,7 +677,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
 
   // Read-only viewers (guests or logged-in non-owners) can open the share sheet
   // for someone else's report without hitting the server. The URL comes from
-  // the active share ID — no state is modified on the server.
+  // the active share ID, no state is modified on the server.
   const isViewerOnly = isSharedView && !isEditingUnlocked;
   const handleViewerShare = useCallback(() => {
     if (!activeShareId) return;
@@ -687,7 +688,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
 
   const teamSpecies = analysis?.pokemon.map((p) => p.parsed.species) ?? [];
 
-  // Slide reorder logic — determine if current slide is a reorderable Pokemon or matchup plan
+  // Slide reorder logic, determine if current slide is a reorderable Pokemon or matchup plan
   const pokemonCount = analysis?.pokemon.length ?? 0;
   const plansCount = plans.length;
   // Physical slide layout (after inserting Common Modes at index 1):
@@ -730,7 +731,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
   }, [isPokemonSlide, isMatchupPlanSlide, physicalSlide, firstPokemonPhys, firstMatchupPhys, reorderPokemon, reorderPlans]);
 
   // Scroll to top of slide content when navigating between slides
-  // Skip during walkthrough — the overlay handles its own scroll positioning
+  // Skip during walkthrough, the overlay handles its own scroll positioning
   useEffect(() => {
     if (walkthroughActive) return;
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -779,6 +780,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
           onTemplateSelect={setPendingTemplateId}
         />
         <LimitlessImport onImport={importTeam} />
+        <PageFooter hideFeedback />
       </main>
     );
   }
@@ -799,7 +801,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
             </p>
           </div>
           <SignUpButton mode="modal">
-            <button className="w-full px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 transition-all cursor-pointer shadow-md shadow-accent/25">
+            <button className="w-full px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 transition cursor-pointer shadow-md shadow-accent/25">
               Sign up to collaborate
             </button>
           </SignUpButton>
@@ -808,7 +810,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
               Already have an account? Sign in
             </button>
           </SignInButton>
-          <a href="/" className="inline-flex min-h-11 items-center text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors mt-1">
+          <a href="/" className="inline-flex min-h-11 items-center text-xs text-text-tertiary hover:text-text-primary transition-colors mt-1">
             or go to home page
           </a>
         </div>
@@ -823,7 +825,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         {decodeFailed ? (
           <div className="flex flex-col items-center gap-4 animate-fade-in text-center">
             <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
+              <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="15" y1="9" x2="9" y2="15" />
                 <line x1="9" y1="9" x2="15" y2="15" />
@@ -955,7 +957,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
           // Owner pencil: leave presentation mode AND turn editing on in one
           // gesture. Without explicitly setting creator mode here, the
           // useLayoutEffect that restores creatorMode on present-exit only
-          // does so when it was true before entering — but on auto-present
+          // does so when it was true before entering, but on auto-present
           // owners enter presentation before owner-edit could engage, so the
           // captured value is false. Forcing it true here is the contract.
           setPresentationMode(false);
@@ -965,23 +967,23 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         onStartTour={!presentationMode ? startWalkthrough : undefined}
       />
 
-      {/* Welcome-back banner — shown when paste was restored from localStorage.
+      {/* Welcome-back banner, shown when paste was restored from localStorage.
           Signed-in only: its "Get my link" CTA calls handleShareClick, which
-          hard-requires an account — for guests the button silently failed AND
+          hard-requires an account, for guests the button silently failed AND
           dismissed the banner, while the logged-out banner below simultaneously
           said publishing needs sign-in. Guests get that banner instead. */}
       {wasRestored && !isSharedView && analysis && isSignedIn && (
         <div className="max-w-5xl mx-auto px-4 pt-2">
           <div className="flex items-start gap-3 px-4 py-3 bg-gradient-to-br from-emerald-500/10 via-accent-surface/20 to-accent/5 border border-emerald-500/30 rounded-xl animate-fade-in">
             <div className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 dark:text-emerald-400">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-800 dark:text-emerald-400">
                 <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                 <path d="M3 3v5h5" />
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-extrabold text-text-primary">
-                Welcome back — we restored your team
+              <p className="text-sm font-bold text-text-primary">
+                Welcome back, we restored your team
               </p>
               <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">
                 Your in-progress report is still here and auto-saves to your drafts. <span className="font-bold text-text-primary">Click Share to get a permanent link</span> you can send to others.
@@ -993,14 +995,14 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                     handleShareClick();
                     dismissRestoreBanner();
                   }}
-                  className="px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-white hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-accent text-white hover:brightness-110 transition cursor-pointer shadow-sm shadow-accent/25"
                 >
                   Get my link
                 </button>
                 <button
                   type="button"
                   onClick={dismissRestoreBanner}
-                  className="px-3 py-1.5 text-[11px] font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-alt transition-colors cursor-pointer"
                 >
                   Dismiss
                 </button>
@@ -1022,7 +1024,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         </div>
       )}
 
-      {/* Logged-out banner — draft is local-only, signing in is required to publish.
+      {/* Logged-out banner, draft is local-only, signing in is required to publish.
           Shown whenever there's an analysis but no authenticated user. Distinct
           from the restore banner so the messaging is explicit about the local
           nature of the draft and what sign-in unlocks. */}
@@ -1030,13 +1032,13 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         <div className="max-w-5xl mx-auto px-4 pt-2">
           <div className="flex items-start gap-3 px-4 py-3 bg-gradient-to-br from-accent/10 via-accent-surface/15 to-transparent border border-accent/30 rounded-xl animate-fade-in">
             <div className="w-8 h-8 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
                 <path d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-extrabold text-text-primary">
+              <p className="text-sm font-bold text-text-primary">
                 This draft only lives on this device
               </p>
               <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">
@@ -1046,7 +1048,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                 <SignUpButton mode="modal">
                   <button
                     type="button"
-                    className="px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-white hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
+                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-accent text-white hover:brightness-110 transition cursor-pointer shadow-sm shadow-accent/25"
                   >
                     Sign up to save
                   </button>
@@ -1054,7 +1056,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                 <SignInButton mode="modal">
                   <button
                     type="button"
-                    className="px-3 py-1.5 text-[11px] font-bold rounded-lg text-text-secondary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
+                    className="px-3 py-1.5 text-xs font-bold rounded-lg text-text-secondary hover:text-accent hover:bg-surface-alt transition-colors cursor-pointer"
                   >
                     Sign in
                   </button>
@@ -1068,7 +1070,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
       {/* URL length warning */}
       {urlWarning && (
         <div className="max-w-5xl mx-auto px-4 pt-2">
-          <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-600 dark:text-amber-400">
+          <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-800 dark:text-amber-400">
             <WarningTriangleIcon width="14" height="14" className="flex-shrink-0" />
             <span>{urlWarning}</span>
           </div>
@@ -1094,7 +1096,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
           >
             {/* Info icon */}
             <span className="w-8 h-8 flex items-center justify-center flex-shrink-0" aria-hidden>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" y1="16" x2="12" y2="12" />
                 <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -1104,7 +1106,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
             {/* Label */}
             <div className="flex items-center gap-2 px-1 sm:px-2 min-w-0">
               <span className="text-xs font-semibold truncate">No differences with</span>
-              <span className="text-[10px] font-bold opacity-80 whitespace-nowrap tabular-nums">
+              <span className="text-xs font-bold opacity-80 whitespace-nowrap tabular-nums">
                 v{versionDiff.version}
               </span>
             </div>
@@ -1116,7 +1118,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
             <button
               type="button"
               onClick={handleClearCompare}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer flex-shrink-0"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition cursor-pointer flex-shrink-0"
               aria-label="Exit version comparison"
             >
               <CloseIcon width="12" height="12" strokeWidth="2.5" />
@@ -1134,8 +1136,8 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         aria-label={`${slideLabels[currentSlide] ?? "Team report"}, slide ${currentSlide + 1} of ${totalSlides}`}
         aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
         className={`max-w-5xl mx-auto slide-content overflow-x-hidden min-h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:min-h-0 sm:h-[calc(100dvh-var(--nav-height)-var(--bottom-nav-height,3.5rem))] sm:overflow-y-auto sm:scrollbar-thin pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:pb-16 ${
-          isPresentationStyle
-            ? "px-3 sm:px-8 py-2 sm:py-4"
+ isPresentationStyle
+ ? "px-3 sm:px-8 py-2 sm:py-4"
             : "px-2 sm:px-6 lg:px-8 py-2 sm:py-6 creator:px-8 creator:py-6"
         }`}
         key={tournamentMode ? "tournament" : physicalSlide}
@@ -1144,13 +1146,13 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         {/*
           VGC-259: every slide needs an <h1>. TeamOverview owns the visible h1 on
           slide 0 (read-only view), so this sr-only heading covers every other
-          slide — and tournament mode, which replaces the slide body entirely.
+          slide, and tournament mode, which replaces the slide body entirely.
           Visually hidden on purpose: the slides already render their own visible
           titles, so a visible h1 would duplicate them on screen.
         */}
         {(tournamentMode || physicalSlide !== 0) && (
           <h1 className="sr-only">
-            {`${tournamentMode ? "Tournament Mode" : (slideLabels[currentSlide] ?? "Team report")}${teamName ? ` — ${teamName}` : ""}`}
+            {`${tournamentMode ? "Tournament Mode" : (slideLabels[currentSlide] ?? "Team report")}${teamName ? `, ${teamName}` : ""}`}
           </h1>
         )}
         {tournamentMode ? (
@@ -1162,7 +1164,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
           />
         ) : (
         <>
-        {/* Fork attribution banner — shown on any report that was forked from another */}
+        {/* Fork attribution banner, shown on any report that was forked from another */}
         {isSharedView && forkedFrom && (
           <div className="flex items-center gap-3 px-4 py-3 mb-5 bg-accent/8 border border-accent/25 rounded-2xl animate-fade-in">
             <div className="flex-shrink-0 w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center text-accent">
@@ -1188,7 +1190,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                 {forkedFrom.deleted
                   ? "The original report is no longer available."
                   : forkedFrom.creatorName
-                    ? `Original team by ${forkedFrom.creatorName}${forkedFrom.species.length > 0 ? ` — ${forkedFrom.species.slice(0, 6).join(", ")}` : ""}`
+                    ? `Original team by ${forkedFrom.creatorName}${forkedFrom.species.length > 0 ? `, ${forkedFrom.species.slice(0, 6).join(", ")}` : ""}`
                     : forkedFrom.species.length > 0
                       ? forkedFrom.species.slice(0, 6).join(", ")
                       : "View the original to compare changes."}
@@ -1208,7 +1210,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         {creatorMode && isSlideHiddenAt(physicalSlide) && (
           <div className="flex items-center gap-3 px-4 py-3 mb-5 bg-amber-500/8 border border-amber-500/25 rounded-2xl animate-fade-in">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center">
-              <EyeOffIcon width="16" height="16" className="text-amber-600 dark:text-amber-400" />
+              <EyeOffIcon width="16" height="16" className="text-amber-800 dark:text-amber-400" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">{t.thisSlideIsHidden}</p>
@@ -1289,7 +1291,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         </>
         )}
 
-      {/* Social engagement section for public shared reports — inside scroll container so desktop users can reach it */}
+      {/* Social engagement section for public shared reports, inside scroll container so desktop users can reach it */}
       {isSharedView && !isEditingUnlocked && !isPresentationStyle && activeShareId && (
         <div className="relative z-40 max-w-5xl mx-auto px-2 sm:px-4 py-6 mb-24 sm:mb-16 space-y-4">
           {/* Creator info + secondary actions */}
@@ -1332,23 +1334,23 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                   }
                 }}
                 disabled={!isPublic && !isUnlisted && warnings.length > 0}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 transition-all ${
-                  !isPublic && !isUnlisted && warnings.length > 0
-                    ? "cursor-not-allowed opacity-50 bg-surface border-border text-text-tertiary"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 transition ${
+ !isPublic && !isUnlisted && warnings.length > 0
+ ? "cursor-not-allowed opacity-50 bg-surface border-border text-text-tertiary"
                     : isPublic
-                    ? "cursor-pointer bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                    ? "cursor-pointer bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-400"
                     : isUnlisted
-                    ? "cursor-pointer bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
+                    ? "cursor-pointer bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-400"
                     : "cursor-pointer bg-surface border-border text-text-tertiary hover:border-accent/30 hover:text-accent"
                 }`}
                 title={
                   !isPublic && !isUnlisted && warnings.length > 0
                     ? "Fix team warnings before publishing"
                     : isPublic
-                    ? "Public — click to make private"
+                    ? "Public, click to make private"
                     : isUnlisted
-                    ? "Unlisted (link only) — click to publish on Explore"
-                    : "Private — click to make unlisted"
+                    ? "Unlisted (link only), click to publish on Explore"
+                    : "Private, click to make unlisted"
                 }
               >
                 {isPublic ? (
@@ -1361,7 +1363,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                 {isPublic ? "Public" : isUnlisted ? "Unlisted" : "Private"}
               </button>
             )}
-            {/* Fork button — only on public reports, and only for non-owners.
+            {/* Fork button, only on public reports, and only for non-owners.
                 Unlisted reports cannot be forked: possession of the link grants
                 view, not the right to copy the team into a new report. */}
             {isPublic && !isOwner && (
@@ -1370,14 +1372,14 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                   type="button"
                   onClick={handleForkReport}
                   disabled={forkStatus === "forking"}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border transition-all ${
-                    forkStatus === "forking"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border transition ${
+ forkStatus === "forking"
                       ? "opacity-60 cursor-wait text-text-tertiary"
                       : forkStatus === "error"
                         ? "border-rose-500/40 text-rose-500"
                         : "text-text-secondary hover:border-accent/30 hover:text-accent cursor-pointer"
                   }`}
-                  title="Fork this report — copy the team, notes, calcs, and matchup plans into a new report you own. The new report will link back to this one."
+                  title="Fork this report, copy the team, notes, calcs, and matchup plans into a new report you own. The new report will link back to this one."
                 >
                   <ForkIcon width="14" height="14" />
                   {forkStatus === "forking"
@@ -1390,10 +1392,10 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                 <SignInButton mode="modal">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent transition cursor-pointer"
                     title="Sign in to fork this report into your own editable copy"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="18" r="3" />
                       <circle cx="6" cy="6" r="3" />
                       <circle cx="18" cy="6" r="3" />
@@ -1406,7 +1408,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
               )
             )}
             {/* Save toggle lives in the Navbar overflow menu (single source
-                of truth) — having two copies fired /api/user/saved twice on
+                of truth), having two copies fired /api/user/saved twice on
                 mount and the late initial fetch could overwrite the user's
                 optimistic toggle. */}
           </div>
@@ -1414,7 +1416,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
             <CommentSection shareId={activeShareId} canModerate={isEditingUnlocked} />
           ) : (
             <div className="flex items-center gap-2 px-4 py-3 bg-surface-alt/50 border border-border rounded-xl text-xs text-text-tertiary">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 <line x1="9" y1="9" x2="15" y2="15" />
                 <line x1="15" y1="9" x2="9" y2="15" />
@@ -1428,7 +1430,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
               rather than mid-scroll. (VGC-141) */}
           <TeamCardCTA shareId={activeShareId} hasTournament={!!(placement || tournamentName)} />
 
-          {/* End-of-report conversion CTA — fires after the user has seen all
+          {/* End-of-report conversion CTA, fires after the user has seen all
               slides (isLast) so they've already consumed the value. Only shown
               to non-owner guests; owners see the creator toolbar instead. */}
           {isLast && !isOwner && !endOfReportCtaDismissed && (
@@ -1445,7 +1447,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-text-primary">You&apos;ve reached the end!</p>
                   <p className="text-xs text-text-secondary mt-0.5 hidden sm:block">
-                    Build your own team report — add notes, calcs, matchup plans, and share it with the community.
+                    Build your own team report: add notes, calcs, matchup plans, and share it with the community.
                   </p>
                 </div>
               </div>
@@ -1453,7 +1455,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                 {isSignedIn ? (
                   <a
                     href="/"
-                    className="inline-flex min-h-11 items-center px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30"
+                    className="inline-flex min-h-11 items-center px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition shadow-md shadow-accent/30"
                   >
                     Create yours
                   </a>
@@ -1461,7 +1463,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                   <SignUpButton mode="modal">
                     <button
                       type="button"
-                      className="px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer"
+                      className="px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition shadow-md shadow-accent/30 cursor-pointer"
                     >
                       Sign up free
                     </button>
@@ -1484,7 +1486,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
       </div>
       </VersionDiffProvider>
 
-      {/* Slide navigation — hidden in tournament mode */}
+      {/* Slide navigation, hidden in tournament mode */}
       {!tournamentMode && (
         <SlideNavControls
           currentSlide={currentSlide}
@@ -1497,7 +1499,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
           slideLabels={slideLabels}
           // Bottom nav stays locked + visible at all times (even in
           // presentation mode). Report navigation is non-obvious, so the tab
-          // bar must always be discoverable — and the old hover-to-reveal
+          // bar must always be discoverable, and the old hover-to-reveal
           // auto-hide was unusable on touch devices anyway (no hover to bring
           // it back). Keeping it pinned is the safer, clearer default.
           autoHide={false}
@@ -1555,7 +1557,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         </div>
       )}
 
-      {/* First-visit tour offer — non-blocking, clears the slide nav and swipe hint */}
+      {/* First-visit tour offer, non-blocking, clears the slide nav and swipe hint */}
       {walkthroughIsFirstTime && (
         <div
           role="status"
@@ -1602,7 +1604,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         isPresentationMode={isPresentationStyle}
       />
 
-      {/* Share modal — social share options */}
+      {/* Share modal, social share options */}
       {showShareModal && lastShareResult?.publicUrl && (
         <ShareModal
           publicUrl={lastShareResult.publicUrl}
@@ -1655,7 +1657,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         />
       )}
 
-      {/* CTA banner for shared views (read-only viewers) — Notion-style
+      {/* CTA banner for shared views (read-only viewers), Notion-style
           "Duplicate this team" prompt. Anonymous viewers see a sign-in
           modal; signed-in viewers fork directly. (VGC-140) */}
       {isSharedView && !isEditingUnlocked && !isPresentationStyle && !shareCtaDismissed && !isOwner && (
@@ -1688,7 +1690,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
     {showExportThemePicker && (
       /* eslint-disable-next-line jsx-a11y/no-static-element-interactions */
       <div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50"
         onClick={() => setShowExportThemePicker(false)}
         onKeyDown={(e) => {
           if (e.key === "Escape") setShowExportThemePicker(false);
@@ -1700,13 +1702,13 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
           aria-modal="true"
           aria-labelledby="export-theme-modal-title"
           tabIndex={-1}
-          className="bg-surface border border-border rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 space-y-5"
+          className="bg-surface rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 space-y-5"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="text-center">
             <h3
               id="export-theme-modal-title"
-              className="text-lg font-extrabold text-text-primary"
+              className="text-lg font-bold text-text-primary"
             >
               Export Theme
             </h3>
@@ -1720,14 +1722,14 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
             <button
               type="button"
               onClick={() => setExportTheme("light")}
-              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                exportTheme === "light"
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition cursor-pointer ${
+ exportTheme === "light"
                   ? "border-accent bg-accent/5 shadow-md"
                   : "border-border hover:border-accent/30"
               }`}
             >
               <div className="w-14 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="5" />
                   <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
                   <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
@@ -1742,14 +1744,14 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
             <button
               type="button"
               onClick={() => setExportTheme("dark")}
-              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                exportTheme === "dark"
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition cursor-pointer ${
+ exportTheme === "dark"
                   ? "border-accent bg-accent/5 shadow-md"
                   : "border-border hover:border-accent/30"
               }`}
             >
-              <div className="w-14 h-10 rounded-lg bg-[#0B0B1A] border border-[#2A2A52] flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0EDE6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <div className="w-14 h-10 rounded-lg bg-(--night) border border-(--dark-border) flex items-center justify-center">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0EDE6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
                 </svg>
               </div>
@@ -1793,33 +1795,33 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
         aria-hidden="true"
         data-export-theme={exportTheme}
         style={(exportMode === "tournament-evs" || exportMode === "tournament-stats") ? {
-          backgroundColor: exportTheme === "dark" ? "#0B0B1A" : "#FAF9F6",
+          backgroundColor: exportTheme === "dark" ? "var(--night)" : "var(--light-background)",
           padding: "16px",
           colorAdjust: "exact",
           WebkitPrintColorAdjust: "exact",
           printColorAdjust: "exact",
           ...exportTheme === "dark" ? {
-            "--background": "#0B0B1A", "--foreground": "#F0EDE6",
-            "--surface": "#141428", "--surface-alt": "#1C1C38",
-            "--border": "#2A2A52", "--border-subtle": "#222244",
-            "--text-primary": "#F0EDE6", "--text-secondary": "#C0C0D8", "--text-tertiary": "#9898B8",
-            "--accent": "#FB7185", "--accent-light": "#FDA4AF", "--accent-surface": "#3B1525",
-            "--color-background": "#0B0B1A", "--color-foreground": "#F0EDE6",
-            "--color-surface": "#141428", "--color-surface-alt": "#1C1C38",
-            "--color-border": "#2A2A52", "--color-border-subtle": "#222244",
-            "--color-text-primary": "#F0EDE6", "--color-text-secondary": "#C0C0D8", "--color-text-tertiary": "#9898B8",
-            "--color-accent": "#FB7185", "--color-accent-light": "#FDA4AF", "--color-accent-surface": "#3B1525",
+            "--background": "var(--dark-background)", "--foreground": "var(--light-border-subtle)",
+            "--surface": "var(--dark-surface)", "--surface-alt": "var(--dark-surface-alt)",
+            "--border": "var(--dark-border)", "--border-subtle": "var(--dark-border-subtle)",
+            "--text-primary": "var(--light-border-subtle)", "--text-secondary": "var(--dark-text-secondary)", "--text-tertiary": "var(--dark-text-tertiary)",
+            "--accent": "var(--dark-accent)", "--accent-light": "var(--light-accent-light)", "--accent-surface": "var(--dark-accent-surface)",
+            "--color-background": "var(--dark-background)", "--color-foreground": "var(--light-border-subtle)",
+            "--color-surface": "var(--dark-surface)", "--color-surface-alt": "var(--dark-surface-alt)",
+            "--color-border": "var(--dark-border)", "--color-border-subtle": "var(--dark-border-subtle)",
+            "--color-text-primary": "var(--light-border-subtle)", "--color-text-secondary": "var(--dark-text-secondary)", "--color-text-tertiary": "var(--dark-text-tertiary)",
+            "--color-accent": "var(--dark-accent)", "--color-accent-light": "var(--light-accent-light)", "--color-accent-surface": "var(--dark-accent-surface)",
           } as React.CSSProperties : {
-            "--background": "#FAF9F6", "--foreground": "#1A1A2E",
-            "--surface": "#FFFFFF", "--surface-alt": "#F2F0EB",
-            "--border": "#E0DDD5", "--border-subtle": "#F0EDE6",
-            "--text-primary": "#1A1A2E", "--text-secondary": "#4A4A68", "--text-tertiary": "#6E6E8A",
-            "--accent": "#E11D48", "--accent-light": "#FDA4AF", "--accent-surface": "#FFF1F2",
-            "--color-background": "#FAF9F6", "--color-foreground": "#1A1A2E",
-            "--color-surface": "#FFFFFF", "--color-surface-alt": "#F2F0EB",
-            "--color-border": "#E0DDD5", "--color-border-subtle": "#F0EDE6",
-            "--color-text-primary": "#1A1A2E", "--color-text-secondary": "#4A4A68", "--color-text-tertiary": "#6E6E8A",
-            "--color-accent": "#E11D48", "--color-accent-light": "#FDA4AF", "--color-accent-surface": "#FFF1F2",
+            "--background": "var(--light-background-83)", "--foreground": "var(--light-text-primary)",
+            "--surface": "var(--light-surface-33)", "--surface-alt": "var(--light-surface-alt-77)",
+            "--border": "var(--light-border-98)", "--border-subtle": "var(--light-border-subtle)",
+            "--text-primary": "var(--light-text-primary)", "--text-secondary": "var(--light-text-secondary)", "--text-tertiary": "var(--light-text-tertiary)",
+            "--accent": "var(--light-accent)", "--accent-light": "var(--light-accent-light)", "--accent-surface": "var(--light-accent-surface)",
+            "--color-background": "var(--light-background-83)", "--color-foreground": "var(--light-text-primary)",
+            "--color-surface": "var(--light-surface-33)", "--color-surface-alt": "var(--light-surface-alt-77)",
+            "--color-border": "var(--light-border-98)", "--color-border-subtle": "var(--light-border-subtle)",
+            "--color-text-primary": "var(--light-text-primary)", "--color-text-secondary": "var(--light-text-secondary)", "--color-text-tertiary": "var(--light-text-tertiary)",
+            "--color-accent": "var(--light-accent)", "--color-accent-light": "var(--light-accent-light)", "--color-accent-surface": "var(--light-accent-surface)",
           } as React.CSSProperties,
         } : undefined}
       >

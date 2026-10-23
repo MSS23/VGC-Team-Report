@@ -43,7 +43,7 @@ export function DiffNavigator({ changes, onNavigate, onDismiss, version, editorN
   const navRef = useRef({ handlePrev, handleNext });
   navRef.current = { handlePrev, handleNext };
 
-  // Keyboard: J/K when this is visible — attaches once
+  // Keyboard: J/K when this is visible, attaches once
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       // Don't capture if user is typing in an input
@@ -65,10 +65,10 @@ export function DiffNavigator({ changes, onNavigate, onDismiss, version, editorN
         {/* Prev */}
         <button
           onClick={handlePrev}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition cursor-pointer"
           aria-label="Previous change"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
@@ -86,10 +86,10 @@ export function DiffNavigator({ changes, onNavigate, onDismiss, version, editorN
         {/* Next */}
         <button
           onClick={handleNext}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition cursor-pointer"
           aria-label="Next change"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </button>
@@ -98,17 +98,17 @@ export function DiffNavigator({ changes, onNavigate, onDismiss, version, editorN
         <span className="w-px h-5 bg-white/25 mx-0.5" />
 
         {/* Version + editor badge */}
-        <span className="text-[10px] font-bold opacity-60 whitespace-nowrap px-1 hidden sm:inline">
+        <span className="text-xs font-bold opacity-60 whitespace-nowrap px-1 hidden sm:inline">
           v{version}{editorName ? ` by ${editorName}` : ""}
         </span>
 
         {/* Dismiss */}
         <button
           onClick={onDismiss}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition-all cursor-pointer"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-white/15 active:scale-90 transition cursor-pointer"
           aria-label="Dismiss comparison"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>

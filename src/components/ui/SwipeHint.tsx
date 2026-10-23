@@ -47,12 +47,12 @@ export function SwipeHint() {
     >
       <div className="flex items-center gap-2.5 px-4 py-2.5 bg-surface/95 backdrop-blur-lg border border-border rounded-full shadow-lg">
         {/* Left arrow */}
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent animate-[swipe-arrow_1.5s_ease-in-out_infinite]">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent animate-[swipe-arrow_1.5s_ease-in-out_infinite]">
           <polyline points="15 18 9 12 15 6" />
         </svg>
         <span className="text-xs font-bold text-text-primary whitespace-nowrap">Swipe or double-tap to advance</span>
         {/* Right arrow */}
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent animate-[swipe-arrow_1.5s_ease-in-out_infinite_reverse]">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent animate-[swipe-arrow_1.5s_ease-in-out_infinite_reverse]">
           <polyline points="9 18 15 12 9 6" />
         </svg>
       </div>

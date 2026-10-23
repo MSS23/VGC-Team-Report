@@ -73,7 +73,7 @@ export default function ThreatMatrix({ team, regulation }: { team: ParsedPokemon
       if (!ctx) throw new Error("Image export is unavailable in this browser.");
       ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#111827"; ctx.font = "bold 28px sans-serif";
-      ctx.fillText(`VGC Team Report — ${direction === "offense" ? "Your attacks" : "Opponent attacks"}`, 24, 40);
+      ctx.fillText(`VGC Team Report, ${direction === "offense" ? "Your attacks" : "Opponent attacks"}`, 24, 40);
       ctx.font = "18px sans-serif";
       ctx.fillText("Best move's damage range (% HP). Level 50 doubles, no Tera / boosts / weather / terrain / screens.", 24, 78);
       defending.forEach((p, j) => ctx.fillText(p.species, 235 + j * 207, 123, 195));

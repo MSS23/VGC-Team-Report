@@ -66,7 +66,7 @@ export function MatchupSheet({
       <div className="flex items-center justify-between">
         <h2 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">{t.matchupSheet}</h2>
         {plans.length > 0 && (
-          <span className="text-xs font-medium text-text-tertiary px-2.5 py-1 bg-surface-alt rounded-full">
+          <span className="text-xs text-text-tertiary px-2.5 py-1 bg-surface-alt rounded-full">
             {plans.length} {plans.length !== 1 ? t.matchups : t.matchup}
           </span>
         )}
@@ -74,10 +74,10 @@ export function MatchupSheet({
 
       {plans.length === 0 ? (
         <div className="text-center py-16 text-text-tertiary bg-surface border border-border rounded-2xl shadow-sm">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 text-text-tertiary/50">
+          <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 text-text-tertiary/50">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14,2 14,8 20,8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
           </svg>
-          <p className="text-base font-medium">{t.noMatchupPlans}</p>
+          <p className="text-base ">{t.noMatchupPlans}</p>
           <p className="text-sm text-text-tertiary mt-1">{t.addOpponentHint}</p>
         </div>
       ) : (
@@ -91,8 +91,8 @@ export function MatchupSheet({
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, index)}
               onDragEnd={handleDragEnd}
-              className={`transition-all ${
-                !isReadOnly ? "cursor-grab active:cursor-grabbing" : ""
+              className={`transition ${
+ !isReadOnly ? "cursor-grab active:cursor-grabbing" : ""
               } ${
                 dragOverIndex === index ? "ring-2 ring-accent/50 rounded-2xl" : ""
               }`}

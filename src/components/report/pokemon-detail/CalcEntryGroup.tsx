@@ -24,7 +24,7 @@ export const CATEGORY_CONFIG = {
     bgClass: "bg-emerald-500/8",
     presentBgClass: "presenting:bg-emerald-500/12",
     tagBg: "bg-emerald-500/15",
-    tagText: "text-emerald-600 dark:text-emerald-400",
+    tagText: "text-emerald-800 dark:text-emerald-400",
     iconColor: "text-emerald-400",
     bulletColor: "text-emerald-400/70",
   },
@@ -36,7 +36,7 @@ export const CATEGORY_CONFIG = {
     bgClass: "bg-amber-500/8",
     presentBgClass: "presenting:bg-amber-500/12",
     tagBg: "bg-amber-500/15",
-    tagText: "text-amber-600 dark:text-amber-400",
+    tagText: "text-amber-800 dark:text-amber-400",
     iconColor: "text-amber-400",
     bulletColor: "text-amber-400/70",
   },
@@ -86,7 +86,7 @@ function EditableCalcEntry({
 
   return (
     <div
-      className={`group flex items-start gap-3 px-3 py-2.5 sm:px-4 sm:py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-lg transition-all hover:shadow-sm presenting:px-5`}
+      className={`group flex items-start gap-3 px-3 py-2.5 sm:px-4 sm:py-3 ${cfg.bgClass} ${cfg.presentBgClass} border ${cfg.borderClass} border-l-[3px] ${cfg.leftBorder} rounded-lg transition hover:shadow-sm presenting:px-5`}
     >
       <span className={`${cfg.bulletColor} text-sm mt-px flex-shrink-0 presenting:text-base`}>&#9656;</span>
       {editing && !isReadOnly ? (
@@ -139,9 +139,9 @@ function EditableCalcEntry({
                     aria-label={`${t.changeCategory}: ${label}`}
                     aria-pressed={isActive}
                     title={label}
-                    className={`inline-flex items-center justify-center h-11 w-11 sm:h-9 sm:w-9 rounded-md text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-surface ${
-                      isActive
-                        ? `${catCfg.tagBg} ${catCfg.tagText} border ${catCfg.borderClass} shadow-sm`
+                    className={`inline-flex items-center justify-center h-11 w-11 sm:h-9 sm:w-9 rounded-md text-sm transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-surface ${
+ isActive
+ ? `${catCfg.tagBg} ${catCfg.tagText} border ${catCfg.borderClass} shadow-sm`
                         : "text-text-tertiary hover:text-text-primary hover:bg-surface active:scale-95"
                     }`}
                   >
@@ -162,7 +162,7 @@ function EditableCalcEntry({
             onClick={onRemove}
             aria-label={t.removeCalc}
             title={t.removeCalc}
-            className="inline-flex items-center justify-center h-11 w-11 sm:h-9 sm:w-9 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 active:scale-95 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
+            className="inline-flex items-center justify-center h-11 w-11 sm:h-9 sm:w-9 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 active:scale-95 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-surface"
           >
             <svg
               className="h-4 w-4"
@@ -219,15 +219,15 @@ export function CollapsibleCalcGroup({
         className="flex items-center gap-2 w-full mb-1 group/header cursor-pointer"
       >
         <span className="text-sm">{cfg.icon}</span>
-        <span className={`text-xs font-extrabold uppercase tracking-widest ${cfg.tagText}`}>
+        <span className={`text-xs font-bold ${cfg.tagText}`}>
           {translatedLabel}
         </span>
         <span className={`text-xs font-semibold ${cfg.tagText} opacity-60`}>
           ({entries.length})
         </span>
         <span className={`flex-1 h-px ${cfg.tagBg}`} />
-        <svg
-          className={`w-3.5 h-3.5 ${cfg.tagText} opacity-50 group-hover/header:opacity-100 transition-all duration-200 ${effectiveOpen ? "rotate-180" : ""}`}
+        <svg aria-hidden="true"
+          className={`w-3.5 h-3.5 ${cfg.tagText} opacity-50 group-hover/header:opacity-100 transition duration-200 ${effectiveOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -237,7 +237,7 @@ export function CollapsibleCalcGroup({
         </svg>
       </button>
       <div
-        className={`grid transition-all duration-200 ease-in-out ${effectiveOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+        className={`grid transition duration-200 ease-in-out ${effectiveOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
       >
         <div className="overflow-hidden">
         <div className="flex flex-col gap-2 pt-1">

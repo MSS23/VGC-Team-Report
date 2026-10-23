@@ -9,7 +9,7 @@ import { StatColorNote } from "./StatColorNote";
 import { useIsPrintMode } from "@/components/ui/print-context";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 
-// Lazy-load the editor — most card renders never need it (read-only views,
+// Lazy-load the editor, most card renders never need it (read-only views,
 // presentation mode, embeds), so we keep the modal + dex-search bundle out
 // of the initial paint.
 const InlinePokemonEditor = dynamic(
@@ -40,7 +40,7 @@ interface PokemonCardProps {
   isMega?: boolean;
   onToggleMega?: () => void;
   regulation?: string;
-  /** Inline replace — when provided, a small pencil button on the card
+  /** Inline replace, when provided, a small pencil button on the card
    *  opens a search picker to swap the species without re-pasting the team. */
   onReplaceSpecies?: (newSpecies: string) => void;
   /** When true, hints the browser to load this card's sprite with high fetch priority (LCP optimization). */
@@ -62,7 +62,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const isPrint = useIsPrintMode();
   const posthog = usePostHog();
 
-  // Inline-edit modal — opened via the pencil button when the card is editable.
+  // Inline-edit modal, opened via the pencil button when the card is editable.
   const [editing, setEditing] = useState(false);
   const canReplace = !isReadOnly && !!onReplaceSpecies;
 
@@ -80,7 +80,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   }, [alreadyMega, parsed.item, parsed.species]);
   const isMegaCapable = !!megaEntry;
 
-  // Base form data — resolved first so the toggle logic below can know
+  // Base form data, resolved first so the toggle logic below can know
   // whether we actually have a base side to flip to. For base+stone
   // pastes the parsed `data` is already the base form, so this memo is
   // only load-bearing for the alreadyMega branch.
@@ -91,7 +91,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
 
   // Can this card actually flip to its base side? Base+stone pastes
   // always can (data IS the base). alreadyMega pastes need baseFormData
-  // to resolve in the Pokemon DB — if the base species isn't in our data
+  // to resolve in the Pokemon DB, if the base species isn't in our data
   // set, we can't render the base side, so we lock the card to Mega and
   // hide the toggle rather than letting the user tap into an empty state.
   const canFlipToBase = isMegaCapable && (!alreadyMega || !!baseFormData);
@@ -99,7 +99,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   // The Mega flip toggle has two strict gates the user has set:
   //   1. Regulation must be Reg M-A (or unset for legacy reports). Reg F,
   //      G, H, I and any other explicit non-M-A regulation never shows
-  //      the toggle, even on already-Mega pastes — the format simply
+  //      the toggle, even on already-Mega pastes, the format simply
   //      doesn't allow Mega Evolution.
   //   2. The Pokemon must actually carry a Mega Stone matching its
   //      species. Without the stone Mega Evolution can't trigger in
@@ -112,14 +112,14 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   // Default form: respect regulation + stone presence. Without a stone
   // we never auto-render Mega even on alreadyMega pastes (they fall to
   // base form when baseFormData resolves). When canFlipToBase is false
-  // the existing fallback locks to Mega — that branch is only reached
+  // the existing fallback locks to Mega, that branch is only reached
   // when alreadyMega has no resolvable base data, which shouldn't ever
   // happen for currently legal mons.
   const defaultShowMega = !isExplicitlyNonMA && hasMegaStone;
   const showMega = isMegaCapable && (canFlipToBase ? (isMega ?? defaultShowMega) : true);
   const showMegaToggle = canFlipToBase && hasMegaStone && !isExplicitlyNonMA;
 
-  // Mega form data — populated when we're rendering the Mega side.
+  // Mega form data, populated when we're rendering the Mega side.
   const megaData = useMemo(() => {
     if (!showMega || !megaEntry) return null;
     return lookupPokemon(megaEntry.dataKey);
@@ -127,7 +127,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
 
   // Resolve the "base side" data for this card: the alreadyMega branch
   // uses the base form lookup, otherwise the parsed Pokemon's own data.
-  // `?? data` is a defensive safety net — canFlipToBase already blocks
+  // `?? data` is a defensive safety net, canFlipToBase already blocks
   // the path that would read this when baseFormData is null, but the
   // fallback guards against future reordering breaking that invariant.
   const effectiveBaseData = alreadyMega ? (baseFormData ?? data) : data;
@@ -155,7 +155,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
     return calculateAllChampionsStats(sourceData.baseStats, sp, parsed.nature);
   }, [regulation, showMega, megaData, effectiveBaseData, parsed.evs, parsed.nature]);
 
-  // Display-side resolution — all four follow the same branch: show Mega,
+  // Display-side resolution, all four follow the same branch: show Mega,
   // or show base (with the alreadyMega fallback when needed).
   const displaySpecies = showMega && megaEntry
     ? megaEntry.displayName
@@ -167,7 +167,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   ) ?? [];
   // Base-form ability for already-Mega flipped cards: the user's paste has
   // the Mega ability, not the base ability. Fall back to the base Pokemon's
-  // primary ability (abilities[0]) with an asterisk marker — the real base
+  // primary ability (abilities[0]) with an asterisk marker, the real base
   // ability varies and this is an honest best guess.
   const displayAbility = showMega && megaEntry
     ? megaEntry.ability
@@ -194,10 +194,10 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
     [relevantStats]
   );
 
-  // Champions (Reg M-A / M-B) has no Tera mechanic and forces IVs to 31 — hide both.
+  // Champions (Reg M-A / M-B) has no Tera mechanic and forces IVs to 31, hide both.
   const isChampions = isChampionsFormat(regulation);
 
-  // Non-default IVs (not 31) — hidden entirely in Reg M-A since IVs are locked.
+  // Non-default IVs (not 31), hidden entirely in Reg M-A since IVs are locked.
   const nonDefaultIvs = isChampions
     ? []
     : (["hp", "atk", "def", "spa", "spd", "spe"] as const).filter(
@@ -206,16 +206,16 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const ivLabels = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe } as const;
 
   return (
-    <Card className={`p-2.5 sm:p-6 creator:p-7 flex flex-col gap-2 sm:gap-4 creator:gap-5 transition-all duration-200 ${
-      isMvp ? "ring-2 ring-amber-400/60 shadow-lg shadow-amber-400/15 border-amber-400/30" : ""
+    <Card className={`p-2.5 sm:p-6 creator:p-7 flex flex-col gap-2 sm:gap-4 creator:gap-5 transition duration-200 ${
+ isMvp ? "ring-2 ring-amber-400/60 shadow-lg shadow-amber-400/15 border-amber-400/30" : ""
     }`}>
       {/* MVP Banner */}
       {isMvp && (
         <div className="flex items-center gap-1.5 -mb-1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-amber-500">
+          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-amber-800">
             <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
           </svg>
-          <span className="text-xs font-extrabold text-amber-500 uppercase tracking-widest">{t.teamMvp}</span>
+          <span className="text-xs font-bold text-amber-800 ">{t.teamMvp}</span>
         </div>
       )}
 
@@ -241,20 +241,20 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-            <h3 className="text-sm sm:text-lg font-extrabold text-text-primary creator:text-xl truncate leading-tight tracking-tight">
+            <h3 className="text-sm sm:text-lg font-bold text-text-primary creator:text-xl truncate leading-tight tracking-tight">
               {displaySpecies}
             </h3>
-            {/* Mega Evolution toggle — appears for both base+stone AND
+            {/* Mega Evolution toggle, appears for both base+stone AND
                 already-Mega pastes, so users can always flip between
                 forms to compare stats/types/ability. */}
             {showMegaToggle && (
               <button
                 type="button"
                 onClick={onToggleMega}
-                className={`inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md text-xs sm:text-xs font-extrabold transition-all duration-200 ${
-                  showMega
-                    ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-sm shadow-purple-500/30"
-                    : "bg-surface-alt text-text-tertiary hover:text-purple-500 hover:bg-purple-500/10 border border-border-subtle"
+                className={`inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md text-xs sm:text-xs font-bold transition duration-200 ${
+ showMega
+ ? "bg-accent text-accent-ink"
+                    : "bg-surface-alt text-text-tertiary hover:text-purple-800 hover:bg-purple-500/10 border border-border-subtle"
                 }`}
                 title={showMega ? "Show base form" : "Show Mega Evolution"}
                 aria-label={showMega ? "Show base form" : "Show Mega Evolution"}
@@ -264,18 +264,18 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               </button>
             )}
             {parsed.gender && (
-              <span className={`text-sm font-bold ${parsed.gender === "M" ? "text-blue-500" : "text-pink-500"}`}>
+              <span className={`text-sm font-bold ${parsed.gender === "M" ? "text-blue-800" : "text-pink-800"}`}>
                 {parsed.gender === "M" ? "\u2642" : "\u2640"}
               </span>
             )}
-            {/* Damage calculator deep-link — always visible, hidden in print */}
+            {/* Damage calculator deep-link, always visible, hidden in print */}
             {!isPrint && (
               <a
                 href="https://nerd-of-now.github.io/NCP-VGC-Damage-Calculator/"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => posthog?.capture("calc_opened", { pokemon_name: showMega && megaEntry ? megaEntry.displayName : parsed.species })}
-                className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200"
+                className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition duration-200"
                 title="Open damage calculator"
                 aria-label={`Open damage calculator for ${showMega && megaEntry ? megaEntry.displayName : parsed.species}`}
               >
@@ -294,18 +294,18 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                 </svg>
               </a>
             )}
-            {/* Inline replace — pencil button opens a search picker.
+            {/* Inline replace, pencil button opens a search picker.
                 Same surface as MVP star but to the LEFT of it so it does
                 not push the star off the row on narrow cards. */}
             {canReplace && (
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="ml-auto min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition-all duration-200 cursor-pointer"
+                className="ml-auto min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-text-tertiary/50 hover:text-accent hover:bg-accent-surface/40 transition duration-200 cursor-pointer"
                 title="Replace this Pokemon"
                 aria-label={`Replace ${displaySpecies}`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                   <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
@@ -316,15 +316,15 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               <button
                 type="button"
                 onClick={onToggleMvp}
-                className={`${canReplace ? "" : "ml-auto"} min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg transition-all duration-200 ${
+                className={`${canReplace ? "" : "ml-auto"} min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg transition duration-200 ${
                   isMvp
-                    ? "text-amber-500 bg-amber-500/10"
+                    ? "text-amber-800 bg-amber-500/10"
                     : "text-text-tertiary/40 hover:text-amber-400 hover:bg-amber-400/5"
                 }`}
                 title={isMvp ? t.removeMvp : t.setAsMvp}
                 aria-label={isMvp ? t.removeMvp : t.setAsMvp}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill={isMvp ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill={isMvp ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
                   <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
                 </svg>
               </button>
@@ -338,18 +338,18 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             ))}
             {parsed.teraType && !isChampions && (
               <span className="flex items-center gap-0.5 ml-0.5 sm:ml-1">
-                <span className="text-[9px] sm:text-xs text-text-tertiary font-semibold">{t.tera}:</span>
+                <span className="text-[11px] sm:text-xs text-text-tertiary font-semibold">{t.tera}:</span>
                 <TypeBadge type={parsed.teraType} />
               </span>
             )}
           </div>
 
           {/* Item + Ability */}
-          <div className="flex flex-wrap items-center gap-x-1.5 sm:gap-x-3 gap-y-0.5 mt-0.5 sm:mt-2 text-[10px] sm:text-sm text-text-secondary">
+          <div className="flex flex-wrap items-center gap-x-1.5 sm:gap-x-3 gap-y-0.5 mt-0.5 sm:mt-2 text-[11px] sm:text-sm text-text-secondary">
             {parsed.item && (
               <span className="font-bold text-text-primary">@ {parsed.item}</span>
             )}
-            {displayAbility && <span className="font-medium">{displayAbility}</span>}
+            {displayAbility && <span className="">{displayAbility}</span>}
           </div>
 
           {/* Non-default IVs */}
@@ -375,10 +375,10 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               placeholder={t.rolePlaceholder}
               aria-label="Pokemon role or archetype"
               maxLength={40}
-              className="mt-1.5 sm:mt-2.5 w-full text-[11px] sm:text-xs font-semibold px-2 sm:px-3 py-1 sm:py-1.5 bg-surface-alt/60 border-2 border-border-subtle rounded-lg text-text-primary placeholder:text-text-tertiary/60 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50 transition-all"
+              className="mt-1.5 sm:mt-2.5 w-full text-[11px] sm:text-xs font-semibold px-2 sm:px-3 py-1 sm:py-1.5 bg-surface-alt/60 border-2 border-border-subtle rounded-lg text-text-primary placeholder:text-text-tertiary/60 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50 transition"
             />
           ) : role ? (
-            <span className="mt-1 sm:mt-2.5 inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-xs font-extrabold tracking-widest uppercase text-accent bg-accent-surface/80 border border-accent/20 px-2 py-1 sm:px-3 sm:py-1.5 rounded-md">
+            <span className="mt-1 sm:mt-2.5 inline-flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold text-accent bg-accent-surface/80 border border-accent/20 px-2 py-1 sm:px-3 sm:py-1.5 rounded-md">
               <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-accent/60 flex-shrink-0" />
               {role}
             </span>
@@ -388,7 +388,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
 
       {/* Moves */}
       <div>
-        <h4 className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-0.5 sm:mb-2 creator:mb-2.5">
+        <h4 className="text-[11px] sm:text-xs font-bold text-text-tertiary mb-0.5 sm:mb-2 creator:mb-2.5">
           {t.moves}
         </h4>
         <div className="grid grid-cols-2 gap-0.5 sm:gap-2 stagger-moves">
@@ -397,8 +397,8 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             return (
               <span
                 key={move}
-                className={`text-[10px] sm:text-sm creator:text-base leading-tight px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg border font-semibold text-center transition-colors break-words hyphens-auto ${
-                  typeStyle ? "shadow-sm" : "text-text-primary bg-surface-alt/60 border-transparent"
+                className={`text-[11px] sm:text-sm creator:text-base leading-tight px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg border font-semibold text-center transition-colors break-words hyphens-auto ${
+ typeStyle ? "shadow-sm" : "text-text-primary bg-surface-alt/60 border-transparent"
                 }`}
                 style={typeStyle ?? undefined}
               >
@@ -409,7 +409,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
         </div>
       </div>
 
-      {/* Stats — render whenever the user has entered EVs/IVs, even if the
+      {/* Stats, render whenever the user has entered EVs/IVs, even if the
           species isn't in our dex (e.g. a newly-released Mega that hasn't
           shipped to mega-pokemon.ts yet). Without this fallback the entire
           spread + EV column disappeared for any unknown species. */}
@@ -425,13 +425,13 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
         return (
         <div>
           <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2 creator:mb-2.5 flex-wrap">
-            <h4 className="text-[9px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary">
-              {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70 hidden sm:inline">({parsed.nature})</span>
+            <h4 className="text-[11px] sm:text-xs font-bold text-text-tertiary">
+              {t.stats} <span className="normal-case tracking-normal text-text-tertiary/70 hidden sm:inline">({parsed.nature})</span>
             </h4>
 
             {isChampions ? (() => {
               // Reg M-A is an SP-only format. EV totals are misleading here
-              // (66 SP ≠ 66 EVs — the conversion curve is non-linear), so
+              // (66 SP ≠ 66 EVs, the conversion curve is non-linear), so
               // the budget badge stays SP-native instead of offering an EV
               // toggle that would mix two unit systems.
               const spOver = totalSp > CHAMPIONS_TOTAL_SP;
@@ -443,8 +443,8 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                   aria-label={`Stat Points: ${totalSp} of ${CHAMPIONS_TOTAL_SP}`}
                 >
                   <span className={`h-1 w-1 rounded-full ${spDot}`} aria-hidden />
-                  <span className="text-[10px] font-semibold tracking-wide tabular-nums text-text-secondary">SP</span>
-                  <span className="text-[10px] font-semibold tabular-nums text-text-tertiary">
+                  <span className="text-[11px] font-semibold tabular-nums text-text-secondary">SP</span>
+                  <span className="text-[11px] font-semibold tabular-nums text-text-tertiary">
                     {totalSp}/{CHAMPIONS_TOTAL_SP}
                   </span>
                 </div>
@@ -456,11 +456,11 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                     no stat gain, so 508 is the correctly optimized target
                     (e.g. 252/252/4 = 508). */}
                 {totalEvs > 508 ? (
-                  <span className="text-[10px] sm:text-xs font-bold text-danger ml-auto tabular-nums">{totalEvs}/508</span>
+                  <span className="text-[11px] sm:text-xs font-bold text-danger ml-auto tabular-nums">{totalEvs}/508</span>
                 ) : totalEvs > 0 && totalEvs < 508 ? (
-                  <span className="text-[10px] sm:text-xs font-bold text-amber-500 ml-auto tabular-nums">{totalEvs}/508<span className="hidden sm:inline"> · {508 - totalEvs} left</span></span>
+                  <span className="text-[11px] sm:text-xs font-bold text-amber-800 ml-auto tabular-nums">{totalEvs}/508<span className="hidden sm:inline"> · {508 - totalEvs} left</span></span>
                 ) : totalEvs > 0 ? (
-                  <span className="text-[10px] sm:text-xs font-bold text-text-tertiary/50 ml-auto tabular-nums hidden sm:inline">{totalEvs}/508</span>
+                  <span className="text-[11px] sm:text-xs font-bold text-text-tertiary/50 ml-auto tabular-nums hidden sm:inline">{totalEvs}/508</span>
                 ) : null}
               </>
             )}
@@ -470,12 +470,12 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
           {isChampions && totalEvs > 0 && (overSp || (hasWastedEvs && !overSp)) && (
             <div className="flex flex-wrap gap-1.5 mb-1.5 sm:mb-2">
               {overSp && (
-                <span className="text-[9px] sm:text-[10px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded">
+                <span className="text-[11px] sm:text-[11px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded">
                   Over budget by {totalSp - CHAMPIONS_TOTAL_SP} SP
                 </span>
               )}
               {hasWastedEvs && !overSp && (
-                <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                <span className="text-[11px] sm:text-[11px] font-bold text-amber-800 bg-amber-500/10 px-1.5 py-0.5 rounded">
                   Auto-converted from EVs
                 </span>
               )}
@@ -511,9 +511,9 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
 
               return (
                 <div key={stat} className="flex items-center gap-1 sm:gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${natureUp ? ", boosted by nature" : ""}${natureDown ? ", reduced by nature" : ""}${isBoosted ? ", boosted by item" : ""}${showSp && sp > 0 ? `, ${sp} SP` : ev > 0 ? `, ${ev} EVs` : ""}`}>
-                  <span className="text-[9px] sm:text-xs font-bold w-9 sm:w-11 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5 flex-shrink-0">
-                    {natureUp && <span className="text-[9px] sm:text-[12px] text-emerald-500 dark:text-emerald-400 leading-none" aria-label="boosted by nature">{"\u25B2"}</span>}
-                    {natureDown && <span className="text-[9px] sm:text-[12px] text-rose-500 dark:text-rose-400 leading-none" aria-label="reduced by nature">{"\u25BC"}</span>}
+                  <span className="text-[11px] sm:text-xs font-bold w-9 sm:w-11 text-right text-text-tertiary flex items-center justify-end gap-0.5 flex-shrink-0">
+                    {natureUp && <span className="text-[11px] sm:text-[12px] text-emerald-800 dark:text-emerald-400 leading-none" aria-label="boosted by nature">{"\u25B2"}</span>}
+                    {natureDown && <span className="text-[11px] sm:text-[12px] text-rose-500 dark:text-rose-400 leading-none" aria-label="reduced by nature">{"\u25BC"}</span>}
                     {labels[stat]}
                   </span>
                   <div className="flex-1 h-2 sm:h-2.5 bg-surface-alt rounded-full overflow-hidden creator:h-3" role="progressbar" aria-valuenow={displayValue} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${labels[stat]} stat bar${isBoosted ? " (item boosted)" : ""}`}>
@@ -525,18 +525,18 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                       }}
                     />
                   </div>
-                  {/* Number value — color coded for nature/item modifiers.
+                  {/* Number value, color coded for nature/item modifiers.
                       The up/down arrows live exclusively on the left next
                       to the stat label so each affected stat shows exactly
                       one arrow (not two). */}
                   <span className={`text-[11px] sm:text-sm font-[family-name:var(--font-mono)] font-bold w-7 sm:w-8 text-right tabular-nums ${
-                    isBoosted ? "text-amber-500" : hasBuff ? "text-emerald-600 dark:text-emerald-400" : hasNerf ? "text-rose-600 dark:text-rose-400" : "text-text-secondary"
+ isBoosted ? "text-amber-800" : hasBuff ? "text-emerald-800 dark:text-emerald-400" : hasNerf ? "text-rose-600 dark:text-rose-400" : "text-text-secondary"
                   }`}>
                     {displayValue}
                   </span>
                   {investLabel > 0 ? (
-                    <span className={`text-[10px] sm:text-xs font-bold w-9 sm:w-12 text-right tabular-nums flex-shrink-0 ${isOverMax && showSp ? "text-amber-500" : "text-accent"}`}>
-                      +{investLabel}{investUnit && <span className="text-[8px] sm:text-[9px] ml-px">{investUnit}</span>}
+                    <span className={`text-[11px] sm:text-xs font-bold w-9 sm:w-12 text-right tabular-nums flex-shrink-0 ${isOverMax && showSp ? "text-amber-800" : "text-accent"}`}>
+                      +{investLabel}{investUnit && <span className="text-[11px] sm:text-[11px] ml-px">{investUnit}</span>}
                     </span>
                   ) : (
                     <span className="w-9 sm:w-12 flex-shrink-0" />
@@ -546,7 +546,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             })}
           </div>
           {/* Clarify that bar colors are a fixed per-stat palette (which stat),
-              not a percentile/quality ranking — a common point of confusion.
+              not a percentile/quality ranking, a common point of confusion.
               Dismissible; hides everywhere once the user gets it. */}
           <StatColorNote />
         </div>

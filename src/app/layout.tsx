@@ -97,7 +97,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://play.pokemonshowdown.com" crossOrigin="" />
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var r=document.documentElement,dm=localStorage.getItem("vgc-dark-mode"),isDark=dm==="true"||(dm===null&&matchMedia("(prefers-color-scheme:dark)").matches);if(isDark)r.setAttribute("data-dark-mode","");var t=localStorage.getItem("vgc-gen-theme")||"gen9",p={"gen1":{a:"#8b5cf6",l:"#c4b5fd",s:"#f5f3ff",ad:"#c4b5fd",sd:"#4c1d95"},"gen2":{a:"#d97706",l:"#fcd34d",s:"#fffbeb",ad:"#fcd34d",sd:"#78350f"},"gen3":{a:"#16a34a",l:"#86efac",s:"#f0fdf4",ad:"#86efac",sd:"#14532d"},"gen4":{a:"#3b82f6",l:"#93c5fd",s:"#eff6ff",ad:"#93c5fd",sd:"#1e3a5f"},"gen5":{a:"#0ea5e9",l:"#7dd3fc",s:"#f0f9ff",ad:"#7dd3fc",sd:"#0c4a6e"},"gen6":{a:"#dc2626",l:"#fca5a5",s:"#fef2f2",ad:"#fca5a5",sd:"#7f1d1d"},"gen7":{a:"#ea580c",l:"#fdba74",s:"#fff7ed",ad:"#fdba74",sd:"#7c2d12"},"gen8":{a:"#0891b2",l:"#67e8f9",s:"#ecfeff",ad:"#67e8f9",sd:"#164e63"},"gen9":{a:"#e11d48",l:"#fda4af",s:"#fff1f2",ad:"#fda4af",sd:"#881337"}}[t]||{a:"#e11d48",l:"#fda4af",s:"#fff1f2",ad:"#fda4af",sd:"#881337"};r.style.setProperty("--accent",isDark?p.ad:p.a);r.style.setProperty("--accent-light",p.l);r.style.setProperty("--accent-surface",isDark?p.sd:p.s)}catch(e){}})()` }} />
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var r=document.documentElement,dm=localStorage.getItem("vgc-dark-mode"),isDark=dm==="true"||(dm===null&&matchMedia("(prefers-color-scheme:dark)").matches);if(isDark)r.setAttribute("data-dark-mode","");var t=localStorage.getItem("vgc-gen-theme")||"gen9",p={"gen1":{a:"#6d28d9",l:"#c4b5fd",s:"#f5f3ff",ad:"#c4b5fd",sd:"#4c1d95"},"gen2":{a:"#b45309",l:"#fcd34d",s:"#fffbeb",ad:"#fcd34d",sd:"#78350f"},"gen3":{a:"#15803d",l:"#86efac",s:"#f0fdf4",ad:"#86efac",sd:"#14532d"},"gen4":{a:"#1d4ed8",l:"#93c5fd",s:"#eff6ff",ad:"#93c5fd",sd:"#1e3a5f"},"gen5":{a:"#0369a1",l:"#7dd3fc",s:"#f0f9ff",ad:"#7dd3fc",sd:"#0c4a6e"},"gen6":{a:"#dc2626",l:"#fca5a5",s:"#fef2f2",ad:"#fca5a5",sd:"#7f1d1d"},"gen7":{a:"#c2410c",l:"#fdba74",s:"#fff7ed",ad:"#fdba74",sd:"#7c2d12"},"gen8":{a:"#0e7490",l:"#67e8f9",s:"#ecfeff",ad:"#67e8f9",sd:"#164e63"},"gen9":{a:"#e11d48",l:"#fda4af",s:"#fff1f2",ad:"#fda4af",sd:"#881337"}}[t]||{a:"#e11d48",l:"#fda4af",s:"#fff1f2",ad:"#fda4af",sd:"#881337"};r.style.setProperty("--accent",isDark?p.ad:p.a);r.style.setProperty("--accent-light",p.l);r.style.setProperty("--accent-surface",isDark?p.sd:p.s)}catch(e){}})()` }} />
       </head>
       <body className={`${sora.variable} ${jetbrainsMono.variable} antialiased`}>
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-accent focus:text-white focus:rounded-lg focus:text-sm focus:font-bold">
@@ -114,7 +114,7 @@ export default function RootLayout({
             name: "VGC Team Report",
             url: "https://pokemonvgcteamreport.com",
             description:
-              "Build detailed competitive Pokemon VGC team breakdowns with notes, matchup plans, and damage calcs — then share them with the community or present at tournaments.",
+              "Build detailed competitive Pokemon VGC team breakdowns with notes, matchup plans, and damage calcs, then share them with the community or present at tournaments.",
             applicationCategory: "SportsApplication",
             operatingSystem: "Any",
             featureList: [

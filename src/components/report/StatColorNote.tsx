@@ -32,7 +32,7 @@ export function StatColorNote() {
     try {
       localStorage.setItem(KEY, "1");
     } catch {
-      // private browsing / quota exceeded — hides for this tab only
+      // private browsing / quota exceeded, hides for this tab only
     }
     window.dispatchEvent(new Event(EVENT));
   }, []);
@@ -42,7 +42,7 @@ export function StatColorNote() {
   return (
     <p
       role="note"
-      className="mt-1.5 flex items-center text-xs font-semibold uppercase tracking-wide text-text-tertiary"
+      className="mt-1.5 flex items-center text-xs font-semibold text-text-tertiary"
     >
       Bar color = stat type, not quality
       <button

@@ -11,7 +11,7 @@ const WELCOME_FEATURES = [
   {
     icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
     title: "Paste & Analyze",
-    desc: "Paste your Showdown team and get an instant breakdown — stats, coverage, speed tiers, and more.",
+    desc: "Paste your Showdown team and get an instant breakdown, stats, coverage, speed tiers, and more.",
   },
   {
     icon: "M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z",
@@ -26,7 +26,7 @@ const WELCOME_FEATURES = [
   {
     icon: "M13 10V3L4 14h7v7l9-11h-7z",
     title: "Works Offline",
-    desc: "Reports you\u2019ve viewed are saved for offline use — perfect for checking your team at tournaments with bad signal.",
+    desc: "Reports you\u2019ve viewed are saved for offline use, perfect for checking your team at tournaments with bad signal.",
   },
 ];
 
@@ -149,7 +149,7 @@ export function WhatsNewModal() {
             className="absolute top-2 right-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer z-10"
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -158,12 +158,12 @@ export function WhatsNewModal() {
           {/* Header */}
           <div className="px-6 pt-6 pb-4 text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-accent-surface rounded-full mb-4">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-accent">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
-              <span className="text-xs font-extrabold text-accent uppercase tracking-widest">{badgeLabel}</span>
+              <span className="text-xs font-bold text-accent ">{badgeLabel}</span>
             </div>
-            <h2 id="whats-new-title" className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
+            <h2 id="whats-new-title" className="text-xl sm:text-2xl font-bold text-text-primary tracking-tight">
               {heading}
             </h2>
             <p className="text-sm text-text-secondary mt-2 max-w-sm mx-auto">
@@ -176,7 +176,7 @@ export function WhatsNewModal() {
             {features.map((f) => (
               <div key={f.title} className="flex items-start gap-3 p-3 rounded-xl bg-surface-alt/50">
                 <div className="w-9 h-9 rounded-lg bg-accent-surface flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
                     <path d={f.icon} />
                   </svg>
                 </div>
@@ -193,16 +193,16 @@ export function WhatsNewModal() {
             <button
               type="button"
               onClick={dismiss}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition cursor-pointer"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
               </svg>
               {ctaLabel}
             </button>
             <a
               href="/explore"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-text-secondary hover:text-text-primary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all tracking-wide"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-text-secondary hover:text-text-primary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition "
               onClick={() => localStorage.setItem(STORAGE_KEY, "1")}
             >
               Explore Teams
