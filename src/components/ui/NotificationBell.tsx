@@ -7,15 +7,15 @@ import { relativeTime } from "@/lib/utils/relative-time";
 const TYPE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
   comment: {
     icon: (
-      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
       </svg>
     ),
-    color: "text-blue-800",
+    color: "text-blue-500",
   },
   reaction: {
     icon: (
-      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
         <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
       </svg>
     ),
@@ -23,7 +23,7 @@ const TYPE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
   },
   new_report: {
     icon: (
-      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
         <polyline points="14 2 14 8 20 8" />
       </svg>
@@ -32,14 +32,14 @@ const TYPE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
   },
   collab_invite: {
     icon: (
-      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 00-3-3.87" />
         <path d="M16 3.13a4 4 0 010 7.75" />
       </svg>
     ),
-    color: "text-purple-800",
+    color: "text-purple-500",
   },
 };
 
@@ -90,7 +90,7 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
       return () => cancelAnimationFrame(id);
     }
     if (wasOpenRef.current) {
-      // Closing transition, restore focus to the trigger
+      // Closing transition — restore focus to the trigger
       triggerRef.current?.focus();
       wasOpenRef.current = false;
     }
@@ -106,15 +106,15 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-haspopup="true"
-        className="relative p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition"
+        className="relative p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all"
         aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
       >
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 01-3.46 0" />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center leading-none">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -135,7 +135,7 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
                 type="button"
                 onClick={() => { markAllRead(); }}
                 aria-label="Mark all notifications as read"
-                className="text-xs font-bold text-accent hover:underline cursor-pointer"
+                className="text-[10px] font-bold text-accent hover:underline cursor-pointer"
               >
                 Mark all read
               </button>
@@ -155,7 +155,7 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
                     key={n.id}
                     href={n.sourceShareId ? `/s/${n.sourceShareId}` : n.sourceUserName ? `/creator/${n.sourceUserName}` : "#"}
                     className={`flex items-start gap-3 px-4 py-3 hover:bg-surface-alt/50 transition-colors border-b border-border/50 last:border-0 ${
- !n.read ? "bg-accent/5" : ""
+                      !n.read ? "bg-accent/5" : ""
                     }`}
                     onClick={() => setOpen(false)}
                   >
@@ -166,7 +166,7 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
                       <p className={`text-xs leading-relaxed ${!n.read ? "text-text-primary font-semibold" : "text-text-secondary"}`}>
                         {n.message}
                       </p>
-                      <p className="text-xs text-text-tertiary mt-0.5">
+                      <p className="text-[10px] text-text-tertiary mt-0.5">
                         {relativeTime(n.createdAt)}
                       </p>
                     </div>
@@ -184,7 +184,7 @@ export function NotificationBell({ enabled }: { enabled: boolean }) {
               className="text-xs text-accent hover:underline"
               onClick={() => setOpen(false)}
             >
-              View all notifications
+              View all notifications →
             </a>
           </div>
         </div>

@@ -163,7 +163,7 @@ export function VersionHistoryPanel({
       {/* Panel */}
       <div
         ref={panelRef}
-        className="fixed top-0 right-0 z-[71] h-full w-full sm:w-[340px] bg-surface border-l border-border shadow-(--shadow-drawer) flex flex-col animate-slide-in-right"
+        className="fixed top-0 right-0 z-[71] h-full w-full sm:w-[340px] bg-surface border-l border-border shadow-[-8px_0_32px_rgba(0,0,0,0.1)] flex flex-col animate-slide-in-right"
         role="dialog"
         aria-label="Version history"
       >
@@ -171,14 +171,14 @@ export function VersionHistoryPanel({
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/60">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
             </div>
             <div>
               <h2 className="text-sm font-bold text-text-primary">Version history</h2>
-              <p className="text-xs text-text-tertiary">
+              <p className="text-[10px] text-text-tertiary">
                 {isComparing
                   ? `Comparing with v${comparingVersion}`
                   : `${versions.length} version${versions.length !== 1 ? "s" : ""} saved`
@@ -192,7 +192,7 @@ export function VersionHistoryPanel({
             className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
             aria-label="Close version history"
           >
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
@@ -201,8 +201,8 @@ export function VersionHistoryPanel({
         {/* Compare mode hint */}
         {onCompare && !isComparing && !loading && versions.length > 0 && (
           <div className="px-5 py-2.5 bg-surface-alt/40 border-b border-border/40">
-            <p className="text-xs text-text-tertiary flex items-center gap-1.5">
-              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-text-tertiary">
+            <p className="text-[11px] text-text-tertiary flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-text-tertiary">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
               </svg>
               Click a version number to highlight what changed
@@ -215,14 +215,14 @@ export function VersionHistoryPanel({
           <div className="px-4 py-2.5 bg-blue-50 dark:bg-blue-950/50 border-b border-blue-300 dark:border-blue-500/40 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse flex-shrink-0" />
-              <span className="text-xs font-bold text-blue-800 dark:text-blue-200">
+              <span className="text-[11px] font-bold text-blue-800 dark:text-blue-200">
                 Showing changes since v{comparingVersion}
               </span>
             </div>
             <button
               type="button"
               onClick={onClearCompare}
-              className="flex-shrink-0 px-2.5 py-1 text-xs font-bold text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors cursor-pointer"
+              className="flex-shrink-0 px-2.5 py-1 text-[10px] font-bold text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors cursor-pointer"
             >
               Clear
             </button>
@@ -239,7 +239,7 @@ export function VersionHistoryPanel({
           ) : versions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
               <div className="w-12 h-12 rounded-xl bg-surface-alt flex items-center justify-center">
-                <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
@@ -264,9 +264,9 @@ export function VersionHistoryPanel({
                 <div className="flex-1 min-w-0 pt-0.5">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-accent">v{currentVersion}</span>
-                    <span className="text-xs font-bold text-accent bg-accent/10 px-1.5 py-0.5 rounded">Current</span>
+                    <span className="text-[10px] font-bold text-accent bg-accent/10 px-1.5 py-0.5 rounded">Current</span>
                   </div>
-                  <p className="text-xs text-text-tertiary mt-0.5">Latest version</p>
+                  <p className="text-[11px] text-text-tertiary mt-0.5">Latest version</p>
                 </div>
               </div>
 
@@ -280,16 +280,16 @@ export function VersionHistoryPanel({
                     {/* Timeline dot */}
                     <div className="relative z-10 w-[22px] flex items-center justify-center flex-shrink-0 pt-1">
                       <div className={`w-2.5 h-2.5 rounded-full transition-colors ${
- isSelected
- ? "bg-blue-500 ring-2 ring-blue-500/30"
+                        isSelected
+                          ? "bg-blue-500 ring-2 ring-blue-500/30"
                           : "bg-border group-hover:bg-text-tertiary"
                       }`} />
                     </div>
 
                     {/* Version content */}
                     <div className={`flex-1 min-w-0 rounded-xl p-3 -ml-1 transition-colors ${
- isSelected
- ? "bg-blue-50 dark:bg-blue-950/40 ring-2 ring-blue-400/40 dark:ring-blue-500/30"
+                      isSelected
+                        ? "bg-blue-50 dark:bg-blue-950/40 ring-2 ring-blue-400/40 dark:ring-blue-500/30"
                         : "group-hover:bg-surface-alt/60"
                     }`}>
                       <div className="flex items-center justify-between gap-2">
@@ -300,8 +300,8 @@ export function VersionHistoryPanel({
                             onClick={() => handleCompareClick(v.version)}
                             disabled={compareLoading}
                             className={`text-sm font-bold transition-colors cursor-pointer hover:underline disabled:opacity-50 ${
- isSelected
- ? "text-blue-700 dark:text-blue-300"
+                              isSelected
+                                ? "text-blue-700 dark:text-blue-300"
                                 : "text-text-primary hover:text-accent"
                             }`}
                             title={isSelected ? "Click to stop comparing" : `Compare current with v${v.version}`}
@@ -311,9 +311,9 @@ export function VersionHistoryPanel({
                               <span className="inline-block w-2.5 h-2.5 border-[1.5px] border-blue-500/30 border-t-blue-500 rounded-full animate-spin ml-1 align-middle" />
                             )}
                           </button>
-                          <span className="text-xs text-text-tertiary flex-shrink-0">{formatTime(v.createdAt)}</span>
+                          <span className="text-[10px] text-text-tertiary flex-shrink-0">{formatTime(v.createdAt)}</span>
                           {isSelected && (
-                            <span className="text-xs font-bold text-white bg-blue-500 px-1.5 py-0.5 rounded shadow-sm">
+                            <span className="text-[9px] font-bold text-white bg-blue-500 px-1.5 py-0.5 rounded shadow-sm">
                               Comparing
                             </span>
                           )}
@@ -322,7 +322,7 @@ export function VersionHistoryPanel({
                           type="button"
                           onClick={() => handleRevert(v.version)}
                           disabled={reverting !== null}
-                          className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-accent bg-accent/10 rounded-lg hover:bg-accent/20 active:scale-95 transition cursor-pointer disabled:opacity-50 sm:opacity-0 sm:group-hover:opacity-100"
+                          className="flex-shrink-0 px-3 py-1.5 text-[11px] font-bold text-accent bg-accent/10 rounded-lg hover:bg-accent/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50 sm:opacity-0 sm:group-hover:opacity-100"
                         >
                           {reverting === v.version ? (
                             <span className="flex items-center gap-1">
@@ -334,8 +334,8 @@ export function VersionHistoryPanel({
                       </div>
 
                       {v.editorName && (
-                        <p className="text-xs text-text-secondary mt-1 flex items-center gap-1">
-                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                        <p className="text-[11px] text-text-secondary mt-1 flex items-center gap-1">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
                           </svg>
                           {v.editorName}
@@ -347,7 +347,7 @@ export function VersionHistoryPanel({
                           {v.sections.map((section, j) => (
                             <span
                               key={j}
-                              className="text-xs text-text-tertiary bg-surface-alt px-1.5 py-0.5 rounded-md"
+                              className="text-[10px] text-text-tertiary bg-surface-alt px-1.5 py-0.5 rounded-md"
                             >
                               {section}
                             </span>
@@ -355,7 +355,7 @@ export function VersionHistoryPanel({
                         </div>
                       )}
 
-                      <p className="text-xs text-text-tertiary/60 mt-1">{formatFullDate(v.createdAt)}</p>
+                      <p className="text-[10px] text-text-tertiary/60 mt-1">{formatFullDate(v.createdAt)}</p>
                     </div>
                   </div>
                 );

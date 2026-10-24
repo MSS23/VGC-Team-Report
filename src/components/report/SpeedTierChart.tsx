@@ -30,7 +30,7 @@ interface SpeedTierChartProps {
   megaStates?: Record<number, boolean>;
 }
 
-/** Common meta threats, standard VGC formats (Reg G/H etc.) */
+/** Common meta threats — standard VGC formats (Reg G/H etc.) */
 const META_THREATS_DEFAULT = [
   "flutter-mane", "iron-bundle", "raging-bolt", "calyrex-shadow",
   "urshifu", "urshifu-rapid-strike", "tornadus", "landorus",
@@ -39,7 +39,7 @@ const META_THREATS_DEFAULT = [
   "pelipper", "torkoal", "porygon2", "dusclops",
 ] as const;
 
-/** Champions meta threats, filtered per reg through getChampionsDex(). */
+/** Champions meta threats — filtered per reg through getChampionsDex(). */
 const META_THREATS_CHAMPIONS = [
   // Key Megas
   "kangaskhan-mega", "salamence-mega", "metagross-mega",
@@ -113,7 +113,7 @@ function SideModifierToggle({
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-1.5">
         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-        <span className="text-[11px] sm:text-xs font-bold text-text-tertiary">{label}</span>
+        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-tertiary">{label}</span>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {(Object.entries(MODIFIER_CONFIG) as [SpeedModifier, typeof MODIFIER_CONFIG[SpeedModifier]][]).map(([key, cfg]) => {
@@ -123,9 +123,9 @@ function SideModifierToggle({
               key={key}
               type="button"
               onClick={() => onToggle(side, key)}
-              className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 min-h-11 text-[11px] sm:text-xs font-semibold rounded-lg border transition cursor-pointer ${
- active
- ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
+              className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 min-h-11 text-[10px] sm:text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                active
+                  ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
                   : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
               }`}
               title={`${cfg.label} on ${label}: ${cfg.description}`}
@@ -221,7 +221,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       const baseKey = speciesKeys[i];
       const megaKeys = BASE_KEY_TO_MEGA_KEYS.get(baseKey) ?? [];
       if (megaKeys.length === 0) return [];
-      // Require an actual Mega Stone matching the species, without one,
+      // Require an actual Mega Stone matching the species — without one,
       // Mega Evolution can't trigger and the Mega speed tier isn't reachable.
       const hasMegaStone = !!detectMegaFromItem(mon.parsed.item, mon.parsed.species);
       if (!hasMegaStone) return [];
@@ -251,7 +251,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   }, [showMegaTiers, pokemon, speciesKeys, isChampions, regulation, megaStates]);
 
   // Build meta threat entries. We intentionally do NOT filter out Pokemon
-  // already on the user's team, a player running a bulky/mid-speed variant
+  // already on the user's team — a player running a bulky/mid-speed variant
   // wants to compare it against the standard max-speed meta build of the
   // same species. Duplicates are visually disambiguated by a "META" badge
   // on the meta entry (see render below).
@@ -292,7 +292,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       }>;
   }, [showMetaThreats, regulation, META_THREATS, teamSpeciesSet]);
 
-  // Set of species keys that appear as meta threats, used to show a "Yours" badge
+  // Set of species keys that appear as meta threats — used to show a "Yours" badge
   // on the user's entry when a meta benchmark of the same species is also shown.
   const metaSpeciesSet = useMemo(
     () => new Set(metaEntries.map(e => e.speciesKey)),
@@ -381,13 +381,13 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   // Group entries by their final displayed speed so we can mark every
   // member of a tie group, not just the second-and-later rows. The
   // previous "compare with prevSpeed" approach only flagged the bottom
-  // half of a tie pair, making the user think the unmarked top row
+  // half of a tie pair — making the user think the unmarked top row
   // wasn't tied with anything, then misreading the marked row as
   // "tied with whatever's directly above me" (which it usually wasn't).
   //
   // Only surface tie groups that contain at least one team Pokemon
   // (isYours). A speed tie between two meta-threat Pokemon the user
-  // doesn't run is noise, they only care about races their own
+  // doesn't run is noise — they only care about races their own
   // Pokemon are part of. Meta entries in a relevant group are kept so
   // a team Pokemon's tooltip can list "tied with X" even when X is a
   // meta threat, and so the meta row also shows the TIE marker (the
@@ -403,7 +403,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         groups.set(e.displaySpeed, { species: [e.species], hasTeamMember: e.isYours });
       }
     }
-    // Drop groups with no team member, those are meta-vs-meta ties (noise).
+    // Drop groups with no team member — those are meta-vs-meta ties (noise).
     const relevant = new Map<number, string[]>();
     for (const [speed, group] of groups) {
       if (group.hasTeamMember) relevant.set(speed, group.species);
@@ -425,10 +425,10 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   return (
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
       <div>
-        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text-primary presenting:text-3xl tracking-tight">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text-primary presenting:text-3xl tracking-tight">
           {t.teamAnalysis}
         </h2>
-        <p className="text-sm sm:text-base text-text-secondary mt-1 ">
+        <p className="text-sm sm:text-base text-text-secondary mt-1 font-medium">
           {t.speedTiersAndCoverage}
         </p>
       </div>
@@ -436,7 +436,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       {/* Speed Tiers Section */}
       <div className="flex flex-col gap-3" data-walkthrough="speed-tiers">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-text-tertiary">
+          <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary">
             {t.speedTiers}
           </h3>
         </div>
@@ -455,26 +455,26 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
               <SideModifierToggle
                 side="opponent"
                 label="Opponent"
-                color="var(--chart-muted-2)"
+                color="#64748b"
                 modifiers={opponentModifiers}
                 onToggle={toggleModifier}
               />
             )}
           </div>
 
-          {/* Overlay toggles, Mega tiers and Meta Threats */}
+          {/* Overlay toggles — Mega tiers and Meta Threats */}
           <div className="flex items-center gap-2 pt-1 border-t border-border-subtle flex-wrap">
-            {/* Mega tiers toggle, only meaningful in the Champions format
+            {/* Mega tiers toggle — only meaningful in the Champions format
                 (Reg M-A) since other regulations don't allow Mega Evolution.
                 Hidden entirely for any explicit non-M-A regulation. */}
             {(!regulation || isChampionsFormat(regulation)) && (
               <button
                 type="button"
                 onClick={() => setShowMegaTiers(!showMegaTiers)}
-                title="Adds a separate purple Mega-speed row for each team member that has a matching Mega Stone equipped. A Mega that shares its base form's Speed shows the same number, that's expected, not a bug."
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition cursor-pointer ${
- showMegaTiers
- ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
+                title="Adds a separate purple Mega-speed row for each team member that has a matching Mega Stone equipped. A Mega that shares its base form's Speed shows the same number — that's expected, not a bug."
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                  showMegaTiers
+                    ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
                     : "bg-surface-alt/50 text-text-secondary border-border hover:border-purple-500/30 hover:text-purple-400"
                 }`}
               >
@@ -490,10 +490,10 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                 setShowMetaThreats(!showMetaThreats);
                 if (showMetaThreats) setOpponentModifiers(new Set());
               }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition cursor-pointer ${
- showMetaThreats
- ? "bg-blue-500/15 text-blue-800 border-blue-500/30"
-                  : "bg-surface-alt/50 text-text-secondary border-border hover:border-blue-500/30 hover:text-blue-800"
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                showMetaThreats
+                  ? "bg-blue-500/15 text-blue-500 border-blue-500/30"
+                  : "bg-surface-alt/50 text-text-secondary border-border hover:border-blue-500/30 hover:text-blue-500"
               }`}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -505,14 +505,14 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                 the report's regulation tag, which is otherwise invisible. */}
             {showMetaThreats && (
               <span
-                className="text-[11px] sm:text-xs text-text-tertiary "
-                title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag, Champions formats use the Champions meta for that reg, everything else uses the standard meta."
+                className="text-[10px] sm:text-xs text-text-tertiary font-medium"
+                title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag — Champions formats use the Champions meta for that reg, everything else uses the standard meta."
               >
                 * {metaSourceLabel}
               </span>
             )}
             {hasAnyModifiers && (
-              <span className="text-[11px] sm:text-xs text-accent ml-auto">
+              <span className="text-[10px] sm:text-xs text-accent font-medium ml-auto">
                 {yourModSummary && `You: ${yourModSummary}`}
                 {yourModSummary && oppModSummary && " \u00B7 "}
                 {oppModSummary && `Opp: ${oppModSummary}`}
@@ -523,13 +523,13 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           {/* Mega toggle feedback \u2014 explain the empty state instead of silently
               rendering nothing, and clarify what the toggle actually does. */}
           {showMegaTiers && (
-            <p className="text-[11px] sm:text-xs text-text-tertiary leading-relaxed">
+            <p className="text-[10px] sm:text-xs text-text-tertiary leading-relaxed">
               {teamMegaEntries.length === 0 ? (
                 Object.values(megaStates ?? {}).some(Boolean) ? (
                   "Your Mega is already shown in its Mega form above. Switch it back to its base form on its card to compare both speeds."
                 ) : (
                 <>
-                  No Mega forms to show, a team member needs a matching Mega Stone equipped.
+                  No Mega forms to show — a team member needs a matching Mega Stone equipped.
                   {regulation && !isChampionsFormat(regulation) && " Mega Evolution is only legal in Pokémon Champions (Reg M-A/M-B/M-C)."}
                 </>
                 )
@@ -561,7 +561,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             return (
               <div
                 key={entryKey}
-                className={`flex items-center gap-1.5 sm:gap-3 transition duration-300 ${!entry.isYours ? "opacity-70" : ""}`}
+                className={`flex items-center gap-1.5 sm:gap-3 transition-all duration-300 ${!entry.isYours ? "opacity-70" : ""}`}
               >
                 {/* Name column */}
                 <div className="flex items-center gap-1.5 sm:gap-2 w-[6.5rem] sm:w-40 lg:w-48 flex-shrink-0 min-w-0">
@@ -580,35 +580,35 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                     shiny={sc?.shiny}
                   />
                   <span className={`text-xs sm:text-sm lg:text-base font-bold truncate ${
- entry.isMega ? "text-purple-400" : entry.isYours ? "text-text-primary" : "text-text-tertiary"
+                    entry.isMega ? "text-purple-400" : entry.isYours ? "text-text-primary" : "text-text-tertiary"
                   }`}>
                     {entry.species}
                   </span>
                   {/* Mega-evolved speed entry for one of the user's team Pokemon. */}
                   {entry.isMega && (
                     <span
-                      className="text-[11px] sm:text-[11px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0"
+                      className="text-[8px] sm:text-[9px] font-extrabold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
                       title="Mega-evolved speed (same EV/SP spread as base form)"
                     >
                       Mega
                     </span>
                   )}
                   {/* Disambiguates a meta entry that shares species with one
-                      of the user's Pokemon, e.g. their bulky Garchomp next
+                      of the user's Pokemon — e.g. their bulky Garchomp next
                       to the meta max-speed Garchomp. */}
                   {!entry.isYours && entry.isDuplicateOfTeam && (
                     <span
-                      className="text-[11px] sm:text-[11px] font-bold text-blue-400 bg-blue-500/15 border border-blue-500/30 px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0"
+                      className="text-[8px] sm:text-[9px] font-extrabold text-blue-400 bg-blue-500/15 border border-blue-500/30 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
                       title="Standard meta variant (max speed benchmark)"
                     >
                       Meta
                     </span>
                   )}
-                  {/* "Yours" badge, shown when a meta benchmark of the same species
+                  {/* "Yours" badge — shown when a meta benchmark of the same species
                       is also visible, so users can tell which bar is their own spread. */}
                   {entry.isYours && !entry.isMega && showMetaThreats && metaSpeciesSet.has(entry.speciesKey) && (
                     <span
-                      className="text-[11px] sm:text-[11px] font-bold px-1 sm:px-1.5 py-0.5 rounded flex-shrink-0"
+                      className="text-[8px] sm:text-[9px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
                       style={{ color: "var(--stat-spe)", backgroundColor: "color-mix(in srgb, var(--stat-spe) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--stat-spe) 30%, transparent)" }}
                       title="Your spread"
                     >
@@ -621,24 +621,24 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                 <div className="flex-1 flex items-center gap-2 min-w-0">
                   <div className="flex-1 h-7 sm:h-8 lg:h-10 bg-surface-alt rounded-lg overflow-hidden relative">
                     <div
-                      className={`absolute inset-y-0 left-0 rounded-lg transition duration-300 ${
- entry.hasSpeedBoost ? "bar-speed-boosted" : ""
+                      className={`absolute inset-y-0 left-0 rounded-lg transition-all duration-300 ${
+                        entry.hasSpeedBoost ? "bar-speed-boosted" : ""
                       }`}
                       style={{
                         width: `${percent}%`,
                         backgroundColor: entry.isMega
-                          ? "var(--chart-mega)"
+                          ? "#a855f7"
                           : entry.isYours
-                            ? entry.hasSpeedBoost ? "var(--chart-boost)" : "var(--stat-spe)"
-                            : "var(--chart-muted-2)",
+                            ? entry.hasSpeedBoost ? "#f59e0b" : "var(--stat-spe)"
+                            : "#64748b",
                         opacity: entry.isMega ? 0.6 : entry.isYours ? (entry.hasSpeedBoost ? 0.8 : 0.7) : 0.4,
                       }}
                     />
-                    {/* Speed tie indicator, shows on every entry that shares
+                    {/* Speed tie indicator — shows on every entry that shares
                         its exact final speed with at least one other entry. */}
                     {isTie && (
                       <div
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-bold text-amber-800 bg-amber-500/10 px-1.5 py-0.5 rounded cursor-help"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded cursor-help"
                         title={tiePartners.length > 0 ? `Speed tie at ${entry.displaySpeed} with ${tiePartners.join(", ")}` : `Speed tie at ${entry.displaySpeed}`}
                         aria-label={tiePartners.length > 0 ? `Speed tie at ${entry.displaySpeed} with ${tiePartners.join(", ")}` : `Speed tie at ${entry.displaySpeed}`}
                       >
@@ -649,37 +649,37 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
 
                   {/* Speed value + delta + position change */}
                   <div className="w-20 sm:w-32 lg:w-36 flex-shrink-0 flex items-center justify-end gap-1 sm:gap-1.5">
-                    <span className={`text-xs sm:text-sm lg:text-base font-[family-name:var(--font-mono)] font-bold tabular-nums ${
- entry.isMega
- ? "text-purple-400"
+                    <span className={`text-xs sm:text-sm lg:text-base font-[family-name:var(--font-mono)] font-extrabold tabular-nums ${
+                      entry.isMega
+                        ? "text-purple-400"
                         : entry.isYours
-                          ? entry.hasSpeedBoost ? "text-amber-800" : "text-text-primary"
+                          ? entry.hasSpeedBoost ? "text-amber-500" : "text-text-primary"
                           : "text-text-tertiary"
                     }`}>
                       {entry.displaySpeed}
                     </span>
                     {entry.isYours && !entry.isMega && entry.hasSpeedBoost && entry.speedBoostLabel && (
-                      <span className="text-[11px] text-amber-500/60 font-semibold hidden sm:inline">
+                      <span className="text-[10px] text-amber-500/60 font-semibold hidden sm:inline">
                         {entry.speedBoostLabel}
                       </span>
                     )}
                     {/* Delta from modifier */}
                     {entry.delta !== 0 && (
-                      <span className={`text-[11px] sm:text-xs font-bold tabular-nums ${
- entry.delta > 0 ? "text-emerald-800" : "text-red-400"
+                      <span className={`text-[10px] sm:text-xs font-bold tabular-nums ${
+                        entry.delta > 0 ? "text-emerald-500" : "text-red-400"
                       }`}>
                         {entry.delta > 0 ? "+" : ""}{entry.delta}
                       </span>
                     )}
                     {/* Position change indicator */}
                     {posChange !== 0 && (
-                      <span className={`text-[11px] sm:text-[11px] font-bold flex items-center gap-px ${
- posChange > 0 ? "text-emerald-800" : "text-red-400"
+                      <span className={`text-[9px] sm:text-[10px] font-bold flex items-center gap-px ${
+                        posChange > 0 ? "text-emerald-500" : "text-red-400"
                       }`} title={`Moved ${Math.abs(posChange)} position${Math.abs(posChange) > 1 ? "s" : ""} ${posChange > 0 ? "up" : "down"}`}>
                         {posChange > 0 ? (
-                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15" /></svg>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15" /></svg>
                         ) : (
-                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
                         )}
                         <span className="hidden sm:inline">{Math.abs(posChange)}</span>
                       </span>
@@ -699,7 +699,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           </span>
           {showMegaTiers && teamMegaEntries.length > 0 && (
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded" style={{ backgroundColor: "var(--chart-mega)", opacity: 0.6 }} />
+              <span className="w-3 h-3 rounded" style={{ backgroundColor: "#a855f7", opacity: 0.6 }} />
               Mega-evolved speed
             </span>
           )}
@@ -720,10 +720,10 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           )}
         </div>
 
-        {/* Meta source footnote, ties the asterisk above to the regulation. */}
+        {/* Meta source footnote — ties the asterisk above to the regulation. */}
         {showMetaThreats && (
-          <p className="text-[11px] sm:text-xs text-text-tertiary leading-relaxed">
-            * Max-speed benchmarks for your team&apos;s regulation, the meta list auto-follows the {regulation ?? "current"} tag.
+          <p className="text-[10px] sm:text-xs text-text-tertiary leading-relaxed">
+            * Max-speed benchmarks for your team&apos;s regulation — the meta list auto-follows the {regulation ?? "current"} tag.
           </p>
         )}
       </div>

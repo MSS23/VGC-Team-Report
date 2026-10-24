@@ -73,7 +73,7 @@ export function WalkthroughOverlay({
     return () => window.removeEventListener("keydown", handleKey, { capture: true });
   }, [onNext, onSkip, onPrev]);
 
-  // Measure target and position tooltip, reads DOM directly, no stale state
+  // Measure target and position tooltip — reads DOM directly, no stale state
   const positionTooltip = useCallback(() => {
     const tt = tooltipRef.current;
     if (!tt) return;
@@ -175,10 +175,10 @@ export function WalkthroughOverlay({
         }, 400);
         return;
       } else if (attempts < maxAttempts) {
-        // Element not in DOM yet (slide still rendering), retry
+        // Element not in DOM yet (slide still rendering) — retry
         setTimeout(tryPosition, 100);
       } else {
-        // Give up, position anyway (centered fallback) and show
+        // Give up — position anyway (centered fallback) and show
         positionTooltip();
         requestAnimationFrame(() => { if (!cancelled) setVisible(true); });
       }
@@ -221,7 +221,7 @@ export function WalkthroughOverlay({
 
   return createPortal(
     <>
-      {/* Backdrop, tap or Enter to dismiss the tour at any step, including first run. */}
+      {/* Backdrop — tap or Enter to dismiss the tour at any step, including first run. */}
       <div
         role="button"
         tabIndex={0}
@@ -271,13 +271,13 @@ export function WalkthroughOverlay({
         className="bg-surface rounded-2xl border border-border shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Always-available close, first-run users were getting trapped before. */}
+        {/* Always-available close — first-run users were getting trapped before. */}
         <button
           onClick={onSkip}
           aria-label="Close tour"
-          className="absolute top-1 right-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-[0.92] transition cursor-pointer z-10"
+          className="absolute top-1 right-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt active:scale-[0.92] transition-all cursor-pointer z-10"
         >
-          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
@@ -306,8 +306,8 @@ export function WalkthroughOverlay({
           {Array.from({ length: totalSteps }, (_, i) => (
             <div
               key={i}
-              className={`h-1 rounded-full flex-1 transition duration-200 ${
- i <= stepIndex ? "bg-accent" : "bg-surface-alt"
+              className={`h-1 rounded-full flex-1 transition-all duration-200 ${
+                i <= stepIndex ? "bg-accent" : "bg-surface-alt"
               }`}
             />
           ))}
@@ -319,12 +319,12 @@ export function WalkthroughOverlay({
             {stepIndex > 0 && onPrev ? (
               <button
                 onClick={onPrev}
-                className="text-xs text-text-tertiary hover:text-text-secondary px-3 py-2 rounded-lg active:scale-[0.95] transition cursor-pointer"
+                className="text-xs font-medium text-text-tertiary hover:text-text-secondary px-3 py-2 rounded-lg active:scale-[0.95] transition-all cursor-pointer"
               >
                 &larr; {t.prev}
               </button>
             ) : (
-              <span className="text-xs text-text-tertiary tabular-nums ">
+              <span className="text-xs text-text-tertiary tabular-nums font-medium">
                 {stepIndex + 1} {t.of} {totalSteps}
               </span>
             )}
@@ -333,14 +333,14 @@ export function WalkthroughOverlay({
             {!isLastStep && (
               <button
                 onClick={onSkip}
-                className="text-xs text-text-tertiary hover:text-text-secondary px-3 py-2 rounded-lg active:scale-[0.95] transition cursor-pointer"
+                className="text-xs font-medium text-text-tertiary hover:text-text-secondary px-3 py-2 rounded-lg active:scale-[0.95] transition-all cursor-pointer"
               >
                 {t.skipAll}
               </button>
             )}
             <button
               onClick={onNext}
-              className="text-xs font-bold text-white bg-accent hover:brightness-110 px-5 py-2 rounded-lg active:scale-[0.95] transition cursor-pointer shadow-sm shadow-accent/25"
+              className="text-xs font-bold text-white bg-accent hover:brightness-110 px-5 py-2 rounded-lg active:scale-[0.95] transition-all cursor-pointer shadow-sm shadow-accent/25"
             >
               {isLastStep ? t.done : t.next}
             </button>

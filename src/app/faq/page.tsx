@@ -4,13 +4,13 @@ import { BreadcrumbListJsonLd, FAQPageJsonLd, HowToSchema } from "@/components/s
 import { PageFooter } from "@/components/layout/PageFooter";
 
 export const metadata: Metadata = {
-  title: "FAQ, Common Questions Answered",
+  title: "FAQ — Common Questions Answered",
   description:
     "Answers to the most common questions about VGC Team Report: how to share a Pokémon VGC team, what a team report is, format support, and more.",
   keywords: ["VGC team report FAQ", "how to share VGC team", "Pokemon team report", "VGC team builder help", "Showdown export", "PokePaste alternative", "VGC damage calcs", "speed tiers VGC", "Pokemon Champions format"],
   alternates: { canonical: "https://pokemonvgcteamreport.com/faq" },
   openGraph: {
-    title: "VGC Team Report FAQ, Common Questions Answered",
+    title: "VGC Team Report FAQ — Common Questions Answered",
     description:
       "Answers to the most common questions about VGC Team Report: how to share a Pokémon VGC team, what a team report is, format support, and more.",
     url: "https://pokemonvgcteamreport.com/faq",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "VGC Team Report FAQ, Common Questions Answered",
+    title: "VGC Team Report FAQ — Common Questions Answered",
     description:
       "Answers to the most common questions about VGC Team Report: how to share a Pokémon VGC team, what a team report is, format support, and more.",
     images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
@@ -40,7 +40,7 @@ const FAQ_ITEMS = [
   {
     question: "What is VGC Team Report?",
     answer:
-      "VGC Team Report is a free web tool for competitive Pokémon players. It lets you build a detailed team report, paste your team from Pokémon Showdown or PokéPaste, add matchup notes, key damage calculations, speed tier breakdowns, and tournament context, then share it with a single link. Whether you're presenting a team after a Regional Championship, coaching a student, or documenting a ladder build, VGC Team Report gives your team the write-up it deserves.",
+      "VGC Team Report is a free web tool for competitive Pokémon players. It lets you build a detailed team report — paste your team from Pokémon Showdown or PokéPaste, add matchup notes, key damage calculations, speed tier breakdowns, and tournament context, then share it with a single link. Whether you're presenting a team after a Regional Championship, coaching a student, or documenting a ladder build, VGC Team Report gives your team the write-up it deserves.",
   },
   {
     question: "What is a VGC team report?",
@@ -50,22 +50,22 @@ const FAQ_ITEMS = [
   {
     question: "How do I share a VGC team using VGC Team Report?",
     answer:
-      "Sharing a team takes under five minutes. Export your team from Pokémon Showdown (team builder → Export) or copy a PokéPaste link. Paste the export into VGC Team Report, the tool automatically parses your six Pokémon, movesets, items, and abilities. Add your report content: matchup notes, damage calcs, speed tiers, and a team overview. Click Share to generate a permanent public link. Anyone with the link can view your report without needing an account.",
+      "Sharing a team takes under five minutes. Export your team from Pokémon Showdown (team builder → Export) or copy a PokéPaste link. Paste the export into VGC Team Report — the tool automatically parses your six Pokémon, movesets, items, and abilities. Add your report content: matchup notes, damage calcs, speed tiers, and a team overview. Click Share to generate a permanent public link. Anyone with the link can view your report without needing an account.",
   },
   {
     question: "Does VGC Team Report support Pokémon Champions and Mega Evolution?",
     answer:
-      "Yes. VGC Team Report fully supports Pokémon Champions, the official competitive format for the 2026 Play! Pokémon Championship Series, including Mega Evolution detection and display. When you import a Pokémon Champions team, Mega Evolutions are automatically recognized and displayed with their Mega form stats. VGC Team Report supports every Champions regulation, M-A, M-B and the current Regulation M-C, including the new Z Mega Evolutions.",
+      "Yes. VGC Team Report fully supports Pokémon Champions — the official competitive format for the 2026 Play! Pokémon Championship Series — including Mega Evolution detection and display. When you import a Pokémon Champions team, Mega Evolutions are automatically recognized and displayed with their Mega form stats. VGC Team Report supports every Champions regulation — M-A, M-B and the current Regulation M-C, including the new Z Mega Evolutions.",
   },
   {
     question: "How is VGC Team Report different from PokéPaste or VGC.tools?",
     answer:
-      "These tools serve different purposes. PokéPaste shares the raw team paste (six Pokémon, sets, items), minimal and text-only. VGC.tools is for building a new team from scratch with a community library. Pikalytics analyzes usage stats and meta data. VGC Team Report is for documenting a completed team with full strategy notes, matchup plans, and damage calcs, then sharing it as a polished, readable report. Think of PokéPaste as the Pastebin of Pokémon teams, and VGC Team Report as the write-up you publish after piloting the team.",
+      "These tools serve different purposes. PokéPaste shares the raw team paste (six Pokémon, sets, items) — minimal and text-only. VGC.tools is for building a new team from scratch with a community library. Pikalytics analyzes usage stats and meta data. VGC Team Report is for documenting a completed team with full strategy notes, matchup plans, and damage calcs — then sharing it as a polished, readable report. Think of PokéPaste as the Pastebin of Pokémon teams, and VGC Team Report as the write-up you publish after piloting the team.",
   },
   {
     question: "Is VGC Team Report free?",
     answer:
-      "Yes, VGC Team Report is completely free to use. No account is required to create or view a team report. Creating a free account lets you save and manage your reports across sessions.",
+      "Yes — VGC Team Report is completely free to use. No account is required to create or view a team report. Creating a free account lets you save and manage your reports across sessions.",
   },
   {
     question: "What competitive Pokémon formats does VGC Team Report support?",
@@ -75,7 +75,7 @@ const FAQ_ITEMS = [
   {
     question: "What are damage calculations, and why do they belong in a team report?",
     answer:
-      "Damage calculations (damage calcs or \"calcs\") show the exact range of damage one Pokémon's move deals to another under specific conditions, for example, whether a Pokémon survives a key hit from a top meta threat or OHKOs a target it needs to remove. Including calcs in a team report explains why specific EV spreads were chosen, making the report far more useful to players who want to verify the strategy logic and adapt spreads for their own builds. VGC Team Report includes a built-in damage calc interface so you can add and display calcs without switching tools.",
+      "Damage calculations (damage calcs or \"calcs\") show the exact range of damage one Pokémon's move deals to another under specific conditions — for example, whether a Pokémon survives a key hit from a top meta threat or OHKOs a target it needs to remove. Including calcs in a team report explains why specific EV spreads were chosen, making the report far more useful to players who want to verify the strategy logic and adapt spreads for their own builds. VGC Team Report includes a built-in damage calc interface so you can add and display calcs without switching tools.",
   },
   {
     question: "What are speed tiers in VGC, and how does VGC Team Report handle them?",
@@ -85,17 +85,17 @@ const FAQ_ITEMS = [
   {
     question: "What is an Open Team Sheet (OTS) in VGC, and how does VGC Team Report support it?",
     answer:
-      "An Open Team Sheet (OTS) is a document that reveals your six Pokémon, their items, abilities, moves, and Tera types before a match, but omits EV and IV spreads. OTS rules are used at many major VGC tournaments so opponents know the general team composition without seeing exact EV benchmarks. VGC Team Report includes a built-in OTS generator: open any team report and use the 'Visual OTS Sheet' option in the menu to generate a clean, shareable OTS image with all six Pokémon sprites and a QR code linking to your report. You can download the image or copy an OTS-formatted text paste compatible with Pokémon Showdown.",
+      "An Open Team Sheet (OTS) is a document that reveals your six Pokémon, their items, abilities, moves, and Tera types before a match — but omits EV and IV spreads. OTS rules are used at many major VGC tournaments so opponents know the general team composition without seeing exact EV benchmarks. VGC Team Report includes a built-in OTS generator: open any team report and use the 'Visual OTS Sheet' option in the menu to generate a clean, shareable OTS image with all six Pokémon sprites and a QR code linking to your report. You can download the image or copy an OTS-formatted text paste compatible with Pokémon Showdown.",
   },
   {
     question: "What are SP spreads in Pokémon Champions?",
     answer:
-      "In the Pokémon Champions format, Stat Points (SP) replace the traditional EV (Effort Value) system. Each Pokémon has 66 total SP to distribute across the six stats (HP, Attack, Defense, Sp. Atk, Sp. Def, Speed), with a maximum of 32 SP per individual stat. The conversion from EVs is not 1:1, the first SP in a stat costs 4 EVs and each SP after that costs 8, so 32 SP corresponds to a fully invested 252-EV stat in traditional VGC. VGC Team Report automatically detects Champions format teams and displays SP values correctly when you import a team paste.",
+      "In the Pokémon Champions format, Stat Points (SP) replace the traditional EV (Effort Value) system. Each Pokémon has 66 total SP to distribute across the six stats (HP, Attack, Defense, Sp. Atk, Sp. Def, Speed), with a maximum of 32 SP per individual stat. The conversion from EVs is not 1:1 — the first SP in a stat costs 4 EVs and each SP after that costs 8, so 32 SP corresponds to a fully invested 252-EV stat in traditional VGC. VGC Team Report automatically detects Champions format teams and displays SP values correctly when you import a team paste.",
   },
   {
     question: "What is Regulation M-C in Pokémon Champions?",
     answer:
-      "Regulation M-C is the current competitive ruleset for Pokémon Champions (September 9, December 2, 2026). It is a superset of Regulation M-B and M-A: nothing was removed, and it adds Pokémon such as Rillaboom, Cinderace, Inteleon, Indeedee, Salamence and Baxcalibur plus six new Mega Evolutions, Mega Garchomp Z, Mega Lucario Z, Mega Absol Z, Mega Salamence, Mega Baxcalibur and Mega Golisopod. You can still only Mega Evolve once per battle, restricted legendaries are banned, and item clause applies. VGC Team Report auto-detects the right Champions regulation from your paste and checks legality against it.",
+      "Regulation M-C is the current competitive ruleset for Pokémon Champions (September 9 – December 2, 2026). It is a superset of Regulation M-B and M-A: nothing was removed, and it adds Pokémon such as Rillaboom, Cinderace, Inteleon, Indeedee, Salamence and Baxcalibur plus six new Mega Evolutions — Mega Garchomp Z, Mega Lucario Z, Mega Absol Z, Mega Salamence, Mega Baxcalibur and Mega Golisopod. You can still only Mega Evolve once per battle, restricted legendaries are banned, and item clause applies. VGC Team Report auto-detects the right Champions regulation from your paste and checks legality against it.",
   },
   {
     question: "How do I get my VGC team report discovered by other players?",
@@ -104,7 +104,7 @@ const FAQ_ITEMS = [
   },
 ] as const;
 
-// "How to share a VGC team", wired from .swarm/drafts/r7-content-brief-share-vgc-team-howto.md.
+// "How to share a VGC team" — wired from .swarm/drafts/r7-content-brief-share-vgc-team-howto.md.
 // HowTo schema is the highest-yield AEO win per R7 audit; steps must match the FAQ answer.
 const SHARE_VGC_TEAM_HOW_TO_STEPS = [
   {
@@ -141,7 +141,7 @@ export default function FAQPage() {
       <FAQPageJsonLd items={[...FAQ_ITEMS]} />
       <HowToSchema steps={SHARE_VGC_TEAM_HOW_TO_STEPS} />
 
-      <main className="mx-auto max-w-(--container) px-(--gutter) py-8 sm:py-12">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-xs text-text-tertiary mb-8" aria-label="Breadcrumb">
           <Link href="/" className="inline-flex min-h-11 items-center hover:text-text-secondary transition-colors">
@@ -150,28 +150,28 @@ export default function FAQPage() {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <polyline points="9 18 15 12 9 6" />
           </svg>
-          <span className="text-text-secondary ">FAQ</span>
+          <span className="text-text-secondary font-medium">FAQ</span>
         </nav>
 
         {/* Page header */}
-        <header className="mb-(--section-gap-s) max-w-3xl pt-4 sm:pt-8">
-          <h1 className="font-display text-display-s font-bold tracking-display text-text-primary">
+        <header className="mb-10">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight mb-3">
             Frequently Asked Questions
           </h1>
-          <p className="lead mt-5 text-text-secondary">
+          <p className="text-sm sm:text-base text-text-secondary leading-relaxed max-w-2xl">
             Everything you need to know about building, sharing, and discovering competitive
             Pok&eacute;mon VGC team reports.
           </p>
         </header>
 
         {/* FAQ list */}
-        <div className="divide-y divide-border border-t border-border">
+        <div className="space-y-0 divide-y divide-border/50">
           {FAQ_ITEMS.map((item, index) => (
-            <div key={index} className="grid gap-4 py-8 lg:grid-cols-12 lg:gap-(--gap-columns)">
-              <h2 id={slugify(item.question)} className="font-display text-title font-bold tracking-tight text-text-primary lg:col-span-5">
+            <div key={index} className="py-6 first:pt-0">
+              <h2 id={slugify(item.question)} className="text-base sm:text-lg font-semibold text-text-primary mb-3 leading-snug">
                 {item.question}
               </h2>
-              <p className="max-w-[65ch] text-text-secondary leading-relaxed lg:col-span-7">
+              <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
                 {item.answer}
               </p>
             </div>
@@ -179,23 +179,23 @@ export default function FAQPage() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-(--section-gap-s) border-t border-border pt-8">
-          <p className="font-display text-title font-bold tracking-tight text-text-primary">
+        <div className="mt-12 p-5 sm:p-6 rounded-2xl bg-surface border border-border">
+          <p className="text-sm font-semibold text-text-primary mb-1">
             Ready to build your team report?
           </p>
-          <p className="mt-2 mb-6 text-text-secondary">
+          <p className="text-sm text-text-secondary mb-4">
             Paste your team from Pok&eacute;mon Showdown and create a shareable team report in minutes.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
               href="/"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-card bg-accent px-6 text-base font-semibold text-accent-ink transition-[background-color,transform] duration-(--dur-short) hover:brightness-110 active:translate-y-px"
+              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-bold hover:opacity-90 active:scale-[0.97] transition-all"
             >
               Build a Report
             </Link>
             <Link
               href="/explore"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-card border border-text-primary px-6 text-base font-semibold text-text-primary transition-colors duration-(--dur-short) hover:bg-surface-alt"
+              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-surface-alt border border-border text-sm font-semibold text-text-primary hover:border-accent/40 active:scale-[0.97] transition-all"
             >
               Browse Reports
             </Link>

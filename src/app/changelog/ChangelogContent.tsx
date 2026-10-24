@@ -83,7 +83,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
   const expandAll = () => setExpandedVersions(new Set(entries.map((e) => e.version)));
   const collapseAll = () => setExpandedVersions(new Set());
 
-  // Filtering, narrow visible entries (and items within them) by the
+  // Filtering — narrow visible entries (and items within them) by the
   // currently selected type and free-text query. Hides any version whose
   // items all get filtered out so the timeline doesn't have empty cards.
   const filteredEntries = useMemo(() => {
@@ -127,9 +127,29 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
           className="mb-10"
         >
           <div className="flex items-center gap-3 mb-3">
+            <div className="w-11 h-11 rounded-2xl bg-accent-surface flex items-center justify-center ring-1 ring-accent/20">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-accent"
+                aria-hidden
+              >
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            </div>
             <div>
-              <h1 className="font-display text-display-s font-bold tracking-display text-text-primary">Changelog</h1>
-              <p className="lead mt-5 text-text-secondary">Every shipped change, version by version</p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Changelog</h1>
+              <p className="text-sm text-text-secondary">Every shipped change, version by version</p>
             </div>
           </div>
 
@@ -137,11 +157,11 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
             <CountPill color="emerald" label={`${totalNew} new features`} />
             <CountPill color="sky" label={`${totalImproved} improvements`} />
             <CountPill color="amber" label={`${totalFixed} fixes`} />
-            <span className="text-xs text-text-tertiary ml-1">across {entries.length} releases</span>
+            <span className="text-xs text-text-tertiary font-medium ml-1">across {entries.length} releases</span>
           </div>
         </motion.div>
 
-        {/* Controls, search + type filter + expand/collapse */}
+        {/* Controls — search + type filter + expand/collapse */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -194,9 +214,9 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                       if (e.key === "Home") { e.preventDefault(); tabs[0]?.focus(); }
                       if (e.key === "End") { e.preventDefault(); tabs[tabs.length - 1]?.focus(); }
                     }}
-                    className={`min-h-11 px-3 py-2 text-xs font-bold rounded-lg transition capitalize cursor-pointer ${
- active
- ? "bg-accent text-white shadow-sm shadow-accent/30"
+                    className={`min-h-11 px-3 py-2 text-xs font-bold rounded-lg transition-all capitalize cursor-pointer ${
+                      active
+                        ? "bg-accent text-white shadow-sm shadow-accent/30"
                         : "text-text-secondary hover:text-text-primary"
                     }`}
                   >
@@ -256,8 +276,8 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                         treatment; others get a neutral surface bubble. */}
                     <div
                       className={`hidden sm:flex absolute left-0 top-4 w-10 h-10 rounded-full items-center justify-center z-10 transition-transform duration-300 hover:scale-105 ${
- entry.highlight
- ? "bg-accent text-white shadow-lg shadow-accent/30 ring-4 ring-accent/15"
+                        entry.highlight
+                          ? "bg-accent text-white shadow-lg shadow-accent/30 ring-4 ring-accent/15"
                           : "bg-surface border-2 border-border text-text-tertiary"
                       }`}
                       aria-hidden
@@ -267,13 +287,13 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
 
                     {/* Card */}
                     <article
-                      className={`rounded-2xl border overflow-hidden transition duration-300 ${
- entry.highlight
- ? "border-accent/30 bg-gradient-to-br from-accent-surface/30 to-surface shadow-sm shadow-accent/10"
+                      className={`rounded-2xl border overflow-hidden transition-all duration-300 ${
+                        entry.highlight
+                          ? "border-accent/30 bg-gradient-to-br from-accent-surface/30 to-surface shadow-sm shadow-accent/10"
                           : "border-border bg-surface hover:border-accent/25"
                       }`}
                     >
-                      {/* Clickable header, always visible */}
+                      {/* Clickable header — always visible */}
                       <button
                         type="button"
                         onClick={() => toggleVersion(entry.version)}
@@ -283,17 +303,17 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                       >
                         <span className="sm:hidden text-xl flex-shrink-0">{entry.emoji}</span>
                         <span
-                          className={`inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-lg flex-shrink-0 font-mono ${
- entry.highlight ? "bg-accent text-white" : "bg-accent-surface text-accent"
+                          className={`inline-flex items-center px-2.5 py-1 text-[11px] font-extrabold rounded-lg tracking-wide flex-shrink-0 font-mono ${
+                            entry.highlight ? "bg-accent text-white" : "bg-accent-surface text-accent"
                           }`}
                         >
                           v{entry.version}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <h2 className="font-display text-title font-bold tracking-tight text-text-primary group-hover:text-accent transition-colors line-clamp-2 sm:truncate">
+                          <h2 className="text-sm sm:text-base font-bold text-text-primary group-hover:text-accent transition-colors truncate">
                             {entry.title}
                           </h2>
-                          <span className="text-xs text-text-tertiary ">{entry.date}</span>
+                          <span className="text-[11px] text-text-tertiary font-medium">{entry.date}</span>
                         </div>
                         <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0" aria-hidden>
                           {newCount > 0 && <MiniCount color="emerald">{newCount}</MiniCount>}
@@ -316,11 +336,11 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                         </svg>
                       </button>
 
-                      {/* Items, collapsible */}
+                      {/* Items — collapsible */}
                       <div
                         id={`${anchorId}-items`}
-                        className={`grid transition duration-300 ease-out ${
- isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                        className={`grid transition-all duration-300 ease-out ${
+                          isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                         }`}
                       >
                         <div className="overflow-hidden">
@@ -330,7 +350,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
                               return (
                                 <li key={j} className="flex items-start gap-3 group/item">
                                   <span
-                                    className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-bold rounded-md mt-0.5 ${style.badge}`}
+                                    className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-extrabold rounded-md tracking-wider uppercase mt-0.5 ${style.badge}`}
                                   >
                                     <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} aria-hidden />
                                     {style.label}
@@ -360,7 +380,7 @@ function ChangelogInner({ entries }: ChangelogContentProps) {
           <p className="text-sm text-text-tertiary mb-4">Have an idea for the next update?</p>
           <a
             href="/feedback"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition "
+            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide"
           >
             <svg
               width="14"
@@ -392,8 +412,11 @@ function CountPill({ color, label }: { color: "emerald" | "sky" | "amber"; label
       : color === "sky"
       ? "bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/30 dark:text-sky-300 dark:ring-sky-400/30"
       : "bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/30 dark:text-amber-300 dark:ring-amber-400/30";
+  const dotCls =
+    color === "emerald" ? "bg-emerald-500" : color === "sky" ? "bg-sky-500" : "bg-amber-500";
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg ${cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${dotCls}`} aria-hidden />
       {label}
     </span>
   );
@@ -407,7 +430,7 @@ function MiniCount({ color, children }: { color: "emerald" | "sky" | "amber"; ch
       ? "bg-sky-500/10 text-sky-700 dark:text-sky-300"
       : "bg-amber-500/10 text-amber-700 dark:text-amber-300";
   return (
-    <span className={`w-5 h-5 rounded-md text-xs font-bold flex items-center justify-center ${cls}`}>
+    <span className={`w-5 h-5 rounded-md text-[10px] font-bold flex items-center justify-center ${cls}`}>
       {children}
     </span>
   );

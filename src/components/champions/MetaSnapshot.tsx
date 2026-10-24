@@ -52,10 +52,10 @@ export function MetaSnapshot() {
   const maxPct = top10.length > 0 ? top10[0].percentage : 100;
 
   return (
-    <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
+    <section className="max-w-5xl mx-auto px-4 py-12">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-5">
         <div>
-          <h2 className="font-display text-section font-bold tracking-display text-text-primary">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
             Champions Meta Snapshot
           </h2>
           {!loading && data && (
@@ -66,7 +66,8 @@ export function MetaSnapshot() {
             </p>
           )}
         </div>
-        <span className="inline-flex items-center text-xs font-bold text-accent bg-accent-surface px-3 py-1 rounded-full">
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-accent uppercase tracking-widest bg-accent-surface px-3 py-1 rounded-full">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent" />
           Live Data
         </span>
       </div>
@@ -131,7 +132,7 @@ export function MetaSnapshot() {
                   >
                     {/* Rank */}
                     <span
-                      className="text-xs font-bold text-text-tertiary w-5 text-right shrink-0"
+                      className="text-[11px] font-bold text-text-tertiary w-5 text-right shrink-0"
                       aria-label={`Rank ${i + 1}`}
                     >
                       {i + 1}
@@ -151,14 +152,14 @@ export function MetaSnapshot() {
                       aria-hidden="true"
                     >
                       <div
-                        className="h-full bg-accent/70 rounded-full transition duration-500"
+                        className="h-full bg-accent/70 rounded-full transition-all duration-500"
                         style={{ width: `${barWidth}%` }}
                       />
                     </div>
 
                     {/* Percentage */}
                     <span
-                      className="text-xs font-bold text-text-secondary w-10 text-right shrink-0 tabular-nums"
+                      className="text-[11px] font-bold text-text-secondary w-10 text-right shrink-0 tabular-nums"
                       aria-label={`${entry.percentage}% usage`}
                     >
                       {entry.percentage}%
@@ -166,7 +167,7 @@ export function MetaSnapshot() {
 
                     {/* Count */}
                     <span
-                      className="text-xs text-text-tertiary w-10 shrink-0 tabular-nums hidden sm:block"
+                      className="text-[10px] text-text-tertiary w-10 shrink-0 tabular-nums hidden sm:block"
                       aria-label={`${entry.count} teams`}
                     >
                       {entry.count}×
@@ -177,7 +178,7 @@ export function MetaSnapshot() {
             </div>
 
             {/* Footer note */}
-            <p className="mt-4 text-xs text-text-tertiary text-right">
+            <p className="mt-4 text-[10px] text-text-tertiary text-right">
               Showing top 10 of {data.entries.length} Pokémon · updates every 5 min
             </p>
           </div>

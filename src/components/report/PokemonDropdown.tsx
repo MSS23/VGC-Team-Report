@@ -80,11 +80,11 @@ export function PokemonDropdown({
         }}
         draggable={draggable}
         onDragStart={onDragStart}
-        aria-label={selected ? `${speciesLabels?.[selectedIndex!] ?? selected.parsed.species} selected, click to change` : "Select a Pokémon to bring"}
+        aria-label={selected ? `${speciesLabels?.[selectedIndex!] ?? selected.parsed.species} selected — click to change` : "Select a Pokémon to bring"}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`flex flex-col items-center gap-1 w-[72px] sm:w-[88px] min-h-[60px] sm:min-h-[72px] justify-center rounded-xl border border-border-subtle hover:border-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background transition bg-surface p-1.5 hover:shadow-sm ${
- draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+        className={`flex flex-col items-center gap-1 w-[72px] sm:w-[88px] min-h-[60px] sm:min-h-[72px] justify-center rounded-xl border border-border-subtle hover:border-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all bg-surface p-1.5 hover:shadow-sm ${
+          draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
         }`}
       >
         {selected ? (
@@ -109,7 +109,7 @@ export function PokemonDropdown({
           role="listbox"
           aria-label="Select a Pokémon"
           className={`absolute z-50 left-0 sm:left-1/2 sm:-translate-x-1/2 bg-surface border border-border rounded-xl shadow-xl min-w-[160px] sm:min-w-[180px] py-1 overflow-y-auto max-h-[320px] ${
- openUpward ? "bottom-full mb-1" : "top-full mt-1"
+            openUpward ? "bottom-full mb-1" : "top-full mt-1"
           }`}
         >
           {selected !== null && (
@@ -138,8 +138,8 @@ export function PokemonDropdown({
                   setOpen(false);
                 }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
- isSelected
- ? "bg-accent/10 cursor-default"
+                  isSelected
+                    ? "bg-accent/10 cursor-default"
                     : isTaken
                       ? "opacity-30 cursor-not-allowed"
                       : "hover:bg-surface-alt cursor-pointer"
@@ -147,7 +147,7 @@ export function PokemonDropdown({
               >
                 <PokemonSprite species={mon.parsed.species} size={32} />
                 <span className={`text-sm truncate flex-1 ${
- isSelected ? "text-accent font-semibold" : "text-text-primary"
+                  isSelected ? "text-accent font-semibold" : "text-text-primary"
                 }`}>
                   {speciesLabels?.[index] ?? mon.parsed.species}
                 </span>

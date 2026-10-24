@@ -43,7 +43,7 @@ interface ShareModalProps {
    * When true, the modal is being opened by a read-only viewer of someone
    * else's report (guest or logged-in non-owner/non-collaborator). Hides
    * the visibility toggle, comments toggle, publish prompt, and edit-link
-   * bookmark warning, none of which apply to viewers, and changes the
+   * bookmark warning — none of which apply to viewers — and changes the
    * header copy so it doesn't imply the viewer just saved something.
    */
   viewerMode?: boolean;
@@ -99,7 +99,7 @@ export function ShareModal({
   const [embedCopied, setEmbedCopied] = useState(false);
   const [pasteCopied, setPasteCopied] = useState(false);
   const [rentalCopied, setRentalCopied] = useState(false);
-  // Screen-reader announcement for copy actions, the visual "Copied!" flips
+  // Screen-reader announcement for copy actions — the visual "Copied!" flips
   // are invisible to assistive tech without a live region.
   const [copyAnnouncement, setCopyAnnouncement] = useState("");
   const [publicConfirmDismissed, setPublicConfirmDismissed] = useState(false);
@@ -217,7 +217,7 @@ export function ShareModal({
       setTimeout(() => { setEmbedCopied(false); setCopyAnnouncement(""); }, 2000);
       posthog?.capture("share_embed_copied", { has_tournament: !!tournamentName });
     } catch {
-      // Clipboard unavailable (non-HTTPS or permission denied), no-op; the
+      // Clipboard unavailable (non-HTTPS or permission denied) — no-op; the
       // embed snippet is already visible in the UI and selectable by the user.
     }
   };
@@ -233,7 +233,7 @@ export function ShareModal({
   const achievementHeadline = (() => {
     if (placement && tournamentName) return `${placement} at ${tournamentName} with ${speciesText}`;
     if (tournamentName) return `${tournamentName}: ${speciesText}`;
-    if (placement) return `${placement}, ${speciesText}`;
+    if (placement) return `${placement} — ${speciesText}`;
     return speciesText;
   })();
 
@@ -256,7 +256,7 @@ export function ShareModal({
       setTimeout(() => { setLinkCopied(false); setCopyAnnouncement(""); }, 2000);
       posthog?.capture("share_link_copied", { is_short_url: isShortUrl });
     } catch {
-      // Clipboard unavailable (non-HTTPS or permission denied), no-op; the
+      // Clipboard unavailable (non-HTTPS or permission denied) — no-op; the
       // URL is visible in the display row and the user can select it manually.
     }
   };
@@ -269,7 +269,7 @@ export function ShareModal({
       setTimeout(() => { setDiscordCopied(false); setCopyAnnouncement(""); }, 2000);
       posthog?.capture("share_discord_copied", { has_tournament: !!tournamentName });
     } catch {
-      // Clipboard unavailable (non-HTTPS or permission denied), no-op.
+      // Clipboard unavailable (non-HTTPS or permission denied) — no-op.
     }
   };
 
@@ -282,7 +282,7 @@ export function ShareModal({
       setTimeout(() => { setPasteCopied(false); setCopyAnnouncement(""); }, 2000);
       posthog?.capture("share_paste_copied", { has_tournament: !!tournamentName });
     } catch {
-      // Clipboard unavailable (non-HTTPS or permission denied), no-op.
+      // Clipboard unavailable (non-HTTPS or permission denied) — no-op.
     }
   };
 
@@ -298,7 +298,7 @@ export function ShareModal({
       setTimeout(() => { setRentalCopied(false); setCopyAnnouncement(""); }, 2000);
       posthog?.capture("share_rental_code_copied", { has_tournament: !!tournamentName });
     } catch {
-      // Clipboard unavailable (non-HTTPS or permission denied), code is
+      // Clipboard unavailable (non-HTTPS or permission denied) — code is
       // visible and selectable in the row above.
     }
   };
@@ -311,7 +311,7 @@ export function ShareModal({
       await navigator.share({ title, url: publicUrl });
       posthog?.capture("share_native_used", { has_tournament: !!tournamentName });
     } catch {
-      // User cancelled or share failed, silently no-op
+      // User cancelled or share failed — silently no-op
     }
   };
 
@@ -341,7 +341,7 @@ export function ShareModal({
         {/* Header */}
         <div className="px-6 pt-3 sm:pt-6 pb-4">
           <div className="flex items-center justify-between mb-1">
-            <h3 id={titleId} className="text-lg font-bold text-text-primary tracking-tight">
+            <h3 id={titleId} className="text-lg font-extrabold text-text-primary tracking-tight">
               {viewerMode ? t.shareModalTitleViewer : t.shareModalTitleOwner}
             </h3>
             <button
@@ -360,17 +360,17 @@ export function ShareModal({
           </p>
         </div>
 
-        {/* Thank you banner, shown when user just published the team */}
+        {/* Thank you banner — shown when user just published the team */}
         {justPublished && (
           <div className="mx-6 mb-4 rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-accent-surface/20 to-accent/5 p-4 animate-fade-in">
             <div className="flex items-start gap-3">
               <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-800 dark:text-emerald-400">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 dark:text-emerald-400">
                   <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-text-primary mb-0.5">
+                <p className="text-sm font-extrabold text-text-primary mb-0.5">
                   {t.shareModalThankYouTitle}
                 </p>
                 <p className="text-xs text-text-secondary leading-relaxed">
@@ -379,7 +379,7 @@ export function ShareModal({
                 <button
                   type="button"
                   onClick={() => setJustPublished(false)}
-                  className="mt-2 text-xs font-bold text-accent hover:underline cursor-pointer"
+                  className="mt-2 text-[11px] font-bold text-accent hover:underline cursor-pointer"
                 >
                   {t.shareModalGotIt}
                 </button>
@@ -396,7 +396,7 @@ export function ShareModal({
           </div>
         )}
 
-        {/* Team card preview, shown FIRST so users see what they're sharing
+        {/* Team card preview — shown FIRST so users see what they're sharing
             before any URL/social actions. Download button stays in the social
             grid below (full TeamCardExport with capture node). */}
         {teamSpecies.length > 0 && (
@@ -436,14 +436,14 @@ export function ShareModal({
                 : t.shareModalVisibilityPrivateActive}
           </p>
           {!isShortUrl && (
-            <p className="text-xs text-amber-800 mt-1.5 flex items-center gap-1.5">
+            <p className="text-xs text-amber-500 mt-1.5 flex items-center gap-1.5">
               <WarningTriangleIcon width="12" height="12" className="flex-shrink-0" />
               {t.shareModalLongLinkWarning}
             </p>
           )}
         </div>
 
-        {/* Rental code, surfaced prominently when present; the most viral
+        {/* Rental code — surfaced prominently when present; the most viral
             sharing mechanic in VGC (paste + rental code together = instant
             Play! Pokémon use). Shown above all social/share actions. */}
         {hasRentalCode && (
@@ -451,20 +451,20 @@ export function ShareModal({
             <div className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent p-3.5">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
-                  <LockIcon width="18" height="18" className="text-amber-800 dark:text-amber-400" aria-hidden="true" />
+                  <LockIcon width="18" height="18" className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-amber-800 dark:text-amber-400 mb-0.5">
+                  <p className="text-[11px] font-extrabold uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-0.5">
                     Rental code
                   </p>
-                  <p className="text-base font-mono font-bold text-text-primary break-all">
+                  <p className="text-base font-mono font-bold text-text-primary tracking-wide break-all">
                     {trimmedRentalCode}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={handleCopyRental}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 active:scale-95 transition cursor-pointer flex-shrink-0 px-3"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 active:scale-95 transition-all cursor-pointer flex-shrink-0 px-3"
                   aria-label={rentalCopied ? "Rental code copied" : "Copy rental code"}
                 >
                   {rentalCopied ? (
@@ -478,13 +478,13 @@ export function ShareModal({
           </div>
         )}
 
-        {/* Native share, PRIMARY action on mobile (shown first, full-width, above all other options) */}
+        {/* Native share — PRIMARY action on mobile (shown first, full-width, above all other options) */}
         {canNativeShare && (
           <div className="sm:hidden px-6 pb-4">
             <button
               type="button"
               onClick={handleNativeShare}
-              className="flex items-center justify-center gap-3 w-full px-4 py-3.5 bg-accent text-white rounded-xl font-bold text-sm hover:bg-accent/90 active:scale-[0.98] transition cursor-pointer shadow-md shadow-accent/25"
+              className="flex items-center justify-center gap-3 w-full px-4 py-3.5 bg-accent text-white rounded-xl font-bold text-sm hover:bg-accent/90 active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-accent/25"
             >
               <ShareIcon width="18" height="18" />
               {t.shareModalNativeShare}
@@ -493,11 +493,11 @@ export function ShareModal({
           </div>
         )}
 
-        {/* Social buttons, only shown for short URLs */}
+        {/* Social buttons — only shown for short URLs */}
         <div className={`px-6 pb-6 grid grid-cols-1 gap-2 ${!isShortUrl ? "opacity-40 pointer-events-none" : ""}`}>
-          {/* "Or share to:" section label, shown on mobile when native share is available */}
+          {/* "Or share to:" section label — shown on mobile when native share is available */}
           {canNativeShare && (
-            <p className="sm:hidden text-xs font-bold text-text-tertiary mb-1">Or share to:</p>
+            <p className="sm:hidden text-xs font-bold text-text-tertiary uppercase tracking-widest mb-1">Or share to:</p>
           )}
           {/* Twitter/X */}
           <a
@@ -507,10 +507,10 @@ export function ShareModal({
             onClick={() => {
               posthog?.capture("share_twitter_clicked", { has_tournament: !!tournamentName, has_placement: !!placement });
             }}
-            className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition group"
+            className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group"
           >
-            <div className="w-9 h-9 rounded-lg bg-(--brand-ink) flex items-center justify-center flex-shrink-0">
-              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="white">
+            <div className="w-9 h-9 rounded-lg bg-[#000] flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
             </div>
@@ -533,10 +533,10 @@ export function ShareModal({
             onClick={() => {
               posthog?.capture("share_reddit_clicked", { has_tournament: !!tournamentName });
             }}
-            className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition group"
+            className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group"
           >
-            <div className="w-9 h-9 rounded-lg bg-(--brand-reddit) flex items-center justify-center flex-shrink-0">
-              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="white">
+            <div className="w-9 h-9 rounded-lg bg-[#FF4500] flex items-center justify-center flex-shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
                 <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
               </svg>
             </div>
@@ -555,10 +555,10 @@ export function ShareModal({
           <button
             type="button"
             onClick={handleCopyDiscord}
-            className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition group cursor-pointer text-left w-full"
+            className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group cursor-pointer text-left w-full"
           >
-            <div className="w-9 h-9 rounded-lg bg-(--brand-discord) flex items-center justify-center flex-shrink-0">
-              <svg aria-hidden="true" width="18" height="14" viewBox="0 0 24 18" fill="white">
+            <div className="w-9 h-9 rounded-lg bg-[#5865F2] flex items-center justify-center flex-shrink-0">
+              <svg width="18" height="14" viewBox="0 0 24 18" fill="white">
                 <path d="M20.317 1.492a19.7 19.7 0 0 0-4.885-1.516.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.7 19.7 0 0 0 3.677 1.492.07.07 0 0 0 3.642 1.52C.533 6.093-.319 10.555.099 14.961a.08.08 0 0 0 .031.055 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.227-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .079.009c.12.099.245.198.372.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.06.06 0 0 0-.031-.02zM8.02 12.278c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.332-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.332-.946 2.418-2.157 2.418z" />
               </svg>
             </div>
@@ -570,21 +570,21 @@ export function ShareModal({
                 {t.shareModalDiscordSubtitle}
               </div>
             </div>
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
             </svg>
           </button>
 
-          {/* Copy Paste, shown only when showdownPaste is available */}
+          {/* Copy Paste — shown only when showdownPaste is available */}
           {showdownPaste && (
             <button
               type="button"
               onClick={handleCopyPaste}
-              className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition group cursor-pointer text-left w-full"
+              className="flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group cursor-pointer text-left w-full"
             >
               <div className="w-9 h-9 rounded-lg bg-surface border border-border flex items-center justify-center flex-shrink-0">
-                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary group-hover:text-accent transition-colors">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-secondary group-hover:text-accent transition-colors">
                   <polyline points="16 18 22 12 16 6" />
                   <polyline points="8 6 2 12 8 18" />
                 </svg>
@@ -601,12 +601,12 @@ export function ShareModal({
             </button>
           )}
 
-          {/* Native share, shown in the list on desktop only; on mobile the primary version is shown above */}
+          {/* Native share — shown in the list on desktop only; on mobile the primary version is shown above */}
           {canNativeShare && (
             <button
               type="button"
               onClick={handleNativeShare}
-              className="hidden sm:flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition group cursor-pointer text-left w-full"
+              className="hidden sm:flex items-center gap-3 px-4 py-3 bg-surface-alt border border-border rounded-xl hover:border-accent/40 hover:bg-accent-surface/30 transition-all group cursor-pointer text-left w-full"
             >
               <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
                 <ShareIcon width="16" height="16" stroke="white" />
@@ -619,7 +619,7 @@ export function ShareModal({
                   {t.shareModalNativeShareSubtitle}
                 </div>
               </div>
-              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent transition-colors flex-shrink-0">
                 <line x1="7" y1="17" x2="17" y2="7" />
                 <polyline points="7 7 17 7 17 17" />
               </svg>
@@ -640,10 +640,10 @@ export function ShareModal({
           )}
         </div>
 
-        {/* Embed snippet, only shown when a short /s/ URL is available */}
+        {/* Embed snippet — only shown when a short /s/ URL is available */}
         {embedSnippet && (
           <div className="px-6 pb-6 border-t border-border pt-4">
-            <p className="text-xs font-bold text-text-secondary mb-2">
+            <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-2">
               {t.shareModalEmbedLabel}
             </p>
             <div
@@ -654,20 +654,20 @@ export function ShareModal({
               aria-label="Copy embed code"
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCopyEmbed(); } }}
             >
-              <code className="text-xs text-text-secondary font-[family-name:var(--font-mono)] break-all flex-1 leading-relaxed select-all">
+              <code className="text-[11px] text-text-secondary font-[family-name:var(--font-mono)] break-all flex-1 leading-relaxed select-all">
                 {embedSnippet}
               </code>
               <span className="text-xs font-bold text-accent flex-shrink-0 group-hover:text-accent/80 transition-colors mt-0.5">
                 {embedCopied ? t.copied : t.copy}
               </span>
             </div>
-            <p className="text-xs text-text-tertiary mt-2 leading-relaxed">
+            <p className="text-[11px] text-text-tertiary mt-2 leading-relaxed">
               {t.shareModalEmbedNote}
             </p>
           </div>
         )}
 
-        {/* Public confirmation prompt, shown when sharing publicly, asks user to confirm */}
+        {/* Public confirmation prompt — shown when sharing publicly, asks user to confirm */}
         {!viewerMode && isPublic && !publicConfirmDismissed && isOwner && (
           <div className={`mx-6 mb-4 rounded-xl border p-4 ${hasWarnings || !hasCreator || !hasTags ? "border-amber-500/30 bg-amber-500/5" : "border-accent/30 bg-accent-surface/20"}`}>
             {hasWarnings ? (
@@ -720,12 +720,12 @@ export function ShareModal({
           </div>
         )}
 
-        {/* Visibility picker, only owner can change; blocked when warnings exist.
+        {/* Visibility picker — only owner can change; blocked when warnings exist.
             Hidden entirely in viewer mode since it's irrelevant to someone
             who's just sharing someone else's report. */}
         {!viewerMode && (
         <div className="px-6 py-4 border-t border-border">
-          <p id="share-visibility-label" className="text-xs font-bold text-text-tertiary mb-3">{t.shareModalVisibilityLabel}</p>
+          <p id="share-visibility-label" className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-3">{t.shareModalVisibilityLabel}</p>
           {/* 3-state picker: Private | Unlisted | Public */}
           <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="share-visibility-label">
             {/* Private */}
@@ -739,15 +739,15 @@ export function ShareModal({
                 if (onSetVisibility) onSetVisibility(false, false);
                 else handleTogglePublic(false);
               }}
-              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition ${
- !isPublic && !isUnlisted
- ? "bg-surface border-accent/50 shadow-sm shadow-accent/10"
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all ${
+                !isPublic && !isUnlisted
+                  ? "bg-surface border-accent/50 shadow-sm shadow-accent/10"
                   : isOwner ? "bg-surface-alt border-border hover:border-accent/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
               }`}
             >
               <LockIcon width="18" height="18" className={!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"} />
               <span className={`text-xs font-bold leading-none ${!isPublic && !isUnlisted ? "text-accent" : "text-text-tertiary"}`}>{t.shareModalPrivate}</span>
-              <span className="text-xs text-text-tertiary leading-tight text-center">{t.shareModalPrivateDesc}</span>
+              <span className="text-[10px] text-text-tertiary leading-tight text-center">{t.shareModalPrivateDesc}</span>
             </button>
             {/* Unlisted */}
             <button
@@ -760,15 +760,15 @@ export function ShareModal({
                 if (onSetVisibility) onSetVisibility(false, true);
                 else handleTogglePublic(false);
               }}
-              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition ${
- isUnlisted && !isPublic
- ? "bg-surface border-amber-500/50 shadow-sm shadow-amber-500/10"
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all ${
+                isUnlisted && !isPublic
+                  ? "bg-surface border-amber-500/50 shadow-sm shadow-amber-500/10"
                   : isOwner ? "bg-surface-alt border-border hover:border-amber-500/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
               }`}
             >
-              <LinkIcon width="18" height="18" className={isUnlisted && !isPublic ? "text-amber-800" : "text-text-tertiary"} />
-              <span className={`text-xs font-bold leading-none ${isUnlisted && !isPublic ? "text-amber-800" : "text-text-tertiary"}`}>{t.shareModalUnlisted}</span>
-              <span className="text-xs text-text-tertiary leading-tight text-center">{t.shareModalUnlistedDesc}</span>
+              <LinkIcon width="18" height="18" className={isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"} />
+              <span className={`text-xs font-bold leading-none ${isUnlisted && !isPublic ? "text-amber-500" : "text-text-tertiary"}`}>{t.shareModalUnlisted}</span>
+              <span className="text-[10px] text-text-tertiary leading-tight text-center">{t.shareModalUnlistedDesc}</span>
             </button>
             {/* Public */}
             <button
@@ -786,15 +786,15 @@ export function ShareModal({
                 if (onSetVisibility) onSetVisibility(true, false);
                 else handleTogglePublic(true);
               }}
-              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition ${
- isPublic
- ? "bg-surface border-emerald-500/50 shadow-sm shadow-emerald-500/10"
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border transition-all ${
+                isPublic
+                  ? "bg-surface border-emerald-500/50 shadow-sm shadow-emerald-500/10"
                   : isOwner && !hasWarnings ? "bg-surface-alt border-border hover:border-emerald-500/30 cursor-pointer" : "bg-surface-alt border-border cursor-not-allowed opacity-50"
               }`}
             >
-              <GlobeIcon width="18" height="18" className={isPublic ? "text-emerald-800" : "text-text-tertiary"} />
-              <span className={`text-xs font-bold leading-none ${isPublic ? "text-emerald-800" : "text-text-tertiary"}`}>{t.shareModalPublicOption}</span>
-              <span className="text-xs text-text-tertiary leading-tight text-center">{t.shareModalPublicOptionDesc}</span>
+              <GlobeIcon width="18" height="18" className={isPublic ? "text-emerald-500" : "text-text-tertiary"} />
+              <span className={`text-xs font-bold leading-none ${isPublic ? "text-emerald-500" : "text-text-tertiary"}`}>{t.shareModalPublicOption}</span>
+              <span className="text-[10px] text-text-tertiary leading-tight text-center">{t.shareModalPublicOptionDesc}</span>
             </button>
           </div>
           {/* Description line */}
@@ -857,7 +857,7 @@ export function ShareModal({
                   <button
                     type="button"
                     onClick={onClearPublishError}
-                    className="mt-1 text-xs font-semibold text-red-600/80 dark:text-red-400/80 hover:underline"
+                    className="mt-1 text-[10px] font-semibold text-red-600/80 dark:text-red-400/80 hover:underline"
                   >
                     {t.shareModalDismiss}
                   </button>
@@ -868,7 +868,7 @@ export function ShareModal({
         </div>
         )}
 
-        {/* Comments toggle, only meaningful for the owner. Viewers can't
+        {/* Comments toggle — only meaningful for the owner. Viewers can't
             persist this setting, so the toggle is hidden in viewer mode. */}
         {!viewerMode && (
         <div className="px-6 py-3 border-t border-border">
@@ -879,11 +879,11 @@ export function ShareModal({
             onClick={() => onToggleComments(!allowComments)}
             className="flex items-center gap-3 w-full text-left group cursor-pointer"
           >
-            <div className={`relative inline-flex h-[24px] w-[42px] items-center rounded-full transition duration-300 flex-shrink-0 ${
- allowComments ? "bg-accent shadow-md shadow-accent/30" : "bg-border"
+            <div className={`relative inline-flex h-[24px] w-[42px] items-center rounded-full transition-all duration-300 flex-shrink-0 ${
+              allowComments ? "bg-accent shadow-md shadow-accent/30" : "bg-border"
             }`}>
-              <span className={`inline-block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition duration-300 ${
- allowComments ? "translate-x-[20px] scale-110" : "translate-x-[3px]"
+              <span className={`inline-block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-all duration-300 ${
+                allowComments ? "translate-x-[20px] scale-110" : "translate-x-[3px]"
               }`} />
             </div>
             <div className="flex-1 min-w-0">
@@ -906,11 +906,11 @@ export function ShareModal({
               browser-stored or copied secret link. */}
           {!viewerMode && (
             <div className="flex items-start gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-800 dark:text-emerald-400 flex-shrink-0 mt-0.5" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" aria-hidden="true">
                 <rect x="3" y="11" width="18" height="10" rx="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-              <p className="text-xs text-text-secondary leading-relaxed">
+              <p className="text-[11px] text-text-secondary leading-relaxed">
                 <span className="font-bold text-text-primary">{t.shareModalBookmarkBold}</span> {t.shareModalBookmarkDesc}
               </p>
             </div>

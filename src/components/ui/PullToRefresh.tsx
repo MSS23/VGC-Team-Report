@@ -77,14 +77,14 @@ export function PullToRefresh({ onRefresh, enabled }: PullToRefreshProps) {
       style={{ transform: `translateY(${refreshing ? 48 : pullDistance - 20}px)` }}
     >
       <div className={`w-8 h-8 rounded-full bg-surface border border-border shadow-lg flex items-center justify-center transition-transform ${
- refreshing ? "animate-spin" : pullDistance >= threshold ? "scale-110" : ""
+        refreshing ? "animate-spin" : pullDistance >= threshold ? "scale-110" : ""
       }`}>
         {refreshing ? (
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
             <path d="M21 12a9 9 0 11-6.219-8.56" />
           </svg>
         ) : (
-          <svg aria-hidden="true"
+          <svg
             width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
             className={`text-text-secondary transition-transform ${pullDistance >= threshold ? "text-accent" : ""}`}
             style={{ transform: `rotate(${Math.min(pullDistance / threshold * 180, 180)}deg)` }}

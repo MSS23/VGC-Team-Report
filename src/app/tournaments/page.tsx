@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "VGC Tournament Results Archive | Team Reports 2026",
     description:
-      "Browse team reports from top VGC tournament finishers. Regionals, Internationals, and World Championships, all in one place.",
+      "Browse team reports from top VGC tournament finishers. Regionals, Internationals, and World Championships — all in one place.",
     type: "website",
     siteName: "VGC Team Report",
     url: "https://pokemonvgcteamreport.com/tournaments",

@@ -35,20 +35,20 @@ function ErrorContent({
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-text-primary">{t.somethingWentWrong}</h1>
+        <h1 className="text-2xl font-extrabold text-text-primary">{t.somethingWentWrong}</h1>
         <p className="text-text-secondary text-sm leading-relaxed">
           {t.unexpectedError}
         </p>
         <div className="flex items-center gap-3 mt-1">
           <button
             onClick={reset}
-            className="px-6 py-3 bg-accent text-white rounded-xl text-sm font-bold hover:brightness-110 active:scale-[0.97] transition shadow-sm shadow-accent/20"
+            className="px-6 py-3 bg-accent text-white rounded-xl text-sm font-bold hover:brightness-110 active:scale-[0.97] transition-all shadow-sm shadow-accent/20"
           >
             {t.tryAgain}
           </button>
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center px-6 py-3 bg-surface border border-border text-text-primary rounded-2xl font-bold text-sm hover:bg-surface-alt active:scale-[0.97] transition"
+            className="inline-flex min-h-11 items-center px-6 py-3 bg-surface border border-border text-text-primary rounded-2xl font-bold text-sm hover:bg-surface-alt active:scale-[0.97] transition-all"
           >
             {t.goHome}
           </Link>

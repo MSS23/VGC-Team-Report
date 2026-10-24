@@ -60,7 +60,7 @@ export function CookieBanner() {
             consentModal: {
               title: "Cookie preferences",
               description:
-                'We use analytics cookies (PostHog, Microsoft Clarity) to understand how you use the app and fix bugs. This includes session recording, clicks, scrolling and page navigation are replayed to spot interface problems. <a href="/privacy" class="cc-link">Privacy Policy</a>',
+                'We use analytics cookies (PostHog, Microsoft Clarity) to understand how you use the app and fix bugs. This includes session recording — clicks, scrolling and page navigation are replayed to spot interface problems. <a href="/privacy" class="cc-link">Privacy Policy</a>',
               acceptAllBtn: "Accept all",
               acceptNecessaryBtn: "Reject all",
               showPreferencesBtn: "Manage preferences",

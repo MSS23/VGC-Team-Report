@@ -25,14 +25,14 @@ function NotFoundContent() {
             <line x1="15" y1="9" x2="15.01" y2="9" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-text-primary">{t.pageNotFound}</h1>
+        <h1 className="text-2xl font-extrabold text-text-primary">{t.pageNotFound}</h1>
         <p className="text-text-secondary text-sm leading-relaxed">
           {t.pageNotFoundDesc}
         </p>
         <Link
           href="/"
           aria-label="Go back to home page"
-          className="mt-1 px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold hover:brightness-110 active:scale-[0.97] transition shadow-sm shadow-accent/20"
+          className="mt-1 px-6 py-2.5 bg-accent text-white rounded-xl text-sm font-bold hover:brightness-110 active:scale-[0.97] transition-all shadow-sm shadow-accent/20"
         >
           {t.goHome}
         </Link>

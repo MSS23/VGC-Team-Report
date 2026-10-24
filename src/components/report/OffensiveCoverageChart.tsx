@@ -165,14 +165,14 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h3 className="text-sm font-semibold text-text-tertiary mb-1">
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-text-tertiary mb-1">
           Offensive Profile
         </h3>
         <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
           Best coverage each Pok&eacute;mon has against every type based on their moves.
-          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded-md text-[11px] font-bold" style={{ backgroundColor: "var(--cell-se)", color: "var(--cell-se-text)" }}>2&times;</span>
+          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded-md text-[10px] font-extrabold" style={{ backgroundColor: "var(--cell-se)", color: "var(--cell-se-text)" }}>2&times;</span>
           = super effective,
-          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded-md text-[11px] font-bold ring-2 ring-cyan-400/80" style={{ backgroundColor: "var(--cell-dse)", color: "var(--cell-dse-text)" }}>4&times;</span>
+          <span className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded-md text-[10px] font-black ring-2 ring-cyan-400/80" style={{ backgroundColor: "var(--cell-dse)", color: "var(--cell-dse-text)" }}>4&times;</span>
           = double SE.
         </p>
       </div>
@@ -187,12 +187,12 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
                 key={`gap-${type}`}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/25 text-xs font-bold text-red-400"
               >
-                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                   <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
                 </svg>
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: tc.bg }} />
                 {type}
-                <span className="text-red-400/70">, no SE coverage</span>
+                <span className="text-red-400/70">&mdash; no SE coverage</span>
               </span>
             );
           })}
@@ -203,12 +203,12 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
                 key={`strong-${type}`}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-xs font-bold text-emerald-400"
               >
-                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: tc.bg }} />
                 {type}
-                <span className="text-emerald-400/70">, {seCount} hit SE</span>
+                <span className="text-emerald-400/70">&mdash; {seCount} hit SE</span>
               </span>
             );
           })}
@@ -220,7 +220,7 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
         <table className="w-full table-fixed sm:table-auto border-collapse text-center min-w-[40rem]">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[11px] sm:text-xs font-bold text-text-tertiary w-14 sm:w-32">
+              <th className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[9px] sm:text-xs font-bold text-text-tertiary uppercase tracking-wider w-14 sm:w-32">
                 Pok&eacute;mon
               </th>
               {ALL_TYPES.map((type) => {
@@ -235,7 +235,7 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
                     }}
                   >
                     <span
-                      className={`inline-block w-full px-0.5 sm:px-1 py-1 text-[11px] sm:text-[11px] font-bold rounded-md leading-tight transition-opacity ${highlightedType && highlightedType !== type ? "opacity-50" : ""}`}
+                      className={`inline-block w-full px-0.5 sm:px-1 py-1 text-[10px] sm:text-[11px] font-bold uppercase rounded-md leading-tight transition-opacity ${highlightedType && highlightedType !== type ? "opacity-50" : ""}`}
                       style={{ backgroundColor: tc.bg, color: tc.text }}
                       title={type}
                     >
@@ -249,7 +249,7 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
           <tbody>
             {profiles.map((p) => (
               <tr key={p.species} className="border-t border-border/30 hover:bg-surface-alt/40 transition-colors">
-                <td className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[11px] sm:text-sm font-bold text-text-primary truncate max-w-[3.5rem] sm:max-w-[8rem]">
+                <td className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[10px] sm:text-sm font-bold text-text-primary truncate max-w-[3.5rem] sm:max-w-[8rem]">
                   {p.species}
                 </td>
                 {ALL_TYPES.map((defType) => {
@@ -267,8 +267,8 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
                   return (
                     <td key={defType} className={`px-0.5 py-1 transition-opacity ${isDimmed ? "opacity-50" : ""}`}>
                       <span
-                        className={`inline-flex items-center justify-center w-full h-8 rounded-lg text-[11px] sm:text-xs tabular-nums ${cell.bg} ${cell.text} ${cell.ring ?? ""} ${
-                          mult >= 4 ? "font-bold text-[11px] sm:text-sm" : mult >= 2 ? "font-bold" : "font-bold"
+                        className={`inline-flex items-center justify-center w-full h-8 rounded-lg text-[10px] sm:text-xs tabular-nums ${cell.bg} ${cell.text} ${cell.ring ?? ""} ${
+                          mult >= 4 ? "font-black text-[11px] sm:text-sm" : mult >= 2 ? "font-extrabold" : "font-bold"
                         } ${isHighlighted ? "ring-2 ring-accent/40" : ""}`}
                         style={cell.style}
                         title={tooltipMove}
@@ -282,7 +282,7 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
             ))}
             {/* Team coverage summary row */}
             <tr className="border-t-2 border-border/60">
-              <td className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[11px] sm:text-xs font-bold text-text-tertiary tracking-tight sm:tracking-wider">
+              <td className="sticky left-0 z-10 bg-background px-1.5 sm:px-2 py-2 text-left text-[9px] sm:text-xs font-extrabold text-text-tertiary uppercase tracking-tight sm:tracking-wider">
                 Team SE
               </td>
               {teamSummary.map(({ type, seCount }) => {
@@ -290,9 +290,9 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
                 const isDimmed = highlightedType !== null && !isHighlighted;
                 return (
                   <td key={type} className={`px-0.5 py-1 transition-opacity ${isDimmed ? "opacity-50" : ""}`}>
-                    <span className={`inline-flex items-center justify-center w-full h-8 rounded-md text-[11px] sm:text-xs font-bold tabular-nums ${
- seCount === 0
- ? "bg-red-500/30 text-red-300 ring-1 ring-red-500/40"
+                    <span className={`inline-flex items-center justify-center w-full h-8 rounded-md text-[10px] sm:text-xs font-extrabold tabular-nums ${
+                      seCount === 0
+                        ? "bg-red-500/30 text-red-300 ring-1 ring-red-500/40"
                         : seCount === 1
                           ? "bg-amber-500/20 text-amber-400"
                           : seCount >= 4
@@ -312,11 +312,11 @@ export function OffensiveCoverageChart({ pokemon }: OffensiveCoverageChartProps)
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-text-secondary">
         <span className="flex items-center gap-1.5">
-          <span className="w-7 h-6 rounded-lg ring-2 ring-cyan-400/80 inline-flex items-center justify-center text-[11px] font-bold" style={{ backgroundColor: "var(--cell-dse)", color: "var(--cell-dse-text)" }}>4&times;</span>
+          <span className="w-7 h-6 rounded-lg ring-2 ring-cyan-400/80 inline-flex items-center justify-center text-[11px] font-black" style={{ backgroundColor: "var(--cell-dse)", color: "var(--cell-dse-text)" }}>4&times;</span>
           Double SE
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-bold" style={{ backgroundColor: "var(--cell-se)", color: "var(--cell-se-text)" }}>2&times;</span>
+          <span className="w-7 h-6 rounded-lg inline-flex items-center justify-center text-[11px] font-extrabold" style={{ backgroundColor: "var(--cell-se)", color: "var(--cell-se-text)" }}>2&times;</span>
           Super effective
         </span>
         <span className="flex items-center gap-1.5">

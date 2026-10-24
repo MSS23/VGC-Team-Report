@@ -1,39 +1,7 @@
-/* Hallmark · shape: kept (Workbench on /, Banner elsewhere, app screens kept) · genre: modern-minimal · theme: Coral (deal 2/3, seed vgc-team-report-web-f538·d02091a4·2026-10-23·r0) · redesign: restyle
- * paper: oklch(97% 0.006 55), cotton sheets at 98.8% on it · accent: the ink board oklch(22% 0.011 40) for the one primary, coral oklch(45% 0.16 29) as the signal (links, focus, the pressed states) · display: General Sans · body: General Sans · figures: Geist Mono · hero: kept (Counter on /, Banner on the list, tool and form routes) · nav: kept, edge-aligned · footer: kept, mast · imagery: the product · signature: the paste box on a felt desk, a real Showdown set in it
- * axes: light/grotesk-sans/warm · posture: restrained · surface: absolute · modes: light+dark · colours: Coral by request, replacing the rose · contrast: pass · fold: pass · v2.0.0 */
-/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 · weakest: E, 80 components carry their controls as utility strings; the Coral controls (board, cotton card, lit edge, cast) are applied by four unlayered rules on the shared classes rather than rewriting each file */
-/* Hallmark · waive 74 · the gen-theme, random-accent and view-milestone presets keep their hex literals in useTheme.ts, random-accent.ts, accent-themes.ts and layout.tsx · they are the product's optional palettes, applied only after a visitor picks one; the page itself opens in Coral */
-/* Hallmark · colours: Coral by request · the rose accent is gone; the primary is the ink board, coral is spent on links, focus and the pressed states */
-/* Hallmark · waive 23 · the primary is the ink board, oklch(22% 0.011 40), one lightness step from the ink text · the render tier reads the display head's pixels as accent; the board paints one control a screen */
-/* Hallmark · dismissed 41 · --accent-ink is the board's light type, measured here against the surface it never sits on · the label sits on the board, 13:1 */
-/* Hallmark · dismissed 11 · the hover lift on the board and the cotton card is Coral's one control signal, a card rising 1px into its cast · no card or image lifts */
-/* Hallmark · retired the random accent and the view-milestone palettes as colour pickers · applyRandomAccent now applies the one Coral set, dark-aware; the gen-theme picker still recolours the board when a visitor picks a generation, and keeps choosing the sprite style */
-/* Hallmark · fonts: General Sans from Fontshare's CSS (self-host it under public/fonts when the licence download is in hand), Geist Mono through next/font */
-/* Hallmark · waive 47b · one frame, the paste box, a real Showdown set inside · the paste box is the product doing its job */
-/* Hallmark · waive 8 · kept sequence: paste, samples, how it works, spotlight, latest · the order is the job's own, recomposed as Counter, Grid, Steps, Showcase, Rail */
-/* Hallmark · waive 44c · hero: Banner on the list, tool and form routes (/explore, /compare, /changelog, /feedback, /tournaments, /tools/ev-to-sp, /faq, /support, /champions/[pokemon]) · the list, the form or the converter is the reason to come, so it starts above the fold */
-/* Hallmark · waive 59 · the explore, compare, changelog and tools screens are workbenches that part their rows with hairlines and wells · a filter bar, its list and its empty state are one object */
-/* Hallmark · waive 78 · the FAQ, the changelog, the tournaments list and the explore list head their rows at --text-title under one display h1 · thirteen questions at section size would be a wall */
-/* Hallmark · waive 39b · app UI: the changelog rows are disclosure headers with a 44px hit target · each row holds a version, its date and its title, so the whole row is the control */
-/* Hallmark · dropped the inline footer links /feedback, /support, /privacy in PasteInput · the home page now ends on the site footer, which carries all three */
-/* Hallmark · dropped the preventDefault and stopPropagation handler on the Champions banner dismiss · the dismiss button no longer sits inside the banner link */
-/* Hallmark · dropped nothing in the three handlers whose comments lost a dash · onTagsChange and the two mobile onClick handlers run unchanged, only a comment inside them was repunctuated */
-/* Hallmark · dismissed kept headings · ready for tournament day and its four items live in the What's New modal, suppressed in this capture */
-/* Hallmark · dismissed kept images · tapu-fini, tapu-koko and tapu-lele now load through resolveSlug as tapufini, tapukoko and tapulele */
-/* Hallmark · answered F3 · text-wrap: balance on h1, h2 and h3 in base.css */
-/* Hallmark · waive 77 · a band of one line and an action, once a page · the feedback line closes the home page before the footer */
-/* Hallmark · answered F25 · the three steps collapse behind a Show the steps control for returning phone visitors, by the product's own rule */
-/* Hallmark · dismissed 3 · the presentation-mode Pokémon grid is the report's six team members, not icon tiles */
-/* Hallmark · dismissed 49 · the long labels are whole phrases the product owner wrote, two lines at most on a phone */
-/* Hallmark · dismissed 28a · the sample-team sprites sit below the hero; the hero sprites load eager */
 @import "tailwindcss";
-@import "./tokens.css";
-@import "./base.css" layer(base);
 
 @custom-variant creator (&:where([data-creator-mode] *));
 @custom-variant presenting (&:where([data-presentation-mode] *));
-/* dark: utilities follow the site's own toggle (the attribute), not only the OS preference */
-@custom-variant dark (&:where([data-dark-mode], [data-dark-mode] *));
 
 :root {
   --nav-height: 6rem;
@@ -42,22 +10,18 @@
      iOS gesture-bar safe area. Consumers read it via
      var(--bottom-nav-height, 3.5rem). */
   --bottom-nav-height: 3.5rem;
-  --background: var(--light-background-83);
-  --foreground: var(--light-foreground);
-  --surface: var(--light-surface-33);
-  --surface-alt: var(--light-surface-alt-77);
-  --border: var(--light-border-98);
-  --border-subtle: var(--light-border-subtle);
-  --text-primary: var(--light-text-primary);
-  --text-secondary: var(--light-text-secondary);
-  --text-tertiary: var(--light-text-tertiary);
-  --accent: var(--light-accent);
-  --accent-light: var(--light-accent-light);
-  --accent-surface: var(--light-accent-surface);
-  --accent-ink: var(--light-accent-ink);
-  --signal: var(--light-signal);
-  --desk: var(--light-desk);
-  --press-shadow: 0 -0.75px 0 var(--text-primary);
+  --background: #FAF9F6;
+  --foreground: #1A1A2E;
+  --surface: #FFFFFF;
+  --surface-alt: #F2F0EB;
+  --border: #E0DDD5;
+  --border-subtle: #F0EDE6;
+  --text-primary: #1A1A2E;
+  --text-secondary: #4A4A68;
+  --text-tertiary: #5E5E7A;
+  --accent: #E11D48;
+  --accent-light: #FDA4AF;
+  --accent-surface: #FFF1F2;
   --success: #16A34A;
   --warning: #D97706;
   --danger: #DC2626;
@@ -83,100 +47,6 @@
   --stat-spe: #FA92B2;
 }
 
-/* Fixed light and dark values, declared once so the export, print, creator and dark blocks reference tokens */
-:root {
-  --light-background: oklch(98.8% 0.0045 80);
-  --light-surface: oklch(98.8% 0.0045 80);
-  --light-surface-alt: oklch(96% 0.006 60);
-  --light-border: oklch(87% 0.009 55);
-  --light-background-83: oklch(97% 0.006 55);
-  --light-foreground: oklch(21% 0.012 38);
-  --light-surface-33: oklch(98.8% 0.0045 80);
-  --light-surface-alt-77: oklch(94.5% 0.007 55);
-  --light-border-98: oklch(87% 0.009 55);
-  --light-border-subtle: oklch(91.5% 0.009 55);
-  --light-text-primary: oklch(21% 0.012 38);
-  --light-text-secondary: oklch(29% 0.013 40);
-  --light-text-tertiary: oklch(44% 0.013 45);
-  --light-accent: oklch(22% 0.011 40);
-  --light-accent-light: oklch(74% 0.125 30);
-  --light-accent-surface: oklch(95.5% 0.025 40);
-  --light-accent-ink: oklch(96.5% 0.006 70);
-  --light-signal: oklch(45% 0.16 29);
-  --light-desk: oklch(94.3% 0.008 64);
-  --light-success: #16A34A;
-  --light-warning: #D97706;
-  --light-danger: #DC2626;
-  --light-cell-immune: #E4E4E7;
-  --light-cell-immune-text: #71717A;
-  --light-cell-nve: #FEE2E2;
-  --light-cell-nve-text: #B91C1C;
-  --light-cell-se: #D1FAE5;
-  --light-cell-se-text: #065F46;
-  --light-cell-dse: #A5F3FC;
-  --light-cell-dse-text: #164E63;
-  --light-def-4x: #FECACA;
-  --light-def-4x-text: #991B1B;
-  --light-stat-hp: #FF5959;
-  --light-stat-atk: #F5AC78;
-  --light-stat-def: #FAE078;
-  --light-stat-spa: #9DB7F5;
-  --light-stat-spd: #A7DB8D;
-  --light-stat-spe: #FA92B2;
-  --dark-cell-immune: #27272A;
-  --dark-cell-immune-text: #A1A1AA;
-  --dark-cell-nve: rgba(239, 68, 68, 0.2);
-  --dark-cell-nve-text: #FCA5A5;
-  --dark-cell-se: rgba(16, 185, 129, 0.25);
-  --dark-cell-se-text: #6EE7B7;
-  --dark-cell-dse: rgba(6, 182, 212, 0.4);
-  --dark-cell-dse-text: #FFFFFF;
-  --dark-def-4x: rgba(220, 38, 38, 0.5);
-  --dark-def-4x-text: #FFFFFF;
-  --dark-background: oklch(15% 0.012 45);
-  --dark-foreground: oklch(94% 0.008 60);
-  --dark-surface: oklch(18% 0.012 45);
-  --dark-surface-alt: oklch(21% 0.012 45);
-  --dark-border: oklch(30% 0.012 45);
-  --dark-border-subtle: oklch(25% 0.012 45);
-  --dark-text-primary: oklch(94% 0.008 60);
-  --dark-text-secondary: oklch(80% 0.01 55);
-  --dark-text-tertiary: oklch(68% 0.012 50);
-  --dark-accent-light: oklch(74% 0.125 30);
-  --dark-accent: oklch(90% 0.012 70);
-  --dark-accent-surface: oklch(26% 0.04 35);
-  --dark-accent-ink: oklch(21% 0.012 38);
-  --dark-signal: oklch(78% 0.12 30);
-  --dark-desk: oklch(17% 0.012 50);
-  --print-ink: #111827;
-  --print-rule: #E5E7EB;
-  --stripe: rgba(255, 255, 255, 0.15);
-  --stripe-soft: rgba(255, 255, 255, 0.12);
-  --spot-ring-dark: rgba(255, 255, 255, 0.6);
-  --spot-glow-dark: rgba(255, 255, 255, 0.2);
-  --diff: #3b82f6;
-  --diff-dark: #60a5fa;
-  --shadow-nav: 0 1px 8px rgba(0, 0, 0, 0.03);
-  --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.12);
-  --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-drawer: -8px 0 32px rgba(0, 0, 0, 0.1);
-  --shadow-bar: 0 -4px 20px rgba(0, 0, 0, 0.08);
-  --brand-x: #1da1f2;
-  --brand-youtube: #ff0000;
-  --brand-discord: #5865F2;
-  --brand-reddit: #FF4500;
-  --brand-ink: #000000;
-  --night: #0B0B1A;
-  --chart-mega: #a855f7;
-  --chart-muted: #94a3b8;
-  --chart-muted-2: #64748b;
-  --sprite-fallback: #888888;
-  --editor-muted: #666666;
-  --chart-boost: #f59e0b;
-  --night-2: #16213e;
-  --night-3: #0f3460;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -193,7 +63,7 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
-  --font-sans: "General Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-sora);
   --font-mono: var(--font-mono);
 }
 
@@ -210,17 +80,17 @@ html {
      so on desktop it made the element ~15px wider than the usable content
      width and produced a hairline left↔right scroll. overflow-x: hidden does
      the clipping without that side effect. */
-  overflow-x: clip;
+  overflow-x: hidden;
   overscroll-behavior-x: none;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans);
+  font-family: var(--font-sora), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: clip;
+  overflow-x: hidden;
   overscroll-behavior-x: none;
   /* No max-width: 100vw here either — same scrollbar-gutter overflow bug as
      on <html>. overflow-x: hidden already clips horizontal overflow. */
@@ -235,11 +105,12 @@ body {
    horizontal scroll revealing the banner offscreen. Constrain it.
    ==================================================================== */
 #cc-main {
-  --cc-font-family: var(--font-sans);
+  --cc-font-family: var(--font-sora), system-ui, sans-serif;
 }
 #cc-main .cm,
 #cc-main .pm {
-  max-width: 100% !important;
+  max-width: calc(100vw - 1.5rem) !important;
+  max-width: calc(100dvw - 1.5rem) !important;
   box-sizing: border-box !important;
   word-wrap: break-word;
   overflow-wrap: anywhere;
@@ -250,15 +121,17 @@ body {
        outside the viewport horizontally regardless of library defaults. */
     inset: auto 0 0 0 !important;
     margin: 0 auto !important;
-    width: 100% !important;
-    max-width: min(480px, 100% - 1rem) !important;
+    width: calc(100vw - 1rem) !important;
+    width: calc(100dvw - 1rem) !important;
+    max-width: 480px !important;
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%) !important;
     bottom: max(env(safe-area-inset-bottom, 0px), 0.5rem) !important;
   }
   #cc-main .pm {
-    width: 100% !important;
+    width: calc(100vw - 1rem) !important;
+    width: calc(100dvw - 1rem) !important;
     max-width: 100% !important;
   }
   #cc-main .cm__btns,
@@ -306,15 +179,28 @@ body {
 
   /* PWA bottom nav gets extra padding for gesture bar */
   nav[aria-label="Mobile navigation"] {
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--space-2xs));
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
   }
 
   /* Slide nav also gets gesture bar padding in PWA */
   [data-walkthrough="slide-nav"] {
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--space-2xs));
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
   }
 }
 
+/* Subtle dot grid — only on large screens for performance */
+@media (min-width: 1024px) {
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.3;
+    background-image: radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0);
+    background-size: 32px 32px;
+    pointer-events: none;
+  }
+}
 
 /* Safe area padding for notched/dynamic island devices */
 @supports (padding: env(safe-area-inset-bottom)) {
@@ -337,14 +223,6 @@ body {
 }
 .scrollbar-none::-webkit-scrollbar {
   display: none;
-}
-
-/* A chip row that scrolls sideways on phones: fade the clipped edge instead of a hard cut */
-@media (max-width: 639px) {
-  .scroll-row {
-    overscroll-behavior-x: contain;
-    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent);
-  }
 }
 
 /* Better text input sizing on iOS (prevents zoom on focus) */
@@ -372,54 +250,44 @@ body {
 
 ::selection {
   background: var(--accent);
-  color: var(--accent-ink);
+  color: white;
 }
 
 [data-creator-mode] {
-  --background: var(--light-background);
-  --surface: var(--light-surface);
-  --surface-alt: var(--light-surface-alt);
-  --border: var(--light-border);
+  --background: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #FAFAF7;
+  --border: #E5E2DA;
 }
 
 [data-dark-mode] {
-  --cell-immune: var(--dark-cell-immune);
-  --cell-immune-text: var(--dark-cell-immune-text);
-  --cell-nve: var(--dark-cell-nve);
-  --cell-nve-text: var(--dark-cell-nve-text);
-  --cell-se: var(--dark-cell-se);
-  --cell-se-text: var(--dark-cell-se-text);
-  --cell-dse: var(--dark-cell-dse);
-  --cell-dse-text: var(--dark-cell-dse-text);
-  --def-4x: var(--dark-def-4x);
-  --def-4x-text: var(--dark-def-4x-text);
-  --background: var(--dark-background);
-  --foreground: var(--dark-foreground);
-  --surface: var(--dark-surface);
-  --surface-alt: var(--dark-surface-alt);
-  --border: var(--dark-border);
-  --border-subtle: var(--dark-border-subtle);
-  --text-primary: var(--dark-text-primary);
-  --text-secondary: var(--dark-text-secondary);
-  --text-tertiary: var(--dark-text-tertiary);
-  --accent: var(--accent-dark, var(--dark-accent));
-  --accent-light: var(--dark-accent-light);
-  --accent-surface: var(--accent-surface-dark, var(--dark-accent-surface));
-  --accent-ink: var(--dark-accent-ink);
-  --signal: var(--signal-dark, var(--dark-signal));
-  --desk: var(--dark-desk);
-  /* dark: elevation is lightness, not shadow; the light falls on nothing */
-  --lit: 96% 0.006 70; --shade: 8% 0.01 40;
-  --cast-stock: 0 0 0 0 transparent;
-  --cast-stock-lift: 0 0 0 0 transparent;
-  --press-shadow: 0.5px 0.75px 0 var(--accent);
+  --cell-immune: #27272A;
+  --cell-immune-text: #A1A1AA;
+  --cell-nve: rgba(239, 68, 68, 0.2);
+  --cell-nve-text: #FCA5A5;
+  --cell-se: rgba(16, 185, 129, 0.25);
+  --cell-se-text: #6EE7B7;
+  --cell-dse: rgba(6, 182, 212, 0.4);
+  --cell-dse-text: #FFFFFF;
+  --def-4x: rgba(220, 38, 38, 0.5);
+  --def-4x-text: #FFFFFF;
+  --background: #0B0B1A;
+  --foreground: #F0EDE6;
+  --surface: #141428;
+  --surface-alt: #1C1C38;
+  --border: #2A2A52;
+  --border-subtle: #222244;
+  --text-primary: #F0EDE6;
+  --text-secondary: #C0C0D8;
+  --text-tertiary: #9898B8;
+  --accent: var(--accent-dark, #FB7185);
+  --accent-light: #FDA4AF;
+  --accent-surface: var(--accent-surface-dark, #3B1525);
 }
 
-/* dark: the primary is a light stock card, so the legacy white labels on it take the board's ink */
-[data-dark-mode] :is(.bg-accent, .hover\:bg-accent:hover):is(.text-white, .hover\:text-white:hover) {
-  color: var(--accent-ink);
+[data-dark-mode] body::before {
+  opacity: 0.15;
 }
-
 
 /* ====================================================================
    EXPORT THEME OVERRIDES — force light/dark on print container
@@ -427,71 +295,69 @@ body {
 
 [data-export-theme="light"],
 [data-export-theme="light"] * {
-  --background: var(--light-background-83) !important;
-  --foreground: var(--light-foreground) !important;
-  --surface: var(--light-surface-33) !important;
-  --surface-alt: var(--light-surface-alt-77) !important;
-  --border: var(--light-border-98) !important;
-  --border-subtle: var(--light-border-subtle) !important;
-  --text-primary: var(--light-text-primary) !important;
-  --text-secondary: var(--light-text-secondary) !important;
-  --text-tertiary: var(--light-text-tertiary) !important;
-  --accent: var(--light-accent) !important;
-  --accent-light: var(--light-accent-light) !important;
-  --accent-surface: var(--light-accent-surface) !important;
-  --color-background: var(--light-background-83) !important;
-  --color-foreground: var(--light-foreground) !important;
-  --color-surface: var(--light-surface-33) !important;
-  --color-surface-alt: var(--light-surface-alt-77) !important;
-  --color-border: var(--light-border-98) !important;
-  --color-border-subtle: var(--light-border-subtle) !important;
-  --color-text-primary: var(--light-text-primary) !important;
-  --color-text-secondary: var(--light-text-secondary) !important;
-  --color-text-tertiary: var(--light-text-tertiary) !important;
-  --color-accent: var(--light-accent) !important;
-  --color-accent-light: var(--light-accent-light) !important;
-  --color-accent-surface: var(--light-accent-surface) !important;
+  --background: #FAF9F6 !important;
+  --foreground: #1A1A2E !important;
+  --surface: #FFFFFF !important;
+  --surface-alt: #F2F0EB !important;
+  --border: #E0DDD5 !important;
+  --border-subtle: #F0EDE6 !important;
+  --text-primary: #1A1A2E !important;
+  --text-secondary: #4A4A68 !important;
+  --text-tertiary: #5E5E7A !important;
+  --accent: #E11D48 !important;
+  --accent-light: #FDA4AF !important;
+  --accent-surface: #FFF1F2 !important;
+  --color-background: #FAF9F6 !important;
+  --color-foreground: #1A1A2E !important;
+  --color-surface: #FFFFFF !important;
+  --color-surface-alt: #F2F0EB !important;
+  --color-border: #E0DDD5 !important;
+  --color-border-subtle: #F0EDE6 !important;
+  --color-text-primary: #1A1A2E !important;
+  --color-text-secondary: #4A4A68 !important;
+  --color-text-tertiary: #5E5E7A !important;
+  --color-accent: #E11D48 !important;
+  --color-accent-light: #FDA4AF !important;
+  --color-accent-surface: #FFF1F2 !important;
 }
 
 [data-export-theme="dark"],
 [data-export-theme="dark"] * {
-  color: var(--dark-foreground) !important;
-  --background: var(--dark-background) !important;
-  --foreground: var(--dark-foreground) !important;
-  --surface: var(--dark-surface) !important;
-  --surface-alt: var(--dark-surface-alt) !important;
-  --border: var(--dark-border) !important;
-  --border-subtle: var(--dark-border-subtle) !important;
-  --text-primary: var(--dark-text-primary) !important;
-  --text-secondary: var(--dark-text-secondary) !important;
-  --text-tertiary: var(--dark-text-tertiary) !important;
-  --accent: var(--dark-accent) !important;
-  --accent-light: var(--dark-accent-light) !important;
-  --accent-surface: var(--dark-accent-surface) !important;
-  --color-background: var(--dark-background) !important;
-  --color-foreground: var(--dark-foreground) !important;
-  --color-surface: var(--dark-surface) !important;
-  --color-surface-alt: var(--dark-surface-alt) !important;
-  --color-border: var(--dark-border) !important;
-  --color-border-subtle: var(--dark-border-subtle) !important;
-  --color-text-primary: var(--dark-text-primary) !important;
-  --color-text-secondary: var(--dark-text-secondary) !important;
-  --color-text-tertiary: var(--dark-text-tertiary) !important;
-  --color-accent: var(--dark-accent) !important;
-  --color-accent-light: var(--dark-accent-light) !important;
-  --color-accent-surface: var(--dark-accent-surface) !important;
+  --background: #0B0B1A !important;
+  --foreground: #F0EDE6 !important;
+  --surface: #141428 !important;
+  --surface-alt: #1C1C38 !important;
+  --border: #2A2A52 !important;
+  --border-subtle: #222244 !important;
+  --text-primary: #F0EDE6 !important;
+  --text-secondary: #C0C0D8 !important;
+  --text-tertiary: #9898B8 !important;
+  --accent: #FB7185 !important;
+  --accent-light: #FDA4AF !important;
+  --accent-surface: #3B1525 !important;
+  --color-background: #0B0B1A !important;
+  --color-foreground: #F0EDE6 !important;
+  --color-surface: #141428 !important;
+  --color-surface-alt: #1C1C38 !important;
+  --color-border: #2A2A52 !important;
+  --color-border-subtle: #222244 !important;
+  --color-text-primary: #F0EDE6 !important;
+  --color-text-secondary: #C0C0D8 !important;
+  --color-text-tertiary: #9898B8 !important;
+  --color-accent: #FB7185 !important;
+  --color-accent-light: #FDA4AF !important;
+  --color-accent-surface: #3B1525 !important;
 }
 
 @media print {
   [data-export-theme="dark"] {
-    background-color: var(--dark-background) !important;
-    color: var(--dark-foreground) !important;
+    background-color: #0B0B1A !important;
     color-adjust: exact;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
   [data-export-theme="light"] {
-    background-color: var(--light-background) !important;
+    background-color: #FAF9F6 !important;
     color-adjust: exact;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
@@ -686,20 +552,20 @@ body {
 @media (orientation: landscape) and (max-height: 500px) {
   /* Tighter padding in presentation mode on landscape phones */
   [data-presentation-mode] .slide-content {
-    padding-top: var(--space-2xs) !important;
-    padding-bottom: var(--space-2xs) !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
   }
 
   /* Compact navbar */
   [data-presentation-mode] header {
-    padding-top: var(--space-2xs) !important;
-    padding-bottom: var(--space-2xs) !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
   }
 
   /* Compact bottom nav */
   [data-presentation-mode] [role="navigation"] {
-    padding-top: var(--space-2xs) !important;
-    padding-bottom: var(--space-2xs) !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
   }
 
   /* Smaller text in presenting mode for landscape */
@@ -710,12 +576,12 @@ body {
   /* Team overview: 3-col grid in landscape to use horizontal space */
   [data-presentation-mode] [data-walkthrough="pokemon-grid"] {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: var(--space-xs) !important;
+    gap: 0.5rem !important;
   }
 
   /* Reduce Pokemon card padding */
   [data-presentation-mode] .card-hover {
-    padding: var(--space-xs) !important;
+    padding: 0.5rem !important;
   }
 }
 
@@ -729,8 +595,8 @@ body {
 }
 
 .dark .walkthrough-spotlight {
-  outline-color: var(--spot-ring-dark);
-  filter: drop-shadow(0 0 12px var(--spot-glow-dark));
+  outline-color: rgba(255, 255, 255, 0.6);
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
 }
 
 /* ====================================================================
@@ -747,7 +613,7 @@ body {
     font-size: 11pt;
     line-height: 1.4;
     background: white !important;
-    color: var(--print-ink) !important;
+    color: #111827 !important;
   }
 
   body::before {
@@ -844,38 +710,38 @@ body {
   /* Overrides dark mode variables so PDF is always readable on white */
 
   #print-container {
-    --background: var(--light-background-83);
-    --foreground: var(--light-foreground);
-    --surface: var(--light-surface-33);
-    --surface-alt: var(--light-surface-alt-77);
-    --border: var(--light-border-98);
-    --border-subtle: var(--light-border-subtle);
-    --text-primary: var(--light-text-primary);
-    --text-secondary: var(--light-text-secondary);
-    --text-tertiary: var(--light-text-tertiary);
-    --accent: var(--light-accent);
-    --accent-light: var(--light-accent-light);
-    --accent-surface: var(--light-accent-surface);
-    --success: var(--light-success);
-    --warning: var(--light-warning);
-    --danger: var(--light-danger);
-    --cell-immune: var(--light-cell-immune);
-    --cell-immune-text: var(--light-cell-immune-text);
-    --cell-nve: var(--light-cell-nve);
-    --cell-nve-text: var(--light-cell-nve-text);
-    --cell-se: var(--light-cell-se);
-    --cell-se-text: var(--light-cell-se-text);
-    --cell-dse: var(--light-cell-dse);
-    --cell-dse-text: var(--light-cell-dse-text);
-    --def-4x: var(--light-def-4x);
-    --def-4x-text: var(--light-def-4x-text);
-    --stat-hp: var(--light-stat-hp);
-    --stat-atk: var(--light-stat-atk);
-    --stat-def: var(--light-stat-def);
-    --stat-spa: var(--light-stat-spa);
-    --stat-spd: var(--light-stat-spd);
-    --stat-spe: var(--light-stat-spe);
-    color: var(--light-text-primary) !important;
+    --background: #FAF9F6;
+    --foreground: #1A1A2E;
+    --surface: #FFFFFF;
+    --surface-alt: #F2F0EB;
+    --border: #E0DDD5;
+    --border-subtle: #F0EDE6;
+    --text-primary: #1A1A2E;
+    --text-secondary: #4A4A68;
+    --text-tertiary: #5E5E7A;
+    --accent: #E11D48;
+    --accent-light: #FDA4AF;
+    --accent-surface: #FFF1F2;
+    --success: #16A34A;
+    --warning: #D97706;
+    --danger: #DC2626;
+    --cell-immune: #E4E4E7;
+    --cell-immune-text: #71717A;
+    --cell-nve: #FEE2E2;
+    --cell-nve-text: #B91C1C;
+    --cell-se: #D1FAE5;
+    --cell-se-text: #065F46;
+    --cell-dse: #A5F3FC;
+    --cell-dse-text: #164E63;
+    --def-4x: #FECACA;
+    --def-4x-text: #991B1B;
+    --stat-hp: #FF5959;
+    --stat-atk: #F5AC78;
+    --stat-def: #FAE078;
+    --stat-spa: #9DB7F5;
+    --stat-spd: #A7DB8D;
+    --stat-spe: #FA92B2;
+    color: #1A1A2E !important;
     background: white !important;
   }
 
@@ -902,39 +768,39 @@ body {
 
   /* Accent colors */
   .text-accent, [class*="text-accent"] {
-    color: var(--light-accent) !important;
+    color: #E11D48 !important;
   }
 
   /* Stat bar backgrounds — force light mode */
   #print-container .bg-surface-alt {
-    background-color: var(--light-surface-alt) !important;
+    background-color: #F2F0EB !important;
   }
 
   #print-container .bg-surface {
-    background-color: var(--light-surface) !important;
+    background-color: #FFFFFF !important;
   }
 
   /* Borders — force light mode */
   #print-container .border-border {
-    border-color: var(--light-border) !important;
+    border-color: #E0DDD5 !important;
   }
 
   /* Text colors — force light mode readability */
   #print-container .text-text-primary {
-    color: var(--light-text-primary) !important;
+    color: #1A1A2E !important;
   }
 
   #print-container .text-text-secondary {
-    color: var(--light-text-secondary) !important;
+    color: #4A4A68 !important;
   }
 
   #print-container .text-text-tertiary {
-    color: var(--light-text-tertiary) !important;
+    color: #5E5E7A !important;
   }
 
   /* Stat bar borders for clarity */
   [role="progressbar"] {
-    border: 1px solid var(--print-rule) !important;
+    border: 1px solid #E5E7EB !important;
   }
 }
 
@@ -958,61 +824,8 @@ body {
    outline-offset ensures the ring doesn't overlap element borders. */
 @layer base {
   *:focus-visible {
-    outline: 2px solid var(--signal);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
-  }
-}
-
-/* Field edges read at 3:1 against the surface: every field that carried the hairline token takes the muted ink.
-   Unlayered on purpose: it must outrank the utility. */
-:is(input, select, textarea).border-border {
-  border-color: var(--text-tertiary);
-}
-
-/* Accent as text is the signal: deep coral by default; a picked gen or random accent sets --signal beside --accent */
-:root {
-  --accent-text: var(--signal);
-}
-.text-accent {
-  color: var(--accent-text);
-}
-
-/* Coral controls and surfaces, applied on the shared classes so every route takes them (unlayered: they outrank the utilities) */
-:is(.rounded-card, .rounded-lg, .rounded-xl, .rounded-2xl).bg-surface:not(input, textarea, select) {
-  box-shadow: var(--edge-stock), var(--cast-stock);
-}
-:is(button, a, summary).bg-accent {
-  text-shadow: var(--press-shadow);
-  box-shadow: var(--cast-stock);
-}
-:is(button, a, summary).bg-accent:hover:not(:active):not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--cast-stock-lift);
-}
-:is(button, a, summary).border-text-primary {
-  border-color: transparent;
-  background-color: var(--surface);
-  background-image: var(--tex-cotton);
-  text-shadow: 0.5px 0.75px 0 var(--surface);
-  box-shadow: var(--edge-stock), var(--cast-stock);
-}
-:is(button, a, summary).border-text-primary:hover:not(:active):not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--edge-stock), var(--cast-stock-lift);
-}
-.desk {
-  background-color: var(--desk);
-  background-image: radial-gradient(90% 120% at 0% 30%, var(--surface), transparent 62%), var(--tex-felt);
-}
-h1, h2, h3 {
-  font-weight: var(--display-weight);
-}
-
-/* Disabled controls: three channels, the native attribute included */
-@layer base {
-  button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disabled="true"] {
-    opacity: 0.55;
-    cursor: not-allowed;
   }
 }
 
@@ -1027,8 +840,8 @@ h1, h2, h3 {
     -45deg,
     transparent,
     transparent 3px,
-    var(--stripe) 3px,
-    var(--stripe) 5px
+    rgba(255, 255, 255, 0.15) 3px,
+    rgba(255, 255, 255, 0.15) 5px
   );
   background-size: auto;
 }
@@ -1039,8 +852,8 @@ h1, h2, h3 {
     -45deg,
     transparent,
     transparent 4px,
-    var(--stripe-soft) 4px,
-    var(--stripe-soft) 6px
+    rgba(255, 255, 255, 0.12) 4px,
+    rgba(255, 255, 255, 0.12) 6px
   );
 }
 
@@ -1063,37 +876,37 @@ h1, h2, h3 {
 
 /* Strong border around changed slides */
 .version-diff-border {
-  border: 3px solid var(--diff);
+  border: 3px solid #3b82f6;
   border-radius: 16px;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--diff) 10%, transparent),
-    0 0 24px color-mix(in srgb, var(--diff) 15%, transparent),
-    0 0 48px color-mix(in srgb, var(--diff) 8%, transparent);
+    0 0 0 1px rgba(59, 130, 246, 0.1),
+    0 0 24px rgba(59, 130, 246, 0.15),
+    0 0 48px rgba(59, 130, 246, 0.08);
   animation: version-diff-pulse 2.5s ease-in-out infinite;
 }
 
 :is(.dark) .version-diff-border {
-  border-color: var(--diff-dark);
+  border-color: #60a5fa;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--diff-dark) 15%, transparent),
-    0 0 24px color-mix(in srgb, var(--diff-dark) 20%, transparent),
-    0 0 48px color-mix(in srgb, var(--diff-dark) 10%, transparent);
+    0 0 0 1px rgba(96, 165, 250, 0.15),
+    0 0 24px rgba(96, 165, 250, 0.2),
+    0 0 48px rgba(96, 165, 250, 0.1);
 }
 
 @keyframes version-diff-pulse {
   0%, 100% {
     opacity: 0.7;
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--diff) 10%, transparent),
-      0 0 24px color-mix(in srgb, var(--diff) 10%, transparent),
-      0 0 48px color-mix(in srgb, var(--diff) 5%, transparent);
+      0 0 0 1px rgba(59, 130, 246, 0.1),
+      0 0 24px rgba(59, 130, 246, 0.1),
+      0 0 48px rgba(59, 130, 246, 0.05);
   }
   50% {
     opacity: 1;
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--diff) 20%, transparent),
-      0 0 32px color-mix(in srgb, var(--diff) 20%, transparent),
-      0 0 64px color-mix(in srgb, var(--diff) 10%, transparent);
+      0 0 0 1px rgba(59, 130, 246, 0.2),
+      0 0 32px rgba(59, 130, 246, 0.2),
+      0 0 64px rgba(59, 130, 246, 0.1);
   }
 }
 
@@ -1103,13 +916,13 @@ h1, h2, h3 {
   position: absolute;
   inset: -8px;
   border-radius: 16px;
-  background: color-mix(in srgb, var(--diff) 4%, transparent);
+  background: rgba(59, 130, 246, 0.04);
   pointer-events: none;
   z-index: -1;
 }
 
 :is(.dark) .version-diff-highlight::before {
-  background: color-mix(in srgb, var(--diff-dark) 6%, transparent);
+  background: rgba(96, 165, 250, 0.06);
 }
 
 @media (min-width: 640px) {

@@ -6,7 +6,7 @@ import { applyRandomAccent } from "@/lib/utils/random-accent";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 import { INDY_TOP_CUT } from "@/data/indy-top-cut";
@@ -22,25 +22,6 @@ import {
   type MegaPokemonEntry,
 } from "@/lib/data/mega-pokemon";
 import { MetaSnapshot } from "@/components/champions/MetaSnapshot";
-import { getSpriteUrls, resolveSlug } from "@/lib/utils/sprite-slug";
-
-function HeroSprite({ dataKey, name }: { dataKey: string; name: string }) {
-  const urls = getSpriteUrls(dataKey);
-  const [idx, setIdx] = useState(0);
-  return (
-    <img
-      src={urls[Math.min(idx, urls.length - 1)]}
-      alt={name}
-      width={96}
-      height={96}
-      className="h-24 w-24 object-contain sm:h-28 sm:w-28"
-      loading="eager"
-      onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
-    />
-  );
-}
-
-const HERO_MEGAS = getRegMCMegas().filter((m) => hasMegaSprite(m.dataKey)).slice(0, 9);
 
 interface MegaCard {
   name: string;
@@ -80,7 +61,7 @@ const MEGA_GROUPS: {
     id: "megas-reg-m-c",
     heading: "New in Regulation M-C",
     blurb:
-      "Added in the current rotation (Sep 9, Dec 2, 2026), including the three Z Megas. Not legal in Regulation M-A or M-B.",
+      "Added in the current rotation (Sep 9 – Dec 2, 2026), including the three Z Megas. Not legal in Regulation M-A or M-B.",
     megas: getRegMCMegas()
       .filter((m) => CHAMPIONS_REG_MC_ONLY_MEGAS.has(m.dataKey))
       .map(toCard),
@@ -105,7 +86,6 @@ const MEGA_GROUPS: {
 
 const TOTAL_MEGAS = MEGA_GROUPS.reduce((n, g) => n + g.megas.length, 0);
 
-const LIGHT_INK_TYPES = new Set(["Dark", "Ghost", "Dragon", "Fighting", "Poison"]);
 const TYPE_COLORS: Record<string, string> = {
   Normal: "#A8A878", Fire: "#F08030", Water: "#6890F0", Electric: "#F8D030",
   Grass: "#78C850", Ice: "#98D8D8", Fighting: "#C03028", Poison: "#A040A0",
@@ -139,23 +119,29 @@ export function ChampionsContent() {
       />
       <main className="min-h-screen bg-background pb-24 sm:pb-0">
         {/* Hero */}
-        <section className="mx-auto max-w-(--container) px-(--gutter) pt-12 pb-16 sm:pt-16 lg:flex lg:min-h-[calc(100dvh-4rem)] lg:items-center lg:py-0">
-          <div className="grid w-full items-center gap-12 lg:grid-cols-12 lg:gap-(--gap-columns)">
-          <div className="lg:col-span-5">
-            <h1 className="font-display text-display-s font-bold tracking-display text-text-primary">
+        <section className="relative overflow-hidden py-16 sm:py-24 px-4">
+          <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-transparent" />
+          <div className="relative max-w-5xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent-surface rounded-full mb-6">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs font-extrabold text-accent uppercase tracking-widest">
+                Champions Ready
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight leading-tight">
               Pokemon Champions<br />
-              VGC Team Reports
+              <span className="text-accent">VGC Team Reports</span>
             </h1>
-            <p className="lead mt-5 text-text-secondary">
+            <p className="mt-4 text-base sm:text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
               Build detailed team reports for the official Pokemon Champions competitive format.
               Mega Evolution support, matchup plans, damage calcs, speed tiers, and one-click sharing.
             </p>
-            <div className="mt-10 flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-card bg-accent px-6 whitespace-nowrap text-base font-semibold text-accent-ink transition-[background-color,transform] duration-(--dur-short) hover:brightness-110 active:translate-y-px"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
               >
-                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
@@ -163,28 +149,20 @@ export function ChampionsContent() {
               </Link>
               <Link
                 href="/explore?regulation=Reg+M-A"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-card border border-text-primary px-6 whitespace-nowrap text-base font-semibold text-text-primary transition-colors duration-(--dur-short) hover:bg-surface-alt"
+                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-text-secondary hover:text-text-primary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all"
               >
                 Explore Champions Teams
               </Link>
             </div>
           </div>
-          <ul className="grid grid-cols-3 gap-4 lg:col-span-7 lg:gap-6" aria-label="Mega Evolutions legal in the current regulation">
-            {HERO_MEGAS.map((m) => (
-              <li key={m.dataKey} className="flex aspect-square items-center justify-center rounded-card bg-surface">
-                <HeroSprite dataKey={m.dataKey} name={m.displayName} />
-              </li>
-            ))}
-          </ul>
-          </div>
         </section>
 
         {/* What is Pokemon Champions */}
-        <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
-          <h2 className="font-display text-section font-bold tracking-display text-text-primary mb-10">
+        <section className="max-w-5xl mx-auto px-4 py-12">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
             What is Pokemon Champions?
           </h2>
-          <div className="max-w-[65ch] space-y-4 text-text-secondary leading-relaxed">
+          <div className="space-y-4 text-text-secondary text-sm leading-relaxed">
             <p>
               Pokemon Champions is the new competitive Pokemon battle game and the official platform
               for the 2026 Play! Pokemon Championship Series. It replaces Pokemon Scarlet &amp; Violet
@@ -195,34 +173,36 @@ export function ChampionsContent() {
               The season opened on <strong className="text-text-primary">Regulation M-A</strong>, the
               format played at the Global Challenge (May 1-4), Indianapolis Regionals (May 29-31), and
               the NA International Championships (June 12-14). Reg M-A banned all Legendary and
-              Restricted Pokemon, no Groudon, Kyogre, Calyrex, Miraidon, Koraidon, or other restricted
-              picks, and allowed one Mega Evolution per battle from a pool of 59 legal Mega forms.
+              Restricted Pokemon — no Groudon, Kyogre, Calyrex, Miraidon, Koraidon, or other restricted
+              picks — and allowed one Mega Evolution per battle from a pool of 59 legal Mega forms.
             </p>
             <p>
               <strong className="text-text-primary">Regulation M-B</strong> added 16 Megas including Mega
               Metagross, Mawile and Blaziken. The current format,{" "}
-              <strong className="text-text-primary">Regulation M-C</strong> (Sep 9, Dec 2, 2026), keeps
+              <strong className="text-text-primary">Regulation M-C</strong> (Sep 9 – Dec 2, 2026), keeps
               everything from M-B and adds the Galar starters, Indeedee, Baxcalibur and more, plus six
-              Megas, the new Z Megas (Garchomp Z, Lucario Z, Absol Z) and Mega Salamence, Baxcalibur
-              and Golisopod, for {TOTAL_MEGAS} legal Mega forms. Restricted Pokemon stay banned, item
+              Megas — the new Z Megas (Garchomp Z, Lucario Z, Absol Z) and Mega Salamence, Baxcalibur
+              and Golisopod — for {TOTAL_MEGAS} legal Mega forms. Restricted Pokemon stay banned, item
               clause applies, and you can still only Mega Evolve once per battle.
             </p>
           </div>
         </section>
 
-        {/* Mega Pokemon index, grouped by regulation */}
-        <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
-          <h2 className="font-display text-section font-bold tracking-display text-text-primary mb-5">
+        {/* Mega Pokemon index — grouped by regulation */}
+        <section className="max-w-5xl mx-auto px-4 py-12">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-2">
             Every Legal Mega Evolution
           </h2>
-          <p className="mb-12 max-w-[65ch] text-text-secondary leading-relaxed">
+          <p className="text-sm text-text-secondary mb-8 max-w-2xl leading-relaxed">
             All {TOTAL_MEGAS} Mega Evolutions legal in Pokemon Champions, grouped by the regulation
             they can be played in. Pick one for its stats, ability, Mega Stone, SP spreads, and
             community team reports.
           </p>
           {MEGA_GROUPS.map((group) => (
             <div key={group.id} className="mb-10 last:mb-0">
-              <h3 id={group.id} className="font-display text-title font-bold tracking-tight text-text-primary"
+              <h3
+                id={group.id}
+                className="text-base sm:text-lg font-extrabold text-text-primary tracking-tight"
               >
                 {group.heading}{" "}
                 <span className="text-xs font-bold text-text-tertiary align-middle">
@@ -245,7 +225,7 @@ export function ChampionsContent() {
                             {mon.name}
                           </h4>
                           {mon.reg !== "M-A" && (
-                            <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-accent-surface text-accent border border-accent/20 whitespace-nowrap">
+                            <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent-surface text-accent border border-accent/20 whitespace-nowrap">
                               Reg {mon.reg}
                             </span>
                           )}
@@ -255,8 +235,8 @@ export function ChampionsContent() {
                           {mon.types.map((t) => (
                             <span
                               key={t}
-                              className={`text-xs font-bold px-2 py-0.5 rounded-full ${LIGHT_INK_TYPES.has(t) ? "text-white" : "text-(--night)"}`}
-                              style={{ backgroundColor: TYPE_COLORS[t] ?? "var(--sprite-fallback)" }}
+                              className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
                             >
                               {t}
                             </span>
@@ -265,7 +245,7 @@ export function ChampionsContent() {
                       </Link>
                     ) : (
                       // Sprite-less Megas (Meowstic, Raichu X/Y) have no landing
-                      // page, Showdown ships no usable sprite, so the page would
+                      // page — Showdown ships no usable sprite, so the page would
                       // render broken. Surfaced as a non-clickable "Coming Soon"
                       // card instead.
                       <div
@@ -274,7 +254,7 @@ export function ChampionsContent() {
                       >
                         <div className="flex items-start justify-between gap-2 flex-wrap">
                           <h4 className="text-sm font-bold text-text-tertiary">{mon.name}</h4>
-                          <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
+                          <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
                             Coming Soon
                           </span>
                         </div>
@@ -283,14 +263,14 @@ export function ChampionsContent() {
                           {mon.types.map((t) => (
                             <span
                               key={t}
-                              className={`text-xs font-bold px-2 py-0.5 rounded-full ${LIGHT_INK_TYPES.has(t) ? "text-white" : "text-(--night)"}${" opacity-70"}`}
-                              style={{ backgroundColor: TYPE_COLORS[t] ?? "var(--sprite-fallback)" }}
+                              className="text-[10px] font-bold text-white/70 px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
                             >
                               {t}
                             </span>
                           ))}
                         </div>
-                        <p className="text-xs text-text-tertiary/60 mt-2 italic">Sprite unavailable</p>
+                        <p className="text-[10px] text-text-tertiary/60 mt-2 italic">Sprite unavailable</p>
                       </div>
                     )}
                   </li>
@@ -301,8 +281,8 @@ export function ChampionsContent() {
         </section>
 
         {/* Sample Teams */}
-        <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
-          <h2 className="font-display text-section font-bold tracking-display text-text-primary mb-5">
+        <section className="max-w-5xl mx-auto px-4 py-12">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-2">
             Sample Teams to Get You Started
           </h2>
           <p className="text-sm text-text-secondary mb-6">
@@ -315,14 +295,14 @@ export function ChampionsContent() {
                 className="rounded-xl border border-border bg-surface p-5 flex flex-col gap-3"
               >
                 <div>
-                  <h3 className="text-sm font-bold text-text-primary">{team.name}</h3>
+                  <h3 className="text-sm font-extrabold text-text-primary">{team.name}</h3>
                   <p className="text-xs text-text-secondary mt-1 leading-relaxed">{team.description}</p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {team.pokemon.map((species) => (
                     <span
                       key={species}
-                      className="text-xs font-bold text-text-secondary bg-surface-alt border border-border px-2 py-0.5 rounded-full capitalize"
+                      className="text-[10px] font-bold text-text-secondary bg-surface-alt border border-border px-2 py-0.5 rounded-full capitalize"
                     >
                       {species.replace(/-/g, " ")}
                     </span>
@@ -346,13 +326,13 @@ export function ChampionsContent() {
         <MetaSnapshot />
 
         {/* Indy Regionals Top Cut */}
-        <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
+        <section className="max-w-5xl mx-auto px-4 py-12">
           <div className="flex flex-col sm:flex-row sm:items-end gap-2 mb-2">
-            <h2 className="font-display text-section font-bold tracking-display text-text-primary">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
               Indianapolis Regionals Top Cut
             </h2>
-            <span className="text-xs font-bold text-amber-800 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full self-start sm:self-auto mb-0.5">
-              Sample, May 29-31, 2026
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full self-start sm:self-auto mb-0.5">
+              Sample — May 29-31, 2026
             </span>
           </div>
           <p className="text-sm text-text-secondary mb-1">
@@ -373,20 +353,20 @@ export function ChampionsContent() {
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm border-collapse" aria-label="Indianapolis Regionals top cut teams">
               <caption className="sr-only">
-                Indianapolis Regionals Top Cut, Sample representatives from the Regulation M-A meta. Columns: placement, player, team Pokémon, and Limitless link.
+                Indianapolis Regionals Top Cut — Sample representatives from the Regulation M-A meta. Columns: placement, player, team Pokémon, and Limitless link.
               </caption>
               <thead>
                 <tr className="bg-surface-alt border-b border-border">
-                  <th scope="col" className="text-left text-xs font-bold text-text-tertiary px-4 py-3 w-16">
+                  <th scope="col" className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3 w-16">
                     Place
                   </th>
-                  <th scope="col" className="text-left text-xs font-bold text-text-tertiary px-4 py-3">
+                  <th scope="col" className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3">
                     Player
                   </th>
-                  <th scope="col" className="text-left text-xs font-bold text-text-tertiary px-4 py-3">
+                  <th scope="col" className="text-left text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3">
                     Team
                   </th>
-                  <th scope="col" className="text-xs font-bold text-text-tertiary px-4 py-3 w-20">
+                  <th scope="col" className="text-xs font-extrabold text-text-tertiary uppercase tracking-wider px-4 py-3 w-20">
                     Details
                   </th>
                 </tr>
@@ -397,7 +377,7 @@ export function ChampionsContent() {
                     key={`${entry.placement}-${idx}`}
                     className="border-b border-border last:border-0 bg-surface hover:bg-surface-alt transition-colors"
                   >
-                    <td className="px-4 py-3 font-bold text-accent whitespace-nowrap">
+                    <td className="px-4 py-3 font-extrabold text-accent whitespace-nowrap">
                       {entry.placement}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -412,10 +392,10 @@ export function ChampionsContent() {
                           return (
                             <span
                               key={name}
-                              className="inline-flex items-center gap-1 text-xs font-bold text-text-secondary bg-surface-alt border border-border px-2 py-0.5 rounded-full"
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-text-secondary bg-surface-alt border border-border px-2 py-0.5 rounded-full"
                             >
                               <img
-                                src={`https://play.pokemonshowdown.com/sprites/home/${resolveSlug(slug)}.png`}
+                                src={`https://play.pokemonshowdown.com/sprites/home/${slug}.png`}
                                 alt={name}
                                 width={20}
                                 height={20}
@@ -446,7 +426,7 @@ export function ChampionsContent() {
                           View
                         </a>
                       ) : (
-                        <span className="text-xs text-text-tertiary">, </span>
+                        <span className="text-xs text-text-tertiary">—</span>
                       )}
                     </td>
                   </tr>
@@ -468,8 +448,8 @@ export function ChampionsContent() {
         </section>
 
         {/* How it works */}
-        <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
-          <h2 className="font-display text-section font-bold tracking-display text-text-primary mb-10">
+        <section className="max-w-5xl mx-auto px-4 py-12">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
             How to Create a Champions Team Report
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -479,7 +459,7 @@ export function ChampionsContent() {
               { step: "3", title: "Share & Discover", desc: "Share your report with a link, embed it on Discord, or make it public for the community to explore and learn from." },
             ].map((item) => (
               <div key={item.step} className="text-center">
-                <div className="w-10 h-10 rounded-full bg-accent-surface text-accent font-bold text-lg flex items-center justify-center mx-auto mb-3">
+                <div className="w-10 h-10 rounded-full bg-accent-surface text-accent font-extrabold text-lg flex items-center justify-center mx-auto mb-3">
                   {item.step}
                 </div>
                 <h3 className="text-sm font-bold text-text-primary mb-1">{item.title}</h3>
@@ -490,18 +470,18 @@ export function ChampionsContent() {
         </section>
 
         {/* EV → SP converter */}
-        <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
-          <h2 className="font-display text-section font-bold tracking-display text-text-primary mb-5">
+        <section className="max-w-5xl mx-auto px-4 py-12">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-2">
             Still Thinking in EVs?
           </h2>
           <p className="text-sm text-text-secondary mb-5 max-w-2xl leading-relaxed">
-            Champions swaps EVs for Stat Points, 66 in total, 32 max per stat.
+            Champions swaps EVs for Stat Points — 66 in total, 32 max per stat.
             The first SP costs 4 EVs and every one after it costs 8, which is why
             the conversion trips people up. Our free converter does the math both ways.
           </p>
           <Link
             href="/tools/ev-to-sp"
-            className="inline-flex min-h-11 items-center gap-2 px-4 py-2 bg-surface border border-border text-sm font-bold text-text-primary rounded-xl hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.97] transition"
+            className="inline-flex min-h-11 items-center gap-2 px-4 py-2 bg-surface border border-border text-sm font-bold text-text-primary rounded-xl hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.97] transition-all"
           >
             Open the EV to SP Converter
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -511,8 +491,8 @@ export function ChampionsContent() {
         </section>
 
         {/* Key Events */}
-        <section className="mx-auto max-w-(--container) px-(--gutter) py-(--section-gap-s)">
-          <h2 className="font-display text-section font-bold tracking-display text-text-primary mb-10">
+        <section className="max-w-5xl mx-auto px-4 py-12">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
             2026 Champions Tournament Calendar
           </h2>
           <div className="space-y-3">
@@ -531,7 +511,7 @@ export function ChampionsContent() {
                   {e.date}
                 </span>
                 <span className="text-sm font-bold text-text-primary flex-1">{e.event}</span>
-                <span className="text-xs font-bold text-text-tertiary bg-surface-alt px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold text-text-tertiary bg-surface-alt px-2 py-0.5 rounded-full">
                   {e.tag}
                 </span>
               </div>
@@ -540,8 +520,8 @@ export function ChampionsContent() {
         </section>
 
         {/* CTA */}
-        <section className="mx-auto max-w-(--container) border-t border-border px-(--gutter) py-(--section-gap-s)">
-          <h2 className="font-display text-section font-bold tracking-display text-text-primary mb-10">
+        <section className="max-w-5xl mx-auto px-4 py-16 text-center">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-5">
             Ready for Champions?
           </h2>
           <p className="text-sm text-text-secondary mb-6 max-w-lg mx-auto">
@@ -550,7 +530,7 @@ export function ChampionsContent() {
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-8 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition"
+            className="inline-flex items-center gap-2 px-8 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
           >
             Start Building
           </Link>

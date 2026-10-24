@@ -234,7 +234,7 @@ function ExploreInner() {
             </div>
             <button
               onClick={() => setRetryKey((k) => k + 1)}
-              className="min-h-[44px] px-6 py-2.5 bg-accent text-white rounded-xl font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition cursor-pointer"
+              className="min-h-[44px] px-6 py-2.5 bg-accent text-white rounded-xl font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer"
             >
               Retry
             </button>
@@ -283,7 +283,7 @@ function ExploreInner() {
                 <button
                   onClick={loadMore}
                   disabled={loadingMore}
-                  className="px-6 py-2.5 rounded-lg text-sm font-bold bg-surface border-2 border-border text-text-primary hover:border-accent/40 hover:bg-accent-surface active:scale-[0.97] transition disabled:opacity-40 disabled:cursor-not-allowed "
+                  className="px-6 py-2.5 rounded-lg text-sm font-bold bg-surface border-2 border-border text-text-primary hover:border-accent/40 hover:bg-accent-surface active:scale-[0.97] transition-all disabled:opacity-40 disabled:cursor-not-allowed tracking-wide"
                 >
                   {loadingMore ? t.loading : t.loadMore}
                 </button>

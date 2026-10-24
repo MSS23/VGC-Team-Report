@@ -1,4 +1,4 @@
-// Streaming skeleton for /dashboard, shown by Next.js Suspense while DashboardContent loads.
+// Streaming skeleton for /dashboard — shown by Next.js Suspense while DashboardContent loads.
 // Server component: no 'use client' needed for static pulse skeletons.
 
 function DashboardCardSkeleton() {

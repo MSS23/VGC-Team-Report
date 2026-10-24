@@ -1,4 +1,4 @@
-// Streaming skeleton for /s/[id], shown by Next.js Suspense while the share page loads.
+// Streaming skeleton for /s/[id] — shown by Next.js Suspense while the share page loads.
 // Server component: no 'use client' needed for static pulse skeletons.
 
 export default function ShareLoading() {

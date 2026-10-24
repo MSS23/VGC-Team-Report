@@ -7,18 +7,21 @@ import { useTranslation } from "@/lib/i18n";
 const CATEGORY_CONFIG = {
   offensive: {
     label: "Offensive",
+    icon: "⚔️",
     borderClass: "border-red-400/30",
     tagBg: "bg-red-500/20",
     tagText: "text-red-400",
   },
   defensive: {
     label: "Defensive",
+    icon: "🛡️",
     borderClass: "border-emerald-400/30",
     tagBg: "bg-emerald-500/20",
     tagText: "text-emerald-400",
   },
   speed: {
     label: "Speed Tier",
+    icon: "⚡",
     borderClass: "border-border-subtle",
     tagBg: "bg-surface-alt",
     tagText: "text-text-tertiary",
@@ -60,7 +63,7 @@ function autoDetectCategory(line: string, pokemonSpecies: string): CalcCategory 
     if (beforeVs.includes(speciesLower)) return "offensive";
     if (afterVs.includes(speciesLower)) return "defensive";
 
-    // Can't determine, default offensive
+    // Can't determine — default offensive
     return "offensive";
   }
 
@@ -192,13 +195,13 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs font-semibold text-text-tertiary">
+            <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
               {t.pasteCalcs}
             </span>
             <span className="text-[11px] text-text-secondary leading-snug">
               Paste <span className="text-red-500 dark:text-red-400 font-semibold">offensive</span> and{" "}
-              <span className="text-emerald-800 dark:text-emerald-400 font-semibold">defensive</span> calcs
-              together, we&apos;ll auto-sort them. Multi-line or all on one line both work.
+              <span className="text-emerald-500 dark:text-emerald-400 font-semibold">defensive</span> calcs
+              together — we&apos;ll auto-sort them. Multi-line or all on one line both work.
             </span>
           </div>
           <button
@@ -215,7 +218,7 @@ export function CalcInput({ pokemonSpecies, onAddCalc }: CalcInputProps) {
           value={pasteInput}
           aria-label={t.pasteCalcs}
           onChange={(e) => handlePasteChange(e.target.value)}
-          placeholder={`Paste one or many calcs, offensive and defensive, mixed together.
+          placeholder={`Paste one or many calcs — offensive and defensive, mixed together.
 
 Examples:
 ⚔️  252+ Atk Incineroar Flare Blitz vs. 252 HP / 0 Def Rillaboom: 210-248 (103.4 - 122.1%) -- guaranteed OHKO
@@ -232,7 +235,7 @@ Examples:
               <span className="text-[11px] text-text-tertiary">
                 {parsedLines.length} {t.calcsDetected}
               </span>
-              <span className="text-[11px] text-text-tertiary italic">
+              <span className="text-[10px] text-text-tertiary italic">
                 Tap &#9876; &#128737; &#9889; to fix a wrong category
               </span>
             </div>
@@ -262,13 +265,13 @@ Examples:
                             aria-label={`${t.changeCategory}: ${label}`}
                             aria-pressed={isActive}
                             title={label}
-                            className={`inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-sm transition duration-150 ${
- isActive
- ? `${catCfg.tagBg} ${catCfg.tagText} shadow-sm`
+                            className={`inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-sm transition-all duration-150 ${
+                              isActive
+                                ? `${catCfg.tagBg} ${catCfg.tagText} shadow-sm`
                                 : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
                             }`}
                           >
-                            
+                            <span aria-hidden>{catCfg.icon}</span>
                           </button>
                         );
                       })}
@@ -295,7 +298,7 @@ Examples:
             <button
               type="button"
               onClick={handleAddAll}
-              className="self-end px-4 py-2 bg-accent text-white text-sm rounded-xl hover:bg-accent/90 transition-colors"
+              className="self-end px-4 py-2 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90 transition-colors"
             >
               {t.addAll} ({parsedLines.length})
             </button>
@@ -321,13 +324,13 @@ Examples:
                 onClick={() => setCalcCategory(cat)}
                 aria-label={catLabelMap[cfg.label] ?? cfg.label}
                 aria-pressed={isActive}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs transition-colors min-h-[32px] ${
- isActive
- ? `${cfg.tagBg} ${cfg.tagText} border ${cfg.borderClass}`
+                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-[32px] ${
+                  isActive
+                    ? `${cfg.tagBg} ${cfg.tagText} border ${cfg.borderClass}`
                     : "bg-surface border border-border text-text-tertiary hover:text-text-secondary"
                 }`}
               >
-                
+                <span aria-hidden="true">{cfg.icon}</span>
                 <span className="hidden sm:inline">{catLabelMap[cfg.label] ?? cfg.label}</span>
               </button>
             );
@@ -371,7 +374,7 @@ Examples:
         <button
           type="submit"
           disabled={!calcInput.trim()}
-          className="px-3 sm:px-4 py-2.5 bg-accent text-white text-sm rounded-xl hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 min-h-[40px]"
+          className="px-3 sm:px-4 py-2.5 bg-accent text-white text-sm font-medium rounded-xl hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0 min-h-[40px]"
         >
           {t.add}
         </button>

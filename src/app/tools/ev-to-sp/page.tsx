@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   },
 };
 
-// Static page, nothing here reads the request or the database.
+// Static page — nothing here reads the request or the database.
 export const dynamic = "force-static";
 
 // EV values players actually type into Showdown, converted with the same
@@ -74,12 +74,12 @@ const FAQ_ITEMS = [
   {
     question: "How do you convert EVs to SP in Pokémon Champions?",
     answer:
-      `Any investment at all costs at least 1 Stat Point, and after that every further 8 EVs buys 1 more SP, so the conversion is SP = ceil(EVs / 8), with a minimum of 1 SP for a non-zero EV value. In practice the first Stat Point costs 4 EVs and each Stat Point after it costs 8 EVs: 4 EVs = 1 SP, 12 EVs = 2 SP, 20 EVs = 3 SP, and so on. Anything from 248 EVs upward hits the ${CHAMPIONS_MAX_SP_PER_STAT} SP per-stat cap, which is why a maxed 252 EV stat becomes ${CHAMPIONS_MAX_SP_PER_STAT} SP.`,
+      `Any investment at all costs at least 1 Stat Point, and after that every further 8 EVs buys 1 more SP — so the conversion is SP = ceil(EVs / 8), with a minimum of 1 SP for a non-zero EV value. In practice the first Stat Point costs 4 EVs and each Stat Point after it costs 8 EVs: 4 EVs = 1 SP, 12 EVs = 2 SP, 20 EVs = 3 SP, and so on. Anything from 248 EVs upward hits the ${CHAMPIONS_MAX_SP_PER_STAT} SP per-stat cap, which is why a maxed 252 EV stat becomes ${CHAMPIONS_MAX_SP_PER_STAT} SP.`,
   },
   {
     question: "Why does the EV to SP math not add up?",
     answer:
-      "Because the first Stat Point is cheaper than the rest. The smallest EV chip players use is 4 EVs, and that already rounds up to a full Stat Point, but the second Stat Point needs 12 EVs, not 8. That single rounding-up step at the bottom of the curve is what makes the numbers look inconsistent: 4 EVs and 8 EVs both cost exactly 1 SP, then every 8 EVs after that costs 1 SP each.",
+      "Because the first Stat Point is cheaper than the rest. The smallest EV chip players use is 4 EVs, and that already rounds up to a full Stat Point — but the second Stat Point needs 12 EVs, not 8. That single rounding-up step at the bottom of the curve is what makes the numbers look inconsistent: 4 EVs and 8 EVs both cost exactly 1 SP, then every 8 EVs after that costs 1 SP each.",
   },
   {
     question: "How many Stat Points does a Pokémon get in Champions?",
@@ -89,7 +89,7 @@ const FAQ_ITEMS = [
   {
     question: "What is 252 EVs in SP?",
     answer:
-      `252 EVs is ${CHAMPIONS_MAX_SP_PER_STAT} SP, the per-stat cap. So is 248 EVs, which means the classic "248 HP" bulk-optimising trick converts to exactly the same Stat Point cost as a full 252 investment.`,
+      `252 EVs is ${CHAMPIONS_MAX_SP_PER_STAT} SP — the per-stat cap. So is 248 EVs, which means the classic "248 HP" bulk-optimising trick converts to exactly the same Stat Point cost as a full 252 investment.`,
   },
   {
     question: "What is 4 EVs in SP?",
@@ -99,7 +99,7 @@ const FAQ_ITEMS = [
   {
     question: "Does a 252 / 252 / 4 EV spread fit inside the 66 SP budget?",
     answer:
-      `Yes. 252 EVs converts to ${CHAMPIONS_MAX_SP_PER_STAT} SP, a second 252 converts to another ${CHAMPIONS_MAX_SP_PER_STAT} SP, and the 4 EV chip converts to 1 SP, ${CHAMPIONS_MAX_SP_PER_STAT * 2 + 1} SP of the ${CHAMPIONS_TOTAL_SP} available, leaving 1 SP spare. Champions spreads are slightly more flexible than EV spreads because that spare point can go anywhere.`,
+      `Yes. 252 EVs converts to ${CHAMPIONS_MAX_SP_PER_STAT} SP, a second 252 converts to another ${CHAMPIONS_MAX_SP_PER_STAT} SP, and the 4 EV chip converts to 1 SP — ${CHAMPIONS_MAX_SP_PER_STAT * 2 + 1} SP of the ${CHAMPIONS_TOTAL_SP} available, leaving 1 SP spare. Champions spreads are slightly more flexible than EV spreads because that spare point can go anywhere.`,
   },
   {
     question: "Can a stat go over 32 SP in Pokémon Champions?",
@@ -110,7 +110,7 @@ const FAQ_ITEMS = [
 
 function SectionHeading({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h2 id={id} className="font-display text-section font-bold tracking-display text-text-primary mb-8">
+    <h2 id={id} className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight mb-3">
       {children}
     </h2>
   );
@@ -148,7 +148,7 @@ export default function EvToSpPage() {
         }}
       />
 
-      <main className="mx-auto max-w-(--container) px-(--gutter) py-8 sm:py-12 [&_p]:max-w-[34rem]">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-xs text-text-tertiary mb-8" aria-label="Breadcrumb">
           <Link href="/" className="inline-flex min-h-11 items-center hover:text-text-secondary transition-colors">
@@ -157,19 +157,19 @@ export default function EvToSpPage() {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <polyline points="9 18 15 12 9 6" />
           </svg>
-          <span className="text-text-secondary ">EV to SP Converter</span>
+          <span className="text-text-secondary font-medium">EV to SP Converter</span>
         </nav>
 
         {/* Header */}
-        <header className="mb-12 max-w-3xl pt-4 sm:pt-8">
-          <h1 className="font-display text-display-s font-bold tracking-display text-text-primary">
+        <header className="mb-10">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight mb-3">
             EV to SP Converter for Pok&eacute;mon Champions
           </h1>
-          <p className="mt-5 max-w-[34rem] text-text-secondary leading-relaxed">
+          <p className="text-sm sm:text-base text-text-secondary leading-relaxed max-w-2xl">
             Pok&eacute;mon Champions replaces EVs with <strong className="text-text-primary font-semibold">Stat Points (SP)</strong>:{" "}
             {CHAMPIONS_TOTAL_SP} to spend across the six stats, and no more than{" "}
             {CHAMPIONS_MAX_SP_PER_STAT} in any one of them. Convert an EV spread
-            you already know into Stat Points below , or go the other way and
+            you already know into Stat Points below &mdash; or go the other way and
             work out what an SP spread would have cost in EVs.
           </p>
         </header>
@@ -180,7 +180,7 @@ export default function EvToSpPage() {
         </div>
 
         {/* Explanation */}
-        <section className="mb-(--section-gap-s)" aria-labelledby="how-it-works">
+        <section className="mb-12" aria-labelledby="how-it-works">
           <SectionHeading id="how-it-works">How the EV to SP conversion works</SectionHeading>
           <div className="space-y-4 text-sm sm:text-base text-text-secondary leading-relaxed max-w-3xl">
             <p>
@@ -193,7 +193,7 @@ export default function EvToSpPage() {
             <p>
               That floor is the whole reason people say the math does not add up.
               The smallest EV chip anyone actually uses is 4 EVs, and 4 EVs rounds
-              up to a full Stat Point , but the <em>second</em> Stat Point needs
+              up to a full Stat Point &mdash; but the <em>second</em> Stat Point needs
               12 EVs, not 8. So the curve reads as{" "}
               <strong className="text-text-primary font-semibold">the first SP costs 4
               EVs and every SP after it costs 8</strong>: 4 &rarr; 1 SP, 12 &rarr; 2 SP,
@@ -207,7 +207,7 @@ export default function EvToSpPage() {
               Two maxed stats cost {CHAMPIONS_MAX_SP_PER_STAT * 2} SP, a 4 EV chip
               costs 1 SP, and that leaves{" "}
               {CHAMPIONS_TOTAL_SP - (CHAMPIONS_MAX_SP_PER_STAT * 2 + 1)} SP spare out
-              of {CHAMPIONS_TOTAL_SP} , so a 252 / 252 / 4 spread converts cleanly
+              of {CHAMPIONS_TOTAL_SP} &mdash; so a 252 / 252 / 4 spread converts cleanly
               with a point to put wherever you like. Spending more than{" "}
               {CHAMPIONS_TOTAL_SP} SP in total, or more than{" "}
               {CHAMPIONS_MAX_SP_PER_STAT} SP in a single stat, is illegal in
@@ -217,16 +217,16 @@ export default function EvToSpPage() {
         </section>
 
         {/* Quick facts */}
-        <section className="mb-(--section-gap-s)" aria-labelledby="quick-facts">
+        <section className="mb-12" aria-labelledby="quick-facts">
           <SectionHeading id="quick-facts">The rules at a glance</SectionHeading>
           <dl className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { term: `${CHAMPIONS_TOTAL_SP} SP`, def: "Total Stat Points available to each Pokémon." },
-              { term: `${CHAMPIONS_MAX_SP_PER_STAT} SP`, def: "Hard cap on any single stat, the equivalent of 252 EVs." },
+              { term: `${CHAMPIONS_MAX_SP_PER_STAT} SP`, def: "Hard cap on any single stat — the equivalent of 252 EVs." },
               { term: "4 EVs = 1 SP", def: "The cheapest investment; every SP after the first costs 8 EVs." },
             ].map((item) => (
               <div key={item.term} className="p-4 rounded-2xl border border-border bg-surface">
-                <dt className="text-lg font-bold text-accent tracking-tight">{item.term}</dt>
+                <dt className="text-lg font-extrabold text-accent tracking-tight">{item.term}</dt>
                 <dd className="text-sm text-text-secondary leading-relaxed mt-1">{item.def}</dd>
               </div>
             ))}
@@ -234,7 +234,7 @@ export default function EvToSpPage() {
         </section>
 
         {/* EV → SP table */}
-        <section className="mb-(--section-gap-s)" aria-labelledby="ev-to-sp-table">
+        <section className="mb-12" aria-labelledby="ev-to-sp-table">
           <SectionHeading id="ev-to-sp-table">EV to SP conversion table</SectionHeading>
           <p className="text-sm sm:text-base text-text-secondary leading-relaxed max-w-3xl mb-5">
             Common EV values and what each one costs in Stat Points.
@@ -264,9 +264,9 @@ export default function EvToSpPage() {
                       {row.ev === 0
                         ? "Uninvested"
                         : row.ev === 4
-                          ? "Minimum investment, the first SP costs only 4 EVs"
+                          ? "Minimum investment — the first SP costs only 4 EVs"
                           : row.sp === CHAMPIONS_MAX_SP_PER_STAT
-                            ? `Per-stat cap (${CHAMPIONS_MAX_SP_PER_STAT} SP), 248 EVs and ${MAX_EV_PER_STAT} EVs cost the same`
+                            ? `Per-stat cap (${CHAMPIONS_MAX_SP_PER_STAT} SP) — 248 EVs and ${MAX_EV_PER_STAT} EVs cost the same`
                             : `Leaves ${CHAMPIONS_TOTAL_SP - row.sp} SP for the other five stats`}
                     </td>
                   </tr>
@@ -277,7 +277,7 @@ export default function EvToSpPage() {
         </section>
 
         {/* SP → EV table */}
-        <section className="mb-(--section-gap-s)" aria-labelledby="sp-to-ev-table">
+        <section className="mb-12" aria-labelledby="sp-to-ev-table">
           <SectionHeading id="sp-to-ev-table">SP to EV: what each Stat Point costs</SectionHeading>
           <p className="text-sm sm:text-base text-text-secondary leading-relaxed max-w-3xl mb-5">
             The full ladder from 1 to {CHAMPIONS_MAX_SP_PER_STAT} SP, showing the
@@ -318,7 +318,7 @@ export default function EvToSpPage() {
         </section>
 
         {/* FAQ */}
-        <section className="mb-(--section-gap-s)" aria-labelledby="faq">
+        <section className="mb-12" aria-labelledby="faq">
           <SectionHeading id="faq">EV to SP questions</SectionHeading>
           <div className="divide-y divide-border/50">
             {FAQ_ITEMS.map((item) => (
@@ -347,13 +347,13 @@ export default function EvToSpPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/"
-              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-bold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.97] transition"
+              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-bold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.97] transition-all"
             >
               Build a Report
             </Link>
             <Link
               href="/champions"
-              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-surface-alt border border-border text-sm font-semibold text-text-primary hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.97] transition"
+              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-surface-alt border border-border text-sm font-semibold text-text-primary hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.97] transition-all"
             >
               Champions Format Guide
             </Link>

@@ -56,14 +56,14 @@ export function EditChangelog({ shareId }: { shareId: string }) {
 
   return (
     <div className="mt-4">
-      {/* Button, prominent with icon and count */}
+      {/* Button — prominent with icon and count */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl border-2 transition cursor-pointer ${
- open
- ? "bg-accent/10 border-accent/30 text-accent"
+        className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl border-2 transition-all cursor-pointer ${
+          open
+            ? "bg-accent/10 border-accent/30 text-accent"
             : "bg-surface border-border text-text-primary hover:border-accent/30 hover:text-accent"
         }`}
       >
@@ -72,11 +72,11 @@ export function EditChangelog({ shareId }: { shareId: string }) {
         </svg>
         Version History
         {entries.length > 0 && (
-          <span className="px-2 py-0.5 text-xs font-bold bg-accent-surface text-accent rounded-full">
+          <span className="px-2 py-0.5 text-[10px] font-extrabold bg-accent-surface text-accent rounded-full">
             {entries.length}
           </span>
         )}
-        <svg aria-hidden="true"
+        <svg
           width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
           className={`transition-transform ${open ? "rotate-180" : ""}`}
         >
@@ -90,7 +90,7 @@ export function EditChangelog({ shareId }: { shareId: string }) {
           <div className="px-4 py-3 bg-surface-alt/50 border-b border-border flex items-center justify-between">
             <span className="text-xs font-bold text-text-primary">All Versions</span>
             {publishedCount > 0 && (
-              <span className="text-xs font-bold text-emerald-800">
+              <span className="text-[10px] font-bold text-emerald-500">
                 {publishedCount} published
               </span>
             )}
@@ -103,11 +103,11 @@ export function EditChangelog({ shareId }: { shareId: string }) {
             </div>
           ) : entries.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary mx-auto mb-2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary mx-auto mb-2">
                 <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p className="text-xs text-text-tertiary">No version history yet.</p>
-              <p className="text-xs text-text-tertiary mt-0.5">Changes are tracked when signed-in users edit this report.</p>
+              <p className="text-[10px] text-text-tertiary mt-0.5">Changes are tracked when signed-in users edit this report.</p>
             </div>
           ) : (
             <div className="max-h-96 overflow-y-auto">
@@ -118,7 +118,7 @@ export function EditChangelog({ shareId }: { shareId: string }) {
                   <div
                     key={entry.version}
                     className={`border-b border-border/50 last:border-b-0 transition-colors ${
- isExpanded ? "bg-surface-alt/30" : "hover:bg-surface-alt/20"
+                      isExpanded ? "bg-surface-alt/30" : "hover:bg-surface-alt/20"
                     }`}
                   >
                     {/* Entry row */}
@@ -130,8 +130,8 @@ export function EditChangelog({ shareId }: { shareId: string }) {
                       {/* Timeline dot */}
                       <div className="flex flex-col items-center flex-shrink-0">
                         <div className={`w-3 h-3 rounded-full ${
- entry.isPublished
- ? "bg-emerald-500 ring-2 ring-emerald-500/30"
+                          entry.isPublished
+                            ? "bg-emerald-500 ring-2 ring-emerald-500/30"
                             : "bg-border"
                         }`} />
                       </div>
@@ -141,15 +141,15 @@ export function EditChangelog({ shareId }: { shareId: string }) {
                         <div className="flex items-center gap-2 flex-wrap">
                           {/* Published / WIP badge */}
                           {entry.isPublished ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-md bg-emerald-500/15 text-emerald-800 border border-emerald-500/25">
-                              <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-emerald-500/15 text-emerald-500 border border-emerald-500/25">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
                               </svg>
                               Published
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-md bg-surface-alt text-text-tertiary border border-border">
-                              <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-md bg-surface-alt text-text-tertiary border border-border">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                                 <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                               </svg>
@@ -163,7 +163,7 @@ export function EditChangelog({ shareId }: { shareId: string }) {
                           </span>
 
                           {isLatest && (
-                            <span className="text-xs font-bold text-accent bg-accent-surface px-1.5 py-0.5 rounded ">
+                            <span className="text-[9px] font-extrabold text-accent bg-accent-surface px-1.5 py-0.5 rounded uppercase tracking-wider">
                               Latest
                             </span>
                           )}
@@ -171,17 +171,17 @@ export function EditChangelog({ shareId }: { shareId: string }) {
 
                         {/* Timestamp + version */}
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-text-tertiary">
+                          <span className="text-[10px] text-text-tertiary">
                             {formatTime(entry.createdAt)}
                           </span>
-                          <span className="text-xs text-text-tertiary font-mono">
+                          <span className="text-[10px] text-text-tertiary font-mono">
                             v{entry.version}
                           </span>
                         </div>
                       </div>
 
                       {/* Expand arrow */}
-                      <svg aria-hidden="true"
+                      <svg
                         width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                         className={`text-text-tertiary flex-shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                       >
@@ -189,10 +189,10 @@ export function EditChangelog({ shareId }: { shareId: string }) {
                       </svg>
                     </button>
 
-                    {/* Expanded detail, changed sections */}
+                    {/* Expanded detail — changed sections */}
                     {isExpanded && (
                       <div className="px-4 pb-4 pl-10 animate-fade-in">
-                        <p className="text-xs font-bold text-text-tertiary mb-2">
+                        <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2">
                           Changes in this version
                         </p>
                         <div className="space-y-1.5">
@@ -201,7 +201,7 @@ export function EditChangelog({ shareId }: { shareId: string }) {
                               key={section}
                               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-alt/60 border border-border/50"
                             >
-                              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent flex-shrink-0">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent flex-shrink-0">
                                 <polyline points="9 11 12 14 22 4" />
                                 <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
                               </svg>

@@ -15,18 +15,18 @@ export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePicker
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-bold text-text-secondary mb-1.5">
+        <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5">
           Accent Theme
         </label>
         <p className="text-xs text-text-tertiary mb-3">
-          Open themes by getting views on your public reports.
+          Unlock themes by getting views on your public reports.
           {nextTier && (
-            <span className="text-text-secondary ">
+            <span className="text-text-secondary font-medium">
               {" "}Next unlock at {nextTier.views.toLocaleString()} views ({totalViews.toLocaleString()}/{nextTier.views.toLocaleString()})
             </span>
           )}
           {!nextTier && (
-            <span className="text-accent "> All themes unlocked!</span>
+            <span className="text-accent font-medium"> All themes unlocked!</span>
           )}
         </p>
       </div>
@@ -46,10 +46,10 @@ export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePicker
                 applyAccentTheme(theme);
               }}
               disabled={!isUnlocked}
-              title={isUnlocked ? theme.name : `Open at ${VIEW_TIERS.find((t) => t.unlocks > i)?.views.toLocaleString() ?? "?"} views`}
+              title={isUnlocked ? theme.name : `Unlock at ${VIEW_TIERS.find((t) => t.unlocks > i)?.views.toLocaleString() ?? "?"} views`}
               className={`
- relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition
- ${isSelected ? "border-accent ring-2 ring-accent/30 bg-accent-surface" : "border-border hover:border-text-tertiary"}
+                relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all
+                ${isSelected ? "border-accent ring-2 ring-accent/30 bg-accent-surface" : "border-border hover:border-text-tertiary"}
                 ${!isUnlocked ? "opacity-40 cursor-not-allowed grayscale" : "cursor-pointer"}
               `}
             >
@@ -58,12 +58,12 @@ export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePicker
                 className="w-8 h-8 rounded-lg shadow-sm"
                 style={{ backgroundColor: theme.accent }}
               />
-              <span className="text-xs font-bold text-text-secondary leading-none">{theme.name}</span>
+              <span className="text-[10px] font-bold text-text-secondary leading-none">{theme.name}</span>
 
               {/* Lock icon for locked themes */}
               {!isUnlocked && (
                 <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-surface-alt border border-border rounded-full flex items-center justify-center">
-                  <svg aria-hidden="true" className="w-2.5 h-2.5 text-text-tertiary" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-2.5 h-2.5 text-text-tertiary" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -72,7 +72,7 @@ export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePicker
               {/* Checkmark for selected */}
               {isSelected && isUnlocked && (
                 <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
-                  <svg aria-hidden="true" className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                   </svg>
                 </div>
@@ -87,7 +87,7 @@ export function ThemePicker({ totalViews, selectedTheme, onSelect }: ThemePicker
         <div className="mt-2">
           <div className="h-1.5 bg-surface-alt border border-border rounded-full overflow-hidden">
             <div
-              className="h-full bg-accent rounded-full transition duration-500"
+              className="h-full bg-accent rounded-full transition-all duration-500"
               style={{
                 width: `${Math.min(100, (totalViews / nextTier.views) * 100)}%`,
               }}

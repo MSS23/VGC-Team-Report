@@ -35,20 +35,20 @@ const { parsed, spriteSpecies, displaySpecies, showMegaToggle, showMega, types, 
       </div>
       <div className="flex flex-col gap-1.5 sm:gap-2 pt-0.5 sm:pt-2 min-w-0">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <h2 className="text-2xl lg:text-3xl font-bold text-text-primary presenting:text-4xl line-clamp-2 break-words min-w-0 tracking-tight" title={displaySpecies}>
+          <h2 className="text-2xl lg:text-3xl font-extrabold text-text-primary presenting:text-4xl line-clamp-2 break-words min-w-0 tracking-tight" title={displaySpecies}>
             {displaySpecies}
           </h2>
-          {/* Mega toggle, same control covers base+stone AND already-Mega
+          {/* Mega toggle — same control covers base+stone AND already-Mega
               pastes now that the detail slide resolves megaEntry from
               either the item or the species key. */}
           {showMegaToggle && (
             <button
               type="button"
               onClick={onToggleMega}
-              className={`inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md text-sm font-bold transition duration-200 ${
- showMega
- ? "bg-accent text-accent-ink"
-                  : "bg-surface-alt text-text-tertiary hover:text-purple-800 hover:bg-purple-500/10 border border-border-subtle"
+              className={`inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md text-sm font-extrabold transition-all duration-200 ${
+                showMega
+                  ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white shadow-sm shadow-purple-500/30"
+                  : "bg-surface-alt text-text-tertiary hover:text-purple-500 hover:bg-purple-500/10 border border-border-subtle"
               }`}
               title={showMega ? "Show base form" : "Show Mega Evolution"}
               aria-label={showMega ? "Show base form" : "Show Mega Evolution"}
@@ -60,7 +60,7 @@ const { parsed, spriteSpecies, displaySpecies, showMegaToggle, showMega, types, 
           {parsed.gender && (
             <span
               className={`text-lg sm:text-xl font-bold ${
- parsed.gender === "M" ? "text-blue-800" : "text-pink-800"
+                parsed.gender === "M" ? "text-blue-500" : "text-pink-500"
               }`}
             >
               {parsed.gender === "M" ? "\u2642" : "\u2640"}
@@ -79,7 +79,7 @@ const { parsed, spriteSpecies, displaySpecies, showMegaToggle, showMega, types, 
           )}
         </div>
         <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 text-sm sm:text-base text-text-secondary presenting:text-lg">
-          {displayAbility && <span className="">{displayAbility}</span>}
+          {displayAbility && <span className="font-medium">{displayAbility}</span>}
           {parsed.item && (
             <span className="text-text-primary font-bold">
               @ {parsed.item}
@@ -88,7 +88,7 @@ const { parsed, spriteSpecies, displaySpecies, showMegaToggle, showMega, types, 
         </div>
         {nonDefaultIvs.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <span className="text-xs font-bold text-text-tertiary presenting:text-sm">{t.ivs}:</span>
+            <span className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary presenting:text-sm">{t.ivs}:</span>
             {nonDefaultIvs.map((stat) => (
               <span
                 key={stat}

@@ -14,62 +14,67 @@ const NAV_LINKS = [
   // sitewide footer link at all.
   { href: "/champions", label: "Champions" },
   { href: "/faq", label: "FAQ" },
-  { href: "/tools/ev-to-sp", label: "EV to SP" },
+  { href: "/tools/ev-to-sp", label: "EV → SP" },
   { href: "/changelog", label: "Changelog" },
   { href: "/support", label: "Support" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
 ] as const;
 
-const footerLink =
-  "inline-flex min-h-11 items-center text-sm text-text-secondary transition-colors duration-(--dur-short) hover:text-text-primary";
-
-/** A mast: the wordmark large over one row of the page's real links. */
 export function PageFooter({ hideFeedback = false }: PageFooterProps) {
   return (
-    <footer className="mt-(--section-gap) border-t border-border pb-28 sm:pb-16">
-      <div className="mx-auto max-w-(--container) px-(--gutter) pt-16">
-        <div className="grid gap-10 lg:grid-cols-12 lg:gap-(--gap-columns)">
-          <div className="lg:col-span-5">
-            <p className="font-display text-3xl font-bold tracking-tight text-text-primary">VGC Team Report</p>
-            <p className="mt-3 text-sm text-text-secondary">
-              Built by{" "}
-              <a
-                href="https://x.com/Manny64Official"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center font-semibold text-text-primary underline decoration-border underline-offset-4 transition-colors duration-(--dur-short) hover:decoration-accent"
-              >
-                Manraj Sidhu
-              </a>
-            </p>
-            {!hideFeedback && (
-              <Link href="/feedback" className={`${footerLink} mt-2 underline decoration-border underline-offset-4 hover:decoration-accent`}>
-                Send feedback, a bug or an idea
-              </Link>
-            )}
+    <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-28 sm:pb-8 border-t border-border/50 mt-12">
+      {/* Feedback callout */}
+      {!hideFeedback && (
+        <Link
+          href="/feedback"
+          className="flex items-center gap-3 px-4 py-3.5 mb-6 bg-surface border-2 border-border rounded-xl hover:border-accent/40 hover:bg-surface-alt/50 transition-all group active:scale-[0.98]"
+        >
+          <div className="w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/20 transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+            </svg>
           </div>
-          <nav className="lg:col-span-7" aria-label="Footer">
-            <ul className="flex flex-wrap gap-x-6 gap-y-1">
-              {NAV_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className={footerLink}>
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <button
-                  type="button"
-                  onClick={() => window.dispatchEvent(new CustomEvent("open-cookie-settings"))}
-                  className={`${footerLink} cursor-pointer`}
-                >
-                  Cookie settings
-                </button>
-              </li>
-            </ul>
-          </nav>
+          <div className="flex-1 min-w-0">
+            <span className="text-sm font-bold text-text-primary">Send Feedback</span>
+            <p className="text-xs text-text-secondary mt-0.5">Bug reports, feature requests, ideas</p>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary group-hover:text-accent flex-shrink-0 transition-colors">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </Link>
+      )}
+
+      <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-4 min-w-0">
+        <div className="flex items-center gap-1.5 text-sm text-text-secondary">
+          <span>Built by</span>
+          <a
+            href="https://x.com/Manny64Official"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center font-bold text-text-primary hover:text-accent active:text-accent transition-colors"
+          >
+            Manraj Sidhu
+          </a>
         </div>
+        <nav className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1 max-w-full">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all whitespace-nowrap"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("open-cookie-settings"))}
+            className="min-h-11 px-3 py-2 text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all cursor-pointer whitespace-nowrap"
+          >
+            Cookie Settings
+          </button>
+        </nav>
       </div>
     </footer>
   );

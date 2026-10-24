@@ -50,13 +50,13 @@ export function FollowButton({ creatorName }: FollowButtonProps) {
       type="button"
       onClick={toggle}
       disabled={loading}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 transition cursor-pointer disabled:opacity-40 ${
- following
- ? "bg-accent-surface border-accent/30 text-accent"
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border-2 transition-all cursor-pointer disabled:opacity-40 ${
+        following
+          ? "bg-accent-surface border-accent/30 text-accent"
           : "bg-surface border-border text-text-secondary hover:border-accent/30 hover:text-accent"
       }`}
     >
-      <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill={following ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill={following ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         {following ? (
           <>
             <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />

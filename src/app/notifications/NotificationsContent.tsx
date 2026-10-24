@@ -8,15 +8,15 @@ import { relativeTime } from "@/lib/utils/relative-time";
 const TYPE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
   comment: {
     icon: (
-      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
       </svg>
     ),
-    color: "text-blue-800",
+    color: "text-blue-500",
   },
   reaction: {
     icon: (
-      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
         <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
       </svg>
     ),
@@ -24,7 +24,7 @@ const TYPE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
   },
   new_report: {
     icon: (
-      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
         <polyline points="14 2 14 8 20 8" />
       </svg>
@@ -33,14 +33,14 @@ const TYPE_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
   },
   collab_invite: {
     icon: (
-      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 00-3-3.87" />
         <path d="M16 3.13a4 4 0 010 7.75" />
       </svg>
     ),
-    color: "text-purple-800",
+    color: "text-purple-500",
   },
 };
 
@@ -82,8 +82,8 @@ function NotificationItem({ notification }: { notification: Notification }) {
     <a
       href={href}
       className={`flex items-start gap-4 px-4 py-4 rounded-xl transition-colors hover:bg-surface-alt/50 ${
- !notification.read
- ? "border-l-2 border-accent bg-accent/5"
+        !notification.read
+          ? "border-l-2 border-accent bg-accent/5"
           : "border-l-2 border-transparent"
       }`}
     >
@@ -95,8 +95,8 @@ function NotificationItem({ notification }: { notification: Notification }) {
       <div className="flex-1 min-w-0">
         <p
           className={`text-sm leading-relaxed ${
- !notification.read
- ? "text-text-primary font-semibold"
+            !notification.read
+              ? "text-text-primary font-semibold"
               : "text-text-secondary"
           }`}
         >
@@ -125,7 +125,7 @@ function NotificationGroup({
   const headingId = `notif-group-${label.toLowerCase().replace(/\s+/g, "-")}`;
   return (
     <section className="mb-6" aria-labelledby={headingId}>
-      <h2 id={headingId} className="text-xs font-bold text-text-tertiary mb-2 px-1">
+      <h2 id={headingId} className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest mb-2 px-1">
         {label}
       </h2>
       <ul className="bg-surface border border-border rounded-2xl overflow-hidden divide-y divide-border/50 list-none p-0 m-0">
@@ -156,7 +156,7 @@ export function NotificationsContent() {
       setHasMore(hookHasMore);
       setInitialLoaded(true);
     } else if (!hookLoading && !initialLoaded) {
-      // Hook finished loading but returned empty, mark as loaded
+      // Hook finished loading but returned empty — mark as loaded
       setInitialLoaded(true);
     } else if (realtimeNotifications.length > 0 && initialLoaded) {
       // Merge in any new notifications at the top without losing paginated ones
@@ -214,7 +214,7 @@ export function NotificationsContent() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               Notifications
             </h1>
             <p className="text-sm text-text-secondary mt-0.5">
@@ -231,7 +231,7 @@ export function NotificationsContent() {
               <button
                 type="button"
                 onClick={handleMarkAllRead}
-                className="px-4 py-2 text-sm font-bold rounded-xl bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition cursor-pointer"
+                className="px-4 py-2 text-sm font-bold rounded-xl bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition-all cursor-pointer"
               >
                 Mark all as read
               </button>
@@ -263,7 +263,7 @@ export function NotificationsContent() {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                 />
               </svg>
-              <span className="text-sm ">Loading notifications...</span>
+              <span className="text-sm font-medium">Loading notifications...</span>
             </div>
           </div>
         )}
@@ -272,7 +272,7 @@ export function NotificationsContent() {
         {isEmpty && (
           <div className="text-center py-20">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-surface-alt flex items-center justify-center">
-              <svg aria-hidden="true"
+              <svg
                 width="28"
                 height="28"
                 viewBox="0 0 24 24"
@@ -295,7 +295,7 @@ export function NotificationsContent() {
             </p>
             <Link
               href="/"
-              className="mt-6 inline-flex min-h-11 items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition "
+              className="mt-6 inline-flex min-h-11 items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide"
             >
               Create a Report
             </Link>
@@ -317,7 +317,7 @@ export function NotificationsContent() {
                   onClick={loadMore}
                   disabled={loadingMore}
                   aria-busy={loadingMore}
-                  className="px-6 py-2.5 text-sm font-bold rounded-xl bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+                  className="px-6 py-2.5 text-sm font-bold rounded-xl bg-surface border border-border text-text-secondary hover:text-accent hover:border-accent/30 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-wait"
                 >
                   {loadingMore ? (
                     <span className="flex items-center gap-2">

@@ -98,7 +98,7 @@ export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
                 key={arch}
                 type="button"
                 onClick={() => setLabel(arch)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-surface-alt/50 text-text-secondary border border-border hover:border-accent/30 hover:text-accent hover:bg-accent-surface/30 transition cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-surface-alt/50 text-text-secondary border border-border hover:border-accent/30 hover:text-accent hover:bg-accent-surface/30 transition-all cursor-pointer"
               >
                 <span className="text-[11px]">{ARCHETYPE_ICONS[arch] ?? ""}</span>
                 {arch}
@@ -116,7 +116,7 @@ export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
             spellCheck={false}
           />
           {isUrl && (
-            <div className="absolute top-2 right-2 px-2 py-0.5 bg-accent-surface text-accent text-[11px] font-semibold rounded-md ">
+            <div className="absolute top-2 right-2 px-2 py-0.5 bg-accent-surface text-accent text-[10px] font-semibold rounded-md uppercase tracking-wide">
               PokéPaste URL
             </div>
           )}
@@ -129,7 +129,7 @@ export function AddOpponentInput({ onAdd }: AddOpponentInputProps) {
             {isUrl
               ? t.fetchPokePasteToContinue
               : parsedCount > 0
-                ? `${parsedCount} ${t.pokemonDetected}${parsedResult?.teamName ? `, "${parsedResult.teamName}"` : ""}`
+                ? `${parsedCount} ${t.pokemonDetected}${parsedResult?.teamName ? ` — "${parsedResult.teamName}"` : ""}`
                 : t.pasteTeamToContinue}
           </span>
           {isUrl ? (

@@ -1,4 +1,4 @@
-// Streaming skeleton for /explore, shown by Next.js Suspense while ExploreContent loads.
+// Streaming skeleton for /explore — shown by Next.js Suspense while ExploreContent loads.
 // Server component: no 'use client' needed for static pulse skeletons.
 
 function ReportCardSkeleton() {
@@ -71,7 +71,7 @@ export default function ExploreLoading() {
           </div>
         </div>
 
-        {/* Card grid, 6 skeleton cards */}
+        {/* Card grid — 6 skeleton cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {Array.from({ length: 6 }).map((_, i) => (
             <ReportCardSkeleton key={i} />

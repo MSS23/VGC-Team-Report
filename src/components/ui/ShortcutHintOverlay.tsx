@@ -67,7 +67,7 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
         aria-modal="true"
         aria-labelledby="keyboard-shortcuts-title"
       >
-        <h3 id="keyboard-shortcuts-title" className="text-sm font-bold text-text-primary mb-4 ">
+        <h3 id="keyboard-shortcuts-title" className="text-sm font-bold text-text-primary mb-4 uppercase tracking-wider">
           {t.keyboardShortcuts}
         </h3>
         <div className="space-y-3">
@@ -81,7 +81,7 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
           ))}
         </div>
         <div className="mt-4 pt-3 border-t border-border-subtle">
-          <p className="text-xs text-text-tertiary text-center leading-relaxed">
+          <p className="text-[11px] text-text-tertiary text-center leading-relaxed">
             {t.swipeHint}
           </p>
         </div>
@@ -90,7 +90,7 @@ export function ShortcutHintOverlay({ visible, onDismiss, isPresentationMode = f
           onClick={onDismiss}
           className="mt-4 min-h-11 w-full text-center text-xs text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
         >
-          {t.clickOrEsc} <kbd className="px-1.5 py-0.5 bg-surface-alt border border-border rounded text-xs font-mono font-semibold">Esc</kbd> {t.toClose}
+          {t.clickOrEsc} <kbd className="px-1.5 py-0.5 bg-surface-alt border border-border rounded text-[10px] font-mono font-semibold">Esc</kbd> {t.toClose}
         </button>
       </div>
     </div>

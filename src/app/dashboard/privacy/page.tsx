@@ -80,9 +80,9 @@ function PrivacyDashboardInner() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         <Show when="signed-out">
           <div className="text-center py-20">
-            <h1 className="text-2xl font-bold mb-3">Sign in to manage your data</h1>
+            <h1 className="text-2xl font-extrabold mb-3">Sign in to manage your data</h1>
             <SignInButton mode="modal">
-              <button className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-md shadow-accent/30 transition cursor-pointer">Sign In</button>
+              <button className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer">Sign In</button>
             </SignInButton>
           </div>
         </Show>
@@ -90,11 +90,11 @@ function PrivacyDashboardInner() {
         <Show when="signed-in">
           {/* Back link */}
           <a href="/dashboard" className="inline-flex items-center gap-1 text-xs text-text-tertiary hover:text-text-primary mb-6 transition-colors">
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5" /><polyline points="12 19 5 12 12 5" /></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5" /><polyline points="12 19 5 12 12 5" /></svg>
             Back to Dashboard
           </a>
 
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Data & Privacy</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Data & Privacy</h1>
           <p className="text-xs sm:text-sm text-text-secondary mt-0.5 mb-8">
             Manage your personal data stored by VGC Team Report.
           </p>
@@ -103,12 +103,12 @@ function PrivacyDashboardInner() {
           <section>
             <h2 className="text-lg font-bold mb-2">Download My Data</h2>
             <p className="text-sm text-text-secondary mb-4">
-              Export all your personal data, teams, notes, follows, reactions, and more, as a JSON file. You can request one export per 24 hours.
+              Export all your personal data — teams, notes, follows, reactions, and more — as a JSON file. You can request one export per 24 hours.
             </p>
             <button
               onClick={handleDownload}
               disabled={downloading}
-              className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {downloading ? "Exporting..." : "Download My Data"}
             </button>
@@ -125,7 +125,7 @@ function PrivacyDashboardInner() {
             </p>
             <button
               onClick={() => setModalOpen(true)}
-              className="px-5 py-2.5 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 active:scale-[0.97] transition cursor-pointer"
+              className="px-5 py-2.5 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 active:scale-[0.97] transition-all cursor-pointer"
             >
               Delete My Account
             </button>
@@ -149,14 +149,14 @@ function PrivacyDashboardInner() {
                 <div className="flex gap-3 mt-6 justify-end">
                   <button
                     onClick={() => { setModalOpen(false); setDeleteInput(""); setDeleteError(null); }}
-                    className="px-4 py-2 text-sm font-bold text-text-secondary border border-border rounded-xl hover:bg-surface-alt transition cursor-pointer"
+                    className="px-4 py-2 text-sm font-bold text-text-secondary border border-border rounded-xl hover:bg-surface-alt transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleDelete}
                     disabled={deleteInput !== "DELETE" || deleting}
-                    className="px-5 py-2.5 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 active:scale-[0.97] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-5 py-2.5 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 active:scale-[0.97] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {deleting ? "Deleting..." : "Delete My Account"}
                   </button>

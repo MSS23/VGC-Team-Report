@@ -58,11 +58,3 @@ cypress/videos/
 *.jfif
 Screenshot*.png
 manraj app.png
-
-# Hallmark redesign records and screenshots (log.json is kept)
-.hallmark/before/
-.hallmark/shots/
-.hallmark/compare.html
-.hallmark/before.json
-.hallmark/*.txt
-.hallmark/salt

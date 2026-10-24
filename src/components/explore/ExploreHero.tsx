@@ -6,11 +6,11 @@ export function ExploreHero() {
   const { t } = useTranslation();
 
   return (
-    <div className="pt-10 pb-12 sm:pt-16 sm:pb-16">
-      <h1 className="font-display text-display-s font-bold tracking-display text-text-primary">
-        Best VGC Teams 2026
+    <div className="pt-3 sm:pt-10 pb-2 sm:pb-6 text-center">
+      <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight">
+        Best <span className="text-accent">VGC Teams</span> 2026
       </h1>
-      <p className="lead mt-5 text-text-secondary">
+      <p className="mt-1 text-text-secondary text-xs sm:text-sm max-w-md mx-auto hidden sm:block">
         {t.exploreSubtitle}
       </p>
     </div>

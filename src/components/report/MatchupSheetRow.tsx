@@ -28,7 +28,7 @@ export function MatchupSheetRow({
     return parsed.pokemon.map((p) => p.species);
   }, [plan.opponentPaste]);
 
-  // Gather bring info from first game plan, lead (0,1) and back (2,3)
+  // Gather bring info from first game plan — lead (0,1) and back (2,3)
   const firstPlan = plan.gamePlans[0];
   const leadPreview = firstPlan
     ? ([0, 1] as const)
@@ -81,7 +81,7 @@ export function MatchupSheetRow({
               {/* Lead preview */}
               {leadPreview.length > 0 && (
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[11px] font-bold text-blue-400/70 mr-0.5 hidden sm:inline">L</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400/70 mr-0.5 hidden sm:inline">L</span>
                   {leadPreview.map((species, i) => (
                     <PokemonSprite key={i} species={species} size={18} className="sm:hidden" />
                   ))}
@@ -93,7 +93,7 @@ export function MatchupSheetRow({
               {/* Back preview */}
               {backPreview.length > 0 && (
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[11px] font-bold text-amber-400/70 mr-0.5 hidden sm:inline">B</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400/70 mr-0.5 hidden sm:inline">B</span>
                   {backPreview.map((species, i) => (
                     <PokemonSprite key={i} species={species} size={18} className="sm:hidden" />
                   ))}
@@ -105,7 +105,7 @@ export function MatchupSheetRow({
             </div>
           )}
 
-          <span className="text-xs text-text-tertiary whitespace-nowrap px-2 py-1 bg-surface-alt rounded-md">
+          <span className="text-xs font-medium text-text-tertiary whitespace-nowrap px-2 py-1 bg-surface-alt rounded-md">
             {plan.gamePlans.length} {plan.gamePlans.length !== 1 ? t.plans : t.plan}
           </span>
 
@@ -118,7 +118,7 @@ export function MatchupSheetRow({
               title={t.removeMatchup}
               aria-label={t.removeMatchup}
             >
-              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>

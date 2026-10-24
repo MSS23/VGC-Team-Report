@@ -32,7 +32,7 @@ export interface CommonModesValue {
   /**
    * Legacy free-text fields retained for backward compatibility. 119 shared
    * reports authored before the Combinations table shipped still carry these;
-   * we never drop them, they round-trip through serialization and are surfaced
+   * we never drop them — they round-trip through serialization and are surfaced
    * read-only (and in a collapsible "Legacy notes" area while editing).
    */
   leads?: string;
@@ -42,14 +42,14 @@ export interface CommonModesValue {
 interface CommonModesSlideProps {
   commonModes: CommonModesValue | undefined;
   onChange: (value: CommonModesValue) => void;
-  /** The team's own six, the roster the combination picker chooses from. */
+  /** The team's own six — the roster the combination picker chooses from. */
   yourPokemon: AnalyzedPokemon[];
   isReadOnly: boolean;
   isPresentationMode?: boolean;
 }
 
 /**
- * Accent flavor per block, Strengths reads emerald, Weaknesses reads
+ * Accent flavor per block — Strengths reads emerald, Weaknesses reads
  * amber/rose, the rest use the neutral accent. Kept subtle so the section
  * stays consistent with the surface/border palette used across the report.
  */
@@ -82,8 +82,8 @@ const READ_BORDER: Record<Accent, string> = {
 /** Label color for the read-only panels, per block flavor. */
 const LABEL_COLOR: Record<Accent, string> = {
   accent: "text-text-tertiary",
-  emerald: "text-emerald-800 dark:text-emerald-400",
-  amber: "text-amber-800 dark:text-amber-400",
+  emerald: "text-emerald-600 dark:text-emerald-400",
+  amber: "text-amber-600 dark:text-amber-400",
 };
 
 /** Convert a combination's leads/back arrays into a fixed 4-slot bring tuple. */
@@ -103,7 +103,7 @@ export function CommonModesSlide({
   // The Integrate phase adds the commonModes i18n keys to every translation
   // file. Until then `t` (a closed TranslationKeys type derived from `en`)
   // doesn't statically know every key across all locales, so read them through
-  // an index helper with a graceful fallback, English always supplies a value.
+  // an index helper with a graceful fallback — English always supplies a value.
   const tr = (key: string, fallback: string): string => {
     const dict = t as unknown as Record<string, string | undefined>;
     return dict[key] ?? fallback;
@@ -157,7 +157,7 @@ export function CommonModesSlide({
         if (c.id !== id) return c;
         const bring = bringOf(c);
         bring[slot] = pokemonIndex;
-        // Compact out nulls, leads/back store up to 2 indices, no gaps.
+        // Compact out nulls — leads/back store up to 2 indices, no gaps.
         const leads = [bring[0], bring[1]].filter((x): x is number => x !== null);
         const back = [bring[2], bring[3]].filter((x): x is number => x !== null);
         return { ...c, leads, back };
@@ -173,20 +173,20 @@ export function CommonModesSlide({
     <FieldDiffHighlight field="commonModes" label="How to play changed">
       <div
         className={`flex flex-col gap-3 sm:gap-6 animate-fade-in ${
- isPresentationMode ? "presenting:gap-8" : ""
+          isPresentationMode ? "presenting:gap-8" : ""
         }`}
       >
         {/* Section header */}
         <div className="flex flex-col gap-2.5 sm:gap-4">
           <h3
-            className="text-[11px] sm:text-sm font-bold text-text-tertiary mb-1 sm:mb-3 presenting:text-base presenting:mb-4"
+            className="text-[10px] sm:text-sm font-extrabold uppercase tracking-widest text-text-tertiary mb-1 sm:mb-3 presenting:text-base presenting:mb-4"
             data-walkthrough="common-modes"
           >
             {tr("commonModesTitle", "How to Pilot This Team")}
           </h3>
 
           {isReadOnly && !hasAny ? (
-            <div className="w-full p-5 sm:p-6 bg-surface-alt/50 border border-border-subtle rounded-xl text-base text-text-tertiary italic presenting:text-lg presenting:p-8">
+            <div className="w-full p-5 sm:p-6 bg-surface-alt/50 border border-border-subtle rounded-xl text-base text-text-tertiary italic font-medium presenting:text-lg presenting:p-8">
               {tr("commonModesEmpty", "No piloting notes yet.")}
             </div>
           ) : (
@@ -216,8 +216,8 @@ export function CommonModesSlide({
                 return (
                   <div key={block.key} className="flex flex-col gap-1.5 sm:gap-2">
                     <h4
-                      className={`text-[11px] sm:text-xs font-bold presenting:text-sm ${
- isReadOnly ? LABEL_COLOR[block.accent] : "text-text-tertiary"
+                      className={`text-[10px] sm:text-xs font-extrabold uppercase tracking-widest presenting:text-sm ${
+                        isReadOnly ? LABEL_COLOR[block.accent] : "text-text-tertiary"
                       }`}
                     >
                       {label}
@@ -293,7 +293,7 @@ function CombinationsSection({
   return (
     <div className="flex flex-col gap-2 sm:gap-3">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-[11px] sm:text-xs font-bold presenting:text-sm text-text-tertiary">
+        <h4 className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest presenting:text-sm text-text-tertiary">
           {title}
         </h4>
         {!isReadOnly && (
@@ -315,7 +315,7 @@ function CombinationsSection({
         <div className="flex flex-col gap-3">
           {combinations.length === 0 && (
             <div className="w-full p-4 sm:p-5 bg-surface-alt/50 border border-dashed border-border rounded-xl text-sm text-text-tertiary italic">
-              {tr("commonCombinationsDesc", "Your go-to brings, pick two leads and two in the back from your six, then note when to bring it.")}
+              {tr("commonCombinationsDesc", "Your go-to brings — pick two leads and two in the back from your six, then note when to bring it.")}
             </div>
           )}
           {combinations.map((combo, i) => (
@@ -360,14 +360,14 @@ function SpriteGroup({
 }) {
   const valid = indices.filter((idx) => yourPokemon[idx]);
   if (valid.length === 0) {
-    return <span className="text-xs text-text-tertiary italic">, </span>;
+    return <span className="text-xs text-text-tertiary italic">—</span>;
   }
   return (
     <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
       {valid.map((idx, i) => (
         <div key={i} className="flex flex-col items-center gap-0.5 w-[52px] sm:w-[60px]">
           <PokemonSprite species={yourPokemon[idx].parsed.species} size={size} />
-          <span className="text-[11px] sm:text-xs text-text-secondary truncate w-full text-center leading-tight">
+          <span className="text-[10px] sm:text-xs text-text-secondary truncate w-full text-center leading-tight">
             {speciesLabels[idx] ?? yourPokemon[idx].parsed.species}
           </span>
         </div>
@@ -387,16 +387,16 @@ function CombinationsTable({
 
   return (
     <div className="w-full overflow-x-auto rounded-xl border border-border bg-surface shadow-sm presenting:bg-surface-alt presenting:border-border-subtle">
-      {/* Header row, hidden on mobile, shown sm+ */}
+      {/* Header row — hidden on mobile, shown sm+ */}
       <div className="hidden sm:grid sm:grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)] gap-3 px-4 py-2.5 border-b border-border-subtle bg-surface-alt/60 presenting:text-sm">
-        <span className="text-[11px] font-bold text-text-tertiary">#</span>
-        <span className="text-[11px] font-bold text-blue-800 dark:text-blue-400">
+        <span className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">#</span>
+        <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-500 dark:text-blue-400">
           {tr("combinationLeads", "Leads")}
         </span>
-        <span className="text-[11px] font-bold text-amber-800 dark:text-amber-400">
+        <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-500 dark:text-amber-400">
           {tr("combinationBack", "Back")}
         </span>
-        <span className="text-[11px] font-bold text-text-tertiary">
+        <span className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">
           {tr("combinationStrategy", "Strategy")}
         </span>
       </div>
@@ -416,7 +416,7 @@ function CombinationsTable({
 
             {/* Leads */}
             <div className="flex flex-col gap-1">
-              <span className="sm:hidden text-[11px] font-bold text-blue-800 dark:text-blue-400">
+              <span className="sm:hidden text-[10px] font-extrabold uppercase tracking-widest text-blue-500 dark:text-blue-400">
                 {tr("combinationLeads", "Leads")}
               </span>
               <SpriteGroup
@@ -429,7 +429,7 @@ function CombinationsTable({
 
             {/* Back */}
             <div className="flex flex-col gap-1">
-              <span className="sm:hidden text-[11px] font-bold text-amber-800 dark:text-amber-400">
+              <span className="sm:hidden text-[10px] font-extrabold uppercase tracking-widest text-amber-500 dark:text-amber-400">
                 {tr("combinationBack", "Back")}
               </span>
               <SpriteGroup
@@ -442,7 +442,7 @@ function CombinationsTable({
 
             {/* Strategy */}
             <div className="flex flex-col gap-1">
-              <span className="sm:hidden text-[11px] font-bold text-text-tertiary">
+              <span className="sm:hidden text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">
                 {tr("combinationStrategy", "Strategy")}
               </span>
               {combo.strategy.trim() ? (
@@ -450,7 +450,7 @@ function CombinationsTable({
                   {combo.strategy}
                 </p>
               ) : (
-                <span className="text-xs text-text-tertiary italic">, </span>
+                <span className="text-xs text-text-tertiary italic">—</span>
               )}
             </div>
           </div>
@@ -514,9 +514,9 @@ function CombinationEditor({
           <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 sm:p-4 border border-border-subtle">
             <div className="flex items-center gap-2 mb-2.5">
               <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-500/20 text-blue-400">
-                <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /></svg>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /></svg>
               </span>
-              <span className="text-xs font-bold text-blue-400">
+              <span className="text-xs font-bold uppercase tracking-widest text-blue-400">
                 {tr("combinationLeads", "Leads")}
               </span>
             </div>
@@ -539,9 +539,9 @@ function CombinationEditor({
           <div className="flex-1 bg-surface-alt/50 rounded-xl p-3 sm:p-4 border border-border-subtle">
             <div className="flex items-center gap-2 mb-2.5">
               <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-500/20 text-amber-400">
-                <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
               </span>
-              <span className="text-xs font-bold text-amber-400">
+              <span className="text-xs font-bold uppercase tracking-widest text-amber-400">
                 {tr("combinationBack", "Back")}
               </span>
             </div>
@@ -563,7 +563,7 @@ function CombinationEditor({
 
         {/* Strategy */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] sm:text-xs font-bold text-text-tertiary">
+          <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary">
             {tr("combinationStrategy", "Strategy")}
           </span>
           <textarea
@@ -600,7 +600,7 @@ function LegacyNotes({ leads, modes, isReadOnly, tr }: LegacyNotesProps) {
     <div className="flex flex-col gap-2.5">
       {hasLeads && (
         <div className="flex flex-col gap-1">
-          <span className="text-[11px] font-bold text-text-tertiary">
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">
             {tr("legacyLeadsLabel", "Common Leads (old)")}
           </span>
           <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">{leads}</p>
@@ -608,7 +608,7 @@ function LegacyNotes({ leads, modes, isReadOnly, tr }: LegacyNotesProps) {
       )}
       {hasModes && (
         <div className="flex flex-col gap-1">
-          <span className="text-[11px] font-bold text-text-tertiary">
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">
             {tr("legacyModesLabel", "Common Modes (old)")}
           </span>
           <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">{modes}</p>
@@ -621,7 +621,7 @@ function LegacyNotes({ leads, modes, isReadOnly, tr }: LegacyNotesProps) {
   if (isReadOnly) {
     return (
       <div className="w-full p-3 sm:p-4 bg-surface-alt/40 border border-border-subtle rounded-xl">
-        <h4 className="text-[11px] sm:text-xs font-bold text-text-tertiary mb-2">
+        <h4 className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-2">
           {title}
         </h4>
         {rows}
@@ -633,7 +633,7 @@ function LegacyNotes({ leads, modes, isReadOnly, tr }: LegacyNotesProps) {
   // text into combinations, but we never auto-delete it.
   return (
     <details className="w-full bg-surface-alt/40 border border-border-subtle rounded-xl px-3 py-2 sm:px-4 sm:py-3">
-      <summary className="text-[11px] sm:text-xs font-bold text-text-tertiary cursor-pointer select-none">
+      <summary className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary cursor-pointer select-none">
         {title}
       </summary>
       <div className="mt-3">{rows}</div>

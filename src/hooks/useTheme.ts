@@ -17,48 +17,48 @@ interface ThemePreset {
 const GEN_PRESETS: Record<GenTheme, ThemePreset> = {
   gen1: {
     label: "Red / Blue / Yellow",
-    accent: "#6d28d9",        // Mewtwo purple
+    accent: "#8b5cf6",        // Mewtwo purple
     accentLight: "#c4b5fd",
     accentSurface: "#f5f3ff",
     accentSurfaceDark: "#4c1d95",
     accentDark: "#c4b5fd",
-    badge: "#6d28d9",
+    badge: "#8b5cf6",
   },
   gen2: {
     label: "Gold / Silver / Crystal",
-    accent: "#b45309",        // Ho-Oh golden amber
+    accent: "#d97706",        // Ho-Oh golden amber
     accentLight: "#fcd34d",
     accentSurface: "#fffbeb",
     accentSurfaceDark: "#78350f",
     accentDark: "#fcd34d",
-    badge: "#b45309",
+    badge: "#d97706",
   },
   gen3: {
     label: "Ruby / Sapphire / Emerald",
-    accent: "#15803d",        // Rayquaza green
+    accent: "#16a34a",        // Rayquaza green
     accentLight: "#86efac",
     accentSurface: "#f0fdf4",
     accentSurfaceDark: "#14532d",
     accentDark: "#86efac",
-    badge: "#15803d",
+    badge: "#16a34a",
   },
   gen4: {
     label: "Diamond / Pearl / Platinum",
-    accent: "#1d4ed8",        // Dialga steel blue
+    accent: "#3b82f6",        // Dialga steel blue
     accentLight: "#93c5fd",
     accentSurface: "#eff6ff",
     accentSurfaceDark: "#1e3a5f",
     accentDark: "#93c5fd",
-    badge: "#1d4ed8",
+    badge: "#3b82f6",
   },
   gen5: {
     label: "Black / White",
-    accent: "#0369a1",        // Zekrom electric blue
+    accent: "#0ea5e9",        // Zekrom electric blue
     accentLight: "#7dd3fc",
     accentSurface: "#f0f9ff",
     accentSurfaceDark: "#0c4a6e",
     accentDark: "#7dd3fc",
-    badge: "#0369a1",
+    badge: "#0ea5e9",
   },
   gen6: {
     label: "X / Y",
@@ -71,21 +71,21 @@ const GEN_PRESETS: Record<GenTheme, ThemePreset> = {
   },
   gen7: {
     label: "Sun / Moon",
-    accent: "#c2410c",        // Solgaleo fiery orange
+    accent: "#ea580c",        // Solgaleo fiery orange
     accentLight: "#fdba74",
     accentSurface: "#fff7ed",
     accentSurfaceDark: "#7c2d12",
     accentDark: "#fdba74",
-    badge: "#c2410c",
+    badge: "#ea580c",
   },
   gen8: {
     label: "Sword / Shield",
-    accent: "#0e7490",        // Zacian cyan
+    accent: "#0891b2",        // Zacian cyan
     accentLight: "#67e8f9",
     accentSurface: "#ecfeff",
     accentSurfaceDark: "#164e63",
     accentDark: "#67e8f9",
-    badge: "#0e7490",
+    badge: "#0891b2",
   },
   gen9: {
     label: "Scarlet / Violet",
@@ -99,14 +99,14 @@ const GEN_PRESETS: Record<GenTheme, ThemePreset> = {
 };
 
 export const GEN_THEMES: { id: GenTheme; abbr: string; label: string; badge: string; legendary: string }[] = [
-  { id: "gen1", abbr: "RBY",  label: "Red / Blue / Yellow",        badge: "#6d28d9", legendary: "mewtwo" },
-  { id: "gen2", abbr: "GSC",  label: "Gold / Silver / Crystal",    badge: "#b45309", legendary: "hooh" },
-  { id: "gen3", abbr: "RSE",  label: "Ruby / Sapphire / Emerald",  badge: "#15803d", legendary: "rayquaza" },
-  { id: "gen4", abbr: "DPPt", label: "Diamond / Pearl / Platinum", badge: "#1d4ed8", legendary: "dialga" },
-  { id: "gen5", abbr: "BW",   label: "Black / White",              badge: "#0369a1", legendary: "zekrom" },
+  { id: "gen1", abbr: "RBY",  label: "Red / Blue / Yellow",        badge: "#8b5cf6", legendary: "mewtwo" },
+  { id: "gen2", abbr: "GSC",  label: "Gold / Silver / Crystal",    badge: "#d97706", legendary: "hooh" },
+  { id: "gen3", abbr: "RSE",  label: "Ruby / Sapphire / Emerald",  badge: "#16a34a", legendary: "rayquaza" },
+  { id: "gen4", abbr: "DPPt", label: "Diamond / Pearl / Platinum", badge: "#3b82f6", legendary: "dialga" },
+  { id: "gen5", abbr: "BW",   label: "Black / White",              badge: "#0ea5e9", legendary: "zekrom" },
   { id: "gen6", abbr: "XY",   label: "X / Y",                      badge: "#dc2626", legendary: "yveltal" },
-  { id: "gen7", abbr: "SM",   label: "Sun / Moon",                 badge: "#c2410c", legendary: "solgaleo" },
-  { id: "gen8", abbr: "SwSh", label: "Sword / Shield",             badge: "#0e7490", legendary: "zacian" },
+  { id: "gen7", abbr: "SM",   label: "Sun / Moon",                 badge: "#ea580c", legendary: "solgaleo" },
+  { id: "gen8", abbr: "SwSh", label: "Sword / Shield",             badge: "#0891b2", legendary: "zacian" },
   { id: "gen9", abbr: "SV",   label: "Scarlet / Violet",           badge: "#e11d48", legendary: "koraidon" },
 ];
 
@@ -116,8 +116,6 @@ const STORAGE_KEY = "vgc-gen-theme";
 const listeners = new Set<() => void>();
 
 let currentTheme: GenTheme = "gen9";
-// The stylesheet opens in Coral. A gen palette is applied only once the visitor has picked one (stored), or a shared view pins one.
-let hasStoredTheme = false;
 
 // View override: when set (e.g. on a shared report view), this theme is
 // applied to the DOM regardless of the viewer's own `currentTheme`. This
@@ -129,7 +127,7 @@ let viewOverrideTheme: GenTheme | null = null;
 if (typeof window !== "undefined") {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && stored in GEN_PRESETS) { currentTheme = stored as GenTheme; hasStoredTheme = true; }
+    if (stored && stored in GEN_PRESETS) currentTheme = stored as GenTheme;
   } catch {}
 }
 
@@ -146,30 +144,16 @@ function getServerSnapshot(): GenTheme {
   return "gen9";
 }
 
-// Whether the visitor has picked a generation. Until they do, the page sits in the stylesheet's default and no generation is "active".
-function getStoredSnapshot(): boolean {
-  return hasStoredTheme;
-}
-
-function getStoredServerSnapshot(): boolean {
-  return false;
-}
-
 function applyTheme(themeId: GenTheme) {
   // View override takes precedence, so shared reports stay on the creator's
   // theme even when the MutationObserver re-fires on dark-mode toggles.
-  const effective = viewOverrideTheme ?? (hasStoredTheme ? themeId : null);
-  const root = document.documentElement;
-  if (!effective) {
-    for (const prop of ["--accent", "--accent-light", "--accent-surface", "--signal"]) root.style.removeProperty(prop);
-    return;
-  }
+  const effective = viewOverrideTheme ?? themeId;
   const preset = GEN_PRESETS[effective];
+  const root = document.documentElement;
   const isDark = root.hasAttribute("data-dark-mode");
   root.style.setProperty("--accent", isDark ? preset.accentDark : preset.accent);
   root.style.setProperty("--accent-light", preset.accentLight);
   root.style.setProperty("--accent-surface", isDark ? preset.accentSurfaceDark : preset.accentSurface);
-  root.style.setProperty("--signal", isDark ? preset.accentDark : preset.accent);
 }
 
 /**
@@ -195,7 +179,6 @@ export function reapplyCurrentTheme() {
 function setTheme(theme: GenTheme) {
   if (theme === currentTheme) return;
   currentTheme = theme;
-  hasStoredTheme = true;
   try { localStorage.setItem(STORAGE_KEY, theme); } catch {}
   if (typeof document !== "undefined") applyTheme(theme);
   listeners.forEach((fn) => fn());
@@ -210,7 +193,6 @@ if (typeof window !== "undefined") {
 
 export function useTheme() {
   const genTheme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const hasGenTheme = useSyncExternalStore(subscribe, getStoredSnapshot, getStoredServerSnapshot);
   const setGenTheme = useCallback((theme: GenTheme) => setTheme(theme), []);
-  return { genTheme, hasGenTheme, setGenTheme };
+  return { genTheme, setGenTheme };
 }

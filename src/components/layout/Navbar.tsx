@@ -7,7 +7,7 @@ import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
-import { GEN_THEMES, useTheme } from "@/hooks/useTheme";
+import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
 import type { DraftSaveStatus } from "@/hooks/useAutoDraft";
 import { NotificationBell } from "@/components/ui/NotificationBell";
@@ -23,7 +23,7 @@ import {
   LinkIcon,
 } from "@/components/ui/icons";
 
-// Only rendered in shared/edit views, keep its 379 lines out of the Navbar's
+// Only rendered in shared/edit views — keep its 379 lines out of the Navbar's
 // initial chunk (Finding 3.12).
 const VersionHistoryPanel = dynamic(
   () => import("@/components/social/VersionHistoryPanel").then((m) => ({ default: m.VersionHistoryPanel })),
@@ -195,7 +195,6 @@ export function Navbar(props: NavbarProps) {
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode, onEditPresentation,
     onReset, onStartTour,
   } = props;
-  const { hasGenTheme } = useTheme();
 
   const { t } = useTranslation();
   const { isLoaded, isSignedIn } = useAuth();
@@ -212,7 +211,7 @@ export function Navbar(props: NavbarProps) {
   // at most once per share view.
   const [saved, setSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
-  // True once the user has manually toggled, blocks the initial fetch's
+  // True once the user has manually toggled — blocks the initial fetch's
   // .then() from racing in afterwards and overwriting the optimistic state.
   const savedTouchedRef = useRef(false);
   const canSave = isSharedView && !isOwner && isSignedIn && !!activeShareId;
@@ -225,7 +224,7 @@ export function Navbar(props: NavbarProps) {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         // If the user has already toggled (or we unmounted) drop the
-        // late initial-fetch result, it would otherwise overwrite the
+        // late initial-fetch result — it would otherwise overwrite the
         // optimistic state with stale data.
         if (savedTouchedRef.current || ac.signal.aborted) return;
         if (data?.reports?.some((r: { id: string }) => r.id === activeShareId)) {
@@ -242,7 +241,7 @@ export function Navbar(props: NavbarProps) {
     savedTouchedRef.current = true;
     setSaveLoading(true);
     const wasSaved = saved;
-    // Optimistic, rollback on failure.
+    // Optimistic — rollback on failure.
     setSaved(!wasSaved);
     try {
       const res = await fetch("/api/user/saved", {
@@ -296,12 +295,12 @@ export function Navbar(props: NavbarProps) {
   return (
     <>
     <header
-      className={`sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 border-b transition duration-200 sticky-header-standalone ${
- isPresentationStyle
- ? "bg-transparent border-transparent"
+      className={`sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 border-b transition-all duration-200 sticky-header-standalone ${
+        isPresentationStyle
+          ? "bg-transparent border-transparent"
           : scrolled
             ? "bg-surface/90 border-border/60 shadow-lg shadow-black/5"
-            : "bg-surface/80 border-border/60 shadow-(--shadow-nav)"
+            : "bg-surface/80 border-border/60 shadow-[0_1px_12px_rgba(0,0,0,0.04)]"
       }`}
     >
       <div className="max-w-5xl mx-auto px-2.5 sm:px-6 py-1 sm:py-2.5 flex items-center justify-between gap-1 sm:gap-2">
@@ -317,7 +316,7 @@ export function Navbar(props: NavbarProps) {
               {warnings.length > 0 && (
                 <WarningPopover warnings={warnings} label={`${warnings.length} ${warnings.length > 1 ? t.warningsPlural : t.warnings}`} />
               )}
-              <span className={`text-xs font-bold text-emerald-800 hidden sm:inline transition-opacity duration-300 ${saveFlash ? "opacity-100" : "opacity-0"}`}>
+              <span className={`text-xs font-bold text-emerald-500 hidden sm:inline transition-opacity duration-300 ${saveFlash ? "opacity-100" : "opacity-0"}`}>
                 {t.saved}
               </span>
               {creatorMode && onUndo && onRedo && (
@@ -330,7 +329,7 @@ export function Navbar(props: NavbarProps) {
                     title="Undo (Ctrl+Z)"
                     aria-label="Undo (Ctrl+Z)"
                   >
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M3 10h10a5 5 0 015 5v0a5 5 0 01-5 5H8" /><polyline points="7 14 3 10 7 6" />
                     </svg>
                   </button>
@@ -342,7 +341,7 @@ export function Navbar(props: NavbarProps) {
                     title="Redo (Ctrl+Shift+Z)"
                     aria-label="Redo (Ctrl+Shift+Z)"
                   >
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 10H11a5 5 0 00-5 5v0a5 5 0 005 5h5" /><polyline points="17 14 21 10 17 6" />
                     </svg>
                   </button>
@@ -356,7 +355,7 @@ export function Navbar(props: NavbarProps) {
             </a>
           ) : isPresentationStyle ? (
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 text-sm text-text-secondary">
-              {/* Home, reports open straight into presentation, so this is the
+              {/* Home — reports open straight into presentation, so this is the
                   only way back out to the rest of the app from the deck. */}
               <a
                 href="/"
@@ -364,15 +363,15 @@ export function Navbar(props: NavbarProps) {
                 title="Home"
                 className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 -ml-1.5 sm:-ml-2 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors"
               >
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
               </a>
               {tournamentName && (
                 <>
-                  <span className="font-bold text-text-primary truncate tracking-tight">{tournamentName}</span>
+                  <span className="font-extrabold text-text-primary truncate tracking-tight">{tournamentName}</span>
                   {placement && (
-                    <span className="text-xs font-bold text-accent bg-accent-surface px-2.5 py-0.5 rounded-md flex-shrink-0">{placement}</span>
+                    <span className="text-xs font-extrabold text-accent bg-accent-surface px-2.5 py-0.5 rounded-md flex-shrink-0">{placement}</span>
                   )}
                 </>
               )}
@@ -386,7 +385,7 @@ export function Navbar(props: NavbarProps) {
         {!isPresentationStyle && (
           <>
             {/* Persistent live region so screen readers hear autosave
-                outcomes, the visual indicators (desktop pill, mobile
+                outcomes — the visual indicators (desktop pill, mobile
                 spinner/check) carry no accessible text. Must live outside
                 the hidden/md:hidden responsive wrappers (display:none
                 silences live regions) and render whenever editing is
@@ -407,9 +406,9 @@ export function Navbar(props: NavbarProps) {
             <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary min-w-0">
               {tournamentName && (
                 <>
-                  <span className="font-bold text-text-primary truncate tracking-tight">{tournamentName}</span>
+                  <span className="font-extrabold text-text-primary truncate tracking-tight">{tournamentName}</span>
                   {placement && (
-                    <span className="text-xs font-bold text-accent bg-accent-surface px-2.5 py-0.5 rounded-md flex-shrink-0">{placement}</span>
+                    <span className="text-xs font-extrabold text-accent bg-accent-surface px-2.5 py-0.5 rounded-md flex-shrink-0">{placement}</span>
                   )}
                   {record && (
                     <span className="text-text-tertiary font-semibold flex-shrink-0">({record})</span>
@@ -420,7 +419,7 @@ export function Navbar(props: NavbarProps) {
               <span className="font-semibold text-text-primary truncate">{slideLabels[currentSlide]}</span>
               <span className="text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums">{currentSlide + 1}/{totalSlides}</span>
               {isSharedView && isEditingUnlocked && (
-                <span className="text-xs font-bold text-emerald-800 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md flex-shrink-0 ">
+                <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md flex-shrink-0 uppercase tracking-wider">
                   {t.editing}
                 </span>
               )}
@@ -428,11 +427,11 @@ export function Navbar(props: NavbarProps) {
                 <button
                   type="button"
                   onClick={canShowVersionHistory ? () => setVersionPanelOpen(true) : undefined}
-                  className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md flex-shrink-0 transition-colors ${
- canShowVersionHistory ? "cursor-pointer hover:brightness-110" : ""
+                  className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 transition-colors ${
+                    canShowVersionHistory ? "cursor-pointer hover:brightness-110" : ""
                   } ${
                     autoSaveStatus === "saving" ? "text-text-tertiary bg-surface-alt/60"
-                      : autoSaveStatus === "saved" ? "text-emerald-800 dark:text-emerald-400 bg-emerald-500/10"
+                      : autoSaveStatus === "saved" ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
                       : "text-red-500 bg-red-500/10"
                   }`}
                   title={canShowVersionHistory ? "Open version history" : undefined}
@@ -445,7 +444,7 @@ export function Navbar(props: NavbarProps) {
                 </button>
               )}
               {isSharedView && isEditingUnlocked && collaborators !== undefined && collaborators > 1 && (
-                <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md flex-shrink-0 text-blue-800 dark:text-blue-400 bg-blue-500/10">
+                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0 text-blue-600 dark:text-blue-400 bg-blue-500/10">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                   {collaborators} editing
                 </span>
@@ -454,19 +453,19 @@ export function Navbar(props: NavbarProps) {
 
             {/* Mobile center */}
             <div className="md:hidden flex items-center justify-center min-w-0 overflow-hidden flex-1 gap-1.5">
-              <span className="text-xs text-text-primary font-semibold truncate max-w-[120px]">{slideLabels[currentSlide]}</span>
-              <span className="text-xs text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">{currentSlide + 1}/{totalSlides}</span>
+              <span className="text-[11px] text-text-primary font-semibold truncate max-w-[120px]">{slideLabels[currentSlide]}</span>
+              <span className="text-[11px] text-text-tertiary font-[family-name:var(--font-mono)] font-bold tabular-nums flex-shrink-0">{currentSlide + 1}/{totalSlides}</span>
               {isSharedView && isEditingUnlocked && autoSaveStatus === "saving" && (
                 <span className="w-2 h-2 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
               )}
               {isSharedView && isEditingUnlocked && autoSaveStatus === "saved" && (
-                <CheckIcon width="10" height="10" strokeWidth="3" className="text-emerald-800 flex-shrink-0" />
+                <CheckIcon width="10" height="10" strokeWidth="3" className="text-emerald-500 flex-shrink-0" />
               )}
               {isLocalDraft && showUser && draftSaveStatus === "saving" && (
                 <span className="w-2 h-2 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
               )}
               {isLocalDraft && showUser && draftSaveStatus === "saved" && (
-                <CheckIcon width="10" height="10" strokeWidth="3" className="text-emerald-800 flex-shrink-0" />
+                <CheckIcon width="10" height="10" strokeWidth="3" className="text-emerald-500 flex-shrink-0" />
               )}
             </div>
           </>
@@ -531,7 +530,7 @@ export function Navbar(props: NavbarProps) {
               </Button>
               {showSignIn && (
                 <SignInButton mode="modal">
-                  <button className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-accent bg-accent-surface/60 border border-accent/20 rounded-lg hover:bg-accent-surface transition cursor-pointer">
+                  <button className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold text-accent bg-accent-surface/60 border border-accent/20 rounded-lg hover:bg-accent-surface transition-all cursor-pointer">
                     Sign in to save
                   </button>
                 </SignInButton>
@@ -546,9 +545,9 @@ export function Navbar(props: NavbarProps) {
             </Button>
           )}
 
-          {/* Creator mode toggle, in overflow menu */}
+          {/* Creator mode toggle — in overflow menu */}
 
-          {/* Presentation mode, top-right control is role-based, NOT a generic
+          {/* Presentation mode — top-right control is role-based, NOT a generic
               "Exit". A shared report opens straight into presentation, so for a
               viewer this mode IS the report; "exit to what?" is meaningless.
               Instead we branch on edit-capability:
@@ -569,13 +568,13 @@ export function Navbar(props: NavbarProps) {
                 <KeyboardIcon width="14" height="14" />
               </button>
               {isSharedView && !isEditingUnlocked ? (
-                /* Plain viewer of someone else's shared report, can't edit.
+                /* Plain viewer of someone else's shared report — can't edit.
                    Surface the one action that matters (and the way back to the
                    builder) instead of a meaningless "Exit". */
                 <a
                   href="/"
                   aria-label={t.buildYourOwn}
-                  className="inline-flex min-h-11 items-center gap-1.5 px-2 min-[360px]:px-3 sm:px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition "
+                  className="inline-flex min-h-11 items-center gap-1.5 px-2 min-[360px]:px-3 sm:px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"
                 >
                   <PlusIcon width="12" height="12" strokeWidth="2.5" />
                   <span className="min-[430px]:hidden">Build</span>
@@ -583,7 +582,7 @@ export function Navbar(props: NavbarProps) {
                 </a>
               ) : (
                 /* Owner, collaborator, or the author previewing their own local
-                   draft, all can edit. "Edit" drops out of presentation and
+                   draft — all can edit. "Edit" drops out of presentation and
                    turns editing on in one tap. */
                 onEditPresentation && (
                   <Button variant="ghost" size="sm" onClick={onEditPresentation} className="gap-1.5">
@@ -595,15 +594,15 @@ export function Navbar(props: NavbarProps) {
             </>
           )}
 
-          {/* Build Your Own (shared read-only views), hidden on mobile, ShareViewCTA handles it */}
+          {/* Build Your Own (shared read-only views) — hidden on mobile, ShareViewCTA handles it */}
           {isSharedView && !isPresentationStyle && !isEditingUnlocked && (
-            <a href="/" className="hidden sm:inline-flex min-h-11 items-center gap-1.5 px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition ">
+            <a href="/" className="hidden sm:inline-flex min-h-11 items-center gap-1.5 px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
               <EditIcon width="12" height="12" strokeWidth="2.5" />
               {t.buildYourOwn}
             </a>
           )}
 
-          {/* PDF export, version history, tournament mode, all in overflow menu now */}
+          {/* PDF export, version history, tournament mode — all in overflow menu now */}
 
           {/* ── Overflow menu (settings, auth, theme) ── */}
           <div className="relative" ref={menuRef}>
@@ -617,12 +616,12 @@ export function Navbar(props: NavbarProps) {
             >
               {showUser ? (
                 <div className="w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center text-accent">
-                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
                   </svg>
                 </div>
               ) : (
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
                 </svg>
               )}
@@ -650,7 +649,7 @@ export function Navbar(props: NavbarProps) {
                     <div className="px-4 py-2.5">
                       <SignInButton mode="modal">
                         <button
-                          className="w-full px-3 py-2 text-sm font-bold text-white bg-accent rounded-lg hover:brightness-110 transition cursor-pointer"
+                          className="w-full px-3 py-2 text-sm font-bold text-white bg-accent rounded-lg hover:brightness-110 transition-all cursor-pointer"
                           onClick={() => setMenuOpen(false)}
                         >
                           Sign In
@@ -669,19 +668,19 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { void onSaveDraft(); }}
                       disabled={draftSaveStatus === "saving"}
                       className={`w-full min-h-11 flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold hover:bg-surface-alt/50 transition-colors disabled:opacity-60 disabled:cursor-wait ${
- draftSaveStatus === "error" ? "text-red-500" : "text-text-secondary hover:text-accent"
+                        draftSaveStatus === "error" ? "text-red-500" : "text-text-secondary hover:text-accent"
                       }`}
                     >
                       {draftSaveStatus === "saving" ? (
                         <span className="w-3.5 h-3.5 border-2 border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
                       ) : draftSaveStatus === "saved" ? (
-                        <CheckIcon width="14" height="14" className="text-emerald-800 flex-shrink-0" />
+                        <CheckIcon width="14" height="14" className="text-emerald-500 flex-shrink-0" />
                       ) : (
                         <ClockIcon width="14" height="14" className="flex-shrink-0" />
                       )}
                       <span className="flex-1 text-left">
                         {draftSaveLabel}
-                        <span className="block text-xs text-text-tertiary mt-0.5">
+                        <span className="block text-[10px] font-medium text-text-tertiary mt-0.5">
                           {draftSaveStatus === "error" ? draftSaveError : "Available in Dashboard → Drafts"}
                         </span>
                       </span>
@@ -706,17 +705,17 @@ export function Navbar(props: NavbarProps) {
                   <>
                     <div className="border-t border-border/50 mx-3 my-1" />
                     <div className="px-4 py-2.5">
-                      <span className="text-xs font-bold text-text-tertiary mb-2 block">Theme</span>
+                      <span className="text-[10px] font-extrabold text-text-tertiary uppercase tracking-widest mb-2 block">Theme</span>
                       <div className="flex items-center gap-1">
                         {GEN_THEMES.map((theme) => {
-                          const isActive = hasGenTheme && genTheme === theme.id;
+                          const isActive = genTheme === theme.id;
                           return (
                             <button
                               key={theme.id}
                               type="button"
                               onClick={() => { onGenThemeChange(theme.id); }}
-                              className={`relative flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition cursor-pointer ${
- isActive ? "bg-surface-alt scale-105" : "hover:bg-surface-alt/60 opacity-50 hover:opacity-90"
+                              className={`relative flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg transition-all cursor-pointer ${
+                                isActive ? "bg-surface-alt scale-105" : "hover:bg-surface-alt/60 opacity-50 hover:opacity-90"
                               }`}
                               style={isActive ? { boxShadow: `0 0 0 2px ${theme.badge}60` } : undefined}
                               title={theme.label}
@@ -747,7 +746,7 @@ export function Navbar(props: NavbarProps) {
                     onClick={() => { setMenuOpen(false); onSetCreatorMode(!creatorMode); }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                   >
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={creatorMode ? "text-accent" : ""}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={creatorMode ? "text-accent" : ""}>
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                       {creatorMode ? <path d="M7 11V7a5 5 0 019.9-1" /> : <path d="M7 11V7a5 5 0 0110 0v4" />}
                     </svg>
@@ -755,7 +754,7 @@ export function Navbar(props: NavbarProps) {
                   </button>
                 )}
 
-                {/* Save / Unsave, shared-view non-owners only. Replaces
+                {/* Save / Unsave — shared-view non-owners only. Replaces
                     the deleted FloatingReactionDock bookmark so viewers can
                     still collect reports without an overlaid floating pill. */}
                 {canSave && (
@@ -766,7 +765,7 @@ export function Navbar(props: NavbarProps) {
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors disabled:opacity-60 disabled:cursor-wait"
                     aria-label={saved ? "Remove from saved" : "Save report"}
                   >
-                    <svg aria-hidden="true"
+                    <svg
                       width="14"
                       height="14"
                       viewBox="0 0 24 24"
@@ -790,7 +789,7 @@ export function Navbar(props: NavbarProps) {
                     onClick={() => { setMenuOpen(false); onSetPresentationMode(true); }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-accent hover:bg-surface-alt/50 transition-colors"
                   >
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="5,3 19,12 5,21" fill="currentColor" stroke="none" />
                     </svg>
                     Present
@@ -806,13 +805,13 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onSetTournamentMode(!tournamentMode); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <DumbbellIcon width="14" height="14" className={tournamentMode ? "text-amber-800" : ""} />
+                      <DumbbellIcon width="14" height="14" className={tournamentMode ? "text-amber-500" : ""} />
                       {tournamentMode ? "Exit Tournament Mode" : "Tournament Mode"}
                     </button>
                   </>
                 )}
 
-                {/* Version history, opens side panel */}
+                {/* Version history — opens side panel */}
                 {canShowVersionHistory && (
                   <>
                     <div className="border-t border-border/50 mx-3 my-1" />
@@ -846,21 +845,21 @@ export function Navbar(props: NavbarProps) {
                   </>
                 )}
 
-                {/* Visual OTS Sheet, sprites + QR code, downloadable as PNG */}
+                {/* Visual OTS Sheet — sprites + QR code, downloadable as PNG */}
                 {onOpenOTSSheet && !isPresentationStyle && (
                   <button
                     type="button"
                     onClick={() => { setMenuOpen(false); onOpenOTSSheet(); }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                   >
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
                     </svg>
                     Visual OTS Sheet
                   </button>
                 )}
 
-                {/* Create PokéPaste, OTS (Open Team Sheet) & CTS (Closed / full spread) */}
+                {/* Create PokéPaste — OTS (Open Team Sheet) & CTS (Closed / full spread) */}
                 {onCreatePokepaste && !isPresentationStyle && (
                   <>
                     <button
@@ -884,7 +883,7 @@ export function Navbar(props: NavbarProps) {
                   </>
                 )}
 
-                {/* PDF Export (mobile, all three options) */}
+                {/* PDF Export (mobile — all three options) */}
                 {onExportPdf && !isPresentationStyle && (
                   <>
                     <div className="border-t border-border/50 mx-3 my-1" />
@@ -893,7 +892,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onExportPdf("all-slides"); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="7 10 12 15 17 10" />
                         <line x1="12" y1="15" x2="12" y2="3" />
@@ -928,7 +927,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onStartTour(); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10" />
                         <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
                         <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -945,7 +944,7 @@ export function Navbar(props: NavbarProps) {
                   className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                   </svg>
                   Feedback

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description: HUB_DESCRIPTION,
   alternates: { canonical: "https://pokemonvgcteamreport.com/champions" },
   openGraph: {
-    title: "Pokemon Champions Format | Reg M-C Mega Teams & Z Megas, VGC Team Report",
+    title: "Pokemon Champions Format | Reg M-C Mega Teams & Z Megas — VGC Team Report",
     description: HUB_DESCRIPTION,
     type: "website",
     siteName: "VGC Team Report",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pokemon Champions Format | Reg M-C Mega Teams & Z Megas, VGC Team Report",
+    title: "Pokemon Champions Format | Reg M-C Mega Teams & Z Megas — VGC Team Report",
     description: HUB_DESCRIPTION,
   },
   keywords: [
@@ -48,7 +48,7 @@ export default function ChampionsPage() {
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "VGC Champions Format Pokémon, Regulation M-C",
+    name: "VGC Champions Format Pokémon — Regulation M-C",
     description: "All Mega Evolution Pokémon legal in the Pokemon Champions Regulation M-C competitive format (VGC 2026). Reg M-C is a superset of Reg M-B and M-A.",
     url: "https://pokemonvgcteamreport.com/champions",
     numberOfItems: champMegas.length,

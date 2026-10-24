@@ -76,7 +76,7 @@ export function useHomePage() {
   const { creatorMode, setCreatorMode } = useCreatorMode();
   const { presentationMode, setPresentationMode } = usePresentationMode();
   const { darkMode, setDarkMode } = useDarkMode();
-  const { genTheme, hasGenTheme, setGenTheme } = useTheme();
+  const { genTheme, setGenTheme } = useTheme();
   const [showShortcutHint, setShowShortcutHint] = useState(false);
   const creatorModeBeforePresent = useRef(creatorMode);
 
@@ -278,7 +278,7 @@ export function useHomePage() {
     privateFields: privateFields.length > 0 ? privateFields : undefined,
     // Pin viewers to the creator's accent theme so the report appearance
     // stays consistent across devices / incognito / other users.
-    genTheme: hasGenTheme ? genTheme : undefined,
+    genTheme: genTheme || undefined,
   }), [paste, notes, calcs, roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId, privateFields, genTheme]);
 
   // ── Self-echo suppression wiring (§1-B) ──────────────────────────

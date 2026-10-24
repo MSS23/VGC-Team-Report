@@ -10,7 +10,7 @@ import type { ExploreReport } from "@/components/explore/ReportCard";
 
 // Revalidate every hour. New public teams for any given mega don't appear
 // fast enough to justify a 10-minute window, and each revalidation runs
-// DB queries + SSR for every mega in MEGA_POKEMON_LIST, roughly 6x
+// DB queries + SSR for every mega in MEGA_POKEMON_LIST — roughly 6x
 // cheaper at 3600s vs 600s for users who won't notice the difference.
 export const revalidate = 3600;
 
@@ -23,7 +23,7 @@ export function generateStaticParams() {
   //
   // This MUST track the widest live regulation, not M-A. When it was pinned to
   // getRegMAMegasWithSprites() the 14 sprited Reg M-B Megas were never
-  // prerendered, never sitemapped and never linked (VGC-258), they only
+  // prerendered, never sitemapped and never linked (VGC-258) — they only
   // resolved on demand via dynamicParams, i.e. invisible to crawlers.
   return getRegMCMegasWithSprites().map((m) => ({ pokemon: m.slug }));
 }
@@ -46,7 +46,7 @@ function regulationCopy(dataKey: string) {
     legalIn: getMegaLegalInLabel(dataKey),
     /** Narrowest set of regulation keywords that is actually true. */
     keywords: regs.map((r) => `Regulation ${r}`),
-    /** Explore deep-link filter value, the regulation this Mega debuted in. */
+    /** Explore deep-link filter value — the regulation this Mega debuted in. */
     exploreRegulation: `Reg ${since}`,
   };
 }
@@ -63,7 +63,7 @@ export async function generateMetadata({
   // Title targets the highest-volume long-tail queries: "{Pokemon} VGC",
   // "{Pokemon} SP spread", "{Pokemon} moveset". Keeping it under ~60 chars
   // so Google doesn't truncate in SERPs.
-  const title = `${mega.displayName} VGC Guide, SP Spreads, Movesets & Teams`;
+  const title = `${mega.displayName} VGC Guide — SP Spreads, Movesets & Teams`;
   const reg = regulationCopy(mega.dataKey);
   const description = `Complete ${mega.displayName} VGC guide for Pokemon Champions ${reg.legalIn}: best SP spreads, movesets, damage calcs, and top competitive teams. ${mega.ability} with ${mega.megaStone}.`;
 
@@ -116,7 +116,7 @@ async function getTeamsForPokemon(
     const sql = getDb();
     // Two valid pieces of evidence that this team uses the Pokemon AS its
     // Mega:
-    //   1. The paste contains the Mega Stone (e.g. "Scizorite"), base+stone
+    //   1. The paste contains the Mega Stone (e.g. "Scizorite") — base+stone
     //   2. The paste contains the EXACT Mega species form name
     //
     // The species pattern must be the FULL form name ("Charizard-Mega-Y"),
@@ -206,7 +206,7 @@ export default async function MegaPokemonPage({
   if (!pokemonData) notFound();
 
   // Fetch teams using the exact Mega species form (via dataKey) AND the
-  // Mega Stone, searching by base name alone would pull in any team
+  // Mega Stone — searching by base name alone would pull in any team
   // containing the un-Mega'd base species.
   const teams = await getTeamsForPokemon(mega.dataKey, mega.megaStone);
 
@@ -230,9 +230,9 @@ export default async function MegaPokemonPage({
     pokemonData.baseStats.spa + pokemonData.baseStats.spd + pokemonData.baseStats.spe;
   const typeLine = mega.types.join(" / ");
 
-  // FAQ schema, Google surfaces these as rich snippets for long-tail
+  // FAQ schema — Google surfaces these as rich snippets for long-tail
   // queries. Every answer below is grounded in first-party data (stats,
-  // ability, mega stone, live team count), NO hallucinated "best spread"
+  // ability, mega stone, live team count) — NO hallucinated "best spread"
   // claims that we can't back up. Adding fake answers here would be a
   // manual-action risk for structured-data spam.
   const reg = regulationCopy(mega.dataKey);
@@ -259,8 +259,8 @@ export default async function MegaPokemonPage({
     {
       q: `Is ${mega.displayName} legal in VGC 2026 Regulation M-C?`,
       a: reg.since === "M-A"
-        ? `Yes, ${mega.displayName} has been legal since Regulation M-A, the Pokemon Champions launch format, and remains legal in Regulation M-B and the current Regulation M-C.`
-        : `Yes, ${mega.displayName} is legal in ${reg.legalIn}. It was added in the Regulation ${reg.since} rotation and is not legal in earlier Champions regulations.`,
+        ? `Yes — ${mega.displayName} has been legal since Regulation M-A, the Pokemon Champions launch format, and remains legal in Regulation M-B and the current Regulation M-C.`
+        : `Yes — ${mega.displayName} is legal in ${reg.legalIn}. It was added in the Regulation ${reg.since} rotation and is not legal in earlier Champions regulations.`,
     },
     ...(teams.length > 0
       ? [{
@@ -276,7 +276,7 @@ export default async function MegaPokemonPage({
         data={{
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: `${mega.displayName} VGC Guide, SP Spreads, Movesets & Teams`,
+          name: `${mega.displayName} VGC Guide — SP Spreads, Movesets & Teams`,
           description: mega.description,
           url: `https://pokemonvgcteamreport.com/champions/${mega.slug}`,
           isPartOf: {
