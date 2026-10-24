@@ -7,21 +7,21 @@ import { useTranslation } from "@/lib/i18n";
 const CATEGORY_CONFIG = {
   offensive: {
     label: "Offensive",
-    icon: "⚔️",
+    icon: (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 16 4 4"/><path d="m19 21 2-2"/></svg>),
     borderClass: "border-red-400/30",
     tagBg: "bg-red-500/20",
     tagText: "text-red-400",
   },
   defensive: {
     label: "Defensive",
-    icon: "🛡️",
+    icon: (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>),
     borderClass: "border-emerald-400/30",
     tagBg: "bg-emerald-500/20",
     tagText: "text-emerald-400",
   },
   speed: {
     label: "Speed Tier",
-    icon: "⚡",
+    icon: (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>),
     borderClass: "border-border-subtle",
     tagBg: "bg-surface-alt",
     tagText: "text-text-tertiary",
@@ -289,7 +289,7 @@ Examples:
                       className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors"
                       aria-label="Remove calc"
                     >
-                      ✕
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
                     </button>
                   </div>
                 </div>

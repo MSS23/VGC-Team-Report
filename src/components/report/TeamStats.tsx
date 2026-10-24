@@ -65,7 +65,7 @@ export function TeamStats({ pokemon, regulation }: TeamStatsProps) {
       )}
       {teraCount > 0 && (
         <span className="inline-flex items-center gap-1">
-          <span className="text-text-tertiary/60">✦</span>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" className="text-text-tertiary/60" aria-hidden="true"><path d="M12 2c.6 5.4 4.6 9.4 10 10-5.4.6-9.4 4.6-10 10-.6-5.4-4.6-9.4-10-10 5.4-.6 9.4-4.6 10-10z"/></svg>
           <span className="font-semibold text-text-secondary">{teraCount}</span> tera
         </span>
       )}

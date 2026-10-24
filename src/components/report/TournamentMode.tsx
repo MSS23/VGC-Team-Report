@@ -41,7 +41,7 @@ function TypeDot({ type }: { type: PokemonType }) {
 function StatCell({ label, value, boosted, reduced, isStats }: { label: string; value: number; boosted: boolean; reduced: boolean; isStats?: boolean }) {
   return (
     <div className="flex flex-col items-center">
-      <span className={`text-[9px] font-extrabold uppercase tracking-wider leading-none ${
+      <span className={`text-[10px] font-extrabold uppercase tracking-wider leading-none ${
         boosted ? "text-red-500 bg-red-500/15 px-1 rounded" :
         reduced ? "text-blue-500 bg-blue-500/15 px-1 rounded" :
         "text-text-tertiary"
@@ -161,7 +161,7 @@ function CompactCard({
                   className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border"
                   style={{ backgroundColor: `${TYPE_COLORS[parsed.teraType].bg}20`, borderColor: `${TYPE_COLORS[parsed.teraType].bg}40` }}
                 >
-                  <span className="text-[9px] font-extrabold tracking-wide" style={{ color: TYPE_COLORS[parsed.teraType].bg }}>
+                  <span className="text-[10px] font-extrabold tracking-wide" style={{ color: TYPE_COLORS[parsed.teraType].bg }}>
                     Tera {parsed.teraType}
                   </span>
                 </span>

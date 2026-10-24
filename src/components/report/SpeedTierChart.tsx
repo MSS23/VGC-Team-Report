@@ -587,7 +587,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                   {/* Mega-evolved speed entry for one of the user's team Pokemon. */}
                   {entry.isMega && (
                     <span
-                      className="text-[8px] sm:text-[9px] font-extrabold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
+                      className="text-[8px] sm:text-[10px] font-extrabold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
                       title="Mega-evolved speed (same EV/SP spread as base form)"
                     >
                       Mega
@@ -598,7 +598,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                       to the meta max-speed Garchomp. */}
                   {!entry.isYours && entry.isDuplicateOfTeam && (
                     <span
-                      className="text-[8px] sm:text-[9px] font-extrabold text-blue-400 bg-blue-500/15 border border-blue-500/30 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
+                      className="text-[8px] sm:text-[10px] font-extrabold text-blue-400 bg-blue-500/15 border border-blue-500/30 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
                       title="Standard meta variant (max speed benchmark)"
                     >
                       Meta
@@ -608,7 +608,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                       is also visible, so users can tell which bar is their own spread. */}
                   {entry.isYours && !entry.isMega && showMetaThreats && metaSpeciesSet.has(entry.speciesKey) && (
                     <span
-                      className="text-[8px] sm:text-[9px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
+                      className="text-[8px] sm:text-[10px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
                       style={{ color: "var(--stat-spe)", backgroundColor: "color-mix(in srgb, var(--stat-spe) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--stat-spe) 30%, transparent)" }}
                       title="Your spread"
                     >
@@ -638,7 +638,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                         its exact final speed with at least one other entry. */}
                     {isTie && (
                       <div
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded cursor-help"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded cursor-help"
                         title={tiePartners.length > 0 ? `Speed tie at ${entry.displaySpeed} with ${tiePartners.join(", ")}` : `Speed tie at ${entry.displaySpeed}`}
                         aria-label={tiePartners.length > 0 ? `Speed tie at ${entry.displaySpeed} with ${tiePartners.join(", ")}` : `Speed tie at ${entry.displaySpeed}`}
                       >
@@ -673,7 +673,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                     )}
                     {/* Position change indicator */}
                     {posChange !== 0 && (
-                      <span className={`text-[9px] sm:text-[10px] font-bold flex items-center gap-px ${
+                      <span className={`text-[10px] font-bold flex items-center gap-px ${
                         posChange > 0 ? "text-emerald-500" : "text-red-400"
                       }`} title={`Moved ${Math.abs(posChange)} position${Math.abs(posChange) > 1 ? "s" : ""} ${posChange > 0 ? "up" : "down"}`}>
                         {posChange > 0 ? (

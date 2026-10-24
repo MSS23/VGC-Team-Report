@@ -104,7 +104,7 @@ function ProfilePreview({
         <div className="flex items-center gap-2 mb-1">
           <h3 className="text-base font-extrabold text-text-primary leading-tight">{creatorName || "Your Name"}</h3>
           {profile.isPublic && (
-            <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-accent-surface text-accent uppercase tracking-wide">Public</span>
+            <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-accent-surface text-accent uppercase tracking-wide">Public</span>
           )}
         </div>
 

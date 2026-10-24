@@ -238,7 +238,7 @@ export function OTSSheetModal({ pokemon, shareUrl, tournamentName, teamName, onC
                     className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg border border-border"
                     crossOrigin="anonymous"
                   />
-                  <p className="text-[9px] text-text-tertiary text-center max-w-[96px] leading-tight">Scan for full report</p>
+                  <p className="text-[10px] text-text-tertiary text-center max-w-[96px] leading-tight">Scan for full report</p>
                 </div>
               )}
             </div>

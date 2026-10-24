@@ -102,7 +102,7 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
 
             >
               <AnimatedSprite species={species} size={52} />
-              <span className="text-[9px] sm:text-[10px] font-semibold text-text-tertiary text-center leading-tight max-w-[56px] sm:max-w-[72px] truncate">
+              <span className="text-[10px] font-semibold text-text-tertiary text-center leading-tight max-w-[56px] sm:max-w-[72px] truncate">
                 {species}
               </span>
             </div>

@@ -505,7 +505,7 @@ function TeamOverviewBase({
                     )}
                     {tags.regulation}
                     {tags.regulationAutoDetected && (
-                      <span className="text-[9px] font-semibold opacity-70 uppercase tracking-wide">auto</span>
+                      <span className="text-[10px] font-semibold opacity-70 uppercase tracking-wide">auto</span>
                     )}
                   </span>
                 )}

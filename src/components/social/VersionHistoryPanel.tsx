@@ -313,7 +313,7 @@ export function VersionHistoryPanel({
                           </button>
                           <span className="text-[10px] text-text-tertiary flex-shrink-0">{formatTime(v.createdAt)}</span>
                           {isSelected && (
-                            <span className="text-[9px] font-bold text-white bg-blue-500 px-1.5 py-0.5 rounded shadow-sm">
+                            <span className="text-[10px] font-bold text-white bg-blue-500 px-1.5 py-0.5 rounded shadow-sm">
                               Comparing
                             </span>
                           )}

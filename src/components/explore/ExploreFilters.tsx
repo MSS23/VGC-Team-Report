@@ -342,7 +342,7 @@ export function ExploreFilters({
           />
           More filters
           {advancedFilterCount > 0 && (
-            <span className="min-w-[16px] h-4 flex items-center justify-center bg-accent text-white text-[9px] font-bold rounded-full px-1">
+            <span className="min-w-[16px] h-4 flex items-center justify-center bg-accent text-white text-[10px] font-bold rounded-full px-1">
               {advancedFilterCount}
             </span>
           )}

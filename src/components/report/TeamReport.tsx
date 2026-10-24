@@ -117,7 +117,7 @@ export function FieldDiffHighlight({ field, children, label }: { field: string |
     <div className="version-diff-highlight relative" data-diff-field={matchedField}>
       <div className="version-diff-border absolute -inset-1.5 sm:-inset-2 rounded-xl pointer-events-none" />
       <div className="version-diff-label absolute -top-1.5 sm:-top-2 left-2 sm:left-3 z-10 pointer-events-none">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500 text-white text-[9px] font-bold rounded-md shadow-sm shadow-blue-500/30 uppercase tracking-wider">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-md shadow-sm shadow-blue-500/30 uppercase tracking-wider">
           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
           {label ?? "Changed"}
         </span>

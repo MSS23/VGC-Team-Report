@@ -225,7 +225,7 @@ export function ChampionsContent() {
                             {mon.name}
                           </h4>
                           {mon.reg !== "M-A" && (
-                            <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent-surface text-accent border border-accent/20 whitespace-nowrap">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent-surface text-accent border border-accent/20 whitespace-nowrap">
                               Reg {mon.reg}
                             </span>
                           )}
@@ -254,7 +254,7 @@ export function ChampionsContent() {
                       >
                         <div className="flex items-start justify-between gap-2 flex-wrap">
                           <h4 className="text-sm font-bold text-text-tertiary">{mon.name}</h4>
-                          <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 whitespace-nowrap">
                             Coming Soon
                           </span>
                         </div>

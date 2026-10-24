@@ -230,7 +230,7 @@ export function MegaLandingContent({
                     {m.types.map((t) => (
                       <span
                         key={t}
-                        className="text-[9px] font-bold text-white px-1.5 py-0.5 rounded-full"
+                        className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded-full"
                         style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
                       >
                         {t}

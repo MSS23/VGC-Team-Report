@@ -229,7 +229,7 @@ function TypeWeaknessGrid({ label, weakMap, resistMap, color }: { label: string;
           return (
             <div key={t} className="flex flex-col items-center gap-0.5">
               <TypeBadge type={t} />
-              <div className="flex gap-1 text-[9px] font-bold">
+              <div className="flex gap-1 text-[10px] font-bold">
                 {weak > 0 && <span className="text-red-500">-{weak}</span>}
                 {resist > 0 && <span className="text-emerald-500">+{resist}</span>}
                 {weak === 0 && resist === 0 && <span className="text-text-tertiary">0</span>}

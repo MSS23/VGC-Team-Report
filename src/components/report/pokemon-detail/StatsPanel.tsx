@@ -121,7 +121,7 @@ const { parsed, displayData, relevantStats, displayStats, itemBoost, natureData,
                 <div className="flex items-center gap-1 w-16">
                   {investLabel > 0 ? (
                     <span className={`text-xs font-bold ${isOverMax && showSp ? "text-amber-500" : "text-accent"}`}>
-                      +{investLabel}{investUnit && <span className="text-[9px] ml-px">{investUnit}</span>}
+                      +{investLabel}{investUnit && <span className="text-[10px] ml-px">{investUnit}</span>}
                     </span>
                   ) : null}
                   {hasNonDefaultIv && (
@@ -170,7 +170,7 @@ const { parsed, displayData, relevantStats, displayStats, itemBoost, natureData,
                     }`}
                     aria-label={`${statLabels[stat as keyof typeof statLabels]}: ${baseStatsForComparison[stat]} to ${megaForDelta[stat]}, ${positive ? "+" : ""}${delta}`}
                   >
-                    <span className="uppercase text-text-tertiary font-extrabold tracking-widest text-[9px] sm:text-[10px]">
+                    <span className="uppercase text-text-tertiary font-extrabold tracking-widest text-[10px]">
                       {statLabels[stat as keyof typeof statLabels]}
                     </span>
                     <span className="font-[family-name:var(--font-mono)] tabular-nums">

@@ -34,7 +34,7 @@ export function LanguageSelector() {
       >
         <span className="uppercase tracking-wider">{currentLang.code}</span>
         {!isEnglish && (
-          <span className="inline-flex items-center px-1 py-px rounded text-[9px] font-extrabold uppercase tracking-widest bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 leading-none">
+          <span className="inline-flex items-center px-1 py-px rounded text-[10px] font-extrabold uppercase tracking-widest bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 leading-none">
             {t.translationBeta}
           </span>
         )}
@@ -66,7 +66,7 @@ export function LanguageSelector() {
                 </span>
                 <span className="font-medium flex-1">{lang.label}</span>
                 {isBeta && (
-                  <span className="text-[9px] font-extrabold uppercase tracking-widest text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
                     Beta
                   </span>
                 )}
@@ -79,7 +79,7 @@ export function LanguageSelector() {
             );
           })}
           <div className="px-3 py-2 mt-1 border-t border-border-subtle">
-            <p className="text-[9px] text-text-tertiary leading-relaxed">
+            <p className="text-[10px] text-text-tertiary leading-relaxed">
               Move names use localised game data where available. Other interface translations remain in <span className="text-amber-600 dark:text-amber-400 font-bold">beta</span>.
             </p>
           </div>

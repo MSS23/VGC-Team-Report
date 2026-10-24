@@ -163,7 +163,7 @@ export function EditChangelog({ shareId }: { shareId: string }) {
                           </span>
 
                           {isLatest && (
-                            <span className="text-[9px] font-extrabold text-accent bg-accent-surface px-1.5 py-0.5 rounded uppercase tracking-wider">
+                            <span className="text-[10px] font-extrabold text-accent bg-accent-surface px-1.5 py-0.5 rounded uppercase tracking-wider">
                               Latest
                             </span>
                           )}

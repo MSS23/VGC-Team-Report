@@ -265,7 +265,7 @@ export function SlideNavControls({
         <circle cx="19" cy="12" r="1.7" />
       </svg>
       {hiddenCount > 0 && (
-        <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] flex items-center justify-center px-0.5 rounded-full bg-amber-500 text-white text-[9px] font-extrabold leading-none">
+        <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] flex items-center justify-center px-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold leading-none">
           {hiddenCount}
         </span>
       )}

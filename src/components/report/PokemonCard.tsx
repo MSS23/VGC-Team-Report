@@ -338,7 +338,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
             ))}
             {parsed.teraType && !isChampions && (
               <span className="flex items-center gap-0.5 ml-0.5 sm:ml-1">
-                <span className="text-[9px] sm:text-xs text-text-tertiary font-semibold">{t.tera}:</span>
+                <span className="text-[10px] sm:text-xs text-text-tertiary font-semibold">{t.tera}:</span>
                 <TypeBadge type={parsed.teraType} />
               </span>
             )}
@@ -378,7 +378,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
               className="mt-1.5 sm:mt-2.5 w-full text-[11px] sm:text-xs font-semibold px-2 sm:px-3 py-1 sm:py-1.5 bg-surface-alt/60 border-2 border-border-subtle rounded-lg text-text-primary placeholder:text-text-tertiary/60 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50 transition-all"
             />
           ) : role ? (
-            <span className="mt-1 sm:mt-2.5 inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-xs font-extrabold tracking-widest uppercase text-accent bg-accent-surface/80 border border-accent/20 px-2 py-1 sm:px-3 sm:py-1.5 rounded-md">
+            <span className="mt-1 sm:mt-2.5 inline-flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-extrabold tracking-widest uppercase text-accent bg-accent-surface/80 border border-accent/20 px-2 py-1 sm:px-3 sm:py-1.5 rounded-md">
               <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-accent/60 flex-shrink-0" />
               {role}
             </span>
@@ -425,7 +425,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
         return (
         <div>
           <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2 creator:mb-2.5 flex-wrap">
-            <h4 className="text-[9px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary">
+            <h4 className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-text-tertiary">
               {t.stats} <span className="normal-case tracking-normal font-medium text-text-tertiary/70 hidden sm:inline">({parsed.nature})</span>
             </h4>
 
@@ -470,12 +470,12 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
           {isChampions && totalEvs > 0 && (overSp || (hasWastedEvs && !overSp)) && (
             <div className="flex flex-wrap gap-1.5 mb-1.5 sm:mb-2">
               {overSp && (
-                <span className="text-[9px] sm:text-[10px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded">
                   Over budget by {totalSp - CHAMPIONS_TOTAL_SP} SP
                 </span>
               )}
               {hasWastedEvs && !overSp && (
-                <span className="text-[9px] sm:text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
                   Auto-converted from EVs
                 </span>
               )}
@@ -511,9 +511,9 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
 
               return (
                 <div key={stat} className="flex items-center gap-1 sm:gap-2" role="listitem" aria-label={`${labels[stat]}: ${displayValue}${natureUp ? ", boosted by nature" : ""}${natureDown ? ", reduced by nature" : ""}${isBoosted ? ", boosted by item" : ""}${showSp && sp > 0 ? `, ${sp} SP` : ev > 0 ? `, ${ev} EVs` : ""}`}>
-                  <span className="text-[9px] sm:text-xs font-bold w-9 sm:w-11 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5 flex-shrink-0">
-                    {natureUp && <span className="text-[9px] sm:text-[12px] text-emerald-500 dark:text-emerald-400 leading-none" aria-label="boosted by nature">{"\u25B2"}</span>}
-                    {natureDown && <span className="text-[9px] sm:text-[12px] text-rose-500 dark:text-rose-400 leading-none" aria-label="reduced by nature">{"\u25BC"}</span>}
+                  <span className="text-[10px] sm:text-xs font-bold w-9 sm:w-11 text-right uppercase text-text-tertiary flex items-center justify-end gap-0.5 flex-shrink-0">
+                    {natureUp && <span className="text-[10px] sm:text-[12px] text-emerald-500 dark:text-emerald-400 leading-none" aria-label="boosted by nature">{"\u25B2"}</span>}
+                    {natureDown && <span className="text-[10px] sm:text-[12px] text-rose-500 dark:text-rose-400 leading-none" aria-label="reduced by nature">{"\u25BC"}</span>}
                     {labels[stat]}
                   </span>
                   <div className="flex-1 h-2 sm:h-2.5 bg-surface-alt rounded-full overflow-hidden creator:h-3" role="progressbar" aria-valuenow={displayValue} aria-valuemin={0} aria-valuemax={maxStat} aria-label={`${labels[stat]} stat bar${isBoosted ? " (item boosted)" : ""}`}>
@@ -536,7 +536,7 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
                   </span>
                   {investLabel > 0 ? (
                     <span className={`text-[10px] sm:text-xs font-bold w-9 sm:w-12 text-right tabular-nums flex-shrink-0 ${isOverMax && showSp ? "text-amber-500" : "text-accent"}`}>
-                      +{investLabel}{investUnit && <span className="text-[8px] sm:text-[9px] ml-px">{investUnit}</span>}
+                      +{investLabel}{investUnit && <span className="text-[8px] sm:text-[10px] ml-px">{investUnit}</span>}
                     </span>
                   ) : (
                     <span className="w-9 sm:w-12 flex-shrink-0" />

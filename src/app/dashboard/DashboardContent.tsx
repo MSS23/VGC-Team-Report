@@ -180,14 +180,14 @@ function DashboardInner() {
                     >
                       {label}
                       {t === "drafts" && draftReports.length > 0 && (
-                        <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[9px] font-bold bg-amber-500 text-white rounded-full">
+                        <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold bg-amber-500 text-white rounded-full">
                           {draftReports.length}
                         </span>
                       )}
                       {t === "collab" && (() => {
                         const pendingCount = collabReports.filter(r => r.collabStatus === "pending").length;
                         return pendingCount > 0 ? (
-                          <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold bg-purple-500 text-white rounded-full">
+                          <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-purple-500 text-white rounded-full">
                             {pendingCount}
                           </span>
                         ) : null;
@@ -463,7 +463,7 @@ function DraftReportCard({ draft, onDelete }: { draft: DashboardReport; onDelete
   return (
     <div className="group relative bg-surface border border-amber-500/20 rounded-xl overflow-hidden hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all">
       {/* Draft badge */}
-      <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-md border border-amber-500/20">
+      <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-md border border-amber-500/20">
         Draft
       </div>
 
@@ -616,7 +616,7 @@ function ManagedReportCard({
             {report.tournamentName || report.species.join(" / ")}
           </h3>
           {report.placement && (
-            <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold rounded-md tracking-wide bg-accent-surface text-accent mt-1">
+            <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-extrabold rounded-md tracking-wide bg-accent-surface text-accent mt-1">
               {report.placement}
             </span>
           )}
@@ -908,9 +908,9 @@ interface AnalyticsData {
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-2.5 sm:py-3">
-      <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{label}</p>
+      <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{label}</p>
       <p className="text-lg sm:text-2xl font-extrabold text-text-primary mt-0.5 sm:mt-1">{value}</p>
-      {sub && <p className="text-[9px] sm:text-[10px] text-text-secondary mt-0.5 leading-tight">{sub}</p>}
+      {sub && <p className="text-[10px] text-text-secondary mt-0.5 leading-tight">{sub}</p>}
     </div>
   );
 }
@@ -937,7 +937,7 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
       {/* Monthly activity chart */}
       {monthlyActivity.length > 0 && (
         <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Reports Created (Last 6 Months)</p>
+          <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Reports Created (Last 6 Months)</p>
           <div className="flex items-end gap-2 h-24">
             {monthlyActivity.map((m) => (
               <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
@@ -950,7 +950,7 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
                     style={{ height: `${(m.count / maxMonthCount) * 100}%` }}
                   />
                 </div>
-                <span className="text-[9px] text-text-tertiary font-bold">
+                <span className="text-[10px] text-text-tertiary font-bold">
                   {new Date(m.month + "-01").toLocaleDateString("en-GB", { month: "short" })}
                 </span>
               </div>
@@ -962,7 +962,7 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
       {/* Top reports by views */}
       {topByViews.length > 0 && (
         <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reports by Views</p>
+          <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reports by Views</p>
           <div className="space-y-1 sm:space-y-2">
             {topByViews.map((report, i) => (
               <a
@@ -994,7 +994,7 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
       {/* Top reactions */}
       {topReactions.length > 0 && (
         <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reactions</p>
+          <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reactions</p>
           <div className="flex flex-wrap gap-3">
             {topReactions.map((r) => (
               <div key={r.type} className="flex items-center gap-1.5 bg-surface-alt/50 px-3 py-1.5 rounded-lg">
@@ -1086,7 +1086,7 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
     <div className="space-y-3 sm:space-y-4">
       {/* Create new collection */}
       <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-        <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">New Collection</p>
+        <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">New Collection</p>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"

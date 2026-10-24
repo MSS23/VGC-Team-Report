@@ -170,7 +170,7 @@ export function ReportCard({
     >
       {report.tags?.regulation && (
         <span
-          className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 z-10 inline-flex items-center gap-1 ${
+          className={`absolute top-2 right-2 text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 z-10 inline-flex items-center gap-1 ${
             report.tags.regulationAutoDetected ? "border border-dashed border-blue-500/40" : ""
           }`}
           title={report.tags.regulationAutoDetected
@@ -208,7 +208,7 @@ export function ReportCard({
             {report.tournamentName || report.species.join(" / ")}
           </h3>
           {report.placement && (
-            <span className={`flex-shrink-0 inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-extrabold rounded-md tracking-wide ${getPlacementStyle(report.placement)}`}>
+            <span className={`flex-shrink-0 inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] font-extrabold rounded-md tracking-wide ${getPlacementStyle(report.placement)}`}>
               {(report.placement === "1st" || report.placement === "Top 4") && (
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="flex-shrink-0" aria-hidden="true">
                   <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7.4L12 16.8l-6.3 4.6 2.3-7.4-6-4.6h7.6z" />
@@ -294,11 +294,11 @@ export function ReportCard({
         {(hasTagsSection || report.hasRental) && (
           <div className="flex flex-wrap gap-1">
             {hasTagsSection && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">{report.tags!.eventType}</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">{report.tags!.eventType}</span>
             )}
             {report.hasRental && (
               <span
-                className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-0.5"
+                className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-0.5"
                 title="Rental code available"
               >
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

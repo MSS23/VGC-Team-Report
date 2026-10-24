@@ -200,7 +200,7 @@ export function InlinePokemonEditor({
                     {s.types.map((t) => (
                       <span
                         key={t}
-                        className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-px rounded text-white"
+                        className="text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-px rounded text-white"
                         style={{ backgroundColor: TYPE_BG[t] ?? "#666" }}
                       >
                         {t}
