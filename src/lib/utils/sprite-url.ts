@@ -130,6 +130,34 @@ export function getGenThemedSpriteUrls(
   return urls;
 }
 
+export interface ProgressiveSpriteUrls {
+  /** Lightweight static sprites shown while an animation downloads. */
+  preview: string[];
+  /** Animated candidates to decode in the background, in fallback order. */
+  animated: string[];
+}
+
+/**
+ * Return the two phases used by the report sprite renderer.
+ *
+ * Showdown's animated GIFs are commonly several times larger than its HOME
+ * PNGs. Rendering a PNG first gives an imported team an immediate visual
+ * response, while the GIF can download and decode without leaving a blank
+ * card. Static-only species naturally return an empty animation phase.
+ */
+export function getProgressiveSpriteUrls(
+  species: string,
+  genTheme: string,
+  shiny: boolean,
+): ProgressiveSpriteUrls {
+  return {
+    preview: getGenThemedSpriteUrls(species, genTheme, false, shiny),
+    animated: getGenThemedSpriteUrls(species, genTheme, true, shiny).filter(
+      (url) => url.endsWith(".gif"),
+    ),
+  };
+}
+
 /**
  * Whether a gen theme uses pixelated (retro) rendering for static sprites.
  */

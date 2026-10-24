@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { getGenThemedSpriteUrls, isGenThemePixelated } from "@/lib/utils/sprite-url";
+import {
+  getGenThemedSpriteUrls,
+  getProgressiveSpriteUrls,
+  isGenThemePixelated,
+} from "@/lib/utils/sprite-url";
 
 /**
  * VGC-261 regression cover.
@@ -66,5 +70,33 @@ describe("isGenThemePixelated", () => {
     expect(isGenThemePixelated("")).toBe(false);
     expect(isGenThemePixelated("toString")).toBe(false);
     expect(isGenThemePixelated("__proto__")).toBe(false);
+  });
+});
+
+describe("getProgressiveSpriteUrls", () => {
+  it("shows a lightweight static sprite before loading animation", () => {
+    const urls = getProgressiveSpriteUrls("Incineroar", "gen9", false);
+
+    expect(urls.preview[0]).toBe(
+      "https://play.pokemonshowdown.com/sprites/home/incineroar.png",
+    );
+    expect(urls.animated[0]).toBe(
+      "https://play.pokemonshowdown.com/sprites/ani/incineroar.gif",
+    );
+    expect(urls.animated.every((url) => url.endsWith(".gif"))).toBe(true);
+  });
+
+  it("does not schedule known static-only species for failed GIF requests", () => {
+    const urls = getProgressiveSpriteUrls("Chien-Pao", "gen9", false);
+
+    expect(urls.preview[0]).toContain("/home/chienpao.png");
+    expect(urls.animated).toEqual([]);
+  });
+
+  it("keeps shiny and generation-specific preview folders", () => {
+    const urls = getProgressiveSpriteUrls("Pikachu", "gen3", true);
+
+    expect(urls.preview[0]).toContain("/gen3-shiny/pikachu.png");
+    expect(urls.animated[0]).toContain("/gen5ani-shiny/pikachu.gif");
   });
 });
