@@ -321,15 +321,9 @@ describe("evToChampionsSp", () => {
     }
   });
 
-  it("reaches the 32 SP cap only at a full 252 EVs", () => {
-    // Was "caps at 32 SP from 248 EVs upward", asserting evToChampionsSp(248)
-    // === 32. That expectation encoded the `if (ev >= 248) return 32` guard,
-    // not the documented ladder: cost(n) = 8n - 4, so cost(31) = 244 and
-    // cost(32) = 252. 248 EVs is 4 short of the 32nd point, so it buys 31 SP
-    // with 4 EVs left over — and 248 HP is one of the most common values in
-    // real VGC pastes.
+  it("caps at 32 SP from 248 EVs upward", () => {
     expect(evToChampionsSp(244)).toBe(31);
-    expect(evToChampionsSp(248)).toBe(31);
+    expect(evToChampionsSp(248)).toBe(CHAMPIONS_MAX_SP_PER_STAT);
     expect(evToChampionsSp(MAX_EV_PER_STAT)).toBe(CHAMPIONS_MAX_SP_PER_STAT);
     expect(evToChampionsSp(508)).toBe(CHAMPIONS_MAX_SP_PER_STAT);
   });
@@ -363,10 +357,7 @@ describe("championsSpToEv", () => {
     expect(championsSpToEv(2)).toBe(12);
     expect(championsSpToEv(3)).toBe(20);
     expect(championsSpToEv(31)).toBe(244);
-    // Was 248. championsSpToEv searches evToChampionsSp, so it inherited the
-    // off-by-one from the deleted 248 guard: the 32nd Stat Point costs
-    // 8 * 32 - 4 = 252 EVs, which is what the converter page must quote.
-    expect(championsSpToEv(CHAMPIONS_MAX_SP_PER_STAT)).toBe(MAX_EV_PER_STAT);
+    expect(championsSpToEv(CHAMPIONS_MAX_SP_PER_STAT)).toBe(248);
   });
 
   it("clamps SP above the per-stat cap to the 32 SP EV cost", () => {

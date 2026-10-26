@@ -10,7 +10,7 @@ let hook: ReturnType<typeof renderHook<ReturnType<typeof useShareUrl>>>;
 beforeEach(async () => {
   window.history.replaceState({}, "", "/?s=abcd1234");
   vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ ...state, _editable: true, _isOwner: true, _isUnlisted: true, _isPublic: false, _editToken: "token", _version: 1 }))));
-  await act(async () => { hook = renderHook(useShareUrl); await new Promise(resolve => setTimeout(resolve, 0)); });
+  await act(async () => { hook = renderHook(useShareUrl); await new Promise(resolve => setTimeout(resolve, 50)); });
 });
 afterEach(() => { hook.unmount(); vi.unstubAllGlobals(); });
 it("preserves unsaved local edits when a newer remote version arrives", () => {
