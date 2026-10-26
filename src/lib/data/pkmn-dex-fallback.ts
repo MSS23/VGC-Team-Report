@@ -33,6 +33,25 @@ import {
   getSpecies,
   type DexSubsetSpecies,
 } from "@/lib/data/dex-subset";
+import { TYPE_CHART } from "@/lib/data/type-chart";
+
+// ── Type validation at the data boundary ────────────────────────────────────
+// `dex-subset.json` is generated straight from @pkmn/dex, which carries types
+// outside our 18-member `PokemonType` union — MissingNo. ships as
+// "Bird|Normal". A blind `as PokemonType[]` cast let "Bird" reach TypeBadge,
+// where `TYPE_COLORS["Bird"]` is `undefined` and reading `.bg` off it threw:
+// a hard render crash from pasting `MissingNo. @ Leftovers`.
+//
+// The valid set is derived from `TYPE_CHART`'s keys rather than hand-listed.
+// TYPE_CHART is a `Record<PokemonType, …>`, so its keys ARE the 18 members and
+// TypeScript forces them to stay in lockstep with the union — one less copy of
+// the type list to drift.
+const VALID_POKEMON_TYPES: ReadonlySet<string> = new Set(Object.keys(TYPE_CHART));
+
+/** Keep only strings that are genuinely `PokemonType` members. */
+function toPokemonTypes(raw: readonly string[]): PokemonType[] {
+  return raw.filter((t): t is PokemonType => VALID_POKEMON_TYPES.has(t));
+}
 
 // ── Caches ──────────────────────────────────────────────────────────────────
 // `null` is a cached miss — distinct from "not yet looked up" (undefined).
@@ -78,8 +97,22 @@ export function lookupPokemonFromDex(species: string): PokemonData | null {
     return null;
   }
 
+  // Validate, don't cast — see `toPokemonTypes` above. Anything the subset
+  // offers that isn't one of the 18 real types is dropped here, at the edge,
+  // so it can never reach a `Record<PokemonType, …>` lookup downstream.
+  const types = toPokemonTypes(entry.types);
+  if (types.length === 0) {
+    // No renderable typing survived the filter. Reject the entry outright
+    // instead of fabricating a `[undefined]` tuple that lies about the
+    // non-empty `[PokemonType] | [PokemonType, PokemonType]` contract: a
+    // Pokemon with no valid type has nothing useful to show, and every caller
+    // of this function already handles `null` (it is the documented result for
+    // a species the subset doesn't recognise).
+    pokemonCache.set(key, null);
+    return null;
+  }
+
   // Narrow to the [T] | [T, T] tuple our PokemonData type expects.
-  const types = entry.types as PokemonType[];
   const typesTuple: PokemonData["types"] = types.length >= 2
     ? [types[0], types[1]]
     : [types[0]];
@@ -135,7 +168,14 @@ export function getMegaEntryFromDex(species: string): MegaPokemonEntry | null {
     }
   }
 
-  const megaTypes = entry.types as PokemonType[];
+  const megaTypes = toPokemonTypes(entry.types);
+  if (megaTypes.length === 0) {
+    // Same reasoning as `lookupPokemonFromDex`: a mega with no valid typing is
+    // not a usable entry, and `null` is already this function's miss result.
+    megaEntryCache.set(key, null);
+    return null;
+  }
+
   const megaTypesTuple: MegaPokemonEntry["types"] = megaTypes.length >= 2
     ? [megaTypes[0], megaTypes[1]]
     : [megaTypes[0]];
