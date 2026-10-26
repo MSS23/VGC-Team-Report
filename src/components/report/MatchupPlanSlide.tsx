@@ -6,7 +6,7 @@ import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { StatSpread } from "@/lib/types/pokemon";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { lookupPokemon } from "@/lib/data/pokemon";
-import { calculateAllStats } from "@/lib/analysis/stat-calculator";
+import { displayStats } from "@/lib/analysis/spread-builder";
 import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
 import { ItemIcon } from "./ItemIcon";
@@ -46,6 +46,8 @@ interface MatchupPlanSlideProps {
   onAddGamePlan: (matchupId: string) => void;
   onRemoveGamePlan: (matchupId: string, gamePlanId: string) => void;
   onRemove: (id: string) => void;
+  /** Current regulation — Champions (Reg M-A/M-B/M-C) spends SP, not EVs. */
+  regulation?: string;
 }
 
 function totalEvs(evs: StatSpread): number {
@@ -56,15 +58,20 @@ function totalEvs(evs: StatSpread): number {
 function SpeedComparison({
   yourPokemon,
   opponentPokemon,
+  regulation,
 }: {
   yourPokemon: AnalyzedPokemon[];
   opponentPokemon: OpponentPokemonInfo[];
+  regulation?: string;
 }) {
   // Build combined speed entries
   const entries: Array<{ species: string; speed: number; isYours: boolean }> = [];
 
   yourPokemon.forEach((p) => {
-    entries.push({ species: p.parsed.species, speed: p.calculatedStats.spe, isYours: true });
+    // `calculatedStats` is always EV-formula (analyzeTeam takes no regulation),
+    // so Champions speeds have to be recomputed from SP here — VGC-292.
+    const speed = p.data ? displayStats(p.parsed, p.data.baseStats, regulation).spe : p.calculatedStats.spe;
+    entries.push({ species: p.parsed.species, speed, isYours: true });
   });
 
   opponentPokemon.forEach((p) => {
@@ -141,6 +148,7 @@ export function MatchupPlanSlide({
   onAddGamePlan,
   onRemoveGamePlan,
   onRemove,
+  regulation,
 }: MatchupPlanSlideProps) {
   const { t } = useTranslation();
   const STAT_LABELS = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe } as const;
@@ -168,11 +176,11 @@ export function MatchupPlanSlide({
       const hasEvs = totalEvs(p.evs) > 0;
       const calculatedStats =
         hasEvs && data
-          ? calculateAllStats(data.baseStats, p.ivs, p.evs, p.level, p.nature)
+          ? displayStats(p, data.baseStats, regulation)
           : null;
       return { parsed: p, data, calculatedStats, hasEvs };
     });
-  }, [plan.opponentPaste]);
+  }, [plan.opponentPaste, regulation]);
 
   const anyHasEvs = opponentPokemon.some((p) => p.hasEvs);
 
@@ -322,7 +330,7 @@ export function MatchupPlanSlide({
 
       {/* Speed Comparison */}
       {opponentPokemon.length > 0 && (
-        <SpeedComparison yourPokemon={yourPokemon} opponentPokemon={opponentPokemon} />
+        <SpeedComparison yourPokemon={yourPokemon} opponentPokemon={opponentPokemon} regulation={regulation} />
       )}
 
       {/* Game Plans */}

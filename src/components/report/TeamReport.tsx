@@ -376,6 +376,7 @@ export function TeamReport({
             onAddGamePlan={onAddGamePlan ?? (() => {})}
             onRemoveGamePlan={onRemoveGamePlan ?? (() => {})}
             onRemove={onRemovePlan ?? (() => {})}
+            regulation={tags?.regulation}
           />
       );
     }

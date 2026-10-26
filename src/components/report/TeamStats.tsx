@@ -2,6 +2,7 @@
 
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { isChampionsFormat } from "@/lib/data/tags";
+import { displayStats } from "@/lib/analysis/spread-builder";
 
 interface TeamStatsProps {
   pokemon: AnalyzedPokemon[];
@@ -18,9 +19,10 @@ export function TeamStats({ pokemon, regulation }: TeamStatsProps) {
     if (p.data?.types) p.data.types.forEach((t) => allTypes.add(t));
   });
 
-  // Speed range
+  // Speed range. `calculatedStats` is always EV-formula (analyzeTeam has no
+  // regulation), so Champions teams must be recomputed from SP — VGC-292.
   const speeds = pokemon
-    .map((p) => p.calculatedStats.spe)
+    .map((p) => (p.data ? displayStats(p.parsed, p.data.baseStats, regulation).spe : p.calculatedStats.spe))
     .filter((s) => s > 0)
     .sort((a, b) => a - b);
   const minSpeed = speeds[0] ?? 0;

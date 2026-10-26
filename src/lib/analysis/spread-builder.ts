@@ -2,7 +2,7 @@ import { Generations, toID } from "@smogon/calc";
 import type { ParsedPokemon, StatName, StatSpread } from "@/lib/types/pokemon";
 import { isChampionsFormat } from "@/lib/data/tags";
 import { calculateReportDamage, createCalcPokemon } from "./damage-calculator";
-import { convertToChampionsSp } from "./stat-calculator";
+import { calculateAllChampionsStats, calculateAllStats, convertToChampionsSp } from "./stat-calculator";
 
 export const SPREAD_STATS: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
 export const spreadTotal = (spread: StatSpread) => SPREAD_STATS.reduce((sum, stat) => sum + spread[stat], 0);
@@ -12,6 +12,31 @@ export function spreadRules(regulation?: string) {
 export function initialSpread(pokemon: ParsedPokemon, regulation?: string): StatSpread {
   return isChampionsFormat(regulation) ? convertToChampionsSp(pokemon.evs) : { ...pokemon.evs };
 }
+/**
+ * Regulation-aware stats for display. The single helper every report surface
+ * should use when it needs the numbers a player sees on the card.
+ *
+ * Champions (Reg M-A/M-B/M-C) spends **SP**, not EVs, so running the EV
+ * formula over a Champions paste misreads the SP values in the `EVs:` line as
+ * EVs and lands badly low — a Timid Dragapult (base 142 Spe) reads 182 Speed
+ * instead of 213 (VGC-292). Mirrors the SP path `PokemonCard` and
+ * `SpeedTierChart` already take: `convertToChampionsSp` + the SP formula,
+ * which fixes IVs at 31 and level at 50.
+ *
+ * Deliberately NOT routed through `spreadStats`/`createCalcPokemon`: those go
+ * through @smogon/calc at gen 0, which can disagree with the local dex.
+ */
+export function displayStats(
+  pokemon: Pick<ParsedPokemon, "evs" | "ivs" | "level" | "nature">,
+  baseStats: StatSpread,
+  regulation?: string,
+): StatSpread {
+  if (isChampionsFormat(regulation)) {
+    return calculateAllChampionsStats(baseStats, convertToChampionsSp(pokemon.evs), pokemon.nature);
+  }
+  return calculateAllStats(baseStats, pokemon.ivs, pokemon.evs, pokemon.level, pokemon.nature);
+}
+
 export function spreadStats(pokemon: ParsedPokemon, spread: StatSpread, regulation?: string) {
   return createCalcPokemon({ ...pokemon, evs: spread }, regulation).rawStats;
 }

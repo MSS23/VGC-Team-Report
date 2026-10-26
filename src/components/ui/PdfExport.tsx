@@ -154,6 +154,7 @@ export function PrintableReport({
             onAddGamePlan={noop}
             onRemoveGamePlan={noop}
             onRemove={noop}
+            regulation={tags?.regulation}
           />
         </div>
       ))}

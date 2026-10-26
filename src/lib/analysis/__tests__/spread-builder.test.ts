@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
-import { evaluateSpread, initialSpread, suggestSpread, wastedInvestment } from "../spread-builder";
+import { displayStats, evaluateSpread, initialSpread, suggestSpread, wastedInvestment } from "../spread-builder";
 import { replacePokemonSpread } from "@/lib/utils/paste-edit";
 const mon = (s: string) => parseShowdownPaste(s).pokemon[0];
 const own = mon("Incineroar\nAbility: Blaze\nCareful Nature\n- Flare Blitz");
@@ -22,6 +22,23 @@ describe("spread benchmarks", () => {
   });
   it("uses Champions SP directly", () => {
     expect(initialSpread({ ...own, evs: { ...own.evs, hp: 32, atk: 32, spe: 2 } }, "Reg M-B").hp).toBe(32);
+  });
+  // VGC-292: TeamStats, TournamentMode and MatchupPlanSlide ran the EV formula
+  // on Champions teams, so the same report showed a Dragapult at 182 Speed in
+  // those three places and 213 on the card and the speed-tier chart.
+  it("VGC-292: reads Champions Dragapult Speed as 213, not the EV-formula 182", () => {
+    const pult = mon("Dragapult\nAbility: Clear Body\nEVs: 32 SpA / 32 Spe\nTimid Nature\n- Dragon Darts");
+    const base = { hp: 88, atk: 120, def: 75, spa: 100, spd: 75, spe: 142 };
+    expect(displayStats(pult, base, "Reg M-C").spe).toBe(213);
+    expect(displayStats(pult, base, "Reg M-C").spe).not.toBe(182);
+    // The same paste read as EVs — the number the three components used to show.
+    expect(displayStats(pult, base, "Reg I").spe).toBe(182);
+  });
+  it("converts an EV-shaped Champions paste to SP before calculating", () => {
+    const pult = mon("Dragapult\nAbility: Clear Body\nEVs: 252 SpA / 252 Spe / 4 HP\nTimid Nature\n- Dragon Darts");
+    const base = { hp: 88, atk: 120, def: 75, spa: 100, spd: 75, spe: 142 };
+    // 252 Spe -> 32 SP, so the Champions reading lands on the same 213.
+    expect(displayStats(pult, base, "Reg M-A").spe).toBe(213);
   });
   it("saves one spread without losing the header, notes, nickname or other slots", () => {
     const paste = "=== Team ===\n\nCat (Incineroar) @ Sitrus Berry\nEVs: 252 HP\nCareful Nature\n- Flare Blitz\n\nArcanine\n- Protect";
