@@ -49,16 +49,93 @@ export async function apiGuard(request: Request, options: ApiGuardOptions): Prom
     }
   }
 
-  // Body size check
+  // Body size check.
+  //
+  // Content-Length is attacker-controlled: a chunked request (Transfer-Encoding:
+  // chunked, no Content-Length) or a request that simply lies about its length
+  // used to skip this check entirely, leaving the cap unenforced. So the header
+  // is only a cheap fast reject, and the real cap is enforced on the bytes we
+  // actually read off the wire.
   if (maxBodySize) {
-    const contentLength = parseInt(request.headers.get("content-length") ?? "0", 10);
-    if (contentLength > maxBodySize) {
-      return NextResponse.json(
-        { error: "Request too large" },
-        { status: 413 },
-      );
+    const contentLength = parseInt(request.headers.get("content-length") ?? "", 10);
+    if (Number.isFinite(contentLength) && contentLength > maxBodySize) {
+      return tooLarge();
+    }
+
+    // Measure the body for real. A Request body can only be read once, so the
+    // bytes we consume here are buffered back onto the request: callers keep
+    // using `request.text()` / `request.json()` exactly as before.
+    if (request.body && !request.bodyUsed) {
+      const body = await readBodyWithLimit(request.body, maxBodySize);
+      if (body === OVER_LIMIT) return tooLarge();
+      attachBufferedBody(request, body);
     }
   }
 
   return null;
+}
+
+function tooLarge(): NextResponse {
+  return NextResponse.json({ error: "Request too large" }, { status: 413 });
+}
+
+/** Sentinel for "body exceeded the cap" — distinguishable from any decoded body. */
+const OVER_LIMIT = Symbol("over-limit");
+
+/**
+ * Drain a request body stream, aborting as soon as the bytes read exceed
+ * `maxBodySize`. Returns the decoded text, or OVER_LIMIT if the cap was blown.
+ */
+async function readBodyWithLimit(
+  stream: ReadableStream<Uint8Array>,
+  maxBodySize: number,
+): Promise<string | typeof OVER_LIMIT> {
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > maxBodySize) {
+        // Stop pulling bytes we have already decided to reject.
+        await reader.cancel().catch(() => {});
+        return OVER_LIMIT;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {
+      // Already released (e.g. after cancel) — nothing to do.
+    }
+  }
+
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
+
+/**
+ * Re-attach an already-consumed body so downstream handlers can still read it.
+ * Overrides only the accessors routes use; the underlying stream stays spent.
+ */
+function attachBufferedBody(request: Request, text: string): void {
+  const define = (name: string, value: () => Promise<unknown>) => {
+    Object.defineProperty(request, name, { value, configurable: true, writable: true });
+  };
+  define("text", async () => text);
+  define("json", async () => JSON.parse(text));
+  define("arrayBuffer", async () => {
+    const bytes = new TextEncoder().encode(text);
+    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  });
 }
