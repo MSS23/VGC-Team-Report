@@ -19,6 +19,11 @@ export async function GET(request: Request) {
   const shareId = match[1];
   const baseUrl = "https://pokemonvgcteamreport.com";
 
+  // Public-only, deliberately stricter than /api/team-graphic (which also
+  // renders unlisted reports by link). `thumbnail_url` below points at that
+  // graphic, so this predicate is load-bearing for privacy: widening it to
+  // unlisted or private rows would publish a thumbnail through every unfurler
+  // that polls oEmbed. Keep it ≤ the graphic's own gate.
   const sql = getDb();
   const rows = await sql`SELECT data FROM shares WHERE id = ${shareId} AND is_public = TRUE AND deleted_at IS NULL`;
   if (rows.length === 0) {
