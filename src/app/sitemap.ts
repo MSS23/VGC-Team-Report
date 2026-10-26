@@ -24,6 +24,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/support`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1 },
     { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.1 },
+    // AI-facing reference documents (llms.txt convention). They are static
+    // files under public/, so nothing else links to them from the app shell —
+    // without these entries crawlers have no path to them at all.
+    { url: `${BASE}/llms.txt`, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${BASE}/llms-full.txt`, changeFrequency: "monthly", priority: 0.3 },
     // Reg M-C is the current Champions regulation and a superset of M-B/M-A,
     // so this covers every legal Mega with a usable sprite. Sprite-less Megas
     // are deliberately excluded — they have no landing page to point at.
