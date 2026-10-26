@@ -17,6 +17,25 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "October 2026",
+    version: "5.29",
+    title: "Correct Champions Speeds, a Readable Dark Mode & Private Team Graphics",
+    emoji: "🌓",
+    items: [
+      { type: "fixed", text: "Champions reports now show the same Speed everywhere. The team-stats bar, Tournament Mode and the match-up speed tiers were still using the EV formula, so a Timid Dragapult read 182 in those three places while its own card correctly read 213. All of them now agree." },
+      { type: "fixed", text: "Dark mode no longer shows a light-mode accent colour. The random page accent was being written straight onto the theme, which outranks the dark-mode rule, so pages rendered a near-white accent panel on the dark background. Error, success and warning text is also readable on the dark theme now \u2014 it was previously keeping its light-mode colour." },
+      { type: "fixed", text: "Team graphics now respect your report's privacy settings. A Private report's graphic could previously be pulled by anyone holding the link, and any item you had chosen to hide still appeared in the image. Private graphics are now owner-and-collaborator only, hidden fields stay hidden, and an unlisted report's graphic is no longer held in a shared cache for a day after you make it private." },
+      { type: "fixed", text: "Deleting your account now erases everything tied to it \u2014 including your match-log notes and tournament names, comment flags, version history and collection entries. Those rows were previously left behind because the tables have no database-level link to your account." },
+      { type: "fixed", text: "The team comparison page now reads a Mega Evolution's real ability. Gengar holding a Gengarite was shown with the right typing but treated as Levitate-immune to Ground, when Mega Gengar actually has Shadow Tag \u2014 so the team weakness and resist counts were wrong." },
+      { type: "fixed", text: "Pastes with Tera Type: Stellar keep their Tera type instead of silently dropping it, and it now shows as a Stellar Tera badge on the report." },
+      { type: "fixed", text: "Pasting a nonsense or glitch species no longer crashes your report. An unrecognised typing is dropped cleanly, and any odd type renders as a plain grey badge rather than taking the page down." },
+      { type: "fixed", text: "Corrected the reference document served to AI assistants, which still described Champions Stat Points as just another name for EVs. It now states the real 66 SP budget, the 32-per-stat cap and the correct 4-then-8 EVs-per-point conversion \u2014 and an automated check now pins both AI documents to the calculator so they cannot drift apart again." },
+      { type: "improved", text: "Report pages load lighter sprites. Small list and match-up icons were each fetching a static image and then a full animated GIF; they now load only the static one, so a team opens faster on phone data at an event. The large team-card and detail sprites still animate." },
+      { type: "improved", text: "Open someone's shared team on your phone and you can now go straight to building your own report without signing in first \u2014 previously the only button on mobile led to a sign-in prompt. Shared links also advertise a richer preview to apps like Discord and Slack." },
+      { type: "improved", text: "Security: patched an advisory in the library that validates saved reports, bounded a couple of fields that had no ceiling, and made the request-size limit count the bytes actually received rather than trusting what the request claimed." },
+    ],
+  },
+  {
+    date: "October 2026",
     version: "5.28",
     title: "Pokémon Champions Regulation M-C & the Z Megas",
     emoji: "⚡",
