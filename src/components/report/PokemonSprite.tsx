@@ -9,10 +9,48 @@ interface PokemonSpriteProps {
   species: string;
   size?: number;
   className?: string;
+  /**
+   * Opt in to the animated GIF. Off by default: progressive loading fetches a
+   * static preview first, so animating costs a second, much larger request per
+   * sprite. Only pass this for large hero/detail sprites where the animation is
+   * the point — row icons and pickers stay on the cheap static preview.
+   */
   animated?: boolean;
   shiny?: boolean;
   /** When true, sets fetchPriority="high" and loading="eager" for LCP optimization. */
   priority?: boolean;
+}
+
+/**
+ * Decide where an <img> error moves the fallback chain.
+ *
+ * `showingAnimated` must describe what is actually rendered, not merely what
+ * is held in state: an animated URL left over from a previous species/theme is
+ * not on screen, so counting its error as the GIF's would consume the
+ * preview's only error event and strand a permanently broken image instead of
+ * walking on to the substitute sprite. Exported for tests.
+ */
+export function nextSpriteFallbackState(current: {
+  /** Index into the static preview chain that is currently rendered. */
+  urlIndex: number;
+  /** Number of URLs in the preview chain. */
+  urlCount: number;
+  /** Animated URL held in state — possibly stale. */
+  animatedSrc: string | null;
+  /** Whether that animated URL is the one on screen. */
+  showingAnimated: boolean;
+}): { urlIndex: number; animatedSrc: string | null } {
+  if (current.showingAnimated) {
+    // The GIF failed. Drop it and show the static preview that already
+    // loaded; the preview chain itself has not failed, so it keeps its place.
+    return { urlIndex: current.urlIndex, animatedSrc: null };
+  }
+  // The preview on screen failed: advance exactly one step, and drop any
+  // animated URL still held so it cannot swallow the next error.
+  return {
+    urlIndex: Math.min(current.urlIndex + 1, Math.max(current.urlCount - 1, 0)),
+    animatedSrc: null,
+  };
 }
 
 /**
@@ -24,7 +62,7 @@ export function PokemonSprite({
   species,
   size = 64,
   className = "",
-  animated = true,
+  animated = false,
   shiny = false,
   priority = false,
 }: PokemonSpriteProps) {
@@ -121,11 +159,14 @@ export function PokemonSprite({
         ...(pixelated ? { imageRendering: "pixelated" as const } : {}),
       }}
       onError={() => {
-        if (animatedSrc) {
-          setAnimatedSrc(null);
-          return;
-        }
-        setUrlIndex((prev) => Math.min(prev + 1, urls.length - 1));
+        const next = nextSpriteFallbackState({
+          urlIndex: Math.min(urlIndex, urls.length - 1),
+          urlCount: urls.length,
+          animatedSrc,
+          showingAnimated: liveAnimatedSrc !== null,
+        });
+        setUrlIndex(next.urlIndex);
+        setAnimatedSrc(next.animatedSrc);
       }}
       onLoad={() => {
         if (!liveAnimatedSrc) setPreviewLoaded(true);

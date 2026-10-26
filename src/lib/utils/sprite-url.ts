@@ -131,7 +131,14 @@ export function getGenThemedSpriteUrls(
 }
 
 export interface ProgressiveSpriteUrls {
-  /** Lightweight static sprites shown while an animation downloads. */
+  /**
+   * Static-first sprites shown while an animation downloads. The tail of the
+   * chain deliberately keeps the `ani/*.gif` entry that
+   * `getGenThemedSpriteUrls` appends: it is only reached after the gen-themed
+   * and gen5 PNGs have both 404'd, and a real (animated) sprite beats the
+   * substitute doll there. So a "preview" can end up animated on a double
+   * failure — by design, not by accident.
+   */
   preview: string[];
   /** Animated candidates to decode in the background, in fallback order. */
   animated: string[];

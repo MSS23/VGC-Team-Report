@@ -93,6 +93,20 @@ describe("getProgressiveSpriteUrls", () => {
     expect(urls.animated).toEqual([]);
   });
 
+  it("keeps the real-sprite GIF as the preview's last resort before the substitute", () => {
+    // The preview chain is static-FIRST, not static-only: after both PNG
+    // folders 404 it falls through to the animated sprite rather than the
+    // substitute doll. Pinned so the ordering stays a deliberate choice.
+    const urls = getProgressiveSpriteUrls("Incineroar", "gen9", false);
+
+    expect(urls.preview).toEqual([
+      "https://play.pokemonshowdown.com/sprites/home/incineroar.png",
+      "https://play.pokemonshowdown.com/sprites/gen5/incineroar.png",
+      "https://play.pokemonshowdown.com/sprites/ani/incineroar.gif",
+      "https://play.pokemonshowdown.com/sprites/gen5/substitute.png",
+    ]);
+  });
+
   it("keeps shiny and generation-specific preview folders", () => {
     const urls = getProgressiveSpriteUrls("Pikachu", "gen3", true);
 
