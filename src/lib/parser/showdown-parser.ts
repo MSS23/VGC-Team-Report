@@ -1,10 +1,14 @@
-import type { ParsedPokemon, ParsedTeam, PokemonType, StatSpread } from "@/lib/types/pokemon";
+import type { ParsedPokemon, ParsedTeam, PokemonType, StatSpread, TeraType } from "@/lib/types/pokemon";
 
 const POKEMON_TYPES: PokemonType[] = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
   "Fighting", "Poison", "Ground", "Flying", "Psychic", "Bug",
   "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
 ];
+
+// Stellar is a legal Tera type but not a defensive typing, so it is accepted
+// here while staying out of `PokemonType` (VGC-294).
+const TERA_TYPES: TeraType[] = [...POKEMON_TYPES, "Stellar"];
 
 function defaultEvs(): StatSpread {
   return { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
@@ -93,7 +97,7 @@ function parsePokemonBlock(block: string): { pokemon: ParsedPokemon; warnings: s
   // Parse remaining lines
   let ability: string | null = null;
   const level = 50;
-  let teraType: PokemonType | null = null;
+  let teraType: TeraType | null = null;
   let shiny = false;
   const evs = defaultEvs();
   const ivs = defaultIvs();
@@ -111,8 +115,8 @@ function parsePokemonBlock(block: string): { pokemon: ParsedPokemon; warnings: s
       // VGC is always level 50 — ignore any parsed level
     } else if (/^Tera Type:\s*/i.test(cleanLine)) {
       const tt = cleanLine.replace(/^Tera Type:\s*/i, "").trim();
-      if (POKEMON_TYPES.includes(tt as PokemonType)) {
-        teraType = tt as PokemonType;
+      if (TERA_TYPES.includes(tt as TeraType)) {
+        teraType = tt as TeraType;
       }
     } else if (/^Shiny:\s*/i.test(cleanLine)) {
       shiny = cleanLine.replace(/^Shiny:\s*/i, "").trim().toLowerCase() === "yes";
