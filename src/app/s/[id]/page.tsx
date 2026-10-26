@@ -134,6 +134,24 @@ export async function generateMetadata({
       },
       alternates: {
         canonical: `https://pokemonvgcteamreport.com/s/${id}`,
+        // oEmbed discovery. Next renders `alternates.types` as
+        // <link rel="alternate" type="..." href="..." title="..." />, which is
+        // exactly the discovery link unfurlers (Discord, Slack, WordPress)
+        // look for. /api/oembed takes the share URL as a `url` query param and
+        // only serves rows with is_public = TRUE, so advertise it for public
+        // shares only — unlisted ones would just 404 the unfurler.
+        ...(isPublic && {
+          types: {
+            "application/json+oembed": [
+              {
+                url: `https://pokemonvgcteamreport.com/api/oembed?url=${encodeURIComponent(
+                  `https://pokemonvgcteamreport.com/s/${id}`,
+                )}`,
+                title,
+              },
+            ],
+          },
+        }),
       },
       twitter: {
         card: "summary",

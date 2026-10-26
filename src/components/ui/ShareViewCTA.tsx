@@ -39,6 +39,35 @@ export function ShareViewCTA({
             <p className="text-xs text-text-tertiary mt-0.5 hidden sm:block">
               You&apos;ll get an editable copy — change spreads, add notes, share your version with the community.
             </p>
+            {/* Secondary, no-auth escape hatch for signed-out mobile viewers.
+                Duplicate stays the single primary CTA; this is a plain text
+                link. Desktop already surfaces "Build Your Own" in the navbar
+                (hidden sm:inline-flex there), so this is mobile-only to avoid
+                duplicating it. */}
+            {!isSignedIn && (
+              <a
+                href="/"
+                aria-label="Build your own team report"
+                className="sm:hidden inline-flex items-center gap-1 min-h-[44px] -mt-0.5 -mb-2 text-xs font-semibold text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
+              >
+                Build your own
+                <svg
+                  aria-hidden="true"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="flex-shrink-0"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </a>
+            )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             {isSignedIn ? (
