@@ -33,8 +33,15 @@ const ShareBodySchema = z.object({
           .array(
             z.object({
               id: z.string(),
-              leads: z.array(z.number().int()),
-              back: z.array(z.number().int()),
+              // A bring combination has exactly four slots (0,1 = leads;
+              // 2,3 = back), so each side holds at most two roster indices.
+              // `setSlot` in CommonModesSlide is the only writer and compacts
+              // nulls out of a fixed 4-tuple, so it can never emit more than
+              // two per side — the bound rejects nothing a client can produce.
+              // Explicit so an attacker can't make the validator walk an
+              // unbounded index list (GHSA-mrhx-c7xc-m3w5 defence in depth).
+              leads: z.array(z.number().int()).max(2),
+              back: z.array(z.number().int()).max(2),
               strategy: z.string(),
             }),
           )

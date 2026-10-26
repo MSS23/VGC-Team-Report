@@ -27,12 +27,25 @@ const body = {
   editToken: TOKEN,
 };
 
-function request() {
+function request(payload: unknown = body) {
   return new Request("https://x.test/api/share", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify(payload),
   });
+}
+
+/** A body whose commonModes carries one bring combination. */
+function bodyWithCombination(leads: number[], back: number[]) {
+  return {
+    ...body,
+    state: {
+      ...body.state,
+      commonModes: {
+        combinations: [{ id: "combo-1", leads, back, strategy: "Set Trick Room" }],
+      },
+    },
+  };
 }
 
 function makeSql(isCollaborator: boolean) {
@@ -88,5 +101,35 @@ describe("POST /api/share — account authorization", () => {
     const response = await POST(request());
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ id: "abcd1234", updated: true });
+  });
+});
+
+describe("POST /api/share — bounded bring combinations", () => {
+  beforeEach(() => {
+    vi.mocked(auth).mockResolvedValue({ userId: "owner-1" } as never);
+    vi.mocked(getDb).mockReturnValue(makeSql(false) as never);
+  });
+
+  it("accepts a full two-lead, two-back combination", async () => {
+    const response = await POST(request(bodyWithCombination([0, 1], [2, 3])));
+    expect(response.status).toBe(200);
+  });
+
+  it("accepts a partially filled combination", async () => {
+    const response = await POST(request(bodyWithCombination([0], [])));
+    expect(response.status).toBe(200);
+  });
+
+  it("rejects more than two leads — the slide only ever writes two", async () => {
+    const response = await POST(request(bodyWithCombination([0, 1, 2], [3])));
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ error: "Invalid request body" });
+  });
+
+  it("rejects an unbounded index list padded to exhaust the validator", async () => {
+    const response = await POST(
+      request(bodyWithCombination([0, 1], Array.from({ length: 50_000 }, () => 0))),
+    );
+    expect(response.status).toBe(400);
   });
 });
