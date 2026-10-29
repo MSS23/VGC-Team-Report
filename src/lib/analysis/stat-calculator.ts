@@ -75,24 +75,48 @@ export function calculateAllChampionsStats(
 }
 
 /**
+ * Abilities that double Speed while their condition holds (Showdown
+ * `onModifySpe` -> `chainModify(2)`): Swift Swim in rain, Chlorophyll in sun,
+ * Sand Rush in sand, Slush Rush in snow, Unburden once the held item is gone.
+ */
+const SPEED_DOUBLING_ABILITIES = new Set(["swift swim", "chlorophyll", "sand rush", "slush rush", "unburden"]);
+
+export function hasSpeedDoublingAbility(ability: string | null | undefined): boolean {
+  return !!ability && SPEED_DOUBLING_ABILITIES.has(ability.trim().toLowerCase());
+}
+
+/**
  * In-battle Speed, following the game engine (Showdown `getActionSpeed`):
- *  1. stat stage (Icy Wind -1 → floor(stat × 2/3))
- *  2. every Speed modifier chained into ONE multiply — item/ability boost
- *     (Choice Scarf, Booster Energy ×1.5) and Tailwind ×2 — rounded half-down
- *  3. paralysis ×0.5 floored last (Gen 7+ applies it after all other modifiers)
+ *  1. stat stage, clamped to -6..+6 (Icy Wind is -1 -> floor(stat x 2/3);
+ *     +1 -> floor(stat x 3/2); +2 -> stat x 2)
+ *  2. every Speed modifier chained into ONE multiply — item boost
+ *     (Choice Scarf, Booster Energy x1.5), a doubling ability (Swift Swim,
+ *     Chlorophyll, Sand Rush, Slush Rush, Unburden x2) and Tailwind x2 —
+ *     rounded half-down
+ *  3. paralysis x0.5 floored last (Gen 7+ applies it after all other modifiers)
  * Applying Tailwind/paralysis as separate floored steps is off by one for odd
  * speeds: 101 Spe Scarf + Tailwind is 303, not 302.
  */
 export function calcBattleSpeed(
   speed: number,
   boostMultiplier: number,
-  mods: { icyWind?: boolean; tailwind?: boolean; paralysis?: boolean },
+  mods: { stage?: number; icyWind?: boolean; tailwind?: boolean; paralysis?: boolean; abilityDouble?: boolean },
 ): number {
-  let s = mods.icyWind ? Math.floor((speed * 2) / 3) : speed;
-  const chained = boostMultiplier * (mods.tailwind ? 2 : 1);
+  const stage = Math.max(-6, Math.min(6, (mods.stage ?? 0) - (mods.icyWind ? 1 : 0)));
+  // Showdown boostTable [1, 1.5, 2, 2.5, 3, 3.5, 4]: multiply when positive, divide when negative.
+  let s = stage >= 0 ? Math.floor((speed * (2 + stage)) / 2) : Math.floor((speed * 2) / (2 - stage));
+  const chained = boostMultiplier * (mods.abilityDouble ? 2 : 1) * (mods.tailwind ? 2 : 1);
   if (chained !== 1) s = Math.ceil(s * chained - 0.5); // pokeRound: .5 rounds down
   if (mods.paralysis) s = Math.floor(s / 2);
   return s;
+}
+
+/**
+ * Turn-order comparator: fastest first, or slowest first under Trick Room
+ * (Showdown orders by 10000 - speed, which is the same ordering).
+ */
+export function compareTurnOrder(a: number, b: number, trickRoom: boolean): number {
+  return trickRoom ? a - b : b - a;
 }
 
 /** Champions SP budget constants. */

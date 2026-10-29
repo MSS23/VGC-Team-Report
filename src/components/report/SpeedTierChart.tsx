@@ -8,7 +8,7 @@ import { useTranslation } from "@/lib/i18n";
 import { lookupPokemon } from "@/lib/data/pokemon";
 import { getChampionsDex } from "@/lib/data/champions-dex";
 import { isChampionsFormat } from "@/lib/data/tags";
-import { calculateStat, calculateChampionsStat, convertToChampionsSp, calcBattleSpeed } from "@/lib/analysis/stat-calculator";
+import { calculateStat, calculateChampionsStat, convertToChampionsSp, calcBattleSpeed, hasSpeedDoublingAbility, compareTurnOrder } from "@/lib/analysis/stat-calculator";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import { detectMegaFromItem } from "@/lib/utils/mega-detect";
 import { resolveSpeedTierForm } from "@/lib/utils/speed-tier-form";
@@ -58,20 +58,31 @@ const META_THREATS_CHAMPIONS = [
   "arcanine", "gyarados", "ninetales-alola", "rotom",
 ] as const;
 
-type SpeedModifier = "tailwind" | "paralysis" | "icywind";
+type SpeedModifier = "tailwind" | "paralysis" | "icywind" | "plus1" | "plus2" | "speedability";
 type ModifierSide = "yours" | "opponent";
 
 const MODIFIER_CONFIG: Record<SpeedModifier, { label: string; icon: string; description: string }> = {
   tailwind: { label: "Tailwind", icon: "\u{1F4A8}", description: "\u00D72 speed" },
   paralysis: { label: "Paralysis", icon: "\u{26A1}", description: "\u00D70.5 speed" },
   icywind: { label: "Icy Wind", icon: "\u{2744}\u{FE0F}", description: "-1 stage" },
+  plus1: { label: "+1", icon: "\u{2B06}\u{FE0F}", description: "+1 Speed stage (\u00D71.5)" },
+  plus2: { label: "+2", icon: "\u{23EB}", description: "+2 Speed stages (\u00D72)" },
+  speedability: { label: "Ability \u00D72", icon: "\u{1F327}\u{FE0F}", description: "Swift Swim / Chlorophyll / Sand Rush / Slush Rush / Unburden active (\u00D72, only Pokemon with that ability)" },
 };
 
-function calcSpeed(baseSpe: number, boostMultiplier: number, mod: Set<SpeedModifier>): number {
-  return calcBattleSpeed(baseSpe, boostMultiplier, {
+/** Modifiers that only make sense for your team (meta threats carry no ability). */
+const YOURS_ONLY_MODIFIERS = new Set<SpeedModifier>(["speedability"]);
+
+function calcSpeed(baseSpe: number, boostMultiplier: number, mod: Set<SpeedModifier>, ability?: string | null): number {
+  const abilityDouble = mod.has("speedability") && hasSpeedDoublingAbility(ability);
+  // Unburden only triggers once the held item is gone, so any item boost is gone too.
+  const itemBoost = abilityDouble && ability?.trim().toLowerCase() === "unburden" ? 1 : boostMultiplier;
+  return calcBattleSpeed(baseSpe, itemBoost, {
+    stage: mod.has("plus2") ? 2 : mod.has("plus1") ? 1 : 0,
     icyWind: mod.has("icywind"),
     tailwind: mod.has("tailwind"),
     paralysis: mod.has("paralysis"),
+    abilityDouble,
   });
 }
 
@@ -116,13 +127,16 @@ function SideModifierToggle({
         <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-tertiary">{label}</span>
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {(Object.entries(MODIFIER_CONFIG) as [SpeedModifier, typeof MODIFIER_CONFIG[SpeedModifier]][]).map(([key, cfg]) => {
+        {(Object.entries(MODIFIER_CONFIG) as [SpeedModifier, typeof MODIFIER_CONFIG[SpeedModifier]][])
+          .filter(([key]) => side === "yours" || !YOURS_ONLY_MODIFIERS.has(key))
+          .map(([key, cfg]) => {
           const active = modifiers.has(key);
           return (
             <button
               key={key}
               type="button"
               onClick={() => onToggle(side, key)}
+              aria-pressed={active}
               className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 min-h-11 text-[10px] sm:text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 active
                   ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
@@ -154,14 +168,18 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   const [opponentModifiers, setOpponentModifiers] = useState<Set<SpeedModifier>>(new Set());
   const [showMetaThreats, setShowMetaThreats] = useState(false);
   const [showMegaTiers, setShowMegaTiers] = useState(() => isChampionsFormat(regulation));
+  const [trickRoom, setTrickRoom] = useState(false);
 
-  const hasAnyModifiers = yourModifiers.size > 0 || opponentModifiers.size > 0;
+  const hasAnyModifiers = yourModifiers.size > 0 || opponentModifiers.size > 0 || trickRoom;
 
   const toggleModifier = (side: ModifierSide, mod: SpeedModifier) => {
     const setter = side === "yours" ? setYourModifiers : setOpponentModifiers;
     setter(prev => {
       const next = new Set(prev);
       if (next.has(mod)) next.delete(mod); else next.add(mod);
+      // +1 and +2 are alternative stages, not additive toggles.
+      if (mod === "plus1" && next.has("plus1")) next.delete("plus2");
+      if (mod === "plus2" && next.has("plus2")) next.delete("plus1");
       return next;
     });
   };
@@ -199,6 +217,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       boostMultiplier,
       hasSpeedBoost,
       speedBoostLabel,
+      ability: mon.parsed.ability,
       isYours: true as const,
       isMega: form.isMega,
       baseSpeciesKey: form.baseSpeciesKey,
@@ -242,6 +261,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           boostMultiplier: 1 as number,
           hasSpeedBoost: false,
           speedBoostLabel: "",
+          ability: mon.parsed.ability,
           isYours: true as const,
           isMega: true as const,
           baseSpeciesKey: baseKey,
@@ -303,7 +323,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   const allEntries = useMemo(() => {
     const combined = [
       ...teamEntries.map(e => {
-        const baseSpeed = calcSpeed(e.baseSpe, e.boostMultiplier, yourModifiers);
+        const baseSpeed = calcSpeed(e.baseSpe, e.boostMultiplier, yourModifiers, e.ability);
         // Also compute unmodified speed for delta display
         const unmodifiedSpeed = calcSpeed(e.baseSpe, e.boostMultiplier, new Set());
         return {
@@ -314,7 +334,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         };
       }),
       ...teamMegaEntries.map(e => {
-        const baseSpeed = calcSpeed(e.baseSpe, 1, yourModifiers);
+        const baseSpeed = calcSpeed(e.baseSpe, 1, yourModifiers, e.ability);
         const unmodifiedSpeed = calcSpeed(e.baseSpe, 1, new Set());
         return {
           ...e,
@@ -338,10 +358,11 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         };
       }),
     ];
-    return combined.sort((a, b) => b.displaySpeed - a.displaySpeed);
-  }, [teamEntries, teamMegaEntries, metaEntries, yourModifiers, opponentModifiers]);
+    return combined.sort((a, b) => compareTurnOrder(a.displaySpeed, b.displaySpeed, trickRoom));
+  }, [teamEntries, teamMegaEntries, metaEntries, yourModifiers, opponentModifiers, trickRoom]);
 
-  const maxDisplaySpeed = allEntries[0]?.displaySpeed ?? 200;
+  // Under Trick Room the list is slowest-first, so the widest bar is no longer row 0.
+  const maxDisplaySpeed = allEntries.reduce((m, e) => Math.max(m, e.displaySpeed), 0) || 200;
 
   // Compute position changes when modifiers are active
   const positionChanges = useMemo(() => {
@@ -414,6 +435,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   // Build active modifier summary for each side
   const yourModSummary = Array.from(yourModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
   const oppModSummary = Array.from(opponentModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
+  const fieldSummary = trickRoom ? "Trick Room (slowest first)" : "";
 
   // Which meta benchmark list is in play, derived from the report's regulation.
   // Champions formats (Reg M-A/M-B/M-C) pull META_THREATS_CHAMPIONS; everything else
@@ -486,6 +508,22 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             )}
             <button
               type="button"
+              onClick={() => setTrickRoom(!trickRoom)}
+              aria-pressed={trickRoom}
+              title="Trick Room: the slowest Pokemon moves first. Speed values stay the same; only the turn order flips."
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                trickRoom
+                  ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
+                  : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
+              }`}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M7 4v16" /><polyline points="3 16 7 20 11 16" /><path d="M17 20V4" /><polyline points="13 8 17 4 21 8" />
+              </svg>
+              Trick Room
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 setShowMetaThreats(!showMetaThreats);
                 if (showMetaThreats) setOpponentModifiers(new Set());
@@ -513,9 +551,9 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             )}
             {hasAnyModifiers && (
               <span className="text-[10px] sm:text-xs text-accent font-medium ml-auto">
-                {yourModSummary && `You: ${yourModSummary}`}
-                {yourModSummary && oppModSummary && " \u00B7 "}
-                {oppModSummary && `Opp: ${oppModSummary}`}
+                {[yourModSummary && `You: ${yourModSummary}`, oppModSummary && `Opp: ${oppModSummary}`, fieldSummary]
+                  .filter(Boolean)
+                  .join(" \u00B7 ")}
               </span>
             )}
           </div>
