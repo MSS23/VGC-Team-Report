@@ -4,6 +4,7 @@ import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { ShareRedirectClient } from "./redirect";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { getShareOgCard, ogCardFingerprint, scheduleOgImageBackfill, OG_IMAGE_SIZE } from "@/lib/sharing/og-image";
 
 export async function generateMetadata({
   params,
@@ -109,18 +110,24 @@ export async function generateMetadata({
       ? undefined
       : { index: false as const, follow: false as const };
 
-    // Embed images for shared reports are intentionally suppressed. We have
-    // tried this twice now (an opengraph-image.tsx convention file, then
-    // wiring /api/team-graphic into og:image) — both produced "image failed
-    // to load" unfurls in Discord and elsewhere. The edge runtime + sprite
-    // CDN dependency + unfurler-side timeout combine to make a reliably-
-    // rendering OG card unrealistic for now. A clean text-only unfurl
-    // (title + description) is strictly better than a broken preview.
+    // Embed image: a card pre-rendered at save time and stored in Vercel Blob
+    // (see lib/sharing/og-image). Rendering it on demand — an
+    // opengraph-image.tsx convention file, then /api/team-graphic as og:image —
+    // produced "image failed to load" unfurls, so og:image only ever points at
+    // a static Blob URL. No card yet (older report, or no Blob token) means a
+    // text-only unfurl, and a backfill render is queued after the response.
     //
-    // `images: []` is load-bearing: without it, Next.js falls back to the
-    // root /opengraph-image.tsx, which would show a generic site-wide
-    // image on every share link. Explicitly empty arrays block that
-    // inheritance for both the Open Graph and Twitter Card sides.
+    // `images: []` stays load-bearing when there is no card: without it,
+    // Next.js falls back to the root /opengraph-image.tsx, which would show a
+    // generic site-wide image on every share link.
+    const visibility = { isPublic: isPublicRow, isUnlisted: isUnlistedRow };
+    const ogCard = await getShareOgCard(id);
+    if (!ogCard || ogCard.fp !== ogCardFingerprint(data)) {
+      scheduleOgImageBackfill(id, data, visibility);
+    }
+    const ogImages = ogCard
+      ? [{ url: ogCard.url, ...OG_IMAGE_SIZE, alt: `${title} — team preview` }]
+      : [];
     return {
       title,
       description,
@@ -130,7 +137,7 @@ export async function generateMetadata({
         description,
         type: "website",
         siteName: "VGC Team Report",
-        images: [],
+        images: ogImages,
       },
       alternates: {
         canonical: `https://pokemonvgcteamreport.com/s/${id}`,
@@ -154,10 +161,10 @@ export async function generateMetadata({
         }),
       },
       twitter: {
-        card: "summary",
+        card: ogCard ? "summary_large_image" : "summary",
         title,
         description,
-        images: [],
+        images: ogImages,
       },
     };
   } catch (err) {

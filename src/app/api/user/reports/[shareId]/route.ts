@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { cacheDel, cacheInvalidatePrefix, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { removeShareOgImage } from "@/lib/sharing/og-image";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -136,6 +137,7 @@ export async function DELETE(
       await Promise.all([
         cacheDel(CacheKeys.share(shareId)),
         cacheInvalidatePrefix("explore:"),
+        removeShareOgImage(shareId),
       ]);
       captureServerEvent(userId, "report_deleted", { report_id: shareId });
       return NextResponse.json({ deleted: true });

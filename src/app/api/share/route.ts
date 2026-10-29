@@ -6,6 +6,7 @@ import { notifyFollowers } from "@/lib/notifications";
 import { detectChangedSections } from "@/lib/utils/diff-state";
 import { cacheInvalidatePrefix, cacheDel, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { schedulePublishShareOgImage } from "@/lib/sharing/og-image";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -413,6 +414,12 @@ export async function POST(request: Request) {
           is_publish: isPublish ?? false,
         });
 
+        // Pre-render the unfurl card (skipped when the card is unchanged).
+        schedulePublishShareOgImage(existingId, state as Record<string, unknown>, {
+          isPublic: rows[0].is_public === true,
+          isUnlisted: rows[0].is_unlisted === true,
+        });
+
         return NextResponse.json({ id: existingId, editToken, updated: true, version: rows[0].version, isPublic: rows[0].is_public, isUnlisted: rows[0].is_unlisted });
       }
       // Another update won between SELECT and UPDATE. Never create a duplicate
@@ -565,6 +572,11 @@ export async function POST(request: Request) {
       has_matchup_plans: (state.matchupPlans?.length ?? 0) > 0,
       has_notes: !!state.notes && Object.keys(state.notes).length > 0,
       creator_name: state.creatorName ?? null,
+    });
+
+    schedulePublishShareOgImage(id, state as Record<string, unknown>, {
+      isPublic: isPublic ?? false,
+      isUnlisted: isUnlisted ?? false,
     });
 
     return NextResponse.json({ id, editToken: newEditToken, updated: false, version: 1, isPublic: isPublic ?? false, isUnlisted: isUnlisted ?? false });

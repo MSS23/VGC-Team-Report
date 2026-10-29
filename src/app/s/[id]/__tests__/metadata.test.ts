@@ -3,8 +3,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // generateMetadata's only external boundary is the DB — mock it and exercise
 // the real metadata-shaping logic.
 vi.mock("@/lib/db", () => ({ getDb: vi.fn() }));
+vi.mock("@/lib/sharing/og-image", async (orig) => ({
+  ...(await orig<typeof import("@/lib/sharing/og-image")>()),
+  getShareOgCard: vi.fn(async () => null),
+  scheduleOgImageBackfill: vi.fn(),
+}));
 
 import { getDb } from "@/lib/db";
+import { getShareOgCard, scheduleOgImageBackfill, ogCardFingerprint } from "@/lib/sharing/og-image";
 import { generateMetadata } from "@/app/s/[id]/page";
 
 type Row = Record<string, unknown>;
@@ -47,6 +53,7 @@ function oembedAlternate(meta: Awaited<ReturnType<typeof generateMetadata>>) {
 
 beforeEach(() => {
   vi.mocked(getDb).mockReset();
+  vi.mocked(scheduleOgImageBackfill).mockClear();
 });
 
 describe("generateMetadata /s/[id] — oEmbed discovery link", () => {
@@ -90,7 +97,7 @@ describe("generateMetadata /s/[id] — oEmbed discovery link", () => {
     );
   });
 
-  it("keeps the deliberate image suppression on the share route", async () => {
+  it("keeps images empty when no card has been pre-rendered", async () => {
     // `images: []` is load-bearing: it blocks inheritance of the root
     // opengraph-image. Guard it so the oembed work can't regress it.
     vi.mocked(getDb).mockReturnValue(makeSql(shareRow()) as never);
@@ -98,5 +105,25 @@ describe("generateMetadata /s/[id] — oEmbed discovery link", () => {
 
     expect(meta.openGraph?.images).toEqual([]);
     expect(meta.twitter?.images).toEqual([]);
+  });
+
+  it("points og:image at the pre-rendered Blob card when one exists", async () => {
+    const row = shareRow();
+    const fp = ogCardFingerprint(row.data as Record<string, unknown>);
+    vi.mocked(getShareOgCard).mockResolvedValueOnce({ url: `https://blob.example/og/${VALID_ID}.png?v=${fp}`, fp });
+    vi.mocked(getDb).mockReturnValue(makeSql(row) as never);
+    const meta = await generateMetadata(args());
+
+    const images = meta.openGraph?.images as Array<{ url: string; width: number }>;
+    expect(images[0].url).toBe(`https://blob.example/og/${VALID_ID}.png?v=${fp}`);
+    expect(images[0].width).toBe(1200);
+    expect((meta.twitter as { card?: string }).card).toBe("summary_large_image");
+    expect(scheduleOgImageBackfill).not.toHaveBeenCalled();
+  });
+
+  it("queues a backfill render when the share has no card yet", async () => {
+    vi.mocked(getDb).mockReturnValue(makeSql(shareRow()) as never);
+    await generateMetadata(args());
+    expect(scheduleOgImageBackfill).toHaveBeenCalledWith(VALID_ID, expect.any(Object), { isPublic: true, isUnlisted: false });
   });
 });
