@@ -349,6 +349,7 @@ export function Navbar(props: NavbarProps) {
               )}
             </>
           ) : isSharedView && !isPresentationStyle ? (
+            // eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state
             <a href="/" className="flex min-h-11 items-center gap-1 font-bold text-xs sm:text-sm hover:opacity-80 active:opacity-70 transition-opacity">
               <span className="text-text-primary">VGC</span>
               <span className="text-accent">Report</span>
@@ -357,6 +358,7 @@ export function Navbar(props: NavbarProps) {
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 text-sm text-text-secondary">
               {/* Home — reports open straight into presentation, so this is the
                   only way back out to the rest of the app from the deck. */}
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state */}
               <a
                 href="/"
                 aria-label="Home"
@@ -571,6 +573,7 @@ export function Navbar(props: NavbarProps) {
                 /* Plain viewer of someone else's shared report — can't edit.
                    Surface the one action that matters (and the way back to the
                    builder) instead of a meaningless "Exit". */
+                // eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state
                 <a
                   href="/"
                   aria-label={t.buildYourOwn}
@@ -596,6 +599,7 @@ export function Navbar(props: NavbarProps) {
 
           {/* Build Your Own (shared read-only views) — hidden on mobile, ShareViewCTA handles it */}
           {isSharedView && !isPresentationStyle && !isEditingUnlocked && (
+            // eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state
             <a href="/" className="hidden sm:inline-flex min-h-11 items-center gap-1.5 px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
               <EditIcon width="12" height="12" strokeWidth="2.5" />
               {t.buildYourOwn}

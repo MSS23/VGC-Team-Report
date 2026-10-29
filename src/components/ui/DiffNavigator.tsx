@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import type { DiffChange } from "@/lib/utils/version-diff";
 
 interface DiffNavigatorProps {
@@ -20,6 +20,7 @@ export function DiffNavigator({ changes, onNavigate, onDismiss, version, editorN
   const count = changes.length;
 
   // Reset index when changes list updates
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- reset to the first change when the diff changes
   useEffect(() => { setIndex(0); }, [count]);
 
   const go = useCallback((i: number) => {
@@ -41,7 +42,9 @@ export function DiffNavigator({ changes, onNavigate, onDismiss, version, editorN
 
   // Stable ref so keyboard listener doesn't re-attach on every render
   const navRef = useRef({ handlePrev, handleNext });
-  navRef.current = { handlePrev, handleNext };
+  useLayoutEffect(() => {
+    navRef.current = { handlePrev, handleNext };
+  });
 
   // Keyboard: J/K when this is visible — attaches once
   useEffect(() => {

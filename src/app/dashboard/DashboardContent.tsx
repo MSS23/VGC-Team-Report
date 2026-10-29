@@ -61,6 +61,7 @@ function DashboardInner() {
 
   useEffect(() => {
     if (!user) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading flag for the fetch this effect starts
     setLoading(true);
 
     // Guard against a tab-switch race: a slow response from a previously

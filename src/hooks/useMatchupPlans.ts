@@ -149,6 +149,7 @@ export function useMatchupPlans(speciesKeys: string[], persist = true) {
   useEffect(() => {
     if (planKey === prevPlanKey.current) return;
     prevPlanKey.current = planKey;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reload per-team state from storage when the team key changes
     if (speciesKeys.length === 0) { setPlans([]); return; }
     if (!persist) return;
     try {

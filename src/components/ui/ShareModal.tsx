@@ -110,6 +110,7 @@ export function ShareModal({
 
   // Detect Web Share API support client-side only (SSR-safe)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- navigator is client-only; reading it in render would break hydration
     setCanNativeShare(typeof navigator !== "undefined" && "share" in navigator);
   }, []);
 
@@ -119,13 +120,9 @@ export function ShareModal({
   const hasTags = !!(tags?.regulation || tags?.eventType || (tags?.archetype && tags.archetype.length > 0));
   const hasCreator = !!creatorName?.trim();
 
-  // Clear errors if requirements are met while modal is open
-  useEffect(() => {
-    if (hasTags && tagError) setTagError(false);
-  }, [hasTags, tagError]);
-  useEffect(() => {
-    if (hasCreator && creatorError) setCreatorError(false);
-  }, [hasCreator, creatorError]);
+  // An error stops showing as soon as its requirement is met while the modal is open.
+  const showTagError = tagError && !hasTags;
+  const showCreatorError = creatorError && !hasCreator;
 
   const hasWarnings = warnings.length > 0;
 
@@ -826,7 +823,7 @@ export function ShareModal({
           )}
 
           {/* Creator name error message */}
-          {creatorError && (
+          {showCreatorError && (
             <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
               <WarningTriangleIcon width="14" height="14" className="text-red-500 flex-shrink-0 mt-0.5" />
               <p className="text-xs font-semibold text-red-600 dark:text-red-400">
@@ -836,7 +833,7 @@ export function ShareModal({
           )}
 
           {/* Tag error message */}
-          {tagError && (
+          {showTagError && (
             <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
               <WarningTriangleIcon width="14" height="14" className="text-red-500 flex-shrink-0 mt-0.5" />
               <p className="text-xs font-semibold text-red-600 dark:text-red-400">

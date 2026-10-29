@@ -67,6 +67,7 @@ export function WhatsNewModal() {
     // The homepage already explains the product; release notes are useful on a
     // later visit, when the user has context for what changed.
     if (hasVisited && !seen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is client-only; read after hydration
       setIsNewUser(false);
       setShow(true);
     }

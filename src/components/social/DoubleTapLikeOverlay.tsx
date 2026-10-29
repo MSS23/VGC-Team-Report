@@ -18,6 +18,7 @@ interface Heart {
   id: number;
   x: number;
   y: number;
+  reduced: boolean;
 }
 
 /** Window between two pointerdowns (ms) to count as a double-tap. */
@@ -197,8 +198,9 @@ export function DoubleTapLikeOverlay({
 
   const spawnHeart = useCallback((x: number, y: number) => {
     const id = ++heartIdRef.current;
-    setHearts((prev) => [...prev, { id, x, y }]);
-    const ttl = reducedMotionRef.current ? HEART_REDUCED_MS : HEART_ANIM_MS;
+    const reduced = reducedMotionRef.current;
+    setHearts((prev) => [...prev, { id, x, y, reduced }]);
+    const ttl = reduced ? HEART_REDUCED_MS : HEART_ANIM_MS;
     const timer = setTimeout(() => {
       pendingTimersRef.current.delete(timer);
       setHearts((prev) => prev.filter((h) => h.id !== id));
@@ -317,7 +319,7 @@ export function DoubleTapLikeOverlay({
       `}</style>
 
       {hearts.map((h) => {
-        const reduced = reducedMotionRef.current;
+        const reduced = h.reduced;
         return (
           <span
             key={h.id}

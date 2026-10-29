@@ -13,10 +13,11 @@ import { createRoot, type Root } from "react-dom/client";
  */
 export function renderHook<T>(useHook: () => T): { current: T; unmount: () => void } {
   const container = document.createElement("div");
-  let value!: T;
+  const latest = {} as { value: T };
   let root!: Root;
   function Probe() {
-    value = useHook();
+    // eslint-disable-next-line react-hooks/immutability -- test probe hands the hook result out of the tree
+    latest.value = useHook();
     return null;
   }
   act(() => {
@@ -25,7 +26,7 @@ export function renderHook<T>(useHook: () => T): { current: T; unmount: () => vo
   });
   return {
     get current() {
-      return value;
+      return latest.value;
     },
     unmount() {
       act(() => root.unmount());

@@ -90,6 +90,13 @@ export function InstallPrompt() {
     };
   }, []);
 
+  const handleDismiss = useCallback(() => {
+    setDismissed(true);
+    setDeferredPrompt(null);
+    setShowIOSPrompt(false);
+    localStorage.setItem(DISMISS_KEY, String(Date.now()));
+  }, []);
+
   const handleInstall = useCallback(async () => {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
@@ -98,14 +105,7 @@ export function InstallPrompt() {
       setDeferredPrompt(null);
     }
     handleDismiss();
-  }, [deferredPrompt]);
-
-  const handleDismiss = useCallback(() => {
-    setDismissed(true);
-    setDeferredPrompt(null);
-    setShowIOSPrompt(false);
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
-  }, []);
+  }, [deferredPrompt, handleDismiss]);
 
   if (dismissed || (!deferredPrompt && !showIOSPrompt)) return null;
 

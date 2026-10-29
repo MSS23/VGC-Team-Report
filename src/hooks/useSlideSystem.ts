@@ -125,7 +125,9 @@ export function useSlideSystem(opts: SlideSystemOptions) {
 
   const physicalSlide = visibleIndices[currentSlide] ?? 0;
   const physicalSlideRef = useRef(physicalSlide);
-  physicalSlideRef.current = physicalSlide;
+  useLayoutEffect(() => {
+    physicalSlideRef.current = physicalSlide;
+  });
 
   // Preserve physical slide position when visibleIndices changes
   const prevVisibleRef = useRef(visibleIndices);

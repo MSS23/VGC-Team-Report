@@ -808,6 +808,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
               Already have an account? Sign in
             </button>
           </SignInButton>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state */}
           <a href="/" className="inline-flex min-h-11 items-center text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors mt-1">
             or go to home page
           </a>
@@ -1451,6 +1452,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {isSignedIn ? (
+                  // eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state
                   <a
                     href="/"
                     className="inline-flex min-h-11 items-center px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30"
