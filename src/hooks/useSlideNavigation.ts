@@ -25,11 +25,13 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
 
   // Reset to slide 0 when team changes (resetKey), or when totalSlides changes if no resetKey
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset to the first slide when the deck changes
     setCurrentSlide(0);
   }, [resetKey ?? totalSlides]);
 
   // Clamp when totalSlides decreases (e.g., plan removed)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset to the first slide when the deck changes
     setCurrentSlide((prev) => Math.min(prev, Math.max(0, totalSlides - 1)));
   }, [totalSlides]);
 

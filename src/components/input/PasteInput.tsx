@@ -273,7 +273,7 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
 
       {/* Champions announcement banner */}
       {!championsBannerDismissed && (
-        <a
+        <Link
           href="/champions"
           className="group flex items-center gap-3 mb-4 sm:mb-6 px-4 py-3 rounded-xl bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border border-accent/20 hover:border-accent/40 transition-all relative"
 
@@ -306,7 +306,7 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-        </a>
+        </Link>
       )}
 
       {/* How it works — collapsible for returning mobile users */}

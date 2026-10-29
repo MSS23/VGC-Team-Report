@@ -90,6 +90,7 @@ export function InlinePokemonEditor({
   const inputRef = useRef<HTMLInputElement>(null);
   const [mounted, setMounted] = useState(false);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- portal target only exists after mount (SSR-safe)
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
     // Autofocus once mounted so the user can start typing immediately
@@ -98,6 +99,8 @@ export function InlinePokemonEditor({
 
   // ESC closes; arrow keys + Enter navigate the list
   const results = useMemo(() => searchSpecies(query, currentSpecies), [query, currentSpecies]);
+  // Results shrink as the query narrows; fall back to the first row instead of resetting state.
+  const activeIndex = highlighted < results.length ? highlighted : 0;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -110,18 +113,13 @@ export function InlinePokemonEditor({
         setHighlighted((h) => Math.max(h - 1, 0));
       } else if (e.key === "Enter") {
         e.preventDefault();
-        const pick = results[highlighted];
+        const pick = results[activeIndex];
         if (pick) onReplace(pick.name);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [results, highlighted, onClose, onReplace]);
-
-  // Keep highlight in range as results change
-  useEffect(() => {
-    if (highlighted >= results.length) setHighlighted(0);
-  }, [results.length, highlighted]);
+  }, [results, activeIndex, onClose, onReplace]);
 
   if (!mounted) return null;
 
@@ -184,13 +182,13 @@ export function InlinePokemonEditor({
             </li>
           )}
           {results.map((s, i) => (
-            <li key={s.name} role="option" aria-selected={i === highlighted}>
+            <li key={s.name} role="option" aria-selected={i === activeIndex}>
               <button
                 type="button"
                 onClick={() => onReplace(s.name)}
                 onMouseEnter={() => setHighlighted(i)}
                 className={`w-full flex items-center gap-3 px-5 py-2.5 text-left transition-colors cursor-pointer ${
-                  i === highlighted ? "bg-accent-surface/40" : "hover:bg-surface-alt"
+                  i === activeIndex ? "bg-accent-surface/40" : "hover:bg-surface-alt"
                 }`}
               >
                 <PokemonSprite species={s.name} size={36} animated={false} />
@@ -211,7 +209,7 @@ export function InlinePokemonEditor({
                 </div>
                 <svg
                   width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                  className={`flex-shrink-0 transition-opacity ${i === highlighted ? "text-accent opacity-100" : "opacity-0"}`}
+                  className={`flex-shrink-0 transition-opacity ${i === activeIndex ? "text-accent opacity-100" : "opacity-0"}`}
                 >
                   <polyline points="9 18 15 12 9 6" />
                 </svg>

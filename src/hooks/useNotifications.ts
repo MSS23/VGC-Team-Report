@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useLayoutEffect, useRef } from "react";
 
 export interface Notification {
   id: number;
@@ -22,7 +22,9 @@ export function useNotifications(enabled: boolean) {
   // Mirror of `notifications` so markIdsRead can compute the real unread
   // delta without churning its useCallback identity.
   const notificationsRef = useRef<Notification[]>([]);
-  notificationsRef.current = notifications;
+  useLayoutEffect(() => {
+    notificationsRef.current = notifications;
+  });
 
   const fetchNotifications = useCallback(async () => {
     if (!enabled) return;
@@ -56,6 +58,7 @@ export function useNotifications(enabled: boolean) {
   // Initial fetch
   useEffect(() => {
     if (!enabled) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading flag for the fetch this effect starts
     setLoading(true);
     fetchNotifications().finally(() => setLoading(false));
   }, [enabled, fetchNotifications]);

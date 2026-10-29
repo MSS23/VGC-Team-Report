@@ -35,6 +35,7 @@ function useMyReports() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset/loading flag for the fetch this effect starts
     if (!isSignedIn) { setReports([]); return; }
     setLoading(true);
     fetch("/api/user/reports")

@@ -45,6 +45,7 @@ export function ShareViewCTA({
                 (hidden sm:inline-flex there), so this is mobile-only to avoid
                 duplicating it. */}
             {!isSignedIn && (
+              // eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state
               <a
                 href="/"
                 aria-label="Build your own team report"

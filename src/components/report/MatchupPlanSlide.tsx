@@ -160,6 +160,7 @@ export function MatchupPlanSlide({
   useEffect(() => {
     if (plan.gamePlans.length > prevPlanCount.current) {
       // Auto-switch to the new tab on mobile
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- jump to a newly added game plan tab (reacts to a count increase)
       setActiveGameTab(plan.gamePlans.length - 1);
       if (gamePlansRef.current) {
         const lastChild = gamePlansRef.current.lastElementChild;

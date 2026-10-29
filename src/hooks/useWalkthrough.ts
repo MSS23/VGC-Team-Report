@@ -336,6 +336,7 @@ export function useWalkthrough({ enabled, pokemonNames, goToSlide, pokemonCount,
   useEffect(() => {
     if (!enabled || hasAutoTriggered) return;
     if (getSeenFlag()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is client-only; read after hydration
       setHasAutoTriggered(true);
       return;
     }
