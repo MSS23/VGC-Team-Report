@@ -7,6 +7,8 @@ import {
   evToChampionsSp,
   championsSpToEv,
   calcBattleSpeed,
+  hasSpeedDoublingAbility,
+  compareTurnOrder,
   isSpFormSpread,
   CHAMPIONS_TOTAL_SP,
   CHAMPIONS_MAX_SP_PER_STAT,
@@ -404,6 +406,46 @@ describe("calcBattleSpeed", () => {
   });
   it("is identity with no modifiers", () => {
     expect(calcBattleSpeed(137, 1, {})).toBe(137);
+  });
+  it("applies +1 / +2 stages with Showdown's boost table (floor)", () => {
+    expect(calcBattleSpeed(101, 1, { stage: 1 })).toBe(151); // floor(151.5)
+    expect(calcBattleSpeed(101, 1, { stage: 2 })).toBe(202);
+    expect(calcBattleSpeed(101, 1, { stage: 6 })).toBe(404);
+    expect(calcBattleSpeed(101, 1, { stage: -2 })).toBe(50); // floor(101 / 2)
+  });
+  it("Icy Wind on a +1 Pokemon cancels to neutral", () => {
+    expect(calcBattleSpeed(137, 1, { stage: 1, icyWind: true })).toBe(137);
+  });
+  it("clamps stages to ±6", () => {
+    expect(calcBattleSpeed(100, 1, { stage: 9 })).toBe(400);
+  });
+  it("chains a doubling ability with Tailwind into one ×4 modifier", () => {
+    expect(calcBattleSpeed(101, 1, { abilityDouble: true })).toBe(202);
+    expect(calcBattleSpeed(101, 1, { abilityDouble: true, tailwind: true })).toBe(404);
+  });
+  it("chains a doubling ability with a ×1.5 item before rounding (101 -> 303)", () => {
+    expect(calcBattleSpeed(101, 1.5, { abilityDouble: true })).toBe(303);
+  });
+  it("applies the stage before Swift Swim, and paralysis last", () => {
+    // +1: floor(101 * 1.5) = 151; ×2 = 302; paralysis floor(302 / 2) = 151
+    expect(calcBattleSpeed(101, 1, { stage: 1, abilityDouble: true, paralysis: true })).toBe(151);
+  });
+});
+
+describe("hasSpeedDoublingAbility", () => {
+  it("recognises the weather and Unburden abilities, case-insensitively", () => {
+    for (const a of ["Swift Swim", "Chlorophyll", "Sand Rush", "Slush Rush", "unburden"]) {
+      expect(hasSpeedDoublingAbility(a)).toBe(true);
+    }
+    expect(hasSpeedDoublingAbility("Intimidate")).toBe(false);
+    expect(hasSpeedDoublingAbility(null)).toBe(false);
+  });
+});
+
+describe("compareTurnOrder", () => {
+  it("sorts fastest first normally and slowest first under Trick Room", () => {
+    expect([90, 150, 30].sort((a, b) => compareTurnOrder(a, b, false))).toEqual([150, 90, 30]);
+    expect([90, 150, 30].sort((a, b) => compareTurnOrder(a, b, true))).toEqual([30, 90, 150]);
   });
 });
 
