@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { MEGA_BY_SLUG, getMegaRegulation, getMegaLegalInLabel, getRegMCMegasWithSprites } from "@/lib/data/mega-pokemon";
+import { notFound, permanentRedirect } from "next/navigation";
+import { MEGA_BY_SLUG, megaSlugForSpecies, getMegaRegulation, getMegaLegalInLabel, getRegMCMegasWithSprites } from "@/lib/data/mega-pokemon";
 import { lookupPokemon } from "@/lib/data/pokemon";
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
@@ -195,7 +195,12 @@ export default async function MegaPokemonPage({
 }) {
   const { pokemon } = await params;
   const mega = MEGA_BY_SLUG.get(pokemon);
-  if (!mega) notFound();
+  if (!mega) {
+    // People type /champions/garchomp; send them to the Mega guide instead of a 404.
+    const megaSlug = megaSlugForSpecies(pokemon);
+    if (megaSlug) permanentRedirect(`/champions/${megaSlug}`);
+    notFound();
+  }
 
   // Use lookupPokemon so Champions-original Megas that aren't in our
   // hand-written POKEMON_DATA (Froslass-Mega, Emboar-Mega, Chandelure-Mega,

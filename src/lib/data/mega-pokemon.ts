@@ -1033,6 +1033,17 @@ export const MEGA_BY_SLUG = new Map(
   MEGA_POKEMON_LIST.map((m) => [m.slug, m]),
 );
 
+/**
+ * Canonical Mega slug for a bare species path (`/champions/garchomp` ->
+ * `mega-garchomp`), or null when the slug is already a Mega or has no single
+ * matching Mega (e.g. `charizard` has X and Y, so it stays a 404).
+ */
+export function megaSlugForSpecies(slug: string): string | null {
+  if (MEGA_BY_SLUG.has(slug)) return null;
+  const mega = MEGA_BY_SLUG.get(`mega-${slug.toLowerCase()}`);
+  return mega ? mega.slug : null;
+}
+
 /** Lookup by data key (e.g. "kangaskhan-mega") */
 export const MEGA_BY_KEY = new Map(
   MEGA_POKEMON_LIST.map((m) => [m.dataKey, m]),
