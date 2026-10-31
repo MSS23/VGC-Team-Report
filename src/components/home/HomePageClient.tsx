@@ -1642,6 +1642,8 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
           shareUrl={activeShareId ? `${typeof window !== "undefined" ? window.location.origin : "https://pokemonvgcteamreport.com"}/s/${activeShareId}` : undefined}
           tournamentName={tournamentName}
           teamName={teamName}
+          regulation={tags?.regulation}
+          eventType={tags?.eventType}
           onClose={() => setShowOTSSheet(false)}
         />
       )}

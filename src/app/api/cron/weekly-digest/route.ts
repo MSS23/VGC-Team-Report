@@ -283,7 +283,7 @@ export async function GET(request: Request) {
   }
 
   // 4. Collect email jobs first, then send in parallel batches
-  type EmailJob = { to: string; subject: string; html: string };
+  type EmailJob = { to: string; subject: string; html: string; headers?: Record<string, string> };
   const emailJobs: EmailJob[] = [];
 
   for (const userId of userIds) {
@@ -357,7 +357,8 @@ export async function GET(request: Request) {
         subject = `Your reports this week, ${firstName || "there"}!`;
       }
 
-      emailJobs.push({ to: email, subject, html });
+      // CAN-SPAM / Gmail bulk-sender: point mail clients at the preferences page.
+      emailJobs.push({ to: email, subject, html, headers: { "List-Unsubscribe": `<${APP_URL}/dashboard/notifications>` } });
     } catch (e) {
       console.error(`[weekly-digest] Error preparing email for ${userId}:`, e);
       errors++;

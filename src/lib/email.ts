@@ -33,6 +33,7 @@ export async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
+  headers?: Record<string, string>;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -57,6 +58,7 @@ export async function sendEmail(opts: {
       to: opts.to,
       subject,
       html: opts.html,
+      ...(opts.headers && Object.keys(opts.headers).length > 0 && { headers: opts.headers }),
     }),
   });
 
@@ -185,13 +187,14 @@ export async function sendWelcomeEmail(opts: {
   try {
     const displayName = opts.firstName || "there";
     const html = buildWelcomeEmailHtml(displayName);
-    await sendEmail({
+    return await sendEmail({
       to: opts.to,
       subject: "Welcome to VGC Team Report!",
       html,
     });
   } catch (e: unknown) {
     console.warn("Failed to send welcome email:", e);
+    return null;
   }
 }
 
