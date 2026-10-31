@@ -1,10 +1,15 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { getClientIp } from "@/lib/security/input-validation";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import {
+  parseChronologicalCursor,
+  serializeChronologicalCursor,
+} from "@/lib/explore/chronological-cursor";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +18,7 @@ export async function GET(request: Request) {
     const guard = await apiGuard(request, { rateLimit: { key: "explore", max: 30 } });
     if (guard) return guard;
 
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const ip = getClientIp(request);
     const url = new URL(request.url);
     const cursor = url.searchParams.get("cursor");
     const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") ?? "12", 10) || 12, 1), 50);
@@ -29,10 +34,11 @@ export async function GET(request: Request) {
     const filterPlacement = url.searchParams.get("placement") ?? ""; // e.g. "1st", "Top 4", "Top 8"
     const filterFollowing = url.searchParams.get("following") === "1";
     const filterHasRental = url.searchParams.get("hasRental") === "1";
+    const freshnessSensitive = sort === "newest" || sort === "updated";
 
     // ── Cache check (skip for user-specific following queries) ───────
     let cacheKey: string | null = null;
-    if (!filterFollowing) {
+    if (!filterFollowing && !freshnessSensitive) {
       cacheKey = CacheKeys.explore(
         `${sort}:${q}:${searchType}:${cursor ?? ""}:${limit}:${filterRegulation}:${filterEventType}:${filterArchetype}:${filterSpecies}:${filterExcludeSpecies}:${filterPlacement}:rental=${filterHasRental ? 1 : 0}`
       );
@@ -74,7 +80,7 @@ export async function GET(request: Request) {
     // Convert query to tsquery: split words, add :* prefix matching to each word.
     // The :* suffix enables prefix matching so "chien" matches "Chien-Pao".
     const tsQuery = q
-      ? q.trim().split(/\s+/).map(w => w.replace(/[^\w]/g, "")).filter(Boolean).map(w => `${w}:*`).join(" & ")
+      ? q.trim().split(/[^\w]+/).filter(Boolean).map(w => `${w}:*`).join(" & ")
       : null;
 
     // For popular sort, we need a subquery to count likes
@@ -184,7 +190,7 @@ export async function GET(request: Request) {
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${c ? sql`AND (COALESCE(rc.like_count, 0), s.created_at) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
+          ${c ? sql`AND (COALESCE(rc.like_count, 0), date_trunc('milliseconds', s.created_at)) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
         ORDER BY COALESCE(rc.like_count, 0) DESC, s.created_at DESC
         LIMIT ${limit + 1}
       `;
@@ -198,12 +204,13 @@ export async function GET(request: Request) {
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${c ? sql`AND (COALESCE(s.view_count, 0), s.created_at) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
+          ${c ? sql`AND (COALESCE(s.view_count, 0), date_trunc('milliseconds', s.created_at)) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
         ORDER BY COALESCE(s.view_count, 0) DESC, s.created_at DESC
         LIMIT ${limit + 1}
       `;
     } else {
       const col = sort === "updated" ? sql`s.updated_at` : sql`s.created_at`;
+      const chronologicalCursor = parseChronologicalCursor(cursor);
 
       rows = await sql`
         SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
@@ -212,8 +219,12 @@ export async function GET(request: Request) {
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${cursor ? sql`AND ${col} < ${cursor}` : sql``}
-        ORDER BY ${col} DESC
+          ${chronologicalCursor?.id
+            ? sql`AND (date_trunc('milliseconds', ${col}), s.id) < (${chronologicalCursor.timestamp}::timestamptz, ${chronologicalCursor.id})`
+            : chronologicalCursor
+              ? sql`AND date_trunc('milliseconds', ${col}) < ${chronologicalCursor.timestamp}::timestamptz`
+              : sql``}
+        ORDER BY ${col} DESC, s.id DESC
         LIMIT ${limit + 1}
       `;
     }
@@ -223,8 +234,8 @@ export async function GET(request: Request) {
 
     // Batch-fetch social counts
     const shareIds = items.map((r) => r.id as string);
-    let likeMap: Record<string, number> = {};
-    let commentMap: Record<string, number> = {};
+    const likeMap: Record<string, number> = {};
+    const commentMap: Record<string, number> = {};
 
     // Collect unique creator names for verification check
     const creatorNames = [...new Set(items.map((r) => ((r.data as Record<string, unknown>).creatorName as string)).filter(Boolean))];
@@ -236,20 +247,40 @@ export async function GET(request: Request) {
     // appears in the feed. Best-effort — column may not exist on older envs.
     const forkedFromCreatorMap: Record<string, string> = {};
     if (shareIds.length > 0) {
-      const queries: Promise<unknown>[] = [
+      // Fork lineage join — single self-join over forked_from_id so the
+      // explore card can credit the original creator on duplicated teams.
+      // src.is_public is required, not optional: forking is only allowed from
+      // a public source, but the source owner can unpublish afterwards, and
+      // without this filter the card would keep crediting (and thereby
+      // disclose) the creator of a report that is no longer public.
+      // forked_from_id is a recent column and may be absent on older env
+      // clones, so this promise catches its own error and degrades to [];
+      // that lets it join the same Promise.all batch (one round-trip) instead
+      // of running as a separate serial await.
+      const forkQuery = (sql`
+        SELECT s.id AS fork_id, src.data->>'creatorName' AS source_creator
+        FROM shares s
+        JOIN shares src ON src.id = s.forked_from_id
+        WHERE s.id = ANY(${shareIds})
+          AND src.deleted_at IS NULL
+          AND src.is_public = true
+          AND COALESCE(src.data->>'creatorName', '') <> ''
+      ` as Promise<Array<Record<string, unknown>>>).catch(() => [] as Array<Record<string, unknown>>);
+
+      const [likeRows, commentRows, collabRows, verifiedRows, forkRows] = await Promise.all([
         sql`SELECT share_id, COUNT(*)::int as count FROM reactions WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
         sql`SELECT share_id, COUNT(*)::int as count FROM comments WHERE share_id = ANY(${shareIds}) GROUP BY share_id`,
         sql`SELECT share_id, user_name FROM collaborators WHERE share_id = ANY(${shareIds}) AND COALESCE(status, 'accepted') = 'accepted'`,
-      ];
-      if (creatorNames.length > 0) {
-        queries.push(sql`SELECT name FROM verified_creators WHERE LOWER(name) = ANY(${creatorNames.map((n) => n.toLowerCase())})`);
-      }
-
-      const [likeRows, commentRows, collabRows, verifiedRows] = await Promise.all(queries) as [
+        creatorNames.length > 0
+          ? sql`SELECT name FROM verified_creators WHERE LOWER(name) = ANY(${creatorNames.map((n) => n.toLowerCase())})`
+          : Promise.resolve([] as Array<Record<string, unknown>>),
+        forkQuery,
+      ]) as [
         Array<Record<string, unknown>>,
         Array<Record<string, unknown>>,
         Array<Record<string, unknown>>,
-        Array<Record<string, unknown>>?,
+        Array<Record<string, unknown>>,
+        Array<Record<string, unknown>>,
       ];
 
       for (const r of likeRows) {
@@ -268,24 +299,11 @@ export async function GET(request: Request) {
         verifiedSet = new Set(verifiedRows.map((r) => (r.name as string).toLowerCase()));
       }
 
-      // Fork lineage join — single self-join over forked_from_id so the
-      // explore card can credit the original creator on duplicated teams.
-      // Wrapped in try because forked_from_id is a recent column and may
-      // be absent on older env clones; the rest of the payload still works.
-      try {
-        const forkRows = await sql`
-          SELECT s.id AS fork_id, src.data->>'creatorName' AS source_creator
-          FROM shares s
-          JOIN shares src ON src.id = s.forked_from_id
-          WHERE s.id = ANY(${shareIds})
-            AND src.deleted_at IS NULL
-            AND COALESCE(src.data->>'creatorName', '') <> ''
-        ` as Array<Record<string, unknown>>;
-        for (const r of forkRows) {
-          forkedFromCreatorMap[r.fork_id as string] = r.source_creator as string;
-        }
-      } catch {
-        // forked_from_id column missing — feature degrades silently
+      // Populate fork lineage from the batched query above. forkRows is []
+      // when forked_from_id is absent (query caught its own error), so the
+      // feature degrades silently exactly as before.
+      for (const r of forkRows) {
+        forkedFromCreatorMap[r.fork_id as string] = r.source_creator as string;
       }
     }
 
@@ -321,8 +339,8 @@ export async function GET(request: Request) {
       const lastCreatedAt = (last.created_at as Date).toISOString();
       if (sort === "popular") nextCursor = `${last.like_count ?? 0}:${lastCreatedAt}`;
       else if (sort === "views") nextCursor = `${last.view_count ?? 0}:${lastCreatedAt}`;
-      else if (sort === "updated") nextCursor = (last.updated_at as Date).toISOString();
-      else nextCursor = lastCreatedAt;
+      else if (sort === "updated") nextCursor = serializeChronologicalCursor(last.updated_at as Date, last.id as string);
+      else nextCursor = serializeChronologicalCursor(last.created_at as Date, last.id as string);
     }
 
     const result = { reports, nextCursor };
@@ -352,12 +370,15 @@ export async function GET(request: Request) {
     // invocations for the CDN TTL window.
     const res = NextResponse.json(result);
     if (!filterFollowing) {
-      res.headers.set(
-        "Cache-Control",
-        "public, s-maxage=60, stale-while-revalidate=300",
-      );
-      res.headers.set("CDN-Cache-Control", "public, s-maxage=60");
-      res.headers.set("Vercel-CDN-Cache-Control", "public, s-maxage=60");
+      if (freshnessSensitive) {
+        res.headers.set("Cache-Control", "private, no-store, max-age=0");
+        res.headers.set("CDN-Cache-Control", "no-store");
+        res.headers.set("Vercel-CDN-Cache-Control", "no-store");
+      } else {
+        res.headers.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+        res.headers.set("CDN-Cache-Control", "public, s-maxage=60");
+        res.headers.set("Vercel-CDN-Cache-Control", "public, s-maxage=60");
+      }
     }
     return res;
   } catch (e) {

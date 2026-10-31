@@ -60,7 +60,7 @@ export function CookieBanner() {
             consentModal: {
               title: "Cookie preferences",
               description:
-                'We use analytics cookies (Vercel Analytics, PostHog) to understand how you use the app and fix bugs. <a href="/privacy" class="cc-link">Privacy Policy</a>',
+                'We use analytics cookies (PostHog, Microsoft Clarity) to understand how you use the app and fix bugs. This includes session recording — clicks, scrolling and page navigation are replayed to spot interface problems. <a href="/privacy" class="cc-link">Privacy Policy</a>',
               acceptAllBtn: "Accept all",
               acceptNecessaryBtn: "Reject all",
               showPreferencesBtn: "Manage preferences",
@@ -82,7 +82,7 @@ export function CookieBanner() {
                 {
                   title: "Analytics",
                   description:
-                    "Help us understand how you use the app. Used by Vercel Analytics, Vercel Speed Insights, and PostHog. No advertising.",
+                    "Help us understand how you use the app. Used by PostHog and Microsoft Clarity, including session recording (clicks, scrolling, mouse movement and page navigation). No advertising.",
                   linkedCategory: "analytics",
                 },
               ],

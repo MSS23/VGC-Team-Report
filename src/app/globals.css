@@ -5,6 +5,11 @@
 
 :root {
   --nav-height: 6rem;
+  /* Height reserved for the fixed bottom slide-nav bar. Mobile uses the
+     two-row segmented bar (~3.5rem); the standalone override below adds the
+     iOS gesture-bar safe area. Consumers read it via
+     var(--bottom-nav-height, 3.5rem). */
+  --bottom-nav-height: 3.5rem;
   --background: #FAF9F6;
   --foreground: #1A1A2E;
   --surface: #FFFFFF;
@@ -70,10 +75,13 @@
 html {
   /* Belt-and-braces: prevent any descendant from creating a horizontal scroll
      viewport on mobile (PWA / Safari standalone where body overflow alone
-     occasionally fails to clip absolutely-positioned children). */
+     occasionally fails to clip absolutely-positioned children).
+     NOTE: no `max-width: 100vw` — 100vw counts the vertical scrollbar gutter,
+     so on desktop it made the element ~15px wider than the usable content
+     width and produced a hairline left↔right scroll. overflow-x: hidden does
+     the clipping without that side effect. */
   overflow-x: hidden;
   overscroll-behavior-x: none;
-  max-width: 100vw;
 }
 
 body {
@@ -84,7 +92,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   overscroll-behavior-x: none;
-  max-width: 100vw;
+  /* No max-width: 100vw here either — same scrollbar-gutter overflow bug as
+     on <html>. overflow-x: hidden already clips horizontal overflow. */
   /* Use dynamic viewport height for true full-screen on mobile */
   min-height: 100dvh;
 }
@@ -148,7 +157,7 @@ body {
   /* Account for safe-area in navbar height so slide content doesn't overlap */
   :root {
     --nav-height: calc(6rem + env(safe-area-inset-top, 0px));
-    --bottom-nav-height: calc(3rem + env(safe-area-inset-bottom, 0px));
+    --bottom-nav-height: calc(3.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   /* Sticky headers extend behind status bar with safe area padding */
@@ -271,9 +280,42 @@ body {
   --text-primary: #F0EDE6;
   --text-secondary: #C0C0D8;
   --text-tertiary: #9898B8;
-  --accent: var(--accent-dark, #FB7185);
+  --accent: #FB7185;
   --accent-light: #FDA4AF;
-  --accent-surface: var(--accent-surface-dark, #3B1525);
+  --accent-surface: #3B1525;
+  /* Dark-appropriate semantic status colors. The light values (#DC2626 /
+     #16A34A / #D97706) only reach 4.04 / 5.92 / 6.12 : 1 on the #0B0B1A
+     background and 3.75 / 5.49 / 5.68 : 1 on #141428, so `text-danger` —
+     the validation-error color in the EV→SP converter and on the Pokémon
+     cards — fell under the 4.5:1 bar. These are the same hue families one
+     step lighter: danger 7.05 : 1 on the background, 6.54 : 1 on surface,
+     5.97 : 1 on surface-alt; success 11.19 / 10.39 / 9.47; warning
+     11.68 / 10.84 / 9.89. */
+  --success: #4ADE80;
+  --warning: #FBBF24;
+  --danger: #F87171;
+}
+
+/* ── Random accent (src/lib/utils/random-accent.ts) ───────────────────
+   applyRandomAccent() writes ONLY palette DATA properties
+   (--random-accent-*) as inline styles on <html>. An inline declaration
+   outranks every selector, [data-dark-mode] included, so --accent itself
+   must never be set inline — these two rules are what choose the half that
+   applies. Regression (c4938de): the light palette was written straight to
+   --accent/--accent-surface, so dark mode rendered a near-white accent
+   surface on the #0B0B1A background and no stylesheet rule could override
+   it. Both rules are specificity (0,2,0)+ and the dark one also matches
+   [data-dark-mode], so it wins in dark mode regardless of source order. */
+:root[data-random-accent] {
+  --accent: var(--random-accent-light);
+  --accent-light: var(--random-accent-light-tint);
+  --accent-surface: var(--random-accent-light-surface);
+}
+
+:root[data-dark-mode][data-random-accent] {
+  --accent: var(--random-accent-dark);
+  --accent-light: var(--random-accent-dark-tint);
+  --accent-surface: var(--random-accent-dark-surface);
 }
 
 [data-dark-mode] body::before {
@@ -809,11 +851,15 @@ body {
   }
 }
 
-/* Visible focus rings for keyboard navigation */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 4px;
+/* Visible focus rings for keyboard navigation.
+   Uses the theme accent color which resolves to #E11D48 (light) and
+   #FB7185 (dark) — both high-contrast against their respective backgrounds.
+   outline-offset ensures the ring doesn't overlap element borders. */
+@layer base {
+  *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 }
 
 /* Remove outline for mouse/touch users */

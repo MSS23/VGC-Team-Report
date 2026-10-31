@@ -1,10 +1,12 @@
+import { reportFingerprint } from "@/lib/sharing/collaboration";
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { getClientIp } from "@/lib/security/input-validation";
 import { notifyFollowers } from "@/lib/notifications";
 import { detectChangedSections } from "@/lib/utils/diff-state";
-import { extractSpecies } from "@/lib/utils/extract-species";
 import { cacheInvalidatePrefix, cacheDel, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { schedulePublishShareOgImage } from "@/lib/sharing/og-image";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -19,6 +21,39 @@ const ShareBodySchema = z.object({
     calcs: z.record(z.string(), z.unknown()).optional(),
     roles: z.record(z.string(), z.unknown()).optional(),
     teamSummary: z.string().optional(),
+    // "How to pilot this team" (Common Modes / leads / strengths / etc.).
+    // MUST be listed here — the schema strips unknown keys, so omitting this
+    // silently dropped the entire Modes section on every save (the client
+    // showed "saved" but the DB never stored it).
+    commonModes: z
+      .object({
+        // Structured bring combinations — same shape as ShareableStateSchema.
+        // Absent here, zod stripped the whole array on every save (the exact
+        // bug class the comment above describes).
+        combinations: z
+          .array(
+            z.object({
+              id: z.string(),
+              // A bring combination has exactly four slots (0,1 = leads;
+              // 2,3 = back), so each side holds at most two roster indices.
+              // `setSlot` in CommonModesSlide is the only writer and compacts
+              // nulls out of a fixed 4-tuple, so it can never emit more than
+              // two per side — the bound rejects nothing a client can produce.
+              // Explicit so an attacker can't make the validator walk an
+              // unbounded index list (GHSA-mrhx-c7xc-m3w5 defence in depth).
+              leads: z.array(z.number().int()).max(2),
+              back: z.array(z.number().int()).max(2),
+              strategy: z.string(),
+            }),
+          )
+          .optional(),
+        leads: z.string().optional(),
+        modes: z.string().optional(),
+        strengths: z.string().optional(),
+        weaknesses: z.string().optional(),
+        gameplan: z.string().optional(),
+      })
+      .optional(),
     teamName: z.string().optional(),
     tournamentName: z.string().optional(),
     placement: z.string().optional(),
@@ -30,16 +65,26 @@ const ShareBodySchema = z.object({
     hiddenSlides: z.array(z.union([z.number(), z.string()])).optional(),
     allowComments: z.boolean().optional(),
     tags: z.object({
+      tournamentUrl: z.string().regex(/^https:\/\/limitlessvgc\.com\/tournaments\/\d+$/).optional(),
+      tournamentDate: z.string().max(100).optional(),
+      tournamentPlayers: z.number().int().positive().optional(),
+      tournamentRegion: z.string().max(100).optional(),
       regulation: z.string().optional(),
       eventType: z.string().optional(),
       archetype: z.array(z.string()).optional(),
       regulationAutoDetected: z.boolean().optional(),
     }).optional(),
     templateId: z.string().optional(),
+    // Tiered-publishing per-field visibility flags. Also previously absent
+    // from this schema, so the "hide fields from public viewers" choices were
+    // stripped on save the same way commonModes was.
+    privateFields: z.array(z.string()).optional(),
     genTheme: z.string().optional(),
   }).strip(),
+  expectedVersion: z.number().int().positive().optional(),
   existingId: z.string().optional(),
   editToken: z.string().optional(),
+  draftId: z.string().min(1).max(128).optional(),
   isPublic: z.boolean().optional(),
   isUnlisted: z.boolean().optional(),
   isPublish: z.boolean().optional(),
@@ -66,7 +111,7 @@ export async function POST(request: Request) {
     const guard = await apiGuard(request, { rateLimit: { key: "share", max: 20 }, maxBodySize: MAX_BODY_SIZE });
     if (guard) return guard;
 
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const ip = getClientIp(request);
 
     const raw = await request.json();
     const parsed = ShareBodySchema.safeParse(raw);
@@ -76,7 +121,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const { state, existingId, editToken, isPublic, isUnlisted, isPublish } = parsed.data;
+    const { state, existingId, editToken, draftId, isPublic, isUnlisted, isPublish, expectedVersion } = parsed.data;
 
     // Require authentication for ALL writes — both create and update. An edit
     // token in localStorage alone must never grant mutation rights to an
@@ -121,11 +166,40 @@ export async function POST(request: Request) {
     if (existingId && editToken) {
       // Fetch old state for changelog diff and version snapshot
       const oldRows = await sql`
-        SELECT data, COALESCE(version, 1) AS version, is_public, owner_id FROM shares WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
+        SELECT data, COALESCE(version, 1) AS version, is_public, is_unlisted, owner_id FROM shares WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
       `;
 
+      // The edit token is an internal update nonce, not an authorization
+      // credential. The caller must also be the owner or an accepted account
+      // collaborator. This prevents a token recovered from an old URL or
+      // browser profile from granting a different account write access.
+      if (oldRows.length === 0) {
+        return NextResponse.json({ error: "Report not found or edit session expired." }, { status: 403 });
+      }
+      const isOwner = oldRows[0].owner_id === authedUserId;
+      let isCollaborator = false;
+      if (!isOwner) {
+        const collaboratorRows = await sql`
+          SELECT 1 FROM collaborators
+          WHERE share_id = ${existingId} AND user_id = ${authedUserId}
+            AND COALESCE(status, 'accepted') = 'accepted'
+        `;
+        isCollaborator = collaboratorRows.length > 0;
+      }
+      if (!isOwner && !isCollaborator) {
+        return NextResponse.json(
+          { error: "Only the report owner or an accepted collaborator can edit this report." },
+          { status: 403 }
+        );
+      }
+
+      const observedVersion = Number(oldRows[0].version);
+      if (expectedVersion !== undefined && expectedVersion !== observedVersion) {
+        return NextResponse.json({ error: "A teammate saved a newer version. Review the conflict before saving.", version: observedVersion, state: oldRows[0].data }, { status: 409 });
+      }
+
       // Detect actual changes before creating a version
-      const oldState = oldRows.length > 0 ? (oldRows[0].data as Record<string, unknown>) : null;
+      const oldState = oldRows[0].data as Record<string, unknown>;
       const sections = detectChangedSections(oldState, state);
       const hasDataChanges = sections.length > 0;
 
@@ -133,54 +207,125 @@ export async function POST(request: Request) {
       if (hasDataChanges && oldRows.length > 0) {
         const oldVersion = Number(oldRows[0].version);
         const oldData = oldRows[0].data;
-        try {
-          const { userId } = await auth();
-          const user = userId ? await currentUser() : null;
-          const editorName = user?.firstName
-            ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-            : user?.username ?? null;
-          sql`
-            INSERT INTO share_versions (share_id, version, data, editor_id, editor_name)
-            VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb, ${userId ?? null}, ${editorName})
-            ON CONFLICT (share_id, version) DO NOTHING
-          `.catch(() => { /* version snapshot is non-critical */ });
-        } catch {
-          // Auth not available — snapshot without editor info
-          sql`
-            INSERT INTO share_versions (share_id, version, data)
-            VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb)
-            ON CONFLICT (share_id, version) DO NOTHING
-          `.catch(() => {});
-        }
-      }
 
-      // Only the owner can change visibility — collaborators keep the existing value
-      let effectiveIsPublic = isPublic ?? false;
-      const effectiveIsUnlisted = isUnlisted ?? false;
-      if (oldRows.length > 0 && isPublic !== undefined) {
-        const currentIsPublic = !!oldRows[0].is_public;
-        if (isPublic !== currentIsPublic) {
-          // Visibility is changing — verify caller is the owner
-          let callerId: string | null = null;
+        // ── Snapshot coalescing (§1-B) ──────────────────────────────────────
+        // Writing a full-report JSONB blob into share_versions on every
+        // 3-second autosave is what ballooned that table to 447MB / 131k rows
+        // for 119 shares. Only take a fresh snapshot when EITHER this is an
+        // explicit publish, OR the newest existing snapshot for this share is
+        // older than the coalescing window. Otherwise skip the blob write and
+        // let the version bump / changelog below carry the change.
+        // The check is a single cheap indexed lookup (idx_share_versions_share).
+        const COALESCE_WINDOW_MINUTES = 10;
+        let shouldSnapshot = isPublish === true;
+        if (!shouldSnapshot) {
           try {
-            const { userId: uid } = await auth();
-            callerId = uid;
-          } catch { /* not authenticated */ }
-          if (!callerId || callerId !== oldRows[0].owner_id) {
-            // Not the owner — return an explicit error so the client can surface
-            // it and the user isn't left staring at a "saved" toggle that didn't
-            // actually publish. Previously this silently reverted the value,
-            // which caused "I clicked List on Explore but it didn't appear".
-            return NextResponse.json(
-              { error: "Only the report owner can change visibility." },
-              { status: 403 }
-            );
+            const latest = await sql`
+              SELECT MAX(created_at) AS latest FROM share_versions WHERE share_id = ${existingId}
+            `;
+            const latestAt = latest.length > 0 ? latest[0].latest : null;
+            // No prior snapshot, or the newest is older than the window → snapshot.
+            shouldSnapshot =
+              !latestAt ||
+              Date.now() - new Date(latestAt as string).getTime() >
+                COALESCE_WINDOW_MINUTES * 60_000;
+          } catch (err) {
+            // Fail open — a missed snapshot loses revert history; better to write.
+            console.error("share_versions coalesce check failed:", err);
+            shouldSnapshot = true;
+          }
+        }
+
+        if (shouldSnapshot) {
+          let snapshotInserted = false;
+          try {
+            const { userId } = await auth();
+            const user = userId ? await currentUser() : null;
+            const editorName = user?.firstName
+              ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
+              : user?.username ?? null;
+            // Awaited so the snapshot actually completes before the Vercel lambda freezes
+            // after responding (bare .catch() on Neon HTTP queries can be cancelled).
+            // Non-fatal — log on failure but don't break the main update.
+            try {
+              await sql`
+                INSERT INTO share_versions (share_id, version, data, editor_id, editor_name)
+                VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb, ${userId ?? null}, ${editorName})
+                ON CONFLICT (share_id, version) DO NOTHING
+              `;
+              snapshotInserted = true;
+            } catch (err) {
+              console.error("share_versions snapshot failed (with editor):", err);
+            }
+          } catch {
+            // Auth not available — snapshot without editor info
+            try {
+              await sql`
+                INSERT INTO share_versions (share_id, version, data)
+                VALUES (${existingId}, ${oldVersion}, ${JSON.stringify(oldData)}::jsonb)
+                ON CONFLICT (share_id, version) DO NOTHING
+              `;
+              snapshotInserted = true;
+            } catch (err) {
+              console.error("share_versions snapshot failed (anon):", err);
+            }
+          }
+
+          // ── Self-cleaning retention (§1-B) ──────────────────────────────
+          // The versions UI only ever shows the newest 50, so anything beyond
+          // that is invisible dead weight. Trim inline right after each insert
+          // so the table can never regrow unbounded. Keyed to this share_id.
+          if (snapshotInserted) {
+            try {
+              await sql`
+                DELETE FROM share_versions
+                WHERE share_id = ${existingId}
+                  AND id NOT IN (
+                    SELECT id FROM share_versions
+                    WHERE share_id = ${existingId}
+                    ORDER BY version DESC
+                    LIMIT 50
+                  )
+              `;
+            } catch (err) {
+              console.error("share_versions retention trim failed:", err);
+            }
           }
         }
       }
 
+      // Preserve the report's current visibility whenever the client doesn't
+      // explicitly send a new value. A bare update (e.g. a collaborator's
+      // content autosave, or any older client) that omits isPublic/isUnlisted
+      // must NOT silently demote a public or unlisted report to private —
+      // that was the cause of "I set it to Unlisted and it reverted to
+      // Private". Only an explicit flag from the owner changes visibility.
+      const currentIsPublic = !!oldRows[0].is_public;
+      const currentIsUnlisted = !!oldRows[0].is_unlisted;
+      // Only the owner can change visibility — collaborators keep the existing value
+      const effectiveIsPublic = isPublic ?? currentIsPublic;
+      const effectiveIsUnlisted = isUnlisted ?? currentIsUnlisted;
+      // isUnlisted is a visibility decision exactly like isPublic — flipping it
+      // changes who can reach the report through /s/{id} — so it sits behind the
+      // same owner-only gate. Content edits are untouched: a collaborator that
+      // omits both flags, or echoes back the values already stored, requests no
+      // visibility change and passes straight through to the update below.
+      const visibilityChangeRequested =
+        (isPublic !== undefined && isPublic !== currentIsPublic) ||
+        (isUnlisted !== undefined && isUnlisted !== currentIsUnlisted);
+      if (visibilityChangeRequested && !isOwner) {
+        // Not the owner — return an explicit error so the client can surface
+        // it and the user isn't left staring at a "saved" toggle that didn't
+        // actually publish. Previously this silently reverted the value,
+        // which caused "I clicked List on Explore but it didn't appear".
+        return NextResponse.json(
+          { error: "Only the report owner can change visibility." },
+          { status: 403 }
+        );
+      }
+
       // Require tags to publish — only block when going from private → public
-      const wasPublic = oldRows.length > 0 && !!oldRows[0].is_public;
+      const wasPublic = !!oldRows[0].is_public;
       if (effectiveIsPublic && !wasPublic) {
         const tags = (state.tags ?? {}) as Record<string, unknown>;
         const hasRegulation = !!tags.regulation;
@@ -194,23 +339,31 @@ export async function POST(request: Request) {
         }
       }
 
+      // Bump the version when visibility changes too, not just on data edits.
+      // Version-based pollers (?since=N) get a 304 when the version is
+      // unchanged — without this, a public→private flip would be invisible to
+      // a client polling for updates and it would keep showing stale content.
+      const visibilityChanged =
+        effectiveIsPublic !== currentIsPublic || effectiveIsUnlisted !== currentIsUnlisted;
       const rows = await sql`
         UPDATE shares
         SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(),
-            version = COALESCE(version, 1) + ${hasDataChanges ? 1 : 0},
+            version = COALESCE(version, 1) + ${reportFingerprint(oldState) !== reportFingerprint(state) || visibilityChanged ? 1 : 0},
             is_public = ${effectiveIsPublic},
             is_unlisted = ${effectiveIsUnlisted},
-            species = ${extractSpecies(state.paste)},
             search_vector =
               setweight(to_tsvector('english', ${searchCreator}), 'A') ||
               setweight(to_tsvector('english', ${searchTournament}), 'A') ||
               setweight(to_tsvector('english', ${searchPaste}), 'B') ||
               setweight(to_tsvector('english', ${searchSummary}), 'C')
-        WHERE id = ${existingId} AND edit_token = ${editToken}
+        WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
+          AND COALESCE(version, 1) = ${observedVersion}
         RETURNING id, COALESCE(version, 1) AS version, is_public, is_unlisted
       `;
       if (rows.length > 0) {
-        // Record changelog entry (fire-and-forget, only for authenticated users)
+        // Record changelog entry — awaited so it actually completes on Vercel/Neon HTTP
+        // (a bare .catch() promise can be cancelled when the lambda freezes after responding).
+        // Failure is non-fatal: log and continue.
         if (hasDataChanges) {
           try {
             const { userId } = await auth();
@@ -219,10 +372,30 @@ export async function POST(request: Request) {
               const editorName = user?.firstName
                 ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
                 : user?.username ?? "Unknown";
-              sql`
-                INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
-                VALUES (${existingId}, ${rows[0].version}, ${userId}, ${editorName}, ${JSON.stringify(sections)}::jsonb, ${isPublish ?? false})
-              `.catch(() => { /* changelog insert is non-critical */ });
+              try {
+                await sql`
+                  INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
+                  VALUES (${existingId}, ${rows[0].version}, ${userId}, ${editorName}, ${JSON.stringify(sections)}::jsonb, ${isPublish ?? false})
+                `;
+                // Self-cleaning retention (§1-B): keep only the newest 50
+                // changelog rows for this share, matching share_versions above.
+                try {
+                  await sql`
+                    DELETE FROM edit_changelog
+                    WHERE share_id = ${existingId}
+                      AND id NOT IN (
+                        SELECT id FROM edit_changelog
+                        WHERE share_id = ${existingId}
+                        ORDER BY version DESC, id DESC
+                        LIMIT 50
+                      )
+                  `;
+                } catch (err) {
+                  console.error("edit_changelog retention trim failed:", err);
+                }
+              } catch (err) {
+                console.error("edit_changelog insert failed (update path):", err);
+              }
             }
           } catch { /* not authenticated — skip changelog */ }
         }
@@ -241,9 +414,18 @@ export async function POST(request: Request) {
           is_publish: isPublish ?? false,
         });
 
+        // Pre-render the unfurl card (skipped when the card is unchanged).
+        schedulePublishShareOgImage(existingId, state as Record<string, unknown>, {
+          isPublic: rows[0].is_public === true,
+          isUnlisted: rows[0].is_unlisted === true,
+        });
+
         return NextResponse.json({ id: existingId, editToken, updated: true, version: rows[0].version, isPublic: rows[0].is_public, isUnlisted: rows[0].is_unlisted });
       }
-      // Token mismatch or not found — fall through to create new
+      // Another update won between SELECT and UPDATE. Never create a duplicate
+      // or overwrite it: return the newest state for explicit reconciliation.
+      const latest = await sql`SELECT data, COALESCE(version, 1) AS version FROM shares WHERE id = ${existingId} AND deleted_at IS NULL`;
+      return NextResponse.json({ error: "A teammate saved at the same time. Review the conflict before saving.", version: latest[0]?.version, state: latest[0]?.data }, { status: 409 });
     }
 
     // Create new share — auth was already enforced at the top of this handler.
@@ -267,7 +449,7 @@ export async function POST(request: Request) {
     // This prevents duplicate public reports when a user navigates away from
     // /s/{id} (clearing the client-side session refs) and clicks Share again.
     const existingDup = await sql`
-      SELECT id, edit_token, COALESCE(version, 1) AS version, is_public
+      SELECT id, edit_token, COALESCE(version, 1) AS version, is_public, is_unlisted
       FROM shares
       WHERE owner_id = ${ownerId}
         AND deleted_at IS NULL
@@ -281,14 +463,15 @@ export async function POST(request: Request) {
       // Update the existing share instead of creating a duplicate
       const dup = existingDup[0];
       const effectiveIsPublic = isPublic ?? !!dup.is_public;
-      const effectiveIsUnlistedDup = isUnlisted ?? false;
+      // Preserve existing unlisted state when the client doesn't explicitly
+      // pass isUnlisted — otherwise a re-share silently flips unlisted → private.
+      const effectiveIsUnlistedDup = isUnlisted ?? !!dup.is_unlisted;
       await sql`
         UPDATE shares
         SET data = ${JSON.stringify(state)}::jsonb, updated_at = NOW(),
             version = COALESCE(version, 1) + 1,
             is_public = ${effectiveIsPublic},
             is_unlisted = ${effectiveIsUnlistedDup},
-            species = ${extractSpecies(state.paste)},
             search_vector =
               setweight(to_tsvector('english', ${searchCreator}), 'A') ||
               setweight(to_tsvector('english', ${searchTournament}), 'A') ||
@@ -300,6 +483,18 @@ export async function POST(request: Request) {
         cacheDel(CacheKeys.share(dup.id)),
         cacheInvalidatePrefix("explore:"),
       ]);
+      // Publishing a resumed draft should remove only that draft. Creators
+      // may have several other works in progress in their dashboard.
+      if (draftId) {
+        try {
+          await sql`
+            DELETE FROM shares
+            WHERE id = ${draftId} AND owner_id = ${ownerId} AND is_draft = TRUE
+          `;
+        } catch (err) {
+          console.error("draft cleanup failed:", err);
+        }
+      }
       return NextResponse.json({
         id: dup.id,
         editToken: dup.edit_token,
@@ -312,45 +507,61 @@ export async function POST(request: Request) {
 
     const id = generateId();
     const newEditToken = generateEditToken();
-    const parsedSpecies = extractSpecies(state.paste);
 
     await sql`
-      INSERT INTO shares (id, edit_token, data, version, is_public, is_unlisted, owner_id, search_vector, species)
+      INSERT INTO shares (id, edit_token, data, version, is_public, is_unlisted, owner_id, search_vector)
       VALUES (
         ${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${isUnlisted ?? false}, ${ownerId},
         setweight(to_tsvector('english', ${searchCreator}), 'A') ||
         setweight(to_tsvector('english', ${searchTournament}), 'A') ||
         setweight(to_tsvector('english', ${searchPaste}), 'B') ||
-        setweight(to_tsvector('english', ${searchSummary}), 'C'),
-        ${parsedSpecies.length > 0 ? sql`${parsedSpecies}::text[]` : sql`NULL`}
+        setweight(to_tsvector('english', ${searchSummary}), 'C')
       )
     `;
 
-    // Record initial changelog entry
+    // Record initial changelog entry — awaited so it completes before lambda freezes.
+    // Non-fatal: log on failure but don't break the share creation response.
     if (ownerId) {
       try {
         const user = await currentUser();
         const editorName = user?.firstName
           ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
           : user?.username ?? "Unknown";
-        sql`
-          INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
-          VALUES (${id}, 1, ${ownerId}, ${editorName}, ${JSON.stringify(["Created report"])}::jsonb, TRUE)
-        `.catch(() => {});
+        try {
+          await sql`
+            INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
+            VALUES (${id}, 1, ${ownerId}, ${editorName}, ${JSON.stringify(["Created report"])}::jsonb, TRUE)
+          `;
+        } catch (err) {
+          console.error("edit_changelog insert failed (create path):", err);
+        }
       } catch { /* skip */ }
     }
 
-    // Clean up any drafts for this user (fire-and-forget — the real share replaces the draft)
-    if (ownerId) {
-      sql`DELETE FROM shares WHERE owner_id = ${ownerId} AND is_draft = TRUE`.catch(() => {});
+    // Remove only the active draft being published; keep the creator's other
+    // works in progress available in the dashboard.
+    if (draftId) {
+      try {
+        await sql`
+          DELETE FROM shares
+          WHERE id = ${draftId} AND owner_id = ${ownerId} AND is_draft = TRUE
+        `;
+      } catch (err) {
+        console.error("draft cleanup failed:", err);
+      }
     }
 
-    // Invalidate explore cache on new share
-    cacheInvalidatePrefix("explore:");
+    // Invalidate explore cache on new share — awaited so it actually flushes
+    // before the lambda freezes (was previously fire-and-forget).
+    try {
+      await cacheInvalidatePrefix("explore:");
+    } catch (err) {
+      console.error("explore cache invalidate failed:", err);
+    }
 
-    // Notify followers when a new public (non-unlisted) report is created (fire-and-forget)
+    // Finish follower notifications before the serverless function returns
     if (isPublic && !isUnlisted && state.creatorName) {
-      notifyFollowers(state.creatorName as string, id, ownerId ?? undefined);
+      await notifyFollowers(state.creatorName as string, id, ownerId ?? undefined);
     }
 
     // Track server-side
@@ -361,6 +572,11 @@ export async function POST(request: Request) {
       has_matchup_plans: (state.matchupPlans?.length ?? 0) > 0,
       has_notes: !!state.notes && Object.keys(state.notes).length > 0,
       creator_name: state.creatorName ?? null,
+    });
+
+    schedulePublishShareOgImage(id, state as Record<string, unknown>, {
+      isPublic: isPublic ?? false,
+      isUnlisted: isUnlisted ?? false,
     });
 
     return NextResponse.json({ id, editToken: newEditToken, updated: false, version: 1, isPublic: isPublic ?? false, isUnlisted: isUnlisted ?? false });

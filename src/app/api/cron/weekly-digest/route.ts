@@ -1,13 +1,11 @@
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
-import { sendEmail } from "@/lib/email";
-import { html, raw } from "@/lib/email-html";
+import { sendEmail, escapeHtml } from "@/lib/email";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 const APP_URL = "https://pokemonvgcteamreport.com";
 const MAX_USERS = 500;
-const UNSUBSCRIBE_URL = `${APP_URL}/dashboard/notifications`;
 
 // ── HTML Builders ─────────────────────────────────────────────────────────────
 
@@ -18,17 +16,17 @@ function buildDigestEmailHtml(data: {
   newComments: number;
   newReactions: number;
 }) {
-  const name = data.firstName || "there";
+  const name = escapeHtml(data.firstName || "there");
 
   const statCard = (value: number, label: string, color: string) =>
-    raw(`<td style="padding:0 6px;" width="33%">
+    `<td style="padding:0 6px;" width="33%">
       <div style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;padding:20px 8px;text-align:center;">
         <div style="font-size:28px;font-weight:800;color:${color};line-height:1;">${value}</div>
         <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;margin-top:8px;font-weight:600;">${label}</div>
       </div>
-    </td>`);
+    </td>`;
 
-  return html`<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -41,7 +39,7 @@ function buildDigestEmailHtml(data: {
 
   <!-- Preheader -->
   <div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#F4F4F5;">
-    ${raw(data.totalViews)} views, ${raw(data.newComments)} comments, ${raw(data.newReactions)} reactions this week.
+    ${data.totalViews} views, ${data.newComments} comments, ${data.newReactions} reactions this week.
   </div>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F4F5;">
@@ -80,18 +78,18 @@ function buildDigestEmailHtml(data: {
               </tr>
             </table>
 
-            ${data.newReports > 0 ? raw(`
+            ${data.newReports > 0 ? `
             <!-- New reports callout -->
             <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:12px 16px;margin-bottom:24px;">
               <p style="font-size:13px;font-weight:600;color:#15803D;margin:0;">
                 You published ${data.newReports} new report${data.newReports > 1 ? "s" : ""} this week. Keep it up!
               </p>
             </div>
-            `) : ""}
+            ` : ""}
 
             <!-- CTA -->
             <div style="text-align:center;">
-              <a href="${raw(APP_URL)}/dashboard" style="display:inline-block;padding:12px 28px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">View your reports</a>
+              <a href="${APP_URL}/dashboard" style="display:inline-block;padding:12px 28px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">View your reports</a>
             </div>
 
           </div>
@@ -100,9 +98,9 @@ function buildDigestEmailHtml(data: {
         <!-- Footer -->
         <tr><td style="padding:24px 0 0;text-align:center;">
           <p style="font-size:12px;color:#9CA3AF;margin:0 0 6px;">
-            <a href="${raw(APP_URL)}/explore" style="color:#6B7280;text-decoration:none;font-weight:500;">Explore</a>
+            <a href="${APP_URL}/explore" style="color:#6B7280;text-decoration:none;font-weight:500;">Explore</a>
             <span style="margin:0 6px;color:#D1D5DB;">&middot;</span>
-            <a href="${raw(APP_URL)}/dashboard" style="color:#6B7280;text-decoration:none;font-weight:500;">Dashboard</a>
+            <a href="${APP_URL}/dashboard" style="color:#6B7280;text-decoration:none;font-weight:500;">Dashboard</a>
           </p>
           <p style="font-size:11px;color:#D1D5DB;margin:0;">
             VGC Team Report &mdash; pokemonvgcteamreport.com<br>
@@ -122,17 +120,17 @@ function buildTrendingDigestHtml(data: {
   firstName: string | null;
   topTitles: string[];
 }) {
-  const name = data.firstName || "there";
+  const name = escapeHtml(data.firstName || "there");
 
-  const titleRows = raw(data.topTitles.length > 0
+  const titleRows = data.topTitles.length > 0
     ? data.topTitles.map((title) =>
-        html`<tr>
-          <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;">${title}</td>
+        `<tr>
+          <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;">${escapeHtml(title)}</td>
         </tr>`
       ).join("")
-    : `<tr><td style="padding:24px;text-align:center;font-size:13px;color:#9CA3AF;">Check out the latest reports from the community</td></tr>`);
+    : `<tr><td style="padding:24px;text-align:center;font-size:13px;color:#9CA3AF;">Check out the latest reports from the community</td></tr>`;
 
-  return html`<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -184,7 +182,7 @@ function buildTrendingDigestHtml(data: {
 
             <!-- CTA -->
             <div style="text-align:center;">
-              <a href="${raw(APP_URL)}/explore" style="display:inline-block;padding:12px 28px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">Explore trending teams</a>
+              <a href="${APP_URL}/explore" style="display:inline-block;padding:12px 28px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">Explore trending teams</a>
             </div>
 
           </div>
@@ -193,9 +191,9 @@ function buildTrendingDigestHtml(data: {
         <!-- Footer -->
         <tr><td style="padding:24px 0 0;text-align:center;">
           <p style="font-size:12px;color:#9CA3AF;margin:0 0 6px;">
-            <a href="${raw(APP_URL)}/explore" style="color:#6B7280;text-decoration:none;font-weight:500;">Explore</a>
+            <a href="${APP_URL}/explore" style="color:#6B7280;text-decoration:none;font-weight:500;">Explore</a>
             <span style="margin:0 6px;color:#D1D5DB;">&middot;</span>
-            <a href="${raw(APP_URL)}/dashboard" style="color:#6B7280;text-decoration:none;font-weight:500;">Dashboard</a>
+            <a href="${APP_URL}/dashboard" style="color:#6B7280;text-decoration:none;font-weight:500;">Dashboard</a>
           </p>
           <p style="font-size:11px;color:#D1D5DB;margin:0;">
             VGC Team Report &mdash; pokemonvgcteamreport.com<br>
@@ -249,6 +247,11 @@ export async function GET(request: Request) {
       WHERE owner_id IS NOT NULL
         AND deleted_at IS NULL
         AND created_at < NOW() - INTERVAL '7 days'
+        AND NOT EXISTS (
+          SELECT 1 FROM user_preferences prefs
+          WHERE prefs.user_id = shares.owner_id
+            AND prefs.preferences->>'weeklyDigest' = 'false'
+        )
       LIMIT ${MAX_USERS + 1}
     `;
     userIds = rows.map((r) => r.owner_id as string);
@@ -306,17 +309,31 @@ export async function GET(request: Request) {
 
       const firstName = user.firstName ?? null;
 
-      // c. Query engagement stats — includes total_shares to avoid a second query
+      // c. Query engagement stats.
+      // SUM(view_count) and COUNT(shares) must NOT cross-join with comments
+      // and reactions — the cross-product inflates both by 1+commentsCount
+      // * 1+reactionsCount per share. Aggregate share-level stats in their
+      // own row, then add separate scalar subqueries for the comment and
+      // reaction windows. COUNT(DISTINCT) on the comment/reaction ids
+      // happens to mask the inflation for those two counts but not for
+      // SUM or plain COUNT, so we keep the comment / reaction counts as
+      // dedicated subqueries too for symmetry.
       const [stats] = await sql`
         SELECT
-          COUNT(DISTINCT r.id) FILTER (WHERE r.created_at > NOW() - INTERVAL '7 days') AS new_reports,
+          COUNT(*) FILTER (WHERE r.created_at > NOW() - INTERVAL '7 days') AS new_reports,
           COALESCE(SUM(r.view_count), 0) AS total_views,
-          COUNT(DISTINCT c.id) AS new_comments,
-          COUNT(DISTINCT rc.id) AS new_reactions,
-          COUNT(r.id) AS total_shares
+          COUNT(*) AS total_shares,
+          (
+            SELECT COUNT(*) FROM comments c
+            WHERE c.share_id IN (SELECT id FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL)
+              AND c.created_at > NOW() - INTERVAL '7 days'
+          ) AS new_comments,
+          (
+            SELECT COUNT(*) FROM reactions rc
+            WHERE rc.share_id IN (SELECT id FROM shares WHERE owner_id = ${userId} AND deleted_at IS NULL)
+              AND rc.created_at > NOW() - INTERVAL '7 days'
+          ) AS new_reactions
         FROM shares r
-        LEFT JOIN comments c ON c.share_id = r.id AND c.created_at > NOW() - INTERVAL '7 days'
-        LEFT JOIN reactions rc ON rc.share_id = r.id AND rc.created_at > NOW() - INTERVAL '7 days'
         WHERE r.owner_id = ${userId} AND r.deleted_at IS NULL
       `;
 
@@ -329,26 +346,19 @@ export async function GET(request: Request) {
       const hasActivity = newReports > 0 || newComments > 0 || newReactions > 0 || totalViews > 0;
       const sendTrending = totalShares === 0 && !hasActivity;
 
-      let emailHtml: string;
+      let html: string;
       let subject: string;
 
       if (sendTrending) {
-        emailHtml = buildTrendingDigestHtml({ firstName, topTitles });
+        html = buildTrendingDigestHtml({ firstName, topTitles });
         subject = "Here's what's trending in VGC this week";
       } else {
-        emailHtml = buildDigestEmailHtml({ firstName, newReports, totalViews, newComments, newReactions });
+        html = buildDigestEmailHtml({ firstName, newReports, totalViews, newComments, newReactions });
         subject = `Your reports this week, ${firstName || "there"}!`;
       }
 
-      emailJobs.push({
-        to: email,
-        subject,
-        html,
-        headers: {
-          "List-Unsubscribe": `<${UNSUBSCRIBE_URL}>`,
-          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-        },
-      });
+      // CAN-SPAM / Gmail bulk-sender: point mail clients at the preferences page.
+      emailJobs.push({ to: email, subject, html, headers: { "List-Unsubscribe": `<${APP_URL}/dashboard/notifications>` } });
     } catch (e) {
       console.error(`[weekly-digest] Error preparing email for ${userId}:`, e);
       errors++;

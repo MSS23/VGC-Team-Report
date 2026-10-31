@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import type { TeamAnalysis } from "@/lib/types/analysis";
 import type { MatchupPlan, GameResult } from "@/hooks/useMatchupPlans";
@@ -8,6 +9,7 @@ import type { SpriteConfig } from "@/lib/types/sprites";
 import type { ReportTags } from "@/lib/data/tags";
 import { TeamOverview } from "./TeamOverview";
 import { PokemonDetailSlide } from "./PokemonDetailSlide";
+import { CommonModesSlide, type CommonModesValue } from "./CommonModesSlide";
 import { useVersionDiff } from "@/lib/contexts/VersionDiffContext";
 
 // Lazy-load heavy analysis and matchup components
@@ -17,6 +19,7 @@ const SpeedTierChart = dynamic(() => import("./SpeedTierChart").then(m => ({ def
 const OffensiveCoverageChart = dynamic(() => import("./OffensiveCoverageChart").then(m => ({ default: m.OffensiveCoverageChart })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-xl h-48" />,
 });
+const ThreatMatrix = dynamic(() => import("./ThreatMatrix"));
 const DefensiveCoverageChart = dynamic(() => import("./DefensiveCoverageChart").then(m => ({ default: m.DefensiveCoverageChart })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" />,
 });
@@ -26,6 +29,11 @@ const MatchupPlanSlide = dynamic(() => import("./MatchupPlanSlide").then(m => ({
 const MatchupSheet = dynamic(() => import("./MatchupSheet").then(m => ({ default: m.MatchupSheet })), {
   loading: () => <div className="animate-pulse bg-surface-alt rounded-2xl h-64" data-walkthrough="matchup-sheet" />,
 });
+
+// Stable empty array so the memoized PokemonDetailSlide sees a referentially
+// equal `calcs` prop for slots with no damage calcs (otherwise `?? []` minted a
+// fresh array every render and defeated React.memo).
+const EMPTY_CALCS: CalcEntry[] = [];
 
 interface TeamReportProps {
   analysis: TeamAnalysis;
@@ -42,6 +50,8 @@ interface TeamReportProps {
   onRoleChange: (speciesKey: string, text: string) => void;
   teamSummary: string;
   onTeamSummaryChange: (text: string) => void;
+  commonModes?: CommonModesValue;
+  onCommonModesChange?: (value: CommonModesValue) => void;
   teamName?: string;
   onTeamNameChange?: (text: string) => void;
   tournamentName?: string;
@@ -62,7 +72,6 @@ interface TeamReportProps {
   isPresentationMode?: boolean;
   plans?: MatchupPlan[];
   onGamePlanNotesChange?: (matchupId: string, gamePlanId: string, notes: string) => void;
-  onGamePlanReplaysChange?: (matchupId: string, gamePlanId: string, replays: string[]) => void;
   onGamePlanBringChange?: (
     matchupId: string,
     gamePlanId: string,
@@ -80,6 +89,7 @@ interface TeamReportProps {
   onReorderPokemon?: (fromIndex: number, toIndex: number) => void;
   onPokemonLongPress?: (index: number) => void;
   onUpdatePaste?: (paste: string) => void;
+  onUpdateSpread?: (index: number, spread: import("@/lib/types/pokemon").StatSpread, reasoning: string) => void;
   onReplacePokemon?: (index: number, newSpecies: string) => void;
   megaStates?: Record<number, boolean>;
   onToggleMega?: (index: number) => void;
@@ -107,7 +117,7 @@ export function FieldDiffHighlight({ field, children, label }: { field: string |
     <div className="version-diff-highlight relative" data-diff-field={matchedField}>
       <div className="version-diff-border absolute -inset-1.5 sm:-inset-2 rounded-xl pointer-events-none" />
       <div className="version-diff-label absolute -top-1.5 sm:-top-2 left-2 sm:left-3 z-10 pointer-events-none">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500 text-white text-[9px] font-bold rounded-md shadow-sm shadow-blue-500/30 uppercase tracking-wider">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-md shadow-sm shadow-blue-500/30 uppercase tracking-wider">
           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
           {label ?? "Changed"}
         </span>
@@ -132,6 +142,8 @@ export function TeamReport({
   onRoleChange,
   teamSummary,
   onTeamSummaryChange,
+  commonModes,
+  onCommonModesChange,
   teamName,
   onTeamNameChange,
   tournamentName,
@@ -152,7 +164,6 @@ export function TeamReport({
   isPresentationMode = false,
   plans = [],
   onGamePlanNotesChange,
-  onGamePlanReplaysChange,
   onGamePlanBringChange,
   onAddGamePlan,
   onRemoveGamePlan,
@@ -165,6 +176,7 @@ export function TeamReport({
   onReorderPokemon,
   onPokemonLongPress,
   onUpdatePaste,
+  onUpdateSpread,
   onReplacePokemon,
   megaStates,
   onToggleMega,
@@ -173,6 +185,36 @@ export function TeamReport({
   redactedFields,
 }: TeamReportProps) {
   const pokemonCount = analysis.pokemon.length;
+
+  // ── Stable per-slide detail callbacks ────────────────────────────
+  // The Pokemon detail slide (currentSlide >= 2) is memoized. Passing fresh
+  // inline arrows every render (e.g. `(text) => onNoteChange(key, text)`) would
+  // change its props on every parent render and defeat the memo. Derive the
+  // active slide's key/index up front and wrap the closures in useCallback so
+  // they stay referentially stable while the same slide is shown. These hooks
+  // must run before any early return to satisfy the rules of hooks.
+  const detailIndex = currentSlide - 2;
+  const detailKey = speciesKeys[detailIndex];
+  const handleDetailNoteChange = useCallback(
+    (text: string) => onNoteChange(detailKey, text),
+    [onNoteChange, detailKey],
+  );
+  const handleDetailAddCalc = useCallback(
+    (text: string, category: CalcCategory) => onAddCalc(detailKey, text, category),
+    [onAddCalc, detailKey],
+  );
+  const handleDetailRemoveCalc = useCallback(
+    (index: number) => onRemoveCalc(detailKey, index),
+    [onRemoveCalc, detailKey],
+  );
+  const handleDetailEditCalc = useCallback(
+    (index: number, updates: Partial<CalcEntry>) => onEditCalc(detailKey, index, updates),
+    [onEditCalc, detailKey],
+  );
+  const handleDetailToggleMega = useMemo(
+    () => (onToggleMega ? () => onToggleMega(detailIndex) : undefined),
+    [onToggleMega, detailIndex],
+  );
 
   const redactedNotice = (redactedFields && redactedFields.length > 0) ? (
     <div className="max-w-5xl mx-auto px-2 sm:px-4 mb-3">
@@ -237,21 +279,39 @@ export function TeamReport({
     );
   }
 
-  // Slides 1 through pokemonCount: Individual Pokemon detail
-  if (currentSlide >= 1 && currentSlide <= pokemonCount) {
-    const pokemonIndex = currentSlide - 1;
+  // Slide 1: Common Modes ("How to pilot this team")
+  if (currentSlide === 1) {
+    return (
+      <>
+        {redactedNotice}
+        <CommonModesSlide
+          commonModes={commonModes}
+          onChange={onCommonModesChange ?? (() => {})}
+          yourPokemon={analysis.pokemon}
+          isReadOnly={isReadOnly}
+          isPresentationMode={isPresentationMode}
+        />
+      </>
+    );
+  }
+
+  // Slides 2 through pokemonCount + 1: Individual Pokemon detail
+  if (currentSlide >= 2 && currentSlide <= pokemonCount + 1) {
+    const pokemonIndex = currentSlide - 2;
     const pokemon = analysis.pokemon[pokemonIndex];
     const key = speciesKeys[pokemonIndex];
 
     return (
         <PokemonDetailSlide
           pokemon={pokemon}
+          team={analysis.pokemon.map((entry) => entry.parsed)}
+          onApplySpread={onUpdateSpread ? (spread, reasoning) => onUpdateSpread(pokemonIndex, spread, reasoning) : undefined}
           note={notes[key] ?? ""}
-          onNoteChange={(text) => onNoteChange(key, text)}
-          calcs={calcs[key] ?? []}
-          onAddCalc={(text, category) => onAddCalc(key, text, category)}
-          onRemoveCalc={(index) => onRemoveCalc(key, index)}
-          onEditCalc={(index, updates) => onEditCalc(key, index, updates)}
+          onNoteChange={handleDetailNoteChange}
+          calcs={calcs[key] ?? EMPTY_CALCS}
+          onAddCalc={handleDetailAddCalc}
+          onRemoveCalc={handleDetailRemoveCalc}
+          onEditCalc={handleDetailEditCalc}
           isReadOnly={isReadOnly}
           isPresentationMode={isPresentationMode}
           shiny={getSpriteConfig?.(key)?.shiny}
@@ -260,13 +320,13 @@ export function TeamReport({
           pokemonIndex={pokemonIndex}
           regulation={tags?.regulation}
           isMega={megaStates?.[pokemonIndex]}
-          onToggleMega={onToggleMega ? () => onToggleMega(pokemonIndex) : undefined}
+          onToggleMega={handleDetailToggleMega}
         />
     );
   }
 
   // Speed tier chart slide (after all Pokemon)
-  if (currentSlide === pokemonCount + 1) {
+  if (currentSlide === pokemonCount + 2) {
     return (
         <SpeedTierChart
           pokemon={analysis.pokemon}
@@ -274,31 +334,41 @@ export function TeamReport({
           getSpriteConfig={getSpriteConfig}
           isPresentationMode={isPresentationMode}
           regulation={tags?.regulation}
+          megaStates={megaStates}
         />
     );
   }
 
   // Offensive coverage slide
-  if (currentSlide === pokemonCount + 2) {
+  if (currentSlide === pokemonCount + 3) {
     return (
         <div className="animate-fade-in">
-          <OffensiveCoverageChart pokemon={analysis.pokemon} />
+          <OffensiveCoverageChart
+            pokemon={analysis.pokemon}
+            speciesKeys={speciesKeys}
+            megaStates={megaStates}
+          />
+          <ThreatMatrix team={analysis.pokemon.map((p) => p.parsed)} regulation={tags?.regulation} />
         </div>
     );
   }
 
   // Defensive coverage slide
-  if (currentSlide === pokemonCount + 3) {
+  if (currentSlide === pokemonCount + 4) {
     return (
         <div className="animate-fade-in">
-          <DefensiveCoverageChart pokemon={analysis.pokemon} />
+          <DefensiveCoverageChart
+            pokemon={analysis.pokemon}
+            speciesKeys={speciesKeys}
+            megaStates={megaStates}
+          />
         </div>
     );
   }
 
   // Per-matchup plan slides (visibility handled by navigation layer)
   if (plans.length > 0) {
-    const matchupSlideIndex = currentSlide - pokemonCount - 4;
+    const matchupSlideIndex = currentSlide - pokemonCount - 5;
 
     if (matchupSlideIndex >= 0 && matchupSlideIndex < plans.length) {
       const plan = plans[matchupSlideIndex];
@@ -308,20 +378,20 @@ export function TeamReport({
             yourPokemon={analysis.pokemon}
             isReadOnly={isReadOnly}
             onGamePlanNotesChange={onGamePlanNotesChange ?? (() => {})}
-            onGamePlanReplaysChange={onGamePlanReplaysChange ?? (() => {})}
             onGamePlanBringChange={onGamePlanBringChange ?? (() => {})}
             onReorderGamePlanBring={onReorderGamePlanBring ?? (() => {})}
             onGamePlanResultChange={onGamePlanResultChange ?? (() => {})}
             onAddGamePlan={onAddGamePlan ?? (() => {})}
             onRemoveGamePlan={onRemoveGamePlan ?? (() => {})}
             onRemove={onRemovePlan ?? (() => {})}
+            regulation={tags?.regulation}
           />
       );
     }
   }
 
   // Last slide: Matchup sheet (always available — expandable rows for game plans)
-  const matchupSheetSlide = pokemonCount + 4 + plans.length;
+  const matchupSheetSlide = pokemonCount + 5 + plans.length;
   if (currentSlide === matchupSheetSlide) {
     return (
         <MatchupSheet

@@ -108,6 +108,7 @@ export const TYPE_CHART: Record<PokemonType, Partial<Record<PokemonType, number>
     Fire: 0.5,
     Grass: 2,
     Fighting: 0.5,
+    Poison: 0.5,
     Flying: 0.5,
     Psychic: 2,
     Ghost: 0.5,
@@ -181,18 +182,39 @@ export function getEffectiveness(
   return mult;
 }
 
+// Abilities that grant a full immunity to an attacking type. Absorb/redirect
+// abilities (Flash Fire, Storm Drain…) count: they take 0 damage, which is
+// what the defensive chart cares about. Keys are lowercased with spaces
+// stripped so paste variants ("Lightning Rod" / "Lightningrod") both match.
+// ponytail: Dry Skin's extra Fire weakness isn't modeled — immunities only.
+const ABILITY_IMMUNITIES: Record<string, PokemonType> = {
+  levitate: "Ground",
+  eartheater: "Ground",
+  flashfire: "Fire",
+  wellbakedbody: "Fire",
+  voltabsorb: "Electric",
+  lightningrod: "Electric",
+  motordrive: "Electric",
+  waterabsorb: "Water",
+  stormdrain: "Water",
+  dryskin: "Water",
+  sapsipper: "Grass",
+};
+
 /**
  * Returns a map of every attacking type → effectiveness multiplier against
  * the given defensive typing (one or two types).
  *
  * Useful for rendering a full defensive profile / weakness chart for a Pokemon.
+ * Pass the Pokemon's ability to apply ability-based immunities (e.g. Levitate → Ground 0x).
  *
  * Example:
  *   getDefensiveProfile(["Water", "Flying"])
  *   // { Normal: 1, Fire: 0.5, Water: 0.5, Electric: 2, Grass: 1, ... }
  */
 export function getDefensiveProfile(
-  types: PokemonType[]
+  types: PokemonType[],
+  ability?: string | null
 ): Record<PokemonType, number> {
   const allTypes: PokemonType[] = [
     "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -204,5 +226,9 @@ export function getDefensiveProfile(
   for (const attackType of allTypes) {
     profile[attackType] = getEffectiveness(attackType, types);
   }
+
+  const immuneType = ability ? ABILITY_IMMUNITIES[ability.toLowerCase().replace(/[^a-z]/g, "")] : undefined;
+  if (immuneType) profile[immuneType] = 0;
+
   return profile;
 }

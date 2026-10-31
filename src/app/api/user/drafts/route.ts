@@ -4,32 +4,15 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+// Server-only route: import the schemas module directly so this path keeps a
+// static zod import. `url-codec.ts` no longer re-exports the schemas (VGC-256)
+// because it sits in the homepage client graph.
+import { ShareableStateSchema } from "@/lib/sharing/url-codec.schemas";
 
 const DraftBodySchema = z.object({
-  state: z.object({
-    paste: z.string(),
-    matchupPlans: z.array(z.unknown()).optional().default([]),
-    notes: z.record(z.string(), z.unknown()).optional(),
-    calcs: z.record(z.string(), z.unknown()).optional(),
-    roles: z.record(z.string(), z.unknown()).optional(),
-    teamSummary: z.string().optional(),
-    teamName: z.string().optional(),
-    tournamentName: z.string().optional(),
-    placement: z.string().optional(),
-    record: z.string().optional(),
-    mvpIndex: z.number().nullable().optional(),
-    rentalCode: z.string().optional(),
-    creatorName: z.string().optional(),
-    spriteSettings: z.unknown().optional(),
-    hiddenSlides: z.array(z.union([z.number(), z.string()])).optional(),
-    tags: z.object({
-      regulation: z.string().optional(),
-      eventType: z.string().optional(),
-      archetype: z.array(z.string()).optional(),
-    }).optional(),
-    templateId: z.string().optional(),
-    genTheme: z.string().optional(),
-  }).strip(),
+  // Reuse the canonical report schema so drafts cannot silently lose newly
+  // added fields when they are saved and resumed later.
+  state: ShareableStateSchema,
   draftId: z.string().optional(),
 });
 
@@ -63,7 +46,7 @@ export async function GET(request: NextRequest) {
     const draftId = request.nextUrl.searchParams.get("id");
     if (draftId) {
       const rows = await sql`
-        SELECT id, edit_token, data, created_at, updated_at
+        SELECT id, data, created_at, updated_at
         FROM shares
         WHERE id = ${draftId} AND owner_id = ${userId} AND is_draft = TRUE AND deleted_at IS NULL
       `;
@@ -74,7 +57,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         drafts: [{
           id: row.id as string,
-          editToken: row.edit_token as string,
           data: row.data,
           createdAt: (row.created_at as Date).toISOString(),
           updatedAt: (row.updated_at as Date).toISOString(),
@@ -83,7 +65,7 @@ export async function GET(request: NextRequest) {
     }
 
     const rows = await sql`
-      SELECT id, edit_token, data, created_at, updated_at
+      SELECT id, data, created_at, updated_at
       FROM shares
       WHERE owner_id = ${userId} AND is_draft = TRUE AND deleted_at IS NULL
       ORDER BY updated_at DESC
@@ -95,7 +77,6 @@ export async function GET(request: NextRequest) {
       const paste = (data.paste as string) ?? "";
       return {
         id: row.id as string,
-        editToken: row.edit_token as string,
         species: extractSpecies(paste),
         tournamentName: (data.tournamentName as string) || undefined,
         creatorName: (data.creatorName as string) || undefined,
@@ -161,7 +142,7 @@ export async function POST(request: NextRequest) {
       VALUES (${id}, ${editToken}, ${JSON.stringify(state)}::jsonb, 1, FALSE, TRUE, ${userId})
     `;
 
-    return NextResponse.json({ id, editToken, updated: false });
+    return NextResponse.json({ id, updated: false });
   } catch (e) {
     console.error("Draft save error:", e);
     return NextResponse.json({ error: "Failed" }, { status: 500 });

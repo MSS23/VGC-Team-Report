@@ -5,6 +5,10 @@ import { createPortal } from "react-dom";
 import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { teamToOpenSheet } from "@/lib/utils/export-paste";
 import { resolveSlug, getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { getHtml2Canvas } from "@/lib/dynamic-imports/html2canvas";
+import { useTranslation } from "@/lib/i18n";
+import type { LanguageCode } from "@/lib/i18n";
+import { translateMove } from "@/lib/utils/translate-move";
 
 interface OTSSheetModalProps {
   pokemon: ParsedPokemon[];
@@ -193,7 +197,7 @@ function SpriteImg({ species }: { species: string }) {
   );
 }
 
-function PokemonCard({ mon }: { mon: ParsedPokemon }) {
+function PokemonCard({ mon, language }: { mon: ParsedPokemon; language: LanguageCode }) {
   const displayName = mon.nickname ? `${mon.nickname} (${mon.species})` : mon.species;
   return (
     <div className="flex gap-3 p-3 bg-surface border border-border rounded-xl">
@@ -222,7 +226,7 @@ function PokemonCard({ mon }: { mon: ParsedPokemon }) {
         <ul className="grid grid-cols-2 gap-x-3 gap-y-0">
           {mon.moves.map((move, i) => (
             <li key={i} className="text-[11px] text-text-secondary truncate">
-              <span className="text-text-tertiary">— </span>{move}
+              <span className="text-text-tertiary">— </span>{translateMove(move, language)}
             </li>
           ))}
         </ul>
@@ -240,7 +244,10 @@ export function OTSSheetModal({
   eventType,
   onClose,
 }: OTSSheetModalProps) {
+  const { language } = useTranslation();
   const sheetRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const titleId = "ots-sheet-modal-title";
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState<"png" | "pdf" | false>(false);
@@ -271,7 +278,7 @@ export function OTSSheetModal({
     if (!sheetRef.current) return;
     setDownloading("png");
     try {
-      const { default: html2canvas } = await import("html2canvas-pro");
+      const html2canvas = await getHtml2Canvas();
       const canvas = await html2canvas(sheetRef.current, {
         useCORS: true,
         allowTaint: false,
@@ -300,10 +307,53 @@ export function OTSSheetModal({
     if (e.target === e.currentTarget) onClose();
   }, [onClose]);
 
+  // Focus trap + Escape handler + focus restore
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    // Remember the element that had focus before the modal opened so we can restore it on close
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const focusableSelectors =
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    // Focus first focusable element on mount
+    const firstFocusable = modal.querySelector<HTMLElement>(focusableSelectors);
+    firstFocusable?.focus();
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      const focusable = Array.from(modal.querySelectorAll<HTMLElement>(focusableSelectors));
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKey);
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      // Restore focus to the element that triggered the modal
+      previouslyFocused?.focus();
+    };
   }, [onClose]);
 
   if (!mounted) return null;
@@ -313,11 +363,17 @@ export function OTSSheetModal({
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-sm safe-x"
       onClick={handleBackdropClick}
     >
-      <div className="relative w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col bg-background rounded-2xl shadow-2xl overflow-hidden border border-border">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col bg-background rounded-2xl shadow-2xl overflow-hidden border border-border"
+      >
         {/* Header */}
         <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 sm:py-4 border-b border-border flex-shrink-0">
           <div className="min-w-0">
-            <h2 className="text-base font-bold text-text-primary">Open Team Sheet</h2>
+            <h2 id={titleId} className="text-base font-bold text-text-primary">Open Team Sheet</h2>
             {(tournamentName || teamName) && (
               <p className="text-xs text-text-tertiary mt-0.5 truncate">{teamName || tournamentName}</p>
             )}
@@ -355,14 +411,14 @@ export function OTSSheetModal({
                     className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg border border-border"
                     crossOrigin="anonymous"
                   />
-                  <p className="text-[9px] text-text-tertiary text-center max-w-[96px] leading-tight">Scan for full report</p>
+                  <p className="text-[10px] text-text-tertiary text-center max-w-[96px] leading-tight">Scan for full report</p>
                 </div>
               )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {pokemon.map((mon, i) => (
-                <PokemonCard key={i} mon={mon} />
+                <PokemonCard key={i} mon={mon} language={language} />
               ))}
             </div>
 

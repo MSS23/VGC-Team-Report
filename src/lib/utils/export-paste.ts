@@ -83,7 +83,7 @@ export function teamToShowdown(pokemon: ParsedPokemon[]): string {
  * a match. Species, item, ability, Tera Type, level (if non-default), and
  * moves are visible; EVs, IVs, and nature are hidden.
  */
-export function pokemonToOpenSheet(mon: ParsedPokemon): string {
+function pokemonToOpenSheet(mon: ParsedPokemon): string {
   const lines: string[] = [];
 
   let line1 = "";

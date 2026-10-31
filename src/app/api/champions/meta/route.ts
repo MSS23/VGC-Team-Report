@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const CACHE_KEY = "champions:meta:snapshot";
+const CACHE_KEY = "champions:meta:snapshot:v2";
 const CACHE_TTL = 300; // 5 minutes
 const MIN_REPORTS = 5;
 const TOP_N = 20;
@@ -53,7 +53,9 @@ export async function GET(request: Request) {
         WHERE is_public = TRUE
           AND deleted_at IS NULL
           AND (
-            data->>'regulation' ILIKE '%champion%'
+            data->>'regulation' IN ('Reg M-A', 'Reg M-B', 'Reg M-C')
+            OR data->'tags'->>'regulation' IN ('Reg M-A', 'Reg M-B', 'Reg M-C')
+            OR data->>'regulation' ILIKE '%champion%'
             OR data->>'regulation' ILIKE '%reg-m%'
             OR data->'tags'->>'regulation' ILIKE '%champion%'
             OR data->'tags'->>'regulation' ILIKE '%reg-m%'
@@ -76,10 +78,10 @@ export async function GET(request: Request) {
       name_parts AS (
         SELECT
           id,
-          block_num,
+          row_number() OVER (PARTITION BY id ORDER BY block_num) AS block_num,
           trim(split_part(first_line, ' @ ', 1)) AS name_part
         FROM blocks
-        WHERE first_line <> ''
+        WHERE first_line <> '' AND first_line !~ '^==='
       ),
       gender_stripped AS (
         SELECT

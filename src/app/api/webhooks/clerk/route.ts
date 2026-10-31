@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
-import { sendEmail, buildWelcomeEmailHtml } from "@/lib/email";
-import { cacheSetIfAbsent } from "@/lib/cache";
+import { sendWelcomeEmail } from "@/lib/email";
+import { cacheDel, cacheSetIfAbsent } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -71,17 +71,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true });
       }
 
-      const displayName = data.first_name || "there";
-      const result = await sendEmail({
+      const result = await sendWelcomeEmail({
         to: primaryEmail.email_address,
-        subject: "Welcome to VGC Team Report!",
-        html: buildWelcomeEmailHtml(displayName),
+        firstName: data.first_name,
       });
 
       if (!result) {
         // sendEmail returns null on failure — return 500 so Clerk retries.
-        // The next retry will pass the svix-id dedup check only if this
-        // delivery's svix-id hasn't been cached (i.e. Redis was unavailable).
+        // Release the svix-id first, otherwise the retry is deduped and the email is lost.
+        if (svixId) await cacheDel(`clerk:svix:${svixId}`);
         console.error("Failed to send welcome email to", primaryEmail.email_address);
         return NextResponse.json({ error: "Email send failed" }, { status: 500 });
       }
@@ -90,6 +88,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("Clerk webhook handler error:", e);
-    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
+    // Return HTTP 200 even on internal/handler errors so Clerk does not
+    // auto-disable the webhook or retry (which would cause duplicate welcome
+    // emails). Signature verification failures above still return 4xx.
+    return NextResponse.json({ ok: false, error: "handler_error" }, { status: 200 });
   }
 }

@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 // QRCode loaded dynamically — only needed when rental code is present
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { PokemonCard } from "./PokemonCard";
 import { TeamStats } from "./TeamStats";
 import { useTranslation } from "@/lib/i18n";
-import { ARCHETYPES, REGULATIONS, EVENT_TYPES } from "@/lib/data/tags";
+import { ARCHETYPES, REGULATIONS, EVENT_TYPES, isChampionsFormat } from "@/lib/data/tags";
 import type { ReportTags } from "@/lib/data/tags";
 import { FieldDiffHighlight } from "./TeamReport";
+import { encodeSectionKey } from "@/lib/utils/version-diff";
 import { hapticMedium, hapticSuccess } from "@/lib/utils/haptics";
 import { detectImportSource } from "@/lib/utils/multi-import";
 import { fetchPokePaste } from "@/lib/utils/pokepaste";
@@ -28,6 +29,7 @@ function LongPressWrapper({
   onDragLeave,
   onDragOver,
   onDrop,
+  ariaLabel,
 }: {
   onLongPress?: () => void;
   onTap?: () => void;
@@ -40,10 +42,12 @@ function LongPressWrapper({
   onDragLeave?: React.DragEventHandler;
   onDragOver?: React.DragEventHandler;
   onDrop?: React.DragEventHandler;
+  ariaLabel?: string;
 }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelled = useRef(false);
   const didLongPress = useRef(false);
+  const handledTouchTap = useRef(false);
   const [pressed, setPressed] = useState(false);
 
   const start = useCallback(() => {
@@ -74,6 +78,7 @@ function LongPressWrapper({
       const target = e.target as HTMLElement;
       // Don't navigate if tapping an interactive child element
       if (!target.closest('button, input, textarea, a, [role="button"], [contenteditable]')) {
+        handledTouchTap.current = true;
         onTap();
       }
     }
@@ -81,6 +86,10 @@ function LongPressWrapper({
 
   return (
     <div
+      data-slide-navigation-ignore={onTap ? "true" : undefined}
+      role={onTap ? "button" : undefined}
+      tabIndex={onTap ? 0 : undefined}
+      aria-label={onTap ? ariaLabel : undefined}
       className={`${className ?? ""} ${pressed ? "scale-[0.97] opacity-80" : ""} transition-transform duration-100`}
       draggable={draggable}
       onDragStart={onDragStart}
@@ -93,8 +102,21 @@ function LongPressWrapper({
       onTouchEnd={end}
       onTouchMove={move}
       onClick={(e) => {
+        // Mobile browsers emit a synthetic click after touchend. Suppress it
+        // so one tap never launches two slide transitions.
+        if (handledTouchTap.current) {
+          handledTouchTap.current = false;
+          return;
+        }
         // Desktop click fallback — touch devices use onTap above
         if (onTap && !(e.target as HTMLElement).closest('button, input, textarea, a, [role="button"], [contenteditable]')) {
+          onTap();
+        }
+      }}
+      onKeyDown={(e) => {
+        if (!onTap || e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
           onTap();
         }
       }}
@@ -117,7 +139,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
     setError("");
 
     const source = detectImportSource(trimmed);
-    if (source === "pokepaste" || source === "pikalytics") {
+    if (source === "pokepaste") {
       setLoading(true);
       try {
         const result = await fetchPokePaste(trimmed);
@@ -140,7 +162,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
       setInput("");
       setOpen(false);
     } else {
-      setError("Paste a Showdown export, PokePaste URL, or Pikalytics URL");
+      setError("Paste a Showdown export or PokePaste URL");
     }
   };
 
@@ -149,7 +171,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-text-tertiary hover:text-accent border border-border-subtle hover:border-accent/30 rounded-lg transition-all cursor-pointer"
+        className="flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold text-text-tertiary hover:text-accent border border-border-subtle hover:border-accent/30 rounded-lg transition-all cursor-pointer"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="16 16 12 12 8 16" />
@@ -165,12 +187,13 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
     <div className="bg-surface border border-border rounded-xl p-3 sm:p-4 flex flex-col gap-2 animate-fade-in">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold uppercase tracking-widest text-text-tertiary">Update Team</span>
-        <button type="button" onClick={() => { setOpen(false); setError(""); }} className="text-text-tertiary hover:text-text-primary text-sm cursor-pointer">&#10005;</button>
+        <button type="button" aria-label="Close team update" onClick={() => { setOpen(false); setError(""); }} className="min-h-11 min-w-11 rounded-lg text-text-tertiary hover:bg-surface-alt hover:text-text-primary text-sm cursor-pointer">&#10005;</button>
       </div>
       <textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder={"Paste a PokePaste URL, Pikalytics URL, or Showdown export...\n\npokepast.es/abc123\npikalytics.com/team/...\nOr paste the full Showdown text"}
+        aria-label="Updated team paste or PokePaste URL"
+        placeholder={"Paste a PokePaste URL or Showdown export...\n\npokepast.es/abc123\n\nOr paste the full Showdown text"}
         className="w-full min-h-[4rem] sm:min-h-[5rem] p-2.5 bg-surface-alt border border-border-subtle rounded-lg text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary/50 resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 leading-relaxed"
         spellCheck={false}
         autoFocus
@@ -181,7 +204,7 @@ function UpdateTeamPanel({ onUpdatePaste }: { onUpdatePaste: (paste: string) => 
           type="button"
           onClick={handleSubmit}
           disabled={!input.trim() || loading}
-          className="px-3 py-1.5 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+          className="min-h-11 px-3 py-2 text-xs font-bold bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
         >
           {loading ? "Fetching..." : "Apply"}
         </button>
@@ -319,7 +342,7 @@ interface TeamOverviewProps {
   onPrivateFieldsChange?: (fields: string[]) => void;
 }
 
-export function TeamOverview({
+function TeamOverviewBase({
   pokemon,
   creatorMode,
   speciesKeys,
@@ -358,10 +381,13 @@ export function TeamOverview({
   const hasTournamentInfo = !!(teamName || tournamentName || placement || record);
   const hasCreatorInfo = !!creatorName;
 
-  // Champions legality validation — only runs when regulation is Reg M-A
+  // Champions legality validation — runs for every Champions reg (M-A/B/C)
   const legality = useMemo(() => {
-    if (tags?.regulation !== "Reg M-A") return null;
-    return validateChampionsTeam(pokemon.map((p) => p.parsed));
+    if (!isChampionsFormat(tags?.regulation)) return null;
+    return validateChampionsTeam(
+      pokemon.map((p) => p.parsed),
+      tags?.regulation === "Reg M-C" || tags?.regulation === "Reg M-B" ? tags.regulation : "Reg M-A",
+    );
   }, [tags?.regulation, pokemon]);
   const [rentalCopied, setRentalCopied] = useState(false);
   const [summaryExpanded, setSummaryExpanded] = useState(false);
@@ -389,31 +415,45 @@ export function TeamOverview({
 
   return (
     <div className="flex flex-col gap-3 sm:gap-6 animate-fade-in">
+      {isReadOnly && !teamName && (
+        <h1 className="sr-only">
+          {tournamentName || pokemon.map((entry) => entry.parsed.species).join(" / ") || "VGC Team Report"}
+        </h1>
+      )}
       {/* Tournament Context */}
       {isReadOnly ? (
         (hasTournamentInfo || rentalCode || hasCreatorInfo) && (
           <FieldDiffHighlight field={["teamName", "tournamentName", "placement", "record", "rentalCode", "creatorName", "tags"]} label="Info changed">
           <div className="flex flex-col gap-2 px-1">
+            {/* The TEAM is the subject. teamName leads as H1; if it's missing
+                the team is still the page identity (the Pokemon grid below) —
+                we never promote a tournament name into the headline slot. */}
             {teamName && (
               <h1 className="text-2xl sm:text-4xl font-black text-text-primary tracking-tight leading-tight presenting:text-5xl">
                 {teamName}
               </h1>
             )}
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              {tournamentName && (
-                <h2 className={`font-extrabold text-text-primary tracking-tight leading-tight ${teamName ? "text-base sm:text-lg text-text-secondary" : "text-xl sm:text-3xl"}`}>
-                  {tournamentName}
-                </h2>
-              )}
-              {placement && (
-                <span className="text-sm font-extrabold text-accent bg-accent-surface px-3.5 py-1.5 rounded-lg border border-accent/20 tracking-wide shadow-sm shadow-accent/10">
-                  {placement}
-                </span>
-              )}
-              {record && (
-                <span className="text-sm text-text-secondary font-semibold">({record})</span>
-              )}
-            </div>
+            {/* Tournament result — attached metadata ABOUT the team, not the
+                report's headline. Framed per-result so the same team could
+                carry multiple results over time. Styled as muted chips. */}
+            {(tournamentName || placement || record) && (
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap text-text-secondary">
+                {placement && (
+                  <span className="text-xs font-extrabold text-accent bg-accent-surface px-2.5 py-1 rounded-md border border-accent/20 tracking-wide">
+                    {placement}
+                  </span>
+                )}
+                {tournamentName && (
+                  <span className="inline-flex items-baseline gap-1 text-xs sm:text-sm font-medium text-text-secondary">
+                    <span className="text-text-tertiary">Used at</span>
+                    <span className="font-bold text-text-primary">{tournamentName}</span>
+                  </span>
+                )}
+                {record && (
+                  <span className="text-xs text-text-tertiary font-semibold">({record})</span>
+                )}
+              </div>
+            )}
             {rentalCode && (
               <div className="flex items-center gap-3 self-start">
                 <button
@@ -465,7 +505,7 @@ export function TeamOverview({
                     )}
                     {tags.regulation}
                     {tags.regulationAutoDetected && (
-                      <span className="text-[9px] font-semibold opacity-70 uppercase tracking-wide">auto</span>
+                      <span className="text-[10px] font-semibold opacity-70 uppercase tracking-wide">auto</span>
                     )}
                   </span>
                 )}
@@ -488,9 +528,12 @@ export function TeamOverview({
       ) : (
         <FieldDiffHighlight field={["teamName", "tournamentName", "placement", "record", "rentalCode", "creatorName", "tags"]} label="Info changed">
         <div>
-          <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-3" data-walkthrough="tournament-info">
-            {t.tournamentInfo}
+          <h3 className="text-xs font-extrabold uppercase tracking-widest text-text-tertiary mb-1" data-walkthrough="tournament-info">
+            Team Details
           </h3>
+          <p className="text-[10px] text-text-tertiary mb-3 font-medium">
+            Name your team. Tournament results are optional metadata you can attach to it.
+          </p>
           <div className="mb-2">
             <input
               type="text"
@@ -561,8 +604,8 @@ export function TeamOverview({
             <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">Tags</h4>
             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
               <select
+                aria-label="Tournament regulation"
                 value={tags?.regulation ?? ""}
-                aria-label="Regulation"
                 onChange={(e) => onTagsChange?.({
                   ...(tags ?? {}),
                   regulation: e.target.value || undefined,
@@ -576,8 +619,8 @@ export function TeamOverview({
                 {REGULATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
               <select
+                aria-label="Event type"
                 value={tags?.eventType ?? ""}
-                aria-label="Event Type"
                 onChange={(e) => onTagsChange?.({ ...(tags ?? {}), eventType: e.target.value || undefined })}
                 className="w-full sm:w-[160px] px-3 py-2 bg-surface border-2 border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
               >
@@ -614,6 +657,12 @@ export function TeamOverview({
       )}
 
       {/* Team Summary */}
+      {tags?.tournamentUrl && /^https:\/\/limitlessvgc\.com\/tournaments\/\d+$/.test(tags.tournamentUrl) && (
+        <aside className="rounded-xl border border-border bg-surface p-4 text-sm text-text-secondary">
+          <a href={tags.tournamentUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center font-semibold text-text-primary underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">{tournamentName || "Tournament result"} on Limitless</a>
+          <p>{[tags.tournamentDate, tags.tournamentRegion, tags.tournamentPlayers ? `${tags.tournamentPlayers} players` : ""].filter(Boolean).join(" · ")}</p>
+        </aside>
+      )}
       <FieldDiffHighlight field="teamSummary" label="Summary changed">
       <div>
         <h3 className="text-[10px] sm:text-sm font-extrabold uppercase tracking-widest text-text-tertiary mb-1 sm:mb-3 presenting:text-base presenting:mb-4" data-walkthrough="team-summary">
@@ -651,8 +700,8 @@ export function TeamOverview({
           <textarea
             value={summary}
             onChange={(e) => onSummaryChange(e.target.value)}
+            aria-label="Team summary"
             placeholder={t.teamSummaryPlaceholder}
-            aria-label={t.teamSummary}
             className="w-full min-h-[4rem] sm:min-h-[8rem] p-3 sm:p-6 bg-surface border-2 border-border rounded-xl text-sm sm:text-lg text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
             spellCheck={false}
           />
@@ -695,6 +744,7 @@ export function TeamOverview({
               key={`${mon.parsed.species}-${i}`}
               onLongPress={onPokemonLongPress ? () => onPokemonLongPress(i) : undefined}
               onTap={onPokemonLongPress ? () => onPokemonLongPress(i) : undefined}
+              ariaLabel={`Open ${mon.parsed.species} details`}
               draggable={canDrag}
               onDragStart={(e: React.DragEvent) => {
                 setDragIndex(i);
@@ -738,7 +788,13 @@ export function TeamOverview({
                 isDragOver ? "ring-2 ring-accent ring-offset-2 ring-offset-background scale-[1.02]" : ""
               }`}
             >
-              <FieldDiffHighlight field={[`pokemon:${i}`, `roles:${speciesKeys[i]}`]} label="Updated">
+              <FieldDiffHighlight
+                field={[
+                  encodeSectionKey({ kind: "pokemon", index: i }),
+                  encodeSectionKey({ kind: "roles", speciesKey: speciesKeys[i] }),
+                ]}
+                label="Updated"
+              >
               <PokemonCard
                 pokemon={mon}
                 creatorMode={creatorMode}
@@ -851,3 +907,7 @@ function PrivateFieldsPanel({
     </details>
   );
 }
+
+// Memoized so edits elsewhere in the report tree do not re-render the whole
+// overview slide subtree (Finding 3.13). Relies on stable props/callbacks.
+export const TeamOverview = memo(TeamOverviewBase);

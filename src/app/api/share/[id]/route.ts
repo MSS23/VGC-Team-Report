@@ -30,7 +30,6 @@ function applyPrivateFieldRedaction(data: Record<string, unknown>): {
 }
 
 const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
-const KeySchema = z.string().regex(/^[0-9a-f]{64}$/, "Invalid edit key");
 
 type ForkedFromMeta = {
   id: string;
@@ -43,21 +42,32 @@ type ForkedFromMeta = {
 type SqlClient = ReturnType<typeof getDb>;
 
 /**
- * Look up the forked_from_id for a share in a fault-tolerant way.
- * Returns null if the column does not yet exist in the database (i.e. the
- * migration hasn't been run on this environment). This isolates the fork
- * feature from the main share-read path so a missing column can never
- * break `/s/{id}` for end users.
+ * Run a share-row SELECT in a fault-tolerant way with respect to the
+ * `forked_from_id` column. `withFork` selects the column inline (so the fork
+ * lineage rides along with the main read instead of costing an extra
+ * round-trip); if that column does not yet exist in this environment (the
+ * migration hasn't run), the query throws and we fall back to `withoutFork`.
+ * This isolates the fork feature from the main share-read path so a missing
+ * column can never break `/s/{id}` for end users.
  */
-async function loadForkedFromId(sql: SqlClient, id: string): Promise<string | null> {
+async function selectShareRowTolerant<T>(
+  withFork: () => Promise<T>,
+  withoutFork: () => Promise<T>,
+): Promise<{ rows: T; hasForkColumn: boolean }> {
   try {
-    const rows = await sql`SELECT forked_from_id FROM shares WHERE id = ${id}`;
-    if (rows.length === 0) return null;
-    return (rows[0].forked_from_id as string | null) ?? null;
+    return { rows: await withFork(), hasForkColumn: true };
   } catch {
-    // Column does not exist yet — treat as "no fork lineage"
-    return null;
+    return { rows: await withoutFork(), hasForkColumn: false };
   }
+}
+
+/** Read the forked_from_id off an already-fetched share row (null-safe). */
+function forkedFromIdFromRow(
+  row: Record<string, unknown> | undefined,
+  hasForkColumn: boolean,
+): string | null {
+  if (!hasForkColumn || !row) return null;
+  return (row.forked_from_id as string | null) ?? null;
 }
 
 /** Fetch lightweight metadata about the source a share was forked from (if any). */
@@ -68,11 +78,20 @@ async function fetchForkedFromMeta(
   if (!sourceId) return null;
   try {
     const rows = await sql`
-      SELECT data, deleted_at FROM shares WHERE id = ${sourceId}
+      SELECT data, deleted_at, is_public FROM shares WHERE id = ${sourceId}
     `;
     if (rows.length === 0) {
       return { id: sourceId, creatorName: null, tournamentName: null, species: [], deleted: true };
     }
+    // Forking is restricted to public sources (see /api/share/[id]/fork), but
+    // that is only enforced at fork time — the source owner can unpublish
+    // afterwards. Attribution must not then become a side channel: this
+    // metadata (creator, event, full species list) and the source's very
+    // existence would otherwise be disclosed to anyone holding the fork's
+    // link, including viewers who get a 404 on /s/{sourceId} itself. Once the
+    // source is no longer public, omit the lineage and let the banner hide
+    // itself, exactly as it does for a report that was never forked.
+    if (!rows[0].is_public) return null;
     const data = rows[0].data as Record<string, unknown>;
     const deleted = rows[0].deleted_at !== null;
     return {
@@ -103,66 +122,14 @@ export async function GET(
     const id = idResult.data;
 
     const url = new URL(request.url);
-    const key = url.searchParams.get("key");
-
-    if (key) {
-      const keyResult = KeySchema.safeParse(key);
-      if (!keyResult.success) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
-      }
-    }
-
     const sql = getDb();
 
     // Support version-check polling: ?since=N returns 304 if not changed
     const sinceVersion = url.searchParams.get("since");
 
-    if (key) {
-      // Validate edit key — return data + editable flag + version + visibility.
-      // Require an authenticated session: the key alone does not grant edit
-      // access. Anonymous callers (even with a correct token) get read-only
-      // so a logged-out user cannot mutate a published report via a stale
-      // localStorage token or tampered URL.
-      let authedUserId: string | null = null;
-      try {
-        const { userId: uid } = await auth();
-        authedUserId = uid;
-      } catch { /* not authenticated */ }
-
-      const rows = await sql`
-        SELECT data, (edit_token = ${key}) AS editable, COALESCE(version, 1) AS version, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL
-      `;
-      if (rows.length === 0) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
-      }
-
-      // If polling with ?since=N, return 304 if version hasn't changed
-      if (sinceVersion && Number(sinceVersion) >= Number(rows[0].version)) {
-        return new Response(null, { status: 304 });
-      }
-
-      const forkedFromId = await loadForkedFromId(sql, id);
-      const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
-
-      const editable = !!rows[0].editable && !!authedUserId;
-      const normalized = normalizeReportData(rows[0].data as Record<string, unknown>);
-      // Editors with a valid key see full data; bare-link viewers get redacted (VGC-142)
-      const { data: viewable, redactedFields } = editable
-        ? { data: normalized, redactedFields: [] as string[] }
-        : applyPrivateFieldRedaction(normalized);
-      return NextResponse.json({
-        ...viewable,
-        _editable: editable,
-        _version: Number(rows[0].version),
-        _isPublic: !!rows[0].is_public,
-        _isUnlisted: !!rows[0].is_unlisted,
-        _isOwner: false,
-        _forkedFrom: forkedFrom,
-        _redactedFields: redactedFields,
-      });
-    }
-
-    // Public access — check if the signed-in user is the owner
+    // Edit access is account-based. Legacy ?key= values are deliberately
+    // ignored so copied URLs, cookies, and browser storage can never unlock a
+    // report. Signed-in owners and accepted collaborators are resolved below.
     let userId: string | null = null;
     try {
       const { userId: uid } = await auth();
@@ -171,10 +138,16 @@ export async function GET(
 
     // If the user is the owner or a collaborator, grant edit access
     if (userId) {
-      const ownerRows = await sql`
-        SELECT data, edit_token, COALESCE(version, 1) AS version, is_public, is_unlisted, owner_id
-        FROM shares WHERE id = ${id} AND deleted_at IS NULL
-      `;
+      const { rows: ownerRows, hasForkColumn } = await selectShareRowTolerant(
+        () => sql`
+          SELECT data, edit_token, COALESCE(version, 1) AS version, is_public, is_unlisted, owner_id, forked_from_id
+          FROM shares WHERE id = ${id} AND deleted_at IS NULL
+        `,
+        () => sql`
+          SELECT data, edit_token, COALESCE(version, 1) AS version, is_public, is_unlisted, owner_id
+          FROM shares WHERE id = ${id} AND deleted_at IS NULL
+        `,
+      );
       if (ownerRows.length > 0) {
         const isOwner = ownerRows[0].owner_id === userId;
         let isCollaborator = false;
@@ -190,9 +163,11 @@ export async function GET(
           if (sinceVersion && Number(sinceVersion) >= Number(ownerRows[0].version)) {
             return new Response(null, { status: 304 });
           }
-          const collabNameRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`;
-          const forkedFromId = await loadForkedFromId(sql, id);
-          const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
+          const forkedFromId = forkedFromIdFromRow(ownerRows[0], hasForkColumn);
+          const [collabNameRows, forkedFrom] = await Promise.all([
+            sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
+            fetchForkedFromMeta(sql, forkedFromId),
+          ]);
           return NextResponse.json({
             ...normalizeReportData(ownerRows[0].data as Record<string, unknown>),
             _editable: true,
@@ -208,18 +183,32 @@ export async function GET(
       }
     }
 
-    // Non-owner access — read-only, no edit info leaked.
-    // Private reports behave as "unlisted": anyone with the /s/{id} link can view,
-    // but they are not listed on Explore and edit requires the ?key= collab token.
-    const rows = await sql`
-      SELECT data, COALESCE(version, 1) AS version, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL
-    `;
+    // Non-owner access — read-only, with no edit information leaked. Public
+    // and unlisted reports may continue below; truly private reports are
+    // rejected after the visibility flags are loaded.
+    const { rows, hasForkColumn } = await selectShareRowTolerant(
+      () => sql`
+        SELECT data, COALESCE(version, 1) AS version, is_public, is_unlisted, forked_from_id FROM shares WHERE id = ${id} AND deleted_at IS NULL
+      `,
+      () => sql`
+        SELECT data, COALESCE(version, 1) AS version, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL
+      `,
+    );
     if (rows.length === 0) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     const isPublic = !!rows[0].is_public;
     const isUnlisted = !!rows[0].is_unlisted;
+
+    // Enforce real privacy (VGC: "Private = Only accessible to you"). The
+    // owner and accepted collaborators were already served above with edit
+    // access. Anyone reaching this point is an outsider, so a report that is
+    // neither public nor unlisted must not be viewable via the bare /s/{id}
+    // link — return 404. Unlisted reports remain link-viewable by design.
+    if (!isPublic && !isUnlisted) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     // Check cache for public reads only — unlisted reports skip cache to avoid
     // leaking stale visibility state on public↔private toggles.
@@ -235,12 +224,14 @@ export async function GET(
       return new Response(null, { status: 304 });
     }
 
-    // Fetch accepted collaborator names for public display
-    const collabRows = await sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`;
+    // Fetch accepted collaborator names for public display, in parallel with
+    // fork-source metadata (both are independent of each other).
+    const forkedFromId = forkedFromIdFromRow(rows[0], hasForkColumn);
+    const [collabRows, forkedFrom] = await Promise.all([
+      sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
+      fetchForkedFromMeta(sql, forkedFromId),
+    ]);
     const collaboratorNames = collabRows.map((r) => r.user_name as string);
-
-    const forkedFromId = await loadForkedFromId(sql, id);
-    const forkedFrom = await fetchForkedFromMeta(sql, forkedFromId);
 
     const normalized = normalizeReportData(rows[0].data as Record<string, unknown>);
     const { data: viewable, redactedFields } = applyPrivateFieldRedaction(normalized);
@@ -269,12 +260,14 @@ export async function GET(
     // visibility toggles aren't masked by stale CDN entries.
     const res = NextResponse.json(responseData);
     if (isPublic && !sinceVersion) {
-      res.headers.set(
-        "Cache-Control",
-        "public, s-maxage=300, stale-while-revalidate=900",
-      );
-      res.headers.set("CDN-Cache-Control", "public, s-maxage=300");
-      res.headers.set("Vercel-CDN-Cache-Control", "public, s-maxage=300");
+      // Keep the edge window short. cacheDel() invalidates our Redis copy on a
+      // visibility flip, but it cannot purge Vercel's edge CDN — that entry
+      // only expires with s-maxage. A long window (was 300s + 900s SWR ≈ 20m)
+      // meant a public→private flip kept serving the public body for minutes.
+      // 30s caps that stale-serve window while still absorbing view spikes.
+      res.headers.set("Cache-Control", "public, s-maxage=30, must-revalidate");
+      res.headers.set("CDN-Cache-Control", "public, s-maxage=30");
+      res.headers.set("Vercel-CDN-Cache-Control", "public, s-maxage=30");
     }
     return res;
   } catch (e) {

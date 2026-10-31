@@ -9,6 +9,7 @@ function useIsSharePage() {
 
   useEffect(() => {
     const has = new URLSearchParams(window.location.search).has("s");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- window.location / navigator are client-only; read after hydration
     setHasShareParam((prev) => prev === has ? prev : has);
   }, [pathname]);
 
@@ -56,6 +57,7 @@ export function ConnectivityStatus() {
 
     // Check initial state for offline share page scenario
     if (!navigator.onLine) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- window.location / navigator are client-only; read after hydration
       setPersistOffline(true);
     }
 

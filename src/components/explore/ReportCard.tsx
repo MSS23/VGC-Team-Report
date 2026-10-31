@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { useAuth, useUser, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
@@ -61,7 +61,18 @@ function CardSprite({ species }: { species: string }) {
   );
 }
 
-export function ReportCard({ report }: { report: ExploreReport }) {
+export function ReportCard({
+  report,
+  initialLiked,
+  initialSaved,
+}: {
+  report: ExploreReport;
+  /** Server-truth liked/saved state, resolved by a single batched fetch in
+   *  ExploreContent and passed down — replaces the old per-card GET requests
+   *  (2 serverless invocations per card → ~2 per page load total). */
+  initialLiked?: boolean;
+  initialSaved?: boolean;
+}) {
   const { t } = useTranslation();
   const { isSignedIn } = useAuth();
   const { user } = useUser();
@@ -82,48 +93,38 @@ export function ReportCard({ report }: { report: ExploreReport }) {
     `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() === report.creatorName
   ));
 
+  // Sync from the batched lookups once they resolve (undefined while pending).
+  // Once the user has toggled a control themselves, stop syncing: the batched
+  // refetch that "Load more" triggers can race a just-committed like and
+  // would visibly un-fill the heart the user just tapped.
+  const likeTouchedRef = useRef(false);
+  const saveTouchedRef = useRef(false);
   useEffect(() => {
-    if (!sessionId || !report.id) return;
-    fetch(`/api/reactions/${report.id}?sessionId=${encodeURIComponent(sessionId)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) {
-          const total = Object.values(data.counts ?? {}).reduce(
-            (sum: number, c) => sum + (c as number), 0);
-          setLikeCount(total);
-          setLiked((data.userReactions ?? []).length > 0);
-        }
-      })
-      .catch(() => {});
-  }, [report.id, sessionId]);
-
+    if (initialLiked !== undefined && !likeTouchedRef.current) setLiked(initialLiked);
+  }, [initialLiked]);
   useEffect(() => {
-    if (!user || !report.id) return;
-    fetch("/api/user/saved")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.reports?.some((r: { id: string }) => r.id === report.id)) {
-          setBookmarked(true);
-        }
-      })
-      .catch(() => {});
-  }, [user, report.id]);
+    if (initialSaved !== undefined && !saveTouchedRef.current) setBookmarked(initialSaved);
+  }, [initialSaved]);
 
   const toggleLike = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!sessionId || !isSignedIn) return;
 
+    likeTouchedRef.current = true;
     const wasLiked = liked;
     setLiked(!wasLiked);
     setLikeCount((c) => Math.max(0, c + (wasLiked ? -1 : 1)));
 
     try {
-      await fetch(`/api/reactions/${report.id}`, {
+      const res = await fetch(`/api/reactions/${report.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reactionType: "heart", sessionId }),
       });
+      // fetch only rejects on network failure — a 429/500 resolves fine and
+      // would leave the optimistic heart filled with nothing written.
+      if (!res.ok) throw new Error("reaction failed");
     } catch {
       setLiked(wasLiked);
       setLikeCount((c) => Math.max(0, c + (wasLiked ? 1 : -1)));
@@ -134,15 +135,17 @@ export function ReportCard({ report }: { report: ExploreReport }) {
     e.preventDefault();
     e.stopPropagation();
     if (bookmarkLoading) return;
+    saveTouchedRef.current = true;
     setBookmarkLoading(true);
     const wasSaved = bookmarked;
     setBookmarked(!wasSaved);
     try {
-      await fetch("/api/user/saved", {
+      const res = await fetch("/api/user/saved", {
         method: wasSaved ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shareId: report.id }),
       });
+      if (!res.ok) throw new Error("save failed");
     } catch {
       setBookmarked(wasSaved);
     } finally {
@@ -167,7 +170,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
     >
       {report.tags?.regulation && (
         <span
-          className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 z-10 inline-flex items-center gap-1 ${
+          className={`absolute top-2 right-2 text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 z-10 inline-flex items-center gap-1 ${
             report.tags.regulationAutoDetected ? "border border-dashed border-blue-500/40" : ""
           }`}
           title={report.tags.regulationAutoDetected
@@ -205,7 +208,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
             {report.tournamentName || report.species.join(" / ")}
           </h3>
           {report.placement && (
-            <span className={`flex-shrink-0 inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-extrabold rounded-md tracking-wide ${getPlacementStyle(report.placement)}`}>
+            <span className={`flex-shrink-0 inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] font-extrabold rounded-md tracking-wide ${getPlacementStyle(report.placement)}`}>
               {(report.placement === "1st" || report.placement === "Top 4") && (
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" className="flex-shrink-0" aria-hidden="true">
                   <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7.4L12 16.8l-6.3 4.6 2.3-7.4-6-4.6h7.6z" />
@@ -291,11 +294,11 @@ export function ReportCard({ report }: { report: ExploreReport }) {
         {(hasTagsSection || report.hasRental) && (
           <div className="flex flex-wrap gap-1">
             {hasTagsSection && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">{report.tags!.eventType}</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">{report.tags!.eventType}</span>
             )}
             {report.hasRental && (
               <span
-                className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-0.5"
+                className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-0.5"
                 title="Rental code available"
               >
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -316,7 +319,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                 onClick={toggleLike}
                 aria-label={liked ? "Unlike report" : "Like report"}
                 aria-pressed={liked}
-                className="inline-flex items-center gap-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                className="inline-flex items-center justify-center gap-1 min-h-[44px] min-w-[44px] -my-1.5 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={liked ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"} aria-hidden="true">
                   <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -330,7 +333,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   aria-label="Like report (sign in required)"
                   aria-pressed={false}
-                  className="inline-flex items-center gap-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                  className="inline-flex items-center justify-center gap-1 min-h-[44px] min-w-[44px] -my-1.5 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill={likeCount > 0 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={likeCount > 0 ? "text-red-500" : "text-text-tertiary hover:text-red-400 transition-colors"} aria-hidden="true">
                     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -345,7 +348,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   type="button"
                   onClick={toggleBookmark}
                   disabled={bookmarkLoading}
-                  className="inline-flex items-center gap-0.5 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                  className="inline-flex items-center justify-center gap-0.5 min-h-[44px] min-w-[44px] -my-1.5 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                   aria-label={bookmarked ? "Unsave report" : "Save report"}
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={bookmarked ? "text-accent" : "text-text-tertiary hover:text-accent transition-colors"} aria-hidden="true">
@@ -357,7 +360,7 @@ export function ReportCard({ report }: { report: ExploreReport }) {
                   <button
                     type="button"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                    className="inline-flex items-center gap-0.5 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+                    className="inline-flex items-center justify-center gap-0.5 min-h-[44px] min-w-[44px] -my-1.5 -mx-1 text-[10px] cursor-pointer hover:scale-110 active:scale-95 transition-transform"
                     aria-label="Save report"
                   >
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary hover:text-accent transition-colors" aria-hidden="true">

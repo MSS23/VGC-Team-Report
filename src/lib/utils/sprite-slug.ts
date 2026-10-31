@@ -31,16 +31,33 @@ const SLUG_MAP: Record<string, string> = {
   "tauros-paldea-combat": "tauros-paldeacombat", "tauros-paldea-blaze": "tauros-paldeablaze",
   "tauros-paldea-aqua": "tauros-paldeaaqua",
   "bloodmoon-ursaluna": "ursaluna-bloodmoon",
-  "charizard-mega-x": "charizard-megax",
-  "charizard-mega-y": "charizard-megay",
-  "mewtwo-mega-x": "mewtwo-megax",
-  "mewtwo-mega-y": "mewtwo-megay",
+  // Meowstic's Mega is gendered on Showdown; the bare Mega is the male one.
+  "meowstic-mega": "meowstic-mmega",
+  "meowstic-m-mega": "meowstic-mmega",
+  "meowstic-f-mega": "meowstic-fmega",
 };
 
+/** Showdown joins lettered Mega suffixes: Charizard-Mega-X → charizard-megax,
+ *  Garchomp-Mega-Z → garchomp-megaz, Raichu-Mega-Y → raichu-megay. */
 export function resolveSlug(species: string): string {
   const slug = toSlug(species);
-  return SLUG_MAP[slug] ?? slug;
+  return SLUG_MAP[slug] ?? slug.replace(/-mega-([xyz])$/, "-mega$1");
 }
+
+/**
+ * Resolved slugs that Showdown never produced an animated GIF for, so the
+ * `ani`/`gen5ani` folders 404. The Treasures of Ruin (Chien-Pao, Chi-Yu,
+ * Ting-Lu, Wo-Chien) are the common VGC offenders. For these we skip the
+ * animated attempts entirely and serve the static HOME sprite directly —
+ * otherwise the team preview fires two 404s and flashes a broken image
+ * before falling back. Keyed by the RESOLVED slug (post-SLUG_MAP).
+ */
+export const STATIC_ONLY_SLUGS = new Set<string>([
+  "chienpao",
+  "chiyu",
+  "tinglu",
+  "wochien",
+]);
 
 /** Ordered sprite URLs: animated GIF first, then static PNG fallbacks.
  *

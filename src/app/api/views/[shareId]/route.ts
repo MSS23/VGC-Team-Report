@@ -8,6 +8,7 @@ import { getLogger, flushLogs } from "@/instrumentation";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+const SHARE_ID_RE = /^[a-zA-Z0-9_-]{6,16}$/;
 const ViewBody = z.object({ sessionId: z.string().min(1) });
 
 export async function POST(
@@ -16,6 +17,9 @@ export async function POST(
 ) {
   try {
     const { shareId } = await params;
+    if (!SHARE_ID_RE.test(shareId)) {
+      return NextResponse.json({ error: "Invalid share ID" }, { status: 400 });
+    }
     const guard = await apiGuard(request, { rateLimit: { key: "views", max: 60 } });
     if (guard) return guard;
 

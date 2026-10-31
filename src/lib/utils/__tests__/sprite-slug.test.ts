@@ -26,6 +26,14 @@ describe("resolveSlug", () => {
     expect(resolveSlug("Chi-Yu")).toBe("chiyu");
   });
 
+  it("joins lettered Mega suffixes the way Showdown names files", () => {
+    expect(resolveSlug("Charizard-Mega-X")).toBe("charizard-megax");
+    expect(resolveSlug("Raichu-Mega-Y")).toBe("raichu-megay");
+    expect(resolveSlug("Garchomp-Mega-Z")).toBe("garchomp-megaz");
+    expect(resolveSlug("Meowstic-Mega")).toBe("meowstic-mmega");
+    expect(resolveSlug("Salamence-Mega")).toBe("salamence-mega");
+  });
+
   it("handles Tapu Koko", () => {
     expect(resolveSlug("Tapu Koko")).toBe("tapukoko");
   });

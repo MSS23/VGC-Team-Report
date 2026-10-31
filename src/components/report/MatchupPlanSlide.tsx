@@ -6,7 +6,7 @@ import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { StatSpread } from "@/lib/types/pokemon";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
 import { lookupPokemon } from "@/lib/data/pokemon";
-import { calculateAllStats } from "@/lib/analysis/stat-calculator";
+import { displayStats } from "@/lib/analysis/spread-builder";
 import { PokemonSprite } from "./PokemonSprite";
 import { TypeBadge } from "./TypeBadge";
 import { ItemIcon } from "./ItemIcon";
@@ -14,7 +14,7 @@ import { PokemonDropdown } from "./PokemonDropdown";
 import { Button } from "@/components/ui/Button";
 import { FieldDiffHighlight } from "./TeamReport";
 import { useIsPrintMode } from "@/components/ui/print-context";
-import { GAME_COLORS, getReplayInfo, ReplayIcon } from "@/lib/utils/game-plan-helpers";
+import { GAME_COLORS } from "@/lib/utils/game-plan-helpers";
 import { useTranslation } from "@/lib/i18n";
 import { hapticLight } from "@/lib/utils/haptics";
 
@@ -30,7 +30,6 @@ interface MatchupPlanSlideProps {
   yourPokemon: AnalyzedPokemon[];
   isReadOnly: boolean;
   onGamePlanNotesChange: (matchupId: string, gamePlanId: string, notes: string) => void;
-  onGamePlanReplaysChange: (matchupId: string, gamePlanId: string, replays: string[]) => void;
   onGamePlanBringChange: (
     matchupId: string,
     gamePlanId: string,
@@ -47,6 +46,8 @@ interface MatchupPlanSlideProps {
   onAddGamePlan: (matchupId: string) => void;
   onRemoveGamePlan: (matchupId: string, gamePlanId: string) => void;
   onRemove: (id: string) => void;
+  /** Current regulation — Champions (Reg M-A/M-B/M-C) spends SP, not EVs. */
+  regulation?: string;
 }
 
 function totalEvs(evs: StatSpread): number {
@@ -57,15 +58,20 @@ function totalEvs(evs: StatSpread): number {
 function SpeedComparison({
   yourPokemon,
   opponentPokemon,
+  regulation,
 }: {
   yourPokemon: AnalyzedPokemon[];
   opponentPokemon: OpponentPokemonInfo[];
+  regulation?: string;
 }) {
   // Build combined speed entries
   const entries: Array<{ species: string; speed: number; isYours: boolean }> = [];
 
   yourPokemon.forEach((p) => {
-    entries.push({ species: p.parsed.species, speed: p.calculatedStats.spe, isYours: true });
+    // `calculatedStats` is always EV-formula (analyzeTeam takes no regulation),
+    // so Champions speeds have to be recomputed from SP here — VGC-292.
+    const speed = p.data ? displayStats(p.parsed, p.data.baseStats, regulation).spe : p.calculatedStats.spe;
+    entries.push({ species: p.parsed.species, speed, isYours: true });
   });
 
   opponentPokemon.forEach((p) => {
@@ -136,13 +142,13 @@ export function MatchupPlanSlide({
   yourPokemon,
   isReadOnly,
   onGamePlanNotesChange,
-  onGamePlanReplaysChange,
   onGamePlanBringChange,
   onReorderGamePlanBring,
   onGamePlanResultChange,
   onAddGamePlan,
   onRemoveGamePlan,
   onRemove,
+  regulation,
 }: MatchupPlanSlideProps) {
   const { t } = useTranslation();
   const STAT_LABELS = { hp: t.statHp, atk: t.statAtk, def: t.statDef, spa: t.statSpa, spd: t.statSpd, spe: t.statSpe } as const;
@@ -154,6 +160,7 @@ export function MatchupPlanSlide({
   useEffect(() => {
     if (plan.gamePlans.length > prevPlanCount.current) {
       // Auto-switch to the new tab on mobile
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- jump to a newly added game plan tab (reacts to a count increase)
       setActiveGameTab(plan.gamePlans.length - 1);
       if (gamePlansRef.current) {
         const lastChild = gamePlansRef.current.lastElementChild;
@@ -170,11 +177,11 @@ export function MatchupPlanSlide({
       const hasEvs = totalEvs(p.evs) > 0;
       const calculatedStats =
         hasEvs && data
-          ? calculateAllStats(data.baseStats, p.ivs, p.evs, p.level, p.nature)
+          ? displayStats(p, data.baseStats, regulation)
           : null;
       return { parsed: p, data, calculatedStats, hasEvs };
     });
-  }, [plan.opponentPaste]);
+  }, [plan.opponentPaste, regulation]);
 
   const anyHasEvs = opponentPokemon.some((p) => p.hasEvs);
 
@@ -324,7 +331,7 @@ export function MatchupPlanSlide({
 
       {/* Speed Comparison */}
       {opponentPokemon.length > 0 && (
-        <SpeedComparison yourPokemon={yourPokemon} opponentPokemon={opponentPokemon} />
+        <SpeedComparison yourPokemon={yourPokemon} opponentPokemon={opponentPokemon} regulation={regulation} />
       )}
 
       {/* Game Plans */}
@@ -399,7 +406,6 @@ export function MatchupPlanSlide({
                 canDelete={plan.gamePlans.length > 1}
                 onToggle={() => toggleCollapse(gp.id)}
                 onNotesChange={(notes) => onGamePlanNotesChange(plan.id, gp.id, notes)}
-                onReplaysChange={(replays) => onGamePlanReplaysChange(plan.id, gp.id, replays)}
                 onBringChange={(bringIndex, pokemonIndex) =>
                   onGamePlanBringChange(plan.id, gp.id, bringIndex, pokemonIndex)
                 }
@@ -430,7 +436,6 @@ interface GamePlanSectionProps {
   canDelete: boolean;
   onToggle: () => void;
   onNotesChange: (notes: string) => void;
-  onReplaysChange: (replays: string[]) => void;
   onBringChange: (bringIndex: 0 | 1 | 2 | 3, pokemonIndex: number | null) => void;
   onReorderBring: (fromIndex: 0 | 1 | 2 | 3, toIndex: 0 | 1 | 2 | 3) => void;
   onResultChange: (result: GameResult) => void;
@@ -446,7 +451,6 @@ function GamePlanSection({
   canDelete,
   onToggle,
   onNotesChange,
-  onReplaysChange,
   onBringChange,
   onReorderBring,
   onResultChange,
@@ -458,7 +462,6 @@ function GamePlanSection({
   const isCollapsed = isPrint ? false : isCollapsedProp;
   const color = GAME_COLORS[index] ?? GAME_COLORS[0];
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [replayInput, setReplayInput] = useState("");
 
   const dragType = `application/x-gameplan-${gamePlan.id}`;
 
@@ -667,7 +670,7 @@ function GamePlanSection({
               </div>
             </div>
 
-            {/* Notes + Replays */}
+            {/* Notes */}
             <div className="flex flex-col gap-4">
               <div>
                 <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3 presenting:text-base presenting:mb-4">
@@ -681,97 +684,13 @@ function GamePlanSection({
                   <textarea
                     value={gamePlan.notes}
                     onChange={(e) => onNotesChange(e.target.value)}
+                    aria-label={`${t.notesLabel} for game plan ${index + 1}`}
                     placeholder={t.gamePlanNotesPlaceholder}
-                    aria-label={t.gamePlanNotesPlaceholder}
                     className="w-full min-h-[7rem] sm:min-h-[6rem] p-3 sm:p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
                     spellCheck={false}
                   />
                 )}
               </div>
-
-              {/* Replays (optional) */}
-              {(gamePlan.replays.length > 0 || !isReadOnly) && (
-                <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-text-tertiary block mb-3">
-                    {t.replays} <span className="normal-case tracking-normal font-normal text-text-tertiary/60">({t.optional})</span>
-                  </span>
-                  {gamePlan.replays.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {gamePlan.replays.map((url, i) => {
-                        const info = getReplayInfo(url);
-                        return (
-                          <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-alt border border-border-subtle rounded-lg text-sm">
-                            <ReplayIcon type={info.type} />
-                            {isReadOnly ? (
-                              <a
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-accent hover:underline"
-                              >
-                                {info.label}
-                              </a>
-                            ) : (
-                              <>
-                                <a
-                                  href={url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-accent hover:underline"
-                                >
-                                  {info.label}
-                                </a>
-                                <button
-                                  type="button"
-                                  onClick={() => onReplaysChange(gamePlan.replays.filter((_, j) => j !== i))}
-                                  className="text-text-tertiary hover:text-red-400 transition-colors"
-                                >
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18" />
-                                    <line x1="6" y1="6" x2="18" y2="18" />
-                                  </svg>
-                                </button>
-                              </>
-                            )}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {!isReadOnly && (
-                    <div className="flex gap-2">
-                      <input
-                        type="url"
-                        value={replayInput}
-                        onChange={(e) => setReplayInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && replayInput.trim()) {
-                            e.preventDefault();
-                            onReplaysChange([...gamePlan.replays, replayInput.trim()]);
-                            setReplayInput("");
-                          }
-                        }}
-                        placeholder={t.pasteReplayPlaceholder}
-                        aria-label={t.pasteReplayPlaceholder}
-                        className="flex-1 min-w-0 px-3 py-2.5 bg-surface-alt border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-shadow"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (replayInput.trim()) {
-                            onReplaysChange([...gamePlan.replays, replayInput.trim()]);
-                            setReplayInput("");
-                          }
-                        }}
-                        className="px-4 py-2.5 bg-accent/10 text-accent text-sm font-semibold rounded-lg hover:bg-accent/20 transition-colors flex-shrink-0 min-h-[44px]"
-                      >
-                        {t.add}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
             </div>
           </div>
         </div>

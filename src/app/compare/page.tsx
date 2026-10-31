@@ -4,10 +4,10 @@ import { I18nProvider } from "@/lib/i18n";
 import { CompareContent } from "@/components/compare/CompareContent";
 
 export const metadata: Metadata = {
-  title: "Compare VGC Teams | VGC Team Report",
+  title: "Compare VGC Teams",
   description:
     "Compare two VGC team reports side by side — see differences in Pokémon, movesets, items, and EV spreads.",
-  alternates: { canonical: "https://pokemonvgcteamreport.com/compare" },
+  robots: { index: false, follow: true },
   openGraph: {
     title: "Compare VGC Teams | VGC Team Report",
     description:

@@ -43,6 +43,7 @@ export function useSlideSystem(opts: SlideSystemOptions) {
     if (!analysis) return { allSlideKeys: [] as string[], allSlideLabels: [] as string[] };
     const keys: string[] = [
       "overview",
+      "common-modes",
       ...speciesKeys,
       "speed-tiers",
       "offensive-coverage",
@@ -52,6 +53,7 @@ export function useSlideSystem(opts: SlideSystemOptions) {
     ];
     const labels: string[] = [
       t.overview,
+      (t as unknown as Record<string, string | undefined>).commonModesTitle ?? "Common Modes",
       ...analysis.pokemon.map((mon) => mon.parsed.species),
       t.teamAnalysisLabel,
       "Offensive",
@@ -94,7 +96,9 @@ export function useSlideSystem(opts: SlideSystemOptions) {
   } = useSlideNavigation({
     totalSlides,
     enabled: !!analysis,
-    resetKey: paste,
+    // Applying an investment-only edit should keep the builder and keyboard
+    // focus on the current Pokémon. Other team edits still reset navigation.
+    resetKey: paste.replace(/\r/g, "").split("\n").filter((line) => !/^\s*EVs:/i.test(line)).join("\n"),
     bypassFocusGuard: presentationMode,
     onEscape: presentationMode ? () => setPresentationMode(false) : undefined,
     onToggleDarkMode: () => setDarkMode(!darkMode),
@@ -121,7 +125,9 @@ export function useSlideSystem(opts: SlideSystemOptions) {
 
   const physicalSlide = visibleIndices[currentSlide] ?? 0;
   const physicalSlideRef = useRef(physicalSlide);
-  physicalSlideRef.current = physicalSlide;
+  useLayoutEffect(() => {
+    physicalSlideRef.current = physicalSlide;
+  });
 
   // Preserve physical slide position when visibleIndices changes
   const prevVisibleRef = useRef(visibleIndices);

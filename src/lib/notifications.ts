@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { sendSocialPush } from "@/lib/web-push";
 
 export type NotificationType = "comment" | "reaction" | "new_report" | "collab_invite";
 
@@ -19,7 +20,8 @@ export async function createNotification(
       INSERT INTO notifications (user_id, type, source_share_id, source_user_name, message)
       VALUES (${userId}, ${type}, ${sourceShareId}, ${sourceUserName}, ${message})
     `;
-  } catch (e) {
+    await sendSocialPush([userId]);
+  } catch (e: unknown) {
     console.warn("Failed to create notification:", e);
   }
 }
@@ -34,16 +36,20 @@ export async function notifyFollowers(
 ) {
   try {
     const sql = getDb();
-    const followers = await sql`
-      SELECT user_id FROM follows WHERE creator_name = ${creatorName}
-    `;
     const message = `${creatorName} published a new team report`;
-    for (const row of followers) {
-      const uid = row.user_id as string;
-      if (uid === excludeUserId) continue;
-      await createNotification(uid, "new_report", shareId, creatorName, message);
-    }
-  } catch (e) {
+    // Single bulk insert: one notification row per follower, sourced directly
+    // from the follows table (avoids N+1 round-trips). NULL excludeUserId is
+    // handled by the IS DISTINCT FROM comparison so the current user is skipped.
+    const recipients = await sql`
+      INSERT INTO notifications (user_id, type, source_share_id, source_user_name, message)
+      SELECT user_id, 'new_report', ${shareId}, ${creatorName}, ${message}
+      FROM follows
+      WHERE creator_name = ${creatorName}
+        AND user_id IS DISTINCT FROM ${excludeUserId ?? null}
+      RETURNING user_id
+    `;
+    await sendSocialPush(recipients.map((row) => row.user_id as string));
+  } catch (e: unknown) {
     console.warn("Failed to notify followers:", e);
   }
 }

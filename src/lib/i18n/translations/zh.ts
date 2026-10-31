@@ -1,9 +1,24 @@
 import type { TranslationKeys } from "./en";
 
 const zh: TranslationKeys = {
+  commonCombinationsTitle: "常用组合",
+  commonCombinationsDesc: "你常用的出战：从六只中选择两只首发和两只后备，并记下何时使用。",
+  combinationLeads: "首发",
+  combinationBack: "后备",
+  combinationStrategy: "策略",
+  combinationLabel: "组合",
+  combinationStrategyPlaceholder: "何时派出此组合以及如何应对。",
+  addCombination: "添加组合",
+  combinationsEmpty: "暂无组合。",
+  removeCombination: "删除组合",
+  legacyNotesTitle: "旧备注",
+  legacyLeadsLabel: "常用首发（旧）",
+  legacyModesLabel: "常用模式（旧）",
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "创建、分享和发现竞技宝可梦队伍报告",
+  appMission:
+    "不只是粘贴查看器：把任何队伍转化为包含伤害计算、速度线和对战计划的结构化报告，让每个人都能理解队伍构成并学会如何操作。",
   appInputHint: "粘贴 Showdown 导出或 PokePaste 链接以开始",
 
   loadSample: "加载示例",
@@ -168,11 +183,22 @@ const zh: TranslationKeys = {
   notesLabel: "笔记",
   noNotes: "暂无笔记。",
   gamePlanNotesPlaceholder: "为什么选这四只？胜利条件是什么？",
-  replays: "录像回放",
-  optional: "可选",
-  pasteReplayPlaceholder: "粘贴录像回放链接...",
   add: "添加",
   delete: "删除",
+
+  // Common Modes（如何操作这支队伍）
+  commonModesTitle: "常用打法",
+  commonLeads: "常用首发",
+  commonModesField: "常用打法",
+  strengths: "优势",
+  weaknesses: "劣势",
+  gameplan: "战术计划",
+  commonModesEmpty: "暂无操作笔记",
+  commonLeadsPlaceholder: "你的常用首发组合以及何时使用（例如：对大多数队伍用炽焰咆哮虎 + 振翼发）。",
+  commonModesPlaceholder: "常见的回合节奏和打法风格——这支队伍通常想怎么打。",
+  strengthsPlaceholder: "这支队伍能打赢什么、擅长什么。",
+  weaknessesPlaceholder: "什么会让这支队伍难受，以及如何应对。",
+  gameplanPlaceholder: "如何操作队伍取胜——关键出招顺序、获胜条件和优先事项。",
 
   plan: "计划",
   plans: "计划",

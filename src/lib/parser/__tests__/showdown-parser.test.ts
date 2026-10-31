@@ -102,6 +102,14 @@ describe("parseShowdownPaste", () => {
       const result = parseShowdownPaste(paste);
       expect(result.teamName).toBe("Cool Team");
     });
+
+    it("header with no blank line after it does not eat the first Pokemon (regression)", () => {
+      const paste = `=== [gen9vgc2025regi] Worlds Team ===\n${GARCHOMP_BLOCK}`;
+      const result = parseShowdownPaste(paste);
+      expect(result.teamName).toBe("Worlds Team");
+      expect(result.pokemon).toHaveLength(1);
+      expect(result.pokemon[0].species).toBe("Garchomp");
+    });
   });
 
   describe("empty paste", () => {
@@ -198,6 +206,40 @@ describe("parseShowdownPaste", () => {
       const paste = `Garchomp @ Life Orb\nAbility: Rough Skin\n- Earthquake`;
       const result = parseShowdownPaste(paste);
       expect(result.pokemon[0].teraType).toBeNull();
+    });
+
+    // VGC-294: `Tera Type: Stellar` was silently dropped because the guard
+    // only accepted the 18 members of PokemonType, so the user's Stellar Tera
+    // vanished from the report with no warning.
+    it("VGC-294: keeps Tera Type: Stellar instead of dropping it", () => {
+      const paste = [
+        "Terapagos @ Leftovers",
+        "Ability: Tera Shift",
+        "Tera Type: Stellar",
+        "EVs: 252 HP / 4 SpA / 252 SpD",
+        "Calm Nature",
+        "- Tera Starstorm",
+      ].join("\n");
+      const result = parseShowdownPaste(paste);
+      expect(result.pokemon[0].teraType).toBe("Stellar");
+      expect(result.warnings).toEqual([]);
+    });
+
+    it("VGC-294: parses all 18 standard Tera types", () => {
+      const types = [
+        "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
+        "Fighting", "Poison", "Ground", "Flying", "Psychic", "Bug",
+        "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
+      ];
+      for (const type of types) {
+        const paste = `Garchomp @ Life Orb\nAbility: Rough Skin\nTera Type: ${type}\n- Earthquake`;
+        expect(parseShowdownPaste(paste).pokemon[0].teraType).toBe(type);
+      }
+    });
+
+    it("VGC-294: still rejects an invalid Tera Type", () => {
+      const paste = `Garchomp @ Life Orb\nAbility: Rough Skin\nTera Type: Banana\n- Earthquake`;
+      expect(parseShowdownPaste(paste).pokemon[0].teraType).toBeNull();
     });
   });
 

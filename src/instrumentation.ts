@@ -9,19 +9,14 @@ let _provider: LoggerProvider | null = null;
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     // Build-time data integrity check — fail loudly if a Champions-legal Mega
-    // is missing from mega-pokemon.ts or pokemon.ts. Catches the Golurk-Mega
-    // class of bug (silently invisible spreads) before users see it.
+    // is missing from the catalogue or cannot resolve through the production
+    // lookup path. Catches invisible spread regressions before users see them.
     const { validateMegaCoverage } = await import("./lib/data/__validate-mega-coverage");
     const result = validateMegaCoverage();
     if (!result.ok) {
-      // Soft warning only — the @pkmn/dex runtime fallback (pkmn-dex-fallback.ts)
-      // ensures EV/SP spreads always render even when our static catalogue lags.
-      // These warnings just flag SEO landing pages we haven't built yet.
-      console.warn("[mega-coverage] Static catalogue gaps (UI still works via @pkmn/dex fallback):");
+      console.warn("[mega-coverage] Unresolved Champions catalogue entries:");
       for (const err of result.errors) console.warn("  - " + err);
     }
-
-    await import("../sentry.server.config");
 
     const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
     if (token) {
@@ -40,10 +35,6 @@ export async function register() {
       });
       logs.setGlobalLoggerProvider(_provider);
     }
-  }
-
-  if (process.env.NEXT_RUNTIME === "edge") {
-    await import("../sentry.edge.config");
   }
 }
 

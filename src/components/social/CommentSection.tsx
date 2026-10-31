@@ -8,18 +8,18 @@ interface Comment {
   id: number;
   displayName: string;
   body: string;
-  sessionId: string;
+  isOwn: boolean;
   createdAt: string;
 }
 
 interface CommentSectionProps {
   shareId: string;
-  editToken?: string;
+  canModerate?: boolean;
 }
 
 const DISPLAY_NAME_KEY = "vgc-display-name";
 
-export function CommentSection({ shareId, editToken }: CommentSectionProps) {
+export function CommentSection({ shareId, canModerate = false }: CommentSectionProps) {
   const sessionId = useSessionId();
   const [comments, setComments] = useState<Comment[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -51,11 +51,12 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
     async (cursor?: string) => {
       const params = new URLSearchParams();
       if (cursor) params.set("cursor", cursor);
+      if (sessionId) params.set("sessionId", sessionId);
       const res = await fetch(`/api/comments/${shareId}?${params}`);
       if (!res.ok) return null;
       return res.json() as Promise<{ comments: Comment[]; nextCursor: string | null }>;
     },
-    [shareId],
+    [shareId, sessionId],
   );
 
   useEffect(() => {
@@ -119,7 +120,7 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
       const res = await fetch(`/api/comments/${shareId}/${commentId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, editToken }),
+        body: JSON.stringify({ sessionId }),
       });
       if (res.ok) {
         setComments((prev) => prev.filter((c) => c.id !== commentId));
@@ -131,7 +132,7 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
   };
 
   const canDelete = (comment: Comment) =>
-    comment.sessionId === sessionId || !!editToken;
+    comment.isOwn || canModerate;
 
   const handleFlag = async (commentId: number) => {
     if (!sessionId) return;
@@ -282,7 +283,7 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
                       </span>
                     </div>
                     <div
-                      className="flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all"
+                      className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-all"
                     >
                       {canDelete(comment) && (
                         <button
@@ -294,7 +295,7 @@ export function CommentSection({ shareId, editToken }: CommentSectionProps) {
                           Delete
                         </button>
                       )}
-                      {comment.sessionId !== sessionId && (
+                      {!comment.isOwn && (
                         <button
                           type="button"
                           onClick={() => handleFlag(comment.id)}

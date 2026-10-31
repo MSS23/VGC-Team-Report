@@ -1,12 +1,16 @@
+import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { getDb } from "@/lib/db";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 /**
  * POST /api/migrate
  *
  * Batch-migrates all reports in the database to the latest data format.
- * Protected by MIGRATE_SECRET environment variable.
+ * Protected by MIGRATE_SECRET environment variable — pass it as
+ * `Authorization: Bearer <MIGRATE_SECRET>` (no longer accepted in the JSON body).
  *
  * What it does:
  * 1. Normalizes matchupPlans from legacy planA/planB/selectedIndices → gamePlans[]
@@ -17,13 +21,13 @@ import { NextResponse } from "next/server";
  * Safe to run multiple times (idempotent).
  */
 export async function POST(request: Request) {
-  try {
-    // Auth check — require secret to prevent abuse
-    const { secret } = await request.json().catch(() => ({ secret: "" }));
-    if (!secret || secret !== process.env.MIGRATE_SECRET) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  // Auth check — require bearer token to prevent abuse.
+  // verifyBearer uses crypto.timingSafeEqual to prevent timing oracles.
+  if (!verifyBearer(request, "MIGRATE_SECRET")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  try {
     const sql = getDb();
     const stats = { total: 0, migrated: 0, searchVectorBackfilled: 0, errors: 0 };
 
@@ -46,8 +50,7 @@ export async function POST(request: Request) {
       for (const row of rows) {
         stats.total++;
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = row.data as Record<string, any>;
+          const data = row.data as Record<string, unknown>;
           const normalized = normalizeReportData(data);
           const changed = JSON.stringify(data) !== JSON.stringify(normalized);
 
@@ -105,4 +108,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Migration failed" }, { status: 500 });
   }
 }
-

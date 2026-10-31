@@ -616,6 +616,236 @@ export const MEGA_POKEMON_LIST: MegaPokemonEntry[] = [
     megaStone: "Glimmoranite",
     description: "Mega Glimmora is a legal Mega Evolution in Pokemon Champions Regulation M-A.",
   },
+
+  // ── Regulation M-B Megas (Pokémon Champions) ──────────────────────────
+  // Newly legal in Reg M-B, NOT in M-A. Real Gen 6 Megas (Sceptile,
+  // Blaziken, Swampert, Mawile, Metagross) plus Champions-original Megas.
+  // Verified against Serebii's Reg M-B page + Bulbapedia / PokemonDB /
+  // Game8 (June 2026).
+  {
+    slug: "mega-sceptile",
+    dataKey: "sceptile-mega",
+    displayName: "Mega Sceptile",
+    baseName: "Sceptile",
+    types: ["Grass", "Dragon"],
+    ability: "Lightning Rod",
+    megaStone: "Sceptilite",
+    description: "Mega Sceptile is a Grass/Dragon Mega Evolution newly legal in Pokemon Champions Regulation M-B.",
+  },
+  {
+    slug: "mega-blaziken",
+    dataKey: "blaziken-mega",
+    displayName: "Mega Blaziken",
+    baseName: "Blaziken",
+    types: ["Fire", "Fighting"],
+    ability: "Speed Boost",
+    megaStone: "Blazikenite",
+    description: "Mega Blaziken gains Speed Boost and huge Attack, newly legal in Pokemon Champions Regulation M-B.",
+  },
+  {
+    slug: "mega-swampert",
+    dataKey: "swampert-mega",
+    displayName: "Mega Swampert",
+    baseName: "Swampert",
+    types: ["Water", "Ground"],
+    ability: "Swift Swim",
+    megaStone: "Swampertite",
+    description: "Mega Swampert is a Swift Swim rain sweeper, newly legal in Pokemon Champions Regulation M-B.",
+  },
+  {
+    slug: "mega-mawile",
+    dataKey: "mawile-mega",
+    displayName: "Mega Mawile",
+    baseName: "Mawile",
+    types: ["Steel", "Fairy"],
+    ability: "Huge Power",
+    megaStone: "Mawilite",
+    description: "Mega Mawile doubles its Attack with Huge Power, newly legal in Pokemon Champions Regulation M-B.",
+  },
+  {
+    slug: "mega-metagross",
+    dataKey: "metagross-mega",
+    displayName: "Mega Metagross",
+    baseName: "Metagross",
+    types: ["Steel", "Psychic"],
+    ability: "Tough Claws",
+    megaStone: "Metagrossite",
+    description: "Mega Metagross is a Tough Claws physical powerhouse, newly legal in Pokemon Champions Regulation M-B.",
+  },
+  {
+    slug: "mega-raichu-x",
+    dataKey: "raichu-mega-x",
+    displayName: "Mega Raichu X",
+    baseName: "Raichu",
+    types: ["Electric"],
+    ability: "Electric Surge",
+    megaStone: "Raichunite X",
+    description: "Mega Raichu X sets Electric Terrain with Electric Surge, a Champions-original Mega in Regulation M-B.",
+  },
+  {
+    slug: "mega-raichu-y",
+    dataKey: "raichu-mega-y",
+    displayName: "Mega Raichu Y",
+    baseName: "Raichu",
+    types: ["Electric"],
+    ability: "No Guard",
+    megaStone: "Raichunite Y",
+    description: "Mega Raichu Y is a fast special attacker with No Guard, a Champions-original Mega in Regulation M-B.",
+  },
+  {
+    slug: "mega-staraptor",
+    dataKey: "staraptor-mega",
+    displayName: "Mega Staraptor",
+    baseName: "Staraptor",
+    types: ["Fighting", "Flying"],
+    ability: "Contrary",
+    megaStone: "Staraptite",
+    description: "Mega Staraptor turns Close Combat drops into boosts with Contrary, a Champions-original Mega in Regulation M-B.",
+  },
+  {
+    slug: "mega-scolipede",
+    dataKey: "scolipede-mega",
+    displayName: "Mega Scolipede",
+    baseName: "Scolipede",
+    types: ["Bug", "Poison"],
+    ability: "Shell Armor",
+    megaStone: "Scolipite",
+    description: "Mega Scolipede is a bulky Bug/Poison attacker with Shell Armor, newly legal in Pokemon Champions Regulation M-B.",
+  },
+  {
+    slug: "mega-scrafty",
+    dataKey: "scrafty-mega",
+    displayName: "Mega Scrafty",
+    baseName: "Scrafty",
+    types: ["Dark", "Fighting"],
+    ability: "Intimidate",
+    megaStone: "Scraftinite",
+    description: "Mega Scrafty is an Intimidate bulky attacker, a Champions-original Mega in Regulation M-B.",
+  },
+  {
+    slug: "mega-eelektross",
+    dataKey: "eelektross-mega",
+    displayName: "Mega Eelektross",
+    baseName: "Eelektross",
+    types: ["Electric"],
+    ability: "Eelevate",
+    megaStone: "Eelektrossite",
+    description: "Mega Eelektross is a Ground-immune Electric attacker with Eelevate, a Champions-original Mega in Regulation M-B.",
+  },
+  {
+    slug: "mega-pyroar",
+    dataKey: "pyroar-mega",
+    displayName: "Mega Pyroar",
+    baseName: "Pyroar",
+    types: ["Fire", "Normal"],
+    ability: "Fire Mane",
+    megaStone: "Pyroarite",
+    description: "Mega Pyroar boosts its Fire moves with Fire Mane, a Champions-original Mega in Regulation M-B.",
+  },
+  {
+    slug: "mega-malamar",
+    dataKey: "malamar-mega",
+    displayName: "Mega Malamar",
+    baseName: "Malamar",
+    types: ["Dark", "Psychic"],
+    ability: "Contrary",
+    megaStone: "Malamarite",
+    description: "Mega Malamar turns Superpower drops into boosts with Contrary, a Champions-original Mega in Regulation M-B.",
+  },
+  {
+    slug: "mega-barbaracle",
+    dataKey: "barbaracle-mega",
+    displayName: "Mega Barbaracle",
+    baseName: "Barbaracle",
+    types: ["Rock", "Fighting"],
+    ability: "Tough Claws",
+    megaStone: "Barbaracite",
+    description: "Mega Barbaracle is a Tough Claws Rock/Fighting attacker, a Champions-original Mega in Regulation M-B.",
+  },
+  {
+    slug: "mega-dragalge",
+    dataKey: "dragalge-mega",
+    displayName: "Mega Dragalge",
+    baseName: "Dragalge",
+    types: ["Poison", "Dragon"],
+    ability: "Regenerator",
+    megaStone: "Dragalgite",
+    description: "Mega Dragalge is a hugely bulky special wall with Regenerator, a Champions-original Mega in Regulation M-B.",
+  },
+  {
+    slug: "mega-falinks",
+    dataKey: "falinks-mega",
+    displayName: "Mega Falinks",
+    baseName: "Falinks",
+    types: ["Fighting"],
+    ability: "Defiant",
+    megaStone: "Falinksite",
+    description: "Mega Falinks is a Defiant physical attacker, a Champions-original Mega in Regulation M-B.",
+  },
+
+  // ── Regulation M-C Megas (Pokémon Champions, Sep–Dec 2026) ────────────
+  // Newly legal in Reg M-C, NOT in M-A/M-B. Verified against Victory Road,
+  // Game8 and Stratadex (Oct 2026); stats from @smogon/calc.
+  {
+    slug: "mega-garchomp-z",
+    dataKey: "garchomp-mega-z",
+    displayName: "Mega Garchomp Z",
+    baseName: "Garchomp",
+    types: ["Dragon"],
+    ability: "Levitate",
+    megaStone: "Garchompite Z",
+    description: "Mega Garchomp Z is a 151-Speed mixed Dragon attacker with Levitate, newly legal in Pokemon Champions Regulation M-C.",
+  },
+  {
+    slug: "mega-lucario-z",
+    dataKey: "lucario-mega-z",
+    displayName: "Mega Lucario Z",
+    baseName: "Lucario",
+    types: ["Fighting", "Steel"],
+    ability: "Aura Guard",
+    megaStone: "Lucarionite Z",
+    description: "Mega Lucario Z is a 164 Special Attack, 151-Speed special sweeper with Aura Guard, newly legal in Pokemon Champions Regulation M-C.",
+  },
+  {
+    slug: "mega-absol-z",
+    dataKey: "absol-mega-z",
+    displayName: "Mega Absol Z",
+    baseName: "Absol",
+    types: ["Dark", "Ghost"],
+    ability: "Sharpness",
+    megaStone: "Absolite Z",
+    description: "Mega Absol Z is a Dark/Ghost Sharpness slicer with 151 Speed, newly legal in Pokemon Champions Regulation M-C.",
+  },
+  {
+    slug: "mega-salamence",
+    dataKey: "salamence-mega",
+    displayName: "Mega Salamence",
+    baseName: "Salamence",
+    types: ["Dragon", "Flying"],
+    ability: "Aerilate",
+    megaStone: "Salamencite",
+    description: "Mega Salamence turns Double-Edge and Hyper Voice into Aerilate-boosted Flying spread damage, newly legal in Pokemon Champions Regulation M-C.",
+  },
+  {
+    slug: "mega-baxcalibur",
+    dataKey: "baxcalibur-mega",
+    displayName: "Mega Baxcalibur",
+    baseName: "Baxcalibur",
+    types: ["Dragon", "Ice"],
+    ability: "Thermal Exchange",
+    megaStone: "Baxcalibrite",
+    description: "Mega Baxcalibur is a 175 Attack Dragon/Ice wallbreaker immune to burns via Thermal Exchange, newly legal in Pokemon Champions Regulation M-C.",
+  },
+  {
+    slug: "mega-golisopod",
+    dataKey: "golisopod-mega",
+    displayName: "Mega Golisopod",
+    baseName: "Golisopod",
+    types: ["Bug", "Steel"],
+    ability: "Tough Claws",
+    megaStone: "Golisopite",
+    description: "Mega Golisopod is a 175 Defense Bug/Steel Tough Claws attacker for Trick Room, newly legal in Pokemon Champions Regulation M-C.",
+  },
 ];
 
 /**
@@ -651,6 +881,49 @@ export const CHAMPIONS_REG_MA_MEGAS = new Set<string>([
 /** Filtered list of MEGA_POKEMON_LIST entries that are legal in Reg M-A. */
 export function getRegMAMegas(): MegaPokemonEntry[] {
   return MEGA_POKEMON_LIST.filter((m) => CHAMPIONS_REG_MA_MEGAS.has(m.dataKey));
+}
+
+/**
+ * Megas introduced in Regulation M-B that are NOT legal in M-A. These are the
+ * unambiguous "this team can only be Reg M-B" signal for auto-detection, since
+ * a Mega only exists in the Champions formats and these specific ones aren't
+ * M-A legal.
+ */
+export const CHAMPIONS_REG_MB_ONLY_MEGAS = new Set<string>([
+  "sceptile-mega", "blaziken-mega", "swampert-mega", "mawile-mega",
+  "metagross-mega", "raichu-mega-x", "raichu-mega-y", "staraptor-mega",
+  "scolipede-mega", "scrafty-mega", "eelektross-mega", "pyroar-mega",
+  "malamar-mega", "barbaracle-mega", "dragalge-mega", "falinks-mega",
+]);
+
+/**
+ * Full set of Mega dataKeys legal in Regulation M-B. Reg M-B is a superset of
+ * M-A: every M-A Mega is M-B legal, plus the M-B-only Megas above. (M-B-only
+ * picks are not legal in M-A.)
+ */
+export const CHAMPIONS_REG_MB_MEGAS = new Set<string>([
+  ...CHAMPIONS_REG_MA_MEGAS,
+  ...CHAMPIONS_REG_MB_ONLY_MEGAS,
+]);
+
+/**
+ * Megas introduced in Regulation M-C (Sep 9 – Dec 2 2026) that are NOT legal
+ * in M-A or M-B — the unambiguous "this team is Reg M-C" detection signal.
+ */
+export const CHAMPIONS_REG_MC_ONLY_MEGAS = new Set<string>([
+  "garchomp-mega-z", "lucario-mega-z", "absol-mega-z",
+  "salamence-mega", "baxcalibur-mega", "golisopod-mega",
+]);
+
+/** Full set of Mega dataKeys legal in Reg M-C (superset of M-B). */
+export const CHAMPIONS_REG_MC_MEGAS = new Set<string>([
+  ...CHAMPIONS_REG_MB_MEGAS,
+  ...CHAMPIONS_REG_MC_ONLY_MEGAS,
+]);
+
+/** Filtered list of MEGA_POKEMON_LIST entries that are legal in Reg M-C. */
+export function getRegMCMegas(): MegaPokemonEntry[] {
+  return MEGA_POKEMON_LIST.filter((m) => CHAMPIONS_REG_MC_MEGAS.has(m.dataKey));
 }
 
 /**
@@ -695,12 +968,59 @@ export const MEGAS_WITH_SPRITES = new Set<string>([
   "chesnaught-mega", "delphox-mega", "greninja-mega", "floette-mega",
   "hawlucha-mega", "crabominable-mega", "drampa-mega", "scovillain-mega",
   "glimmora-mega",
-  // Genuinely 404 across all paths: meowstic-mega (only one)
+  // Reg M-B Megas with animated Showdown sprites (probed June 2026 — 14/16;
+  // only Raichu-Mega-X/Y are sprite-less so far).
+  "sceptile-mega", "blaziken-mega", "swampert-mega", "mawile-mega",
+  "metagross-mega", "staraptor-mega", "scolipede-mega", "scrafty-mega",
+  "eelektross-mega", "pyroar-mega", "malamar-mega", "barbaracle-mega",
+  "dragalge-mega", "falinks-mega",
+  // Were "missing" only because our slug lacked Showdown's joined suffix
+  // (raichu-megax, meowstic-mmega) — fixed in resolveSlug (Oct 2026).
+  "raichu-mega-x", "raichu-mega-y", "meowstic-mega",
+  // Reg M-C Megas (probed Oct 2026): Salamence fully animated, the rest
+  // static gen5 PNG only.
+  "salamence-mega", "garchomp-mega-z", "lucario-mega-z", "absol-mega-z",
+  "baxcalibur-mega", "golisopod-mega",
 ]);
 
 /** Reg M-A Megas that have sprites on Showdown — the only ones we link to. */
 export function getRegMAMegasWithSprites(): MegaPokemonEntry[] {
   return getRegMAMegas().filter((m) => MEGAS_WITH_SPRITES.has(m.dataKey));
+}
+
+/**
+ * Reg M-C Megas that have sprites on Showdown. This is the set the public
+ * /champions surfaces build from — index grid links, generateStaticParams,
+ * relatedMegas, and the sitemap — because M-C is the current (and widest)
+ * Champions regulation. Sprite-less Megas are still shown on the index as
+ * non-clickable "Coming Soon" cards.
+ */
+export function getRegMCMegasWithSprites(): MegaPokemonEntry[] {
+  return getRegMCMegas().filter((m) => MEGAS_WITH_SPRITES.has(m.dataKey));
+}
+
+export type ChampionsReg = "M-A" | "M-B" | "M-C";
+
+/**
+ * Earliest Champions regulation a Mega is legal in. Each reg is a superset of
+ * the last (M-A ⊂ M-B ⊂ M-C), so a Mega is legal from this reg onward.
+ *
+ * SEO-critical: the /champions/[pokemon] pages are statically generated, so a
+ * hard-coded "legal in Regulation M-A" string would publish a factually false
+ * legality claim on every later-rotation Mega. Always derive the label here.
+ */
+export function getMegaRegulation(dataKey: string): ChampionsReg {
+  if (CHAMPIONS_REG_MA_MEGAS.has(dataKey)) return "M-A";
+  if (CHAMPIONS_REG_MB_ONLY_MEGAS.has(dataKey)) return "M-B";
+  return "M-C";
+}
+
+/** "Regulation M-A, M-B and M-C" style prose for the regs a Mega is legal in. */
+export function getMegaLegalInLabel(dataKey: string): string {
+  const all: ChampionsReg[] = ["M-A", "M-B", "M-C"];
+  const regs = all.slice(all.indexOf(getMegaRegulation(dataKey)));
+  if (regs.length === 1) return `Regulation ${regs[0]}`;
+  return `Regulation ${regs.slice(0, -1).join(", ")} and ${regs[regs.length - 1]}`;
 }
 
 /** Whether a Mega entry currently has a usable sprite on Showdown. */
@@ -712,6 +1032,17 @@ export function hasMegaSprite(dataKey: string): boolean {
 export const MEGA_BY_SLUG = new Map(
   MEGA_POKEMON_LIST.map((m) => [m.slug, m]),
 );
+
+/**
+ * Canonical Mega slug for a bare species path (`/champions/garchomp` ->
+ * `mega-garchomp`), or null when the slug is already a Mega or has no single
+ * matching Mega (e.g. `charizard` has X and Y, so it stays a 404).
+ */
+export function megaSlugForSpecies(slug: string): string | null {
+  if (MEGA_BY_SLUG.has(slug)) return null;
+  const mega = MEGA_BY_SLUG.get(`mega-${slug.toLowerCase()}`);
+  return mega ? mega.slug : null;
+}
 
 /** Lookup by data key (e.g. "kangaskhan-mega") */
 export const MEGA_BY_KEY = new Map(

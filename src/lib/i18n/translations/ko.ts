@@ -1,9 +1,24 @@
 import type { TranslationKeys } from "./en";
 
 const ko: TranslationKeys = {
+  commonCombinationsTitle: "자주 쓰는 조합",
+  commonCombinationsDesc: "자주 내는 선출입니다. 여섯 마리 중 선발 2마리와 후발 2마리를 고르고, 언제 낼지 메모하세요.",
+  combinationLeads: "선발",
+  combinationBack: "후발",
+  combinationStrategy: "전략",
+  combinationLabel: "조합",
+  combinationStrategyPlaceholder: "이 조합을 언제 내고 어떻게 운영할지.",
+  addCombination: "조합 추가",
+  combinationsEmpty: "아직 조합이 없습니다.",
+  removeCombination: "조합 삭제",
+  legacyNotesTitle: "이전 메모",
+  legacyLeadsLabel: "자주 쓰는 선발 (이전)",
+  legacyModesLabel: "자주 쓰는 모드 (이전)",
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "경쟁 포켓몬 팀 리포트를 제작, 공유, 탐색하세요",
+  appMission:
+    "단순한 페이스트 뷰어가 아닙니다. 어떤 팀이든 데미지 계산, 스피드 티어, 매치업 플랜을 갖춘 체계적인 리포트로 만들어 누구나 구성을 이해하고 직접 운영하는 법을 배울 수 있습니다.",
   appInputHint: "Showdown 내보내기 또는 PokePaste URL을 붙여넣어 시작하세요",
 
   loadSample: "샘플 불러오기",
@@ -168,11 +183,22 @@ const ko: TranslationKeys = {
   notesLabel: "메모",
   noNotes: "메모 없음.",
   gamePlanNotesPlaceholder: "왜 이 네 마리인가요? 승리 조건은?",
-  replays: "리플레이",
-  optional: "선택사항",
-  pasteReplayPlaceholder: "리플레이 URL 붙여넣기...",
   add: "추가",
   delete: "삭제",
+
+  // Common Modes (이 팀 운영법)
+  commonModesTitle: "기본 운영",
+  commonLeads: "주요 선발",
+  commonModesField: "기본 운영",
+  strengths: "강점",
+  weaknesses: "약점",
+  gameplan: "게임 플랜",
+  commonModesEmpty: "아직 운영 메모가 없습니다",
+  commonLeadsPlaceholder: "자주 쓰는 선발 조합과 언제 내보낼지 (예: 대부분의 팀 상대로 어흥염 + 무한다이노).",
+  commonModesPlaceholder: "반복되는 턴 패턴과 플레이 스타일 — 팀이 보통 어떻게 흘러가는지.",
+  strengthsPlaceholder: "이 팀이 잘 이기는 상대와 잘하는 점.",
+  weaknessesPlaceholder: "이 팀이 까다로워하는 상대와 대처법.",
+  gameplanPlaceholder: "이기기 위한 운영법 — 핵심 행동 순서, 승리 조건, 우선순위.",
 
   plan: "플랜",
   plans: "플랜",

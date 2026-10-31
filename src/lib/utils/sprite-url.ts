@@ -1,112 +1,6 @@
+import { resolveSlug, STATIC_ONLY_SLUGS } from "./sprite-slug";
+
 const BASE_URL = "https://play.pokemonshowdown.com/sprites";
-
-function toSlug(species: string): string {
-  return species
-    .toLowerCase()
-    .replace(/♂/g, "m")
-    .replace(/♀/g, "f")
-    .replace(/[éè]/g, "e")
-    .replace(/[''.:\u2019]/g, "")
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-const SLUG_OVERRIDES: Record<string, string> = {
-  // Base name corrections (Showdown strips all non-alnum from base names)
-  "ho-oh": "hooh",
-  "type-null": "typenull",
-  "mr-mime": "mrmime",
-  "mr-rime": "mrrime",
-  "mime-jr": "mimejr",
-  "jangmo-o": "jangmoo",
-  "hakamo-o": "hakamoo",
-  "kommo-o": "kommoo",
-  "tapu-koko": "tapukoko",
-  "tapu-lele": "tapulele",
-  "tapu-bulu": "tapubulu",
-  "tapu-fini": "tapufini",
-  // Nidoran gender (♂/♀ handled in toSlug → nidoranm / nidoranf)
-
-  // Form names (multi-word forms merged)
-  "urshifu-rapid-strike": "urshifu-rapidstrike",
-  "necrozma-dusk-mane": "necrozma-duskmane",
-  "necrozma-dawn-wings": "necrozma-dawnwings",
-  "oricorio-pom-pom": "oricorio-pompom",
-  "mr-mime-galar": "mrmime-galar",
-  "tauros-paldea-combat": "tauros-paldeacombat",
-  "tauros-paldea-blaze": "tauros-paldeablaze",
-  "tauros-paldea-aqua": "tauros-paldeaaqua",
-
-  // Paradox Pokemon (two-word names, no hyphen on Showdown)
-  "flutter-mane": "fluttermane",
-  "iron-hands": "ironhands",
-  "iron-bundle": "ironbundle",
-  "iron-valiant": "ironvaliant",
-  "iron-moth": "ironmoth",
-  "iron-thorns": "ironthorns",
-  "iron-jugulis": "ironjugulis",
-  "iron-leaves": "ironleaves",
-  "iron-boulder": "ironboulder",
-  "iron-crown": "ironcrown",
-  "great-tusk": "greattusk",
-  "brute-bonnet": "brutebonnet",
-  "scream-tail": "screamtail",
-  "sandy-shocks": "sandyshocks",
-  "slither-wing": "slitherwing",
-  "roaring-moon": "roaringmoon",
-  "walking-wake": "walkingwake",
-  "gouging-fire": "gougingfire",
-  "raging-bolt": "ragingbolt",
-
-  // Treasures of Ruin
-  "chien-pao": "chienpao",
-  "chi-yu": "chiyu",
-  "ting-lu": "tinglu",
-  "wo-chien": "wochien",
-
-  // Bloodmoon Ursaluna (name order differs from Showdown slug)
-  "bloodmoon-ursaluna": "ursaluna-bloodmoon",
-
-  // Mega Evolutions (Showdown merges "Mega X/Y" into "megax/megay")
-  "charizard-mega-x": "charizard-megax",
-  "charizard-mega-y": "charizard-megay",
-  "mewtwo-mega-x": "mewtwo-megax",
-  "mewtwo-mega-y": "mewtwo-megay",
-
-  // Forms that match slug as-is (kept for documentation)
-  "calyrex-ice": "calyrex-ice",
-  "calyrex-shadow": "calyrex-shadow",
-  "indeedee-f": "indeedee-f",
-  "meowstic-f": "meowstic-f",
-  "ogerpon-wellspring": "ogerpon-wellspring",
-  "ogerpon-hearthflame": "ogerpon-hearthflame",
-  "ogerpon-cornerstone": "ogerpon-cornerstone",
-  "zacian-crowned": "zacian-crowned",
-  "palkia-origin": "palkia-origin",
-  "dialga-origin": "dialga-origin",
-  "giratina-origin": "giratina-origin",
-  "landorus-therian": "landorus-therian",
-  "thundurus-therian": "thundurus-therian",
-  "tornadus-therian": "tornadus-therian",
-  "enamorus-therian": "enamorus-therian",
-  "ninetales-alola": "ninetales-alola",
-  "arcanine-hisui": "arcanine-hisui",
-  "lilligant-hisui": "lilligant-hisui",
-  "goodra-hisui": "goodra-hisui",
-  "kyurem-white": "kyurem-white",
-  "kyurem-black": "kyurem-black",
-  "rotom-wash": "rotom-wash",
-  "rotom-heat": "rotom-heat",
-  "rotom-mow": "rotom-mow",
-  "rotom-fan": "rotom-fan",
-  "rotom-frost": "rotom-frost",
-};
-
-function resolveSlug(species: string): string {
-  const slug = toSlug(species);
-  return SLUG_OVERRIDES[slug] ?? slug;
-}
 
 // ─── Gen-themed sprite support ──────────────────────────────────────
 
@@ -123,6 +17,16 @@ interface GenSpriteStyle {
   pixelated: boolean;
 }
 
+/**
+ * Style used for any unknown/invalid gen theme. Declared as a standalone
+ * constant (rather than reached for as `GEN_SPRITE_STYLES.gen9`) so the fallback
+ * is not itself an index lookup that can come back `undefined` — every read of
+ * `style.*` below is then statically guaranteed to hit a real object.
+ */
+const DEFAULT_GEN_SPRITE_STYLE: GenSpriteStyle = {
+  folder: "home", shinyFolder: "home-shiny", animated: "ani", animatedShiny: "ani-shiny", pixelated: false,
+};
+
 const GEN_SPRITE_STYLES: Record<string, GenSpriteStyle> = {
   gen1: { folder: "gen1rb",  shinyFolder: null,         animated: "gen5ani", animatedShiny: "gen5ani-shiny", pixelated: true },
   gen2: { folder: "gen2",    shinyFolder: null,         animated: "gen5ani", animatedShiny: "gen5ani-shiny", pixelated: true },
@@ -132,8 +36,24 @@ const GEN_SPRITE_STYLES: Record<string, GenSpriteStyle> = {
   gen6: { folder: "dex",     shinyFolder: "dex-shiny",  animated: "ani",     animatedShiny: "ani-shiny",     pixelated: false },
   gen7: { folder: "dex",     shinyFolder: "dex-shiny",  animated: "ani",     animatedShiny: "ani-shiny",     pixelated: false },
   gen8: { folder: "home",    shinyFolder: "home-shiny", animated: "ani",     animatedShiny: "ani-shiny",     pixelated: false },
-  gen9: { folder: "home",    shinyFolder: "home-shiny", animated: "ani",     animatedShiny: "ani-shiny",     pixelated: false },
+  gen9: DEFAULT_GEN_SPRITE_STYLE,
 };
+
+/**
+ * Resolves a gen theme to its sprite style, always returning a real object.
+ *
+ * The own-property check matters: `GEN_SPRITE_STYLES` is an object literal, so a
+ * bare `GEN_SPRITE_STYLES[genTheme]` for a key like `"toString"`, `"constructor"`
+ * or `"__proto__"` returns an inherited `Object.prototype` member instead of
+ * `undefined`, which means `?? DEFAULT` never fires and the caller ends up
+ * reading `.folder` off a function — emitting `.../undefined/garchomp.png`.
+ * `genTheme` comes from persisted user preferences, so it is untrusted input.
+ */
+function resolveGenStyle(genTheme: string): GenSpriteStyle {
+  return Object.prototype.hasOwnProperty.call(GEN_SPRITE_STYLES, genTheme)
+    ? (GEN_SPRITE_STYLES[genTheme] ?? DEFAULT_GEN_SPRITE_STYLE)
+    : DEFAULT_GEN_SPRITE_STYLE;
+}
 
 /**
  * Returns an ordered list of sprite URLs to try for a given species.
@@ -150,10 +70,18 @@ export function getGenThemedSpriteUrls(
   shiny: boolean,
 ): string[] {
   const slug = resolveSlug(species);
-  const style = GEN_SPRITE_STYLES[genTheme] ?? GEN_SPRITE_STYLES.gen9;
+  // An unrecognised genTheme (stale localStorage, hand-edited URL, a gen we
+  // haven't added yet) falls back to the modern style, so the 12 `style.*` reads
+  // below are safe today and stay safe once `noUncheckedIndexedAccess` lands.
+  const style: GenSpriteStyle = resolveGenStyle(genTheme);
   const urls: string[] = [];
 
-  if (animated) {
+  // Some species (e.g. the Treasures of Ruin) have no animated GIF on
+  // Showdown — trying one just 404s and flashes a broken image. Force the
+  // static path for those even when animation was requested.
+  const wantAnimated = animated && !STATIC_ONLY_SLUGS.has(slug);
+
+  if (wantAnimated) {
     // 1. Gen-themed animated (e.g., gen5ani for retro themes, ani for modern)
     urls.push(`${BASE_URL}/${shiny ? style.animatedShiny : style.animated}/${slug}.gif`);
     // 2. Fallback to both animated styles (ani has modern, gen5ani has wider coverage)
@@ -182,8 +110,15 @@ export function getGenThemedSpriteUrls(
     if (style.folder !== "gen5") {
       urls.push(`${BASE_URL}/${shiny ? "gen5-shiny" : "gen5"}/${slug}.png`);
     }
-    // 4. Animated fallback
-    urls.push(`${BASE_URL}/${shiny ? "ani-shiny" : "ani"}/${slug}.gif`);
+    if (STATIC_ONLY_SLUGS.has(slug)) {
+      // No animated GIF exists for these, and retro static folders don't
+      // carry gen-9 mons — guarantee the modern HOME PNG so a retro theme
+      // still resolves to the real sprite instead of the substitute doll.
+      urls.push(`${BASE_URL}/${shiny ? "home-shiny" : "home"}/${slug}.png`);
+    } else {
+      // 4. Animated fallback
+      urls.push(`${BASE_URL}/${shiny ? "ani-shiny" : "ani"}/${slug}.gif`);
+    }
   }
 
   // No base-form fallback for Megas — see sprite-slug.ts comment.
@@ -195,9 +130,45 @@ export function getGenThemedSpriteUrls(
   return urls;
 }
 
+export interface ProgressiveSpriteUrls {
+  /**
+   * Static-first sprites shown while an animation downloads. The tail of the
+   * chain deliberately keeps the `ani/*.gif` entry that
+   * `getGenThemedSpriteUrls` appends: it is only reached after the gen-themed
+   * and gen5 PNGs have both 404'd, and a real (animated) sprite beats the
+   * substitute doll there. So a "preview" can end up animated on a double
+   * failure — by design, not by accident.
+   */
+  preview: string[];
+  /** Animated candidates to decode in the background, in fallback order. */
+  animated: string[];
+}
+
+/**
+ * Return the two phases used by the report sprite renderer.
+ *
+ * Showdown's animated GIFs are commonly several times larger than its HOME
+ * PNGs. Rendering a PNG first gives an imported team an immediate visual
+ * response, while the GIF can download and decode without leaving a blank
+ * card. Static-only species naturally return an empty animation phase.
+ */
+export function getProgressiveSpriteUrls(
+  species: string,
+  genTheme: string,
+  shiny: boolean,
+): ProgressiveSpriteUrls {
+  return {
+    preview: getGenThemedSpriteUrls(species, genTheme, false, shiny),
+    animated: getGenThemedSpriteUrls(species, genTheme, true, shiny).filter(
+      (url) => url.endsWith(".gif"),
+    ),
+  };
+}
+
 /**
  * Whether a gen theme uses pixelated (retro) rendering for static sprites.
  */
 export function isGenThemePixelated(genTheme: string): boolean {
-  return GEN_SPRITE_STYLES[genTheme]?.pixelated ?? false;
+  // Same unknown-theme fallback as getGenThemedSpriteUrls — one source of truth.
+  return resolveGenStyle(genTheme).pixelated;
 }

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { ChangelogContent } from "./ChangelogContent";
+import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
+import { ENTRIES } from "./data";
 
 export const metadata: Metadata = {
-  title: "Changelog — VGC Team Report",
+  title: "Changelog",
   description: "Full version history of VGC Team Report — new features, bug fixes, and improvements.",
   alternates: { canonical: "https://pokemonvgcteamreport.com/changelog" },
   openGraph: {
@@ -21,5 +23,15 @@ export const metadata: Metadata = {
 };
 
 export default function ChangelogPage() {
-  return <ChangelogContent />;
+  return (
+    <>
+      <BreadcrumbListJsonLd
+        items={[
+          { name: "Home", url: "https://pokemonvgcteamreport.com" },
+          { name: "Changelog", url: "https://pokemonvgcteamreport.com/changelog" },
+        ]}
+      />
+      <ChangelogContent entries={ENTRIES} />
+    </>
+  );
 }

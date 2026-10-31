@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { PageNavbar } from "@/components/layout/PageNavbar";
 
@@ -32,9 +33,31 @@ function getActivePage(pathname: string): ActivePage {
  */
 export function PersistentNavbar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const [hasHashShare, setHasHashShare] = useState(false);
 
-  if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
+  useEffect(() => {
+    const updateHashContext = () => {
+      setHasHashShare(
+        window.location.hash.startsWith("#id=") ||
+        window.location.hash.startsWith("#data="),
+      );
+    };
+    updateHashContext();
+    window.addEventListener("hashchange", updateHashContext);
+    return () => window.removeEventListener("hashchange", updateHashContext);
+  }, []);
+
+  // Shared reports are initially routed through /?s={id}, then clean the
+  // visible URL to /s/{id}. Hide the global navbar for both phases so the
+  // report's purpose-built navigation is the only header on screen.
+  const isShareContext =
+    !!searchParams.get("s") ||
+    hasHashShare ||
+    (typeof window !== "undefined" && window.location.pathname.startsWith("/s/"));
+
+  if (isShareContext || HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
   return (
     <PageNavbar

@@ -1,7 +1,24 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { extractSpecies } from "@/lib/utils/extract-species";
+import { cacheGet, cacheSet } from "@/lib/cache";
 import { NextResponse } from "next/server";
+
+// Public creator pages are hit repeatedly. Short-TTL Redis cache + a matching
+// CDN window keeps the DB (creator UNION + reaction/collaborator batches) cold
+// between refreshes. Inline key/TTL so we don't have to touch shared cache.ts.
+const CREATOR_CACHE_TTL = 60; // seconds
+const CREATOR_CACHE_CONTROL = "public, s-maxage=60, stale-while-revalidate=300";
+
+function creatorResponse(payload: unknown) {
+  const res = NextResponse.json(payload);
+  res.headers.set("Cache-Control", CREATOR_CACHE_CONTROL);
+  // Explicit CDN headers so Vercel's edge actually caches this (some setups
+  // ignore s-maxage from Cache-Control alone). Mirrors share/explore routes.
+  res.headers.set("CDN-Cache-Control", CREATOR_CACHE_CONTROL);
+  res.headers.set("Vercel-CDN-Cache-Control", CREATOR_CACHE_CONTROL);
+  return res;
+}
 
 export async function GET(
   request: Request,
@@ -13,23 +30,34 @@ export async function GET(
     const guard = await apiGuard(request, { rateLimit: { key: "creator", max: 30 } });
     if (guard) return guard;
 
+    // Serve from cache when warm.
+    const cacheKey = `creator:${creatorName}`;
+    const cached = await cacheGet<unknown>(cacheKey);
+    if (cached) {
+      return creatorResponse(cached);
+    }
+
     const sql = getDb();
 
-    // Fetch public reports where this person is the creator OR a collaborator
+    // Fetch public reports where this person is the creator OR a collaborator.
+    // Exact case-insensitive match (like the verified/profile/follows queries
+    // below) — ILIKE here treated the path param as a pattern, so /creator/%25
+    // matched every public report in the table. LIMIT bounds the payload.
     const rows = await sql`
       SELECT id, data, created_at, updated_at, COALESCE(view_count, 0) as view_count, 'creator' as role
       FROM shares
-      WHERE is_public = TRUE AND deleted_at IS NULL AND data->>'creatorName' ILIKE ${creatorName}
+      WHERE is_public = TRUE AND deleted_at IS NULL AND LOWER(data->>'creatorName') = ${creatorName.toLowerCase()}
 
       UNION
 
       SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count, 'collaborator' as role
       FROM shares s
       JOIN collaborators c ON c.share_id = s.id
-      WHERE s.is_public = TRUE AND s.deleted_at IS NULL AND c.user_name ILIKE ${creatorName}
+      WHERE s.is_public = TRUE AND s.deleted_at IS NULL AND LOWER(c.user_name) = ${creatorName.toLowerCase()}
         AND COALESCE(c.status, 'accepted') = 'accepted'
 
       ORDER BY created_at DESC
+      LIMIT 100
     `;
 
     // Check verified status, profile, and follower count
@@ -42,7 +70,9 @@ export async function GET(
 
     // If creator has set their profile to private, return early
     if (profileCheck.length > 0 && profileCheck[0].is_public === false) {
-      return NextResponse.json({ creator: creatorName, isPrivate: true, reports: [] });
+      const privatePayload = { creator: creatorName, isPrivate: true, reports: [] };
+      await cacheSet(cacheKey, privatePayload, CREATOR_CACHE_TTL);
+      return creatorResponse(privatePayload);
     }
 
     const profile = profileCheck.length > 0 ? {
@@ -58,7 +88,9 @@ export async function GET(
     const totalViews = rows.reduce((sum, r) => sum + (Number(r.view_count) || 0), 0);
 
     if (rows.length === 0) {
-      return NextResponse.json({ creator: creatorName, isVerified, profile, followerCount, totalReports: 0, totalReactions: 0, totalViews: 0, reports: [] });
+      const emptyPayload = { creator: creatorName, isVerified, profile, followerCount, totalReports: 0, totalReactions: 0, totalViews: 0, reports: [] };
+      await cacheSet(cacheKey, emptyPayload, CREATOR_CACHE_TTL);
+      return creatorResponse(emptyPayload);
     }
 
     const shareIds = rows.map((r) => r.id as string);
@@ -110,7 +142,7 @@ export async function GET(
       };
     });
 
-    return NextResponse.json({
+    const payload = {
       creator: creatorName,
       isVerified,
       profile,
@@ -119,7 +151,9 @@ export async function GET(
       totalReactions,
       totalViews,
       reports,
-    });
+    };
+    await cacheSet(cacheKey, payload, CREATOR_CACHE_TTL);
+    return creatorResponse(payload);
   } catch (e) {
     console.error("Creator API error:", e);
     return NextResponse.json({ error: "Failed" }, { status: 500 });

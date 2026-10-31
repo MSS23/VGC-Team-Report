@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
 import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
@@ -33,12 +32,12 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
     : 0);
 
   return (
-    <motion.a
+    <a
       href={`/s/${report.id}`}
       className="block bg-surface rounded-2xl border-2 border-accent/20 shadow-lg shadow-accent/5 hover:shadow-xl hover:border-accent/40 transition-all duration-300 overflow-hidden group"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+
+
+
     >
       {/* Top bar: badge + author + placement */}
       <div className="px-5 sm:px-6 pt-5 flex items-center justify-between gap-3 flex-wrap">
@@ -95,18 +94,18 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
       <div className="px-4 sm:px-6 pt-5 pb-3">
         <div className="flex items-end justify-center gap-2 sm:gap-5">
           {report.species.map((species, i) => (
-            <motion.div
+            <div
               key={i}
               className="flex flex-col items-center gap-1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.07, duration: 0.4 }}
+
+
+
             >
               <AnimatedSprite species={species} size={52} />
-              <span className="text-[9px] sm:text-[10px] font-semibold text-text-tertiary text-center leading-tight max-w-[56px] sm:max-w-[72px] truncate">
+              <span className="text-[10px] font-semibold text-text-tertiary text-center leading-tight max-w-[56px] sm:max-w-[72px] truncate">
                 {species}
               </span>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
@@ -162,7 +161,7 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
           </span>
         </div>
       </div>
-    </motion.a>
+    </a>
   );
 }
 

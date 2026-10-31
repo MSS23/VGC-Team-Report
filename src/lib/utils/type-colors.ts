@@ -1,6 +1,6 @@
-import type { PokemonType } from "@/lib/types/pokemon";
+import type { TeraType } from "@/lib/types/pokemon";
 
-export const TYPE_COLORS: Record<PokemonType, { bg: string; text: string; border: string }> = {
+export const TYPE_COLORS: Record<TeraType, { bg: string; text: string; border: string }> = {
   Normal:   { bg: "#A8A77A", text: "#FFFFFF", border: "#9C9B6E" },
   Fire:     { bg: "#EE8130", text: "#FFFFFF", border: "#E27524" },
   Water:    { bg: "#6390F0", text: "#FFFFFF", border: "#5784E4" },
@@ -19,4 +19,7 @@ export const TYPE_COLORS: Record<PokemonType, { bg: string; text: string; border
   Dark:     { bg: "#705746", text: "#FFFFFF", border: "#644B3A" },
   Steel:    { bg: "#B7B7CE", text: "#1A1A2E", border: "#ABABC2" },
   Fairy:    { bg: "#D685AD", text: "#FFFFFF", border: "#CA79A1" },
+  // Stellar is Tera-only (no chart row) but needs badge styling — the games
+  // render it as the iridescent teal/gold Stellar crown (VGC-294).
+  Stellar:  { bg: "#4FA89B", text: "#FFFFFF", border: "#439C8F" },
 };

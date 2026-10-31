@@ -3,6 +3,8 @@ const en = {
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "Build, share, and discover competitive Pokemon team reports",
+  appMission:
+    "More than a paste viewer — turn any team into a structured report with damage calcs, speed tiers, and matchup plans, so anyone can understand how it works and learn to pilot it.",
   appInputHint: "Import any PokéPaste URL, rental code, or Showdown export to get started",
 
   // Input screen
@@ -187,11 +189,37 @@ const en = {
   notesLabel: "Notes",
   noNotes: "No notes.",
   gamePlanNotesPlaceholder: "Why are you bringing these four? What's the win condition?",
-  replays: "Replays",
-  optional: "optional",
-  pasteReplayPlaceholder: "Paste replay URL...",
   add: "Add",
   delete: "Delete",
+
+  // Common Modes ("How to pilot this team")
+  commonModesTitle: "Common Modes",
+  commonLeads: "Common Leads",
+  commonModesField: "Common Modes",
+  strengths: "Strengths",
+  weaknesses: "Weaknesses",
+  gameplan: "Game Plan",
+  commonModesEmpty: "No pilot notes yet",
+  commonLeadsPlaceholder: "Your go-to opening pairs and when to lead them (e.g. Incineroar + Flutter Mane vs. most teams).",
+  commonModesPlaceholder: "Recurring turn patterns and playstyles — how the team usually wants to flow.",
+  strengthsPlaceholder: "What this team beats and what it does well.",
+  weaknessesPlaceholder: "What gives this team trouble and how to play around it.",
+  gameplanPlaceholder: "How to pilot the team to win — key sequencing, win conditions, and what to prioritize.",
+
+  // Common Combinations (structured lead/back bring table)
+  commonCombinationsTitle: "Common Combinations",
+  commonCombinationsDesc: "Your go-to brings — pick two leads and two in the back from your six, then note when to bring it.",
+  combinationLeads: "Leads",
+  combinationBack: "Back",
+  combinationStrategy: "Strategy",
+  combinationLabel: "Combination",
+  combinationStrategyPlaceholder: "When to bring this combo and how to play it out.",
+  addCombination: "Add combination",
+  combinationsEmpty: "No combinations yet.",
+  removeCombination: "Remove combination",
+  legacyNotesTitle: "Legacy notes",
+  legacyLeadsLabel: "Common Leads (old)",
+  legacyModesLabel: "Common Modes (old)",
 
   // MatchupSheetRow
   plan: "plan",
@@ -335,8 +363,8 @@ const en = {
   shareModalEnableComments: "Enable comments",
   shareModalCommentsEnabledDesc: "Viewers can leave comments on your report.",
   shareModalCommentsDisabledDesc: "Comments are off. Turn on to let others share feedback.",
-  shareModalBookmarkBold: "Bookmark this link now.",
-  shareModalBookmarkDesc: "If you close the tab without saving it, you’ll lose edit access to this report.",
+  shareModalBookmarkBold: "Editing is account-protected.",
+  shareModalBookmarkDesc: "Only you and accepted collaborators can edit this report after signing in.",
   shareModalGrowthNote: "The more you share, the more the VGC community grows.",
 
   // Social / Community

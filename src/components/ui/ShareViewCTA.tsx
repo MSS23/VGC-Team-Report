@@ -29,7 +29,7 @@ export function ShareViewCTA({
     "px-3.5 py-2 sm:px-5 sm:py-2.5 bg-accent text-white text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer disabled:opacity-60 disabled:cursor-wait";
 
   return (
-    <div className="fixed bottom-14 sm:bottom-12 inset-x-0 z-30 pointer-events-none">
+    <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] sm:bottom-[calc(3rem+env(safe-area-inset-bottom,0px))] inset-x-0 z-30 pointer-events-none">
       <div className="max-w-5xl mx-auto px-2 sm:px-4 pb-1.5 sm:pb-2">
         <div className="pointer-events-auto bg-surface/95 backdrop-blur-xl border border-border rounded-xl sm:rounded-2xl shadow-2xl px-3 py-2.5 sm:px-5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-3 animate-fade-in">
           <div className="min-w-0">
@@ -39,6 +39,36 @@ export function ShareViewCTA({
             <p className="text-xs text-text-tertiary mt-0.5 hidden sm:block">
               You&apos;ll get an editable copy — change spreads, add notes, share your version with the community.
             </p>
+            {/* Secondary, no-auth escape hatch for signed-out mobile viewers.
+                Duplicate stays the single primary CTA; this is a plain text
+                link. Desktop already surfaces "Build Your Own" in the navbar
+                (hidden sm:inline-flex there), so this is mobile-only to avoid
+                duplicating it. */}
+            {!isSignedIn && (
+              // eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state
+              <a
+                href="/"
+                aria-label="Build your own team report"
+                className="sm:hidden inline-flex items-center gap-1 min-h-[44px] -mt-0.5 -mb-2 text-xs font-semibold text-text-secondary underline underline-offset-2 hover:text-text-primary transition-colors"
+              >
+                Build your own
+                <svg
+                  aria-hidden="true"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="flex-shrink-0"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </a>
+            )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             {isSignedIn ? (

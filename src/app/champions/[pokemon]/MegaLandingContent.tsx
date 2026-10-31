@@ -57,6 +57,8 @@ function MegaSprite({ species }: { species: string }) {
       alt={species}
       width={120}
       height={120}
+      loading="eager"
+      fetchPriority="high"
       className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-lg"
       onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
     />
@@ -68,10 +70,25 @@ interface MegaLandingContentProps {
   baseStats: StatSpread;
   teams: ExploreReport[];
   relatedMegas: { slug: string; displayName: string; types: string[] }[];
+  /**
+   * Human-readable legality, derived server-side from the Mega's actual
+   * regulation (e.g. "Regulation M-A, M-B and M-C" vs "Regulation M-C").
+   * Never hard-code this — M-B-only Megas are not M-A legal.
+   */
+  regulationLabel: string;
+  /** Matching `regulation` filter value for /explore deep links. */
+  exploreRegulation: string;
   // faqs removed from the visible UI — JSON-LD still generated server-side.
 }
 
-export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: MegaLandingContentProps) {
+export function MegaLandingContent({
+  mega,
+  baseStats,
+  teams,
+  relatedMegas,
+  regulationLabel,
+  exploreRegulation,
+}: MegaLandingContentProps) {
   const bst = Object.values(baseStats).reduce((a, b) => a + b, 0);
 
   useEffect(() => {
@@ -124,6 +141,9 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
                 <p className="mt-2 text-xs text-text-tertiary">
                   Mega Stone: <span className="font-medium text-text-secondary">{mega.megaStone}</span>
                 </p>
+                <p className="mt-1 text-xs text-text-tertiary">
+                  Legal in: <span className="font-medium text-text-secondary">{regulationLabel}</span>
+                </p>
               </div>
             </div>
           </div>
@@ -149,7 +169,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
               {mega.displayName} SP Spreads & Competitive Teams
             </h2>
             <Link
-              href={`/explore?species=${encodeURIComponent(mega.baseName)}&regulation=Reg+M-A`}
+              href={`/explore?species=${encodeURIComponent(mega.baseName)}&regulation=${encodeURIComponent(exploreRegulation)}`}
               className="text-xs font-bold text-accent hover:brightness-110 transition-all"
             >
               View all &rarr;
@@ -210,7 +230,7 @@ export function MegaLandingContent({ mega, baseStats, teams, relatedMegas }: Meg
                     {m.types.map((t) => (
                       <span
                         key={t}
-                        className="text-[9px] font-bold text-white px-1.5 py-0.5 rounded-full"
+                        className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded-full"
                         style={{ backgroundColor: TYPE_COLORS[t] ?? "#888" }}
                       >
                         {t}

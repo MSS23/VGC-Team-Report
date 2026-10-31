@@ -25,11 +25,13 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
 
   // Reset to slide 0 when team changes (resetKey), or when totalSlides changes if no resetKey
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset to the first slide when the deck changes
     setCurrentSlide(0);
   }, [resetKey ?? totalSlides]);
 
   // Clamp when totalSlides decreases (e.g., plan removed)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset to the first slide when the deck changes
     setCurrentSlide((prev) => Math.min(prev, Math.max(0, totalSlides - 1)));
   }, [totalSlides]);
 
@@ -72,17 +74,23 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
     onTogglePresentation, onUndo, onRedo, onToggleCreatorMode,
     onToggleHideSlide, onMoveSlideUp, onMoveSlideDown,
   });
-  callbacksRef.current = {
-    onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp,
-    onTogglePresentation, onUndo, onRedo, onToggleCreatorMode,
-    onToggleHideSlide, onMoveSlideUp, onMoveSlideDown,
-  };
+  useEffect(() => {
+    callbacksRef.current = {
+      onEscape, onToggleDarkMode, onToggleFullscreen, onShowHelp,
+      onTogglePresentation, onUndo, onRedo, onToggleCreatorMode,
+      onToggleHideSlide, onMoveSlideUp, onMoveSlideDown,
+    };
+  }, [onEscape, onMoveSlideDown, onMoveSlideUp, onRedo, onShowHelp, onToggleCreatorMode, onToggleDarkMode, onToggleFullscreen, onToggleHideSlide, onTogglePresentation, onUndo]);
 
   const totalSlidesRef = useRef(totalSlides);
-  totalSlidesRef.current = totalSlides;
+  useEffect(() => {
+    totalSlidesRef.current = totalSlides;
+  }, [totalSlides]);
 
   const bypassFocusGuardRef = useRef(bypassFocusGuard);
-  bypassFocusGuardRef.current = bypassFocusGuard;
+  useEffect(() => {
+    bypassFocusGuardRef.current = bypassFocusGuard;
+  }, [bypassFocusGuard]);
 
   // Keyboard listener — only re-attaches when `enabled` changes
   useEffect(() => {
@@ -92,11 +100,21 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
       const cbs = callbacksRef.current;
       const total = totalSlidesRef.current;
 
-      // Focus guard: skip when cursor is in a textarea or input (unless bypassed for presentation mode)
-      if (!bypassFocusGuardRef.current) {
-        const tag = (e.target as HTMLElement)?.tagName;
-        if (tag === "TEXTAREA" || tag === "INPUT") return;
-      }
+      // Never steal navigation keys from editable or composite controls.
+      // Presentation mode may bypass the general focus guard for ordinary
+      // buttons, but text entry and arrow-driven widgets must retain their
+      // native keyboard behaviour.
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      const role = target?.getAttribute?.("role");
+      const isEditable =
+        tag === "TEXTAREA" ||
+        tag === "INPUT" ||
+        tag === "SELECT" ||
+        target?.isContentEditable;
+      const ownsArrowKeys = role === "radio" || role === "slider" || role === "listbox" || role === "menu";
+      if (isEditable || ownsArrowKeys) return;
+      if (!bypassFocusGuardRef.current && role === "tab") return;
 
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey && cbs.onUndo) {
         e.preventDefault();
@@ -114,6 +132,12 @@ export function useSlideNavigation({ totalSlides, enabled, resetKey, bypassFocus
       } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
         withTransition(() => setCurrentSlide((prev) => Math.max(prev - 1, 0)));
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        withTransition(() => setCurrentSlide(0));
+      } else if (e.key === "End") {
+        e.preventDefault();
+        withTransition(() => setCurrentSlide(Math.max(0, total - 1)));
       } else if (e.key === "Escape" && cbs.onEscape) {
         e.preventDefault();
         cbs.onEscape();

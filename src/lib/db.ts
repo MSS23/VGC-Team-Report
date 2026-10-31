@@ -1,16 +1,32 @@
-import { neon } from "@neondatabase/serverless";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
-export function getDb() {
+export function getDb(): NeonQueryFunction<false, false> {
   const sql = neon(process.env.DATABASE_URL!);
   return sql;
 }
 
 /** Run once to create tables and indexes. Each statement is independent so one failure doesn't block others. */
-export async function ensureTable() {
+export async function ensureTable(): Promise<void> {
   const sql = getDb();
   const run = async (query: ReturnType<typeof sql>) => {
-    try { await query; } catch (e) { console.warn("Migration statement skipped:", e); }
+    try { await query; } catch (e: unknown) { console.warn("Migration statement skipped:", e); }
   };
+
+  // Presence: at most 5,000 small rows, 45s visibility, 2min cleanup; no snapshots.
+  // Storage checked 2026-09-21: existing database ~17MB. Budget <10MB for this
+  // bounded table and indexes, with aggressive vacuum of heartbeat updates.
+  await run(sql`CREATE TABLE IF NOT EXISTS collaboration_presence (
+    share_id TEXT NOT NULL, user_id TEXT NOT NULL, display_name VARCHAR(80) NOT NULL,
+    section VARCHAR(160) NOT NULL, field VARCHAR(100) NOT NULL, caret INTEGER,
+    seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (share_id, user_id)
+  ) WITH (autovacuum_vacuum_scale_factor = 0.02, autovacuum_vacuum_threshold = 50)`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_collaboration_presence_seen ON collaboration_presence(seen_at)`);
+  await run(sql`CREATE TABLE IF NOT EXISTS collaboration_comments (
+    id SERIAL PRIMARY KEY, share_id TEXT NOT NULL, section VARCHAR(160) NOT NULL,
+    body VARCHAR(2000) NOT NULL, user_id TEXT NOT NULL, display_name VARCHAR(80) NOT NULL,
+    parent_id INTEGER REFERENCES collaboration_comments(id), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_collaboration_comments_thread ON collaboration_comments(share_id, section, id)`);
 
   await run(sql`
     CREATE TABLE IF NOT EXISTS shares (
@@ -24,6 +40,7 @@ export async function ensureTable() {
   await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_updated_at ON shares(updated_at)`);
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1`);
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE`);
+  await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS is_unlisted BOOLEAN NOT NULL DEFAULT FALSE`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_public_updated ON shares(updated_at DESC) WHERE is_public = TRUE`);
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0`);
 
@@ -137,6 +154,36 @@ export async function ensureTable() {
 
   // Notifications
   await run(sql`
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      endpoint TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id)`);
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS quick_shares (
+      id TEXT PRIMARY KEY,
+      owner_hash TEXT NOT NULL,
+      paste TEXT NOT NULL,
+      expires_at TIMESTAMPTZ,
+      claimed_by TEXT,
+      claimed_share_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await run(sql`CREATE INDEX IF NOT EXISTS idx_quick_shares_expiry ON quick_shares(expires_at) WHERE claimed_share_id IS NULL`);
+  // One small row per account, updated only when a user saves their choices.
+  await run(sql`
+    CREATE TABLE IF NOT EXISTS user_preferences (
+      user_id TEXT PRIMARY KEY,
+      preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await run(sql`
     CREATE TABLE IF NOT EXISTS notifications (
       id SERIAL PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -214,7 +261,11 @@ export async function ensureTable() {
   await run(sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS is_draft BOOLEAN DEFAULT FALSE`);
   await run(sql`CREATE INDEX IF NOT EXISTS idx_shares_drafts ON shares(owner_id, updated_at DESC) WHERE is_draft = TRUE AND deleted_at IS NULL`);
 
-  // Edit changelog for collaborative editing
+  // Edit changelog for collaborative editing.
+  // NOTE: intentionally NO `ON DELETE CASCADE` FK to shares — adding one here
+  // is risky against existing data and not reliably idempotent. Orphaned rows
+  // (share deleted) and per-share retention are handled by /api/cleanup, and
+  // the share route trims this table inline on write (§1-B / Finding 5.8).
   await run(sql`
     CREATE TABLE IF NOT EXISTS edit_changelog (
       id SERIAL PRIMARY KEY,
@@ -229,7 +280,11 @@ export async function ensureTable() {
   await run(sql`CREATE INDEX IF NOT EXISTS idx_edit_changelog_share ON edit_changelog(share_id, version DESC)`);
   await run(sql`ALTER TABLE edit_changelog ADD COLUMN IF NOT EXISTS is_published BOOLEAN DEFAULT FALSE`);
 
-  // Version snapshots for revert capability
+  // Version snapshots for revert capability.
+  // NOTE: intentionally NO `ON DELETE CASCADE` FK to shares (same reasoning as
+  // edit_changelog above). Snapshot coalescing + inline "keep newest 50"
+  // retention live in /api/share; orphan sweep + global retention backstop
+  // live in /api/cleanup. This is what keeps the table from regrowing (§1-B).
   await run(sql`
     CREATE TABLE IF NOT EXISTS share_versions (
       id SERIAL PRIMARY KEY,

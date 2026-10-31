@@ -1,4 +1,5 @@
 import { apiGuard } from "@/lib/security/api-guard";
+import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -12,7 +13,8 @@ const PokePasteCreateSchema = z.object({
 const PokePasteUrlSchema = z.string().url().refine(
   (val: string) => {
     try {
-      return new URL(val).hostname === "pokepast.es";
+      const hostname = new URL(val).hostname;
+      return hostname === "pokepast.es" || hostname === "www.pokepast.es";
     } catch {
       return false;
     }
@@ -52,14 +54,11 @@ export async function GET(request: NextRequest) {
   const rawUrl = `https://pokepast.es${basePath}/raw`;
   const htmlUrl = `https://pokepast.es${basePath}`;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-
   try {
-    // Fetch both raw paste and HTML page in parallel under a shared timeout
+    // Fetch both raw paste and HTML page in parallel, each under a 5s timeout
     const [rawRes, htmlRes] = await Promise.all([
-      fetch(rawUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" }, signal: controller.signal }),
-      fetch(htmlUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" }, signal: controller.signal }),
+      fetchWithTimeout(rawUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" } }, 5000),
+      fetchWithTimeout(htmlUrl, { headers: { "User-Agent": "VGC-Team-Report/1.0" } }, 5000),
     ]);
 
     if (!rawRes.ok) {
@@ -103,8 +102,6 @@ export async function GET(request: NextRequest) {
       { error: "Failed to fetch from PokéPaste" },
       { status: 502 }
     );
-  } finally {
-    clearTimeout(timeoutId);
   }
 }
 
@@ -149,11 +146,8 @@ export async function POST(request: NextRequest) {
   if (author) form.set("author", author);
   if (notes) form.set("notes", notes);
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
-
   try {
-    const res = await fetch("https://pokepast.es/create", {
+    const res = await fetchWithTimeout("https://pokepast.es/create", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -161,8 +155,7 @@ export async function POST(request: NextRequest) {
       },
       body: form.toString(),
       redirect: "manual",
-      signal: controller.signal,
-    });
+    }, 8000);
 
     // pokepast.es responds with 302 Location: /<id> on success
     if (res.status >= 300 && res.status < 400) {
@@ -196,7 +189,5 @@ export async function POST(request: NextRequest) {
       { error: "Failed to create PokéPaste" },
       { status: 502 }
     );
-  } finally {
-    clearTimeout(timeoutId);
   }
 }

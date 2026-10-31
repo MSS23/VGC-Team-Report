@@ -1,351 +1,155 @@
-# TypeScript Strictness Audit Report
-**VGC Team Report Codebase**  
-**Audit Date:** May 2026
+# C2 TypeScript Strictness Audit
+
+_Audited: 2026-05-14 | Scope: src/ | Focus: VGC-179 + general strictness_
 
 ---
 
-## Executive Summary
+## 1. `as unknown as X` Casts (VGC-179) — 4 occurrences
 
-The codebase has **moderate TypeScript hygiene issues**, primarily in state diffing and API response mapping. The worst problems:
-
-1. **Unchecked `any` type usage** in diff-state.ts and version-diff.ts (matching game plans without validation)
-2. **Unsafe type assertions** (`as`) in API routes (especially db row mapping) that bypass compile-time checks
-3. **`unknown` cast without narrowing** in cache.ts and normalize-report.ts
-4. **Per-pokemon field mapping** lacks type safety, relying on string-based indexing
-
-Quick wins: Add explicit type guards in cache layer, replace `any` with proper generic shapes in diff functions, use database type definitions instead of manual casting.
-
----
-
-## Critical Issues
-
-### 1. **Unsafe `any` in Matchup Plan Diffing**
-- **File:** `/home/user/VGC-Team-Report/src/lib/utils/diff-state.ts`
-- **Lines:** 6, 87, 90, 94
-- **Issue Type:** Type Safety - `any` usage
-- **Risk Level:** HIGH
-- **Details:**
-  ```typescript
-  type AnyState = Record<string, any>;  // Line 6
-  function matchupPlansChanged(oldPlans: any[], newPlans: any[]): boolean {  // Line 87
-    const normalize = (p: any) => JSON.stringify({  // Line 90
-      gamePlans: (p.gamePlans ?? []).map((gp: any) => ({...}))  // Line 94
-    });
-  }
-  ```
-  The normalization function accepts `any` and manipulates nested `gamePlans` array without type validation. This silently passes malformed data.
-
-- **Recommended Fix:**
-  ```typescript
-  interface MatchupPlan {
-    opponentLabel: string;
-    opponentPaste: string;
-    gamePlans: GamePlan[];
-  }
-  function matchupPlansChanged(oldPlans: MatchupPlan[], newPlans: MatchupPlan[]): boolean
-  ```
+### 1a. `src/components/providers/PostHogProvider.tsx:14`
+```ts
+let _usePostHog: typeof usePostHogType = () => undefined as unknown as ReturnType<typeof usePostHogType>;
+```
+**Issue:** Stub initializer silences TS by double-casting `undefined` to `PostHog`.
+**Fix:** Type the variable to allow `undefined` for the no-op stub:
+```ts
+let _usePostHog: () => ReturnType<typeof usePostHogType> | undefined = () => undefined;
+export function usePostHog(): ReturnType<typeof usePostHogType> | undefined {
+  return _usePostHog();
+}
+```
+Callers already guard with `if (!posthog)`, so adding `| undefined` to the return type propagates safely.
 
 ---
 
-### 2. **Unsafe `any` in Version Diff**
-- **File:** `/home/user/VGC-Team-Report/src/lib/utils/version-diff.ts`
-- **Lines:** 154, 158, 160
-- **Issue Type:** Type Safety - `any` usage
-- **Risk Level:** HIGH
-- **Details:**
-  ```typescript
-  const normalizePlan = (p: any) => ({  // Line 154
-    gamePlans: Array.isArray(p.gamePlans)
-      ? p.gamePlans.map((gp: any) => ({...}))  // Line 160
-      : [],
-  });
-  ```
-  Same issue as diff-state.ts; defensive array check but no type narrowing. Relies on runtime behavior.
+### 1b–1c. `src/hooks/useHomePage.ts:265` and `:439`
+```ts
+t: t as unknown as Record<string, string>
+```
+**Issue:** `t` is `TranslationKeys` (a typed flat object from `src/lib/i18n/index.ts`). `useShareFlow` and `useSlideSystem` both declare their parameter as `t: Record<string, string>`, forcing a double-cast at every call site.
 
-- **Recommended Fix:** Use the proper `MatchupPlan` type from ShareableState definition.
+**Fix:** Widen the consumer interfaces instead of casting at call sites:
+```ts
+// In useShareFlow.ts and useSlideSystem.ts
+import type { TranslationKeys } from "@/lib/i18n/translations/en";
 
----
-
-### 3. **Unchecked `as` Assertions in API Routes (Multiple)**
-- **File:** `/home/user/VGC-Team-Report/src/app/api/user/collaborations/route.ts`
-- **Lines:** 33-47
-- **Issue Type:** Type Assertions - Unsafe casting
-- **Risk Level:** HIGH
-- **Details:**
-  ```typescript
-  const data = row.data as Record<string, unknown>;  // Line 33
-  const paste = (data.paste as string) ?? "";        // Line 34
-  const createdAt = (row.created_at as Date).toISOString();  // Line 42
-  ```
-  Database rows are cast without validation. If column types change or nulls slip through, `.toISOString()` will crash at runtime.
-
-- **Recommended Fix:**
-  ```typescript
-  // Use a Zod schema or proper type guard
-  const reportSchema = z.object({
-    data: z.record(z.unknown()),
-    created_at: z.date(),
-  });
-  const row = reportSchema.parse(dbRow);
-  ```
+interface ShareFlowOptions {
+  // ...
+  t: TranslationKeys;
+}
+```
+`TranslationKeys` is a concrete `Record<string, string>`-compatible object literal type. This eliminates both casts with no runtime impact.
 
 ---
 
-### 4. **Unsafe `as` in Discord API Route**
-- **File:** `/home/user/VGC-Team-Report/src/app/api/discord/route.ts`
-- **Line:** 68
-- **Issue Type:** Type Assertions - Unsafe casting
-- **Risk Level:** MEDIUM
-- **Details:**
-  ```typescript
-  const getOption = (name: string) => options.find((o: { name: string }) => o.name === name)?.value as string | undefined;
-  ```
-  `.find()` returns `T | undefined`, but the chain still casts `?.value as string | undefined`. If the option object lacks a `value` key, this silently becomes undefined without error.
-
-- **Recommended Fix:**
-  ```typescript
-  const getOption = (name: string): string | undefined => {
-    const opt = options.find(o => o.name === name);
-    return typeof opt?.value === 'string' ? opt.value : undefined;
-  };
-  ```
+### 1d. `src/hooks/useSlideNavigation.ts:46`
+```ts
+const transition = (document as unknown as { startViewTransition: ... }).startViewTransition(update);
+```
+**Issue:** The View Transitions API is not in the TypeScript DOM lib, so casting `document` is necessary — but the double-cast obscures the intent.
+**Fix:** Use a named interface to make a single, readable cast:
+```ts
+interface DocumentWithViewTransition extends Document {
+  startViewTransition(cb: () => void): { ready: Promise<void>; finished: Promise<void> };
+}
+const transition = (document as DocumentWithViewTransition).startViewTransition(update);
+```
+Single cast `as DocumentWithViewTransition` is cleaner and the check `"startViewTransition" in document` already guards the call.
 
 ---
 
-### 5. **Unguarded `as T` in Cache Layer**
-- **File:** `/home/user/VGC-Team-Report/src/lib/cache.ts`
-- **Line:** 35
-- **Issue Type:** Type Assertions - Unchecked cast
-- **Risk Level:** HIGH (noted as VGC-146)
-- **Details:**
-  ```typescript
-  export async function cacheGet<T>(key: string, schema?: ZodType<T>): Promise<T | null> {
-    ...
-    if (!schema) return raw as T;  // Line 35 - DANGEROUS
-    const parsed = schema.safeParse(raw);
-    ...
-  }
-  ```
-  If no schema is provided, `raw` is cast to `T` without validation. Callers relying on this without a schema get no type safety.
+## 2. `: any` Annotations in `src/lib/` — 5 occurrences
 
-- **Recommended Fix:**
-  ```typescript
-  // Make schema required, or return `unknown` if not provided
-  export async function cacheGet<T>(key: string, schema: ZodType<T>): Promise<T | null> {
-    ...
-    const parsed = schema.safeParse(raw);
-    if (!parsed.success) return null;
-    return parsed.data;
-  }
-  ```
+### 2a. `src/lib/utils/version-diff.ts:154`
+```ts
+const normalizePlan = (p: any) => ({
+```
+**Issue:** `p` is a `SerializedMatchupPlan` from `url-codec.ts`. The `any` was written before `SerializedMatchupPlan` was exported.
+**Fix:**
+```ts
+import type { SerializedMatchupPlan, SerializedGamePlan } from "@/lib/sharing/url-codec";
+const normalizePlan = (p: SerializedMatchupPlan) => ({ ... });
+```
 
----
+### 2b. `src/lib/utils/version-diff.ts:160`
+```ts
+? p.gamePlans.map((gp: any) => ({
+```
+Same root cause as 2a. Fixed by the same `SerializedGamePlan` import.
 
-### 6. **Unsound `any` in Normalize Report**
-- **File:** `/home/user/VGC-Team-Report/src/lib/utils/normalize-report.ts`
-- **Lines:** 8, 14, 19, 29, 36
-- **Issue Type:** Type Safety - `any` and unchecked assertions
-- **Risk Level:** MEDIUM
-- **Details:**
-  ```typescript
-  type AnyRecord = Record<string, any>;  // Line 8
-  for (const [key, entries] of Object.entries(rawCalcs as AnyRecord)) {  // Line 14
-    result[key] = entries.map((entry: unknown) => {
-      const e = entry as { text?: string; category?: string };  // Line 19
-  ```
-  Casts `unknown` to a shape without narrowing. If `entry` is not an object, `.text` access will fail.
-
-- **Recommended Fix:**
-  ```typescript
-  const entry: unknown = ...;
-  if (entry && typeof entry === 'object' && 'text' in entry) {
-    const e = entry as { text?: string; category?: string };
-    // Safe to access e.text now
-  }
-  ```
+### 2c–2e. `src/lib/utils/diff-state.ts:87,90,94`
+```ts
+function matchupPlansChanged(oldPlans: any[], newPlans: any[]): boolean {
+  const normalize = (p: any) => JSON.stringify({
+    gamePlans: (p.gamePlans ?? []).map((gp: any) => ({
+```
+**Fix:** Same import approach — parameter types become `SerializedMatchupPlan[]` and `SerializedMatchupPlan`/`SerializedGamePlan` respectively.
 
 ---
 
-### 7. **Type Assertions in Database Dex Fallback**
-- **File:** `/home/user/VGC-Team-Report/src/lib/data/pkmn-dex-fallback.ts`
-- **Lines:** 57, 66, 75
-- **Issue Type:** Type Assertions - Unsafe casting
-- **Risk Level:** MEDIUM
-- **Details:**
-  ```typescript
-  const baseStats = entry.baseStats as StatSpread;  // Line 57 - @pkmn/dex is untyped
-  const types = entry.types as PokemonType[];       // Line 66
-  abilities: Object.values(entry.abilities) as string[],  // Line 75
-  ```
-  `@pkmn/dex` library is not fully typed, so casts are pragmatic but fragile. If the library changes structure, these fail silently at runtime.
+## 3. `as any` Casts in `src/` — 0 occurrences
 
-- **Recommended Fix:**
-  ```typescript
-  // Add type guards for @pkmn/dex results
-  const baseStats = entry.baseStats;
-  if (!isValidStatSpread(baseStats)) return null;
-  ```
+No `as any` casts found in production source (excluding JSDoc comments). Clean.
 
 ---
 
-### 8. **Stat Calculator Returns Unsafe Cast**
-- **File:** `/home/user/VGC-Team-Report/src/lib/analysis/stat-calculator.ts`
-- **Lines:** 58, 74
-- **Issue Type:** Type Assertions - Unsafe casting
-- **Risk Level:** MEDIUM
-- **Details:**
-  ```typescript
-  export function calculateAllStats(...): StatSpread {
-    const result: Partial<StatSpread> = {};
-    for (const stat of stats) {
-      result[stat] = calculateStat(...);
-    }
-    return result as StatSpread;  // Line 58
-  }
-  ```
-  If the loop doesn't populate all 6 stat keys, the cast lies about the object shape. Use `satisfies StatSpread` (TS 4.9+) instead.
+## 4. VGC-146: JSON.parse Validation in `src/lib/sharing/url-codec.ts` — FIXED
 
-- **Recommended Fix:**
-  ```typescript
-  const result: StatSpread = {
-    hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0
-  };
-  for (const stat of stats) {
-    result[stat] = calculateStat(...);
-  }
-  return result;
-  ```
+```ts
+const parsed: unknown = JSON.parse(json);           // line 208 — typed as unknown ✓
+const result2 = ShareableStateSchema.safeParse(parsed);  // line 213 — Zod validated ✓
+if (!result2.success) return null;
+return result2.data as ShareableState;
+```
+**Status: Fixed.** `JSON.parse` output is explicitly `unknown`, run through `ShareableStateSchema.safeParse`, and returns `null` on shape mismatch. The only remaining cast (`as ShareableState` on line 215) is safe because it follows a successful `safeParse`. No action required.
 
 ---
 
-### 9. **Type-Unsafe Record Mapping in Spotlight Route**
-- **File:** `/home/user/VGC-Team-Report/src/app/api/spotlight/route.ts`
-- **Lines:** 26, 27, 30
-- **Issue Type:** Type Assertions - Multiple unchecked casts
-- **Risk Level:** MEDIUM
-- **Details:**
-  ```typescript
-  const data = row.data as Record<string, unknown>;
-  const paste = (data.paste as string) ?? "";
-  const creatorName = (data.creatorName as string) || undefined;
-  ```
-  Same pattern as collaborations route; database columns cast without validation.
+## 5. `cacheGet<T>` Unsound Generic in `src/lib/cache.ts` — PARTIALLY ADDRESSED
 
-- **Recommended Fix:** Centralize database row validation with a Zod schema.
+```ts
+export async function cacheGet<T>(key: string, schema?: ZodType<T>): Promise<T | null> {
+  // ...
+  if (!schema) return raw as T;   // line 35 — unsound unchecked cast
+```
+**Issue:** The `schema` parameter is optional. When omitted, the function performs a bare `raw as T` cast on the Redis value with no runtime shape guarantee. The JSDoc comment at line 27 acknowledges this ("the generic is just an unchecked cast").
 
----
-
-### 10. **Unsafe Cast in Notifications**
-- **File:** `/home/user/VGC-Team-Report/src/lib/notifications.ts`
-- **Line:** 42
-- **Issue Type:** Type Assertions
-- **Risk Level:** MEDIUM
-- **Details:**
-  ```typescript
-  const uid = row.user_id as string;
-  ```
-  No null check. If `user_id` is NULL in the database, the cast lies.
-
-- **Recommended Fix:**
-  ```typescript
-  if (!row.user_id || typeof row.user_id !== 'string') continue;
-  const uid = row.user_id;
-  ```
+**Recommended Fix:** Make the schema required, or use overloads to split paths:
+```ts
+// Typed, validated path (preferred)
+export async function cacheGet<T>(key: string, schema: ZodType<T>): Promise<T | null>;
+// Untyped path — caller receives unknown and must narrow
+export async function cacheGet(key: string): Promise<unknown | null>;
+```
+All current call sites that pass a schema continue to work unchanged.
 
 ---
 
-## Low-Risk Issues
+## 6. Top 5 Exported Functions Missing Return Type Annotations
 
-### 11. **localStorage Cast in i18n**
-- **File:** `/home/user/VGC-Team-Report/src/lib/i18n/index.ts`
-- **Line:** 53
-- **Issue Type:** Type Assertion
-- **Risk Level:** LOW
-- **Details:**
-  ```typescript
-  const saved = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
-  ```
-  Safe because `getItem` always returns `string | null`, and LanguageCode is a literal union. Cast is correct.
+| # | File:Line | Function | Missing Return Type |
+|---|-----------|----------|---------------------|
+| 1 | `src/lib/notifications.ts:9` | `createNotification(...)` | `: Promise<void>` |
+| 2 | `src/lib/notifications.ts:30` | `notifyFollowers(...)` | `: Promise<void>` |
+| 3 | `src/lib/discord-webhook.ts:15` | `postToBuildsChannel(embed)` | `: Promise<void>` |
+| 4 | `src/lib/discord-webhook.ts:31` | `postToFeedbackChannel(embed)` | `: Promise<void>` |
+| 5 | `src/lib/db.ts:3` | `getDb()` | `: ReturnType<typeof neon>` |
 
----
-
-### 12. **Parser Gender Cast**
-- **File:** `/home/user/VGC-Team-Report/src/lib/parser/showdown-parser.ts`
-- **Lines:** 80, 114–115
-- **Issue Type:** Type Assertions
-- **Risk Level:** LOW
-- **Details:**
-  ```typescript
-  gender = genderMatch[1] as "M" | "F";  // Regex ensures only M or F
-  if (POKEMON_TYPES.includes(tt as PokemonType)) {  // Check guards the cast
-    teraType = tt as PokemonType;
-  }
-  ```
-  Safe because regex and guard clauses constrain the values. Code is correct.
+`ensureTable()` at `src/lib/db.ts:9` also lacks `: Promise<void>`. `getDb` is the highest-impact gap because its return type is consumed by 12+ API routes — making it explicit prevents breakage if the neon version changes.
 
 ---
 
 ## Summary Table
 
-| File | Line(s) | Issue | Risk | Type |
-|------|---------|-------|------|------|
-| diff-state.ts | 6, 87, 90, 94 | Unchecked `any` in matchup diffing | HIGH | Logic Error |
-| version-diff.ts | 154, 158, 160 | Unchecked `any` in plan normalization | HIGH | Logic Error |
-| collaborations/route.ts | 33–47 | Multiple unsafe `as` casts (db rows) | HIGH | Runtime Crash |
-| discord/route.ts | 68 | Unsafe cast on `.find()?.value` | MEDIUM | Logic Error |
-| cache.ts | 35 | Unvalidated `as T` when schema omitted | HIGH | Logic Error |
-| normalize-report.ts | 8, 14, 19, 29, 36 | Mixed `any` and unchecked `as` | MEDIUM | Logic Error |
-| pkmn-dex-fallback.ts | 57, 66, 75 | Casts from untyped @pkmn/dex | MEDIUM | Fragility |
-| stat-calculator.ts | 58, 74 | Partial<T> cast to T (incomplete init) | MEDIUM | Logic Error |
-| spotlight/route.ts | 26, 27, 30 | Unsafe db row casts (same as collaborations) | MEDIUM | Runtime Crash |
-| notifications.ts | 42 | Cast without null check | MEDIUM | Logic Error |
-| i18n/index.ts | 53 | Safe cast (guarded by API contract) | LOW | — |
-| showdown-parser.ts | 80, 114–115 | Safe casts (regex/guard constrained) | LOW | — |
+| Issue Type | Count | Files |
+|-----------|-------|-------|
+| `as unknown as` casts (VGC-179) | 4 | PostHogProvider.tsx, useHomePage.ts (×2), useSlideNavigation.ts |
+| `: any` annotations in src/lib/ | 5 | version-diff.ts (×2), diff-state.ts (×3) |
+| `as any` casts | 0 | — clean |
+| JSON.parse unvalidated (VGC-146) | 0 | Fixed in url-codec.ts |
+| Unsound optional generic (cache.ts) | 1 | cache.ts:35 |
+| Missing explicit return types | 5+ | notifications.ts, discord-webhook.ts, db.ts |
 
----
+**Total actionable issues: 15**
 
-## Recommended Actions (Priority Order)
-
-### Tier 1: Must Fix (This Sprint)
-1. **Cache layer** — make schema required or return `unknown` by default
-2. **API db row mapping** — create centralized Zod schemas for collaborations, spotlight, and other routes
-3. **Diff functions** — replace `any` with proper `MatchupPlan` interfaces
-
-### Tier 2: Should Fix (Next Sprint)
-4. **normalize-report.ts** — narrow `unknown` before casting
-5. **stat-calculator.ts** — initialize all keys upfront instead of casting `Partial<T>`
-6. **Notifications** — add null checks before casting
-
-### Tier 3: Nice-to-Have (Refactoring)
-7. **Type untyped libraries** — add .d.ts shims for @pkmn/dex or keep local casts documented
-8. **Enable stricter tsconfig** — set `noImplicitAny: true` and `noImplicitThis: true` if not already
-
----
-
-## Quick Wins
-
-- **Replace `type AnyRecord = Record<string, any>`** with explicit shapes (breaks zero code, improves signal)
-- **Extract db row schemas** → `/lib/db-schemas.ts` with Zod (eliminates 20+ unsafe casts in 1 file)
-- **Remove `as T` from cache** → make schema required (fixes the highest-risk footgun)
-- **Add `as const` assertions** to game plan structures to leverage TypeScript's literal type narrowing
-
----
-
-## Files Needing Review
-
-```
-High Priority:
-- src/lib/utils/diff-state.ts
-- src/lib/utils/version-diff.ts
-- src/lib/cache.ts
-- src/app/api/user/collaborations/route.ts
-- src/app/api/spotlight/route.ts
-
-Medium Priority:
-- src/lib/utils/normalize-report.ts
-- src/lib/analysis/stat-calculator.ts
-- src/lib/notifications.ts
-- src/lib/data/pkmn-dex-fallback.ts
-- src/app/api/discord/route.ts
-```
-
+**Priority for VGC-179:** Fix the `t: TranslationKeys` mismatch (issues 1b–1c) first — changing two interface declarations in `useShareFlow.ts` and `useSlideSystem.ts` eliminates two call-site casts with zero runtime risk and no breaking change. The `useSlideNavigation.ts` double-cast (1d) is the next easiest win. The PostHog stub (1a) requires adding `| undefined` to callers, which is a slightly larger change.

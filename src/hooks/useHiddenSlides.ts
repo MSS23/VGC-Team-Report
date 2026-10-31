@@ -26,6 +26,7 @@ export function useHiddenSlides(speciesKeys: string[], persist = true) {
     if (storageKey === prevKey.current) return;
     prevKey.current = storageKey;
     if (speciesKeys.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reload per-team state from storage when the team key changes
       setHidden(new Set());
       return;
     }

@@ -1,9 +1,24 @@
 import type { TranslationKeys } from "./en";
 
 const ja: TranslationKeys = {
+  commonCombinationsTitle: "定番の組み合わせ",
+  commonCombinationsDesc: "よく使う選出です。6匹から先発2匹と後発2匹を選び、いつ選出するかをメモしましょう。",
+  combinationLeads: "先発",
+  combinationBack: "後発",
+  combinationStrategy: "戦略",
+  combinationLabel: "組み合わせ",
+  combinationStrategyPlaceholder: "この組み合わせをいつ選出し、どう立ち回るか。",
+  addCombination: "組み合わせを追加",
+  combinationsEmpty: "まだ組み合わせがありません。",
+  removeCombination: "組み合わせを削除",
+  legacyNotesTitle: "以前のメモ",
+  legacyLeadsLabel: "定番の先発（旧）",
+  legacyModesLabel: "定番のモード（旧）",
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "競技ポケモンのチームレポートを作成・共有・発見",
+  appMission:
+    "単なるペースト閲覧ツールではありません。どんなチームもダメージ計算・素早さライン・対面プランを備えた構造化レポートに変換し、誰もが構築を理解し、使いこなせるようになります。",
   appInputHint: "Showdownのエクスポートまたは PokePaste URLを貼り付けて開始",
 
   loadSample: "サンプルを読み込む",
@@ -168,11 +183,22 @@ const ja: TranslationKeys = {
   notesLabel: "メモ",
   noNotes: "メモなし。",
   gamePlanNotesPlaceholder: "なぜこの4体？勝利条件は？",
-  replays: "リプレイ",
-  optional: "任意",
-  pasteReplayPlaceholder: "リプレイURLを貼り付け...",
   add: "追加",
   delete: "削除",
+
+  // Common Modes（このチームの動かし方）
+  commonModesTitle: "基本的な動き",
+  commonLeads: "主な先発",
+  commonModesField: "基本的な動き",
+  strengths: "強み",
+  weaknesses: "弱み",
+  gameplan: "勝ち筋",
+  commonModesEmpty: "操作メモはまだありません",
+  commonLeadsPlaceholder: "よく使う先発の組み合わせと、その投げどき（例：多くの相手にはウインディ＋ハバタクカミ）。",
+  commonModesPlaceholder: "よくあるターンの流れやプレイスタイル — チームがどう動きたいか。",
+  strengthsPlaceholder: "このチームが有利な相手と得意なこと。",
+  weaknessesPlaceholder: "このチームが苦手な相手と、その対処法。",
+  gameplanPlaceholder: "勝つための動かし方 — 重要な行動順、勝ち筋、優先すべきこと。",
 
   plan: "プラン",
   plans: "プラン",

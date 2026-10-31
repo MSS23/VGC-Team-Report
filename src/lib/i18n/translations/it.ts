@@ -1,9 +1,24 @@
 import type { TranslationKeys } from "./en";
 
 const it: TranslationKeys = {
+  commonCombinationsTitle: "Combinazioni comuni",
+  commonCombinationsDesc: "Le tue scelte abituali: due in prima linea e due in riserva tra i tuoi sei, poi annota quando portarla.",
+  combinationLeads: "Prima linea",
+  combinationBack: "Riserva",
+  combinationStrategy: "Strategia",
+  combinationLabel: "Combinazione",
+  combinationStrategyPlaceholder: "Quando portare questa combinazione e come giocarla.",
+  addCombination: "Aggiungi combinazione",
+  combinationsEmpty: "Ancora nessuna combinazione.",
+  removeCombination: "Rimuovi combinazione",
+  legacyNotesTitle: "Note precedenti",
+  legacyLeadsLabel: "Prima linea comune (vecchio)",
+  legacyModesLabel: "Modalità comuni (vecchio)",
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "Crea, condividi e scopri report di team Pokemon competitivo",
+  appMission:
+    "Molto piu di un visualizzatore di paste: trasforma qualsiasi team in un report strutturato con calcoli di danno, tier di velocita e piani di matchup, cosi chiunque puo capirne il funzionamento e imparare a giocarlo.",
   appInputHint: "Incolla un export di Showdown o un URL PokePaste per iniziare",
 
   loadSample: "Carica esempio",
@@ -168,11 +183,22 @@ const it: TranslationKeys = {
   notesLabel: "Note",
   noNotes: "Nessuna nota.",
   gamePlanNotesPlaceholder: "Perche questi quattro? Qual e la condizione di vittoria?",
-  replays: "Replay",
-  optional: "opzionale",
-  pasteReplayPlaceholder: "Incolla l'URL del replay...",
   add: "Aggiungi",
   delete: "Elimina",
+
+  // Common Modes ("Come pilotare questo team")
+  commonModesTitle: "Modalita Comuni",
+  commonLeads: "Lead Comuni",
+  commonModesField: "Modalita Comuni",
+  strengths: "Punti di Forza",
+  weaknesses: "Debolezze",
+  gameplan: "Piano di Gioco",
+  commonModesEmpty: "Ancora nessuna nota di pilotaggio",
+  commonLeadsPlaceholder: "Le tue coppie di apertura abituali e quando usarle (es. Incineroar + Flutter Mane contro la maggior parte dei team).",
+  commonModesPlaceholder: "Schemi di turno e stili di gioco ricorrenti: come tende a muoversi il team.",
+  strengthsPlaceholder: "Cosa batte questo team e cosa fa bene.",
+  weaknessesPlaceholder: "Cosa mette in difficolta questo team e come aggirarlo.",
+  gameplanPlaceholder: "Come pilotare il team per vincere: sequenze chiave, condizioni di vittoria e priorita.",
 
   plan: "piano",
   plans: "piani",

@@ -4,6 +4,12 @@ import { cacheDel, CacheKeys } from "@/lib/cache";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { apiGuard } from "@/lib/security/api-guard";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
+const collaborationActionSchema = z.object({
+  shareId: z.string().min(1).max(50),
+  action: z.enum(["accept", "decline"]),
+});
 
 /**
  * GET /api/user/collaborations
@@ -68,12 +74,15 @@ export async function POST(request: Request) {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
 
-    const body = await request.json();
-    const { shareId, action } = body as { shareId?: string; action?: string };
-
-    if (!shareId || !action || !["accept", "decline"].includes(action)) {
-      return NextResponse.json({ error: "shareId and action (accept/decline) required" }, { status: 400 });
+    const rawBody = await request.json().catch(() => null);
+    const parsed = collaborationActionSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "shareId and action (accept/decline) required", details: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
+    const { shareId, action } = parsed.data;
 
     const sql = getDb();
 

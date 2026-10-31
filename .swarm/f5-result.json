@@ -1,0 +1,66 @@
+{
+  "ticket_id": "R6-breadcrumbs",
+  "worker": "F5",
+  "status": "completed",
+  "branch": "swarm-nightly-2026-05-24",
+  "source": ".swarm/r6-seo-audit.md",
+  "summary": "Added reusable BreadcrumbJsonLd server component and wired it onto /explore, /tournaments, and /creator/[name]. Did not touch /champions/[pokemon] (already has its own BreadcrumbList per R6 callout). No visible UI changes.",
+  "files_changed": [
+    "src/components/seo/JsonLd.tsx",
+    "src/app/explore/page.tsx",
+    "src/app/tournaments/page.tsx",
+    "src/app/creator/[name]/page.tsx"
+  ],
+  "component_added": {
+    "name": "BreadcrumbJsonLd",
+    "location": "src/components/seo/JsonLd.tsx",
+    "props": "{ items: { name: string; url: string }[] }",
+    "emits": "schema.org BreadcrumbList JSON-LD inside <script type=\"application/ld+json\">",
+    "notes": "Returns null for empty items array. Uses existing JsonLd wrapper (which already handles </script> escaping)."
+  },
+  "wiring": [
+    {
+      "route": "/explore",
+      "file": "src/app/explore/page.tsx",
+      "breadcrumb": [
+        "Home → https://pokemonvgcteamreport.com",
+        "Explore → https://pokemonvgcteamreport.com/explore"
+      ]
+    },
+    {
+      "route": "/tournaments",
+      "file": "src/app/tournaments/page.tsx",
+      "breadcrumb": [
+        "Home → https://pokemonvgcteamreport.com",
+        "Tournaments → https://pokemonvgcteamreport.com/tournaments"
+      ]
+    },
+    {
+      "route": "/creator/[name]",
+      "file": "src/app/creator/[name]/page.tsx",
+      "breadcrumb": [
+        "Home → https://pokemonvgcteamreport.com",
+        "Explore → https://pokemonvgcteamreport.com/explore",
+        "{creator} → https://pokemonvgcteamreport.com/creator/{encoded creator name}"
+      ],
+      "notes": "Creator name decoded then re-encoded with encodeURIComponent for the URL, matching the existing canonical/ProfilePage url pattern in the same file. Safe against </script> injection via JsonLd's escape."
+    }
+  ],
+  "canonical_base_verified": "https://pokemonvgcteamreport.com (matches existing canonical and other JSON-LD URLs in the same files)",
+  "skipped": {
+    "route": "/champions/[pokemon]",
+    "reason": "Already has inline BreadcrumbList nested in WebPage schema (src/app/champions/[pokemon]/page.tsx lines 241-257). R6 explicitly excluded it."
+  },
+  "verification": {
+    "tsc": "pass (npx tsc --noEmit, no output)",
+    "build": "pass (npm run build completed; all 3 target routes present in route manifest: /explore (static), /tournaments (static), /creator/[name] (dynamic))",
+    "visible_ui_changes": "none — only <script type=\"application/ld+json\"> tags added"
+  },
+  "commit_created": false,
+  "notes": [
+    "Component pattern matches existing helpers (FAQPageJsonLd, OrganizationJsonLd, SportsEventJsonLd) — server component, uses shared JsonLd wrapper.",
+    "BreadcrumbJsonLd placed before other JSON-LD on each page for consistency.",
+    "Did NOT commit per instruction.",
+    "Did NOT touch src/app/champions/[pokemon]/page.tsx per instruction."
+  ]
+}

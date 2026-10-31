@@ -3,6 +3,10 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 
 export interface ReportTags {
+  tournamentUrl?: string;
+  tournamentDate?: string;
+  tournamentPlayers?: number;
+  tournamentRegion?: string;
   archetype?: string[];
   regulation?: string;
   eventType?: string;
@@ -17,6 +21,20 @@ export interface ReportTags {
 interface TeamMeta {
   roles: Record<string, string>;
   summary: string;
+  /**
+   * Creator-authored "how to pilot this team" section (VGC Phase 1). All keys
+   * optional free-text, textarea-style like `summary`. A beginner should be
+   * able to read this and quickly understand how to play the team.
+   */
+  commonModes?: {
+    // Structured "Common Combinations" — lead/back pairs (roster indices) + strategy
+    combinations?: { id: string; leads: number[]; back: number[]; strategy: string }[];
+    leads?: string;       // legacy free-text "Common Leads" (retained for old reports)
+    modes?: string;       // legacy free-text "Common Modes" (retained for old reports)
+    strengths?: string;   // "Strengths"
+    weaknesses?: string;  // "Weaknesses"
+    gameplan?: string;    // "Game Plan" — how to pilot / win conditions
+  };
   teamName?: string;
   tournamentName?: string;
   placement?: string;
@@ -84,6 +102,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
     prevTeamKey.current = teamKey;
 
     if (speciesKeys.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reload per-team state from storage when the team key changes
       setMeta(EMPTY_META);
       return;
     }
@@ -112,6 +131,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
 
   const roles = meta.roles;
   const summary = meta.summary;
+  const commonModes = meta.commonModes;
   const teamName = meta.teamName;
   const tournamentName = meta.tournamentName;
   const placement = meta.placement;
@@ -131,6 +151,10 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
 
   const setSummary = useCallback((text: string) => {
     setMeta((prev) => ({ ...prev, summary: text }));
+  }, []);
+
+  const setCommonModes = useCallback((value: TeamMeta["commonModes"]) => {
+    setMeta((prev) => ({ ...prev, commonModes: value }));
   }, []);
 
   const setTeamName = useCallback((text: string) => {
@@ -163,6 +187,13 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
 
   const setTags = useCallback((newTags: ReportTags) => {
     setMeta((prev) => ({ ...prev, tags: newTags }));
+  }, []);
+
+  // Merge a partial patch into the current tags. Unlike setTags this can't
+  // clobber a concurrent write — needed by the async auto-detect effects,
+  // which may resolve out of order from the same tags snapshot.
+  const mergeTags = useCallback((patch: Partial<ReportTags>) => {
+    setMeta((prev) => ({ ...prev, tags: { ...prev.tags, ...patch } }));
   }, []);
 
   const setTemplateId = useCallback((id: string | undefined) => {
@@ -221,7 +252,7 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
   }, []);
 
   return {
-    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault, privateFields,
-    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
+    roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault, privateFields,
+    setRole, setSummary, setCommonModes, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, mergeTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
   };
 }

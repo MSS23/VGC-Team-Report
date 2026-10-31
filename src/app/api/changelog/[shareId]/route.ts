@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
  * GET /api/changelog/{shareId}
  *
  * Returns the edit changelog for a shared report.
- * Only accessible to authenticated users who own the report or have the edit key.
+ * Only accessible to authenticated owners and accepted collaborators.
  */
 export async function GET(
   request: Request,
@@ -18,34 +18,25 @@ export async function GET(
     const guard = await apiGuard(request, { rateLimit: { key: "changelog", max: 30 } });
     if (guard) return guard;
 
-    const url = new URL(request.url);
-    const key = url.searchParams.get("key");
-
     const sql = getDb();
 
-    // Verify access — must be owner or have edit key
-    let hasAccess = false;
-
-    if (key) {
-      const rows = await sql`
-        SELECT 1 FROM shares WHERE id = ${shareId} AND edit_token = ${key} AND deleted_at IS NULL
-      `;
-      hasAccess = rows.length > 0;
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    if (!hasAccess) {
-      try {
-        const { userId } = await auth();
-        if (userId) {
-          const rows = await sql`
-            SELECT 1 FROM shares WHERE id = ${shareId} AND owner_id = ${userId} AND deleted_at IS NULL
-          `;
-          hasAccess = rows.length > 0;
-        }
-      } catch { /* not authenticated */ }
-    }
-
-    if (!hasAccess) {
+    const accessRows = await sql`
+      SELECT 1 FROM shares s
+      WHERE s.id = ${shareId} AND s.deleted_at IS NULL
+        AND (
+          s.owner_id = ${userId}
+          OR EXISTS (
+            SELECT 1 FROM collaborators c
+            WHERE c.share_id = s.id AND c.user_id = ${userId}
+              AND COALESCE(c.status, 'accepted') = 'accepted'
+          )
+        )
+    `;
+    if (accessRows.length === 0) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

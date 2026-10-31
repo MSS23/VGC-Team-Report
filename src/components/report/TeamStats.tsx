@@ -1,6 +1,8 @@
 "use client";
 
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
+import { isChampionsFormat } from "@/lib/data/tags";
+import { displayStats } from "@/lib/analysis/spread-builder";
 
 interface TeamStatsProps {
   pokemon: AnalyzedPokemon[];
@@ -17,9 +19,10 @@ export function TeamStats({ pokemon, regulation }: TeamStatsProps) {
     if (p.data?.types) p.data.types.forEach((t) => allTypes.add(t));
   });
 
-  // Speed range
+  // Speed range. `calculatedStats` is always EV-formula (analyzeTeam has no
+  // regulation), so Champions teams must be recomputed from SP — VGC-292.
   const speeds = pokemon
-    .map((p) => p.calculatedStats.spe)
+    .map((p) => (p.data ? displayStats(p.parsed, p.data.baseStats, regulation).spe : p.calculatedStats.spe))
     .filter((s) => s > 0)
     .sort((a, b) => a - b);
   const minSpeed = speeds[0] ?? 0;
@@ -31,8 +34,8 @@ export function TeamStats({ pokemon, regulation }: TeamStatsProps) {
     .map((p) => Object.values(p.data!.baseStats).reduce((a, b) => a + b, 0));
   const avgBst = bstValues.length > 0 ? Math.round(bstValues.reduce((a, b) => a + b, 0) / bstValues.length) : 0;
 
-  // Count Pokemon with Tera — always 0 in Reg M-A (no Tera mechanic).
-  const teraCount = regulation === "Reg M-A"
+  // Count Pokemon with Tera — always 0 in Champions (Reg M-A / M-B: no Tera).
+  const teraCount = isChampionsFormat(regulation)
     ? 0
     : pokemon.filter((p) => p.parsed.teraType).length;
 
@@ -64,7 +67,7 @@ export function TeamStats({ pokemon, regulation }: TeamStatsProps) {
       )}
       {teraCount > 0 && (
         <span className="inline-flex items-center gap-1">
-          <span className="text-text-tertiary/60">✦</span>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" className="text-text-tertiary/60" aria-hidden="true"><path d="M12 2c.6 5.4 4.6 9.4 10 10-5.4.6-9.4 4.6-10 10-.6-5.4-4.6-9.4-10-10 5.4-.6 9.4-4.6 10-10z"/></svg>
           <span className="font-semibold text-text-secondary">{teraCount}</span> tera
         </span>
       )}

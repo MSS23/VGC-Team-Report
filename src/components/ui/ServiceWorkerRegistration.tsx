@@ -1,13 +1,43 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 export function ServiceWorkerRegistration() {
+  const { userId, isLoaded } = useAuth();
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const waitingWorkerRef = useRef<ServiceWorker | null>(null);
 
   useEffect(() => {
+    if (!isLoaded || !("serviceWorker" in navigator)) return;
+    let disposed = false;
+    async function detachPreviousAccount() {
+      try {
+        const owner = localStorage.getItem("vgc-push-owner");
+        if (!owner || owner === userId) return;
+        const subscription = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();
+        if (disposed || localStorage.getItem("vgc-push-owner") !== owner) return;
+        await subscription?.unsubscribe();
+        localStorage.removeItem("vgc-push-owner");
+      } catch { /* Generic push copy contains no private report information. */ }
+    }
+    void detachPreviousAccount();
+    return () => { disposed = true; };
+  }, [userId, isLoaded]);
+
+  useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
+
+    // A production service worker controlling local development can serve
+    // stale chunks and make HMR look broken. Development does not benefit from
+    // offline caching, so remove old registrations and leave the page alone.
+    const isLocalPreview = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+    if (process.env.NODE_ENV !== "production" || isLocalPreview) {
+      navigator.serviceWorker.getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+        .catch(() => {});
+      return;
+    }
 
     // Auto-reload when a new SW takes control (after skipWaiting)
     let refreshing = false;

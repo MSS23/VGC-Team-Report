@@ -1,7 +1,7 @@
 /**
  * Build-time data integrity check: every "*-mega" key in CHAMPIONS_DEX must
  * have a corresponding entry in MEGA_POKEMON_LIST, and every entry in
- * MEGA_POKEMON_LIST must have base stats in POKEMON_DATA.
+ * MEGA_POKEMON_LIST must resolve through the same lookup path used by the UI.
  *
  * Without this guard, a Champions-legal Mega missing from mega-pokemon.ts
  * silently breaks the EV/SP spread display on PokemonCard (the dex lookup
@@ -13,7 +13,7 @@
  */
 import { CHAMPIONS_DEX } from "./champions-dex";
 import { MEGA_BY_KEY } from "./mega-pokemon";
-import { POKEMON_DATA } from "./pokemon";
+import { lookupPokemon } from "./pokemon";
 
 export function validateMegaCoverage(): { ok: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -32,18 +32,20 @@ export function validateMegaCoverage(): { ok: boolean; errors: string[] } {
     }
   }
 
-  // 2. Every mega entry must have base stats in pokemon.ts (so the bar fills)
+  // 2. Every mega entry must resolve to base stats through the production
+  // lookup path. That includes the generated @pkmn/dex fallback used by cards
+  // and landing pages when the hand-authored static catalogue lags behind.
   for (const [dataKey, entry] of MEGA_BY_KEY) {
-    if (!POKEMON_DATA[dataKey]) {
+    if (!lookupPokemon(dataKey)) {
       errors.push(
         `MEGA_POKEMON_LIST entry "${entry.displayName}" (dataKey: ${dataKey}) ` +
-        `has no matching POKEMON_DATA["${dataKey}"]. The card will show 0% bars.`,
+        `cannot be resolved by lookupPokemon(). The card will show 0% bars.`,
       );
     }
-    if (!POKEMON_DATA[entry.baseName.toLowerCase()]) {
+    if (!lookupPokemon(entry.baseName)) {
       errors.push(
         `MEGA_POKEMON_LIST entry "${entry.displayName}" baseName "${entry.baseName}" ` +
-        `not found in POKEMON_DATA. The flip-to-base toggle will be hidden.`,
+        `cannot be resolved by lookupPokemon(). The flip-to-base toggle will be hidden.`,
       );
     }
   }

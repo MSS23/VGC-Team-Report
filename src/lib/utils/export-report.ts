@@ -1,8 +1,4 @@
-/** Lazy-load html2canvas-pro (avoids bundling ~200KB on initial page load) */
-async function getHtml2Canvas() {
-  const mod = await import("html2canvas-pro");
-  return mod.default;
-}
+import { getHtml2Canvas } from "@/lib/dynamic-imports/html2canvas";
 
 /** Lazy-load jsPDF (avoids bundling ~300KB on initial page load) */
 async function getJsPDF() {

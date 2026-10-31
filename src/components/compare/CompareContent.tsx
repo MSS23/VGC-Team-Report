@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { parseShowdownPaste } from "@/lib/parser/showdown-parser";
-import { lookupPokemon } from "@/lib/data/pokemon";
 import {
   calculateAllStats,
   calculateChampionsStat,
@@ -17,7 +16,7 @@ import { PokemonSprite } from "@/components/report/PokemonSprite";
 import { TypeBadge } from "@/components/report/TypeBadge";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
-import { detectMegaFromItem, isMegaForm } from "@/lib/utils/mega-detect";
+import { resolveEffectiveForm } from "@/lib/utils/effective-form";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { PokemonType } from "@/lib/types/pokemon";
 
@@ -36,6 +35,7 @@ function useMyReports() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset/loading flag for the fetch this effect starts
     if (!isSignedIn) { setReports([]); return; }
     setLoading(true);
     fetch("/api/user/reports")
@@ -114,6 +114,12 @@ interface CompareAnalyzedPokemon extends AnalyzedPokemon {
   displayTypes: string[];
   /** Sprite key (mega data key if applicable) */
   spriteSpecies: string;
+  /**
+   * Resolved ability (mega ability if applicable). A Mega Evolution changes
+   * its ability, so this — not `parsed.ability` — is what drives the
+   * defensive profile.
+   */
+  displayAbility: string | null;
 }
 
 /**
@@ -143,25 +149,11 @@ function analyzePaste(paste: string): CompareAnalyzedPokemon[] | null {
   if (parsed.pokemon.length === 0) return null;
   const isChampions = looksLikeChampionsTeam(parsed.pokemon);
   return parsed.pokemon.map((p) => {
-    let data = lookupPokemon(p.species);
-    let displaySpecies = p.species;
-    let spriteSpecies = p.species;
-    let displayTypes: string[] = data?.types ?? [];
-
-    // Resolve mega evolution — either already mega or has mega stone
-    const alreadyMega = isMegaForm(p.species);
-    if (!alreadyMega) {
-      const megaEntry = detectMegaFromItem(p.item, p.species);
-      if (megaEntry) {
-        const megaData = lookupPokemon(megaEntry.dataKey);
-        if (megaData) {
-          data = megaData;
-          displaySpecies = megaEntry.displayName;
-          spriteSpecies = megaEntry.dataKey;
-          displayTypes = megaData.types;
-        }
-      }
-    }
+    // Resolve mega evolution — either already mega or has mega stone. A Mega
+    // changes types AND ability AND base stats, so all of them come out of
+    // one resolver (VGC-293).
+    const { data, displaySpecies, spriteSpecies, displayTypes, displayAbility } =
+      resolveEffectiveForm(p);
 
     let calculatedStats = data
       ? calculateAllStats(data.baseStats, p.ivs, p.evs, p.level, p.nature)
@@ -177,8 +169,12 @@ function analyzePaste(paste: string): CompareAnalyzedPokemon[] | null {
         spe: calculateChampionsStat("spe", data.baseStats.spe, sp.spe, p.nature),
       };
     }
-    const itemBoost = getItemStatBoost(p.item, p.ability, calculatedStats);
-    return { parsed: p, data, calculatedStats, itemBoost, displaySpecies, displayTypes, spriteSpecies };
+    // Effective ability here too: it is the ability actually in play, which is
+    // what Booster Energy checks. Behaviourally identical today (a Mega holds
+    // a Mega Stone, not Booster Energy, and no Mega has Protosynthesis or
+    // Quark Drive) but it keeps one source of truth for "which ability".
+    const itemBoost = getItemStatBoost(p.item, displayAbility, calculatedStats);
+    return { parsed: p, data, calculatedStats, itemBoost, displaySpecies, displayTypes, spriteSpecies, displayAbility };
   });
 }
 
@@ -188,7 +184,7 @@ function getTeamWeaknesses(pokemon: CompareAnalyzedPokemon[]) {
   for (const mon of pokemon) {
     const types = mon.displayTypes;
     if (types.length === 0) continue;
-    const profile = getDefensiveProfile(types as PokemonType[]);
+    const profile = getDefensiveProfile(types as PokemonType[], mon.displayAbility);
     for (const [t, mult] of Object.entries(profile)) {
       if (mult >= 2) weakMap[t] = (weakMap[t] ?? 0) + 1;
       if (mult <= 0.5) resistMap[t] = (resistMap[t] ?? 0) + 1;
@@ -229,7 +225,7 @@ function TypeWeaknessGrid({ label, weakMap, resistMap, color }: { label: string;
           return (
             <div key={t} className="flex flex-col items-center gap-0.5">
               <TypeBadge type={t} />
-              <div className="flex gap-1 text-[9px] font-bold">
+              <div className="flex gap-1 text-[10px] font-bold">
                 {weak > 0 && <span className="text-red-500">-{weak}</span>}
                 {resist > 0 && <span className="text-emerald-500">+{resist}</span>}
                 {weak === 0 && resist === 0 && <span className="text-text-tertiary">0</span>}

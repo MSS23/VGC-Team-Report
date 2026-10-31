@@ -45,12 +45,17 @@ export function ChunkErrorReloader() {
       }
     };
 
-    // Clear the reload guard on successful page load (new chunks loaded fine)
-    sessionStorage.removeItem(RELOAD_KEY);
+    // Keep the guard in place long enough to prove that the new page is stable.
+    // Clearing it immediately on mount allowed a persistent chunk failure to
+    // reload forever: mount -> clear -> error -> reload -> repeat.
+    const clearGuardTimer = window.setTimeout(() => {
+      sessionStorage.removeItem(RELOAD_KEY);
+    }, 10_000);
 
     window.addEventListener("error", handleError);
     window.addEventListener("unhandledrejection", handleRejection);
     return () => {
+      window.clearTimeout(clearGuardTimer);
       window.removeEventListener("error", handleError);
       window.removeEventListener("unhandledrejection", handleRejection);
     };

@@ -28,14 +28,10 @@ const BLOCKED_BOT_PATTERNS = [
   /exabot/i,
   /seznambot/i,
 
-  // AI training scrapers
-  /gptbot/i,
+  // AI training-only scrapers (no citation benefit)
   /ccbot/i,
-  /anthropic-ai/i,
-  /claude-web/i,
   /bytespider/i,
   /petalbot/i,
-  /amazonbot/i,
 
   // Aggressive crawlers
   /sogou/i,
@@ -74,6 +70,13 @@ const ALLOWED_BOT_PATTERNS = [
   /chrome-lighthouse/i,
   /pagespeed/i,
   /uptimerobot/i,
+  /gptbot/i,
+  /oai-searchbot/i,
+  /anthropic-ai/i,
+  /claude-web/i,
+  /claudebot/i,
+  /perplexitybot/i,
+  /amazonbot/i,
 ];
 
 /**

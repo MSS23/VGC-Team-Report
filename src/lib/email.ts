@@ -2,7 +2,14 @@
  * Email utilities using Resend for weekly feedback summaries.
  */
 
-import { html, raw } from "@/lib/email-html";
+import { escapeHtml } from "@/lib/utils/sanitize";
+
+// Re-export the shared HTML-escape helper so existing importers (e.g. the
+// weekly-digest cron route) that do `import { escapeHtml } from "@/lib/email"`
+// keep resolving against the single canonical implementation in
+// @/lib/utils/sanitize. All user-controlled values must be escaped before
+// being interpolated into an email HTML template.
+export { escapeHtml };
 
 const RESEND_API = "https://api.resend.com";
 
@@ -36,15 +43,9 @@ export async function sendEmail(opts: {
 
   const from = (process.env.RESEND_FROM_EMAIL || DEFAULT_FROM).replace(/[\r\n]/g, "");
 
-  const body: Record<string, unknown> = {
-    from,
-    to: opts.to,
-    subject: opts.subject,
-    html: opts.html,
-  };
-  if (opts.headers && Object.keys(opts.headers).length > 0) {
-    body.headers = opts.headers;
-  }
+  // Defence in depth: strip CRLF from the subject line to prevent email header injection
+  // if a user-controlled value (e.g. report title, name) slips a newline through.
+  const subject = opts.subject.replace(/[\r\n]/g, "");
 
   const res = await fetch(`${RESEND_API}/emails`, {
     method: "POST",
@@ -52,7 +53,13 @@ export async function sendEmail(opts: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      from,
+      to: opts.to,
+      subject,
+      html: opts.html,
+      ...(opts.headers && Object.keys(opts.headers).length > 0 && { headers: opts.headers }),
+    }),
   });
 
   if (!res.ok) {
@@ -81,19 +88,22 @@ export async function sendCommentNotificationEmail(opts: {
   try {
     const reportUrl = `${APP_URL}/report/${opts.shareId}`;
     const html = buildCommentNotificationHtml(opts.commenterName, opts.commentBody, opts.reportTitle, reportUrl);
+    // Strip CR/LF and quotes from the user-controlled report title to prevent
+    // header injection / quote-breaking in the subject line.
+    const safeSubject = `New comment on "${opts.reportTitle.replace(/[\r\n"]/g, "")}"`;
     await sendEmail({
       to: opts.ownerEmail,
-      subject: `New comment on "${opts.reportTitle}"`,
+      subject: safeSubject,
       html,
     });
-  } catch (e) {
+  } catch (e: unknown) {
     console.warn("Failed to send comment notification email:", e);
   }
 }
 
 /**
  * Build the HTML for a comment notification email.
- * Uses html`` tagged template — all user values are escaped by default.
+ * All user-controlled fields are HTML-escaped before interpolation.
  */
 function buildCommentNotificationHtml(
   commenterName: string,
@@ -101,7 +111,7 @@ function buildCommentNotificationHtml(
   reportTitle: string,
   reportUrl: string,
 ) {
-  return html`<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -136,17 +146,17 @@ function buildCommentNotificationHtml(
           <div style="background:#FFFFFF;border-radius:16px;border:1px solid #E5E7EB;padding:28px;">
             <h1 style="font-size:18px;font-weight:700;color:#111827;margin:0 0 8px;">New comment on your report</h1>
             <p style="font-size:14px;color:#6B7280;margin:0 0 20px;">
-              <strong>${commenterName}</strong> commented on <strong>${reportTitle}</strong>
+              <strong>${escapeHtml(commenterName)}</strong> commented on <strong>${escapeHtml(reportTitle)}</strong>
             </p>
 
             <!-- Comment body -->
             <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:16px;margin-bottom:24px;">
-              <p style="font-size:14px;color:#374151;margin:0;line-height:1.5;white-space:pre-wrap;">${commentBody}</p>
+              <p style="font-size:14px;color:#374151;margin:0;line-height:1.5;white-space:pre-wrap;">${escapeHtml(commentBody)}</p>
             </div>
 
             <!-- CTA -->
             <div style="text-align:center;">
-              <a href="${reportUrl}" style="display:inline-block;padding:12px 24px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">View Report</a>
+              <a href="${escapeHtml(reportUrl)}" style="display:inline-block;padding:12px 24px;background:#111827;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">View Report</a>
             </div>
           </div>
         </td></tr>
@@ -177,21 +187,23 @@ export async function sendWelcomeEmail(opts: {
   try {
     const displayName = opts.firstName || "there";
     const html = buildWelcomeEmailHtml(displayName);
-    await sendEmail({
+    return await sendEmail({
       to: opts.to,
       subject: "Welcome to VGC Team Report!",
       html,
     });
-  } catch (e) {
+  } catch (e: unknown) {
     console.warn("Failed to send welcome email:", e);
+    return null;
   }
 }
 
 /**
  * Build the HTML for a Day 0 welcome email.
- * Uses html`` tagged template — firstName is escaped by default.
+ * Table-based light theme matching the comment notification pattern.
+ * The user-controlled Clerk firstName is HTML-escaped before interpolation.
  */
-export function buildWelcomeEmailHtml(firstName: string): string {
+function buildWelcomeEmailHtml(firstName: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -225,7 +237,7 @@ export function buildWelcomeEmailHtml(firstName: string): string {
         <!-- Main card -->
         <tr><td>
           <div style="background:#FFFFFF;border-radius:16px;border:1px solid #E5E7EB;padding:28px;">
-            <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 8px;">Welcome to VGC Team Report, ${firstName}!</h1>
+            <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 8px;">Welcome to VGC Team Report, ${escapeHtml(firstName)}!</h1>
             <p style="font-size:14px;color:#6B7280;margin:0 0 24px;">You're ready to build and share your VGC team reports.</p>
 
             <!-- Quick-start steps -->
@@ -333,29 +345,35 @@ export function buildWeeklySummaryHtml(data: {
     other: "#6B7280",
   };
 
-  const recentRows = data.recentItems.slice(0, 8).map((item) =>
-    `<tr>
+  const recentRows = data.recentItems.slice(0, 8).map((item) => {
+    // Escape user-controlled / DB-sourced strings before embedding in HTML.
+    const safeType = escapeHtml(item.type);
+    const safeTypeLabel = escapeHtml(typeLabel[item.type] ?? item.type);
+    const safeTitle = escapeHtml(item.title);
+    const safeDate = escapeHtml(item.date);
+    return `<tr>
       <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;vertical-align:top;">
         <table role="presentation" cellpadding="0" cellspacing="0"><tr>
           <td style="width:8px;padding-right:8px;vertical-align:middle;">
-            <div style="width:8px;height:8px;border-radius:50%;background:${typeDot[item.type] ?? "#6B7280"};"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:${typeDot[safeType] ?? "#6B7280"};"></div>
           </td>
           <td style="vertical-align:middle;">
-            <span style="font-size:10px;font-weight:700;color:${typeDot[item.type] ?? "#6B7280"};text-transform:uppercase;letter-spacing:0.05em;">${typeLabel[item.type] ?? item.type}</span>
+            <span style="font-size:10px;font-weight:700;color:${typeDot[safeType] ?? "#6B7280"};text-transform:uppercase;letter-spacing:0.05em;">${safeTypeLabel}</span>
           </td>
         </tr></table>
       </td>
-      <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;vertical-align:top;">${item.title}</td>
-      <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:12px;color:#9CA3AF;vertical-align:top;white-space:nowrap;">${item.date}</td>
-    </tr>`
-  ).join("");
+      <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;vertical-align:top;">${safeTitle}</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #F3F4F6;font-size:12px;color:#9CA3AF;vertical-align:top;white-space:nowrap;">${safeDate}</td>
+    </tr>`;
+  }).join("");
 
-  const topRequestRows = data.topRequests.slice(0, 5).map((req) =>
-    `<tr>
-      <td style="padding:10px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;">${req.title}</td>
+  const topRequestRows = data.topRequests.slice(0, 5).map((req) => {
+    const safeReqTitle = escapeHtml(req.title);
+    return `<tr>
+      <td style="padding:10px 16px;border-bottom:1px solid #F3F4F6;font-size:13px;font-weight:600;color:#111827;">${safeReqTitle}</td>
       <td style="padding:10px 16px;border-bottom:1px solid #F3F4F6;font-size:12px;font-weight:700;color:#E11D48;text-align:right;white-space:nowrap;">${req.count}x</td>
-    </tr>`
-  ).join("");
+    </tr>`;
+  }).join("");
 
   // Helpers
   const statCard = (value: number, label: string, color: string) =>
@@ -367,10 +385,13 @@ export function buildWeeklySummaryHtml(data: {
     </td>`;
 
   const sectionTitle = (text: string) =>
-    `<h2 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#9CA3AF;margin:0 0 12px;padding:0 4px;">${text}</h2>`;
+    `<h2 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#9CA3AF;margin:0 0 12px;padding:0 4px;">${escapeHtml(text)}</h2>`;
 
   const linkBtn = (href: string, text: string) =>
-    `<a href="${href}" style="display:inline-block;padding:10px 20px;background:#111827;color:#FFFFFF;font-size:13px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">${text}</a>`;
+    `<a href="${escapeHtml(href)}" style="display:inline-block;padding:10px 20px;background:#111827;color:#FFFFFF;font-size:13px;font-weight:600;text-decoration:none;border-radius:8px;" target="_blank">${escapeHtml(text)}</a>`;
+
+  // Defence in depth: escape the week label even though it's server-generated today.
+  const safeWeekLabel = escapeHtml(data.weekLabel);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -379,7 +400,7 @@ export function buildWeeklySummaryHtml(data: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <title>Weekly Summary &mdash; ${data.weekLabel}</title>
+  <title>Weekly Summary &mdash; ${safeWeekLabel}</title>
 </head>
 <body style="margin:0;padding:0;background:#F4F4F5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;">
 
@@ -415,7 +436,7 @@ export function buildWeeklySummaryHtml(data: {
             <!-- Card header -->
             <div style="padding:28px 28px 0;">
               <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 4px;">Weekly Summary</h1>
-              <p style="font-size:13px;color:#6B7280;margin:0;">${data.weekLabel}</p>
+              <p style="font-size:13px;color:#6B7280;margin:0;">${safeWeekLabel}</p>
             </div>
 
             <!-- Stats -->

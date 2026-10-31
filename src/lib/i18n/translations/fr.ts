@@ -1,9 +1,24 @@
 import type { TranslationKeys } from "./en";
 
 const fr: TranslationKeys = {
+  commonCombinationsTitle: "Combinaisons courantes",
+  commonCombinationsDesc: "Vos choix habituels : deux meneurs et deux en réserve parmi vos six, puis notez quand l amener.",
+  combinationLeads: "Meneurs",
+  combinationBack: "Réserve",
+  combinationStrategy: "Stratégie",
+  combinationLabel: "Combinaison",
+  combinationStrategyPlaceholder: "Quand amener cette combinaison et comment la jouer.",
+  addCombination: "Ajouter une combinaison",
+  combinationsEmpty: "Aucune combinaison pour l instant.",
+  removeCombination: "Supprimer la combinaison",
+  legacyNotesTitle: "Anciennes notes",
+  legacyLeadsLabel: "Meneurs courants (ancien)",
+  legacyModesLabel: "Modes courants (ancien)",
   appTitle: "VGC Team",
   appTitleAccent: "Report",
   appSubtitle: "Construisez, partagez et explorez des rapports d'equipe Pokemon competitif",
+  appMission:
+    "Bien plus qu'un visualiseur de paste : transformez n'importe quelle equipe en rapport structure avec calculs de degats, paliers de vitesse et plans de matchup, pour que chacun comprenne son fonctionnement et apprenne a la jouer.",
   appInputHint: "Collez un export Showdown ou une URL PokePaste pour commencer",
 
   loadSample: "Charger un exemple",
@@ -168,11 +183,22 @@ const fr: TranslationKeys = {
   notesLabel: "Notes",
   noNotes: "Aucune note.",
   gamePlanNotesPlaceholder: "Pourquoi ces quatre ? Quelle est la condition de victoire ?",
-  replays: "Replays",
-  optional: "optionnel",
-  pasteReplayPlaceholder: "Collez l'URL du replay...",
   add: "Ajouter",
   delete: "Supprimer",
+
+  // Common Modes ("Comment piloter cette equipe")
+  commonModesTitle: "Modes Courants",
+  commonLeads: "Leads Courants",
+  commonModesField: "Modes Courants",
+  strengths: "Forces",
+  weaknesses: "Faiblesses",
+  gameplan: "Plan de Jeu",
+  commonModesEmpty: "Pas encore de notes de pilotage",
+  commonLeadsPlaceholder: "Vos paires d'ouverture habituelles et quand les jouer (p. ex. Incineroar + Flutter Mane contre la plupart des equipes).",
+  commonModesPlaceholder: "Schemas de tour et styles de jeu recurrents : comment l'equipe a tendance a evoluer.",
+  strengthsPlaceholder: "Ce que cette equipe bat et ce qu'elle fait bien.",
+  weaknessesPlaceholder: "Ce qui pose probleme a cette equipe et comment le contourner.",
+  gameplanPlaceholder: "Comment piloter l'equipe pour gagner : sequences cles, conditions de victoire et priorites.",
 
   plan: "plan",
   plans: "plans",

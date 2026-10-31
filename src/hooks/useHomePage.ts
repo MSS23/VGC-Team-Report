@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useLayoutEffect, useRef, useCallback, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTeamReport } from "@/hooks/useTeamReport";
+import { useTeamReport, readRestorableDraft } from "@/hooks/useTeamReport";
 import { useCreatorMode } from "@/hooks/useCreatorMode";
 import { usePresentationMode } from "@/hooks/usePresentationMode";
 import { useDarkMode } from "@/hooks/useDarkMode";
@@ -10,9 +10,11 @@ import { usePokemonNotes } from "@/hooks/usePokemonNotes";
 import { useDamageCalcs } from "@/hooks/useDamageCalcs";
 import { useMatchupPlans } from "@/hooks/useMatchupPlans";
 import { useHiddenSlides } from "@/hooks/useHiddenSlides";
+import { isChampionsFormat } from "@/lib/data/tags";
 import { useTeamMeta } from "@/hooks/useTeamMeta";
 import { useWalkthrough } from "@/hooks/useWalkthrough";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
+import type { UndoRedoSnapshot } from "@/hooks/useUndoRedo";
 import { useTheme } from "@/hooks/useTheme";
 import { useShareFlow } from "@/hooks/useShareFlow";
 import { useCollaborativeSync } from "@/hooks/useCollaborativeSync";
@@ -24,8 +26,9 @@ import { usePostHog } from "@/components/providers/PostHogProvider";
 import { useTranslation } from "@/lib/i18n";
 import { getTemplate } from "@/lib/templates";
 import type { SpriteConfig } from "@/lib/types/sprites";
-import { detectArchetypes } from "@/lib/analysis/detect-archetype";
-import { detectRegulation } from "@/lib/analysis/detect-regulation";
+// detect-archetype / detect-regulation pull the dex subset (~130KB raw) via
+// mega-detect — imported lazily in their effects to keep it off first paint.
+import { isDifferentTeam } from "@/lib/utils/extract-species";
 
 export function useHomePage() {
   const { t } = useTranslation();
@@ -66,7 +69,7 @@ export function useHomePage() {
 
   // ── Core team data ───────────────────────────────────────────────
   const {
-    paste, setPaste, analysis, parseTeam, reorderPokemon, reset, warnings: rawWarnings,
+    paste, setPaste, analysis, parseTeam, reorderPokemon, markPastePublished, reset, warnings: rawWarnings,
   } = useTeamReport(!isSampleTeam && !isInShareContext);
 
   // ── Mode toggles ─────────────────────────────────────────────────
@@ -109,8 +112,8 @@ export function useHomePage() {
   const { notes, setNote, setNotesFull } = usePokemonNotes(speciesKeys, shouldPersist);
   const { calcs, addCalc, removeCalc, editCalc, setCalcsFull } = useDamageCalcs(speciesKeys, shouldPersist);
   const {
-    roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault, privateFields,
-    setRole, setSummary, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
+    roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, tags, templateId, megaStates, globalMegaDefault, privateFields,
+    setRole, setSummary, setCommonModes, setTeamName, setTournamentName, setPlacement, setRecord, setMvpIndex, setRentalCode, setCreatorName, setTags, mergeTags, setTemplateId, setMetaFull, toggleMega, setGlobalMegaDefault, resetMegaOverrides, setPrivateFields,
   } = useTeamMeta(speciesKeys, shouldPersist);
 
   // Compute the effective Mega-or-base state for a given Pokemon index.
@@ -150,14 +153,14 @@ export function useHomePage() {
   );
   const {
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
-    updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,
+    updateGamePlanNotes, updateGamePlanBring,
     reorderGamePlanBring, updateGamePlanResult, togglePlanSlide, reorderPlans, setPlansFull,
   } = useMatchupPlans(speciesKeys, shouldPersist);
 
   // Champions uses stat points (66 SP budget) instead of EVs (510 budget),
   // so the EV total > 510 parser warning is irrelevant.
   const warnings = useMemo(() => {
-    if (tags?.regulation === "Reg M-A") {
+    if (isChampionsFormat(tags?.regulation)) {
       return rawWarnings.filter(w => !w.includes("EV total") || !w.includes("exceeds"));
     }
     return rawWarnings;
@@ -179,38 +182,55 @@ export function useHomePage() {
   const undoRedo = useUndoRedo();
   const snapshotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // The undo history stores the full editable meta set (not just
+  // notes/calcs/roles/summary/plans). Previously edits to teamName,
+  // tournamentName, placement, record, tags, commonModes, hiddenSlides, etc.
+  // couldn't be undone because they were never snapshotted (Finding 4.6).
+  // We carry them as extra fields on the snapshot object (preserved at runtime)
+  // aligned with the fields in buildShareState.
+  type UndoMeta = Parameters<typeof setMetaFull>[0];
+  type FullUndoSnapshot = UndoRedoSnapshot & { meta: UndoMeta; hiddenSlides: string[] };
+
+  const restoreSnapshot = useCallback((snapshot: FullUndoSnapshot | null) => {
+    if (!snapshot) return;
+    setNotesFull(snapshot.notes);
+    setCalcsFull(snapshot.calcs);
+    setMetaFull({ roles: snapshot.roles, summary: snapshot.summary, ...(snapshot.meta ?? {}) });
+    setPlansFull(snapshot.plans);
+    if (Array.isArray(snapshot.hiddenSlides)) setHiddenFull(snapshot.hiddenSlides);
+    undoRedo.doneRestoring();
+  }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
+
   useEffect(() => {
     if (!analysis || undoRedo.isRestoring()) return;
     if (snapshotTimerRef.current) clearTimeout(snapshotTimerRef.current);
     snapshotTimerRef.current = setTimeout(() => {
-      undoRedo.pushSnapshot({
+      const snapshot: FullUndoSnapshot = {
         notes, calcs, roles, summary,
         plans: plans.map((p) => ({ ...p, gamePlans: p.gamePlans.map((gp) => ({ ...gp })) })),
-      });
+        meta: {
+          commonModes, teamName, tournamentName, placement, record,
+          mvpIndex, rentalCode, creatorName, tags, templateId, privateFields,
+        },
+        hiddenSlides: [...hiddenSlides],
+      };
+      undoRedo.pushSnapshot(snapshot);
     }, 500);
     return () => { if (snapshotTimerRef.current) clearTimeout(snapshotTimerRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notes, calcs, roles, summary, plans, analysis]);
+  }, [
+    notes, calcs, roles, summary, plans, analysis,
+    commonModes, teamName, tournamentName, placement, record,
+    mvpIndex, rentalCode, creatorName, tags, templateId, privateFields, hiddenSlides,
+  ]);
 
   const handleUndo = useCallback(() => {
-    const snapshot = undoRedo.undo();
-    if (!snapshot) return;
-    setNotesFull(snapshot.notes);
-    setCalcsFull(snapshot.calcs);
-    setMetaFull({ roles: snapshot.roles, summary: snapshot.summary });
-    setPlansFull(snapshot.plans);
-    undoRedo.doneRestoring();
-  }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull]);
+    restoreSnapshot(undoRedo.undo() as FullUndoSnapshot | null);
+  }, [undoRedo, restoreSnapshot]);
 
   const handleRedo = useCallback(() => {
-    const snapshot = undoRedo.redo();
-    if (!snapshot) return;
-    setNotesFull(snapshot.notes);
-    setCalcsFull(snapshot.calcs);
-    setMetaFull({ roles: snapshot.roles, summary: snapshot.summary });
-    setPlansFull(snapshot.plans);
-    undoRedo.doneRestoring();
-  }, [undoRedo, setNotesFull, setCalcsFull, setMetaFull, setPlansFull]);
+    restoreSnapshot(undoRedo.redo() as FullUndoSnapshot | null);
+  }, [undoRedo, restoreSnapshot]);
 
   // ── Restore in-progress team from localStorage (guest + signed-in) ──
   // The auto-save in useTeamReport writes `vgc-team-paste` on every change,
@@ -234,6 +254,7 @@ export function useHomePage() {
     calcs,
     roles,
     teamSummary: summary,
+    commonModes,
     teamName: teamName || undefined,
     tournamentName: tournamentName || undefined,
     placement: placement || undefined,
@@ -248,7 +269,6 @@ export function useHomePage() {
       gamePlans: p.gamePlans.map((gp) => ({
         bring: gp.bring,
         notes: gp.notes,
-        replays: gp.replays.length > 0 ? gp.replays : undefined,
         result: gp.result ?? undefined,
       })),
     })),
@@ -259,19 +279,58 @@ export function useHomePage() {
     // Pin viewers to the creator's accent theme so the report appearance
     // stays consistent across devices / incognito / other users.
     genTheme: genTheme || undefined,
-  }), [paste, notes, calcs, roles, summary, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId, privateFields, genTheme]);
+  }), [paste, notes, calcs, roles, summary, commonModes, teamName, tournamentName, placement, record, mvpIndex, rentalCode, creatorName, plans, hiddenSlides, tags, templateId, privateFields, genTheme]);
+
+  // ── Self-echo suppression wiring (§1-B) ──────────────────────────
+  // useCollaborativeSync (below) exposes markSaving/updateVersion but is
+  // instantiated AFTER useShareFlow, which is where saves actually fire.
+  // Bridge the two through a ref so the autosave/publish paths can signal
+  // the sync layer to ignore the version bump they're about to cause.
+  const syncControlsRef = useRef<{ markSaving: () => void; updateVersion: (v?: number) => void } | null>(null);
+  const activeDraftIdRef = useRef<string | null>(null);
+  const handleSaveStart = useCallback(() => { syncControlsRef.current?.markSaving(); }, []);
+  const handleSaveEnd = useCallback((version?: number) => { syncControlsRef.current?.updateVersion(version); }, []);
+  const getActiveDraftId = useCallback(() => activeDraftIdRef.current, []);
 
   // ── Share flow (extracted) ───────────────────────────────────────
-  const share = useShareFlow({ analysis, isSampleTeam, buildShareState, t });
+  const share = useShareFlow({
+    analysis,
+    isSampleTeam,
+    buildShareState,
+    getActiveDraftId,
+    t,
+    onSaveStart: handleSaveStart,
+    onSaveEnd: handleSaveEnd,
+  });
 
   // ── Auto-draft (logged-in users) ─────────────────────────────────
-  const { clearDraft } = useAutoDraft({
+  const {
+    draftId,
+    status: draftSaveStatus,
+    error: draftSaveError,
+    saveDraft,
+    setActiveDraft,
+    clearDraft,
+  } = useAutoDraft({
     isSignedIn: !!isSignedIn,
     analysis,
     isSampleTeam,
-    isSharedView: share.isSharedView,
+    isSharedView: share.isSharedView || !!share.sessionShareId,
     buildShareState,
   });
+  activeDraftIdRef.current = draftId;
+
+  // The share endpoint replaces only the active draft. Mirror that successful
+  // transition locally so the next new team cannot target its deleted ID.
+  // Also re-mark the persisted paste as published: the canonical copy now
+  // lives on the server, so the mount-restore must not resurrect this team
+  // as a local "draft" on a later (possibly signed-out) visit.
+  useEffect(() => {
+    if (share.lastShareResult?.publicUrl && !share.isSharedView) {
+      clearDraft();
+      markPastePublished();
+    }
+  }, [clearDraft, markPastePublished, share.isSharedView, share.lastShareResult?.publicUrl]);
 
   // ── Legacy localStorage eviction (one-time, runs on every mount) ──
   // After the 2026-04-10 leak incident, every team-content storage key
@@ -328,36 +387,34 @@ export function useHomePage() {
   // Runs once after share state has settled. Skipped when entering a
   // shared view (/s/[id]) since that path hydrates from the server.
   //
-  // SECURITY: Only restore if the stored paste has the v2 "user" source
-  // marker. The v2 namespace did not exist before the 2026-04-10 leak fix,
-  // so anything in vgc-team-paste-v2 was definitively written by post-fix
-  // code with the source check in place — it cannot contain leaked content.
+  // SECURITY: readRestorableDraft only returns pastes with the v2 "user"
+  // source marker. The v2 namespace did not exist before the 2026-04-10 leak
+  // fix, so anything in vgc-team-paste-v2 was definitively written by
+  // post-fix code with the source check in place — it cannot contain leaked
+  // content. It also refuses (and evicts) anything that matches the
+  // last-published copy, carries a "published" marker, predates save
+  // timestamps, or has aged out — so an already-published team can't
+  // resurface labeled "this draft only lives on this device".
   useEffect(() => {
     if (restoreAttempted.current) return;
     if (analysis) return; // already have a team loaded
     if (share.isSharedView || share.isSharePending || share.sharedState) return;
     restoreAttempted.current = true;
-    try {
-      const stored = localStorage.getItem("vgc-team-paste-v2");
-      const source = localStorage.getItem("vgc-team-paste-source-v2");
-      if (stored && stored.trim() && source === "user") {
-        setPaste(stored);
-        parseTeam(stored);
-        setWasRestored(true);
-      } else if (stored) {
-        // Defensive eviction in case the marker check fails.
-        localStorage.removeItem("vgc-team-paste-v2");
-        localStorage.removeItem("vgc-team-paste-source-v2");
-      }
-    } catch {
-      // localStorage unavailable — nothing to restore
+    const stored = readRestorableDraft();
+    if (stored) {
+      setPaste(stored);
+      parseTeam(stored);
+      setWasRestored(true);
     }
   }, [analysis, share.isSharedView, share.isSharePending, share.sharedState, setPaste, parseTeam]);
 
   // Dismiss the welcome-back banner once the user grabs a share link.
+  // Depend on the stable `hasExistingShare` callback, not the freshly-allocated
+  // `share` object (which changes identity every render and re-ran this effect
+  // continuously — Finding 4.7).
   useEffect(() => {
     if (wasRestored && share.hasExistingShare()) setWasRestored(false);
-  }, [wasRestored, share]);
+  }, [wasRestored, share.hasExistingShare]);
 
   // ── beforeunload warning when leaving with unsaved meaningful work ──
   // Fires only when there's a real team on screen and no share link
@@ -382,10 +439,13 @@ export function useHomePage() {
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [analysis, isSampleTeam, share, summary, teamName, tournamentName, notes, calcs]);
+    // Depend on the specific stable fields used, not the `share` object which
+    // is re-allocated every render (Finding 4.7 — the handler was being
+    // detached/re-attached on every render).
+  }, [analysis, isSampleTeam, share.isSharedView, share.hasExistingShare, summary, teamName, tournamentName, notes, calcs]);
 
   // ── Real-time collaborative sync (SSE) ──────────────────────────
-  const handleRemoteUpdate = useCallback((state: import("@/lib/sharing/url-codec").ShareableState) => {
+  const applyRemoteState = useCallback((state: import("@/lib/sharing/url-codec").ShareableState) => {
     setPaste(state.paste);
     parseTeam(state.paste);
     setNotesFull(state.notes ?? {});
@@ -393,6 +453,7 @@ export function useHomePage() {
     setMetaFull({
       roles: state.roles ?? {},
       summary: state.teamSummary ?? "",
+      commonModes: state.commonModes ?? undefined,
       teamName: state.teamName ?? undefined,
       tournamentName: state.tournamentName ?? undefined,
       placement: state.placement ?? undefined,
@@ -405,28 +466,48 @@ export function useHomePage() {
       privateFields: state.privateFields ?? undefined,
     });
     const rawPlans = Array.isArray(state.matchupPlans) ? state.matchupPlans : [];
+    // Reuse existing plan/gamePlan IDs by position instead of minting fresh
+    // crypto.randomUUID() values on every remote apply. Regenerating IDs made
+    // local state differ from the just-saved state, which retriggered autosave —
+    // the amplifier in the §1-B echo loop. Preserving IDs makes applying an
+    // unchanged remote state idempotent.
     setPlansFull(
-      rawPlans.map((p) => ({
-        id: crypto.randomUUID(),
-        ...p,
-        gamePlans: (p.gamePlans ?? []).map((gp) => ({
-          ...gp,
-          id: crypto.randomUUID(),
-          bring: gp.bring ?? [null, null, null, null],
-          notes: gp.notes ?? "",
-          replays: gp.replays ?? [],
-        })),
-      })),
+      rawPlans.map((p, i) => {
+        const existing = plans[i];
+        return {
+          id: existing?.id ?? crypto.randomUUID(),
+          ...p,
+          gamePlans: (p.gamePlans ?? []).map((gp, j) => ({
+            ...gp,
+            id: existing?.gamePlans?.[j]?.id ?? crypto.randomUUID(),
+            bring: gp.bring ?? [null, null, null, null],
+            notes: gp.notes ?? "",
+          })),
+        };
+      }),
     );
-    if (Array.isArray(state.hiddenSlides)) setHiddenFull(state.hiddenSlides);
-  }, [setPaste, parseTeam, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
+    setHiddenFull(state.hiddenSlides ?? []);
+    share.setAllowComments(state.allowComments ?? false);
+  }, [share.setAllowComments, plans, setPaste, parseTeam, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
 
-  const { collaborators, syncStatus } = useCollaborativeSync({
+  const handleRemoteUpdate = useCallback((state: import("@/lib/sharing/url-codec").ShareableState, version: number) => {
+    if (share.receiveRemote(state, version, { ...buildShareState(), allowComments: share.allowComments })) applyRemoteState(state);
+  }, [share.receiveRemote, share.allowComments, buildShareState, applyRemoteState]);
+  const resolveCollaborationConflict = useCallback((choice: "remote" | "local") => {
+    const state = share.resolveConflict(choice);
+    if (state) applyRemoteState(state);
+  }, [share.resolveConflict, applyRemoteState]);
+
+  const canEditSharedReport = share.isEditingUnlocked && isSignedIn === true;
+
+  const { collaborators, syncStatus, markSaving, updateVersion } = useCollaborativeSync({
     shareId: share.activeShareId,
-    editKey: share.editKeyFromUrl,
-    enabled: share.isEditingUnlocked,
+    enabled: canEditSharedReport,
     onRemoteUpdate: handleRemoteUpdate,
+    getVersion: share.getVersion,
   });
+  // markSaving/updateVersion are stable (useCallback []), so this runs once.
+  syncControlsRef.current = { markSaving, updateVersion };
 
   // ── Slide system (extracted) ─────────────────────────────────────
   const slides = useSlideSystem({
@@ -444,8 +525,7 @@ export function useHomePage() {
   // stale localStorage edit token or the URL has been tampered with. The home
   // page remains fully editable without auth (it's a local draft) — sign-in is
   // only required to publish/save via the Share flow.
-  const isSharedReadOnly =
-    share.isSharedView && (!share.isEditingUnlocked || !isSignedIn);
+  const isSharedReadOnly = share.isSharedView && !canEditSharedReport;
   const isReadOnly = isSharedReadOnly || presentationMode || !creatorMode;
   const isPresentationStyle = presentationMode;
 
@@ -475,6 +555,7 @@ export function useHomePage() {
     start: startWalkthrough,
     guidePokemon: walkthroughGuidePokemon,
     isFirstTime: walkthroughIsFirstTime,
+    dismissPrompt: dismissWalkthroughPrompt,
   } = useWalkthrough({
     enabled: !!analysis && !presentationMode,
     pokemonNames,
@@ -510,13 +591,13 @@ export function useHomePage() {
     parseTeam(share.sharedState.paste);
   }, [share.sharedState, setPaste, parseTeam, setCreatorMode]);
 
-  // Auto-enable edit mode for owners and explicit edit links (?key=).
-  // Other viewers see read-only and can toggle via the navbar button.
+  // Auto-enable edit mode only after the authenticated account has been
+  // confirmed as the owner or an accepted collaborator by the server.
   useEffect(() => {
-    if (share.isEditingUnlocked && (share.isOwner || share.editKeyFromUrl)) {
+    if (canEditSharedReport) {
       setCreatorMode(true);
     }
-  }, [share.isEditingUnlocked, share.isOwner, share.editKeyFromUrl, setCreatorMode]);
+  }, [canEditSharedReport, setCreatorMode]);
 
   useEffect(() => {
     if (!share.sharedState || !analysis || hasHydrated.current) return;
@@ -526,6 +607,7 @@ export function useHomePage() {
     setMetaFull({
       roles: share.sharedState.roles ?? {},
       summary: share.sharedState.teamSummary ?? "",
+      commonModes: share.sharedState.commonModes ?? undefined,
       teamName: share.sharedState.teamName ?? undefined,
       tournamentName: share.sharedState.tournamentName ?? undefined,
       placement: share.sharedState.placement ?? undefined,
@@ -547,7 +629,6 @@ export function useHomePage() {
           id: crypto.randomUUID(),
           bring: gp.bring ?? [null, null, null, null],
           notes: gp.notes ?? "",
-          replays: gp.replays ?? [],
         })),
       })),
     );
@@ -557,10 +638,9 @@ export function useHomePage() {
 
   // Auto-enter presentation mode when a viewer opens a shared team report.
   // The intent is "click a team → drop straight into the deck", same as
-  // tapping a slide deck on Apple Keynote on the web. Skipped when the URL
-  // carries an explicit edit key (?key=...) because those visitors came
-  // here to edit, not present. Tracked via a ref so exiting presentation
-  // mode mid-view doesn't snap the viewer back in.
+  // tapping a slide deck on Apple Keynote on the web. Authenticated editors
+  // stay in editing mode. Tracked via a ref so exiting presentation mode
+  // mid-view doesn't snap the viewer back in.
   const autoPresentTriggered = useRef(false);
   useEffect(() => {
     if (!share.sharedState || !share.isSharedView) {
@@ -568,10 +648,10 @@ export function useHomePage() {
       return;
     }
     if (!analysis || autoPresentTriggered.current) return;
-    if (share.editKeyFromUrl) return;
+    if (canEditSharedReport) return;
     autoPresentTriggered.current = true;
     setPresentationMode(true);
-  }, [share.sharedState, share.isSharedView, share.editKeyFromUrl, analysis, setPresentationMode]);
+  }, [share.sharedState, share.isSharedView, canEditSharedReport, analysis, setPresentationMode]);
 
   // ── Apply template defaults when analysis first appears (non-shared) ──
   const templateApplied = useRef(false);
@@ -594,11 +674,13 @@ export function useHomePage() {
     if (!analysis || share.isSharedView || archetypeDetected.current) return;
     if (tags?.archetype && tags.archetype.length > 0) return; // user already set tags
     archetypeDetected.current = true;
-    const detected = detectArchetypes(analysis.pokemon);
-    if (detected.length > 0) {
-      setTags({ ...tags, archetype: detected });
-    }
-  }, [analysis, share.isSharedView, tags, setTags]);
+    void import("@/lib/analysis/detect-archetype").then(({ detectArchetypes }) => {
+      const detected = detectArchetypes(analysis.pokemon);
+      if (detected.length > 0) {
+        mergeTags({ archetype: detected });
+      }
+    });
+  }, [analysis, share.isSharedView, tags, mergeTags]);
 
   // ── Auto-detect regulation from the team composition ─────────────
   // Uses the signal-based detector (lib/analysis/detect-regulation.ts)
@@ -617,13 +699,14 @@ export function useHomePage() {
     if (!analysis || share.isSharedView || regulationDetected.current) return;
     if (tags?.regulation) return; // user already set regulation
     regulationDetected.current = true;
-    const detected = detectRegulation(analysis.pokemon);
-    setTags({
-      ...tags,
-      regulation: detected ?? "Custom",
-      regulationAutoDetected: true,
+    void import("@/lib/analysis/detect-regulation").then(({ detectRegulation }) => {
+      const detected = detectRegulation(analysis.pokemon);
+      mergeTags({
+        regulation: detected ?? "Custom",
+        regulationAutoDetected: true,
+      });
     });
-  }, [analysis, share.isSharedView, tags, setTags]);
+  }, [analysis, share.isSharedView, tags, mergeTags]);
 
   // ── Draft hydration (parallel to shared-view hydration above) ────
   // The /?draft=ID flow used to call only handleAnalyze(paste), which
@@ -639,7 +722,8 @@ export function useHomePage() {
   const pendingDraftRef = useRef<import("@/lib/sharing/url-codec").ShareableState | null>(null);
   const draftHydrated = useRef(false);
 
-  const loadDraft = useCallback((state: import("@/lib/sharing/url-codec").ShareableState) => {
+  const loadDraft = useCallback((state: import("@/lib/sharing/url-codec").ShareableState, id?: string) => {
+    if (id) setActiveDraft(id);
     pendingDraftRef.current = state;
     draftHydrated.current = false;
     // Skip the auto-template / auto-archetype / auto-regulation effects;
@@ -650,7 +734,7 @@ export function useHomePage() {
     setIsSampleTeam(false);
     setPaste(state.paste);
     parseTeam(state.paste);
-  }, [setPaste, parseTeam]);
+  }, [setActiveDraft, setPaste, parseTeam]);
 
   useEffect(() => {
     const state = pendingDraftRef.current;
@@ -661,6 +745,7 @@ export function useHomePage() {
     setMetaFull({
       roles: state.roles ?? {},
       summary: state.teamSummary ?? "",
+      commonModes: state.commonModes ?? undefined,
       teamName: state.teamName ?? undefined,
       tournamentName: state.tournamentName ?? undefined,
       placement: state.placement ?? undefined,
@@ -682,7 +767,6 @@ export function useHomePage() {
           id: crypto.randomUUID(),
           bring: gp.bring ?? [null, null, null, null],
           notes: gp.notes ?? "",
-          replays: gp.replays ?? [],
         })),
       })),
     );
@@ -691,8 +775,21 @@ export function useHomePage() {
   }, [analysis, setNotesFull, setCalcsFull, setMetaFull, setPlansFull, setHiddenFull]);
 
   // ── Actions ──────────────────────────────────────────────────────
+  const importTeam = (state: import("@/lib/sharing/url-codec").ShareableState) => {
+    clearDraft();
+    share.clearStoredShare();
+    loadDraft(state);
+  };
   const handleAnalyze = (directPaste?: string) => {
     const teamPaste = directPaste ?? paste;
+    // Analyzing an entirely different team must start its own draft. The
+    // active draft ID persists in localStorage, so without this the 4s
+    // autosave would overwrite the previous team's draft with the new team —
+    // silent data loss for anyone keeping multiple drafts in the dashboard.
+    // Editing the current team (any species overlap) keeps updating its draft.
+    if (draftId && (!analysis || isDifferentTeam(analysis.pokemon.map((p) => p.parsed.species), teamPaste))) {
+      clearDraft();
+    }
     setIsSampleTeam(teamPaste.trim() === SAMPLE_PASTE.trim());
     templateApplied.current = false; // reset so template applies on next parse
     archetypeDetected.current = false;
@@ -719,6 +816,7 @@ export function useHomePage() {
   // ── Return (same API as before) ──────────────────────────────────
   return {
     t,
+    buildShareState,
     paste, setPaste, analysis, warnings, reorderPokemon,
     creatorMode, setCreatorMode, presentationMode, setPresentationMode,
     darkMode, setDarkMode, genTheme, setGenTheme,
@@ -733,22 +831,15 @@ export function useHomePage() {
     shareStatus: share.shareStatus,
     urlWarning: share.urlWarning,
     decodeFailed: share.decodeFailed,
-    exitSharedView: share.exitSharedView,
-    isEditingUnlocked: share.isEditingUnlocked,
+    isEditingUnlocked: canEditSharedReport,
     isOwner: share.isOwner,
     sharedRedactedFields: share.redactedFields,
     sessionShareId: share.sessionShareId,
     lastShareResult: share.lastShareResult,
     openShareSheetForUrl: share.openShareSheetForUrl,
-    hasExistingShare: share.hasExistingShare,
-    showEditUrl: share.showEditUrl,
-    setShowEditUrl: share.setShowEditUrl,
-    editLinkCopied: share.editLinkCopied,
     shareButtonText: share.shareButtonText,
     handleShareClick: share.handleShareClick,
     handleReshare: share.handleReshare,
-    handleCopyEditLink: share.handleCopyEditLink,
-    handleFreshReshare: share.handleFreshReshare,
     isPublic: share.isPublic,
     setIsPublic: share.setIsPublic,
     handleSetPublic: share.handleSetPublic,
@@ -761,11 +852,17 @@ export function useHomePage() {
     allowComments: share.allowComments,
     setAllowComments: share.setAllowComments,
     autoSaveStatus: share.autoSaveStatus,
+    draftId,
+    draftSaveStatus,
+    draftSaveError,
+    saveDraft,
     collaboratorNames: share.fetchedCollaborators,
     forkedFrom: share.forkedFrom,
     forkReport: share.forkReport,
 
     // Collaborative sync
+    collaborationConflict: share.conflict,
+    resolveCollaborationConflict,
     collaborators,
     syncStatus,
 
@@ -779,7 +876,7 @@ export function useHomePage() {
 
     // Team content
     notes, setNote, calcs, addCalc, removeCalc, editCalc,
-    roles, setRole, summary, setSummary,
+    roles, setRole, summary, setSummary, commonModes, setCommonModes,
     teamName, setTeamName, tournamentName, setTournamentName, placement, setPlacement,
     record, setRecord, mvpIndex, setMvpIndex,
     rentalCode, setRentalCode, creatorName, setCreatorName, tags, setTags, templateId, setTemplateId,
@@ -790,7 +887,7 @@ export function useHomePage() {
     effectiveMega, hasMegaOverrides,
 
     plans, addPlan, removePlan, addGamePlan, removeGamePlan,
-    updateGamePlanNotes, updateGamePlanReplays, updateGamePlanBring,
+    updateGamePlanNotes, updateGamePlanBring,
     reorderGamePlanBring, updateGamePlanResult, reorderPlans,
 
     getSpriteConfig,
@@ -808,11 +905,13 @@ export function useHomePage() {
     slideHiddenStates: slides.slideHiddenStates,
     isSlideHiddenAt: slides.isSlideHiddenAt,
     handleToggleCurrentSlide: slides.handleToggleCurrentSlide,
+    visibleIndices: slides.visibleIndices,
+    allSlideKeys: slides.allSlideKeys,
 
     // Walkthrough
     walkthroughActive, walkthroughStep, walkthroughStepIndex,
     walkthroughTotalSteps, walkthroughNext, walkthroughPrev, walkthroughSkip,
-    startWalkthrough, walkthroughGuidePokemon, walkthroughIsFirstTime,
+    startWalkthrough, walkthroughGuidePokemon, walkthroughIsFirstTime, dismissWalkthroughPrompt,
 
     // Undo / redo
     canUndo: undoRedo.canUndo,
@@ -830,5 +929,6 @@ export function useHomePage() {
     // Drafts
     clearDraft,
     loadDraft,
+    importTeam,
   };
 }

@@ -5,11 +5,13 @@ import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { PokemonSprite } from "./PokemonSprite";
 import type { SpriteConfig } from "@/lib/types/sprites";
 import { useTranslation } from "@/lib/i18n";
-import { POKEMON_DATA } from "@/lib/data/pokemon";
-import { CHAMPIONS_DEX } from "@/lib/data/champions-dex";
-import { calculateStat, calculateChampionsStat, convertToChampionsSp } from "@/lib/analysis/stat-calculator";
+import { lookupPokemon } from "@/lib/data/pokemon";
+import { getChampionsDex } from "@/lib/data/champions-dex";
+import { isChampionsFormat } from "@/lib/data/tags";
+import { calculateStat, calculateChampionsStat, convertToChampionsSp, calcBattleSpeed, hasSpeedDoublingAbility, compareTurnOrder } from "@/lib/analysis/stat-calculator";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import { detectMegaFromItem } from "@/lib/utils/mega-detect";
+import { resolveSpeedTierForm } from "@/lib/utils/speed-tier-form";
 
 /** Map from normalised base-form key (e.g. "kangaskhan") → Mega dataKeys */
 const BASE_KEY_TO_MEGA_KEYS = new Map<string, string[]>();
@@ -25,6 +27,7 @@ interface SpeedTierChartProps {
   getSpriteConfig?: (key: string) => SpriteConfig;
   isPresentationMode?: boolean;
   regulation?: string;
+  megaStates?: Record<number, boolean>;
 }
 
 /** Common meta threats — standard VGC formats (Reg G/H etc.) */
@@ -36,7 +39,7 @@ const META_THREATS_DEFAULT = [
   "pelipper", "torkoal", "porygon2", "dusclops",
 ] as const;
 
-/** Champions meta threats — only Pokemon legal in Reg M-A */
+/** Champions meta threats — filtered per reg through getChampionsDex(). */
 const META_THREATS_CHAMPIONS = [
   // Key Megas
   "kangaskhan-mega", "salamence-mega", "metagross-mega",
@@ -44,6 +47,9 @@ const META_THREATS_CHAMPIONS = [
   "gardevoir-mega", "lucario-mega", "aerodactyl-mega",
   "alakazam-mega", "lopunny-mega", "tyranitar-mega",
   "garchomp-mega", "scizor-mega", "venusaur-mega",
+  // Reg M-C additions (dex-filtered out of M-A/M-B reports)
+  "garchomp-mega-z", "lucario-mega-z", "absol-mega-z", "baxcalibur-mega",
+  "rillaboom", "cinderace", "indeedee-f",
   // Top base forms
   "incineroar", "kingambit", "archaludon", "dragonite",
   "tyranitar", "garchomp", "excadrill", "whimsicott",
@@ -52,30 +58,32 @@ const META_THREATS_CHAMPIONS = [
   "arcanine", "gyarados", "ninetales-alola", "rotom",
 ] as const;
 
-type SpeedModifier = "tailwind" | "paralysis" | "icywind";
+type SpeedModifier = "tailwind" | "paralysis" | "icywind" | "plus1" | "plus2" | "speedability";
 type ModifierSide = "yours" | "opponent";
 
 const MODIFIER_CONFIG: Record<SpeedModifier, { label: string; icon: string; description: string }> = {
   tailwind: { label: "Tailwind", icon: "\u{1F4A8}", description: "\u00D72 speed" },
   paralysis: { label: "Paralysis", icon: "\u{26A1}", description: "\u00D70.5 speed" },
   icywind: { label: "Icy Wind", icon: "\u{2744}\u{FE0F}", description: "-1 stage" },
+  plus1: { label: "+1", icon: "\u{2B06}\u{FE0F}", description: "+1 Speed stage (\u00D71.5)" },
+  plus2: { label: "+2", icon: "\u{23EB}", description: "+2 Speed stages (\u00D72)" },
+  speedability: { label: "Ability \u00D72", icon: "\u{1F327}\u{FE0F}", description: "Swift Swim / Chlorophyll / Sand Rush / Slush Rush / Unburden active (\u00D72, only Pokemon with that ability)" },
 };
 
-/**
- * Calculate speed after battle modifiers using correct Pokemon rounding.
- * Order matches the game engine:
- *  1. Stat stage modifiers (Icy Wind -1) — applied to base stat
- *  2. Ability/item boost (Quark Drive, Choice Scarf) — reapplied after stages
- *  3. Paralysis (×0.5, Gen 7+)
- *  4. Tailwind (×2)
- */
-function calcSpeed(baseSpe: number, boostMultiplier: number, mod: Set<SpeedModifier>): number {
-  let speed = baseSpe;
-  if (mod.has("icywind")) speed = Math.floor(speed * 2 / 3);
-  if (boostMultiplier !== 1) speed = Math.floor(speed * boostMultiplier);
-  if (mod.has("paralysis")) speed = Math.floor(speed * 0.5);
-  if (mod.has("tailwind")) speed = speed * 2;
-  return speed;
+/** Modifiers that only make sense for your team (meta threats carry no ability). */
+const YOURS_ONLY_MODIFIERS = new Set<SpeedModifier>(["speedability"]);
+
+function calcSpeed(baseSpe: number, boostMultiplier: number, mod: Set<SpeedModifier>, ability?: string | null): number {
+  const abilityDouble = mod.has("speedability") && hasSpeedDoublingAbility(ability);
+  // Unburden only triggers once the held item is gone, so any item boost is gone too.
+  const itemBoost = abilityDouble && ability?.trim().toLowerCase() === "unburden" ? 1 : boostMultiplier;
+  return calcBattleSpeed(baseSpe, itemBoost, {
+    stage: mod.has("plus2") ? 2 : mod.has("plus1") ? 1 : 0,
+    icyWind: mod.has("icywind"),
+    tailwind: mod.has("tailwind"),
+    paralysis: mod.has("paralysis"),
+    abilityDouble,
+  });
 }
 
 /** Calculate max speed at level 50 for a given base stat (31 IV, 252 EV, +nature) */
@@ -119,14 +127,17 @@ function SideModifierToggle({
         <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-tertiary">{label}</span>
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {(Object.entries(MODIFIER_CONFIG) as [SpeedModifier, typeof MODIFIER_CONFIG[SpeedModifier]][]).map(([key, cfg]) => {
+        {(Object.entries(MODIFIER_CONFIG) as [SpeedModifier, typeof MODIFIER_CONFIG[SpeedModifier]][])
+          .filter(([key]) => side === "yours" || !YOURS_ONLY_MODIFIERS.has(key))
+          .map(([key, cfg]) => {
           const active = modifiers.has(key);
           return (
             <button
               key={key}
               type="button"
               onClick={() => onToggle(side, key)}
-              className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 text-[10px] sm:text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+              aria-pressed={active}
+              className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 min-h-11 text-[10px] sm:text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 active
                   ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
                   : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
@@ -134,8 +145,7 @@ function SideModifierToggle({
               title={`${cfg.label} on ${label}: ${cfg.description}`}
             >
               <span className="text-xs sm:text-sm">{cfg.icon}</span>
-              <span className="hidden sm:inline">{cfg.label}</span>
-              <span className="sm:hidden">{cfg.label.slice(0, 2)}</span>
+              <span>{cfg.label}</span>
             </button>
           );
         })}
@@ -144,38 +154,50 @@ function SideModifierToggle({
   );
 }
 
-export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode, regulation }: SpeedTierChartProps) {
-  const META_THREATS = regulation === "Reg M-A"
-    ? META_THREATS_CHAMPIONS.filter(k => POKEMON_DATA[k] && CHAMPIONS_DEX.has(k))
-    : META_THREATS_DEFAULT;
+export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresentationMode, regulation, megaStates }: SpeedTierChartProps) {
+  // Memoized: this runs ~40 lookupPokemon calls and must keep a stable array
+  // identity, or the metaEntries memo below misses on every render and
+  // rebuilds the whole meta-threat speed table.
+  const META_THREATS = useMemo(() => {
+    if (!isChampionsFormat(regulation)) return META_THREATS_DEFAULT;
+    const championsDex = getChampionsDex(regulation);
+    return META_THREATS_CHAMPIONS.filter(k => lookupPokemon(k) && championsDex.has(k));
+  }, [regulation]);
   const { t } = useTranslation();
   const [yourModifiers, setYourModifiers] = useState<Set<SpeedModifier>>(new Set());
   const [opponentModifiers, setOpponentModifiers] = useState<Set<SpeedModifier>>(new Set());
   const [showMetaThreats, setShowMetaThreats] = useState(false);
-  const [showMegaTiers, setShowMegaTiers] = useState(() => regulation === "Reg M-A");
+  const [showMegaTiers, setShowMegaTiers] = useState(() => isChampionsFormat(regulation));
+  const [trickRoom, setTrickRoom] = useState(false);
 
-  const hasAnyModifiers = yourModifiers.size > 0 || opponentModifiers.size > 0;
+  const hasAnyModifiers = yourModifiers.size > 0 || opponentModifiers.size > 0 || trickRoom;
 
   const toggleModifier = (side: ModifierSide, mod: SpeedModifier) => {
     const setter = side === "yours" ? setYourModifiers : setOpponentModifiers;
     setter(prev => {
       const next = new Set(prev);
       if (next.has(mod)) next.delete(mod); else next.add(mod);
+      // +1 and +2 are alternative stages, not additive toggles.
+      if (mod === "plus1" && next.has("plus1")) next.delete("plus2");
+      if (mod === "plus2" && next.has("plus2")) next.delete("plus1");
       return next;
     });
   };
 
   // Build your team entries
-  const isChampions = regulation === "Reg M-A";
+  const isChampions = isChampionsFormat(regulation);
   const teamEntries = useMemo(() => pokemon.map((mon, i) => {
+    const form = resolveSpeedTierForm(mon, speciesKeys[i], megaStates?.[i] === true);
     // In Champions (Reg M-A), recompute Speed from the SP budget so the
     // tier matches the card display. calculatedStats uses the standard
     // EV formula and diverges from the SP formula when the paste carries
     // SP values in the EV line (sum 66, per-stat <=32).
     let baseSpe = mon.calculatedStats.spe;
-    if (isChampions && mon.data) {
+    if (isChampions && form.data) {
       const sp = convertToChampionsSp(mon.parsed.evs);
-      baseSpe = calculateChampionsStat("spe", mon.data.baseStats.spe, sp.spe, mon.parsed.nature);
+      baseSpe = calculateChampionsStat("spe", form.data.baseStats.spe, sp.spe, mon.parsed.nature);
+    } else if (form.data) {
+      baseSpe = calculateStat("spe", form.data.baseStats.spe, mon.parsed.ivs.spe, mon.parsed.evs.spe, mon.parsed.level, mon.parsed.nature);
     }
     const hasSpeedBoost = mon.itemBoost?.stat === "spe";
     const boostMultiplier = hasSpeedBoost ? mon.itemBoost!.multiplier : 1;
@@ -189,26 +211,32 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     }
 
     return {
-      species: mon.parsed.species,
-      speciesKey: speciesKeys[i],
+      species: form.species,
+      speciesKey: form.speciesKey,
       baseSpe,
       boostMultiplier,
       hasSpeedBoost,
       speedBoostLabel,
+      ability: mon.parsed.ability,
       isYours: true as const,
+      isMega: form.isMega,
+      baseSpeciesKey: form.baseSpeciesKey,
     };
-  }), [pokemon, speciesKeys, isChampions]);
+  }), [pokemon, speciesKeys, isChampions, megaStates]);
 
   // Mega-form speed entries for team Pokemon that have a Mega Evolution.
   // EVs/SPs carry over to the Mega form, so Speed is recomputed using the
   // Mega's base stat with the same spread the player specified.
   const teamMegaEntries = useMemo(() => {
-    // Mega forms are only legal in Reg M-A. For any explicit non-M-A
-    // regulation, never include Mega tier entries even if a stale toggle
+    // Mega forms are only legal in Champions regs. For any explicit
+    // non-Champions regulation, never include Mega tier entries even if a stale toggle
     // state lingered from a prior regulation switch.
     if (!showMegaTiers) return [];
-    if (regulation && regulation !== "Reg M-A") return [];
+    if (regulation && !isChampionsFormat(regulation)) return [];
     return pokemon.flatMap((mon, i) => {
+      // The selected form already has its own primary row; do not add a
+      // duplicate overlay row for the same Mega.
+      if (megaStates?.[i] === true) return [];
       const baseKey = speciesKeys[i];
       const megaKeys = BASE_KEY_TO_MEGA_KEYS.get(baseKey) ?? [];
       if (megaKeys.length === 0) return [];
@@ -217,7 +245,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       const hasMegaStone = !!detectMegaFromItem(mon.parsed.item, mon.parsed.species);
       if (!hasMegaStone) return [];
       return megaKeys.flatMap((megaKey) => {
-        const megaData = POKEMON_DATA[megaKey];
+        const megaData = lookupPokemon(megaKey);
         if (!megaData) return [];
         let megaBaseSpe: number;
         if (isChampions && mon.data) {
@@ -233,13 +261,14 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           boostMultiplier: 1 as number,
           hasSpeedBoost: false,
           speedBoostLabel: "",
+          ability: mon.parsed.ability,
           isYours: true as const,
           isMega: true as const,
           baseSpeciesKey: baseKey,
         }];
       });
     });
-  }, [showMegaTiers, pokemon, speciesKeys, isChampions, regulation]);
+  }, [showMegaTiers, pokemon, speciesKeys, isChampions, regulation, megaStates]);
 
   // Build meta threat entries. We intentionally do NOT filter out Pokemon
   // already on the user's team — a player running a bulky/mid-speed variant
@@ -260,10 +289,10 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
     if (!showMetaThreats) return [];
     return META_THREATS
       .map(key => {
-        const data = POKEMON_DATA[key];
+        const data = lookupPokemon(key);
         if (!data) return null;
         const base = data.baseStats.spe;
-        const isMA = regulation === "Reg M-A";
+        const isMA = isChampionsFormat(regulation);
         return {
           species: data.name,
           speciesKey: key,
@@ -294,20 +323,18 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   const allEntries = useMemo(() => {
     const combined = [
       ...teamEntries.map(e => {
-        const baseSpeed = calcSpeed(e.baseSpe, e.boostMultiplier, yourModifiers);
+        const baseSpeed = calcSpeed(e.baseSpe, e.boostMultiplier, yourModifiers, e.ability);
         // Also compute unmodified speed for delta display
         const unmodifiedSpeed = calcSpeed(e.baseSpe, e.boostMultiplier, new Set());
         return {
           ...e,
-          isMega: false as const,
-          baseSpeciesKey: undefined as string | undefined,
           displaySpeed: baseSpeed,
           unmodifiedSpeed,
           delta: baseSpeed - unmodifiedSpeed,
         };
       }),
       ...teamMegaEntries.map(e => {
-        const baseSpeed = calcSpeed(e.baseSpe, 1, yourModifiers);
+        const baseSpeed = calcSpeed(e.baseSpe, 1, yourModifiers, e.ability);
         const unmodifiedSpeed = calcSpeed(e.baseSpe, 1, new Set());
         return {
           ...e,
@@ -331,10 +358,11 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         };
       }),
     ];
-    return combined.sort((a, b) => b.displaySpeed - a.displaySpeed);
-  }, [teamEntries, teamMegaEntries, metaEntries, yourModifiers, opponentModifiers]);
+    return combined.sort((a, b) => compareTurnOrder(a.displaySpeed, b.displaySpeed, trickRoom));
+  }, [teamEntries, teamMegaEntries, metaEntries, yourModifiers, opponentModifiers, trickRoom]);
 
-  const maxDisplaySpeed = allEntries[0]?.displaySpeed ?? 200;
+  // Under Trick Room the list is slowest-first, so the widest bar is no longer row 0.
+  const maxDisplaySpeed = allEntries.reduce((m, e) => Math.max(m, e.displaySpeed), 0) || 200;
 
   // Compute position changes when modifiers are active
   const positionChanges = useMemo(() => {
@@ -407,6 +435,14 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
   // Build active modifier summary for each side
   const yourModSummary = Array.from(yourModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
   const oppModSummary = Array.from(opponentModifiers).map(m => MODIFIER_CONFIG[m].label).join(" + ");
+  const fieldSummary = trickRoom ? "Trick Room (slowest first)" : "";
+
+  // Which meta benchmark list is in play, derived from the report's regulation.
+  // Champions formats (Reg M-A/M-B/M-C) pull META_THREATS_CHAMPIONS; everything else
+  // uses the standard list. Surface this so the source is never a mystery.
+  const metaSourceLabel = regulation
+    ? `${regulation} meta`
+    : isChampions ? "Champions meta" : "Standard meta";
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 animate-fade-in">
@@ -453,43 +489,93 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             {/* Mega tiers toggle — only meaningful in the Champions format
                 (Reg M-A) since other regulations don't allow Mega Evolution.
                 Hidden entirely for any explicit non-M-A regulation. */}
-            {(!regulation || regulation === "Reg M-A") && (
+            {(!regulation || isChampionsFormat(regulation)) && (
               <button
                 type="button"
                 onClick={() => setShowMegaTiers(!showMegaTiers)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                title="Adds a separate purple Mega-speed row for each team member that has a matching Mega Stone equipped. A Mega that shares its base form's Speed shows the same number — that's expected, not a bug."
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                   showMegaTiers
                     ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
                     : "bg-surface-alt/50 text-text-secondary border-border hover:border-purple-500/30 hover:text-purple-400"
                 }`}
               >
-                <span>⬆</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 19V5" /><polyline points="5 12 12 5 19 12" />
+                </svg>
                 Mega Forms
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setTrickRoom(!trickRoom)}
+              aria-pressed={trickRoom}
+              title="Trick Room: the slowest Pokemon moves first. Speed values stay the same; only the turn order flips."
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                trickRoom
+                  ? "bg-accent text-white border-accent shadow-sm shadow-accent/20"
+                  : "bg-surface-alt/50 text-text-secondary border-border hover:border-accent/30 hover:text-accent"
+              }`}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M7 4v16" /><polyline points="3 16 7 20 11 16" /><path d="M17 20V4" /><polyline points="13 8 17 4 21 8" />
+              </svg>
+              Trick Room
+            </button>
             <button
               type="button"
               onClick={() => {
                 setShowMetaThreats(!showMetaThreats);
                 if (showMetaThreats) setOpponentModifiers(new Set());
               }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 showMetaThreats
                   ? "bg-blue-500/15 text-blue-500 border-blue-500/30"
                   : "bg-surface-alt/50 text-text-secondary border-border hover:border-blue-500/30 hover:text-blue-500"
               }`}
             >
-              <span>{"\u{1F30D}"}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+              </svg>
               Meta Threats
             </button>
+            {/* Make the meta source explicit \u2014 the benchmark list auto-follows
+                the report's regulation tag, which is otherwise invisible. */}
+            {showMetaThreats && (
+              <span
+                className="text-[10px] sm:text-xs text-text-tertiary font-medium"
+                title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag — Champions formats use the Champions meta for that reg, everything else uses the standard meta."
+              >
+                * {metaSourceLabel}
+              </span>
+            )}
             {hasAnyModifiers && (
               <span className="text-[10px] sm:text-xs text-accent font-medium ml-auto">
-                {yourModSummary && `You: ${yourModSummary}`}
-                {yourModSummary && oppModSummary && " \u00B7 "}
-                {oppModSummary && `Opp: ${oppModSummary}`}
+                {[yourModSummary && `You: ${yourModSummary}`, oppModSummary && `Opp: ${oppModSummary}`, fieldSummary]
+                  .filter(Boolean)
+                  .join(" \u00B7 ")}
               </span>
             )}
           </div>
+
+          {/* Mega toggle feedback \u2014 explain the empty state instead of silently
+              rendering nothing, and clarify what the toggle actually does. */}
+          {showMegaTiers && (
+            <p className="text-[10px] sm:text-xs text-text-tertiary leading-relaxed">
+              {teamMegaEntries.length === 0 ? (
+                Object.values(megaStates ?? {}).some(Boolean) ? (
+                  "Your Mega is already shown in its Mega form above. Switch it back to its base form on its card to compare both speeds."
+                ) : (
+                <>
+                  No Mega forms to show — a team member needs a matching Mega Stone equipped.
+                  {regulation && !isChampionsFormat(regulation) && " Mega Evolution is only legal in Pokémon Champions (Reg M-A/M-B/M-C)."}
+                </>
+                )
+              ) : (
+                "Mega Forms adds a separate purple row for each eligible Mega. A Mega that shares its base form's Speed shows the same number \u2014 that's expected, not a bug."
+              )}
+            </p>
+          )}
         </div>
 
         {/* Speed bars */}
@@ -539,7 +625,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                   {/* Mega-evolved speed entry for one of the user's team Pokemon. */}
                   {entry.isMega && (
                     <span
-                      className="text-[8px] sm:text-[9px] font-extrabold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
+                      className="text-[8px] sm:text-[10px] font-extrabold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
                       title="Mega-evolved speed (same EV/SP spread as base form)"
                     >
                       Mega
@@ -550,7 +636,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                       to the meta max-speed Garchomp. */}
                   {!entry.isYours && entry.isDuplicateOfTeam && (
                     <span
-                      className="text-[8px] sm:text-[9px] font-extrabold text-blue-400 bg-blue-500/15 border border-blue-500/30 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
+                      className="text-[8px] sm:text-[10px] font-extrabold text-blue-400 bg-blue-500/15 border border-blue-500/30 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
                       title="Standard meta variant (max speed benchmark)"
                     >
                       Meta
@@ -560,7 +646,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                       is also visible, so users can tell which bar is their own spread. */}
                   {entry.isYours && !entry.isMega && showMetaThreats && metaSpeciesSet.has(entry.speciesKey) && (
                     <span
-                      className="text-[8px] sm:text-[9px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
+                      className="text-[8px] sm:text-[10px] font-extrabold px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
                       style={{ color: "var(--stat-spe)", backgroundColor: "color-mix(in srgb, var(--stat-spe) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--stat-spe) 30%, transparent)" }}
                       title="Your spread"
                     >
@@ -590,7 +676,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                         its exact final speed with at least one other entry. */}
                     {isTie && (
                       <div
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded cursor-help"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded cursor-help"
                         title={tiePartners.length > 0 ? `Speed tie at ${entry.displaySpeed} with ${tiePartners.join(", ")}` : `Speed tie at ${entry.displaySpeed}`}
                         aria-label={tiePartners.length > 0 ? `Speed tie at ${entry.displaySpeed} with ${tiePartners.join(", ")}` : `Speed tie at ${entry.displaySpeed}`}
                       >
@@ -625,7 +711,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                     )}
                     {/* Position change indicator */}
                     {posChange !== 0 && (
-                      <span className={`text-[9px] sm:text-[10px] font-bold flex items-center gap-px ${
+                      <span className={`text-[10px] font-bold flex items-center gap-px ${
                         posChange > 0 ? "text-emerald-500" : "text-red-400"
                       }`} title={`Moved ${Math.abs(posChange)} position${Math.abs(posChange) > 1 ? "s" : ""} ${posChange > 0 ? "up" : "down"}`}>
                         {posChange > 0 ? (
@@ -662,12 +748,22 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
             </span>
           )}
           {showMetaThreats && (
-            <span className="flex items-center gap-1.5">
+            <span
+              className="flex items-center gap-1.5"
+              title="Max-speed benchmarks for your report's regulation. The list auto-follows the report's regulation tag."
+            >
               <span className="w-3 h-3 rounded bg-slate-500/40" />
-              Meta (max speed)
+              Meta (max speed) · {metaSourceLabel}*
             </span>
           )}
         </div>
+
+        {/* Meta source footnote — ties the asterisk above to the regulation. */}
+        {showMetaThreats && (
+          <p className="text-[10px] sm:text-xs text-text-tertiary leading-relaxed">
+            * Max-speed benchmarks for your team&apos;s regulation — the meta list auto-follows the {regulation ?? "current"} tag.
+          </p>
+        )}
       </div>
 
     </div>

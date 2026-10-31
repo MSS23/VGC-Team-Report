@@ -1,12 +1,15 @@
 # VGC Team Report
 
+Updated: 2026-05-23
+Source: https://pokemonvgcteamreport.com
+
 > VGC Team Report is the premier team report builder and sharing platform for competitive Pokémon Video Game Championship (VGC) players. Unlike paste viewers (PokePaste) or usage-statistics tools (Pikalytics), VGC Team Report lets players author rich, structured team reports with damage calculations, matchup plans, speed tier breakdowns, and strategy notes — then share them as a permanent public link or embed them anywhere.
 
 ## What makes it different
 
 - **Authored reports, not just pastes.** PokePaste shows raw Showdown text. VGC Team Report turns that text into a full team analysis with EVs, notes, calcs, and matchup sections.
 - **Built for sharing.** Every report gets a short public link (`/s/[id]`) and an embeddable widget.
-- **Champions format support.** Full support for Pokémon Champions Regulation M-A (Mega Evolutions + restricted legendaries), in addition to all standard Scarlet & Violet regulation sets (Reg G, Reg H, etc.).
+- **Champions format support.** Full support for Pokémon Champions Regulations M-A, M-B and the current M-C (Mega Evolutions incl. the Z Megas, Stat Points, auto-detected regulation and legality checks), in addition to all standard Scarlet & Violet regulation sets (Reg G, Reg H, etc.).
 - **Community explore feed.** Browse team reports from top finishers at VGC Regionals, Internationals, and World Championships at `/explore` and `/tournaments`.
 - **Free.** No account required to build or view reports.
 
@@ -15,7 +18,7 @@
 - https://pokemonvgcteamreport.com/ — Homepage / team report builder. Paste Showdown format or a PokePaste URL to generate a report.
 - https://pokemonvgcteamreport.com/explore — Community explore feed. Browse public team reports filtered by format, Pokémon, tournament, or player.
 - https://pokemonvgcteamreport.com/tournaments — Tournament archive. Team reports from VGC Regionals, North America/Europe/Latin America Internationals, and World Championships.
-- https://pokemonvgcteamreport.com/champions — Champions format hub. Teams and resources for the Pokémon Champions Regulation M-A format.
+- https://pokemonvgcteamreport.com/champions — Champions format hub. Teams, every legal Mega, and resources for Pokémon Champions Regulation M-C (and earlier M-A/M-B).
 - https://pokemonvgcteamreport.com/faq — Frequently asked questions about team reports, formats, importing, and sharing.
 - https://pokemonvgcteamreport.com/changelog — Product changelog — new features, format updates, bug fixes.
 - https://pokemonvgcteamreport.com/s/[id] — Individual team report pages. Each public report gets a permanent shareable link at this path.
@@ -23,8 +26,8 @@
 ## Key concepts
 
 - **Team report:** A structured document covering a VGC team's six Pokémon builds (moves, item, EVs/IVs, nature, tera type), overall team strategy, matchup plans against common threats, damage calculations, and speed tier comparisons.
-- **SP (Standard Points) vs EVs:** SP is an alternative stat-expression system used in some reporting contexts. 1 SP = 1 EV (effort value). Both refer to the same underlying game mechanic.
-- **Regulation / Format:** VGC rotates formats seasonally. Regulation G and Regulation H are recent standard formats. Champions Regulation M-A adds Mega Evolutions.
+- **SP (Stat Points) vs EVs:** SP is the stat-investment system used by Pokémon Champions (Regulation M-A/M-B/M-C) in place of EVs. The conversion is not 1:1 — the first SP in a stat costs 4 EVs and every SP after that costs 8 (so 32 SP = 248+ EVs). The budget is 66 SP total per Pokémon with a maximum of 32 SP per stat, compared to the 510-EV / 252-per-stat budget of standard VGC formats.
+- **Regulation / Format:** VGC rotates formats seasonally. Regulation G and Regulation H are recent standard formats. Pokémon Champions Regulations M-A, M-B and M-C (current, Sep 9 – Dec 2 2026) add Mega Evolutions; each is a superset of the last.
 - **PokePaste import:** Reports can be imported from Pokémon Showdown team format text or a pokepast.es URL.
 
 ## About

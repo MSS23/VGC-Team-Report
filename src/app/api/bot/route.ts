@@ -1,5 +1,7 @@
+import { verifyBearer } from "@/lib/auth/verify-bearer";
 import { getDb } from "@/lib/db";
 import { sendWeeklySummary, buildWeeklySummaryHtml } from "@/lib/email";
+import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
 import { NextRequest, NextResponse } from "next/server";
 
 interface FeedbackRecentRow { type: string; title: string; submitter_name: string | null; created_at: string; }
@@ -12,30 +14,25 @@ async function discordFetch(path: string, options: RequestInit = {}) {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error("DISCORD_BOT_TOKEN not set");
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-  let response: Response;
   try {
-    response = await fetch(`${DISCORD_API}${path}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bot ${token}`,
-        ...options.headers,
+    return await fetchWithTimeout(
+      `${DISCORD_API}${path}`,
+      {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bot ${token}`,
+          ...options.headers,
+        },
       },
-      signal: controller.signal,
-    });
+      5000,
+    );
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") {
       throw new Error(`Discord API request timed out: ${path}`);
     }
     throw err;
-  } finally {
-    clearTimeout(timeoutId);
   }
-
-  return response;
 }
 
 async function sendDiscordMessage(channelId: string, content: string, embeds?: unknown[]) {
@@ -54,16 +51,8 @@ export async function GET(request: NextRequest) {
   const action = request.nextUrl.searchParams.get("action");
 
   // Require CRON_SECRET via Authorization: Bearer header to avoid logging secrets in access logs.
-  // Fail closed when CRON_SECRET is unset; use timing-safe comparison to prevent timing oracles.
-  const authHeader = request.headers.get("authorization") ?? "";
-  const expectedSecret = process.env.CRON_SECRET;
-  if (!expectedSecret) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const expected = `Bearer ${expectedSecret}`;
-  const { timingSafeEqual } = await import("crypto");
-  const aLen = Math.max(authHeader.length, expected.length);
-  if (!timingSafeEqual(Buffer.from(authHeader.padEnd(aLen)), Buffer.from(expected.padEnd(aLen))) || authHeader.length !== expected.length) {
+  // Fail closed when CRON_SECRET is unset; uses timing-safe comparison via verifyBearer.
+  if (!verifyBearer(request, "CRON_SECRET")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

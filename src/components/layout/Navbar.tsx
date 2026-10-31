@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { Toggle } from "@/components/ui/Toggle";
@@ -8,9 +9,26 @@ import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { useTranslation } from "@/lib/i18n";
 import { GEN_THEMES } from "@/hooks/useTheme";
 import type { GenTheme } from "@/hooks/useTheme";
+import type { DraftSaveStatus } from "@/hooks/useAutoDraft";
 import { NotificationBell } from "@/components/ui/NotificationBell";
-import { VersionHistoryPanel } from "@/components/social/VersionHistoryPanel";
 import { hapticLight } from "@/lib/utils/haptics";
+import {
+  CheckIcon,
+  ClockIcon,
+  KeyboardIcon,
+  PlusIcon,
+  EditIcon,
+  DumbbellIcon,
+  CopyIcon,
+  LinkIcon,
+} from "@/components/ui/icons";
+
+// Only rendered in shared/edit views — keep its 379 lines out of the Navbar's
+// initial chunk (Finding 3.12).
+const VersionHistoryPanel = dynamic(
+  () => import("@/components/social/VersionHistoryPanel").then((m) => ({ default: m.VersionHistoryPanel })),
+  { ssr: false },
+);
 
 interface NavbarProps {
   // Mode flags
@@ -41,6 +59,9 @@ interface NavbarProps {
   warnings: string[];
   saveFlash: boolean;
   autoSaveStatus?: "idle" | "saving" | "saved" | "error";
+  draftSaveStatus?: DraftSaveStatus;
+  draftSaveError?: string | null;
+  onSaveDraft?: () => void | Promise<unknown>;
 
   // Collaborative sync
   collaborators?: number;
@@ -50,7 +71,7 @@ interface NavbarProps {
   isSampleTeam?: boolean;
   shareStatus: string;
   shareButtonText: string;
-  lastShareResult?: { updated?: boolean; editUrl?: string } | null;
+  lastShareResult?: { updated?: boolean; publicUrl?: string } | null;
   onShareClick: () => void;
   onReshare: () => void;
   onViewerShare?: () => void;
@@ -60,11 +81,6 @@ interface NavbarProps {
   isOwner: boolean;
   activeShareId?: string | null;
   sessionShareId?: string | null;
-
-  // Edit link
-  hasExistingShare: boolean;
-  editLinkCopied: boolean;
-  onCopyEditLink: () => void;
 
   // Undo / redo
   onUndo?: () => void;
@@ -97,7 +113,6 @@ interface NavbarProps {
    *  Surfaced as the pencil icon in the top-right while presenting. */
   onEditPresentation?: () => void;
   onReset: () => void;
-  onExitSharedView: () => void;
 
   // Tour
   onStartTour?: () => void;
@@ -129,6 +144,11 @@ function WarningPopover({ warnings, label }: { warnings: string[]; label: string
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  const renderedWarnings = useMemo(
+    () => warnings.map((w) => ({ w, fix: getWarningFix(w) })),
+    [warnings]
+  );
+
   return (
     <div className="relative hidden sm:inline-block" ref={ref}>
       <button
@@ -140,18 +160,15 @@ function WarningPopover({ warnings, label }: { warnings: string[]; label: string
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1.5 z-50 w-72 rounded-lg border border-border bg-surface shadow-lg p-3 space-y-2.5">
-          {warnings.map((w, i) => {
-            const fix = getWarningFix(w);
-            return (
-              <div key={i} className="text-xs">
-                <div className="flex items-start gap-1.5">
-                  <span className="text-warning shrink-0 mt-px">&#9888;</span>
-                  <span className="font-semibold text-text-primary">{w}</span>
-                </div>
-                <p className="text-text-tertiary mt-0.5 ml-5">{fix}</p>
+          {renderedWarnings.map(({ w, fix }, i) => (
+            <div key={i} className="text-xs">
+              <div className="flex items-start gap-1.5">
+                <span className="text-warning shrink-0 mt-px">&#9888;</span>
+                <span className="font-semibold text-text-primary">{w}</span>
               </div>
-            );
-          })}
+              <p className="text-text-tertiary mt-0.5 ml-5">{fix}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -165,19 +182,18 @@ export function Navbar(props: NavbarProps) {
     tournamentName, placement, record,
     darkMode, onDarkModeChange,
     genTheme, onGenThemeChange,
-    warnings, saveFlash, autoSaveStatus,
+    warnings, saveFlash, autoSaveStatus, draftSaveStatus, draftSaveError, onSaveDraft,
     collaborators, syncStatus,
     isSampleTeam,
     shareStatus, shareButtonText, lastShareResult,
     onShareClick, onReshare, onViewerShare, creatorRequired,
     isOwner, activeShareId, sessionShareId,
-    hasExistingShare, editLinkCopied, onCopyEditLink,
     onUndo, onRedo, canUndo, canRedo,
     comparingVersion, onCompareVersion, onClearCompareVersion, compareLoading,
     onExportPdf, onExportPokepaste, onCreatePokepaste, pokepasteCreating, onOpenOTSSheet,
     tournamentMode, onSetTournamentMode,
     onShowShortcuts, onSetCreatorMode, onSetPresentationMode, onEditPresentation,
-    onReset, onExitSharedView, onStartTour,
+    onReset, onStartTour,
   } = props;
 
   const { t } = useTranslation();
@@ -189,16 +205,28 @@ export function Navbar(props: NavbarProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   // ── Save toggle for shared-view non-owner menu item ───────────────
-  // Replaces the deleted FloatingReactionDock's bookmark control. Lives
-  // in the overflow menu so the report content is never overlaid.
+  // Replaces the deleted FloatingReactionDock's bookmark control AND the
+  // duplicate <SaveButton> that previously lived inline near the
+  // comments section. Single source of truth so /api/user/saved fires
+  // at most once per share view.
   const [saved, setSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  // True once the user has manually toggled — blocks the initial fetch's
+  // .then() from racing in afterwards and overwriting the optimistic state.
+  const savedTouchedRef = useRef(false);
   const canSave = isSharedView && !isOwner && isSignedIn && !!activeShareId;
   useEffect(() => {
     if (!canSave || !activeShareId) return;
-    fetch("/api/user/saved")
+    // Reset the touched guard for each new share view.
+    savedTouchedRef.current = false;
+    const ac = new AbortController();
+    fetch("/api/user/saved", { signal: ac.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
+        // If the user has already toggled (or we unmounted) drop the
+        // late initial-fetch result — it would otherwise overwrite the
+        // optimistic state with stale data.
+        if (savedTouchedRef.current || ac.signal.aborted) return;
         if (data?.reports?.some((r: { id: string }) => r.id === activeShareId)) {
           setSaved(true);
         } else {
@@ -206,9 +234,11 @@ export function Navbar(props: NavbarProps) {
         }
       })
       .catch(() => {});
+    return () => ac.abort();
   }, [canSave, activeShareId]);
   const toggleSaved = async () => {
     if (saveLoading || !activeShareId) return;
+    savedTouchedRef.current = true;
     setSaveLoading(true);
     const wasSaved = saved;
     // Optimistic — rollback on failure.
@@ -254,6 +284,13 @@ export function Navbar(props: NavbarProps) {
   // Wait for Clerk to load before showing auth UI to prevent flash
   const showSignIn = isLoaded && !isSignedIn;
   const showUser = isLoaded && isSignedIn;
+  const draftSaveLabel = draftSaveStatus === "saving"
+    ? "Saving draft…"
+    : draftSaveStatus === "saved"
+      ? "Saved for later"
+      : draftSaveStatus === "error"
+        ? "Try saving again"
+        : "Save for later";
 
   return (
     <>
@@ -312,12 +349,26 @@ export function Navbar(props: NavbarProps) {
               )}
             </>
           ) : isSharedView && !isPresentationStyle ? (
-            <a href="/" className="flex items-center gap-1 font-bold text-xs sm:text-sm hover:opacity-80 transition-opacity">
+            // eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state
+            <a href="/" className="flex min-h-11 items-center gap-1 font-bold text-xs sm:text-sm hover:opacity-80 active:opacity-70 transition-opacity">
               <span className="text-text-primary">VGC</span>
               <span className="text-accent">Report</span>
             </a>
           ) : isPresentationStyle ? (
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 text-sm text-text-secondary">
+              {/* Home — reports open straight into presentation, so this is the
+                  only way back out to the rest of the app from the deck. */}
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state */}
+              <a
+                href="/"
+                aria-label="Home"
+                title="Home"
+                className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:w-9 sm:h-9 -ml-1.5 sm:-ml-2 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-alt/60 transition-colors"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </a>
               {tournamentName && (
                 <>
                   <span className="font-extrabold text-text-primary truncate tracking-tight">{tournamentName}</span>
@@ -335,6 +386,24 @@ export function Navbar(props: NavbarProps) {
         {/* ── Center: slide info (not presentation) ── */}
         {!isPresentationStyle && (
           <>
+            {/* Persistent live region so screen readers hear autosave
+                outcomes — the visual indicators (desktop pill, mobile
+                spinner/check) carry no accessible text. Must live outside
+                the hidden/md:hidden responsive wrappers (display:none
+                silences live regions) and render whenever editing is
+                unlocked so the region exists before the status changes.
+                Announces only terminal states to avoid chatter from the
+                debounced autosave. */}
+            {isSharedView && isEditingUnlocked && (
+              <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                {autoSaveStatus === "saved" ? "Changes saved" : autoSaveStatus === "error" ? "Save failed" : ""}
+              </span>
+            )}
+            {isLocalDraft && showUser && (
+              <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                {draftSaveStatus === "saved" ? "Draft saved for later" : draftSaveStatus === "error" ? `Draft save failed. ${draftSaveError ?? "Try again."}` : ""}
+              </span>
+            )}
             {/* Desktop center */}
             <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary min-w-0">
               {tournamentName && (
@@ -372,9 +441,7 @@ export function Navbar(props: NavbarProps) {
                   {autoSaveStatus === "saving" && <span className="w-2.5 h-2.5 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin" />}
                   {autoSaveStatus === "saving" ? "Saving..." : autoSaveStatus === "saved" ? "Saved" : "Save failed"}
                   {autoSaveStatus === "saved" && canShowVersionHistory && (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="ml-0.5 opacity-60">
-                      <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                    </svg>
+                    <ClockIcon width="10" height="10" strokeWidth="2.5" className="ml-0.5 opacity-60" />
                   )}
                 </button>
               )}
@@ -394,9 +461,13 @@ export function Navbar(props: NavbarProps) {
                 <span className="w-2 h-2 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
               )}
               {isSharedView && isEditingUnlocked && autoSaveStatus === "saved" && (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 flex-shrink-0">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
+                <CheckIcon width="10" height="10" strokeWidth="3" className="text-emerald-500 flex-shrink-0" />
+              )}
+              {isLocalDraft && showUser && draftSaveStatus === "saving" && (
+                <span className="w-2 h-2 border-[1.5px] border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
+              )}
+              {isLocalDraft && showUser && draftSaveStatus === "saved" && (
+                <CheckIcon width="10" height="10" strokeWidth="3" className="text-emerald-500 flex-shrink-0" />
               )}
             </div>
           </>
@@ -404,6 +475,26 @@ export function Navbar(props: NavbarProps) {
 
         {/* ── Right ── */}
         <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+
+          {isLocalDraft && showUser && !isSampleTeam && onSaveDraft && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { hapticLight(); void onSaveDraft(); }}
+              disabled={draftSaveStatus === "saving"}
+              className={`hidden sm:inline-flex ${draftSaveStatus === "error" ? "text-red-500" : ""}`}
+              title={draftSaveError ?? "Save this report to Dashboard → Drafts"}
+            >
+              {draftSaveStatus === "saving" ? (
+                <span className="w-3 h-3 border-2 border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin" />
+              ) : draftSaveStatus === "saved" ? (
+                <CheckIcon width="13" height="13" />
+              ) : (
+                <ClockIcon width="13" height="13" />
+              )}
+              {draftSaveLabel}
+            </Button>
+          )}
 
           {/* Share / Re-share */}
           {isLocalDraft && (
@@ -458,7 +549,16 @@ export function Navbar(props: NavbarProps) {
 
           {/* Creator mode toggle — in overflow menu */}
 
-          {/* Exit presentation (only visible in presentation mode) */}
+          {/* Presentation mode — top-right control is role-based, NOT a generic
+              "Exit". A shared report opens straight into presentation, so for a
+              viewer this mode IS the report; "exit to what?" is meaningless.
+              Instead we branch on edit-capability:
+                • can edit (owner or collaborator) → "Edit" (drops out of
+                  presentation and unlocks editing in one tap)
+                • plain viewer (can't edit) → "Build your own", the one action
+                  that matters and the natural way back to the builder.
+              Share + Save stay reachable in-place (viewer Share button above +
+              the overflow menu), so nobody has to leave the deck to act. */}
           {isPresentationStyle && (
             <>
               <button
@@ -467,38 +567,41 @@ export function Navbar(props: NavbarProps) {
                 title="Keyboard shortcuts (?)"
                 aria-label="Keyboard shortcuts"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="4" width="20" height="16" rx="2" /><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
-                </svg>
+                <KeyboardIcon width="14" height="14" />
               </button>
-              {/* Owner-only pencil — drops out of presentation mode and unlocks
-                  editing in one tap. Placed before Exit so the primary owner
-                  action is always reachable in the top-right corner. */}
-              {isOwner && isEditingUnlocked && onEditPresentation && (
-                <button
-                  type="button"
-                  onClick={onEditPresentation}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-accent hover:bg-accent-surface/60 transition-colors cursor-pointer"
-                  title="Edit this report"
-                  aria-label="Edit this report"
+              {isSharedView && !isEditingUnlocked ? (
+                /* Plain viewer of someone else's shared report — can't edit.
+                   Surface the one action that matters (and the way back to the
+                   builder) instead of a meaningless "Exit". */
+                // eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state
+                <a
+                  href="/"
+                  aria-label={t.buildYourOwn}
+                  className="inline-flex min-h-11 items-center gap-1.5 px-2 min-[360px]:px-3 sm:px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                  </svg>
-                </button>
+                  <PlusIcon width="12" height="12" strokeWidth="2.5" />
+                  <span className="min-[430px]:hidden">Build</span>
+                  <span className="hidden min-[430px]:inline">{t.buildYourOwn}</span>
+                </a>
+              ) : (
+                /* Owner, collaborator, or the author previewing their own local
+                   draft — all can edit. "Edit" drops out of presentation and
+                   turns editing on in one tap. */
+                onEditPresentation && (
+                  <Button variant="ghost" size="sm" onClick={onEditPresentation} className="gap-1.5">
+                    <EditIcon width="15" height="15" />
+                    Edit
+                  </Button>
+                )
               )}
-              <Button variant="ghost" size="sm" onClick={() => onSetPresentationMode(false)}>
-                {t.exit}
-              </Button>
             </>
           )}
 
           {/* Build Your Own (shared read-only views) — hidden on mobile, ShareViewCTA handles it */}
           {isSharedView && !isPresentationStyle && !isEditingUnlocked && (
-            <a href="/" className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-              </svg>
+            // eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state
+            <a href="/" className="hidden sm:inline-flex min-h-11 items-center gap-1.5 px-4 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] shadow-sm shadow-accent/30 transition-all tracking-wide">
+              <EditIcon width="12" height="12" strokeWidth="2.5" />
               {t.buildYourOwn}
             </a>
           )}
@@ -510,8 +613,10 @@ export function Navbar(props: NavbarProps) {
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
+              className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors cursor-pointer"
               aria-label="Settings"
+              aria-expanded={menuOpen}
+              aria-haspopup="menu"
             >
               {showUser ? (
                 <div className="w-7 h-7 rounded-full bg-accent/15 flex items-center justify-center text-accent">
@@ -527,7 +632,7 @@ export function Navbar(props: NavbarProps) {
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl py-2 min-w-[240px] z-50 animate-fade-in">
+              <div role="menu" className="absolute right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl py-2 min-w-[240px] z-50 animate-fade-in">
                 {/* Account section */}
                 {showUser && (
                   <>
@@ -556,6 +661,34 @@ export function Navbar(props: NavbarProps) {
                       </SignInButton>
                     </div>
                     <div className="border-t border-border/50 mx-3 my-1" />
+                  </>
+                )}
+
+                {isLocalDraft && showUser && !isSampleTeam && onSaveDraft && (
+                  <>
+                    <div className="border-t border-border/50 mx-3 my-1" />
+                    <button
+                      type="button"
+                      onClick={() => { void onSaveDraft(); }}
+                      disabled={draftSaveStatus === "saving"}
+                      className={`w-full min-h-11 flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold hover:bg-surface-alt/50 transition-colors disabled:opacity-60 disabled:cursor-wait ${
+                        draftSaveStatus === "error" ? "text-red-500" : "text-text-secondary hover:text-accent"
+                      }`}
+                    >
+                      {draftSaveStatus === "saving" ? (
+                        <span className="w-3.5 h-3.5 border-2 border-text-tertiary/30 border-t-text-tertiary rounded-full animate-spin flex-shrink-0" />
+                      ) : draftSaveStatus === "saved" ? (
+                        <CheckIcon width="14" height="14" className="text-emerald-500 flex-shrink-0" />
+                      ) : (
+                        <ClockIcon width="14" height="14" className="flex-shrink-0" />
+                      )}
+                      <span className="flex-1 text-left">
+                        {draftSaveLabel}
+                        <span className="block text-[10px] font-medium text-text-tertiary mt-0.5">
+                          {draftSaveStatus === "error" ? draftSaveError : "Available in Dashboard → Drafts"}
+                        </span>
+                      </span>
+                    </button>
                   </>
                 )}
 
@@ -653,21 +786,6 @@ export function Navbar(props: NavbarProps) {
                   </button>
                 )}
 
-                {/* Collab link */}
-                {hasExistingShare && isOwner && (
-                  <button
-                    type="button"
-                    onClick={() => { setMenuOpen(false); onCopyEditLink(); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
-                      <path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" />
-                    </svg>
-                    {editLinkCopied ? "Copied!" : "Copy Collab Link"}
-                  </button>
-                )}
-
                 {/* Present mode */}
                 {!isPresentationStyle && (
                   <button
@@ -691,9 +809,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onSetTournamentMode(!tournamentMode); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={tournamentMode ? "text-amber-500" : ""}>
-                        <path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" />
-                      </svg>
+                      <DumbbellIcon width="14" height="14" className={tournamentMode ? "text-amber-500" : ""} />
                       {tournamentMode ? "Exit Tournament Mode" : "Tournament Mode"}
                     </button>
                   </>
@@ -708,10 +824,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); setVersionPanelOpen(true); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                      </svg>
+                      <ClockIcon width="14" height="14" />
                       Version History
                     </button>
                   </>
@@ -730,9 +843,7 @@ export function Navbar(props: NavbarProps) {
                       }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-                      </svg>
+                      <CopyIcon width="14" height="14" />
                       {pasteCopied ? "Copied to Clipboard!" : "Copy Paste"}
                     </button>
                   </>
@@ -761,10 +872,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onCreatePokepaste("ots"); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors disabled:opacity-50 disabled:cursor-wait"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-                        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-                      </svg>
+                      <LinkIcon width="14" height="14" />
                       {pokepasteCreating === "ots" ? "Uploading…" : "Create PokéPaste (OTS)"}
                     </button>
                     <button
@@ -773,10 +881,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onCreatePokepaste("cts"); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors disabled:opacity-50 disabled:cursor-wait"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-                        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-                      </svg>
+                      <LinkIcon width="14" height="14" />
                       {pokepasteCreating === "cts" ? "Uploading…" : "Create PokéPaste (CTS)"}
                     </button>
                   </>
@@ -803,7 +908,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onExportPdf("tournament-evs"); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
+                      <DumbbellIcon width="14" height="14" />
                       Export Tournament (EVs)
                     </button>
                     <button
@@ -811,7 +916,7 @@ export function Navbar(props: NavbarProps) {
                       onClick={() => { setMenuOpen(false); onExportPdf("tournament-stats"); }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-accent hover:bg-surface-alt/50 transition-colors"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6" /><path d="M18 9h1.5a2.5 2.5 0 000-5H18" /><path d="M4 22h16" /><path d="M10 22V2h4v20" /></svg>
+                      <DumbbellIcon width="14" height="14" />
                       Export Tournament (Stats)
                     </button>
                   </>

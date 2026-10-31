@@ -1,89 +1,29 @@
-import { z } from "zod";
 import type { CalcEntry } from "@/hooks/useDamageCalcs";
 
-// CalcEntry comes from a hook in the bundle; we accept it as `unknown[]` at
-// the schema boundary and trust the existing CalcEntry consumers downstream.
-// This keeps the schema decoupled from rapidly-evolving damage-calc shapes.
-const CalcEntrySchema = z.unknown();
+/**
+ * Zod validation schemas live in `./url-codec.schemas` and are loaded with a
+ * dynamic `import()` below (VGC-256). This module sits in the homepage client
+ * graph (page.tsx → useHomePage → useShareFlow → useShareUrl), so a static
+ * `import { z } from "zod"` here shipped ~265 kB raw / ~63 kB gzip of zod to
+ * every visitor of `/`. Do NOT re-add a static import of ./url-codec.schemas
+ * to this file — that would undo the split. Server routes import the schemas
+ * module directly and are unaffected.
+ */
+let schemasPromise: Promise<typeof import("./url-codec.schemas")> | null = null;
 
-const NullableIndex = z.number().int().nullable();
-
-export const SerializedGamePlanSchema = z.object({
-  bring: z.tuple([NullableIndex, NullableIndex, NullableIndex, NullableIndex]),
-  notes: z.string(),
-  replays: z.array(z.string()).optional(),
-  result: z.enum(["W", "L", "T"]).nullable().optional(),
-});
-
-export const SerializedMatchupPlanSchema = z.object({
-  opponentPaste: z.string(),
-  opponentLabel: z.string(),
-  showSlide: z.boolean().optional(),
-  gamePlans: z.array(SerializedGamePlanSchema).optional(),
-  notes: z.string().optional(),
-  selectedIndices: z.array(z.number()).optional(),
-  planA: z
-    .object({
-      lead: z.tuple([NullableIndex, NullableIndex]),
-      back: z.tuple([NullableIndex, NullableIndex]),
-    })
-    .optional(),
-  planB: z
-    .object({
-      lead: z.tuple([NullableIndex, NullableIndex]),
-      back: z.tuple([NullableIndex, NullableIndex]),
-    })
-    .optional(),
-});
-
-export const ShareableStateSchema = z.object({
-  paste: z.string(),
-  notes: z.record(z.string(), z.string()),
-  calcs: z.record(z.string(), z.array(CalcEntrySchema)).optional(),
-  roles: z.record(z.string(), z.string()).optional(),
-  teamSummary: z.string().optional(),
-  teamName: z.string().optional(),
-  tournamentName: z.string().optional(),
-  placement: z.string().optional(),
-  record: z.string().optional(),
-  mvpIndex: z.number().int().nullable().optional(),
-  rentalCode: z.string().optional(),
-  creatorName: z.string().optional(),
-  matchupPlans: z.array(SerializedMatchupPlanSchema),
-  spriteSettings: z
-    .record(
-      z.string(),
-      z.object({
-        shiny: z.boolean().optional(),
-        animated: z.boolean().optional(),
-      }),
-    )
-    .optional(),
-  hiddenSlides: z.array(z.string()).optional(),
-  allowComments: z.boolean().optional(),
-  tags: z
-    .object({
-      archetype: z.array(z.string()).optional(),
-      regulation: z.string().optional(),
-      eventType: z.string().optional(),
-      regulationAutoDetected: z.boolean().optional(),
-    })
-    .optional(),
-  templateId: z.string().optional(),
-  /**
-   * Per-field visibility flags for tiered publishing (VGC-142). When present,
-   * fields marked `false` are hidden from public viewers (rendered redacted)
-   * and visible only to the owner. Keys are dotted paths like
-   * `pokemon.0.evs` or `pokemon.0.nature`.
-   */
-  privateFields: z.array(z.string()).optional(),
-  genTheme: z.string().optional(),
-});
+function getSchemas(): Promise<typeof import("./url-codec.schemas")> {
+  schemasPromise ??= import("./url-codec.schemas").catch((err) => {
+    // Never cache a failed chunk fetch — a transient network error would
+    // otherwise permanently break decoding for the rest of the session.
+    schemasPromise = null;
+    throw err;
+  });
+  return schemasPromise;
+}
 
 export interface SerializedGamePlan {
   bring: [number | null, number | null, number | null, number | null];
   notes: string;
-  replays?: string[];
   result?: "W" | "L" | "T" | null;
 }
 
@@ -104,6 +44,14 @@ export interface ShareableState {
   calcs?: Record<string, CalcEntry[]>;
   roles?: Record<string, string>;
   teamSummary?: string;
+  commonModes?: {
+    combinations?: { id: string; leads: number[]; back: number[]; strategy: string }[];
+    leads?: string;
+    modes?: string;
+    strengths?: string;
+    weaknesses?: string;
+    gameplan?: string;
+  };
   teamName?: string;
   tournamentName?: string;
   placement?: string;
@@ -115,7 +63,7 @@ export interface ShareableState {
   spriteSettings?: Record<string, { shiny?: boolean; animated?: boolean }>;
   hiddenSlides?: string[];
   allowComments?: boolean;
-  tags?: { archetype?: string[]; regulation?: string; eventType?: string; regulationAutoDetected?: boolean };
+  tags?: import("@/lib/data/tags").ReportTags;
   templateId?: string;
   privateFields?: string[];
   /**
@@ -144,34 +92,6 @@ function fromBase64Url(str: string): Uint8Array {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
-}
-
-export async function encodeShareState(state: ShareableState): Promise<string> {
-  const json = JSON.stringify(state);
-  const encoded = new TextEncoder().encode(json);
-
-  const cs = new CompressionStream("deflate-raw");
-  const writer = cs.writable.getWriter();
-  writer.write(encoded);
-  writer.close();
-
-  const reader = cs.readable.getReader();
-  const chunks: Uint8Array[] = [];
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-  }
-
-  const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  return "1:" + toBase64Url(result);
 }
 
 export async function decodeShareState(encoded: string): Promise<ShareableState | null> {
@@ -210,6 +130,11 @@ export async function decodeShareState(encoded: string): Promise<ShareableState 
     // Runtime validation guards against malformed or malicious URLs.
     // safeParse returns null on shape mismatch instead of letting bad
     // data leak into the report viewer (VGC-146).
+    //
+    // The schemas (and zod itself) are fetched on demand here — this is the
+    // only client-side path that needs them, and it already runs inside an
+    // effect, so the extra await costs nothing on the render path (VGC-256).
+    const { ShareableStateSchema } = await getSchemas();
     const result2 = ShareableStateSchema.safeParse(parsed);
     if (!result2.success) return null;
     return result2.data as ShareableState;

@@ -1,25 +1,9 @@
+# A named User-agent group REPLACES the * group entirely (no inheritance),
+# so per-bot "Allow: /" groups silently un-blocked /api/ for those bots.
+# Every crawler already gets Allow: / from the wildcard — one group is both
+# sufficient and the only way the Disallow applies to everyone. (VGC-272)
 User-agent: *
 Allow: /
 Disallow: /api/
-
-# Explicitly allow major search engine bots
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-# Explicitly allow AI crawlers
-User-agent: GPTBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: OAI-SearchBot
-Allow: /
 
 Sitemap: https://pokemonvgcteamreport.com/sitemap.xml

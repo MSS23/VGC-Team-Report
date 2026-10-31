@@ -1,89 +1,56 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { readNotificationPrefs } from "@/lib/notification-preferences";
 
-export const dynamic = "force-dynamic";
+const headers = { "Cache-Control": "private, no-store" };
+const schema = z.object({ welcomeSeries: z.boolean(), weeklyDigest: z.boolean(), socialActivity: z.boolean(), productUpdates: z.boolean() }).strict();
 
-const PreferencesSchema = z.object({
-  digestUnsubscribed: z.boolean().optional(),
-});
-
-/**
- * POST /api/user/preferences
- *
- * Updates the authenticated user's email preferences in Clerk publicMetadata.
- * Currently supports: digestUnsubscribed (controls weekly digest opt-out).
- */
-export async function POST(request: Request) {
-  const guard = await apiGuard(request, { rateLimit: { key: "user-preferences", max: 20 } });
+export async function GET(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "preferences-read", max: 30 } });
   if (guard) return guard;
-
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  let body: unknown;
+  if (!userId) return NextResponse.json({ error: "Sign in to manage preferences." }, { status: 401, headers });
   try {
-    body = await request.json();
+    const sql = getDb();
+    const rows = await sql`SELECT preferences FROM user_preferences WHERE user_id = ${userId}`;
+    return NextResponse.json({ preferences: readNotificationPrefs(rows[0]?.preferences), initialized: rows.length > 0 }, { headers });
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const parsed = PreferencesSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
-  }
-
-  const updates = parsed.data;
-  if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ ok: true });
-  }
-
-  try {
-    const clerk = await clerkClient();
-    const user = await clerk.users.getUser(userId);
-    const currentMeta = (user.publicMetadata ?? {}) as Record<string, unknown>;
-
-    await clerk.users.updateUserMetadata(userId, {
-      publicMetadata: {
-        ...currentMeta,
-        ...updates,
-      },
-    });
-
-    return NextResponse.json({ ok: true });
-  } catch (e) {
-    console.error("[user/preferences] Failed to update Clerk metadata:", e);
-    return NextResponse.json({ error: "Failed to update preferences" }, { status: 500 });
+    return NextResponse.json({ error: "Could not load preferences. Please try again." }, { status: 503, headers });
   }
 }
 
-/**
- * GET /api/user/preferences
- *
- * Returns the current email preferences for the authenticated user.
- */
-export async function GET(request: Request) {
-  const guard = await apiGuard(request, { rateLimit: { key: "user-preferences-read", max: 60 } });
+export async function POST(request: Request) {
+  const guard = await apiGuard(request, { rateLimit: { key: "preferences-write", max: 15 }, requireContentType: true, maxBodySize: 4096 });
   if (guard) return guard;
-
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  if (!userId) return NextResponse.json({ error: "Sign in to manage preferences." }, { status: 401, headers });
+  let input: unknown;
   try {
-    const clerk = await clerkClient();
-    const user = await clerk.users.getUser(userId);
-    const meta = (user.publicMetadata ?? {}) as Record<string, unknown>;
-
-    return NextResponse.json({
-      digestUnsubscribed: meta.digestUnsubscribed === true,
-    });
-  } catch (e) {
-    console.error("[user/preferences] Failed to read Clerk metadata:", e);
-    return NextResponse.json({ error: "Failed to read preferences" }, { status: 500 });
+    const body = await request.text();
+    if (body.length > 4096) return NextResponse.json({ error: "Request too large." }, { status: 413, headers });
+    input = JSON.parse(body);
+  } catch { return NextResponse.json({ error: "Invalid JSON." }, { status: 400, headers }); }
+  const parsed = schema.safeParse(input);
+  if (!parsed.success) return NextResponse.json({ error: "Provide all four notification choices as booleans." }, { status: 400, headers });
+  try {
+    const sql = getDb();
+    if (new URL(request.url).searchParams.get("initialize") === "true") {
+      // Two devices can migrate concurrently; never overwrite choices already
+      // saved by another device after this client read the empty account.
+      await sql`INSERT INTO user_preferences (user_id, preferences, updated_at)
+        VALUES (${userId}, ${JSON.stringify(parsed.data)}::jsonb, NOW())
+        ON CONFLICT (user_id) DO NOTHING`;
+      const rows = await sql`SELECT preferences FROM user_preferences WHERE user_id = ${userId}`;
+      return NextResponse.json({ preferences: readNotificationPrefs(rows[0]?.preferences), initialized: true }, { headers });
+    }
+    await sql`INSERT INTO user_preferences (user_id, preferences, updated_at)
+      VALUES (${userId}, ${JSON.stringify(parsed.data)}::jsonb, NOW())
+      ON CONFLICT (user_id) DO UPDATE SET preferences = EXCLUDED.preferences, updated_at = NOW()`;
+    return NextResponse.json({ preferences: parsed.data, initialized: true }, { headers });
+  } catch {
+    return NextResponse.json({ error: "Preferences were not saved. Please try again." }, { status: 503, headers });
   }
 }

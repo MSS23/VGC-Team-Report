@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { getClientIp } from "@/lib/security/input-validation";
 import { cacheInvalidatePrefix } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
@@ -135,7 +136,7 @@ export async function POST(
     cacheInvalidatePrefix("explore:");
 
     // Server-side analytics
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const ip = getClientIp(request);
     captureServerEvent(ip, "report_forked", {
       report_id: newId,
       source_report_id: sourceId,

@@ -19,6 +19,11 @@ export async function GET(request: Request) {
   const shareId = match[1];
   const baseUrl = "https://pokemonvgcteamreport.com";
 
+  // Public-only, deliberately stricter than /api/team-graphic (which also
+  // renders unlisted reports by link). `thumbnail_url` below points at that
+  // graphic, so this predicate is load-bearing for privacy: widening it to
+  // unlisted or private rows would publish a thumbnail through every unfurler
+  // that polls oEmbed. Keep it ≤ the graphic's own gate.
   const sql = getDb();
   const rows = await sql`SELECT data FROM shares WHERE id = ${shareId} AND is_public = TRUE AND deleted_at IS NULL`;
   if (rows.length === 0) {
@@ -29,7 +34,7 @@ export async function GET(request: Request) {
   const tournamentName = (data.tournamentName as string) ?? "VGC Team Report";
   const creatorName = (data.creatorName as string) ?? "";
 
-  return NextResponse.json({
+  const res = NextResponse.json({
     version: "1.0",
     type: "rich",
     provider_name: "VGC Team Report",
@@ -42,4 +47,8 @@ export async function GET(request: Request) {
     thumbnail_width: 1200,
     thumbnail_height: 400,
   });
+  // oEmbed payloads are polled repeatedly by Discord/Slack unfurlers and change
+  // rarely — let the CDN serve them for an hour to keep the DB lookup cold.
+  res.headers.set("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+  return res;
 }

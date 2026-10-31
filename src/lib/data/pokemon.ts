@@ -1800,6 +1800,113 @@ export const POKEMON_DATA: Record<string, PokemonData> = {
     abilities: ["Parental Bond"],
   },
 
+  // ── Regulation M-B Megas (Pokémon Champions) ──────────────────────────
+  // Champions-original Megas newly legal in Reg M-B. (The real Gen 6 Megas
+  // also new to M-B — Sceptile, Blaziken, Swampert, Mawile, Metagross —
+  // already live in POKEMON_DATA above with canonical stats.)
+  // Types / abilities / stats verified against Serebii's Reg M-B page plus
+  // Bulbapedia / PokemonDB / Game8 (cross-referenced June 2026).
+  "raichu-mega-x": {
+    name: "Raichu-Mega-X",
+    types: ["Electric"],
+    baseStats: { hp: 60, atk: 135, def: 95, spa: 90, spd: 95, spe: 110 },
+    abilities: ["Electric Surge"],
+  },
+  "raichu-mega-y": {
+    name: "Raichu-Mega-Y",
+    types: ["Electric"],
+    baseStats: { hp: 60, atk: 100, def: 55, spa: 160, spd: 80, spe: 130 },
+    abilities: ["No Guard"],
+  },
+  "staraptor-mega": {
+    name: "Staraptor-Mega",
+    types: ["Fighting", "Flying"],
+    baseStats: { hp: 85, atk: 140, def: 100, spa: 60, spd: 90, spe: 110 },
+    abilities: ["Contrary"],
+  },
+  "scolipede-mega": {
+    name: "Scolipede-Mega",
+    types: ["Bug", "Poison"],
+    baseStats: { hp: 60, atk: 140, def: 149, spa: 75, spd: 99, spe: 62 },
+    abilities: ["Shell Armor"],
+  },
+  "scrafty-mega": {
+    name: "Scrafty-Mega",
+    types: ["Dark", "Fighting"],
+    baseStats: { hp: 65, atk: 130, def: 135, spa: 55, spd: 135, spe: 68 },
+    abilities: ["Intimidate"],
+  },
+  "eelektross-mega": {
+    name: "Eelektross-Mega",
+    types: ["Electric"],
+    baseStats: { hp: 85, atk: 145, def: 80, spa: 135, spd: 90, spe: 80 },
+    abilities: ["Eelevate"],
+  },
+  "pyroar-mega": {
+    name: "Pyroar-Mega",
+    types: ["Fire", "Normal"],
+    baseStats: { hp: 86, atk: 88, def: 92, spa: 129, spd: 86, spe: 126 },
+    abilities: ["Fire Mane"],
+  },
+  "malamar-mega": {
+    name: "Malamar-Mega",
+    types: ["Dark", "Psychic"],
+    baseStats: { hp: 86, atk: 102, def: 88, spa: 98, spd: 120, spe: 88 },
+    abilities: ["Contrary"],
+  },
+  "barbaracle-mega": {
+    name: "Barbaracle-Mega",
+    types: ["Rock", "Fighting"],
+    baseStats: { hp: 72, atk: 140, def: 130, spa: 64, spd: 106, spe: 88 },
+    abilities: ["Tough Claws"],
+  },
+  "dragalge-mega": {
+    name: "Dragalge-Mega",
+    types: ["Poison", "Dragon"],
+    baseStats: { hp: 65, atk: 85, def: 105, spa: 132, spd: 163, spe: 44 },
+    abilities: ["Regenerator"],
+  },
+  "falinks-mega": {
+    name: "Falinks-Mega",
+    types: ["Fighting"],
+    baseStats: { hp: 65, atk: 135, def: 135, spa: 70, spd: 65, spe: 100 },
+    abilities: ["Defiant"],
+  },
+
+  // ── Regulation M-C Megas (Pokémon Champions) ──────────────────────────
+  // Newly legal in Reg M-C. Stats/types/abilities match @smogon/calc 0.12
+  // (Legends Z-A Mega Dimension data). Mega Salamence lives further down.
+  "golisopod-mega": {
+    name: "Golisopod-Mega",
+    types: ["Bug", "Steel"],
+    baseStats: { hp: 75, atk: 150, def: 175, spa: 70, spd: 120, spe: 40 },
+    abilities: ["Tough Claws"],
+  },
+  "baxcalibur-mega": {
+    name: "Baxcalibur-Mega",
+    types: ["Dragon", "Ice"],
+    baseStats: { hp: 115, atk: 175, def: 117, spa: 105, spd: 101, spe: 87 },
+    abilities: ["Thermal Exchange"],
+  },
+  "absol-mega-z": {
+    name: "Absol-Mega-Z",
+    types: ["Dark", "Ghost"],
+    baseStats: { hp: 65, atk: 154, def: 60, spa: 75, spd: 60, spe: 151 },
+    abilities: ["Sharpness"],
+  },
+  "garchomp-mega-z": {
+    name: "Garchomp-Mega-Z",
+    types: ["Dragon"],
+    baseStats: { hp: 108, atk: 130, def: 85, spa: 141, spd: 85, spe: 151 },
+    abilities: ["Levitate"],
+  },
+  "lucario-mega-z": {
+    name: "Lucario-Mega-Z",
+    types: ["Fighting", "Steel"],
+    baseStats: { hp: 70, atk: 100, def: 70, spa: 164, spd: 70, spe: 151 },
+    abilities: ["Aura Guard"],
+  },
+
   "charizard-mega-x": {
     name: "Charizard-Mega-X",
     types: ["Fire", "Dragon"],
@@ -2961,6 +3068,7 @@ export const POKEMON_DATA: Record<string, PokemonData> = {
   "espurr": { name: "Espurr", types: ["Psychic"], baseStats: { hp: 62, atk: 48, def: 54, spa: 63, spd: 60, spe: 68 }, abilities: ["Keen Eye","Infiltrator","Own Tempo"] },
   "meowstic": { name: "Meowstic", types: ["Psychic"], baseStats: { hp: 74, atk: 48, def: 76, spa: 83, spd: 81, spe: 104 }, abilities: ["Keen Eye","Infiltrator","Prankster"] },
   "meowstic-f": { name: "Meowstic-F", types: ["Psychic"], baseStats: { hp: 74, atk: 48, def: 76, spa: 83, spd: 81, spe: 104 }, abilities: ["Keen Eye","Infiltrator","Competitive"] },
+  "meowstic-mega": { name: "Meowstic-Mega", types: ["Psychic"], baseStats: { hp: 74, atk: 48, def: 76, spa: 143, spd: 101, spe: 124 }, abilities: ["Trace"] },
   "honedge": { name: "Honedge", types: ["Steel","Ghost"], baseStats: { hp: 45, atk: 80, def: 100, spa: 35, spd: 37, spe: 28 }, abilities: ["No Guard"] },
   "doublade": { name: "Doublade", types: ["Steel","Ghost"], baseStats: { hp: 59, atk: 110, def: 150, spa: 45, spd: 49, spe: 35 }, abilities: ["No Guard"] },
   "aegislash-blade": { name: "Aegislash-Blade", types: ["Steel","Ghost"], baseStats: { hp: 60, atk: 140, def: 50, spa: 140, spd: 50, spe: 60 }, abilities: ["Stance Change"] },

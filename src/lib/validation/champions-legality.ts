@@ -17,11 +17,13 @@
  */
 
 import type { ParsedPokemon } from "@/lib/types/pokemon";
-import { CHAMPIONS_DEX } from "@/lib/data/champions-dex";
+import { getChampionsDex } from "@/lib/data/champions-dex";
+import { getSpecies } from "@/lib/data/dex-subset";
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
+import { getRegulationLookupKey } from "@/lib/data/gen9-regulation-signals";
 import {
   CHAMPIONS_TOTAL_SP,
-  CHAMPIONS_MAX_SP_PER_STAT,
+  isSpFormSpread,
 } from "@/lib/analysis/stat-calculator";
 
 // ── Severity levels ─────────────────────────────────────────────────────────
@@ -74,9 +76,11 @@ const RESTRICTED_BASE_NAMES = new Set([
 
 // ── Mega Stones set ─────────────────────────────────────────────────────────
 
-const MEGA_STONES = new Set(
-  MEGA_POKEMON_LIST.map((m) => m.megaStone.toLowerCase()),
+/** Mega Stone (lowercase) → the Mega's dataKey, for per-reg stone legality. */
+const MEGA_STONE_TO_KEY = new Map(
+  MEGA_POKEMON_LIST.map((m) => [m.megaStone.toLowerCase(), m.dataKey]),
 );
+const MEGA_STONES = new Set(MEGA_STONE_TO_KEY.keys());
 
 // ── Z-Crystal detection ─────────────────────────────────────────────────────
 
@@ -108,39 +112,38 @@ function normalizeSpecies(species: string): string {
  * "Necrozma-Dusk-Mane" → "necrozma"
  */
 function getRestrictedBase(species: string): string {
-  const key = normalizeSpecies(species);
-  // Strip mega/primal suffixes for base check
-  const stripped = key
-    .replace(/-mega(-[xy])?$/, "")
-    .replace(/-primal$/, "")
-    .replace(/-origin$/, "")
-    .replace(/-crowned$/, "")
-    .replace(/-ice$/, "")
-    .replace(/-shadow$/, "")
-    .replace(/-white$/, "")
-    .replace(/-black$/, "")
-    .replace(/-dusk-mane$/, "")
-    .replace(/-dawn-wings$/, "")
-    .replace(/-ultra$/, "");
-  return stripped;
+  // Shares the form-suffix strip list with regulation detection so the two
+  // never drift (Zygarde-10, Terapagos-Terastal, etc. collapse to base).
+  return getRegulationLookupKey(species);
 }
 
 /**
  * Get the base species for Species Clause checks.
- * Mega forms count as the same species as their base.
- * "Kangaskhan-Mega" → "kangaskhan"
- * But different regional forms are different species.
+ *
+ * Species Clause goes by National Dex number, and every form of a species
+ * shares one — so Rotom-Wash duplicates Rotom-Heat, Ninetales duplicates
+ * Ninetales-Alola, and Urshifu duplicates Urshifu-Rapid-Strike. The dex
+ * lookup's baseSpecies collapses all forms; the regex strip is only the
+ * fallback for species the dex subset doesn't know.
  */
 function getSpeciesClauseKey(species: string): string {
+  const entry = getSpecies(species);
+  if (entry) return normalizeSpecies(entry.baseSpecies ?? entry.name);
   const key = normalizeSpecies(species);
-  // Strip mega suffix only — regional forms and other forms are distinct species
-  return key.replace(/-mega(-[xy])?$/, "").replace(/-primal$/, "");
+  return key.replace(/-mega(-[xyz])?$/, "").replace(/-primal$/, "");
 }
 
 // ── Main validation ─────────────────────────────────────────────────────────
 
-export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult {
+export function validateChampionsTeam(
+  pokemon: ParsedPokemon[],
+  regulation: "Reg M-A" | "Reg M-B" | "Reg M-C" = "Reg M-A",
+): LegalityResult {
   const issues: LegalityIssue[] = [];
+
+  // Each Champions reg is a superset of the last — same rules, wider pool.
+  const dex = getChampionsDex(regulation);
+  const regLabel = regulation;
 
   // Team size
   if (pokemon.length < 6) {
@@ -190,16 +193,29 @@ export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult 
   for (const p of pokemon) {
     const key = normalizeSpecies(p.species);
     const base = getRestrictedBase(p.species);
-    const inDex = CHAMPIONS_DEX.has(key);
+    const inDex = dex.has(key);
     const isRestricted = RESTRICTED_BASE_NAMES.has(base);
     // Check if a mega form of this base Pokemon is in the dex
-    const megaInDex = CHAMPIONS_DEX.has(`${key}-mega`) ||
-      CHAMPIONS_DEX.has(`${key}-mega-x`) ||
-      CHAMPIONS_DEX.has(`${key}-mega-y`);
+    const megaInDex = dex.has(`${key}-mega`) ||
+      dex.has(`${key}-mega-x`) ||
+      dex.has(`${key}-mega-y`) ||
+      dex.has(`${key}-mega-z`);
     if (!inDex && !isRestricted && !megaInDex) {
       issues.push({
         severity: "error",
-        message: `${p.species} is not available in Champions format (Reg M-A)`,
+        message: `${p.species} is not available in Champions format (${regLabel})`,
+        pokemon: p.species,
+      });
+    }
+  }
+
+  // Mega Stones from a later rotation (e.g. Garchompite Z in Reg M-B).
+  for (const p of pokemon) {
+    const megaKey = p.item ? MEGA_STONE_TO_KEY.get(p.item.toLowerCase()) : undefined;
+    if (megaKey && !dex.has(megaKey)) {
+      issues.push({
+        severity: "error",
+        message: `${p.item} is not legal in ${regLabel}`,
         pokemon: p.species,
       });
     }
@@ -246,40 +262,56 @@ export function validateChampionsTeam(pokemon: ParsedPokemon[]): LegalityResult 
   //
   // Reg M-A is natively an SP (Stat Points) format: 66 total, 32 per stat.
   // Showdown has no "SPs:" line yet, so Champions pastes ship SP values
-  // inside the EVs line — a spread whose total ≤ 66 and whose per-stat
-  // values are ≤ 32 can only coherently be SP (same detection used by
-  // convertToChampionsSp). Validate those as SP.
+  // inside the EVs line. Which unit a stat line is written in is decided by
+  // `isSpFormSpread` — shared with convertToChampionsSp so the legality sheet
+  // and the rendered stats can never read the same paste differently.
   //
-  // Traditional EV spreads (512 total, 252 per stat) are still accepted
+  // Crucially the unit test is about magnitude, not legality: it used to ask
+  // "is this spread already within the 66/32 SP budget?", which meant the SP
+  // branch was only ever entered by spreads that could not possibly violate
+  // the budget. The 66-total cap CLAUDE.md names as a Champions rule therefore
+  // had no code path that could emit an error — a 67 SP spread validated clean
+  // and was even told it had "443 more available".
+  //
+  // Traditional EV spreads (510 total, 252 per stat) are still accepted
   // because the rest of the app converts them to SP on display, but are
   // validated against the EV budget so obvious typos (e.g. 300 in a stat)
   // still surface.
   for (const p of pokemon) {
     const total = Object.values(p.evs).reduce((a, b) => a + b, 0);
-    const maxPerStat = Math.max(...Object.values(p.evs));
-    const looksLikeSp = total > 0 && total <= CHAMPIONS_TOTAL_SP && maxPerStat <= CHAMPIONS_MAX_SP_PER_STAT;
 
-    if (looksLikeSp) {
-      // looksLikeSp guarantees every stat ≤ 32, so per-stat cap is already
-      // satisfied — only the total-budget hint is worth surfacing.
-      if (total < CHAMPIONS_TOTAL_SP) {
+    if (isSpFormSpread(p.evs)) {
+      if (total > CHAMPIONS_TOTAL_SP) {
+        issues.push({
+          severity: "error",
+          message: `${p.species}: ${total}/${CHAMPIONS_TOTAL_SP} SP — over budget by ${total - CHAMPIONS_TOTAL_SP} SP`,
+          pokemon: p.species,
+        });
+      } else if (total < CHAMPIONS_TOTAL_SP) {
         issues.push({
           severity: "info",
           message: `${p.species}: ${total}/${CHAMPIONS_TOTAL_SP} SP allocated — ${CHAMPIONS_TOTAL_SP - total} more available`,
           pokemon: p.species,
         });
       }
+      // No per-stat cap check here: `isSpFormSpread` only reads a line as SP
+      // when every value is already ≤ CHAMPIONS_MAX_SP_PER_STAT, so the cap
+      // cannot be violated on this branch. Enforcing it needs the unit to be
+      // carried explicitly from the parser rather than inferred — see the
+      // residual documented on `isSpFormSpread`.
     } else {
-      if (total > 512) {
+      // The game's EV budget is 510, not 512 — the parser already warns at
+      // 510, and disagreeing with it here let 512-EV spreads validate clean.
+      if (total > 510) {
         issues.push({
           severity: "error",
-          message: `${p.species}: EV total ${total} exceeds maximum of 512`,
+          message: `${p.species}: EV total ${total} exceeds maximum of 510`,
           pokemon: p.species,
         });
-      } else if (total > 0 && total < 512) {
+      } else if (total > 0 && total < 510) {
         issues.push({
           severity: "info",
-          message: `${p.species}: ${total} EVs allocated — ${512 - total} more available (Reg M-A allows 512 total)`,
+          message: `${p.species}: ${total} EVs allocated — ${510 - total} more available (${regLabel} allows 510 total)`,
           pokemon: p.species,
         });
       }

@@ -146,7 +146,19 @@ export function VersionHistoryPanel({
   return (
     <>
       {/* Scrim */}
-      <div className="fixed inset-0 z-[70] bg-black/20 backdrop-blur-[1px] sm:bg-transparent sm:backdrop-blur-none" onClick={onClose} />
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="Close version history"
+        className="fixed inset-0 z-[70] bg-black/20 backdrop-blur-[1px] sm:bg-transparent sm:backdrop-blur-none"
+        onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClose();
+          }
+        }}
+      />
 
       {/* Panel */}
       <div
@@ -301,7 +313,7 @@ export function VersionHistoryPanel({
                           </button>
                           <span className="text-[10px] text-text-tertiary flex-shrink-0">{formatTime(v.createdAt)}</span>
                           {isSelected && (
-                            <span className="text-[9px] font-bold text-white bg-blue-500 px-1.5 py-0.5 rounded shadow-sm">
+                            <span className="text-[10px] font-bold text-white bg-blue-500 px-1.5 py-0.5 rounded shadow-sm">
                               Comparing
                             </span>
                           )}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import Link from "next/link";
 import { I18nProvider } from "@/lib/i18n";
 
 import { applyRandomAccent } from "@/lib/utils/random-accent";
@@ -135,7 +136,7 @@ function FeedbackInner() {
               We require sign-in so we can follow up on your feedback and keep submissions high quality.
             </p>
             <SignInButton mode="modal">
-              <button className="px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide">
+              <button className="min-h-11 px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide">
                 Sign in
               </button>
             </SignInButton>
@@ -162,12 +163,12 @@ function FeedbackInner() {
               Your feedback has been submitted. We review every submission and use it to improve VGC Team Report.
             </p>
             <div className="flex items-center justify-center gap-3">
-              <a href="/" className="px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+              <Link href="/" className="inline-flex min-h-11 items-center px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                 Back to Home
-              </a>
+              </Link>
               <button
                 onClick={() => { setSubmitted(false); setTitle(""); setDescription(""); setContact(""); }}
-                className="px-6 py-2.5 text-sm font-bold text-text-secondary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all cursor-pointer"
+                className="min-h-11 px-6 py-2.5 text-sm font-bold text-text-secondary bg-surface border-2 border-border hover:border-accent/30 rounded-xl transition-all cursor-pointer"
               >
                 Submit Another
               </button>
@@ -199,6 +200,7 @@ function FeedbackInner() {
                   key={t.value}
                   type="button"
                   onClick={() => setType(t.value)}
+                  aria-pressed={type === t.value}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 + i * 0.05, duration: 0.35 }}
@@ -223,8 +225,12 @@ function FeedbackInner() {
             </div>
 
             {/* Form */}
-            <motion.div
+            <motion.form
               className="space-y-5"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSubmit();
+              }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.4 }}
@@ -314,6 +320,7 @@ function FeedbackInner() {
                 <motion.p
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
+                  role="alert"
                   className="text-sm text-danger font-bold px-3 py-2 bg-danger/10 border border-danger/20 rounded-lg"
                 >
                   {error}
@@ -322,8 +329,7 @@ function FeedbackInner() {
 
               {/* Submit */}
               <button
-                type="button"
-                onClick={handleSubmit}
+                type="submit"
                 disabled={!title.trim() || !description.trim() || submitting}
                 className={`w-full px-5 py-3.5 text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.98] shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed tracking-wide flex items-center justify-center gap-2 ${
                   selectedType.value === "bug"
@@ -354,11 +360,11 @@ function FeedbackInner() {
               {/* Links to changelog */}
               <p className="text-center text-xs text-text-tertiary pt-2">
                 Want to see what we&apos;ve already shipped?{" "}
-                <a href="/changelog" className="font-bold text-accent hover:underline">
+                <Link href="/changelog" className="inline-flex min-h-11 items-center font-bold text-accent hover:underline">
                   View the changelog
-                </a>
+                </Link>
               </p>
-            </motion.div>
+            </motion.form>
           </motion.div>
         )}
       </main>

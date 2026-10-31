@@ -116,6 +116,7 @@ export function MatchupSheetRow({
               onClick={onRemove}
               className="text-text-tertiary hover:text-red-400 p-2.5 rounded-lg hover:bg-red-400/10 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
               title={t.removeMatchup}
+              aria-label={t.removeMatchup}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />

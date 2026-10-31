@@ -3,7 +3,7 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { createNotification } from "@/lib/notifications";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 
 const ALLOWED_TYPES = ["fire", "heart", "brain", "battle", "clap"] as const;
@@ -70,13 +70,20 @@ export async function POST(
     const { reactionType, sessionId } = parsed.data;
     const sql = getDb();
 
+    // Fetch owner_id once — reused for the self-like guard below and the
+    // owner notification in the "added" branch. Also the existence check:
+    // without it, reactions insert rows keyed to share ids that don't exist
+    // (or are trashed), which nothing ever cleans up.
+    const ownerRows = await sql`SELECT owner_id FROM shares WHERE id = ${shareId} AND deleted_at IS NULL`;
+    if (ownerRows.length === 0) {
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
+    }
+    const ownerId = ownerRows[0]?.owner_id as string | undefined;
+
     // Prevent owners from liking their own reports
     const { userId } = await auth();
-    if (userId) {
-      const ownerCheck = await sql`SELECT owner_id FROM shares WHERE id = ${shareId}`;
-      if (ownerCheck.length > 0 && ownerCheck[0].owner_id === userId) {
-        return NextResponse.json({ error: "Cannot like your own report" }, { status: 403 });
-      }
+    if (userId && ownerId && ownerId === userId) {
+      return NextResponse.json({ error: "Cannot like your own report" }, { status: 403 });
     }
 
     // Check if already exists
@@ -99,11 +106,11 @@ export async function POST(
       `;
       action = "added";
 
-      // Notify report owner (fire-and-forget)
-      const ownerRows = await sql`SELECT owner_id FROM shares WHERE id = ${shareId}`;
-      const ownerId = ownerRows[0]?.owner_id as string | undefined;
+      // Notify report owner. Run in the post-response phase so Vercel keeps
+      // the lambda alive until the insert completes (reuses the owner_id
+      // fetched above — no second SELECT).
       if (ownerId) {
-        createNotification(ownerId, "reaction", shareId, null, `Someone liked your report`);
+        after(() => createNotification(ownerId, "reaction", shareId, null, `Someone liked your report`));
       }
     }
 

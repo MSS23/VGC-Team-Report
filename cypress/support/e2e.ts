@@ -67,6 +67,8 @@ Jolly Nature
 - Protect`;
 
 declare global {
+  // Cypress exposes its custom command surface through namespace augmentation.
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
       /** Load a sample team and navigate to the report view */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useLayoutEffect, useRef } from "react";
 
 export interface Notification {
   id: number;
@@ -19,6 +19,12 @@ export function useNotifications(enabled: boolean) {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  // Mirror of `notifications` so markIdsRead can compute the real unread
+  // delta without churning its useCallback identity.
+  const notificationsRef = useRef<Notification[]>([]);
+  useLayoutEffect(() => {
+    notificationsRef.current = notifications;
+  });
 
   const fetchNotifications = useCallback(async () => {
     if (!enabled) return;
@@ -35,37 +41,54 @@ export function useNotifications(enabled: boolean) {
     }
   }, [enabled]);
 
+  // Lightweight poll: fetch only the unread count, skipping the full row list.
+  const fetchCount = useCallback(async () => {
+    if (!enabled) return;
+    try {
+      const res = await fetch("/api/user/notifications?countOnly=1");
+      if (!res.ok) return;
+      const data = await res.json();
+      setUnreadCount(data.unreadCount ?? 0);
+      setTotal(data.total ?? 0);
+    } catch {
+      // silently fail
+    }
+  }, [enabled]);
+
   // Initial fetch
   useEffect(() => {
     if (!enabled) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading flag for the fetch this effect starts
     setLoading(true);
     fetchNotifications().finally(() => setLoading(false));
   }, [enabled, fetchNotifications]);
 
-  // Poll on visibility change (when tab becomes visible)
+  // Poll on visibility change (when tab becomes visible) — count-only, cheap.
   useEffect(() => {
     if (!enabled) return;
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") fetchNotifications();
+      if (document.visibilityState === "visible") fetchCount();
     };
     document.addEventListener("visibilitychange", handleVisibility);
 
-    // Also poll every 60s
-    intervalRef.current = setInterval(fetchNotifications, 60_000);
+    // Also poll every 60s — count-only to keep DB load minimal.
+    intervalRef.current = setInterval(fetchCount, 60_000);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibility);
       clearInterval(intervalRef.current);
     };
-  }, [enabled, fetchNotifications]);
+  }, [enabled, fetchCount]);
 
   const markAllRead = useCallback(async () => {
     try {
-      await fetch("/api/user/notifications", {
+      const res = await fetch("/api/user/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ markAllRead: true }),
       });
+      // Only clear the badge when the server actually persisted the change.
+      if (!res.ok) return;
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch {
@@ -75,16 +98,23 @@ export function useNotifications(enabled: boolean) {
 
   const markIdsRead = useCallback(async (ids: number[]) => {
     if (ids.length === 0) return;
+    // Count only ids that are actually unread — callers pass ids regardless
+    // of read state, and subtracting ids.length twice (open the bell twice)
+    // drove the badge to 0 while unread rows remained.
+    const delta = notificationsRef.current.filter(
+      (n) => ids.includes(n.id) && !n.read
+    ).length;
     try {
-      await fetch("/api/user/notifications", {
+      const res = await fetch("/api/user/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids }),
       });
+      if (!res.ok) return;
       setNotifications((prev) =>
         prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n))
       );
-      setUnreadCount((prev) => Math.max(0, prev - ids.length));
+      setUnreadCount((prev) => Math.max(0, prev - delta));
     } catch {
       // silently fail
     }

@@ -61,6 +61,7 @@ export function useDamageCalcs(speciesKeys: string[], persist = true) {
     prevTeamKey.current = teamKey;
 
     if (speciesKeys.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reload per-team state from storage when the team key changes
       setCalcs({});
       return;
     }

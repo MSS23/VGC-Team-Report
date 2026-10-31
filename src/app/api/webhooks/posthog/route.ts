@@ -1,6 +1,8 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 // ── Session timeline enrichment ──────────────────────────────────────────────
 // On every webhook, query PostHog for the user's last ~15 events leading up to
 // the exception. The webhook fires once per Linear ticket, so this is a single
@@ -216,7 +218,7 @@ export async function POST(request: Request) {
 
     if (!linearApiKey || !teamId) {
       console.error("PostHog webhook: LINEAR_API_KEY or LINEAR_TEAM_ID not configured");
-      return NextResponse.json({ error: "Linear not configured" }, { status: 500 });
+      return NextResponse.json({ ok: false, error: "Linear not configured" }, { status: 200 });
     }
 
     // Create Linear issue with Bug label
@@ -261,7 +263,7 @@ export async function POST(request: Request) {
 
     if (!linearRes.data?.issueCreate?.success) {
       console.error("PostHog webhook: Linear issue creation failed", linearRes);
-      return NextResponse.json({ error: "Linear creation failed" }, { status: 500 });
+      return NextResponse.json({ ok: false, error: "Linear creation failed" }, { status: 200 });
     }
 
     const issue = linearRes.data.issueCreate.issue;
@@ -303,7 +305,9 @@ export async function POST(request: Request) {
     });
   } catch (e) {
     console.error("PostHog webhook error:", e);
-    return NextResponse.json({ error: "Webhook failed" }, { status: 500 });
+    // Return 200 even on internal errors so PostHog doesn't auto-disable the
+    // webhook destination after repeated non-2xx responses.
+    return NextResponse.json({ ok: false, error: "internal" }, { status: 200 });
   }
 }
 
@@ -452,4 +456,11 @@ function inferLabels(event: string, properties: Record<string, unknown>): string
   labels.push(LABELS.analytics);
 
   return labels;
+}
+
+export function GET() {
+  return NextResponse.json(
+    { error: "Method not allowed. This endpoint accepts POST requests only." },
+    { status: 405, headers: { Allow: "POST" } }
+  );
 }

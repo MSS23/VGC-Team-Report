@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { I18nProvider } from "@/lib/i18n";
 
 import { applyRandomAccent } from "@/lib/utils/random-accent";
@@ -10,11 +11,11 @@ import { PageFooter } from "@/components/layout/PageFooter";
 import { MatchTracker } from "@/components/match-tracker/MatchTracker";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { SpinnerIcon, UserIcon, ShieldIcon, BellIcon, PencilIcon, FolderIcon, TrashIcon, CheckIcon, ChevronDownIcon, CloseIcon } from "@/components/ui/icons";
 
 interface DashboardReport extends ExploreReport {
   isPublic?: boolean;
   isUnlisted?: boolean;
-  editToken?: string;
   deletedAt?: string;
   isCollab?: boolean;
 }
@@ -60,51 +61,58 @@ function DashboardInner() {
 
   useEffect(() => {
     if (!user) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading flag for the fetch this effect starts
     setLoading(true);
 
+    // Guard against a tab-switch race: a slow response from a previously
+    // selected tab could otherwise resolve after the user moved on and both
+    // populate the wrong tab AND clear the new tab's loading spinner
+    // (Finding 4.5). `cancelled` blocks stale state writes; the AbortController
+    // cancels the in-flight request on cleanup.
+    let cancelled = false;
+    const ac = new AbortController();
+    const json = (r: Response) => (r.ok ? r.json() : null);
+    const stopLoading = () => { if (!cancelled) setLoading(false); };
+
     if (tab === "analytics") {
-      fetch("/api/user/analytics")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => { if (data) setAnalytics(data); setLoading(false); })
-        .catch(() => setLoading(false));
-      return;
+      fetch("/api/user/analytics", { signal: ac.signal })
+        .then(json)
+        .then((data) => { if (cancelled) return; if (data) setAnalytics(data); setLoading(false); })
+        .catch(stopLoading);
+    } else if (tab === "collections") {
+      fetch("/api/user/collections", { signal: ac.signal })
+        .then(json)
+        .then((data) => { if (cancelled) return; if (data?.collections) setCollections(data.collections); setLoading(false); })
+        .catch(stopLoading);
+    } else if (tab === "drafts") {
+      fetch("/api/user/drafts", { signal: ac.signal })
+        .then(json)
+        .then((data) => { if (cancelled) return; if (data?.drafts) setDraftReports(data.drafts); setLoading(false); })
+        .catch(stopLoading);
+    } else {
+      // Load collections in background for the "add to collection" dropdown
+      if (tab === "my") {
+        fetch("/api/user/collections", { signal: ac.signal }).then(json).then((data) => { if (!cancelled && data?.collections) setCollections(data.collections); }).catch(() => {});
+      }
+
+      const endpoint = tab === "my" ? "/api/user/reports" : tab === "trash" ? "/api/user/reports?trash=1" : tab === "feed" ? "/api/user/feed" : tab === "collab" ? "/api/user/collaborations" : "/api/user/saved";
+      fetch(endpoint, { signal: ac.signal })
+        .then(json)
+        .then((data) => {
+          if (cancelled) return;
+          if (data?.reports) {
+            if (tab === "my") setMyReports(data.reports);
+            else if (tab === "trash") setTrashReports(data.reports);
+            else if (tab === "feed") setFeedReports(data.reports);
+            else if (tab === "collab") setCollabReports(data.reports);
+            else setSavedReports(data.reports);
+          }
+          setLoading(false);
+        })
+        .catch(stopLoading);
     }
 
-    if (tab === "collections") {
-      fetch("/api/user/collections")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => { if (data?.collections) setCollections(data.collections); setLoading(false); })
-        .catch(() => setLoading(false));
-      return;
-    }
-
-    // Load collections in background for the "add to collection" dropdown
-    if (tab === "my") {
-      fetch("/api/user/collections").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.collections) setCollections(data.collections); }).catch(() => {});
-    }
-
-    if (tab === "drafts") {
-      fetch("/api/user/drafts")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => { if (data?.drafts) setDraftReports(data.drafts); setLoading(false); })
-        .catch(() => setLoading(false));
-      return;
-    }
-
-    const endpoint = tab === "my" ? "/api/user/reports" : tab === "trash" ? "/api/user/reports?trash=1" : tab === "feed" ? "/api/user/feed" : tab === "collab" ? "/api/user/collaborations" : "/api/user/saved";
-    fetch(endpoint)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.reports) {
-          if (tab === "my") setMyReports(data.reports);
-          else if (tab === "trash") setTrashReports(data.reports);
-          else if (tab === "feed") setFeedReports(data.reports);
-          else if (tab === "collab") setCollabReports(data.reports);
-          else setSavedReports(data.reports);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    return () => { cancelled = true; ac.abort(); };
   }, [user, tab]);
 
   return (
@@ -134,18 +142,18 @@ function DashboardInner() {
                   Manage your reports and favorites.
                 </p>
               </div>
-              <a href="/dashboard/profile" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-accent bg-accent-surface/50 rounded-lg hover:bg-accent-surface transition-all">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+              <a href="/dashboard/profile" aria-label="Edit Profile" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-accent bg-accent-surface/50 rounded-lg hover:bg-accent-surface transition-all">
+                <UserIcon width="12" height="12" />
                 <span className="hidden sm:inline">Edit Profile</span>
                 <span className="sm:hidden">Profile</span>
               </a>
-              <a href="/dashboard/privacy" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <a href="/dashboard/privacy" aria-label="Privacy" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
+                <ShieldIcon width="12" height="12" />
                 <span className="hidden sm:inline">Privacy</span>
                 <span className="sm:hidden">Data</span>
               </a>
-              <a href="/dashboard/notifications" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+              <a href="/dashboard/notifications" aria-label="Notifications" className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-text-tertiary bg-surface-alt/50 rounded-lg hover:bg-surface-alt transition-all">
+                <BellIcon width="12" height="12" />
                 <span className="hidden sm:inline">Notifications</span>
                 <span className="sm:hidden">Alerts</span>
               </a>
@@ -173,14 +181,14 @@ function DashboardInner() {
                     >
                       {label}
                       {t === "drafts" && draftReports.length > 0 && (
-                        <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[9px] font-bold bg-amber-500 text-white rounded-full">
+                        <span className="ml-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold bg-amber-500 text-white rounded-full">
                           {draftReports.length}
                         </span>
                       )}
                       {t === "collab" && (() => {
                         const pendingCount = collabReports.filter(r => r.collabStatus === "pending").length;
                         return pendingCount > 0 ? (
-                          <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold bg-purple-500 text-white rounded-full">
+                          <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-purple-500 text-white rounded-full">
                             {pendingCount}
                           </span>
                         ) : null;
@@ -216,9 +224,9 @@ function DashboardInner() {
                   type="button"
                   onClick={async () => {
                     for (const r of myReports.filter((r) => !r.isPublic && !r.isCollab)) {
-                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: true }) });
+                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: true, isUnlisted: false }) });
                     }
-                    setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: true }));
+                    setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: true, isUnlisted: false }));
                   }}
                   className="px-2 py-1 text-[10px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition-all"
                 >
@@ -227,10 +235,12 @@ function DashboardInner() {
                 <button
                   type="button"
                   onClick={async () => {
-                    for (const r of myReports.filter((r) => r.isPublic && !r.isCollab)) {
-                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: false }) });
+                    // Include Unlisted reports (isPublic === false) — they were
+                    // previously skipped, so "All Private" left them Unlisted.
+                    for (const r of myReports.filter((r) => (r.isPublic || r.isUnlisted) && !r.isCollab)) {
+                      await fetch(`/api/user/reports/${r.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublic: false, isUnlisted: false }) });
                     }
-                    setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: false }));
+                    setMyReports((prev) => prev.map((r) => r.isCollab ? r : { ...r, isPublic: false, isUnlisted: false }));
                   }}
                   className="px-2 py-1 text-[10px] font-bold rounded-md bg-surface-alt text-text-tertiary border border-border cursor-pointer hover:bg-surface transition-all"
                 >
@@ -244,7 +254,7 @@ function DashboardInner() {
             {loading ? (
               <div className="flex justify-center items-start pt-16 min-h-[60vh]">
                 <div className="flex items-center gap-3 text-text-secondary">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                  <SpinnerIcon className="animate-spin h-5 w-5" />
                   <span className="text-sm font-medium">Loading...</span>
                 </div>
               </div>
@@ -253,15 +263,13 @@ function DashboardInner() {
                 {tab === "drafts" && draftReports.length === 0 && (
                   <div className="text-center py-10 sm:py-16">
                     <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500">
-                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
+                      <PencilIcon width="24" height="24" className="text-amber-500" />
                     </div>
                     <p className="text-sm text-text-secondary mb-1">No drafts yet.</p>
                     <p className="text-xs text-text-tertiary mb-4">Start building a team report and it will auto-save here.</p>
-                    <a href="/" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                       Create Report
-                    </a>
+                    </Link>
                   </div>
                 )}
                 {tab === "drafts" && draftReports.length > 0 && (
@@ -274,9 +282,9 @@ function DashboardInner() {
                 {tab === "my" && myReports.length === 0 && (
                   <div className="text-center py-10 sm:py-16">
                     <p className="text-sm text-text-secondary mb-4">No reports yet. Create a team report to get started.</p>
-                    <a href="/" className="px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+                    <Link href="/" className="inline-flex min-h-11 items-center px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                       Create Report
-                    </a>
+                    </Link>
                   </div>
                 )}
                 {tab === "saved" && savedReports.length === 0 && (
@@ -456,7 +464,7 @@ function DraftReportCard({ draft, onDelete }: { draft: DashboardReport; onDelete
   return (
     <div className="group relative bg-surface border border-amber-500/20 rounded-xl overflow-hidden hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/5 transition-all">
       {/* Draft badge */}
-      <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-md border border-amber-500/20">
+      <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-md border border-amber-500/20">
         Draft
       </div>
 
@@ -591,9 +599,8 @@ function ManagedReportCard({
     finally { setDeleting(false); setDeleteStep(0); }
   };
 
-  const editUrl = report.editToken
-    ? `/s/${report.id}?key=${report.editToken}`
-    : `/s/${report.id}`;
+  // Editing is authorized by the signed-in account, never by URL tokens.
+  const editUrl = `/s/${report.id}`;
 
   return (
     <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
@@ -610,7 +617,7 @@ function ManagedReportCard({
             {report.tournamentName || report.species.join(" / ")}
           </h3>
           {report.placement && (
-            <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold rounded-md tracking-wide bg-accent-surface text-accent mt-1">
+            <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-extrabold rounded-md tracking-wide bg-accent-surface text-accent mt-1">
               {report.placement}
             </span>
           )}
@@ -655,9 +662,10 @@ function ManagedReportCard({
                   onClick={() => setShowCollectionMenu(!showCollectionMenu)}
                   className="inline-flex items-center px-1.5 sm:px-2 py-1 text-[10px] font-bold rounded-md bg-purple-500/10 text-purple-500 border border-purple-500/20 hover:bg-purple-500/20 transition-all cursor-pointer"
                   title="Add to collection"
+                  aria-label="Add to collection"
                 >
                   <span className="hidden sm:inline">+ Collection</span>
-                  <svg className="sm:hidden w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /></svg>
+                  <FolderIcon className="sm:hidden w-3 h-3" />
                 </button>
                 {showCollectionMenu && (
                   <div className="absolute left-0 bottom-full mb-1 sm:bottom-auto sm:top-full sm:mt-1 z-10 bg-surface border border-border rounded-lg shadow-lg py-1 min-w-[160px]">
@@ -720,11 +728,9 @@ function ManagedReportCard({
                 onClick={() => setDeleteStep(1)}
                 className="p-1.5 text-text-tertiary hover:text-red-500 transition-colors cursor-pointer flex-shrink-0"
                 title="Delete report"
+                aria-label="Delete report"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                </svg>
+                <TrashIcon width="12" height="12" />
               </button>
             )
           )}
@@ -868,9 +874,7 @@ function CollabReportCard({
         ) : (
           <div className="flex items-center justify-between gap-2">
             <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+              <CheckIcon width="10" height="10" />
               Collaborator
             </span>
             <a href={`/s/${report.id}`} className="text-[10px] font-bold text-accent hover:underline">
@@ -905,9 +909,9 @@ interface AnalyticsData {
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-2.5 sm:py-3">
-      <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{label}</p>
+      <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">{label}</p>
       <p className="text-lg sm:text-2xl font-extrabold text-text-primary mt-0.5 sm:mt-1">{value}</p>
-      {sub && <p className="text-[9px] sm:text-[10px] text-text-secondary mt-0.5 leading-tight">{sub}</p>}
+      {sub && <p className="text-[10px] text-text-secondary mt-0.5 leading-tight">{sub}</p>}
     </div>
   );
 }
@@ -934,7 +938,7 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
       {/* Monthly activity chart */}
       {monthlyActivity.length > 0 && (
         <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Reports Created (Last 6 Months)</p>
+          <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Reports Created (Last 6 Months)</p>
           <div className="flex items-end gap-2 h-24">
             {monthlyActivity.map((m) => (
               <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
@@ -947,7 +951,7 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
                     style={{ height: `${(m.count / maxMonthCount) * 100}%` }}
                   />
                 </div>
-                <span className="text-[9px] text-text-tertiary font-bold">
+                <span className="text-[10px] text-text-tertiary font-bold">
                   {new Date(m.month + "-01").toLocaleDateString("en-GB", { month: "short" })}
                 </span>
               </div>
@@ -959,7 +963,7 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
       {/* Top reports by views */}
       {topByViews.length > 0 && (
         <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reports by Views</p>
+          <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reports by Views</p>
           <div className="space-y-1 sm:space-y-2">
             {topByViews.map((report, i) => (
               <a
@@ -991,7 +995,7 @@ function AnalyticsPanel({ data }: { data: AnalyticsData }) {
       {/* Top reactions */}
       {topReactions.length > 0 && (
         <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-          <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reactions</p>
+          <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">Top Reactions</p>
           <div className="flex flex-wrap gap-3">
             {topReactions.map((r) => (
               <div key={r.type} className="flex items-center gap-1.5 bg-surface-alt/50 px-3 py-1.5 rounded-lg">
@@ -1083,13 +1087,14 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
     <div className="space-y-3 sm:space-y-4">
       {/* Create new collection */}
       <div className="bg-surface border border-border rounded-xl px-3 sm:px-4 py-3 sm:py-4">
-        <p className="text-[9px] sm:text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">New Collection</p>
+        <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-2 sm:mb-3">New Collection</p>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Collection name"
+            aria-label="Collection name"
             className="flex-1 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-alt border border-border rounded-lg text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
           <input
@@ -1097,11 +1102,13 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
             placeholder="Description (optional)"
+            aria-label="Collection description"
             className="flex-1 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-alt border border-border rounded-lg text-xs sm:text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
           <select
             value={newReg}
             onChange={(e) => setNewReg(e.target.value)}
+            aria-label="Collection regulation"
             className="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-surface-alt border border-border rounded-lg text-xs sm:text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40"
           >
             <option value="">Regulation</option>
@@ -1150,12 +1157,10 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
               <span className="text-xs font-bold text-text-tertiary">
                 {c.itemCount} {c.itemCount === 1 ? "team" : "teams"}
               </span>
-              <svg
-                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              <ChevronDownIcon
+                width="12" height="12"
                 className={`text-text-tertiary transition-transform ${expanded === c.id ? "rotate-180" : ""}`}
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+              />
             </div>
           </button>
 
@@ -1163,7 +1168,7 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
             <div className="border-t border-border px-4 py-3">
               {loadingItems ? (
                 <div className="flex justify-center py-4">
-                  <svg className="animate-spin h-4 w-4 text-text-tertiary" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                  <SpinnerIcon className="animate-spin h-4 w-4 text-text-tertiary" />
                 </div>
               ) : expandedItems.length === 0 ? (
                 <p className="text-xs text-text-tertiary text-center py-4">
@@ -1188,10 +1193,9 @@ function CollectionsPanel({ collections, onUpdate }: { collections: CollectionDa
                         onClick={() => handleRemoveItem(c.id, item.id)}
                         className="p-1 text-text-tertiary hover:text-red-500 transition-colors cursor-pointer flex-shrink-0"
                         title="Remove from collection"
+                        aria-label="Remove from collection"
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
+                        <CloseIcon width="12" height="12" />
                       </button>
                     </div>
                   ))}

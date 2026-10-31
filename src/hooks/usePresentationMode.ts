@@ -50,10 +50,12 @@ export function usePresentationMode() {
   // F5 keyboard shortcut to toggle presentation mode
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "F5") {
-        e.preventDefault();
-        setPresentationMode((prev) => !prev);
-      }
+      if (e.key !== "F5") return;
+      // Don't hijack refresh while the user is typing in a field.
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      e.preventDefault();
+      setPresentationMode((prev) => !prev);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);

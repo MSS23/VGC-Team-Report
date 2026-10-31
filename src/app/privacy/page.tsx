@@ -12,7 +12,7 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-background">
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-24 sm:pb-12">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight mb-2">Privacy Policy</h1>
-        <p className="text-sm text-text-tertiary mb-10">Last updated: April 2026</p>
+        <p className="text-sm text-text-tertiary mb-10">Last updated: August 2026</p>
 
         <div className="space-y-8 text-sm text-text-secondary leading-relaxed">
 
@@ -60,12 +60,29 @@ export default function PrivacyPage() {
                 <span className="text-text-tertiary">Legal basis: Art 6(1)(b) &mdash; necessary for contract performance (delivering the core functionality you requested).</span>
               </li>
               <li>
-                <strong>Analytics data</strong> (page views, feature usage, referrer, country via Vercel Analytics and PostHog) &mdash;
+                <strong>Analytics data</strong> (page views, feature usage, referrer, country via PostHog) &mdash;
                 Usage data collected to understand traffic patterns, feature adoption, and improve the app.
-                PostHog analytics are linked to your account when signed in (identified profiles only) to provide
-                a better experience; anonymous visitors are not tracked individually.
+                Before you make a cookie choice, PostHog runs in a restricted mode: it sets no analytics
+                cookies and writes nothing to your browser storage (data is held in memory for the current
+                page only), and session recording is switched off. PostHog analytics are linked to your
+                account when signed in (identified profiles only) to provide a better experience;
+                anonymous visitors are not tracked individually.
                 <br />
                 <span className="text-text-tertiary">Legal basis: Art 6(1)(f) &mdash; legitimate interest (understanding usage to improve the service); Art 6(1)(a) &mdash; consent when cookie consent is granted for non-essential analytics cookies.</span>
+              </li>
+              <li>
+                <strong>Session recording data</strong> (clicks and taps, scrolling, mouse movement,
+                page navigation, screen size, and a replayable reconstruction of the pages you view,
+                via Microsoft Clarity and PostHog) &mdash;
+                Recorded <strong>only after you grant analytics consent</strong> through our cookie banner.
+                Neither Microsoft Clarity nor PostHog session recording is started until consent is given,
+                and withdrawing consent stops new recording. We use recordings to find interface problems
+                and reproduce reported bugs &mdash; never for advertising or profiling.
+                In PostHog recordings, password fields are masked; other text you type into the app
+                (for example a team paste or a note) may be captured. Microsoft Clarity runs with its
+                default masking behaviour, which we do not modify.
+                <br />
+                <span className="text-text-tertiary">Legal basis: Art 6(1)(a) &mdash; consent, given through the cookie banner and withdrawable at any time via &quot;Cookie Settings&quot; in the footer.</span>
               </li>
               <li>
                 <strong>Redis cache data</strong> (session tokens, rate-limit counters via Upstash) &mdash;
@@ -102,8 +119,13 @@ export default function PrivacyPage() {
                 30 days of an account deletion request.
               </li>
               <li>
-                <strong>Analytics data</strong> &mdash; Retained for 12 months by Vercel and PostHog.
-                We do not store analytics data independently outside these services.
+                <strong>Analytics data</strong> &mdash; Retained for 12 months by PostHog.
+                We do not store analytics data independently outside this service.
+              </li>
+              <li>
+                <strong>Session recordings</strong> &mdash; Held by PostHog and by Microsoft Clarity
+                under each provider&apos;s own retention schedule and deleted when that period expires.
+                We do not download, export, or store recordings ourselves.
               </li>
               <li>
                 <strong>Redis cache data</strong> &mdash; TTL-based, typically purged within 24 hours.
@@ -136,7 +158,7 @@ export default function PrivacyPage() {
                 </a>
               </li>
               <li>
-                <strong>Vercel</strong> &mdash; Hosting, deployment, and web analytics.{" "}
+                <strong>Vercel</strong> &mdash; Hosting and deployment.{" "}
                 <a href="https://vercel.com/legal/dpa" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                   View Vercel DPA
                 </a>
@@ -154,10 +176,16 @@ export default function PrivacyPage() {
                 </a>
               </li>
               <li>
-                <strong>PostHog</strong> &mdash; Product analytics and feature usage tracking (EU-hosted).{" "}
+                <strong>PostHog</strong> &mdash; Product analytics, feature usage tracking, and
+                session recording (EU-hosted).{" "}
                 <a href="https://posthog.com/dpa" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                   View PostHog DPA
                 </a>
+              </li>
+              <li>
+                <strong>Microsoft Clarity</strong> &mdash; Session recording and heatmap analytics.
+                Loaded from Microsoft only after you grant analytics consent. Microsoft&apos;s handling
+                of this data is governed by its own published Clarity terms and privacy documentation.
               </li>
               <li>
                 <strong>Pokemon Showdown</strong> &mdash; Sprite images are loaded client-side from
@@ -257,10 +285,13 @@ export default function PrivacyPage() {
                 from consent requirements.
               </li>
               <li>
-                <strong>Analytics cookies</strong> &mdash; Vercel Analytics and PostHog cookies are
+                <strong>Analytics cookies</strong> &mdash; PostHog and Microsoft Clarity cookies are
                 only set when you grant consent through our cookie banner. PostHog uses cookies to
-                link page views into sessions and identify returning users. You can change your
-                preferences at any time using the &quot;Cookie Settings&quot; link in the footer.
+                link page views into sessions and identify returning users; Microsoft Clarity uses a
+                first-party cookie to join the pages of a single visit into one session recording.
+                Until you consent, PostHog stores nothing in your browser and Microsoft Clarity is
+                not started at all. You can change your preferences at any time using the
+                &quot;Cookie Settings&quot; link in the footer.
               </li>
             </ul>
           </section>

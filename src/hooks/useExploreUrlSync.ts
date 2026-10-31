@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { SearchCategory } from "@/components/explore/ExploreFilters";
 
 export interface FilterState {
@@ -106,26 +106,49 @@ export function useExploreUrlSync(): ExploreUrlSyncResult {
     return parseFiltersFromUrl(window.location.search);
   });
 
-  // Sync state -> URL on every filter change
+  // Sync state -> URL on filter change.
+  //
+  // Debounced + de-duped on purpose: this used to call replaceState on every
+  // keystroke in the search box. Browsers cap history.replaceState() at ~100
+  // calls / 30s and throw SecurityError past that — trivially hit by typing a
+  // search query. Coalescing bursts into a single write (and skipping no-op
+  // writes when the URL already matches) keeps us well under the cap while
+  // still landing on the correct shareable URL once the user pauses.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const search = buildUrlSearch(filters);
     const newUrl = search ? `${window.location.pathname}?${search}` : window.location.pathname;
-    window.history.replaceState({}, "", newUrl);
+    if (newUrl === window.location.pathname + window.location.search) return;
+    const id = window.setTimeout(() => {
+      // Re-check at write time — another effect run may have already synced it.
+      if (newUrl !== window.location.pathname + window.location.search) {
+        window.history.replaceState({}, "", newUrl);
+      }
+    }, 300);
+    return () => window.clearTimeout(id);
   }, [filters]);
 
-  const setQuery = (v: string) => setFilters((f) => ({ ...f, query: v }));
-  const setSort = (v: FilterState["sort"]) => setFilters((f) => ({ ...f, sort: v }));
-  const setSearchCategory = (v: SearchCategory) => setFilters((f) => ({ ...f, searchCategory: v }));
-  const setRegulation = (v: string) => setFilters((f) => ({ ...f, regulation: v }));
-  const setEventType = (v: string) => setFilters((f) => ({ ...f, eventType: v }));
-  const setArchetype = (v: string) => setFilters((f) => ({ ...f, archetype: v }));
-  const setSpecies = (v: string) => setFilters((f) => ({ ...f, species: v }));
-  const setExcludeSpecies = (v: string) => setFilters((f) => ({ ...f, excludeSpecies: v }));
-  const setPlacement = (v: string) => setFilters((f) => ({ ...f, placement: v }));
-  const setFollowingOnly = (v: boolean) => setFilters((f) => ({ ...f, followingOnly: v }));
-  const setTournamentMode = (v: boolean) => setFilters((f) => ({ ...f, tournamentMode: v }));
-  const setHasRental = (v: boolean) => setFilters((f) => ({ ...f, hasRental: v }));
+  // Setters must be identity-stable AND bail out on no-op values. The old
+  // plain arrows were recreated every render and always produced a new
+  // filters object — combined with ExploreFilters' debounce effect (which
+  // lists onQueryChange in its deps) that formed a perpetual 300ms
+  // re-render loop on /explore from mount, without any user input.
+  const makeSetter = <K extends keyof FilterState>(key: K) =>
+    (v: FilterState[K]) => setFilters((f) => (f[key] === v ? f : { ...f, [key]: v }));
+  /* eslint-disable react-hooks/exhaustive-deps */
+  const setQuery = useCallback(makeSetter("query"), []);
+  const setSort = useCallback(makeSetter("sort"), []);
+  const setSearchCategory = useCallback(makeSetter("searchCategory"), []);
+  const setRegulation = useCallback(makeSetter("regulation"), []);
+  const setEventType = useCallback(makeSetter("eventType"), []);
+  const setArchetype = useCallback(makeSetter("archetype"), []);
+  const setSpecies = useCallback(makeSetter("species"), []);
+  const setExcludeSpecies = useCallback(makeSetter("excludeSpecies"), []);
+  const setPlacement = useCallback(makeSetter("placement"), []);
+  const setFollowingOnly = useCallback(makeSetter("followingOnly"), []);
+  const setTournamentMode = useCallback(makeSetter("tournamentMode"), []);
+  const setHasRental = useCallback(makeSetter("hasRental"), []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   return {
     ...filters,

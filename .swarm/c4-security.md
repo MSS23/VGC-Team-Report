@@ -1,262 +1,222 @@
-# Security Audit — VGC Team Report
-**Date:** 2026-05-09  
-**Auditor:** Claude Code (Security Engineer role)  
-**Scope:** Full codebase at `/home/user/VGC-Team-Report`
+# C4 Security Audit — VGC Team Report
+**Date:** 2026-05-14
+**Scope:** src/app/api/, src/lib/
 
 ---
 
-## Summary
+## FINDING 1 — VGC-173 RESOLVED: HogQL Injection Already Patched
 
-12 npm vulnerabilities (3 Critical, 6 High, 3 Moderate). Two Critical CVEs directly affect auth (Clerk middleware bypass). Several medium-risk issues in API design and CSP configuration. No plaintext secrets found in source. SQL injection risk is low (parameterized queries used throughout). Overall security posture is reasonable but the Clerk vulnerabilities require immediate patching.
+**Severity:** INFO (previously HIGH — now fixed)
+**File:** `src/app/api/webhooks/posthog/route.ts`
 
----
+Linear ticket VGC-173 described a HogQL injection at lines 33-34 using string interpolation and a naive `replace(/'/g, '')` quote-strip. **This vulnerability is NOT present in the current codebase.** The code was already patched.
 
-## Findings
-
-### CRITICAL-1: Clerk Auth Middleware Bypass (GHSA-vqx2-fgx2-5wq9)
-**Severity:** Critical  
-**Package:** `@clerk/nextjs`, `@clerk/shared`  
-**File:** `src/middleware.ts`, all `/api/user/*` routes
-
-The installed version of `@clerk/nextjs` has a confirmed vulnerability where middleware-based route protection can be bypassed. Since the application relies on Clerk middleware (`clerkMiddleware`) in `src/middleware.ts` as the primary auth gate for all `/api/user/*` routes (delete account, export data, drafts, analytics, feed, saved, etc.), an attacker who can exploit this bypass could access any authenticated user's private data or delete accounts without credentials.
-
-**CVE:** GHSA-vqx2-fgx2-5wq9 — "Official Clerk JavaScript SDKs: Middleware-based route protection bypass"  
-**Recommendation:** Run `npm update @clerk/nextjs @clerk/backend @clerk/react @clerk/shared` immediately and verify the patched version resolves these CVEs.
-
----
-
-### CRITICAL-2: Clerk Authorization Bypass for Combined Permission Checks (GHSA-w24r-5266-9c3c)
-**Severity:** Critical  
-**Package:** `@clerk/nextjs`, `@clerk/backend`, `@clerk/react`, `@clerk/shared`
-
-A second Clerk CVE (GHSA-w24r-5266-9c3c) allows authorization bypass when combining organization, billing, or reverification checks. All four Clerk packages are affected. This is particularly relevant if any route combines Clerk auth with role/org checks.
-
-**Recommendation:** Same fix as CRITICAL-1 — update all `@clerk/*` packages.
-
----
-
-### CRITICAL-3: Arbitrary Code Execution in protobufjs (GHSA-xq3m-2v4x-88gg)
-**Severity:** Critical  
-**Package:** `protobufjs` (transitive dependency)
-
-protobufjs has a known arbitrary code execution vulnerability via prototype pollution. This is a transitive dependency (likely pulled in by a monitoring or gRPC library). While exploitation requires attacker-controlled protobuf input, the severity is Critical.
-
-**Recommendation:** Identify which direct dependency pulls in protobufjs (`npm ls protobufjs`) and update it.
-
----
-
-### HIGH-1: Axios — Multiple CVEs including SSRF, Prototype Pollution, Header Injection
-**Severity:** High  
-**Package:** `axios` (direct dependency)  
-**Files:** Any route using axios for outbound HTTP
-
-The installed axios version has 14+ CVEs including:
-- SSRF via NO_PROXY bypass (GHSA-3p68-rc4w-qgx5, GHSA-m7pr-hjqh-92cm)
-- Prototype pollution gadgets enabling credential injection and request hijacking (GHSA-q8qp-cvcw-x6jj, GHSA-pf86-5x62-jrwf)
-- CRLF injection in multipart/form-data (GHSA-445q-vr5w-6q77)
-- Authentication bypass via prototype pollution (GHSA-w9j2-pvgh-6h63)
-- Header injection via prototype pollution (GHSA-6chq-wfr3-2hj9)
-
-**Recommendation:** `npm update axios` to latest patched version.
-
----
-
-### HIGH-2: Next.js Denial of Service with Server Components (GHSA-q4gf-8mx6-v5v3)
-**Severity:** High  
-**Package:** `next` (direct dependency)
-
-The installed Next.js version is vulnerable to DoS via specially crafted Server Component requests. On a Vercel Pro plan with build minute budgets, a sustained DoS attack could also exhaust serverless function invocations.
-
-**Recommendation:** `npm update next` to the patched version.
-
----
-
-### HIGH-3: Secret Exposed in URL Query Parameter — `/api/bot`
-**Severity:** High  
-**File:** `src/app/api/bot/route.ts`, line 35
-
-```ts
-const secret = request.nextUrl.searchParams.get("secret");
+**Current (safe) implementation (lines 46-52):**
+```typescript
+query:
+  "SELECT event, timestamp, properties FROM events WHERE properties.$session_id = {session_id} AND timestamp <= {before_ts} ORDER BY timestamp DESC LIMIT 15",
+values: { session_id: sessionId, before_ts: beforeTimestamp },
 ```
 
-The bot endpoint authenticates callers by reading `CRON_SECRET` from the URL query string (`?secret=...`). Query parameters are logged in:
-- Vercel access logs
-- CDN/reverse proxy logs
-- Browser history if ever triggered from a browser
-- Any monitoring or observability tool that captures full URLs
+Variables are bound via PostHog's `values` parameter map — never interpolated into the query string. Additionally, `sessionId` is validated against a strict UUID regex before use (lines 28-29):
+```typescript
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+if (!UUID_RE.test(sessionId)) return [];
+```
 
-This means the `CRON_SECRET` is effectively logged in plaintext.
-
-**Recommendation:** Move the secret to the `Authorization: Bearer <secret>` header, consistent with how other cron routes (e.g., `/api/cron/daily-ops`) handle it via `isCronAuthorized()`.
+No remediation needed.
 
 ---
 
-### HIGH-4: Linear Webhook — No Signature Verification
-**Severity:** High  
-**File:** `src/app/api/webhooks/linear/route.ts`
+## FINDING 2 — GraphQL String Interpolation in Cron Routes (LOW-MEDIUM)
 
-The Linear webhook endpoint has no HMAC signature verification. Any actor who discovers the endpoint URL can send arbitrary webhook payloads, including spoofed `url_verification` challenges. Linear supports webhook signing via an `X-Linear-Signature` header using HMAC-SHA256.
+**Severity:** LOW-MEDIUM
+**Files:**
+- `src/app/api/cron/daily-ops/route.ts:84`
+- `src/app/api/cron/weekly-report/route.ts:30-32`
 
-```ts
-// Current code — no signature check at all
-export async function POST(request: Request) {
-  const body = await request.json();
-  if (body.type === "url_verification") {
-    return NextResponse.json({ challenge: body.challenge });
-  }
-  return NextResponse.json({ ok: true });
+Several cron routes build Linear GraphQL queries via template literal interpolation of environment-sourced values:
+
+**daily-ops/route.ts line 84:**
+```typescript
+query: `{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title updatedAt } } } }`,
+```
+
+**weekly-report/route.ts lines 30-32:**
+```typescript
+const completed = await query(`{ team(id: "${teamId}") { issues(filter: { state: { type: { eq: "completed" } }, completedAt: { gte: "${oneWeekAgo}" } }, first: 50) { nodes { identifier title } } } }`);
+const inProgress = await query(`{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title } } } }`);
+const inReview   = await query(`{ team(id: "${teamId}") { issues(filter: { state: { name: { eq: "In Review" } } }, first: 50) { nodes { identifier title } } } }`);
+```
+
+**Risk assessment:** `teamId` and `oneWeekAgo` are both sourced exclusively from `process.env` and `new Date()` — not from user input. Exploitability is low in the current threat model. However, the pattern is fragile: if a future refactor passes `teamId` from a request parameter, injection becomes possible.
+
+**Contrast:** `getOrCreateOpsLabel()` in `daily-ops/route.ts` (lines 173, 183-188) correctly uses GraphQL `$variables` for the same Linear API — inconsistent pattern within the same file.
+
+**Proposed fix — use GraphQL variables consistently:**
+```typescript
+// Instead of:
+body: JSON.stringify({
+  query: `{ team(id: "${teamId}") { ... } }`,
+})
+
+// Use:
+body: JSON.stringify({
+  query: `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title updatedAt } } } }`,
+  variables: { teamId },
+})
+```
+
+---
+
+## FINDING 3 — VGC-174 CONFIRMED: Timing-Safe Bot Auth Applied Correctly
+
+**Severity:** INFO (fix verified)
+**File:** `src/app/api/bot/route.ts:44-47`
+
+The bot route uses `crypto.timingSafeEqual` correctly to prevent timing oracle attacks on the CRON_SECRET:
+```typescript
+const { timingSafeEqual } = await import("crypto");
+const aLen = Math.max(authHeader.length, expected.length);
+if (!timingSafeEqual(Buffer.from(authHeader.padEnd(aLen)), Buffer.from(expected.padEnd(aLen))) || authHeader.length !== expected.length) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 ```
 
-Although the current handler only does URL verification (no business logic), this is a security gap if the handler is ever extended.
+The padding + length check combination is sound — constant-time compare on padded buffers, then explicit length check to reject wrong-length inputs that would pass the padded comparison.
 
-**Recommendation:** Add HMAC-SHA256 verification using `LINEAR_WEBHOOK_SECRET` env var before processing any payload.
+**Secondary finding — `isCronAuthorized()` uses naive string comparison (LOW):**
 
----
-
-### HIGH-5: vite — Path Traversal and File Read CVEs (dev dependency)
-**Severity:** High (dev-only risk)  
-**Package:** `vite` (dev dependency)
-
-Multiple vite CVEs: path traversal in optimized deps `.map` handling (GHSA-4w7w-66w2-5vf9), `server.fs.deny` bypass (GHSA-v2wj-q39q-566r), arbitrary file read via dev server WebSocket (GHSA-p9ff-h696-f583). These only apply to the local development server; production Vercel deployments are not affected.
-
-**Recommendation:** `npm update vite` — low urgency for production, but high urgency for developer machines.
-
----
-
-### MEDIUM-1: CSP Contains `unsafe-inline` and `unsafe-eval` in `script-src`
-**Severity:** Medium  
-**File:** `next.config.ts`, line 81
-
-```
-"script-src 'self' 'unsafe-inline' 'unsafe-eval' ..."
+`src/lib/cron-auth.ts:10` uses a simple `===` comparison:
+```typescript
+return authHeader === `Bearer ${cronSecret}`;
 ```
 
-Both `'unsafe-inline'` and `'unsafe-eval'` are present in `script-src`, which significantly weakens the XSS protection provided by CSP. While `dangerouslySetInnerHTML` is used for the dark-mode init script in `layout.tsx` (which renders only static, hardcoded values from a predefined map), the presence of `'unsafe-eval'` allows any injected script to call `eval()`.
+This function is used by `daily-ops`, `weekly-report`, `posthog-errors`, and `cleanup` cron routes. The bot route correctly does its own timing-safe check and does NOT use `isCronAuthorized()`. The cron routes using `isCronAuthorized()` are only callable by Vercel's cron infrastructure (reducing practical exploitability), but the inconsistency is a hazard.
 
-**Recommendation:** Replace `'unsafe-inline'` with a nonce-based or hash-based approach for the dark-mode init script. Remove `'unsafe-eval'` if not strictly required by Clerk/Sentry SDKs.
+**Proposed fix for `src/lib/cron-auth.ts`:**
+```typescript
+import { timingSafeEqual } from "crypto";
 
----
+export function isCronAuthorized(request: Request): boolean {
+  const authHeader = request.headers.get("authorization") ?? "";
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) return false;
 
-### MEDIUM-2: `Cross-Origin-Opener-Policy` Set to `unsafe-none`
-**Severity:** Medium  
-**File:** `next.config.ts`, line 61
-
-```ts
-key: "Cross-Origin-Opener-Policy",
-value: "unsafe-none",  // Required for Clerk OAuth popups
+  const expected = `Bearer ${cronSecret}`;
+  if (authHeader.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected));
+}
 ```
 
-`COOP: unsafe-none` disables cross-origin isolation, which enables Spectre-style side-channel attacks from other tabs and prevents use of `SharedArrayBuffer`. The comment correctly notes this is required for Clerk OAuth popups. However, this is a known trade-off worth documenting.
+---
 
-**Recommendation:** Track Clerk's roadmap for COOP-compatible OAuth flows. No immediate action needed, but document the risk.
+## FINDING 4 — Hardcoded Linear Label UUIDs (INFO)
+
+**Severity:** INFO
+**Files:**
+- `src/app/api/webhooks/posthog/route.ts:407-413`
+- `src/app/api/cron/posthog-errors/route.ts:25-27`
+
+Linear label IDs are hardcoded as UUIDs in both files:
+```typescript
+const LABELS = {
+  bug: "bbd03f4e-be6f-4617-ad7d-b9fdc596ce5c",
+  improvement: "06d28974-98c3-457a-bbab-ab85456e51f0",
+  webApp: "1f355942-6143-47a8-93be-4a5cbe0de0b0",
+  mobile: "5389312c-66f8-4ced-a840-ff3cd46b68aa",
+  analytics: "a13703f8-0865-4a6d-b74c-56a7abc2f563",
+  infrastructure: "a0e2ddf6-557d-4164-b049-a4ee36ee342f",
+};
+```
+
+These are Linear workspace-internal label IDs — not secrets (no auth capability, no token). Safe to commit. No remediation needed.
 
 ---
 
-### MEDIUM-3: `dangerouslySetInnerHTML` in JsonLd Component — Potential XSS if Input is User-Controlled
-**Severity:** Medium  
+## FINDING 5 — No Hardcoded API Keys or Secrets Found
+
+**Severity:** INFO (pass)
+
+A scan of all files in `src/lib/` and `src/app/api/` found no hardcoded API keys, tokens, passwords, or secrets. All sensitive values are correctly read from `process.env`. No remediation needed.
+
+---
+
+## FINDING 6 — SSRF: Sprite and PokePaste Proxies Are Properly Allow-Listed
+
+**Severity:** INFO (pass)
+**Files:** `src/app/api/sprite/route.ts`, `src/app/api/pokepaste/route.ts`
+
+The sprite proxy enforces host and path allow-lists before fetching:
+```typescript
+const ALLOWED_HOSTS = new Set(["play.pokemonshowdown.com"]);
+if (!ALLOWED_HOSTS.has(target.hostname)) return new NextResponse("Host not allowed", { status: 400 });
+if (!target.pathname.startsWith("/sprites/")) return new NextResponse("Path not allowed", { status: 400 });
+```
+
+The PokePaste proxy enforces `hostname === "pokepast.es"` via Zod schema validation. No SSRF risk.
+
+---
+
+## FINDING 7 — XSS: JSON-LD Script Injection Properly Mitigated
+
+**Severity:** INFO (pass)
 **File:** `src/components/seo/JsonLd.tsx`
 
-```tsx
-dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+`dangerouslySetInnerHTML` is used to inject JSON-LD but the output is escaped:
+```typescript
+const safe = JSON.stringify(data).replace(/<\/script>/gi, "<\\/script>");
 ```
 
-`JSON.stringify` does NOT escape HTML special characters by default. If any user-controlled string (e.g., `creatorName`, `tournamentName`, `teamSummary`) reaches this component and contains `</script>`, it can break out of the JSON-LD script block and execute arbitrary HTML/JS.
+This prevents `</script>` tag injection. Commit `58b5c7a` (VGC-174) applied this fix. Valid mitigation.
 
-Example: a `creatorName` of `"</script><script>alert(1)</script>"` would produce:
-```html
-<script type="application/ld+json">{"creatorName":"</script><script>alert(1)</script>"}</script>
+---
+
+## FINDING 8 — PostHog Webhook: Non-Timing-Safe Token Comparison (LOW)
+
+**Severity:** LOW
+**File:** `src/app/api/webhooks/posthog/route.ts:170-172`
+
+The PostHog webhook verifies the shared token using direct string equality:
+```typescript
+const token = request.headers.get("x-posthog-token");
+if (!process.env.POSTHOG_WEBHOOK_SECRET || token !== process.env.POSTHOG_WEBHOOK_SECRET) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
 ```
 
-**Recommendation:** Use a JSON serializer that escapes `<`, `>`, and `&`:
-```ts
-const safe = JSON.stringify(data).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+Susceptible to timing oracle attacks. Practical exploitability is low (network jitter dominates timing), but the fix is trivial given that `bot/route.ts` already sets the pattern.
+
+**Proposed fix:**
+```typescript
+import { timingSafeEqual } from "crypto";
+
+const token = request.headers.get("x-posthog-token") ?? "";
+const secret = process.env.POSTHOG_WEBHOOK_SECRET;
+if (!secret) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+if (token.length !== secret.length || !timingSafeEqual(Buffer.from(token), Buffer.from(secret))) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
 ```
 
 ---
 
-### MEDIUM-4: fast-uri Path Traversal (GHSA-q3j6-qgpj-74h6)
-**Severity:** Medium  
-**Package:** `fast-uri` (likely transitive via Sentry or a validation library)
+## Summary Table
 
-Vulnerable to path traversal via percent-encoded dot segments and host confusion via percent-encoded authority delimiters. Impact depends on whether this library is used to parse attacker-controlled URLs.
+| # | Finding | Severity | Status | File |
+|---|---------|----------|--------|------|
+| 1 | VGC-173 HogQL injection | ~~HIGH~~ INFO | Fixed | webhooks/posthog/route.ts |
+| 2 | GraphQL string interpolation in cron (env-only values) | LOW-MEDIUM | Open | cron/daily-ops:84, cron/weekly-report:30-32 |
+| 3 | VGC-174 timing-safe bot auth | INFO | Verified ✓ | api/bot/route.ts:44-47 |
+| 3b | `isCronAuthorized()` naive `===` compare | LOW | Open | lib/cron-auth.ts:10 |
+| 4 | Hardcoded Linear label UUIDs | INFO | Acceptable | webhooks/posthog, cron/posthog-errors |
+| 5 | Hardcoded API keys/secrets | INFO | None found ✓ | All |
+| 6 | SSRF via sprite/pokepaste proxy | INFO | Mitigated ✓ | api/sprite, api/pokepaste |
+| 7 | XSS via JSON-LD injection | INFO | Fixed ✓ | components/seo/JsonLd.tsx |
+| 8 | PostHog webhook non-timing-safe compare | LOW | Open | webhooks/posthog/route.ts:170-172 |
 
-**Recommendation:** `npm update` to pull in a fixed transitive version.
+## Recommended Actions (Prioritized)
 
----
-
-### MEDIUM-5: dompurify — Moderate Vulnerability
-**Severity:** Moderate  
-**Package:** `dompurify` (direct dependency)
-
-A moderate severity vulnerability exists in the installed dompurify version. DOMPurify is the primary XSS sanitizer — any weakness here directly increases XSS risk for any content it sanitizes.
-
-**Recommendation:** `npm update dompurify` immediately, given its critical security role.
-
----
-
-### LOW-1: Discord Public Key Hardcoded in Source
-**Severity:** Low  
-**File:** `src/app/api/discord/route.ts`, line 6
-
-```ts
-const DISCORD_PUBLIC_KEY = "44b2cb02932ad5b5eae681352246314ffb23ecd299c2490d7875d5883e5596ae";
-```
-
-The Discord application's Ed25519 public key is hardcoded directly in source. This is a public key (not a secret), so there's no direct security risk — it cannot be used to forge signatures. However, if the Discord app is ever re-created or the key rotated, this requires a code change and redeployment rather than an env var update.
-
-**Recommendation:** Move to `process.env.DISCORD_PUBLIC_KEY` for operational flexibility. Low priority.
-
----
-
-### LOW-2: follow-redirects — Moderate Vulnerability
-**Severity:** Low (Moderate in npm)  
-**Package:** `follow-redirects` (transitive)
-
-Moderate vulnerability in follow-redirects. This library handles HTTP redirects for axios/node-fetch. The specific CVE details weren't fully resolved but this is patched in newer versions.
-
-**Recommendation:** Updating axios (HIGH-1) should transitively fix this.
-
----
-
-### LOW-3: postcss — Moderate Vulnerability
-**Severity:** Low  
-**Package:** `postcss` (dev dependency, build-time only)
-
-Moderate vulnerability in postcss. This only affects the build pipeline, not the production runtime.
-
-**Recommendation:** `npm update postcss` — low urgency.
-
----
-
-## What Was Found to Be Good
-
-- **Parameterized SQL queries throughout**: All DB queries use tagged template literals with the `postgres` library, which parameterizes inputs automatically. No SQL injection risk found.
-- **Zod validation on most POST routes**: 19 of 48 API routes use Zod schema validation. All high-risk mutation routes were checked.
-- **Rate limiting via `apiGuard`**: The `apiGuard` wrapper applies per-IP rate limiting (via Upstash) consistently across most public-facing endpoints.
-- **CSRF double-submit cookie**: Middleware validates CSRF tokens for cross-origin state-changing requests.
-- **CORS enforcement**: Unknown origins are blocked at the middleware level.
-- **HSTS with preload**: `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` correctly configured.
-- **X-Frame-Options DENY + frame-ancestors none**: Double protection against clickjacking.
-- **No hardcoded secrets in source**: All secrets (API keys, DB credentials) are properly read from `process.env`.
-- **Discord webhook uses Ed25519 signature verification**: The Discord route correctly verifies cryptographic signatures using `tweetnacl`.
-- **Bot detection and suspicious request filtering** in middleware.
-- **Canonical redirect** prevents staging URL leakage.
-
----
-
-## Prioritized Action List
-
-| Priority | Finding | Action |
-|----------|---------|--------|
-| P0 | CRITICAL-1, CRITICAL-2 | `npm update @clerk/nextjs @clerk/backend @clerk/react @clerk/shared` |
-| P0 | MEDIUM-3 | Fix JsonLd XSS — escape `<>& ` in JSON.stringify output |
-| P1 | HIGH-3 | Move `/api/bot` secret from query param to Authorization header |
-| P1 | HIGH-1 | `npm update axios` |
-| P1 | MEDIUM-5 | `npm update dompurify` |
-| P2 | HIGH-4 | Add HMAC-SHA256 verification to Linear webhook |
-| P2 | CRITICAL-3 | Identify and update protobufjs parent dependency |
-| P2 | HIGH-2 | `npm update next` |
-| P3 | MEDIUM-1 | Replace `unsafe-inline`/`unsafe-eval` in CSP with nonces/hashes |
-| P4 | HIGH-5, LOW-2, LOW-3 | `npm update vite postcss` (dev/transitive) |
-| P4 | LOW-1 | Move Discord public key to env var |
+1. **Update `src/lib/cron-auth.ts`** to use `timingSafeEqual` — 5-minute fix affecting 4 cron routes.
+2. **Update PostHog webhook token check** (`webhooks/posthog/route.ts:170-172`) to use `timingSafeEqual`.
+3. **Refactor cron GraphQL queries** to use `$variables` pattern consistently (daily-ops:84, weekly-report:30-32) — eliminates injection risk entirely if env vars are ever replaced with request-derived data.

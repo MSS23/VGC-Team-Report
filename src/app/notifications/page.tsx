@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { NotificationsContent } from "./NotificationsContent";
 
 export const metadata: Metadata = {
-  title: "Notifications | VGC Team Report",
+  title: "Notifications",
   description: "Your activity notifications.",
   robots: { index: false, follow: false },
 };

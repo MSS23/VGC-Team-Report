@@ -8,12 +8,11 @@ export type SyncStatus = "idle" | "connecting" | "syncing" | "synced" | "conflic
 interface UseCollaborativeSyncOptions {
   /** The share ID being edited */
   shareId: string | null;
-  /** The edit key for authorization */
-  editKey: string | null;
   /** Whether collaborative sync is enabled (must be in an editable shared view) */
   enabled: boolean;
   /** Called when a newer version is available from the server */
-  onRemoteUpdate: (state: ShareableState) => void;
+  onRemoteUpdate: (state: ShareableState, version: number) => void;
+  getVersion?: () => number;
 }
 
 /**
@@ -24,28 +23,36 @@ interface UseCollaborativeSyncOptions {
  */
 export function useCollaborativeSync({
   shareId,
-  editKey,
   enabled,
   onRemoteUpdate,
+  getVersion,
 }: UseCollaborativeSyncOptions) {
   const [collaborators, setCollaborators] = useState(0);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [lastRemoteUpdate, setLastRemoteUpdate] = useState<number | null>(null);
   const versionRef = useRef<number>(0);
-  const isSaving = useRef(false);
+  const savesInFlight = useRef(0);
+  const pendingRemote = useRef<{ version: number; state: ShareableState } | null>(null);
   const onRemoteUpdateRef = useRef(onRemoteUpdate);
   onRemoteUpdateRef.current = onRemoteUpdate;
-
-  /** Mark that we're about to save — ignore the next version event to avoid self-triggering */
-  const markSaving = useCallback(() => {
-    isSaving.current = true;
+  const getVersionRef = useRef(getVersion);
+  getVersionRef.current = getVersion;
+  const applyRemote = useCallback((event: { version: number; state: ShareableState }) => {
+    if (event.version <= versionRef.current) return;
+    versionRef.current = event.version;
+    setLastRemoteUpdate(Date.now());
+    onRemoteUpdateRef.current(event.state, event.version);
+    setSyncStatus("synced");
   }, []);
-
-  /** Update our known version after a successful save */
-  const updateVersion = useCallback((version: number) => {
-    versionRef.current = version;
-    isSaving.current = false;
-  }, []);
+  const markSaving = useCallback(() => { savesInFlight.current++; }, []);
+  const updateVersion = useCallback((version?: number) => {
+    savesInFlight.current = Math.max(0, savesInFlight.current - 1);
+    if (typeof version === "number") versionRef.current = Math.max(versionRef.current, version);
+    if (!savesInFlight.current && pendingRemote.current) {
+      const pending = pendingRemote.current; pendingRemote.current = null;
+      applyRemote(pending);
+    }
+  }, [applyRemote]);
 
   /** Generate a stable session ID for presence tracking */
   const sessionIdRef = useRef<string>("");
@@ -54,12 +61,14 @@ export function useCollaborativeSync({
   }
 
   useEffect(() => {
-    if (!enabled || !shareId || !editKey) {
+    if (!enabled || !shareId) {
       setSyncStatus("idle");
       setCollaborators(0);
       return;
     }
 
+    versionRef.current = getVersionRef.current?.() ?? 0;
+    pendingRemote.current = null; savesInFlight.current = 0;
     let eventSource: EventSource | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let retryCount = 0;
@@ -69,7 +78,6 @@ export function useCollaborativeSync({
       if (disposed) return;
 
       const params = new URLSearchParams({
-        key: editKey!,
         session: sessionIdRef.current,
         ...(versionRef.current > 0 ? { since: String(versionRef.current) } : {}),
       });
@@ -81,20 +89,17 @@ export function useCollaborativeSync({
       eventSource = es;
 
       es.addEventListener("version", (e) => {
-        if (isSaving.current) return;
-
         try {
           const { version, state } = JSON.parse(e.data);
-          if (version > versionRef.current) {
-            versionRef.current = version;
-            setSyncStatus("syncing");
-            setLastRemoteUpdate(Date.now());
-            onRemoteUpdateRef.current(state as ShareableState);
-            setSyncStatus("synced");
-            setTimeout(() => {
-              if (!disposed) setSyncStatus("idle");
-            }, 3000);
+          if (version <= versionRef.current) return; // already known — nothing new
+
+          // Queue while saving. Once the POST returns its exact version, discard
+          // only that version's echo; another editor's newer save must survive.
+          if (savesInFlight.current) {
+            if (!pendingRemote.current || version > pendingRemote.current.version) pendingRemote.current = { version, state };
+            return;
           }
+          applyRemote({ version, state });
         } catch {
           // Malformed event — ignore
         }
@@ -137,7 +142,7 @@ export function useCollaborativeSync({
       eventSource?.close();
       if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [enabled, shareId, editKey]);
+  }, [enabled, shareId, applyRemote]);
 
   return { collaborators, syncStatus, lastRemoteUpdate, markSaving, updateVersion };
 }

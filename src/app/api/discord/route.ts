@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
 import nacl from "tweetnacl";
 
 const LINEAR_API = "https://api.linear.app/graphql";
@@ -20,13 +21,52 @@ function getTeamId() {
 }
 
 async function linearQuery(query: string, variables?: Record<string, unknown>) {
-  const res = await fetch(LINEAR_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: getLinearAuth() },
-    body: JSON.stringify({ query, ...(variables ? { variables } : {}) }),
-  });
+  const res = await fetchWithTimeout(
+    LINEAR_API,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: getLinearAuth() },
+      body: JSON.stringify({ query, ...(variables ? { variables } : {}) }),
+    },
+    10000,
+  );
   return res.json();
 }
+
+// Discord user/role IDs allowed to run mutating commands (approve/reject).
+// Comma-separated list of Discord snowflake IDs in DISCORD_ADMIN_USER_IDS
+// (user IDs) and/or DISCORD_ADMIN_ROLE_IDS (role IDs). An invoker is
+// authorized if their user ID is in the user allowlist OR they hold any role
+// in the role allowlist.
+function parseIdList(value: string | undefined): Set<string> {
+  return new Set((value ?? "").split(",").map((s) => s.trim()).filter(Boolean));
+}
+
+/**
+ * Whether the interaction invoker may run state-changing commands.
+ * Signature verification proves the request came from Discord, but not who
+ * invoked the command — so we gate mutations on an explicit allowlist.
+ */
+function isAuthorizedInvoker(body: {
+  member?: { user?: { id?: string }; roles?: string[] };
+  user?: { id?: string };
+}): boolean {
+  const allowedUsers = parseIdList(process.env.DISCORD_ADMIN_USER_IDS);
+  const allowedRoles = parseIdList(process.env.DISCORD_ADMIN_ROLE_IDS);
+
+  // Fail closed: if no allowlist is configured, no one is authorized to mutate.
+  if (allowedUsers.size === 0 && allowedRoles.size === 0) return false;
+
+  // In guilds the invoker is body.member.user; in DMs it's body.user.
+  const userId = body.member?.user?.id ?? body.user?.id;
+  if (userId && allowedUsers.has(userId)) return true;
+
+  const roles = body.member?.roles ?? [];
+  return roles.some((r) => allowedRoles.has(r));
+}
+
+// Commands that change Linear/pipeline state require an authorized invoker.
+const MUTATING_COMMANDS = new Set(["approve", "reject"]);
 
 /**
  * POST /api/discord — Discord interaction endpoint
@@ -66,6 +106,20 @@ export async function POST(request: NextRequest) {
   const command = body.data?.name;
   const options = body.data?.options ?? [];
   const getOption = (name: string) => options.find((o: { name: string }) => o.name === name)?.value as string | undefined;
+
+  // Signature verification proves the request is from Discord, not WHO invoked
+  // it. Mutating commands (approve/reject) drive the autonomous-build pipeline,
+  // so restrict them to an allowlist of admin user/role IDs. Reject with an
+  // ephemeral (flags: 64) message so only the invoker sees it.
+  if (MUTATING_COMMANDS.has(command) && !isAuthorizedInvoker(body)) {
+    return NextResponse.json({
+      type: CHANNEL_MESSAGE,
+      data: {
+        content: "You are not authorized to run this command.",
+        flags: 64,
+      },
+    });
+  }
 
   try {
     if (command === "summary") {

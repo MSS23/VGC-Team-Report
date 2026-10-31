@@ -49,6 +49,9 @@ export const RESTRICTED_LEGENDARIES = new Set<string>([
   "reshiram",
   "zekrom",
   "kyurem",
+  "xerneas",
+  "yveltal",
+  "zygarde",
   "cosmog",
   "cosmoem",
   "solgaleo",
@@ -331,6 +334,9 @@ export function getRegulationLookupKey(species: string): string {
     .replace(/-dusk-mane$/, "")
     .replace(/-dawn-wings$/, "")
     .replace(/-ultra$/, "")
+    .replace(/-(10|50|complete)$/, "")
+    .replace(/-terastal$/, "")
+    .replace(/-stellar$/, "")
     .replace(/-rapid-strike$/, "")
     .replace(/-single-strike$/, "")
     .replace(/-hero$/, "")

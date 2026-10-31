@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { MEGA_BY_SLUG, getRegMAMegasWithSprites } from "@/lib/data/mega-pokemon";
+import { notFound, permanentRedirect } from "next/navigation";
+import { MEGA_BY_SLUG, megaSlugForSpecies, getMegaRegulation, getMegaLegalInLabel, getRegMCMegasWithSprites } from "@/lib/data/mega-pokemon";
 import { lookupPokemon } from "@/lib/data/pokemon";
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
@@ -15,12 +15,40 @@ import type { ExploreReport } from "@/components/explore/ReportCard";
 export const revalidate = 3600;
 
 export function generateStaticParams() {
-  // Only build landing pages for Megas that BOTH (a) are legal in Reg M-A
-  // AND (b) have a confirmed Showdown sprite. Sprite-less Megas would
-  // render as a broken-image page, so they're surfaced only as "Coming
-  // Soon" non-clickable cards on the /champions index until Showdown
+  // Only build landing pages for Megas that BOTH (a) are legal in the current
+  // Champions regulation AND (b) have a confirmed Showdown sprite. Sprite-less
+  // Megas would render as a broken-image page, so they're surfaced only as
+  // "Coming Soon" non-clickable cards on the /champions index until Showdown
   // ships the sprite.
-  return getRegMAMegasWithSprites().map((m) => ({ pokemon: m.slug }));
+  //
+  // This MUST track the widest live regulation, not M-A. When it was pinned to
+  // getRegMAMegasWithSprites() the 14 sprited Reg M-B Megas were never
+  // prerendered, never sitemapped and never linked (VGC-258) — they only
+  // resolved on demand via dynamicParams, i.e. invisible to crawlers.
+  return getRegMCMegasWithSprites().map((m) => ({ pokemon: m.slug }));
+}
+
+/**
+ * Regulation phrasing for a single Mega, derived from its actual legality.
+ *
+ * Regs are nested (M-A ⊂ M-B ⊂ M-C), so a Mega is legal from the rotation that
+ * introduced it onward. These pages are statically generated, so hard-coding
+ * "Regulation M-A" (as this file used to) would publish a false legality claim
+ * on every later-rotation Mega.
+ */
+function regulationCopy(dataKey: string) {
+  const since = getMegaRegulation(dataKey);
+  const regs = (["M-A", "M-B", "M-C"] as const).filter((r) => r >= since);
+  return {
+    /** Rotation that introduced this Mega. */
+    since,
+    /** Prose form, e.g. "Regulation M-A, M-B and M-C". */
+    legalIn: getMegaLegalInLabel(dataKey),
+    /** Narrowest set of regulation keywords that is actually true. */
+    keywords: regs.map((r) => `Regulation ${r}`),
+    /** Explore deep-link filter value — the regulation this Mega debuted in. */
+    exploreRegulation: `Reg ${since}`,
+  };
 }
 
 export async function generateMetadata({
@@ -36,7 +64,8 @@ export async function generateMetadata({
   // "{Pokemon} SP spread", "{Pokemon} moveset". Keeping it under ~60 chars
   // so Google doesn't truncate in SERPs.
   const title = `${mega.displayName} VGC Guide — SP Spreads, Movesets & Teams`;
-  const description = `Complete ${mega.displayName} VGC guide for Pokemon Champions Regulation M-A: best SP spreads, movesets, damage calcs, and top competitive teams. ${mega.ability} with ${mega.megaStone}.`;
+  const reg = regulationCopy(mega.dataKey);
+  const description = `Complete ${mega.displayName} VGC guide for Pokemon Champions ${reg.legalIn}: best SP spreads, movesets, damage calcs, and top competitive teams. ${mega.ability} with ${mega.megaStone}.`;
 
   return {
     title,
@@ -50,11 +79,13 @@ export async function generateMetadata({
       type: "website",
       siteName: "VGC Team Report",
       url: `https://pokemonvgcteamreport.com/champions/${mega.slug}`,
+      images: [{ url: `/champions/${mega.slug}/opengraph-image`, width: 1200, height: 630, alt: `${mega.displayName} VGC guide` }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [{ url: `/champions/${mega.slug}/opengraph-image`, width: 1200, height: 630, alt: `${mega.displayName} VGC guide` }],
     },
     keywords: [
       mega.displayName,
@@ -69,7 +100,7 @@ export async function generateMetadata({
       `${mega.baseName} VGC`,
       `${mega.baseName} SP spread`,
       "Pokemon Champions",
-      "Regulation M-A",
+      ...reg.keywords,
       "VGC 2026",
       mega.ability,
       mega.megaStone,
@@ -119,7 +150,7 @@ async function getTeamsForPokemon(
 
     // Batch fetch like counts
     const shareIds = rows.map((r) => r.id as string);
-    let likeMap: Record<string, number> = {};
+    const likeMap: Record<string, number> = {};
     if (shareIds.length > 0) {
       const likeRows = await sql`
         SELECT share_id, COUNT(*)::int as count
@@ -164,7 +195,12 @@ export default async function MegaPokemonPage({
 }) {
   const { pokemon } = await params;
   const mega = MEGA_BY_SLUG.get(pokemon);
-  if (!mega) notFound();
+  if (!mega) {
+    // People type /champions/garchomp; send them to the Mega guide instead of a 404.
+    const megaSlug = megaSlugForSpecies(pokemon);
+    if (megaSlug) permanentRedirect(`/champions/${megaSlug}`);
+    notFound();
+  }
 
   // Use lookupPokemon so Champions-original Megas that aren't in our
   // hand-written POKEMON_DATA (Froslass-Mega, Emboar-Mega, Chandelure-Mega,
@@ -181,10 +217,19 @@ export default async function MegaPokemonPage({
 
   // Pick up to 8 related Megas (excluding current). Filter to "legal AND
   // sprited" so we never link to a broken-image page.
-  const relatedMegas = getRegMAMegasWithSprites()
-    .filter((m) => m.slug !== mega.slug)
-    .slice(0, 8)
-    .map((m) => ({ slug: m.slug, displayName: m.displayName, types: m.types as string[] }));
+  //
+  // The window rotates by the current Mega's position instead of always taking
+  // the first 8. A fixed .slice(0, 8) pointed all 72 pages at the same 8
+  // siblings, so link equity piled onto those 8 and the rest of the cluster
+  // (including every newly-linked Reg M-B page) got inbound links from the
+  // index only.
+  const spritedMegas = getRegMCMegasWithSprites();
+  const selfIndex = Math.max(spritedMegas.findIndex((m) => m.slug === mega.slug), 0);
+  const relatedPool = spritedMegas.filter((m) => m.slug !== mega.slug);
+  const relatedMegas = Array.from(
+    { length: Math.min(8, relatedPool.length) },
+    (_, i) => relatedPool[(selfIndex + i) % relatedPool.length],
+  ).map((m) => ({ slug: m.slug, displayName: m.displayName, types: m.types as string[] }));
 
   const bst = pokemonData.baseStats.hp + pokemonData.baseStats.atk + pokemonData.baseStats.def +
     pokemonData.baseStats.spa + pokemonData.baseStats.spd + pokemonData.baseStats.spe;
@@ -195,6 +240,7 @@ export default async function MegaPokemonPage({
   // ability, mega stone, live team count) — NO hallucinated "best spread"
   // claims that we can't back up. Adding fake answers here would be a
   // manual-action risk for structured-data spam.
+  const reg = regulationCopy(mega.dataKey);
   const faqItems = [
     {
       q: `What ability does ${mega.displayName} have?`,
@@ -206,15 +252,20 @@ export default async function MegaPokemonPage({
     },
     {
       q: `What type is ${mega.displayName}?`,
-      a: `${mega.displayName} is a ${typeLine}-type Pokemon in VGC Regulation M-A.`,
+      a: `${mega.displayName} is a ${typeLine}-type Pokemon in VGC ${reg.legalIn}.`,
     },
     {
       q: `What are ${mega.displayName}'s base stats?`,
       a: `${mega.displayName} has base stats of ${pokemonData.baseStats.hp} HP / ${pokemonData.baseStats.atk} Atk / ${pokemonData.baseStats.def} Def / ${pokemonData.baseStats.spa} SpA / ${pokemonData.baseStats.spd} SpD / ${pokemonData.baseStats.spe} Spe, for a Base Stat Total of ${bst}.`,
     },
+    // Legality must be derived, never asserted. Regs are nested (M-A ⊂ M-B ⊂
+    // M-C): a Mega is legal from the rotation that introduced it onward, and
+    // saying otherwise would be a false claim baked into prerendered HTML.
     {
-      q: `Is ${mega.displayName} legal in VGC 2026 Regulation M-A?`,
-      a: `Yes — ${mega.displayName} is legal in VGC 2026 Regulation M-A, the Pokemon Champions format that reintroduces Mega Evolution to competitive VGC.`,
+      q: `Is ${mega.displayName} legal in VGC 2026 Regulation M-C?`,
+      a: reg.since === "M-A"
+        ? `Yes — ${mega.displayName} has been legal since Regulation M-A, the Pokemon Champions launch format, and remains legal in Regulation M-B and the current Regulation M-C.`
+        : `Yes — ${mega.displayName} is legal in ${reg.legalIn}. It was added in the Regulation ${reg.since} rotation and is not legal in earlier Champions regulations.`,
     },
     ...(teams.length > 0
       ? [{
@@ -276,6 +327,8 @@ export default async function MegaPokemonPage({
         baseStats={pokemonData.baseStats}
         teams={teams}
         relatedMegas={relatedMegas}
+        regulationLabel={reg.legalIn}
+        exploreRegulation={reg.exploreRegulation}
       />
     </>
   );

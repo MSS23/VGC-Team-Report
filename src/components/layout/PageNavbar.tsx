@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
@@ -21,27 +22,48 @@ const NAV_LINKS = [
 
 export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavbarProps) {
   const { isLoaded, isSignedIn } = useAuth();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
 
   // Wait for Clerk to load before showing auth UI to prevent flash
   const showSignIn = isLoaded && !isSignedIn;
   const showUser = isLoaded && isSignedIn;
+  const compactLinks = NAV_LINKS.filter((link) => link.key === "explore");
+  const overflowLinks = NAV_LINKS.filter((link) => link.key !== "home" && link.key !== "explore");
+  const overflowActive = overflowLinks.some((link) => link.key === activePage);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const close = (event: MouseEvent) => {
+      if (!moreMenuRef.current?.contains(event.target as Node)) setMoreOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [moreOpen]);
 
   return (
     <>
       <header className="sticky top-0 z-40 backdrop-blur-2xl backdrop-saturate-150 bg-surface/80 border-b border-border/60 shadow-[0_1px_8px_rgba(0,0,0,0.03)] sticky-header-standalone">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-12 sm:h-14 flex items-center justify-between">
           {/* Left: logo */}
-          <Link href="/" className="flex items-center gap-1.5 font-bold text-sm hover:opacity-80 transition-opacity">
+          <Link href="/" className="flex min-h-11 items-center gap-1.5 font-bold text-sm hover:opacity-80 active:opacity-70 transition-opacity">
             <span className="text-text-primary">VGC Team</span>
             <span className="text-accent">Report</span>
           </Link>
 
           {/* Center: nav links (desktop) */}
-          <nav className="hidden sm:flex items-center gap-1">
+          <nav className="hidden sm:flex items-center gap-1 relative" aria-label="Primary navigation">
             {/* Create Report CTA — always visible */}
             <Link
               href="/"
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              className={`inline-flex min-h-11 items-center px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 activePage === "home"
                   ? "text-accent bg-accent-surface/50"
                   : "text-accent hover:bg-accent-surface/30"
@@ -50,11 +72,11 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
               + Create
             </Link>
             <span className="w-px h-4 bg-border mx-0.5" />
-            {NAV_LINKS.filter((l) => l.key !== "home").map((link) => (
+            {compactLinks.map((link) => (
               <Link
                 key={link.key}
                 href={link.href}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                className={`inline-flex min-h-11 items-center px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                   activePage === link.key
                     ? "text-accent bg-accent-surface/50"
                     : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
@@ -63,23 +85,79 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
                 {link.label}
               </Link>
             ))}
+            <div className="relative xl:hidden" ref={moreMenuRef}>
+              <button
+                type="button"
+                onClick={() => setMoreOpen((open) => !open)}
+                aria-haspopup="menu"
+                aria-expanded={moreOpen}
+                className={`min-h-11 px-3 text-xs font-bold rounded-lg transition-all ${
+                  overflowActive || moreOpen
+                    ? "text-accent bg-accent-surface/50"
+                    : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
+                }`}
+              >
+                More
+              </button>
+              {moreOpen && (
+                <div
+                  role="menu"
+                  aria-label="More navigation"
+                  className="absolute left-1/2 top-full z-50 mt-1.5 w-48 -translate-x-1/2 rounded-xl border border-border bg-surface p-1.5 shadow-2xl"
+                >
+                  {overflowLinks.map((link) => (
+                    <Link
+                      key={link.key}
+                      href={link.href}
+                      role="menuitem"
+                      onClick={() => setMoreOpen(false)}
+                      className={`flex min-h-11 items-center gap-2 rounded-lg px-3 text-xs font-bold transition-colors ${
+                        activePage === link.key
+                          ? "bg-accent-surface/50 text-accent"
+                          : "text-text-secondary hover:bg-surface-alt hover:text-text-primary"
+                      }`}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d={link.icon} />
+                      </svg>
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="hidden xl:contents">
+              {overflowLinks.map((link) => (
+                <Link
+                  key={link.key}
+                  href={link.href}
+                  className={`inline-flex min-h-11 items-center px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                    activePage === link.key
+                      ? "text-accent bg-accent-surface/50"
+                      : "text-text-tertiary hover:text-text-primary hover:bg-surface-alt"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
           </nav>
 
           {/* Right: auth + language + dark mode */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             {showSignIn && (
               <SignInButton mode="modal">
-                <button className="px-3 py-1.5 text-xs font-bold text-white bg-accent rounded-xl hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/20">
+                <button className="min-h-11 px-3 py-2 text-xs font-bold text-white bg-accent rounded-xl hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer shadow-sm shadow-accent/20">
                   Sign In
                 </button>
               </SignInButton>
             )}
             {showUser && (
               <>
-                <Link href="/dashboard" className="hidden sm:inline px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent hover:bg-surface-alt rounded-lg transition-all">
+                <Link href="/dashboard" className="hidden xl:inline-flex min-h-11 items-center px-2.5 py-1.5 text-xs font-bold text-text-secondary hover:text-accent hover:bg-surface-alt rounded-lg transition-all">
                   Dashboard
                 </Link>
-                <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
+                <UserButton appearance={{ elements: { userButtonTrigger: "min-w-11 min-h-11", avatarBox: "w-8 h-8" } }} />
               </>
             )}
 
@@ -87,7 +165,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
 
             <button
               onClick={onToggleDarkMode}
-              className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-all cursor-pointer"
               aria-label="Toggle dark mode"
             >
               {darkMode ? (
@@ -113,7 +191,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
               <Link
                 key={link.key}
                 href={link.href}
-                className={`relative flex flex-col items-center gap-0 px-2.5 py-1 rounded-xl transition-all duration-200 min-w-[48px] active:scale-[0.90] active:opacity-70 ${
+                className={`relative flex min-h-12 flex-1 flex-col items-center justify-center gap-0 px-1.5 py-1 rounded-xl transition-all duration-200 min-w-[56px] active:scale-[0.94] active:opacity-70 ${
                   isActive
                     ? "text-accent"
                     : "text-text-tertiary"
@@ -130,7 +208,7 @@ export function PageNavbar({ darkMode, onToggleDarkMode, activePage }: PageNavba
                     <path d={link.icon} />
                   </svg>
                 </span>
-                <span className={`text-[9px] leading-none font-semibold transition-colors duration-200 ${isActive ? "text-accent" : ""}`}>{link.label}</span>
+                <span className={`text-[10px] leading-none font-semibold transition-colors duration-200 ${isActive ? "text-accent" : ""}`}>{link.label}</span>
               </Link>
             );
           })}

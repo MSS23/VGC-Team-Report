@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { editorFingerprint } from "@/lib/sharing/collaboration";
 import { useSearchParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import {
   decodeShareState,
   type ShareableState,
@@ -22,25 +24,6 @@ const SHARE_TOKENS_KEY = "vgc-share-tokens";
 interface StoredShareInfo {
   shareId: string;
   editToken: string;
-}
-
-function storeShareInfo(info: StoredShareInfo) {
-  try {
-    const existing = localStorage.getItem(SHARE_TOKENS_KEY);
-    let tokens: StoredShareInfo[] = [];
-    if (existing) {
-      const parsed = JSON.parse(existing);
-      // Handle legacy single-object format
-      tokens = Array.isArray(parsed) ? parsed : [parsed];
-    }
-    // Replace if same shareId exists, otherwise append
-    const idx = tokens.findIndex((t) => t.shareId === info.shareId);
-    if (idx >= 0) tokens[idx] = info;
-    else tokens.push(info);
-    localStorage.setItem(SHARE_TOKENS_KEY, JSON.stringify(tokens));
-  } catch {
-    localStorage.setItem(SHARE_TOKENS_KEY, JSON.stringify([info]));
-  }
 }
 
 /** Detect share ID from hash (fallback for #id= links). */
@@ -75,7 +58,65 @@ function detectInlineData(): string | null {
   return null;
 }
 
+/**
+ * Keys that `POST /api/share` deliberately stores looser than
+ * `ShareableStateSchema` accepts: `hiddenSlides` is written as
+ * `(number | string)[]` (legacy numeric slide ids) and `spriteSettings` as an
+ * unchecked `unknown`. Both are view preferences rather than report content —
+ * `hiddenSlides` feeds a `Set<string>` of slide keys and `spriteSettings` has
+ * no reader left in the client — so a legacy value in one of them must not
+ * make a legitimate report unopenable.
+ */
+const LEGACY_TOLERANT_KEYS = ["hiddenSlides", "spriteSettings"] as const;
+
+/**
+ * Runtime-validate a `/api/share/{id}` body before it becomes report state.
+ *
+ * VGC-146 added `ShareableStateSchema` and wired it into the URL-decode path
+ * (`decodeShareState`), which runs `safeParse` and fails closed. The fetch
+ * path — the one every `/s/{id}` view actually takes — kept an unchecked
+ * `as ShareableState` cast, so a malformed row or a tampered response could
+ * push arbitrary shapes into the report viewer. That blows up inside React's
+ * render pass, where the `.catch()` on the fetch chain cannot see it, and the
+ * viewer gets a white screen instead of the existing error state.
+ *
+ * Mirrors the codec exactly: `null` on shape mismatch, which `settle()` turns
+ * into the "corrupt link" screen the hook already shows. No new error UX.
+ *
+ * The schemas are loaded with `await import()` on purpose — a static import
+ * would pull ~63 kB gzip of zod back into the homepage bundle and undo
+ * VGC-256 (see the rules block in `url-codec.schemas.ts`).
+ */
+export async function parseFetchedShareState(
+  raw: unknown,
+): Promise<ShareableState | null> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const { ShareableStateSchema } = await import("@/lib/sharing/url-codec.schemas");
+
+  const parsed = ShareableStateSchema.safeParse(raw);
+  if (parsed.success) return parsed.data as ShareableState;
+
+  // Retry once with the legacy-tolerant keys removed, but only when every
+  // complaint is about one of them. Anything structural — paste, notes,
+  // matchupPlans, tags… — still fails closed.
+  const offending = parsed.error.issues.map((issue) => issue.path[0]);
+  const onlyTolerable =
+    offending.length > 0 &&
+    offending.every(
+      (key) =>
+        typeof key === "string" &&
+        (LEGACY_TOLERANT_KEYS as readonly string[]).includes(key),
+    );
+  if (!onlyTolerable) return null;
+
+  const relaxed: Record<string, unknown> = { ...(raw as Record<string, unknown>) };
+  for (const key of LEGACY_TOLERANT_KEYS) delete relaxed[key];
+  const retry = ShareableStateSchema.safeParse(relaxed);
+  return retry.success ? (retry.data as ShareableState) : null;
+}
+
 export function useShareUrl() {
+  const { isLoaded: isAuthLoaded, userId } = useAuth();
   // Use Next.js searchParams (works correctly across SSR and hydration)
   const searchParams = useSearchParams();
   // shareId resolves in priority order:
@@ -94,6 +135,26 @@ export function useShareUrl() {
 
   const [isSharedView, setIsSharedView] = useState(false);
   const [sharedState, setSharedState] = useState<ShareableState | null>(null);
+  const versionRef = useRef(0);
+  const baselineRef = useRef<ShareableState | null>(null);
+  const conflictRef = useRef<{ state: ShareableState; version: number } | null>(null);
+  const [conflict, setConflictState] = useState<typeof conflictRef.current>(null);
+  const setConflict = useCallback((value: typeof conflictRef.current) => { conflictRef.current = value; setConflictState(value); }, []);
+  const getVersion = useCallback(() => versionRef.current, []);
+  const receiveRemote = useCallback((state: ShareableState, version: number, local: ShareableState) => {
+    if (version <= versionRef.current) return false;
+    if (conflictRef.current || (baselineRef.current && editorFingerprint(local) !== editorFingerprint(baselineRef.current))) {
+      setConflict({ state, version }); return false;
+    }
+    versionRef.current = version; baselineRef.current = state; return true;
+  }, [setConflict]);
+  const resolveConflict = useCallback((choice: "remote" | "local") => {
+    const latest = conflictRef.current;
+    if (!latest) return null;
+    versionRef.current = latest.version; baselineRef.current = latest.state;
+    setConflict(null);
+    return choice === "remote" ? latest.state : null;
+  }, [setConflict]);
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
   const [urlWarning, setUrlWarning] = useState<string | null>(null);
   const [decodeFailed, setDecodeFailed] = useState(false);
@@ -106,19 +167,26 @@ export function useShareUrl() {
   const [redactedFields, setRedactedFields] = useState<string[]>([]);
   const [lastShareResult, setLastShareResult] = useState<{
     updated: boolean;
-    editUrl?: string;
     publicUrl?: string;
   } | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Active session refs — only set when we have a verified edit session
-  // (loaded via edit link or just created/updated a share in this session).
-  // These are the ONLY source of truth for whether to update vs create.
-  // localStorage is only used to persist across page refreshes within the same editing session.
+  // Active session refs — only set from a server response after account
+  // authorization, or after this account creates/updates a share. They are
+  // deliberately memory-only and are the source of truth for update vs create.
   const activeEditTokenRef = useRef<string | null>(null);
   const activeShareIdRef = useRef<string | null>(null);
   // Reactive state version of activeShareIdRef — tracks whether a share session exists
   // (set after sharing from home page, or when viewing own report at /s/{id})
   const [sessionShareId, setSessionShareId] = useState<string | null>(null);
+
+  // Remove token data written by older releases. It is never read by this
+  // version, and clearing it avoids leaving obsolete edit credentials in a
+  // shared browser profile.
+  useEffect(() => {
+    try {
+      localStorage.removeItem(SHARE_TOKENS_KEY);
+    } catch { /* storage may be unavailable */ }
+  }, []);
 
   // Clear session state when URL no longer points at a share.
   // Without this, navigating from /s/{id} back to / would leave
@@ -131,6 +199,7 @@ export function useShareUrl() {
     if (shareId || inlineData) return;
     activeEditTokenRef.current = null;
     activeShareIdRef.current = null;
+    versionRef.current = 0; baselineRef.current = null; setConflict(null);
     setSessionShareId(null);
     setSharedState(null);
     setIsSharedView(false);
@@ -145,13 +214,32 @@ export function useShareUrl() {
 
   // Fetch shared state on mount
   useEffect(() => {
+    if (shareId && !isAuthLoaded) return;
+
+    // Auth changes must revoke the editable client state immediately. The
+    // authenticated refetch below is the only path that can unlock it again.
+    activeEditTokenRef.current = null;
+    activeShareIdRef.current = null;
+    versionRef.current = 0; baselineRef.current = null; setConflict(null);
+    setSessionShareId(null);
+    setIsEditingUnlocked(false);
+    setIsOwner(false);
+
     let settled = false;
+    // Clear any stale failure from a previous run. decodeFailed is otherwise
+    // write-once (never reset), so a single spurious timeout would lock the
+    // viewer on the "corrupt link" error screen forever, even after a retry.
+    setDecodeFailed(false);
+    const controller = new AbortController();
     const timeout = setTimeout(() => {
       if (!settled) {
         settled = true;
+        // Abort the in-flight fetch so a late success can't half-apply after
+        // we've already given up.
+        controller.abort();
         setDecodeFailed(true);
       }
-    }, 5000);
+    }, 15000); // 5s was too aggressive for Neon cold start + edge miss on slow networks
 
     const settle = (state: ShareableState | null, editable?: boolean) => {
       if (settled) return;
@@ -171,15 +259,14 @@ export function useShareUrl() {
     if (shareId) {
       // Always fetch without the edit key first — the API will grant edit
       // access to authenticated owners/collaborators automatically.
-      // The ?key= param is preserved in editKeyFromUrl for the sign-in gate
-      // in page.tsx. After sign-in, the page reloads and the authenticated
-      // request gets edit access without needing the key in the URL.
+      // A legacy ?key= may still trigger the sign-in explanation in page.tsx,
+      // but it is never sent to the API. The account alone determines access.
       const fetchUrl = `/api/share/${shareId}`;
 
-      fetch(fetchUrl)
+      fetch(fetchUrl, { signal: controller.signal })
         .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (!data) return settle(null);
+        .then(async (data) => {
+          if (!data || typeof data !== "object") return settle(null);
           const editable = data._editable === true;
           if (data._isPublic !== undefined) setFetchedIsPublic(!!data._isPublic);
           if (data._isUnlisted !== undefined) setFetchedIsUnlisted(!!data._isUnlisted);
@@ -190,34 +277,43 @@ export function useShareUrl() {
           const ownerEditToken = data._editToken as string | undefined;
           // Strip internal flags before treating as ShareableState
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { _editable, _isPublic: _ip, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, _forkedFrom: _ff, _redactedFields: _rf, ...state } = data;
+          const { _editable, _isPublic: _ip, _isUnlisted: _iu, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, _forkedFrom: _ff, _redactedFields: _rf, ...state } = data;
+          versionRef.current = Number(_v) || 1; baselineRef.current = state as ShareableState;
           if (Array.isArray(_c)) setFetchedCollaborators(_c as string[]);
-          // Set active edit session — only from server-provided token (authenticated)
-          if (editable && ownerEditToken) {
+          // Runtime-validated instead of cast — a malformed body fails closed
+          // into the same error screen a corrupt link already produces.
+          const validated = await parseFetchedShareState(state);
+          // Set active edit session — only from server-provided token
+          // (authenticated), and only for a report that actually validated: a
+          // rejected body must not leave an editable session pointing at that
+          // share, or the next save would overwrite it from memory.
+          if (validated && editable && ownerEditToken) {
             activeEditTokenRef.current = ownerEditToken;
             activeShareIdRef.current = shareId;
             setSessionShareId(shareId);
-            storeShareInfo({ shareId, editToken: ownerEditToken });
           }
-          settle(state as ShareableState, editable);
+          settle(validated, editable);
         })
         .catch(() => settle(null));
 
       // Replace URL with clean /s/{id} path (strip query params but keep share context)
       history.replaceState(null, "", `/s/${shareId}`);
 
-      return () => clearTimeout(timeout);
+      return () => { clearTimeout(timeout); controller.abort(); };
     }
 
     if (inlineData) {
       decodeShareState(inlineData)
         .then((state) => settle(state))
         .catch(() => settle(null));
-      return () => clearTimeout(timeout);
+      return () => { clearTimeout(timeout); controller.abort(); };
     }
 
     clearTimeout(timeout);
-  }, [shareId, inlineData, editKeyFromUrl]);
+    // editKeyFromUrl is intentionally not a dependency: it has no bearing on
+    // access, and history.replaceState strips it immediately.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shareId, inlineData, isAuthLoaded, userId]);
 
   /** Get the active share info for this session (from refs, not localStorage). */
   const getActiveShare = useCallback((): StoredShareInfo | null => {
@@ -230,13 +326,18 @@ export function useShareUrl() {
     return null;
   }, []);
 
-  const copyShareUrl = useCallback(async (state: ShareableState, isPublic?: boolean, isUnlisted?: boolean) => {
+  const copyShareUrl = useCallback(async (
+    state: ShareableState,
+    isPublic?: boolean,
+    isUnlisted?: boolean,
+    draftId?: string | null,
+  ): Promise<{ ok: boolean; error?: string; version?: number }> => {
+    if (conflictRef.current) return { ok: false, error: "Resolve the collaboration conflict first." };
     setShareStatus("copying");
     setUrlWarning(null);
     setLastShareResult(null);
     try {
       let publicUrl: string;
-      let editUrl: string | undefined;
 
       // Only reuse an existing share if we have an active session with it
       const active = getActiveShare();
@@ -247,23 +348,38 @@ export function useShareUrl() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             state,
+            expectedVersion: active ? versionRef.current || undefined : undefined,
             existingId: active?.shareId,
             editToken: active?.editToken,
+            draftId: draftId ?? undefined,
             isPublic,
             isUnlisted,
             isPublish: true,
           }),
         });
-        if (!res.ok) throw new Error("API error");
-        const { id, editToken, updated } = await res.json();
+        if (!res.ok) {
+          // Surface the server's reason (e.g. "no tags on this report") so the
+          // caller can show it, instead of swallowing it into a transient
+          // "Failed" button label with no explanation.
+          let errorMessage: string | undefined;
+          try {
+            const body = await res.json();
+            if (res.status === 409 && body.state && Number.isInteger(Number(body.version))) setConflict({ state: body.state, version: Number(body.version) });
+            if (body && typeof body.error === "string") errorMessage = body.error;
+          } catch { /* non-JSON */ }
+          setShareStatus("error");
+          if (timerRef.current) clearTimeout(timerRef.current);
+          timerRef.current = setTimeout(() => setShareStatus("idle"), 3000);
+          return { ok: false, error: errorMessage ?? `Share failed (${res.status})` };
+        }
+        const { id, editToken, updated, version } = await res.json();
+        if ((Number(version) || 1) >= versionRef.current) { versionRef.current = Number(version) || 1; baselineRef.current = state; }
         publicUrl = `${window.location.origin}/s/${id}`;
-        editUrl = `${window.location.origin}/s/${id}?key=${editToken}`;
 
-        storeShareInfo({ shareId: id, editToken });
         activeEditTokenRef.current = editToken;
         activeShareIdRef.current = id;
         setSessionShareId(id);
-        setLastShareResult({ updated, editUrl, publicUrl });
+        setLastShareResult({ updated, publicUrl });
         // The caller just successfully created or updated a share, so they
         // own the edit token for this session. Mark them as the owner so
         // UI gates (like the "List on Explore" toggle in ShareModal) don't
@@ -273,7 +389,7 @@ export function useShareUrl() {
         setShareStatus("error");
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => setShareStatus("idle"), 3000);
-        return;
+        return { ok: false, error: "Network error while sharing. Please try again." };
       }
 
       await navigator.clipboard.writeText(publicUrl);
@@ -283,12 +399,14 @@ export function useShareUrl() {
       timerRef.current = setTimeout(() => {
         setShareStatus("idle");
       }, 5000);
+      return { ok: true, version: versionRef.current };
     } catch {
       setShareStatus("error");
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setShareStatus("idle"), 2000);
+      return { ok: false, error: "Could not copy the share link." };
     }
-  }, [getActiveShare]);
+  }, [getActiveShare, setConflict]);
 
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const autoSaveResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -307,7 +425,8 @@ export function useShareUrl() {
     state: ShareableState,
     isPublic?: boolean,
     isUnlisted?: boolean
-  ): Promise<{ ok: boolean; error?: string; status?: number }> => {
+  ): Promise<{ ok: boolean; error?: string; status?: number; version?: number }> => {
+    if (conflictRef.current) return { ok: false, status: 409, error: "Resolve the collaboration conflict first." };
     const active = getActiveShare();
     if (!active) {
       return { ok: false, error: "No active share session to update." };
@@ -320,6 +439,7 @@ export function useShareUrl() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           state,
+          expectedVersion: versionRef.current || undefined,
           existingId: active.shareId,
           editToken: active.editToken,
           isPublic,
@@ -327,14 +447,17 @@ export function useShareUrl() {
         }),
       });
       if (res.ok) {
+        const data = await res.json();
+        if ((Number(data.version) || versionRef.current) >= versionRef.current) { versionRef.current = Number(data.version) || versionRef.current; baselineRef.current = state; }
         setAutoSaveStatus("saved");
         autoSaveResetRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
-        return { ok: true, status: res.status };
+        return { ok: true, status: res.status, version: versionRef.current };
       }
       // Parse server error message if provided so the UI can surface it
       let errorMessage: string | undefined;
       try {
         const body = await res.json();
+        if (res.status === 409 && body.state && Number.isInteger(Number(body.version))) setConflict({ state: body.state, version: Number(body.version) });
         if (body && typeof body.error === "string") errorMessage = body.error;
       } catch { /* non-JSON response */ }
       setAutoSaveStatus("error");
@@ -345,7 +468,7 @@ export function useShareUrl() {
       autoSaveResetRef.current = setTimeout(() => setAutoSaveStatus("idle"), 3000);
       return { ok: false, error: e instanceof Error ? e.message : "Network error" };
     }
-  }, [getActiveShare]);
+  }, [getActiveShare, setConflict]);
 
   /**
    * Pre-populate lastShareResult with a known URL so a caller can open the
@@ -356,64 +479,19 @@ export function useShareUrl() {
     setLastShareResult({ updated: false, publicUrl });
   }, []);
 
-  /** Get the edit URL for the active session. */
-  const getEditUrl = useCallback((): string | null => {
-    const active = getActiveShare();
-    if (!active) return null;
-    return `${window.location.origin}/s/${active.shareId}?key=${active.editToken}`;
-  }, [getActiveShare]);
-
-  /** Whether this session has an active share (edit link can be recovered). */
+  /** Whether this session has an active share. */
   const hasExistingShare = useCallback((): boolean => {
     return !!getActiveShare();
-  }, [getActiveShare]);
-
-  /** Force a fresh share with a new ID and edit token (invalidates old edit link). */
-  const freshShare = useCallback(async (state: ShareableState, isPublic?: boolean) => {
-    setShareStatus("copying");
-    setUrlWarning(null);
-    setLastShareResult(null);
-    try {
-      const res = await fetch("/api/share", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state, isPublic }),
-      });
-      if (!res.ok) throw new Error("API error");
-      const { id, editToken } = await res.json();
-      const publicUrl = `${window.location.origin}/s/${id}`;
-      const editUrl = `${window.location.origin}/s/${id}?key=${editToken}`;
-
-      storeShareInfo({ shareId: id, editToken });
-      activeEditTokenRef.current = editToken;
-      activeShareIdRef.current = id;
-      setSessionShareId(id);
-      setLastShareResult({ updated: false, editUrl, publicUrl });
-      // Caller owns this freshly-minted share — same reasoning as copyShareUrl.
-      setIsOwner(true);
-
-      await navigator.clipboard.writeText(publicUrl);
-      setShareStatus("copied");
-
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        setShareStatus("idle");
-      }, 5000);
-    } catch {
-      setShareStatus("error");
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setShareStatus("idle"), 2000);
-    }
-  }, []);
+  }, [getActiveShare, setConflict]);
 
   /**
    * Fork an existing share: creates a new report owned by the current user
    * that tracks its lineage back to the source via forked_from_id.
-   * Returns { id, editToken } on success, null on failure.
+   * Returns the new account-owned report ID on success.
    */
   const forkReport = useCallback(async (
     sourceId: string
-  ): Promise<{ id: string; editToken: string } | null> => {
+  ): Promise<{ id: string } | null> => {
     try {
       const res = await fetch(`/api/share/${sourceId}/fork`, {
         method: "POST",
@@ -421,18 +499,11 @@ export function useShareUrl() {
       });
       if (!res.ok) return null;
       const data = await res.json();
-      if (!data?.id || !data?.editToken) return null;
-      storeShareInfo({ shareId: data.id, editToken: data.editToken });
-      return { id: data.id, editToken: data.editToken };
+      if (!data?.id) return null;
+      return { id: data.id };
     } catch {
       return null;
     }
-  }, []);
-
-  const exitSharedView = useCallback(() => {
-    setIsSharedView(false);
-    setIsEditingUnlocked(false);
-    history.replaceState(null, "", window.location.pathname);
   }, []);
 
   /** Clear active share session so the next Share creates a fresh link. */
@@ -444,28 +515,27 @@ export function useShareUrl() {
     }
     activeEditTokenRef.current = null;
     activeShareIdRef.current = null;
+    versionRef.current = 0; baselineRef.current = null; setConflict(null);
     setSessionShareId(null);
   }, []);
 
   return {
+    conflict, getVersion, receiveRemote, resolveConflict,
     isSharedView,
     isSharePending,
     sharedState,
     shareId,
     editKeyFromUrl,
     copyShareUrl,
-    freshShare,
     autoSave,
     shareStatus,
     urlWarning,
     decodeFailed,
-    exitSharedView,
     isEditingUnlocked,
     isOwner,
     sessionShareId,
     lastShareResult,
     openShareSheetForUrl,
-    getEditUrl,
     hasExistingShare,
     clearStoredShare,
     fetchedIsPublic,

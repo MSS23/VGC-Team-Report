@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { cacheDel, cacheInvalidatePrefix, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { removeShareOgImage } from "@/lib/sharing/og-image";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -50,12 +51,38 @@ export async function PATCH(
     }
 
     if (parsed.data.isPublic !== undefined || parsed.data.isUnlisted !== undefined) {
+      // Same rule as the share route: publishing (private → public) requires
+      // at least one tag, or the report lands on Explore where every tag
+      // filter excludes it — "Listed" but unfindable.
+      if (parsed.data.isPublic === true) {
+        const current = await sql`
+          SELECT is_public, data->'tags' AS tags FROM shares
+          WHERE id = ${shareId} AND owner_id = ${userId} AND deleted_at IS NULL
+        `;
+        if (current.length === 0) {
+          return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
+        }
+        if (!current[0].is_public) {
+          const tags = (current[0].tags ?? {}) as Record<string, unknown>;
+          const hasTag = !!tags.regulation || !!tags.eventType ||
+            (Array.isArray(tags.archetype) && tags.archetype.length > 0);
+          if (!hasTag) {
+            return NextResponse.json(
+              { error: "Cannot publish to the public as there are no tags on this report." },
+              { status: 400 }
+            );
+          }
+        }
+      }
       const newIsPublic = parsed.data.isPublic;
-      const newIsUnlisted = parsed.data.isUnlisted ?? false;
+      // Preserve the existing unlisted flag when the caller doesn't send one,
+      // so flipping only isPublic (e.g. a single visibility toggle) can't
+      // silently wipe an Unlisted report back to Private.
+      const newIsUnlisted = parsed.data.isUnlisted;
       const rows = await sql`
         UPDATE shares
         SET is_public = COALESCE(${newIsPublic ?? null}::boolean, is_public),
-            is_unlisted = ${newIsUnlisted},
+            is_unlisted = COALESCE(${newIsUnlisted ?? null}::boolean, is_unlisted),
             updated_at = NOW()
         WHERE id = ${shareId} AND owner_id = ${userId} AND deleted_at IS NULL
         RETURNING id, is_public, is_unlisted
@@ -110,6 +137,7 @@ export async function DELETE(
       await Promise.all([
         cacheDel(CacheKeys.share(shareId)),
         cacheInvalidatePrefix("explore:"),
+        removeShareOgImage(shareId),
       ]);
       captureServerEvent(userId, "report_deleted", { report_id: shareId });
       return NextResponse.json({ deleted: true });
