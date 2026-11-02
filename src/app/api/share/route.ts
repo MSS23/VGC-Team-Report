@@ -16,7 +16,14 @@ const MAX_BODY_SIZE = 512_000; // 500 KB
 const ShareBodySchema = z.object({
   state: z.object({
     paste: z.string(),
-    matchupPlans: z.array(z.unknown()).optional().default([]),
+    // No UI cap exists on adding opponents, so the real ceiling is the
+    // MAX_BODY_SIZE guard above (500 KB). Each plan carries a full
+    // 6-Pokemon `opponentPaste` plus label and gamePlans, which is ~1 KB
+    // once JSON-escaped, so 500 plans cannot fit under that guard anyway —
+    // the bound rejects nothing the body-size check would already accept.
+    // Explicit so the validator can't be made to walk an unbounded list
+    // (GHSA-mrhx-c7xc-m3w5 defence in depth).
+    matchupPlans: z.array(z.unknown()).max(500).optional().default([]),
     notes: z.record(z.string(), z.unknown()).optional(),
     calcs: z.record(z.string(), z.unknown()).optional(),
     roles: z.record(z.string(), z.unknown()).optional(),
@@ -62,7 +69,15 @@ const ShareBodySchema = z.object({
     rentalCode: z.string().optional(),
     creatorName: z.string().optional(),
     spriteSettings: z.unknown().optional(),
-    hiddenSlides: z.array(z.union([z.number(), z.string()])).optional(),
+    // `useSlideSystem` builds every slide key a report can render: overview,
+    // common-modes, one per Pokemon (6), speed-tiers, offensive-coverage,
+    // defensive-coverage, matchup-sheet = 12, plus one per matchup plan.
+    // Modern clients hide plan slides via `plan.showSlide` rather than this
+    // array, but legacy clients stored raw numeric indices that covered them
+    // too (hence the number|string union), so the ceiling is 12 + the
+    // 500-plan matchupPlans bound above = 512. Nothing a report can render
+    // is rejected (GHSA-mrhx-c7xc-m3w5 defence in depth).
+    hiddenSlides: z.array(z.union([z.number(), z.string()])).max(512).optional(),
     allowComments: z.boolean().optional(),
     tags: z.object({
       tournamentUrl: z.string().regex(/^https:\/\/limitlessvgc\.com\/tournaments\/\d+$/).optional(),
@@ -71,14 +86,27 @@ const ShareBodySchema = z.object({
       tournamentRegion: z.string().max(100).optional(),
       regulation: z.string().optional(),
       eventType: z.string().optional(),
-      archetype: z.array(z.string()).optional(),
+      // ARCHETYPES in src/lib/data/tags.ts holds 13 entries and the
+      // TeamOverview picker is the only writer — it toggles from exactly
+      // that list and dedupes with `includes`, so 13 is today's ceiling.
+      // Doubled to 26 so a report saved while the picker offered archetypes
+      // since retired still validates, rather than failing an existing
+      // share (GHSA-mrhx-c7xc-m3w5 defence in depth).
+      archetype: z.array(z.string()).max(26).optional(),
       regulationAutoDetected: z.boolean().optional(),
     }).optional(),
     templateId: z.string().optional(),
     // Tiered-publishing per-field visibility flags. Also previously absent
     // from this schema, so the "hide fields from public viewers" choices were
     // stripped on save the same way commonModes was.
-    privateFields: z.array(z.string()).optional(),
+    // `PRIVATE_FIELD_OPTIONS` / `VALID_FIELDS` is 4 flags (evs, ivs, nature,
+    // item) and `PrivateFieldsPanel` dedupes through a Set, so 4 is the
+    // ceiling the UI can produce. Bounded at 24 = 6 Pokemon x 4 fields,
+    // which also covers the per-Pokemon dotted-path form (`pokemon.0.evs`)
+    // that ShareableStateSchema's docblock still describes — a share stored
+    // in that shape must not start 400ing
+    // (GHSA-mrhx-c7xc-m3w5 defence in depth).
+    privateFields: z.array(z.string()).max(24).optional(),
     genTheme: z.string().optional(),
   }).strip(),
   expectedVersion: z.number().int().positive().optional(),
