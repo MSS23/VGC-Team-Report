@@ -234,7 +234,7 @@ function ExploreInner() {
             </div>
             <button
               onClick={() => setRetryKey((k) => k + 1)}
-              className="min-h-[44px] px-6 py-2.5 bg-accent text-white rounded-xl font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer"
+              className="min-h-[44px] px-6 py-2.5 bg-accent text-accent-foreground rounded-xl font-semibold text-sm hover:brightness-110 active:scale-[0.97] transition-all cursor-pointer"
             >
               Retry
             </button>

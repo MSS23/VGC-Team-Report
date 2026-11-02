@@ -54,28 +54,10 @@ const CATEGORY_ICONS: Record<SearchCategory, React.ReactNode> = {
 };
 
 const CATEGORY_KEYS: SearchCategory[] = ["all", "pokemon", "tournament", "creator"];
-const CATEGORY_I18N: Record<SearchCategory, string> = {
-  all: "filterCatAll",
-  pokemon: "filterCatPokemon",
-  tournament: "filterCatTournament",
-  creator: "filterCatCreator",
-};
 
 const SORT_KEYS = ["popular", "newest", "views", "updated"] as const;
-const SORT_I18N: Record<string, string> = {
-  popular: "filterSortPopular",
-  newest: "filterSortNewest",
-  views: "filterSortViews",
-  updated: "filterSortUpdated",
-};
 
 const PLACEMENT_KEYS = ["1st", "Top 4", "Top 8", "Top 16"] as const;
-const PLACEMENT_I18N: Record<string, string> = {
-  "1st": "filterPlace1st",
-  "Top 4": "filterPlaceTop4",
-  "Top 8": "filterPlaceTop8",
-  "Top 16": "filterPlaceTop16",
-};
 
 export function ExploreFilters({
   query,
@@ -269,7 +251,7 @@ export function ExploreFilters({
             aria-pressed={searchCategory === key}
             className={`inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-full flex-shrink-0 transition-all cursor-pointer active:scale-[0.97] whitespace-nowrap ${
               searchCategory === key
-                ? "bg-accent text-white shadow-sm"
+                ? "bg-accent text-accent-foreground shadow-sm"
                 : "bg-surface-alt/60 text-text-tertiary hover:text-text-secondary hover:bg-surface-alt"
             }`}
           >
@@ -342,7 +324,7 @@ export function ExploreFilters({
           />
           More filters
           {advancedFilterCount > 0 && (
-            <span className="min-w-[16px] h-4 flex items-center justify-center bg-accent text-white text-[10px] font-bold rounded-full px-1">
+            <span className="min-w-[16px] h-4 flex items-center justify-center bg-accent text-accent-foreground text-[10px] font-bold rounded-full px-1">
               {advancedFilterCount}
             </span>
           )}
@@ -451,7 +433,7 @@ export function ExploreFilters({
                         }}
                         className={`min-h-11 text-xs font-bold px-3 py-2 rounded-lg border transition-all cursor-pointer active:scale-[0.97] ${
                           active
-                            ? "bg-accent text-white border-accent"
+                            ? "bg-accent text-accent-foreground border-accent"
                             : "bg-surface-alt/50 text-text-tertiary border-transparent hover:text-text-secondary"
                         }`}
                       >
@@ -506,7 +488,7 @@ export function ExploreFilters({
                     aria-label="Show reports from creators I follow"
                     className={`inline-flex min-h-11 items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer active:scale-[0.97] ${
                       followingOnly
-                        ? "bg-accent text-white"
+                        ? "bg-accent text-accent-foreground"
                         : "bg-surface-alt/50 text-text-secondary hover:text-text-primary"
                     }`}
                   >

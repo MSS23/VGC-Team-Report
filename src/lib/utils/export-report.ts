@@ -16,8 +16,12 @@ function resolveBackground(element: HTMLElement): string {
   // Fall back to the CSS variable --background (set on :root by theme)
   const cssVar = getComputedStyle(document.documentElement).getPropertyValue("--background").trim();
   if (cssVar) return cssVar;
-  // Final fallback: detect dark mode from class
-  const isDark = document.documentElement.classList.contains("dark");
+  // Final fallback: detect dark mode from the attribute the app actually
+  // sets. This read was `classList.contains("dark")`, which was always false
+  // — nothing anywhere adds a `dark` class (useDarkMode.ts toggles the
+  // `data-dark-mode` attribute), so a capture that reached this branch was
+  // always composited on the light #FAF9F6. (VGC-316)
+  const isDark = document.documentElement.hasAttribute("data-dark-mode");
   return isDark ? "#0B0B1A" : "#FAF9F6";
 }
 

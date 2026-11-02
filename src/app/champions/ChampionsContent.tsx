@@ -139,7 +139,7 @@ export function ChampionsContent() {
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-accent-foreground text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19" />
@@ -530,7 +530,7 @@ export function ChampionsContent() {
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-8 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
+            className="inline-flex items-center gap-2 px-8 py-3 bg-accent text-accent-foreground text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
           >
             Start Building
           </Link>

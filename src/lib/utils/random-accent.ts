@@ -1,13 +1,13 @@
 /** Accent color palettes — each has light and dark mode variants */
 const PALETTES = [
-  { name: "rose",    accent: "#E11D48", light: "#FDA4AF", surface: "#FFF1F2", darkAccent: "#FB7185", darkSurface: "#3B1525" },
+  { name: "rose",    accent: "#DF1D47", light: "#FDA4AF", surface: "#FFF1F2", darkAccent: "#FB7185", darkSurface: "#3B1525" },
   { name: "violet",  accent: "#7C3AED", light: "#C4B5FD", surface: "#F5F3FF", darkAccent: "#A78BFA", darkSurface: "#2E1065" },
   { name: "blue",    accent: "#2563EB", light: "#93C5FD", surface: "#EFF6FF", darkAccent: "#60A5FA", darkSurface: "#172554" },
-  { name: "emerald", accent: "#059669", light: "#6EE7B7", surface: "#ECFDF5", darkAccent: "#34D399", darkSurface: "#064E3B" },
-  { name: "amber",   accent: "#D97706", light: "#FCD34D", surface: "#FFFBEB", darkAccent: "#FBBF24", darkSurface: "#451A03" },
-  { name: "pink",    accent: "#DB2777", light: "#F9A8D4", surface: "#FDF2F8", darkAccent: "#F472B6", darkSurface: "#500724" },
-  { name: "cyan",    accent: "#0891B2", light: "#67E8F9", surface: "#ECFEFF", darkAccent: "#22D3EE", darkSurface: "#083344" },
-  { name: "orange",  accent: "#EA580C", light: "#FDBA74", surface: "#FFF7ED", darkAccent: "#FB923C", darkSurface: "#431407" },
+  { name: "emerald", accent: "#04835C", light: "#6EE7B7", surface: "#ECFDF5", darkAccent: "#34D399", darkSurface: "#064E3B" },
+  { name: "amber",   accent: "#AD5F05", light: "#FCD34D", surface: "#FFFBEB", darkAccent: "#FBBF24", darkSurface: "#451A03" },
+  { name: "pink",    accent: "#D72675", light: "#F9A8D4", surface: "#FDF2F8", darkAccent: "#F472B6", darkSurface: "#500724" },
+  { name: "cyan",    accent: "#077D9A", light: "#67E8F9", surface: "#ECFEFF", darkAccent: "#22D3EE", darkSurface: "#083344" },
+  { name: "orange",  accent: "#C64B0A", light: "#FDBA74", surface: "#FFF7ED", darkAccent: "#FB923C", darkSurface: "#431407" },
 ] as const;
 
 /**
@@ -42,7 +42,17 @@ const DATA_PROPS = [
  * `layout.tsx` and `useTheme.applyTheme`, which re-fires on every dark-mode
  * toggle), so the random accent has to clear them to take effect at all.
  */
-const THEME_PROPS = ["--accent", "--accent-light", "--accent-surface"] as const;
+const THEME_PROPS = [
+  "--accent",
+  "--accent-light",
+  "--accent-surface",
+  // `applyAccentTheme` (accent-themes.ts, the /dashboard/profile picker) pins
+  // this inline as #FFFFFF to match the light accent it pins. If it survived
+  // here, a random accent would render white ink on its pastel dark accent —
+  // 1.67-2.72 : 1, the exact VGC-315 defect. Stripping it lets the
+  // [data-dark-mode] value (#0B0B1A) apply again.
+  "--accent-foreground",
+] as const;
 
 let inlineAccentGuard: MutationObserver | null = null;
 

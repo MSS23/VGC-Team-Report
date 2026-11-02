@@ -17,48 +17,48 @@ interface ThemePreset {
 const GEN_PRESETS: Record<GenTheme, ThemePreset> = {
   gen1: {
     label: "Red / Blue / Yellow",
-    accent: "#8b5cf6",        // Mewtwo purple
+    accent: "#8256e6",        // Mewtwo purple
     accentLight: "#c4b5fd",
     accentSurface: "#f5f3ff",
     accentSurfaceDark: "#4c1d95",
     accentDark: "#c4b5fd",
-    badge: "#8b5cf6",
+    badge: "#8256e6",
   },
   gen2: {
     label: "Gold / Silver / Crystal",
-    accent: "#d97706",        // Ho-Oh golden amber
+    accent: "#ad5f05",        // Ho-Oh golden amber
     accentLight: "#fcd34d",
     accentSurface: "#fffbeb",
     accentSurfaceDark: "#78350f",
     accentDark: "#fcd34d",
-    badge: "#d97706",
+    badge: "#ad5f05",
   },
   gen3: {
     label: "Ruby / Sapphire / Emerald",
-    accent: "#16a34a",        // Rayquaza green
+    accent: "#12843c",        // Rayquaza green
     accentLight: "#86efac",
     accentSurface: "#f0fdf4",
     accentSurfaceDark: "#14532d",
     accentDark: "#86efac",
-    badge: "#16a34a",
+    badge: "#12843c",
   },
   gen4: {
     label: "Diamond / Pearl / Platinum",
-    accent: "#3b82f6",        // Dialga steel blue
+    accent: "#3370d5",        // Dialga steel blue
     accentLight: "#93c5fd",
     accentSurface: "#eff6ff",
     accentSurfaceDark: "#1e3a5f",
     accentDark: "#93c5fd",
-    badge: "#3b82f6",
+    badge: "#3370d5",
   },
   gen5: {
     label: "Black / White",
-    accent: "#0ea5e9",        // Zekrom electric blue
+    accent: "#0a7aac",        // Zekrom electric blue
     accentLight: "#7dd3fc",
     accentSurface: "#f0f9ff",
     accentSurfaceDark: "#0c4a6e",
     accentDark: "#7dd3fc",
-    badge: "#0ea5e9",
+    badge: "#0a7aac",
   },
   gen6: {
     label: "X / Y",
@@ -71,43 +71,43 @@ const GEN_PRESETS: Record<GenTheme, ThemePreset> = {
   },
   gen7: {
     label: "Sun / Moon",
-    accent: "#ea580c",        // Solgaleo fiery orange
+    accent: "#c64b0a",        // Solgaleo fiery orange
     accentLight: "#fdba74",
     accentSurface: "#fff7ed",
     accentSurfaceDark: "#7c2d12",
     accentDark: "#fdba74",
-    badge: "#ea580c",
+    badge: "#c64b0a",
   },
   gen8: {
     label: "Sword / Shield",
-    accent: "#0891b2",        // Zacian cyan
+    accent: "#077d9a",        // Zacian cyan
     accentLight: "#67e8f9",
     accentSurface: "#ecfeff",
     accentSurfaceDark: "#164e63",
     accentDark: "#67e8f9",
-    badge: "#0891b2",
+    badge: "#077d9a",
   },
   gen9: {
     label: "Scarlet / Violet",
-    accent: "#e11d48",        // Koraidon scarlet
+    accent: "#df1d47",        // Koraidon scarlet
     accentLight: "#fda4af",
     accentSurface: "#fff1f2",
     accentSurfaceDark: "#881337",
     accentDark: "#fda4af",
-    badge: "#e11d48",
+    badge: "#df1d47",
   },
 };
 
 export const GEN_THEMES: { id: GenTheme; abbr: string; label: string; badge: string; legendary: string }[] = [
-  { id: "gen1", abbr: "RBY",  label: "Red / Blue / Yellow",        badge: "#8b5cf6", legendary: "mewtwo" },
-  { id: "gen2", abbr: "GSC",  label: "Gold / Silver / Crystal",    badge: "#d97706", legendary: "hooh" },
-  { id: "gen3", abbr: "RSE",  label: "Ruby / Sapphire / Emerald",  badge: "#16a34a", legendary: "rayquaza" },
-  { id: "gen4", abbr: "DPPt", label: "Diamond / Pearl / Platinum", badge: "#3b82f6", legendary: "dialga" },
-  { id: "gen5", abbr: "BW",   label: "Black / White",              badge: "#0ea5e9", legendary: "zekrom" },
+  { id: "gen1", abbr: "RBY",  label: "Red / Blue / Yellow",        badge: "#8256e6", legendary: "mewtwo" },
+  { id: "gen2", abbr: "GSC",  label: "Gold / Silver / Crystal",    badge: "#ad5f05", legendary: "hooh" },
+  { id: "gen3", abbr: "RSE",  label: "Ruby / Sapphire / Emerald",  badge: "#12843c", legendary: "rayquaza" },
+  { id: "gen4", abbr: "DPPt", label: "Diamond / Pearl / Platinum", badge: "#3370d5", legendary: "dialga" },
+  { id: "gen5", abbr: "BW",   label: "Black / White",              badge: "#0a7aac", legendary: "zekrom" },
   { id: "gen6", abbr: "XY",   label: "X / Y",                      badge: "#dc2626", legendary: "yveltal" },
-  { id: "gen7", abbr: "SM",   label: "Sun / Moon",                 badge: "#ea580c", legendary: "solgaleo" },
-  { id: "gen8", abbr: "SwSh", label: "Sword / Shield",             badge: "#0891b2", legendary: "zacian" },
-  { id: "gen9", abbr: "SV",   label: "Scarlet / Violet",           badge: "#e11d48", legendary: "koraidon" },
+  { id: "gen7", abbr: "SM",   label: "Sun / Moon",                 badge: "#c64b0a", legendary: "solgaleo" },
+  { id: "gen8", abbr: "SwSh", label: "Sword / Shield",             badge: "#077d9a", legendary: "zacian" },
+  { id: "gen9", abbr: "SV",   label: "Scarlet / Violet",           badge: "#df1d47", legendary: "koraidon" },
 ];
 
 // ─── Shared external store so ALL useTheme() callers share state ────

@@ -189,7 +189,7 @@ export default function FAQPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/"
-              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-sm font-bold hover:opacity-90 active:scale-[0.97] transition-all"
+              className="inline-flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-accent text-accent-foreground text-sm font-bold hover:opacity-90 active:scale-[0.97] transition-all"
             >
               Build a Report
             </Link>

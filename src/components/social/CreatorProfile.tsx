@@ -87,7 +87,7 @@ function CreatorProfileInner({ name }: { name: string }) {
               </div>
               <a
                 href="/explore"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/20 transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-accent-foreground text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/20 transition-all"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8" />

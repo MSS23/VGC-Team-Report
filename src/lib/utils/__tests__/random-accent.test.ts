@@ -26,7 +26,9 @@ const THEME_PROPS = ["--accent", "--accent-light", "--accent-surface"];
 /** Rose is PALETTES[0], so Math.random() === 0 pins the expected values. */
 const ROSE = {
   name: "rose",
-  accent: "#E11D48",
+  // Darkened from #E11D48 for VGC-315: white-on-accent was 4.70 : 1 but the
+  // same value as `text-accent` on the #FAF9F6 page background was 4.46 : 1.
+  accent: "#DF1D47",
   tint: "#FDA4AF",
   surface: "#FFF1F2",
   darkAccent: "#FB7185",
