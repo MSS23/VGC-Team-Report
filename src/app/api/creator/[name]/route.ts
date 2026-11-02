@@ -63,7 +63,18 @@ export async function GET(
     // Check verified status, profile, and follower count
     const [verifiedCheck, profileCheck, followerCheck] = await Promise.all([
       sql`SELECT name FROM verified_creators WHERE LOWER(name) = ${creatorName.toLowerCase()}`,
-      sql`SELECT bio, twitter, discord, youtube, is_public, avatar_url FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`,
+      // VGC-253: `name` is written at the user's own casing but matched with
+      // LOWER(), so two rows differing only in case both match here. Without an
+      // ORDER BY, which one `rows[0]` served was nondeterministic. Prefer the
+      // row an account actually owns over an unclaimed legacy row, then break
+      // ties on the stored name so the public page is stable across requests.
+      sql`
+        SELECT bio, twitter, discord, youtube, is_public, avatar_url
+        FROM creator_profiles
+        WHERE LOWER(name) = ${creatorName.toLowerCase()}
+        ORDER BY (user_id IS NULL), name
+        LIMIT 1
+      `,
       sql`SELECT COUNT(*)::int as count FROM follows WHERE LOWER(creator_name) = ${creatorName.toLowerCase()}`,
     ]);
     const isVerified = verifiedCheck.length > 0;

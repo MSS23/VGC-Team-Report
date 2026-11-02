@@ -10,7 +10,8 @@ const HUB_DESCRIPTION =
   `Explore Pokemon Champions team reports for Regulation M-C, M-B and M-A. All ${getRegMCMegas().length} legal Mega Evolutions including the new Z Megas, matchup analysis, SP spreads, and team breakdowns from the competitive community.`;
 
 export const metadata: Metadata = {
-  title: "Pokemon Champions Format | Reg M-C Mega Teams & Z Megas",
+  // <= 60 chars including the 18-char " | VGC Team Report" template suffix.
+  title: "Pokemon Champions Reg M-C Megas & Z Megas",
   description: HUB_DESCRIPTION,
   alternates: { canonical: "https://pokemonvgcteamreport.com/champions" },
   openGraph: {

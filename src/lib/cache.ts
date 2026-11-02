@@ -55,25 +55,60 @@ export async function cacheSet(key: string, value: unknown, ttlSeconds: number):
 }
 
 /**
- * Atomic set-if-absent with TTL. Returns true if the key was set (first
- * call within the window), false if it already existed. Used for cross-
- * Lambda dedup (e.g. view-count rate limiting per session) without keeping
- * a serverless function warm via setInterval.
+ * Outcome of an atomic set-if-absent. The error case is explicit because
+ * "the key already existed" and "I could not reach Redis to find out" are
+ * different facts and some callers must not conflate them.
  *
- * Unconfigured Redis (no env vars, e.g. local dev) returns true so the
- * caller's side-effect still runs. A Redis ERROR returns false — failing
- * open there would turn an Upstash outage into one dedup-free DB write per
- * pageview on the hottest path (the share_versions incident shape).
+ * - `"acquired"` — the key was set (first call within the TTL window), or
+ *   Redis is not configured (no env vars, e.g. local dev) so the caller's
+ *   side-effect should still run.
+ * - `"exists"` — the key was already there: a genuine dedup hit.
+ * - `"error"` — Redis threw / timed out / rate-limited. Duplicate-ness is
+ *   UNKNOWN. The caller decides which direction is safe for it.
  */
-export async function cacheSetIfAbsent(key: string, ttlSeconds: number): Promise<boolean> {
+export type SetIfAbsentResult = "acquired" | "exists" | "error";
+
+/**
+ * Atomic set-if-absent with TTL, reporting the error case separately. Used
+ * for cross-Lambda dedup (view-count rate limiting per session, webhook
+ * idempotency keys) without keeping a serverless function warm via
+ * setInterval.
+ */
+export async function cacheSetIfAbsentResult(
+  key: string,
+  ttlSeconds: number,
+): Promise<SetIfAbsentResult> {
   try {
     const r = getRedis();
-    if (!r) return true;
+    if (!r) return "acquired";
     const res = await r.set(key, 1, { ex: ttlSeconds, nx: true });
-    return res === "OK";
-  } catch {
-    return false;
+    return res === "OK" ? "acquired" : "exists";
+  } catch (e) {
+    // Namespace only: the rest of the key can carry a session id or a webhook
+    // delivery id, and this line lands in shared logs. The prefix plus the
+    // error message is enough to recognise an Upstash outage.
+    console.error("cacheSetIfAbsent failed — Redis unavailable, dedup state unknown", {
+      keyPrefix: key.split(":")[0],
+      error: e instanceof Error ? e.message : String(e),
+    });
+    return "error";
   }
+}
+
+/**
+ * Fail-CLOSED boolean wrapper over {@link cacheSetIfAbsentResult}: `true`
+ * only when the key was genuinely acquired, so a Redis error suppresses the
+ * caller's side-effect.
+ *
+ * Use this only where suppression is the safe direction — view-count dedup
+ * and the og-image render lock — because failing open there would turn an
+ * Upstash outage into one dedup-free DB write per pageview on the hottest
+ * path (the share_versions incident shape). Any caller whose side-effect must
+ * NOT be silently dropped (webhook idempotency guards) must call
+ * `cacheSetIfAbsentResult` and handle `"error"` deliberately.
+ */
+export async function cacheSetIfAbsent(key: string, ttlSeconds: number): Promise<boolean> {
+  return (await cacheSetIfAbsentResult(key, ttlSeconds)) === "acquired";
 }
 
 /**

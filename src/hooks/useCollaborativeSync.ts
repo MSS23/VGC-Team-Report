@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { ShareableState } from "@/lib/sharing/url-codec";
+import { parseFetchedShareState } from "@/hooks/useShareUrl";
 
 export type SyncStatus = "idle" | "connecting" | "syncing" | "synced" | "conflict" | "disconnected";
 
@@ -89,20 +90,54 @@ export function useCollaborativeSync({
       eventSource = es;
 
       es.addEventListener("version", (e) => {
+        // `JSON.parse` is typed `any` by the TS lib, so destructuring straight
+        // into `{ version: number; state: ShareableState }` type-checks with no
+        // diagnostic and no cast — the unsound boundary was invisible to tsc.
+        // Keep the parse result at `unknown` and validate both halves before
+        // anything typed sees them.
+        let raw: unknown;
         try {
-          const { version, state } = JSON.parse(e.data);
-          if (version <= versionRef.current) return; // already known — nothing new
-
-          // Queue while saving. Once the POST returns its exact version, discard
-          // only that version's echo; another editor's newer save must survive.
-          if (savesInFlight.current) {
-            if (!pendingRemote.current || version > pendingRemote.current.version) pendingRemote.current = { version, state };
-            return;
-          }
-          applyRemote({ version, state });
+          raw = JSON.parse(e.data);
         } catch {
-          // Malformed event — ignore
+          return; // Malformed JSON — ignore this frame, keep the stream open
         }
+        if (!raw || typeof raw !== "object" || Array.isArray(raw)) return;
+        const { version, state } = raw as { version?: unknown; state?: unknown };
+        if (typeof version !== "number" || !Number.isFinite(version)) return;
+        if (version <= versionRef.current) return; // already known — nothing new
+
+        // Validate against the same zod schema the `/api/share/{id}` fetch path
+        // uses (`parseFetchedShareState`), so a shape that is rejected as
+        // corrupt on page load cannot be injected into a live editor instead.
+        // It is async only because the schemas are lazily imported to keep zod
+        // out of the eager homepage bundle (VGC-256). Every guard below is
+        // re-checked after the await and every one is monotonic in `version`,
+        // so a late-resolving older frame is dropped rather than applied.
+        parseFetchedShareState(state)
+          .then((validated) => {
+            if (disposed) return;
+            if (!validated) {
+              // Invalid frame: log and drop it. Feeding it to onRemoteUpdate
+              // would put garbage in the editor, and throwing in an SSE
+              // listener would tear down the stream. `versionRef` is left
+              // alone so a later good frame at this version still applies.
+              console.warn("[sync] ignoring version event with invalid state payload", { version });
+              return;
+            }
+            if (version <= versionRef.current) return;
+
+            // Queue while saving. Once the POST returns its exact version, discard
+            // only that version's echo; another editor's newer save must survive.
+            if (savesInFlight.current) {
+              if (!pendingRemote.current || version > pendingRemote.current.version) pendingRemote.current = { version, state: validated };
+              return;
+            }
+            applyRemote({ version, state: validated });
+          })
+          .catch(() => {
+            // Validation itself failed (e.g. the schema chunk could not load).
+            // Ignore the frame; never reject out of an SSE listener.
+          });
       });
 
       es.addEventListener("presence", (e) => {
