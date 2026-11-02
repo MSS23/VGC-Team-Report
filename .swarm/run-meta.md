@@ -42,3 +42,18 @@ external data source").
 C1 dead code · C2 TypeScript strictness · C3 bundle/perf · C4 security ·
 C5 last-20-commit review · R6 SEO (repo-only, live site unreachable) ·
 R8 accessibility (static analysis).
+
+## History state change — 02-11-26 00:20 UTC
+
+The branch was pushed early (commit `f73802c`, pre-flight notes) to satisfy the
+repository's stop-hook check that no uncommitted work is left sitting locally.
+
+**`swarm-nightly-2026-11-02` is therefore PUBLISHED from this point on.** For the
+remainder of the run: bring in `origin/main` with `git merge` only. No rebase, no
+`--force`, no `--force-with-lease`, per the run's history guardrail.
+
+## Linear issue-creation BLOCKED (see linear-issue-limit-02-11-26.md)
+
+`activeIssueCount` free-plan cap reached. VGC-330 filed; 10 further tickets
+written to `.swarm/unfiled-ticket-bodies/02-11-26-*.md` instead. Comments and
+status transitions are unaffected and were used normally.
