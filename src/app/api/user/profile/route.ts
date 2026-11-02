@@ -38,7 +38,17 @@ export async function GET(request: Request) {
       : user.username || "Unknown";
 
     const sql = getDb();
-    const rows = await sql`SELECT bio, twitter, discord, youtube, is_public, accent_theme, avatar_url FROM creator_profiles WHERE LOWER(name) = ${creatorName.toLowerCase()}`;
+    // VGC-253: `name` is stored at the user's own casing but matched case
+    // insensitively, so rows differing only in case can both match. Prefer
+    // this caller's own row, then an unclaimed legacy row, and never surface a
+    // row owned by another account into their editor.
+    const rows = await sql`
+      SELECT bio, twitter, discord, youtube, is_public, accent_theme, avatar_url
+      FROM creator_profiles
+      WHERE LOWER(name) = ${creatorName.toLowerCase()}
+      ORDER BY CASE WHEN user_id = ${user.id} THEN 0 WHEN user_id IS NULL THEN 1 ELSE 2 END, name
+      LIMIT 1
+    `;
 
     return NextResponse.json({
       creatorName,
@@ -80,10 +90,18 @@ export async function PUT(request: Request) {
     const isPublicValue = isPublic !== undefined ? isPublic : true;
     const sql = getDb();
 
-    await sql`
-      INSERT INTO creator_profiles (name, bio, twitter, discord, youtube, is_public, accent_theme, avatar_url, updated_at)
-      VALUES (${creatorName}, ${bio ? escapeHtml(bio) : null}, ${twitter || null}, ${discord || null}, ${youtube || null}, ${isPublicValue}, ${accentTheme || null}, ${avatarUrl || null}, NOW())
+    // VGC-253: `creatorName` comes from the Clerk display name, which the user
+    // can edit freely, so the row must be bound to the account that owns it.
+    // The conflict update only fires for a row this caller already owns, or an
+    // unclaimed legacy row (user_id IS NULL) which the write then claims. A
+    // row owned by someone else fails the WHERE, so DO UPDATE touches nothing
+    // and RETURNING yields zero rows — which we surface as a 409 instead of
+    // reporting a success that never happened.
+    const saved = await sql`
+      INSERT INTO creator_profiles (name, user_id, bio, twitter, discord, youtube, is_public, accent_theme, avatar_url, updated_at)
+      VALUES (${creatorName}, ${user.id}, ${bio ? escapeHtml(bio) : null}, ${twitter || null}, ${discord || null}, ${youtube || null}, ${isPublicValue}, ${accentTheme || null}, ${avatarUrl || null}, NOW())
       ON CONFLICT (name) DO UPDATE SET
+        user_id = ${user.id},
         bio = ${bio ? escapeHtml(bio) : null},
         twitter = ${twitter || null},
         discord = ${discord || null},
@@ -92,7 +110,16 @@ export async function PUT(request: Request) {
         accent_theme = ${accentTheme || null},
         avatar_url = ${avatarUrl || null},
         updated_at = NOW()
+      WHERE creator_profiles.user_id IS NULL OR creator_profiles.user_id = ${user.id}
+      RETURNING name
     `;
+
+    if (saved.length === 0) {
+      return NextResponse.json(
+        { error: "That creator name already belongs to another account. Change your display name to claim a creator page." },
+        { status: 409 },
+      );
+    }
 
     captureServerEvent(user.id, "profile_updated", {
       has_bio: !!bio,
