@@ -195,42 +195,20 @@ export interface FAQItem {
   answer: string;
 }
 
-const DEFAULT_FAQ_ITEMS: FAQItem[] = [
-  {
-    question: "What is a VGC team report?",
-    answer:
-      "A VGC team report is a detailed breakdown of a competitive Pokemon Video Game Championship (VGC) team. It includes each Pokemon's build (moves, item, EVs, nature), the team's overall strategy, matchup plans against common threats, damage calculations, and speed tier comparisons. Coaches and players share these reports to document and analyze their tournament teams.",
-  },
-  {
-    question: "How do I share a VGC team report?",
-    answer:
-      "After building your team report on VGC Team Report, click Share to create a permanent viewer link. Keep it private or unlisted, or publish it to Explore. To co-edit securely, invite collaborators by account from Manage Access.",
-  },
-  {
-    question: "What is Pokemon Champions Regulation M-C?",
-    answer:
-      "Pokemon Champions Regulation M-C (Reg M-C, Sep 9 – Dec 2 2026) is the current Champions VGC format. It keeps every Pokemon and Mega from Regulation M-A and M-B and adds new Pokemon such as Rillaboom, Indeedee and Baxcalibur plus six Megas, including the Z Megas Garchomp Z, Lucario Z and Absol Z. Restricted legendaries are banned, item clause applies, and you can Mega Evolve once per battle. VGC Team Report supports Reg M-A, M-B and M-C, including auto-detection and legality checks.",
-  },
-  {
-    question: "How do I import a PokePaste into VGC Team Report?",
-    answer:
-      "On the VGC Team Report homepage, paste your team's Showdown-format text (or a pokepast.es URL) into the import box and click Analyze. The tool will automatically parse your team's Pokemon, moves, items, EVs, IVs, and natures. You can also import directly from a PokePaste link by pasting the URL into the input field.",
-  },
-  {
-    question: "Is VGC Team Report free to use?",
-    answer:
-      "Yes, VGC Team Report is completely free to use. You can build, analyze, and share team reports without an account. Creating a free account unlocks additional features like saving reports permanently, real-time collaboration with teammates, version history, and publishing your report to the community Explore page.",
-  },
-];
-
-export function FAQPageJsonLd({ items }: { items?: FAQItem[] } = {}) {
-  const entries = items ?? DEFAULT_FAQ_ITEMS;
+/**
+ * FAQPage JSON-LD. `items` is required on purpose: Google's structured-data
+ * policy requires the Q&A to be visible on the page emitting it, so the
+ * caller must own the questions it also renders. There used to be a
+ * DEFAULT_FAQ_ITEMS fallback, which let the homepage publish FAQPage markup
+ * for Q&A that was never rendered (VGC-317).
+ */
+export function FAQPageJsonLd({ items }: { items: FAQItem[] }) {
   return (
     <JsonLd
       data={{
         "@context": "https://schema.org",
         "@type": "FAQPage",
-        mainEntity: entries.map((item) => ({
+        mainEntity: items.map((item) => ({
           "@type": "Question",
           name: item.question,
           acceptedAnswer: {

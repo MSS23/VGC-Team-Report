@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getDb } from "@/lib/db";
+import { isDatabaseConfigured, warnDatabaseUnavailableOnce } from "@/lib/db-availability";
 import { getRegMCMegasWithSprites } from "@/lib/data/mega-pokemon";
 
 const BASE = "https://pokemonvgcteamreport.com";
@@ -15,11 +16,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/champions`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${BASE}/faq`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/tools/ev-to-sp`, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/feedback`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/tournaments`, changeFrequency: "weekly", priority: 0.7 },
-    // /compare is intentionally noindex (robots: { index: false }) — do not
-    // re-add it here; sitemapping a noindex page sends crawlers
-    // contradictory signals. (VGC-272)
+    // /compare and /feedback are intentionally noindex (robots: { index:
+    // false }) — do not re-add them here; sitemapping a noindex page sends
+    // crawlers contradictory signals. (VGC-272, VGC-317)
     { url: `${BASE}/changelog`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/support`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.1 },
@@ -38,6 +38,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })),
   ];
+
+  // Without a connection string there is nothing to add and `getDb()` would
+  // throw once per build. The share/creator rows are unrelated to the Mega
+  // guides' featured-teams batch, so there is no memo to share here — only the
+  // same single, quiet "no database" warning.
+  if (!isDatabaseConfigured()) {
+    warnDatabaseUnavailableOnce("sitemap");
+    return staticPages;
+  }
 
   try {
     const sql = getDb();
