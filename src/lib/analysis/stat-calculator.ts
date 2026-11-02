@@ -240,38 +240,97 @@ function trimSpToBudget(sp: StatSpread, stats: StatName[]): StatSpread {
  * `isChampionsFormat(regulation)`, so the question is never "is this a
  * Champions team" — it is only "which unit are these six numbers in".
  *
- * **The discriminator is per-stat magnitude, not budget compliance.** A value
- * above `CHAMPIONS_MAX_SP_PER_STAT` cannot be a Stat Point value — 32 is the
- * hard per-stat cap — so it proves the line is in EV units. Below that, inside
- * a Champions report, the SP reading is the author's. The *total* is
- * deliberately not consulted: a total above 66 means the spread is an
- * **illegal** SP spread, not an EV spread, and conflating those two is what
- * this function exists to stop.
+ * Three rules, in order:
  *
- * That conflation was the bug. The old predicate asked "is this spread already
- * legal as SP?" (`total <= 66 && every value <= 32`), so an over-budget SP
- * spread failed the test and was run through the EV→SP conversion a second
- * time: `EVs: 32 HP / 32 Atk / 3 Spe` (67 SP) became 4/4/1 and an Incineroar
- * rendered at 174 HP instead of the author's 202, with no warning anywhere —
- * and because the output was always back inside budget, every "Over budget by
- * N SP" warning in the report UI, plus the 66-total check in
- * `validateChampionsTeam`, was unreachable code.
+ *  1. **A value above `CHAMPIONS_MAX_SP_PER_STAT` proves EV units.** 32 is the
+ *     hard per-stat cap, so no Stat Point value can exceed it.
+ *  2. **Inside the 32-per-stat cap *and* the 66-point budget, the SP reading
+ *     wins.** This is a spread that is valid as written in SP, and reading it
+ *     as EVs would collapse "5 Spe" to 1 SP and wreck the speed tiers.
+ *  3. **Over budget, the line is read as EVs unless it is visibly SP-shaped.**
+ *     A total above 66 cannot be a *valid* SP spread, so one of the two
+ *     readings is a mistake — see the trade-off below.
+ *
+ * ### Why rule 3 is not simply "over budget ⇒ EVs"
+ *
+ * The predicate here used to be exactly that (`total <= 66 && every value
+ * <= 32`), and it had a bad failure of its own: a genuine but **over-budget**
+ * SP spread failed the test, was pushed through the EV→SP conversion a second
+ * time, and came back as a legal-looking spread. `EVs: 32 HP / 32 Atk / 3 Spe`
+ * (67 SP) became 4/4/1 — an Incineroar rendered at 174 HP where its author
+ * built 202 — and because the output always landed back inside budget, every
+ * "Over budget by N SP" warning in the report UI and the 66-total check in
+ * `validateChampionsTeam` were unreachable code.
+ *
+ * Dropping the total clause outright fixed that but opened the mirror-image
+ * hole: a genuine **EV** line whose every value happens to be ≤ 32 and whose
+ * total exceeds 66 — `EVs: 28 HP / 28 Def / 20 SpD`, 76 — was read verbatim as
+ * 76 SP. HP was computed from 28 SP instead of the 4 SP that 28 EVs actually
+ * buy, every stat and speed tier on the report was wrong, and the legality
+ * sheet additionally accused the author of being "over budget by 10 SP" for a
+ * spread that is perfectly legal as EVs.
+ *
+ * Both readings of an over-budget, all-≤-32 line therefore produce silently
+ * wrong stats; from the six numbers alone the case is genuinely undecidable.
+ * So rule 3 asks for positive evidence of SP units before keeping the SP
+ * reading, and there are two tells:
+ *
+ *  - **A stat sitting exactly on the 32 SP cap.** Maxing a stat is the single
+ *    most common thing an SP author does, and 32 is where that lands. As an EV
+ *    figure, 32 is an unremarkable mid-size chip with nothing special about it.
+ *  - **A value that is not a multiple of 4.** EVs only pay out in fours — the
+ *    stat formula floors `ev / 4`, so Showdown writes EV lines in 4-EV steps
+ *    and anything else is wasted. SP adds to the stat 1:1, so 11 Def and 5 Spe
+ *    are ordinary SP values and impossible-to-justify EV ones.
+ *
+ * An over-budget line with neither tell (every value a multiple of 4, none at
+ * the cap) is read as EVs, which is what makes `28 / 28 / 20` convert again.
+ *
+ * ### Boundaries
+ *
+ *  - Total exactly 66 ⇒ SP (rule 2; the budget is inclusive).
+ *  - A single value exactly 32 ⇒ within the cap, so still eligible for SP.
+ *  - An all-zero spread ⇒ `false`. A paste with no `EVs:` line parses to all
+ *    zeros, and there is no investment to pick a unit for; the conversion maps
+ *    zeros to zeros either way, so this only keeps the legality sheet from
+ *    announcing "0/66 SP" at a team that never mentioned stats.
+ *  - A spread valid under **both** readings (in cap, in budget — e.g.
+ *    `22 / 11 / 24 / 4 / 5`, legal as 66 SP and as 66 EVs) resolves to **SP**,
+ *    per rule 2: inside a Champions report the author wrote SP, and the EV
+ *    reading would silently discard most of their investment.
+ *  - A spread over budget but carrying a tell (e.g. `32 HP / 28 Def / 20 SpD`,
+ *    80) resolves to **SP** and shows as over budget, which is the honest
+ *    answer: an SP author is told their spread is illegal rather than being
+ *    shown numbers nobody built.
  *
  * `validateChampionsTeam` shares this one function so the display and the
  * legality sheet can never disagree about which unit they are reading.
  *
  * Known residual: a spread with a *single* value just over the cap and a small
- * total (`EVs: 33 HP / 10 Atk`) is read as EVs here, so the 32 SP per-stat cap
- * cannot be enforced from the numbers alone. Any rule that caught it would
- * also have to re-read ordinary partial EV lines such as `EVs: 60 HP` as a
- * 60 SP investment, which is worse. The real fix is to carry the unit
- * explicitly (a `statForm: "ev" | "sp"` on `ParsedPokemon`, set by the
- * parser), which removes the guess entirely.
+ * total (`EVs: 33 HP / 10 Atk`) is read as EVs by rule 1, so the 32 SP
+ * per-stat cap cannot be enforced from the numbers alone. Any rule that caught
+ * it would also have to re-read ordinary partial EV lines such as `EVs: 60 HP`
+ * as a 60 SP investment, which is worse. The real fix for the whole guess is
+ * to carry the unit explicitly (a `statForm: "ev" | "sp"` on `ParsedPokemon`,
+ * set by the parser), which removes it entirely.
  */
 export function isSpFormSpread(evs: StatSpread): boolean {
   const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
   if (stats.every((s) => evs[s] <= 0)) return false;
-  return stats.every((s) => evs[s] <= CHAMPIONS_MAX_SP_PER_STAT);
+
+  // Rule 1 — a value above the per-stat cap cannot be a Stat Point value.
+  if (stats.some((s) => evs[s] > CHAMPIONS_MAX_SP_PER_STAT)) return false;
+
+  // Rule 2 — in cap and in budget: a spread that is valid as written in SP.
+  const total = stats.reduce((sum, s) => sum + evs[s], 0);
+  if (total <= CHAMPIONS_TOTAL_SP) return true;
+
+  // Rule 3 — over budget, so one reading is a mistake. Keep SP only on
+  // positive evidence of SP units: a stat pinned to the 32 SP cap, or a value
+  // that is not a multiple of 4 and so cannot be a sensible EV figure.
+  return stats.some(
+    (s) => evs[s] === CHAMPIONS_MAX_SP_PER_STAT || (evs[s] > 0 && evs[s] % 4 !== 0),
+  );
 }
 
 /**
@@ -295,9 +354,9 @@ export function convertToChampionsSp(evs: StatSpread): StatSpread {
   const stats: StatName[] = ["hp", "atk", "def", "spa", "spd", "spe"];
 
   // Fast path — pastes that are already in SP form are returned verbatim,
-  // over budget or not. See `isSpFormSpread`: the decision is about *units*,
-  // never about budget compliance, so an over-budget SP spread is no longer
-  // silently re-scaled into a legal-looking one.
+  // over budget or not, so an over-budget SP spread is no longer silently
+  // re-scaled into a legal-looking one. `isSpFormSpread` owns the whole
+  // units question, including which way an over-budget line resolves.
   if (isSpFormSpread(evs)) return { ...evs };
 
   // Step 1: Direct per-stat conversion (already capped at 32 by evToChampionsSp).

@@ -266,12 +266,15 @@ export function validateChampionsTeam(
   // `isSpFormSpread` — shared with convertToChampionsSp so the legality sheet
   // and the rendered stats can never read the same paste differently.
   //
-  // Crucially the unit test is about magnitude, not legality: it used to ask
-  // "is this spread already within the 66/32 SP budget?", which meant the SP
-  // branch was only ever entered by spreads that could not possibly violate
-  // the budget. The 66-total cap CLAUDE.md names as a Champions rule therefore
-  // had no code path that could emit an error — a 67 SP spread validated clean
-  // and was even told it had "443 more available".
+  // Crucially the unit test is not "is this spread already legal as SP?": that
+  // is what it used to ask, which meant the SP branch was only ever entered by
+  // spreads that could not possibly violate the budget. The 66-total cap
+  // CLAUDE.md names as a Champions rule therefore had no code path that could
+  // emit an error — a 67 SP spread validated clean and was even told it had
+  // "443 more available". An over-budget line now reaches this branch whenever
+  // it is recognisably written in SP (a stat on the 32 cap, or a value that is
+  // not a multiple of 4), so the error below is reachable; an over-budget line
+  // with no such tell is an ordinary EV line and is validated as one.
   //
   // Traditional EV spreads (510 total, 252 per stat) are still accepted
   // because the rest of the app converts them to SP on display, but are
