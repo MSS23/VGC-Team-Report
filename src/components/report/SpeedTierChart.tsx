@@ -12,6 +12,7 @@ import { calculateStat, calculateChampionsStat, convertToChampionsSp, calcBattle
 import { MEGA_POKEMON_LIST } from "@/lib/data/mega-pokemon";
 import { detectMegaFromItem } from "@/lib/utils/mega-detect";
 import { resolveSpeedTierForm } from "@/lib/utils/speed-tier-form";
+import { resolveMegaAbility } from "@/lib/utils/effective-typing";
 
 /** Map from normalised base-form key (e.g. "kangaskhan") → Mega dataKeys */
 const BASE_KEY_TO_MEGA_KEYS = new Map<string, string[]>();
@@ -217,7 +218,11 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       boostMultiplier,
       hasSpeedBoost,
       speedBoostLabel,
-      ability: mon.parsed.ability,
+      // When the card's Mega toggle is on, THIS row is the Mega form, so the
+      // doubling check has to read the Mega's ability, not the pasted one.
+      ability: form.isMega
+        ? resolveMegaAbility(form.speciesKey, mon.parsed.ability)
+        : mon.parsed.ability,
       isYours: true as const,
       isMega: form.isMega,
       baseSpeciesKey: form.baseSpeciesKey,
@@ -261,7 +266,11 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
           boostMultiplier: 1 as number,
           hasSpeedBoost: false,
           speedBoostLabel: "",
-          ability: mon.parsed.ability,
+          // The paste names the BASE form's ability (Venusaur's Chlorophyll),
+          // which the Mega cannot have (Mega Venusaur is Thick Fat) — and it
+          // hides the Mega's own (Mega Swampert's Swift Swim). Resolve from
+          // the Mega being rendered so this row's number matches its label.
+          ability: resolveMegaAbility(megaKey, mon.parsed.ability),
           isYours: true as const,
           isMega: true as const,
           baseSpeciesKey: baseKey,
@@ -626,7 +635,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
                   {entry.isMega && (
                     <span
                       className="text-[8px] sm:text-[10px] font-extrabold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-1 sm:px-1.5 py-0.5 rounded uppercase tracking-wider flex-shrink-0"
-                      title="Mega-evolved speed (same EV/SP spread as base form)"
+                      title={`Mega-evolved speed (same EV/SP spread as base form)${entry.ability ? ` \u00B7 ${entry.ability}` : ""}`}
                     >
                       Mega
                     </span>
