@@ -47,13 +47,6 @@ const TYPE_EMOJI: Record<string, string> = {
   other: "\uD83D\uDCAC",
 };
 
-const PRIORITY_LABELS: Record<number, string> = {
-  1: "\uD83D\uDD34 Urgent",
-  2: "\uD83D\uDFE0 High",
-  3: "\uD83D\uDFE1 Normal",
-  4: "\u26AA Low",
-};
-
 /**
  * Post a rich feedback embed to the feedback channel and create/find a topic thread.
  */

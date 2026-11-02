@@ -74,14 +74,6 @@ export interface ShareableState {
   genTheme?: string;
 }
 
-function toBase64Url(bytes: Uint8Array): string {
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
 function fromBase64Url(str: string): Uint8Array {
   let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
   const pad = base64.length % 4;
