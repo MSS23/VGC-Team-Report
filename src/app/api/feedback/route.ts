@@ -4,6 +4,7 @@ import { escapeHtml } from "@/lib/utils/sanitize";
 import { containsBlockedWords } from "@/lib/utils/word-filter";
 import { createLinearIssue } from "@/lib/linear";
 import { postFeedbackEmbed } from "@/lib/discord-bot";
+import { postDiscordWebhook, resolveDiscordWebhook } from "@/lib/discord-webhook";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -35,7 +36,9 @@ const FeedbackBody = z.object({
 });
 
 async function sendDiscordNotification(data: z.infer<typeof FeedbackBody>, submitterName: string, linearUrl?: string) {
-  const webhookUrl = process.env.DISCORD_FEEDBACK_WEBHOOK;
+  // Validated (official Discord host, id/token shape) and subject to the
+  // DISCORD_WEBHOOKS_DISABLED kill switch — see src/lib/discord-webhook.ts.
+  const webhookUrl = resolveDiscordWebhook("DISCORD_FEEDBACK_WEBHOOK");
   if (!webhookUrl) return;
 
   const fields = [
@@ -60,19 +63,15 @@ async function sendDiscordNotification(data: z.infer<typeof FeedbackBody>, submi
     fields.push({ name: "Linear", value: `[View issue](${linearUrl})`, inline: true });
   }
 
-  await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      embeds: [{
-        title: `${TYPE_EMOJI[data.type] ?? ""} ${data.type.charAt(0).toUpperCase() + data.type.slice(1)}: ${data.title}`,
-        color: TYPE_COLOR[data.type] ?? 0x6366f1,
-        fields,
-        footer: { text: "VGC Team Report Feedback" },
-        timestamp: new Date().toISOString(),
-      }],
-    }),
-  }).catch((e) => console.error("Discord webhook error:", e));
+  await postDiscordWebhook(webhookUrl, {
+    embeds: [{
+      title: `${TYPE_EMOJI[data.type] ?? ""} ${data.type.charAt(0).toUpperCase() + data.type.slice(1)}: ${data.title}`,
+      color: TYPE_COLOR[data.type] ?? 0x6366f1,
+      fields,
+      footer: { text: "VGC Team Report Feedback" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
 }
 
 export async function POST(request: Request) {
