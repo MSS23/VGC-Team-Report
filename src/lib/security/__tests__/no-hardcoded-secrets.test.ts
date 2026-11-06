@@ -10,6 +10,8 @@ import { describe, expect, it } from "vitest";
 // deleted from the working tree in 28f5b8b, which did NOT remove it from history — the
 // blob is still extractable by anyone who clones. Nothing in CI would have stopped it,
 // and nothing would stop the next one. This test is that gate.
+// (Nov 2026: a full-history blob sweep found that single blob and no other credential
+// shape; Discord returns "Unknown Webhook" for it, so that leaked webhook is dead.)
 //
 // SCOPE: this scans the tracked WORKING TREE only, because that is what a pre-merge
 // check can actually block. It intentionally does not scan history — too slow for CI,

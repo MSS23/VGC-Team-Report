@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+import { postDiscordWebhook, resolveDiscordWebhook } from "@/lib/discord-webhook";
 
 export const dynamic = "force-dynamic";
 
@@ -268,35 +269,27 @@ export async function POST(request: Request) {
 
     const issue = linearRes.data.issueCreate.issue;
 
-    // Notify Discord if webhook is configured
-    const discordWebhook = process.env.DISCORD_BUILDS_WEBHOOK;
+    // Notify Discord if a valid webhook is configured. Non-critical: the
+    // helper validates the URL, times out, redacts the token in logs and
+    // never throws — see src/lib/discord-webhook.ts.
+    const discordWebhook = resolveDiscordWebhook("DISCORD_BUILDS_WEBHOOK");
     if (discordWebhook) {
       const severityEmoji = priority <= 2 ? "🔴" : "🟡";
-      const discordController = new AbortController();
-      const discordTimeoutId = setTimeout(() => discordController.abort(), 3000);
-      try {
-        await fetch(discordWebhook, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            embeds: [
-              {
-                title: `${severityEmoji} PostHog Alert → ${issue.identifier}`,
-                description: `**${title}**\n\n[View in Linear](${issue.url})\n\n**Event:** \`${event}\`\n**User:** ${personEmail}\n**Page:** ${properties.$current_url ?? "N/A"}`,
-                color: priority <= 2 ? 0xef4444 : 0xf9a825,
-                footer: { text: "PostHog → Linear auto-triage" },
-                timestamp: new Date().toISOString(),
-              },
-            ],
-          }),
-          signal: discordController.signal,
-        });
-      } catch {
-        // Discord notification is non-critical — log but don't fail the webhook
-        console.warn("PostHog webhook: Discord notification failed or timed out");
-      } finally {
-        clearTimeout(discordTimeoutId);
-      }
+      await postDiscordWebhook(
+        discordWebhook,
+        {
+          embeds: [
+            {
+              title: `${severityEmoji} PostHog Alert → ${issue.identifier}`,
+              description: `**${title}**\n\n[View in Linear](${issue.url})\n\n**Event:** \`${event}\`\n**User:** ${personEmail}\n**Page:** ${properties.$current_url ?? "N/A"}`,
+              color: priority <= 2 ? 0xef4444 : 0xf9a825,
+              footer: { text: "PostHog → Linear auto-triage" },
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        },
+        3000,
+      );
     }
 
     return NextResponse.json({
