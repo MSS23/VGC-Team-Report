@@ -5,7 +5,7 @@ import Link from "next/link";
 import { I18nProvider } from "@/lib/i18n";
 
 import { applyRandomAccent } from "@/lib/utils/random-accent";
-import { UserButton, Show, SignInButton, useUser } from "@clerk/nextjs";
+import { Show, SignInButton, useUser } from "@clerk/nextjs";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 import { MatchTracker } from "@/components/match-tracker/MatchTracker";
