@@ -1,70 +1,106 @@
-# Merge Conflict Log — swarm-nightly-2026-05-28
-No conflicts at branch creation (cut fresh from main).
+# Merge-conflict log — run 09-11-26
 
-# Swarm run 2026-08-10
+## Pre-run (Step 0B)
 
-## ⚠️ Intra-run file overlap — MY DISPATCH ERROR, must be reconciled at integration
+- Branch `swarm-nightly-2026-11-09` cut fresh from `origin/main` @ `10dfd74`.
+- `git rev-list --count HEAD..origin/main` = **0 behind**, 0 ahead. No sync needed.
+- `main` has had **no commits in the last 7 days**, so `.swarm/main-changed-files.md`
+  is empty. Conflict risk *from main moving* is therefore nil this run.
+- Working tree was clean at Step 0B. Nothing stashed.
 
-VGC-262 (EV→SP converter) returned `conflict_risk: true` and listed three files that the still-running
-VGC-258 agent also owns:
+## KNOWN, EXPECTED CONFLICT with open PR #91 — one file
 
-- `src/app/sitemap.ts`
-- `src/app/champions/ChampionsContent.tsx`
-- `src/components/layout/PageFooter.tsx`
+**File: `src/app/changelog/data.ts`** (the in-app Updates page)
 
-Cause: I told the VGC-262 agent to "link it from somewhere discoverable" and "add it to sitemap.ts"
-WITHOUT constraining which files it could use, while separately telling the VGC-258 agent to edit the
-footer, the sitemap and ChampionsContent. That violates the file-overlap control in the run spec —
-the two agents were dispatched against overlapping file sets. VGC-262's own report caught it; the
-dispatch design should have.
+PR #91 (`swarm-nightly-2026-11-02`, draft, open since 2 Nov, 21 commits) adds a
+`November 2026 / v5.30` section via commit `aa90b25`, inserted immediately after
+`export const ENTRIES: ChangelogEntry[] = [` (line 18).
 
-Both agents do read-modify-write against the SAME working tree, so whichever wrote last wins and the
-earlier agent's edit to that file can be silently lost.
+Tonight's run must also append to the current month's section (November 2026) per the
+mandatory Updates-page step, and inserts at the **same line**. Git will flag this as a
+conflict when the second of the two PRs is merged.
 
-RECONCILIATION REQUIRED once VGC-258 reports — verify in the integrated tree that ALL of these
-survived, and re-apply by hand if not:
-1. `sitemap.ts` contains BOTH the `/tools/ev-to-sp` entry (VGC-262) AND the Reg M-B champions
-   routes (VGC-258).
-2. `PageFooter.tsx` contains BOTH the `/tools/ev-to-sp` link (VGC-262) AND the `/champions`
-   link (VGC-258).
-3. `ChampionsContent.tsx` contains BOTH the converter callout (VGC-262) AND the M-B index grid plus
-   the Indianapolis past-tense fix (VGC-258).
+**It is a pure insertion collision, not a semantic one. Resolution is trivial:**
 
-This is exactly why the sequential commit loop re-gates from the integrated tree rather than trusting
-each agent's isolated green run.
+> Keep BOTH entries. Order them newest-first inside the `November 2026` month:
+> tonight's `v5.31` block above PR #91's `v5.30` block. Delete neither. Do not
+> renumber. The surrounding October 2026 (v5.29, v5.28) entries are untouched by
+> both branches.
 
-## RESOLVED — verified in the integrated tree at 02:0x, 2026-08-10
+Whichever PR merges first will apply cleanly; the second will need this one-minute
+manual resolution.
 
-The VGC-258 agent reconciled the overlap itself and reported both agents' edits surviving. The
-orchestrator re-verified INDEPENDENTLY rather than trusting that report, by grepping the integrated
-tree:
+**Avoiding it entirely:** merge PR #91 first, then this branch picks it up on the next
+sync. Nothing else in tonight's diff touches any file PR #91 touches.
 
-1. `src/app/sitemap.ts` — HAS BOTH: `/tools/ev-to-sp` (line 17, VGC-262) AND
-   `getRegMBMegasWithSprites` import + mapping (lines 3, 29, VGC-258). ✅
-2. `src/components/layout/PageFooter.tsx` — HAS BOTH: `/champions` (line 15, VGC-258) AND
-   `/tools/ev-to-sp` labelled "EV → SP" (line 17, VGC-262). ✅
-3. `src/app/champions/ChampionsContent.tsx` — HAS ALL THREE: the converter callout
-   (`href="/tools/ev-to-sp"`, line 470, VGC-262), the M-B grid grouping
-   ("New in Regulation M-B", line 60, VGC-258), and the Indianapolis paragraph now in PAST tense
-   ("format played at ... Indianapolis Regionals (May 29-31)", line 163). ✅
+## During the run
 
-No re-application needed. Outcome was luck as much as design — the two agents happened to edit
-disjoint regions of each file. The dispatch error stands as a real process bug: the file-overlap
-control exists precisely so this does not depend on luck, and I did not apply it when I told the
-VGC-262 agent to "link it from somewhere discoverable".
+(Nothing further — see the commit log section below if any entry appears.)
 
-**Lesson for the next run:** when an implementation agent is told to "link this from somewhere" or
-"add it to the sitemap", the dispatcher must name the exact files it may touch and cross-check them
-against every other agent's file set BEFORE dispatch — a vague instruction silently expands an
-agent's file footprint beyond what the overlap check was run against.
+## Post-commit sync with origin/main
 
-## Unclaimed working-tree artifact — quarantined, not committed
+Recorded at the end of the run in `.swarm/run-meta.md`.
 
-`VGC-Team-Project` — a BROKEN SYMLINK to `/home/user/VGC-Team-Project` (a path that does not exist),
-timestamped 00:38, which predates this run's 01:14 start. Not in any agent's `files_changed`, not
-gitignored, and would have been committed by a careless `git add .`.
+---
 
-Most likely residue from an isolated-verification tree attempt (one agent reported a Turbopack
-"symlink points out of filesystem root" panic when symlinking instead of hardlinking node_modules).
+## REVISED: the full unmerged-work picture (discovered mid-run)
 
-Moved to the session scratchpad rather than deleted, so it is recoverable. Not committed.
+The initial Step 0B assessment was incomplete in two ways, both corrected here.
+
+### 1. The clone was shallow
+
+`git rev-parse --is-shallow-repository` returned **true** — only 78 commits were present.
+Any history-based analysis run before this was unreliable. `git fetch --unshallow`
+brought the real total to **834 commits**. Two consequences:
+
+- A first pass at classifying the In Review queue produced a wildly inflated "46 tickets
+  have no commit anywhere" figure. The real figure is 20, and 38 are already on `main`.
+- A first check of VGC-305 (the P0 Discord-token-in-history issue) found **zero** matches
+  and looked clean. On full history it finds **two**. Anyone verifying that ticket from a
+  shallow clone will wrongly conclude it is resolved.
+
+### 2. There are TWO unmerged branches, not one — and only one has a PR
+
+| Branch | Commits ahead of `main` | PR | Age |
+|---|---|---|---|
+| `swarm-nightly-2026-11-02` | 21 | **#91 (draft)** | open 7 days, unreviewed |
+| `ccr-643ddaf1-yj2dyf` | 1 | **none** | no PR at all |
+
+`ccr-643ddaf1-yj2dyf` carries `2f4ec31 fix: harden Discord webhook handling after a
+compromised webhook` — a substantial security commit (centralised webhook helper with
+URL validation against official Discord hosts, token redaction in logs, a
+`DISCORD_WEBHOOKS_DISABLED` kill switch, 22 new unit tests) written after a **real
+webhook abuse incident**. It has no pull request, so nothing is tracking it and nobody is
+reviewing it. **That is the single most at-risk piece of work in the repository.**
+
+Its message also records that the leaked webhook "is confirmed deleted on Discord's
+side", which — if accurate — makes the token still sitting in public history inert and
+largely resolves VGC-305. That claim is on an unmerged branch, so it has never been
+reviewed.
+
+### 3. Tonight's audits re-discovered work already fixed on those branches
+
+Direct evidence for VGC-265's thesis that the bottleneck is review throughput, not
+implementation capacity:
+
+- **C4's top NEW security finding** — "the og:image Blob cache isn't revoked when a
+  report is flipped private" — is already fixed by `d0b0ac9 fix: making a report private
+  now revokes its public og:image card` on PR #91. Not re-implemented tonight.
+- **C3's top perf deferral** — defer `CookieBanner` off the shared first-load chunk
+  (15.3 KB gz x 22 routes) — is already done by `5859aff` on PR #91. Not re-implemented.
+- **VGC-243** ("Speed-Tiers not adapting to Mega selection") is almost certainly fixed by
+  `87503db fix: Mega speed tiers read the Mega's own ability, not the base form's` on
+  PR #91, which never cites the ticket.
+- Three of the four tickets dispatched for implementation tonight (VGC-226, VGC-260,
+  VGC-261) turned out to be **already complete on `main`**.
+
+### Merge-order recommendation, to minimise conflicts
+
+1. **`ccr-643ddaf1-yj2dyf` first** — 1 commit, touches `src/lib/discord-webhook.ts`,
+   the feedback/PostHog routes and `.env.example`. No overlap with either other branch.
+   It needs a PR opened for it; the swarm did not open one, because the one-PR-per-run
+   rule covers only tonight's own branch and opening a PR for someone else's branch is
+   not the swarm's call.
+2. **PR #91 next** — 21 commits, 134 files.
+3. **This run's branch last** — it is small (see the PR body) and its only overlap with
+   PR #91 is the one-line changelog insertion documented above.
