@@ -16,6 +16,17 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "November 2026",
+    version: "5.31",
+    title: "Groundwork for Champions Spreads & a Code Clean-up",
+    emoji: "\u{1F9F9}",
+    items: [
+      { type: "improved", text: "Reports now record whether a spread was written in EVs or in Champions Stat Points, instead of working it out from the size of the numbers. The old guess could not be made reliable \u2014 a Champions spread like 33 HP / 10 Atk had to be read as EVs, which is why the 32-per-stat Stat Point limit could never actually flag anything. Nothing you see changes today: existing reports read exactly as they did before, and switching them over to the new, reliable reading is a separate change because it will shift some numbers on Champions teams shared earlier." },
+      { type: "improved", text: "Removed around 46 lines of code that nothing used any more \u2014 leftovers from features that were replaced. No change to anything on screen; it just makes the next person touching these files less likely to break something." },
+      { type: "improved", text: "Re-checked the stricter TypeScript settings that guard against a whole class of coding mistake, and confirmed all five still report zero problems across the project. No user-visible effect \u2014 recorded so the check does not get repeated unnecessarily." },
+    ],
+  },
+  {
     date: "October 2026",
     version: "5.29",
     title: "Correct Champions Speeds, a Readable Dark Mode & Private Team Graphics",
