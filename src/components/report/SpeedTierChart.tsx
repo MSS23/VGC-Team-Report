@@ -580,7 +580,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
 
         {/* Speed bars */}
         <div className="flex flex-col gap-2">
-          {allEntries.map((entry, i) => {
+          {allEntries.map((entry) => {
             const sc = entry.isYours ? getSpriteConfig?.(entry.speciesKey) : undefined;
             const percent = Math.max(Math.min((entry.displaySpeed / maxDisplaySpeed) * 100, 100), 6);
 

@@ -52,7 +52,3 @@ export function calculateReportDamage(attacker: ParsedPokemon, defender: ParsedP
     survival: max < hp ? "Survives every damage roll from full HP" : min >= hp ? "Guaranteed KO from full HP" : "A KO is possible from full HP",
   };
 }
-
-export function getCalcSpecies(regulation?: string): string[] {
-  return Array.from(Generations.get(isChampionsFormat(regulation) ? 0 : 9).species, (s) => s.name).sort();
-}

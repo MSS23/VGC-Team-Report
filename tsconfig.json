@@ -8,6 +8,10 @@
     // VGC-261 — the five flags below are NOT implied by `strict: true`. Each was
     // measured individually against the full program on 2026-08-10 and reported
     // 0 errors, so they were verified clean rather than assumed clean.
+    // Re-measured cold on 2026-11-09: still 0 errors each, so nothing here needs
+    // revisiting. `noImplicitReturns` was measured in the same pass and is still
+    // the only near-miss at 2 errors (NotificationBell.tsx, useShareUrl.ts) — it
+    // stays off until someone decides to make those two fixes.
     // (`useUnknownInCatchVariables` and `strictFunctionTypes` are already on via
     // `strict: true` — writing them out would be a no-op.)
     // Deliberately still OFF: `verbatimModuleSyntax`. It also measures 0 errors,

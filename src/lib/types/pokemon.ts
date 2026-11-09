@@ -37,6 +37,17 @@ export interface ParsedPokemon {
   ivs: StatSpread;
   nature: string;
   moves: string[];
+  /**
+   * Which unit the `evs` spread is written in: traditional EVs or Champions
+   * Stat Points (SP). A Showdown paste writes both on the same `EVs:` line,
+   * so the unit cannot be recovered from the numbers alone — `EVs: 33 HP`
+   * is a legal EV spread and an illegal SP spread that look identical to a
+   * shape check. The parser sets this authoritatively when it is told the
+   * regulation; otherwise it falls back to shape inference
+   * (`isSpFormSpread`). Optional so existing construction sites still
+   * compile (VGC-291).
+   */
+  statForm?: "ev" | "sp";
 }
 
 export interface ParsedTeam {

@@ -275,3 +275,86 @@ describe("parseShowdownPaste", () => {
     });
   });
 });
+
+describe("parseShowdownPaste statForm (VGC-291)", () => {
+  // EV-shaped spread: 252 > 32 per-stat, so shape inference reads it as EVs.
+  const EV_SHAPED = `Garchomp @ Life Orb\nAbility: Rough Skin\nEVs: 4 HP / 252 Atk / 252 Spe\nJolly Nature\n- Earthquake`;
+  // SP-shaped spread: every stat <= 32, so shape inference reads it as SP.
+  const SP_SHAPED = `Garchomp @ Life Orb\nAbility: Rough Skin\nEVs: 2 HP / 32 Atk / 32 Spe\nJolly Nature\n- Earthquake`;
+
+  describe("regulation supplied", () => {
+    it("marks every Pokemon as 'sp' for a Champions regulation", () => {
+      for (const reg of ["Reg M-A", "Reg M-B", "Reg M-C"]) {
+        const result = parseShowdownPaste(FULL_TEAM_PASTE, { regulation: reg });
+        expect(result.pokemon).toHaveLength(6);
+        for (const mon of result.pokemon) {
+          expect(mon.statForm).toBe("sp");
+        }
+      }
+    });
+
+    it("marks an EV-shaped Champions paste as 'sp' anyway — the regulation wins over the shape", () => {
+      const result = parseShowdownPaste(EV_SHAPED, { regulation: "Reg M-C" });
+      expect(result.pokemon[0].statForm).toBe("sp");
+    });
+
+    it("marks every Pokemon as 'ev' for a non-Champions regulation", () => {
+      const result = parseShowdownPaste(FULL_TEAM_PASTE, { regulation: "Reg G" });
+      expect(result.pokemon).toHaveLength(6);
+      for (const mon of result.pokemon) {
+        expect(mon.statForm).toBe("ev");
+      }
+    });
+
+    it("marks an SP-shaped non-Champions paste as 'ev' anyway — the regulation wins over the shape", () => {
+      const result = parseShowdownPaste(SP_SHAPED, { regulation: "Reg H" });
+      expect(result.pokemon[0].statForm).toBe("ev");
+    });
+  });
+
+  describe("no regulation supplied", () => {
+    it("infers 'ev' from an EV-shaped spread", () => {
+      expect(parseShowdownPaste(EV_SHAPED).pokemon[0].statForm).toBe("ev");
+    });
+
+    it("infers 'sp' from an SP-shaped spread", () => {
+      expect(parseShowdownPaste(SP_SHAPED).pokemon[0].statForm).toBe("sp");
+    });
+
+    it("infers 'ev' for an all-zero spread (no EVs line)", () => {
+      const paste = `Garchomp @ Life Orb\nAbility: Rough Skin\nJolly Nature\n- Earthquake`;
+      expect(parseShowdownPaste(paste).pokemon[0].statForm).toBe("ev");
+    });
+
+    it("infers per Pokemon, so a mixed-shape paste is not forced team-wide", () => {
+      const result = parseShowdownPaste(`${EV_SHAPED}\n\n${SP_SHAPED}`);
+      expect(result.pokemon.map((p) => p.statForm)).toEqual(["ev", "sp"]);
+    });
+
+    it("treats an empty regulation string as 'not supplied' and still infers", () => {
+      expect(parseShowdownPaste(SP_SHAPED, { regulation: "" }).pokemon[0].statForm).toBe("sp");
+      expect(parseShowdownPaste(SP_SHAPED, {}).pokemon[0].statForm).toBe("sp");
+    });
+  });
+
+  describe("one-argument call is unchanged", () => {
+    it("parses identically with and without an empty options object", () => {
+      expect(parseShowdownPaste(FULL_TEAM_PASTE)).toEqual(
+        parseShowdownPaste(FULL_TEAM_PASTE, {})
+      );
+    });
+
+    it("still returns the same parsed fields as before the option existed", () => {
+      const result = parseShowdownPaste(GARCHOMP_BLOCK);
+      expect(result.pokemon).toHaveLength(1);
+      const mon = result.pokemon[0];
+      expect(mon.species).toBe("Garchomp");
+      expect(mon.item).toBe("Life Orb");
+      expect(mon.ability).toBe("Rough Skin");
+      expect(mon.nature).toBe("Jolly");
+      expect(mon.evs).toEqual({ hp: 4, atk: 252, def: 0, spa: 0, spd: 0, spe: 252 });
+      expect(mon.moves).toHaveLength(4);
+      expect(result.warnings).toEqual([]);
+    });
+  });
+});

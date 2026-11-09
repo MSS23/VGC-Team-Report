@@ -1,4 +1,6 @@
 import type { ParsedPokemon, ParsedTeam, PokemonType, StatSpread, TeraType } from "@/lib/types/pokemon";
+import { isSpFormSpread } from "@/lib/analysis/stat-calculator";
+import { isChampionsFormat } from "@/lib/data/tags";
 
 const POKEMON_TYPES: PokemonType[] = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -38,7 +40,17 @@ function parseStatLine(line: string): Partial<StatSpread> {
   return stats;
 }
 
-function parsePokemonBlock(block: string): { pokemon: ParsedPokemon; warnings: string[] } {
+type StatForm = NonNullable<ParsedPokemon["statForm"]>;
+
+/**
+ * `statForm` is passed in when the caller knows the unit (the regulation was
+ * supplied). When it is undefined the unit is inferred from the spread's
+ * shape, exactly as before — see `isSpFormSpread` (VGC-291).
+ */
+function parsePokemonBlock(
+  block: string,
+  statForm?: StatForm
+): { pokemon: ParsedPokemon; warnings: string[] } {
   const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
   const warnings: string[] = [];
 
@@ -57,6 +69,7 @@ function parsePokemonBlock(block: string): { pokemon: ParsedPokemon; warnings: s
         ivs: defaultIvs(),
         nature: "Serious",
         moves: [],
+        statForm: statForm ?? "ev",
       },
       warnings: ["Empty Pokemon block"],
     };
@@ -163,12 +176,34 @@ function parsePokemonBlock(block: string): { pokemon: ParsedPokemon; warnings: s
       ivs,
       nature,
       moves,
+      statForm: statForm ?? (isSpFormSpread(evs) ? "sp" : "ev"),
     },
     warnings,
   };
 }
 
-export function parseShowdownPaste(paste: string): ParsedTeam {
+/**
+ * Parse a Showdown paste into a team.
+ *
+ * `options.regulation` is optional. When given, it decides the stat unit
+ * authoritatively (a Champions regulation means SP, anything else means
+ * EVs) and every Pokemon gets that `statForm`. When omitted, the unit is
+ * inferred per Pokemon from the spread's shape, which is what every caller
+ * got before this option existed — so the one-argument call is unchanged
+ * (VGC-291).
+ */
+export function parseShowdownPaste(
+  paste: string,
+  options?: { regulation?: string }
+): ParsedTeam {
+  // An empty/absent regulation is "not supplied" — fall through to inference
+  // rather than silently declaring the spread to be in EV units.
+  const statForm: StatForm | undefined = !options?.regulation
+    ? undefined
+    : isChampionsFormat(options.regulation)
+      ? "sp"
+      : "ev";
+
   const allWarnings: string[] = [];
   let teamName: string | undefined;
 
@@ -201,7 +236,7 @@ export function parseShowdownPaste(paste: string): ParsedTeam {
   const pokemon: ParsedPokemon[] = [];
 
   for (const block of blocks) {
-    const { pokemon: parsed, warnings } = parsePokemonBlock(block);
+    const { pokemon: parsed, warnings } = parsePokemonBlock(block, statForm);
     if (parsed.species !== "Unknown") {
       pokemon.push(parsed);
       allWarnings.push(...warnings);
