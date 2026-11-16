@@ -121,6 +121,33 @@ describe("generateMetadata /s/[id] — oEmbed discovery link", () => {
     expect(scheduleOgImageBackfill).not.toHaveBeenCalled();
   });
 
+  it("VGC-318: server-rendering content must not re-enable an on-demand OG image", async () => {
+    // An opengraph-image.tsx on this route, and /api/team-graphic as og:image,
+    // both produced "image failed to load" unfurls. The only og:image this
+    // route may ever emit is a pre-rendered Blob URL; with no card, the empty
+    // array has to stay, or Next falls back to the root opengraph-image and
+    // every share link unfurls a generic site picture.
+    vi.mocked(getDb).mockReturnValue(makeSql(shareRow()) as never);
+    const meta = await generateMetadata(args());
+
+    expect(meta.openGraph?.images).toEqual([]);
+    expect(meta.twitter?.images).toEqual([]);
+    expect((meta.twitter as { card?: string }).card).toBe("summary");
+  });
+
+  it("leaks nothing into <head> for a private report", async () => {
+    vi.mocked(getDb).mockReturnValue(
+      makeSql(shareRow({ is_public: false, is_unlisted: false, data: { paste: "Garchomp @ Life Orb\n", tournamentName: "Secret Regional" } })) as never,
+    );
+    const meta = await generateMetadata(args());
+
+    expect(meta.title).toEqual({ absolute: "VGC Team Report" });
+    expect(meta.robots).toEqual({ index: false, follow: false });
+    expect(meta.description).toBeUndefined();
+    expect(meta.openGraph).toBeUndefined();
+    expect(JSON.stringify(meta)).not.toContain("Secret Regional");
+  });
+
   it("queues a backfill render when the share has no card yet", async () => {
     vi.mocked(getDb).mockReturnValue(makeSql(shareRow()) as never);
     await generateMetadata(args());

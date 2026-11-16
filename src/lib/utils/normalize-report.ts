@@ -4,21 +4,29 @@
  * to ensure consistent data format across all access paths.
  */
 
+import { DEFAULT_CALC_CATEGORY, toCalcCategory, type CalcCategory } from "./calc-category";
+
 type AnyRecord = Record<string, unknown>;
 
+/** Structurally identical to `CalcEntry` in `@/hooks/useDamageCalcs`. */
+type NormalizedCalcEntry = { text: string; category: CalcCategory };
+
 /** Migrate old calc entries that may be stored as plain strings to {text, category} objects */
-export function migrateCalcEntries(rawCalcs: unknown): Record<string, Array<{ text: string; category: string }>> {
+export function migrateCalcEntries(rawCalcs: unknown): Record<string, NormalizedCalcEntry[]> {
   if (!rawCalcs || typeof rawCalcs !== "object") return {};
-  const result: Record<string, Array<{ text: string; category: string }>> = {};
+  const result: Record<string, NormalizedCalcEntry[]> = {};
   for (const [key, entries] of Object.entries(rawCalcs as AnyRecord)) {
     if (!Array.isArray(entries)) continue;
-    result[key] = entries.map((entry: unknown) => {
-      if (typeof entry === "string") return { text: entry, category: "offensive" };
+    result[key] = entries.map((entry: unknown): NormalizedCalcEntry => {
+      if (typeof entry === "string") return { text: entry, category: DEFAULT_CALC_CATEGORY };
       if (entry && typeof entry === "object" && "text" in entry) {
-        const e = entry as { text?: string; category?: string };
-        return { text: e.text ?? "", category: e.category ?? "offensive" };
+        const e = entry as { text?: string; category?: unknown };
+        // An unrecognised category must be coerced, not passed through: the
+        // report's category filters would match it nowhere and the user's
+        // calc would disappear from the report with no error.
+        return { text: e.text ?? "", category: toCalcCategory(e.category) };
       }
-      return { text: String(entry), category: "offensive" };
+      return { text: String(entry), category: DEFAULT_CALC_CATEGORY };
     });
   }
   return result;

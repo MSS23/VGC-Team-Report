@@ -2,9 +2,17 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { cacheGet, cacheSet } from "@/lib/cache";
+import { apiGuard } from "@/lib/security/api-guard";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Floor that does not depend on Redis. The "one export per 24 h" limit
+    // below is a cacheGet, which returns null whenever Upstash is unset or
+    // throwing — in that state the limit vanished and each call fanned out 12
+    // parallel LIMIT 1000 queries against Neon.
+    const guard = await apiGuard(request, { rateLimit: { key: "user-export", max: 2 } });
+    if (guard) return guard;
+
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

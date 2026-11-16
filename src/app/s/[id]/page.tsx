@@ -1,10 +1,42 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound, unstable_rethrow } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
 import { ShareRedirectClient } from "./redirect";
+import { ShareHero, buildShareHeroProps, type ShareHeroProps } from "./hero";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { getShareOgCard, ogCardFingerprint, scheduleOgImageBackfill, OG_IMAGE_SIZE } from "@/lib/sharing/og-image";
+
+/**
+ * The share row + its accepted collaborators, loaded once per request.
+ *
+ * `generateMetadata` and `SharePage` both need exactly this pair and used to
+ * issue it twice — 4 Neon round trips on the one route whose own 15s client
+ * abort is commented as covering a Neon cold start. Next.js runs
+ * `generateMetadata` inside the same RSC render pass as the page (its own
+ * metadata resolver is a `react.cache` for that reason), so a `cache()`
+ * wrapper here is shared between the two and the pair runs once.
+ *
+ * Returns `null` for a deleted/unknown id. Only a genuinely unreachable
+ * database throws, which both callers already degrade from.
+ */
+const loadShare = cache(
+  async (
+    id: string,
+  ): Promise<{ row: Record<string, unknown>; collabNames: string[] } | null> => {
+    const sql = getDb();
+    const [rows, collabRows] = await Promise.all([
+      sql`SELECT data, is_public, is_unlisted, created_at, updated_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
+      sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
+    ]);
+    if (rows.length === 0) return null;
+    return {
+      row: rows[0] as Record<string, unknown>,
+      collabNames: collabRows.map((r) => r.user_name as string),
+    };
+  },
+);
 
 export async function generateMetadata({
   params,
@@ -23,24 +55,21 @@ export async function generateMetadata({
   const hasEditKey = Boolean(key && (Array.isArray(key) ? key.length > 0 : key.trim() !== ""));
 
   try {
-    const sql = getDb();
-    const [rows, collabRows] = await Promise.all([
-      sql`SELECT data, is_public, is_unlisted FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
-      sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
-    ]);
+    const found = await loadShare(id);
     // Deleted/unknown IDs were a soft 404 (200 + indexable homepage canonical).
-    if (rows.length === 0) notFound();
+    if (!found) notFound();
+    const { row, collabNames } = found;
 
     // Private reports (neither public nor unlisted) must not leak even their
     // title/description into <head> — that's the same data we gate at the API.
-    const isPublicRow = (rows[0] as Record<string, unknown>).is_public === true;
-    const isUnlistedRow = (rows[0] as Record<string, unknown>).is_unlisted === true;
+    const isPublicRow = row.is_public === true;
+    const isUnlistedRow = row.is_unlisted === true;
     if (!isPublicRow && !isUnlistedRow) {
       return { title: { absolute: "VGC Team Report" }, robots: { index: false, follow: false } };
     }
 
-    const data = rows[0].data as Record<string, unknown>;
-    const isPublic = (rows[0] as Record<string, unknown>).is_public !== false;
+    const data = row.data as Record<string, unknown>;
+    const isPublic = row.is_public !== false;
     const paste = (data.paste as string) ?? "";
     const tournamentName = (data.tournamentName as string) ?? "";
     const creatorName = (data.creatorName as string) ?? "";
@@ -48,7 +77,6 @@ export async function generateMetadata({
     const placement = (data.placement as string) ?? "";
     const record = (data.record as string) ?? "";
     const species = extractSpecies(paste);
-    const collabNames = collabRows.map((r) => r.user_name as string);
 
     // ── Title: front-load the most compelling signal the user gave us.
     // Priority is tournament placement → tournament → species core →
@@ -189,24 +217,23 @@ export default async function SharePage({
   // instead of always falling back to the generic site name.
   let jsonLd: Record<string, unknown> | null = null;
   let heading = "VGC Team Report";
+  // Server-rendered content for public reports (VGC-318). Stays null for
+  // private/unlisted rows and when the database is unreachable, in which case
+  // the route degrades to exactly the redirect-only behaviour it had before.
+  let hero: ShareHeroProps | null = null;
   try {
-    const sql = getDb();
-    const [shareRows, jsonLdCollabRows] = await Promise.all([
-      sql`SELECT data, is_public, is_unlisted, created_at, updated_at FROM shares WHERE id = ${id} AND deleted_at IS NULL`,
-      sql`SELECT user_name FROM collaborators WHERE share_id = ${id} AND COALESCE(status, 'accepted') = 'accepted'`,
-    ]);
-    if (shareRows.length === 0) notFound();
+    const found = await loadShare(id);
+    if (!found) notFound();
+    const { row: shareRow, collabNames: jsonLdCollabNames } = found;
     // Skip JSON-LD entirely for private reports — don't expose their structured
     // metadata. Unlisted/public still get rich structured data for unfurls/SEO.
-    const visibleForLd =
-      shareRows.length > 0 &&
-      (shareRows[0].is_public === true || shareRows[0].is_unlisted === true);
+    const visibleForLd = shareRow.is_public === true || shareRow.is_unlisted === true;
     if (visibleForLd) {
-      const data = shareRows[0].data as Record<string, unknown>;
+      const data = shareRow.data as Record<string, unknown>;
       const species = extractSpecies((data.paste as string) ?? "");
       const ldCreatorName = (data.creatorName as string) || undefined;
       const tournamentName = (data.tournamentName as string) || undefined;
-      const ldCollabNames = jsonLdCollabRows.map((r) => r.user_name as string);
+      const ldCollabNames = jsonLdCollabNames;
 
       // Heading priority matches the spec: teamName → tournamentName →
       // species line → site name. teamName isn't currently a top-level
@@ -215,6 +242,15 @@ export default async function SharePage({
       const teamName = (data.teamName as string) || "";
       const speciesLine = species.length > 0 ? species.join(" / ") : "";
       heading = teamName || tournamentName || speciesLine || "VGC Team Report";
+
+      // buildShareHeroProps re-checks is_public itself, so this stays null for
+      // unlisted rows even though they reach this branch for JSON-LD.
+      hero = buildShareHeroProps({
+        shareId: id,
+        row: shareRow,
+        collaborators: ldCollabNames,
+        heading,
+      });
 
       const primaryAuthor = ldCreatorName
         ? { "@type": "Person", name: ldCreatorName }
@@ -233,8 +269,8 @@ export default async function SharePage({
         description:
           (data.teamSummary as string) ||
           `VGC team: ${species.join(", ")}`,
-        datePublished: (shareRows[0].created_at as Date).toISOString(),
-        dateModified: (shareRows[0].updated_at as Date).toISOString(),
+        datePublished: (shareRow.created_at as Date).toISOString(),
+        dateModified: (shareRow.updated_at as Date).toISOString(),
         ...(primaryAuthor && { author: primaryAuthor }),
         ...(contributors.length > 0 && {
           contributor: contributors.length === 1 ? contributors[0] : contributors,
@@ -251,12 +287,18 @@ export default async function SharePage({
     // Non-critical — skip JSON-LD
   }
 
+  // Order matters: the hero is server markup, so it is in the first byte of
+  // HTML and paints before the bundle has even downloaded. ShareRedirectClient
+  // still runs the redirect to the interactive report as soon as it hydrates —
+  // it just renders no UI of its own once the hero has supplied the <h1> and
+  // the content, instead of replacing both with a contentless spinner.
   return (
     <>
       {jsonLd && (
         <JsonLd data={jsonLd} />
       )}
-      <ShareRedirectClient to={`/${qs}`} heading={heading} />
+      {hero && <ShareHero {...hero} />}
+      <ShareRedirectClient to={`/${qs}`} heading={heading} silent={hero !== null} />
     </>
   );
 }
