@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface PageFooterProps {
   hideFeedback?: boolean;
@@ -22,6 +23,12 @@ const NAV_LINKS = [
 ] as const;
 
 export function PageFooter({ hideFeedback = false }: PageFooterProps) {
+  // The footer nav had no active state of any kind, so the current page was
+  // undetectable by assistive tech (WCAG 1.4.1 / 4.1.2). `aria-current="page"`
+  // exposes it without changing the visual design. Exact match only — a nested
+  // page like /champions/charizard is not itself the /champions link's target.
+  const pathname = usePathname();
+
   return (
     <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-28 sm:pb-8 border-t border-border/50 mt-12">
       {/* Feedback callout */}
@@ -62,6 +69,7 @@ export function PageFooter({ hideFeedback = false }: PageFooterProps) {
             <Link
               key={link.href}
               href={link.href}
+              aria-current={pathname === link.href ? "page" : undefined}
               className="inline-flex min-h-11 items-center px-3 py-2 text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-alt active:bg-surface-alt rounded-lg transition-all whitespace-nowrap"
             >
               {link.label}
