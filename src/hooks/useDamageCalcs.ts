@@ -1,8 +1,12 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { DEFAULT_CALC_CATEGORY, toCalcCategory, type CalcCategory } from "@/lib/utils/calc-category";
 
-export type CalcCategory = "offensive" | "defensive" | "speed";
+// `CalcCategory` now lives in `@/lib/utils/calc-category` so the server-side
+// report normalizer can share the same validated list; re-exported here
+// because every consumer imports the type from this hook.
+export type { CalcCategory };
 
 export interface CalcEntry {
   text: string;
@@ -26,16 +30,16 @@ function migrateCalcs(raw: unknown): DamageCalcsMap {
     if (!Array.isArray(entries)) continue;
     result[key] = entries.map((entry: unknown) => {
       if (typeof entry === "string") {
-        return { text: entry, category: "offensive" as CalcCategory };
+        return { text: entry, category: DEFAULT_CALC_CATEGORY };
       }
       if (entry && typeof entry === "object" && "text" in entry) {
         const e = entry as Record<string, unknown>;
         return {
           text: String(e.text ?? ""),
-          category: (["offensive", "defensive", "speed"].includes(e.category as string) ? e.category : "offensive") as CalcCategory,
+          category: toCalcCategory(e.category),
         };
       }
-      return { text: String(entry), category: "offensive" as CalcCategory };
+      return { text: String(entry), category: DEFAULT_CALC_CATEGORY };
     });
   }
   return result;
