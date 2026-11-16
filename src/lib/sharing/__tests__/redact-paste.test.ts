@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { normalizePrivateFields, redactPasteFields } from "@/lib/sharing/redact-paste";
+import {
+  applyPrivateFieldRedaction,
+  normalizePrivateFields,
+  redactPasteFields,
+} from "@/lib/sharing/redact-paste";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -70,6 +74,64 @@ describe("normalizePrivateFields", () => {
 
   it("is case-sensitive — uppercase variants are filtered out", () => {
     expect(normalizePrivateFields(["EVs", "IVs", "Nature", "Item"])).toEqual([]);
+  });
+
+  // Regression (TS audit 16-11-26 #3): `privateFields` arrives from a JSONB
+  // column and from URL state, so it can be any shape. A non-array value used
+  // to normalize to [] — "nothing is private" — which silently disabled
+  // redaction for the whole report in both the rendered report and the PNG
+  // team graphic. Malformed input must fail CLOSED: redact everything.
+  it("fails closed for a non-array privateFields (string row)", () => {
+    const result = normalizePrivateFields("item,evs" as unknown);
+    expect(result).toHaveLength(4);
+    expect(result).toEqual(expect.arrayContaining(["evs", "ivs", "nature", "item"]));
+  });
+
+  it("fails closed for other malformed shapes", () => {
+    for (const bad of ["evs", 1, true, {}, { evs: true }]) {
+      expect(normalizePrivateFields(bad as unknown)).toHaveLength(4);
+    }
+  });
+
+  it("still returns [] for null (no privateFields recorded)", () => {
+    expect(normalizePrivateFields(null as unknown)).toEqual([]);
+  });
+
+  it("ignores non-string entries inside an array", () => {
+    expect(normalizePrivateFields(["evs", 7, null, { ivs: true }] as unknown)).toEqual(["evs"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// applyPrivateFieldRedaction — the composition every reader shares
+// ---------------------------------------------------------------------------
+
+describe("applyPrivateFieldRedaction", () => {
+  it("strips the declared fields from the paste without mutating the input", () => {
+    const data = { paste: GARCHOMP_BLOCK, privateFields: ["evs", "item"] };
+    const { data: viewable, redactedFields } = applyPrivateFieldRedaction(data);
+    expect(redactedFields).toEqual(expect.arrayContaining(["evs", "item"]));
+    expect(viewable.paste).not.toContain("EVs:");
+    expect(viewable.paste).not.toContain("Life Orb");
+    expect(data.paste).toBe(GARCHOMP_BLOCK);
+  });
+
+  it("is a no-op when nothing is marked private", () => {
+    const data = { paste: GARCHOMP_BLOCK, privateFields: [] };
+    const { data: viewable, redactedFields } = applyPrivateFieldRedaction(data);
+    expect(redactedFields).toEqual([]);
+    expect(viewable.paste).toBe(GARCHOMP_BLOCK);
+  });
+
+  it("redacts everything when privateFields is malformed (fail closed)", () => {
+    const data = { paste: GARCHOMP_BLOCK, privateFields: "evs" };
+    const { data: viewable, redactedFields } = applyPrivateFieldRedaction(data);
+    expect(redactedFields).toHaveLength(4);
+    expect(viewable.paste).not.toContain("EVs:");
+    expect(viewable.paste).not.toContain("IVs:");
+    expect(viewable.paste).not.toContain("Life Orb");
+    expect(viewable.paste).not.toContain("Jolly Nature");
+    expect(viewable.paste).toContain("Garchomp");
   });
 });
 

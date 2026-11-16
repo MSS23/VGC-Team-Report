@@ -3,31 +3,13 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { cacheGet, cacheSet, CacheKeys, CacheTTL } from "@/lib/cache";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
 import { extractSpecies } from "@/lib/utils/extract-species";
-import { normalizePrivateFields, redactPasteFields } from "@/lib/sharing/redact-paste";
+// Tiered-publishing redaction (VGC-142) for non-owner viewers lives in
+// @/lib/sharing/redact-paste so the share GET, the team graphic and the fork
+// route all honour the creator's hidden fields through one call shape.
+import { applyPrivateFieldRedaction } from "@/lib/sharing/redact-paste";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-
-/**
- * Apply tiered-publishing redaction (VGC-142) for non-owner viewers.
- * If the share data declares `privateFields`, strip those fields from the
- * paste so anonymous/public callers never see hidden spreads or items.
- * Returns the (possibly mutated) data plus the list of fields that were
- * redacted, so the client can show a "Some fields hidden by creator" banner.
- */
-function applyPrivateFieldRedaction(data: Record<string, unknown>): {
-  data: Record<string, unknown>;
-  redactedFields: string[];
-} {
-  const fields = normalizePrivateFields(data.privateFields as string[] | undefined);
-  if (fields.length === 0) return { data, redactedFields: [] };
-  const paste = (data.paste as string) ?? "";
-  const redacted = redactPasteFields(paste, fields);
-  return {
-    data: { ...data, paste: redacted },
-    redactedFields: fields,
-  };
-}
 
 const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
 
