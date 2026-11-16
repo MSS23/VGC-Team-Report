@@ -2,6 +2,7 @@
 
 - Branch: `swarm-nightly-2026-11-16`
 - REMOTE_EXISTS at start: 0 (fresh branch, cut from origin/main @ 10dfd74)
+- **Branch pushed to origin at 00:3x after the pre-flight notes commit — history is now published, so MERGE-ONLY from this point. No rebase, no force-push.**
 - Existing open PR for branch: none
 - Mode: rebase allowed until first push; merge-only after
 - Session start branch was `claude/loving-sagan-35mnyp`; switched to nightly branch per routine Step 0A.
