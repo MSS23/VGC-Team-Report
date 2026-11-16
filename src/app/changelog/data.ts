@@ -16,6 +16,24 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "November 2026",
+    version: "5.32",
+    title: "Hidden Spreads Stay Hidden, Shared Links Open Instantly & a New Blog",
+    emoji: "🔒",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Forking someone else's report no longer copies the items, EV spreads, IVs or nature they chose to hide. Anyone signed in could press Fork on a public report and end up owning a copy that showed the hidden fields in full \u2014 so a spread you hid before an event could be read by anyone who forked your report. A fork made by someone else now carries only what they could already see on screen. Forking your own report still keeps everything." },
+      { type: "fixed", text: "A report whose privacy settings were stored in an unexpected shape could have its hidden fields shown anyway, in both the report and the team graphic. Those now fail safe and stay hidden." },
+      { type: "improved", text: "Open a shared report link and you now see the team straight away \u2014 its name, placement, all six Pok\u00e9mon and your summary \u2014 instead of a spinner while the full report loads. Shared links are also now readable by search engines and AI assistants, which previously saw an empty page. Private and unlisted reports show nothing, exactly as before." },
+      { type: "fixed", text: "Turning on Trick Room no longer claims every Pok\u00e9mon moved up or down the speed order. The badge was comparing the Trick Room order against the normal one, so it marked all six rows as having shifted when nothing had. Tailwind and the other modifiers still report real movement." },
+      { type: "new", text: "A new blog at /blog, for guides and write-ups on the Champions regulations, Stat Point spreads and reading a team report." },
+      { type: "new", text: "New per-species spread pages: see the most common EV (or Champions SP) spreads for any Pok\u00e9mon, what share of published reports run each one, and the reports they came from. EV and Stat Point spreads are counted separately, so the numbers always mean one thing." },
+      { type: "improved", text: "Pok\u00e9mon type labels are now readable. Ten of the nineteen types used white text on a pale background \u2014 Grass was the worst \u2014 which fell well below the contrast needed to read comfortably." },
+      { type: "improved", text: "Every page now includes its own navigation links, so search engines and AI assistants can find the Champions guides, Explore and the tools without running the site's JavaScript first. Only one page in ninety-eight did this before." },
+      { type: "fixed", text: "Saved damage calcs are now labelled consistently whether they come from your browser or from a shared report, so opening an older report no longer reports a change to your calcs that you did not make." },
+    ],
+  },
+  {
     date: "October 2026",
     version: "5.29",
     title: "Correct Champions Speeds, a Readable Dark Mode & Private Team Graphics",
