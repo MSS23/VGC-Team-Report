@@ -8,7 +8,6 @@ const en = {
   appInputHint: "Import any PokéPaste URL, rental code, or Showdown export to get started",
 
   // Input screen
-  loadSample: "Load sample",
   fetchAndAnalyze: "Fetch & Analyze",
   analyzeTeam: "Analyze Team",
   fetching: "Fetching...",
@@ -23,7 +22,6 @@ const en = {
   warningsPlural: "warnings",
   saved: "Saved",
   editing: "Editing",
-  locked: "Locked",
   share: "Share",
   copied: "Copied!",
   updated: "Updated!",
@@ -32,18 +30,11 @@ const en = {
   saving: "Saving...",
   savedBang: "Saved!",
   reshare: "Share",
-  exportTeam: "Export",
-  exportCopied: "Copied!",
-  editLink: "Edit Link",
-  present: "Present",
-  exit: "Exit",
   buildYourOwn: "Build Your Own",
-  newShort: "New",
   dark: "Dark",
   light: "Light",
 
   // Team Overview
-  tournamentInfo: "Tournament Info",
   teamNamePlaceholder: "Team name (e.g. Sun Offense, Trick Room Bulk)",
   eventNamePlaceholder: "Event name (e.g. EUIC 2025)",
   placementPlaceholder: "Placement",
@@ -83,10 +74,7 @@ const en = {
   teamAnalysis: "Team Analysis",
   speedTiersAndCoverage: "Speed tiers & type coverage",
   speedTiers: "Speed Tiers",
-  base: "Base",
   itemBoosted: "Item boosted",
-  benchmarks: "Benchmarks",
-  tailwindDoublesBase: "Tailwind doubles speed",
 
   // Matchup Sheet
   matchupSheet: "Matchup Sheet",
@@ -103,23 +91,11 @@ const en = {
   prev: "Prev",
   next: "Next",
   hiddenFromViewers: "(hidden from viewers)",
-  hidden: "Hidden",
-  visible: "Visible",
-  hideSlideTooltip: "Click to hide this slide from viewers when you share or present.",
-  hiddenSlideTooltip: "This slide is hidden -- viewers won't see it when you share or present. Click to make it visible again.",
 
   // Hidden slide banner
   thisSlideIsHidden: "This slide is hidden",
   hiddenSlideDescription: "Viewers won't see it when you share or present. Click \"Hidden\" below to show it again.",
   showSlide: "Show slide",
-
-  // Share toast
-  publicLinkCopied: "View link copied!",
-  saveEditLink: "Anyone with the view link can read this report. Share the collab link below only with people you want to co-edit with.",
-  copyEditLink: "Copy Collab Link",
-  lostEditLink: "Lost your collab link on another device?",
-  generateNewEditLink: "Generate a new collab link",
-  oldEditLinkStops: "(old collab link will stop working).",
 
   // Error / 404
   somethingWentWrong: "Something went wrong",
@@ -169,10 +145,6 @@ const en = {
   statSpd: "SpD",
   statSpe: "Spe",
 
-  // BringSelector
-  yourBring4: "Your Bring-4",
-  selectedCount: "selected",
-
   // TeamOverview
   copyRentalCode: "Copy rental code",
 
@@ -194,14 +166,10 @@ const en = {
 
   // Common Modes ("How to pilot this team")
   commonModesTitle: "Common Modes",
-  commonLeads: "Common Leads",
-  commonModesField: "Common Modes",
   strengths: "Strengths",
   weaknesses: "Weaknesses",
   gameplan: "Game Plan",
   commonModesEmpty: "No pilot notes yet",
-  commonLeadsPlaceholder: "Your go-to opening pairs and when to lead them (e.g. Incineroar + Flutter Mane vs. most teams).",
-  commonModesPlaceholder: "Recurring turn patterns and playstyles — how the team usually wants to flow.",
   strengthsPlaceholder: "What this team beats and what it does well.",
   weaknessesPlaceholder: "What gives this team trouble and how to play around it.",
   gameplanPlaceholder: "How to pilot the team to win — key sequencing, win conditions, and what to prioritize.",
@@ -215,7 +183,6 @@ const en = {
   combinationLabel: "Combination",
   combinationStrategyPlaceholder: "When to bring this combo and how to play it out.",
   addCombination: "Add combination",
-  combinationsEmpty: "No combinations yet.",
   removeCombination: "Remove combination",
   legacyNotesTitle: "Legacy notes",
   legacyLeadsLabel: "Common Leads (old)",
@@ -226,33 +193,12 @@ const en = {
   plans: "plans",
   removeMatchup: "Remove matchup",
 
-  // TypeCoverageMatrix
-  offensiveTypeCoverage: "Offensive Type Coverage",
-  defensiveTypeCoverage: "Defensive Type Coverage",
-  offensiveCoverageDesc: "Number of team members that hit each type super-effectively",
-  defensiveCoverageDesc: "Number of team members weak to each attacking type",
-  gaps: "Gaps",
-  noSeCoverage: "no SE coverage",
-  thin: "Thin",
-  onlyOneAnswer: "only 1 answer",
-  covered: "Covered",
-  twoPlusAnswers: "2+ answers",
-  vulnerable: "Vulnerable",
-  threePlusWeak: "3+ weak",
-  exposed: "Exposed",
-  twoWeak: "2 weak",
-  manageable: "Manageable",
-  oneWeak: "1 weak",
-  resistant: "Resistant",
-  noWeakness: "no weakness",
-
   // CalcInput
   pasteCalcs: "Paste Calcs",
   cancel: "Cancel",
   paste: "Paste",
   addAll: "Add All",
   calcsDetected: "detected — click category to change",
-  pasteCalcsPlaceholder: "Paste damage calc results here — one per line.",
   changeCategory: "Change category",
   removeCalc: "Remove calc",
 
@@ -263,35 +209,15 @@ const en = {
   select: "Select",
   clearSelection: "Clear selection",
 
-  // PasscodeModal
-  setPasscode: "Set a Passcode",
-  unlockEditing: "Unlock Editing",
-  passcodeEditDesc: "Anyone with the passcode can edit and re-share this team.",
-  passcodeUnlockDesc: "Enter the passcode to unlock editing.",
-  enterPasscode: "Enter a passcode",
-  passcode: "Passcode",
-  shareWithPasscode: "Share with Passcode",
-  shareWithoutPasscode: "Share without Passcode",
-  unlock: "Unlock",
-
   // AddOpponentInput
   fetchPokePasteToContinue: "Fetch the PokéPaste to continue",
   pokemonDetected: "Pokemon detected",
   pasteTeamToContinue: "Paste a team to continue",
   autoDetected: "Auto-detected",
 
-  // Export report
-  exportAsImage: "Export as Image (PNG)",
-  exportAsPdf: "Export as PDF",
-  exporting: "Exporting...",
-
   // Explore page
   explore: "Explore",
-  exploreTitle: "Explore VGC Teams",
   exploreSubtitle: "Browse team reports shared by players from tournaments around the world",
-  searchPlaceholder: "Search by Pokemon or tournament...",
-  sortNewest: "Newest",
-  sortUpdated: "Recently Updated",
   // Explore filter labels (VGC-199)
   filterCatAll: "All",
   filterCatPokemon: "Pokemon",
@@ -311,8 +237,6 @@ const en = {
   beTheFirst: "Share your team and be the first on the board!",
   loadMore: "Load More",
   loading: "Loading...",
-  listPublicly: "Public",
-  listPubliclyTooltip: "List this team on the Explore gallery for others to discover",
   byCreator: "by",
 
   // ShareModal
@@ -368,16 +292,6 @@ const en = {
   shareModalGrowthNote: "The more you share, the more the VGC community grows.",
 
   // Social / Community
-  sortPopular: "Most Popular",
-  reactions: "Reactions",
-  comments: "Comments",
-  addComment: "Add a comment",
-  commentPlaceholder: "Share your thoughts on this team...",
-  displayNameLabel: "Display name",
-  anonymous: "Anonymous",
-  deleteComment: "Delete",
-  noComments: "No comments yet. Be the first!",
-  loadMoreComments: "Load more comments",
   creatorProfile: "Creator Profile",
   publicReports: "Public Reports",
   totalReactions: "Total Reactions",
