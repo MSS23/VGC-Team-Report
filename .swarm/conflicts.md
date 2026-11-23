@@ -1,70 +1,51 @@
-# Merge Conflict Log — swarm-nightly-2026-05-28
-No conflicts at branch creation (cut fresh from main).
+# Merge conflicts — run 23-11-26
 
-# Swarm run 2026-08-10
+## None. Zero conflicts at any stage.
 
-## ⚠️ Intra-run file overlap — MY DISPATCH ERROR, must be reconciled at integration
+| Stage | Result |
+|---|---|
+| Step 0A branch cut | `REMOTE_EXISTS=0`, fresh branch from `main` at `10dfd74`. Clean. |
+| Step 0B sync with main | `BEHIND=0` — nothing to bring in. No rebase, no merge needed. |
+| Step 4 commit loop | No conflict markers in any staged file (checked per commit with `grep -lE '^(<<<<<<< \|>>>>>>> )'`). |
+| Step 4 post-commit sync | `git merge origin/main` → "Already up to date." `main` has had **zero commits in 7 days**, so nothing moved under the branch all night. |
+| Step 5 push | All four pushes fast-forward. No rejection, no force, no history rewrite. |
 
-VGC-262 (EV→SP converter) returned `conflict_risk: true` and listed three files that the still-running
-VGC-258 agent also owns:
+No stash was needed: the working tree was clean at Step 0B, and every file
+modified during the run was claimed by a subagent report.
 
-- `src/app/sitemap.ts`
-- `src/app/champions/ChampionsContent.tsx`
-- `src/components/layout/PageFooter.tsx`
+## How conflicts were PREVENTED rather than resolved
 
-Cause: I told the VGC-262 agent to "link it from somewhere discoverable" and "add it to sitemap.ts"
-WITHOUT constraining which files it could use, while separately telling the VGC-258 agent to edit the
-footer, the sitemap and ChampionsContent. That violates the file-overlap control in the run spec —
-the two agents were dispatched against overlapping file sets. VGC-262's own report caught it; the
-dispatch design should have.
+The run's defining constraint was that PRs #91, #92 and #93 are all open,
+unmerged, and cut from this same commit, and own **152 files** between them.
+Every file touched tonight was checked against `.swarm/pr-owned-files.txt` by
+exact-line match before editing, by the orchestrator and again by each
+implementing agent. Nothing tonight touches an owned file.
 
-Both agents do read-modify-write against the SAME working tree, so whichever wrote last wins and the
-earlier agent's edit to that file can be silently lost.
+Two cases where that constraint changed the work rather than just filtering it:
 
-RECONCILIATION REQUIRED once VGC-258 reports — verify in the integrated tree that ALL of these
-survived, and re-apply by hand if not:
-1. `sitemap.ts` contains BOTH the `/tools/ev-to-sp` entry (VGC-262) AND the Reg M-B champions
-   routes (VGC-258).
-2. `PageFooter.tsx` contains BOTH the `/tools/ev-to-sp` link (VGC-262) AND the `/champions`
-   link (VGC-258).
-3. `ChampionsContent.tsx` contains BOTH the converter callout (VGC-262) AND the M-B index grid plus
-   the Indianapolis past-tense fix (VGC-258).
+- **VGC-343** — the ticket's prescribed fix site (`url-codec.ts:140`) is owned by
+  #91, and the normaliser it wanted to reuse (`src/lib/utils/calc-category.ts`)
+  does not exist on `main` at all — it is on unmerged #93. The fix went to the
+  validation boundary in the free `url-codec.schemas.ts` instead, which is
+  arguably where it belonged.
+- **VGC-343's test** — `url-codec.test.ts` is owned by #92, so the regression
+  test went into a new file.
 
-This is exactly why the sequential commit loop re-gates from the integrated tree rather than trusting
-each agent's isolated green run.
+File-overlap control across concurrent agents also held: the three implementation
+agents running simultaneously touched disjoint sets (7 i18n locales /
+weekly-digest + share-flow / the secret guard), so no two ever had the same file
+open.
 
-## RESOLVED — verified in the integrated tree at 02:0x, 2026-08-10
+## The one conflict this branch WILL cause, by necessity
 
-The VGC-258 agent reconciled the overlap itself and reported both agents' edits surviving. The
-orchestrator re-verified INDEPENDENTLY rather than trusting that report, by grepping the integrated
-tree:
+`src/app/changelog/data.ts`. Tonight's v5.33 entry is the fourth November entry;
+#91, #92 and #93 add 5.30, 5.31 and 5.32. All four open with identical
+`{` / `date: "November 2026"` lines, so git conflicts **inside one object
+literal** and naive marker deletion produces duplicate keys that will not
+compile.
 
-1. `src/app/sitemap.ts` — HAS BOTH: `/tools/ev-to-sp` (line 17, VGC-262) AND
-   `getRegMBMegasWithSprites` import + mapping (lines 3, 29, VGC-258). ✅
-2. `src/components/layout/PageFooter.tsx` — HAS BOTH: `/champions` (line 15, VGC-258) AND
-   `/tools/ev-to-sp` labelled "EV → SP" (line 17, VGC-262). ✅
-3. `src/app/champions/ChampionsContent.tsx` — HAS ALL THREE: the converter callout
-   (`href="/tools/ev-to-sp"`, line 470, VGC-262), the M-B grid grouping
-   ("New in Regulation M-B", line 60, VGC-258), and the Indianapolis paragraph now in PAST tense
-   ("format played at ... Indianapolis Regionals (May 29-31)", line 163). ✅
-
-No re-application needed. Outcome was luck as much as design — the two agents happened to edit
-disjoint regions of each file. The dispatch error stands as a real process bug: the file-overlap
-control exists precisely so this does not depend on luck, and I did not apply it when I told the
-VGC-262 agent to "link it from somewhere discoverable".
-
-**Lesson for the next run:** when an implementation agent is told to "link this from somewhere" or
-"add it to the sitemap", the dispatcher must name the exact files it may touch and cross-check them
-against every other agent's file set BEFORE dispatch — a vague instruction silently expands an
-agent's file footprint beyond what the overlap check was run against.
-
-## Unclaimed working-tree artifact — quarantined, not committed
-
-`VGC-Team-Project` — a BROKEN SYMLINK to `/home/user/VGC-Team-Project` (a path that does not exist),
-timestamped 00:38, which predates this run's 01:14 start. Not in any agent's `files_changed`, not
-gitignored, and would have been committed by a careless `git add .`.
-
-Most likely residue from an isolated-verification tree attempt (one agent reported a Turbopack
-"symlink points out of filesystem root" panic when symlinking instead of hardlinking node_modules).
-
-Moved to the session scratchpad rather than deleted, so it is recoverable. Not committed.
+This is unavoidable — the Updates-page append is mandatory for the run, and the
+file is append-at-top by design. It is mitigated by the version numbering
+(5.33 collides with nothing) and by merging in date order, which makes every
+resolution a pure prepend. Verified recipe in
+`.swarm/merge-order-plan-23-11-26.md` §3.1.
