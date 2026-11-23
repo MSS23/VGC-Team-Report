@@ -1,0 +1,99 @@
+[
+  {
+    "identifier": "VGC-350",
+    "title": "The hardcoded-secret guard test does not cover VAPID_PRIVATE_KEY",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-350/the-hardcoded-secret-guard-test-does-not-cover-vapid-private-key",
+    "files_likely_to_change": ["src/lib/security/__tests__/no-hardcoded-secrets.test.ts"],
+    "new_files": [],
+    "scope_estimate": "S",
+    "priority": "P3",
+    "conflict_risk": false,
+    "partial": false,
+    "notes": "Verified gap: the RULES array at line 54 covers discord-webhook-url, linear-api-key, clerk-secret-key, aws-access-key-id, github-token, jwt-literal, postgres-connection-string, hardcoded-credential-literal - no VAPID rule. src/lib/web-push.ts:7 reads VAPID_PRIVATE_KEY and web-push is a prod dependency. Add a rule plus a test asserting it fires on a synthetic key (VAPID private keys are 43-char base64url). No PR branch touches src/lib/security/** at all (confirmed by diffing all three branches), so this is the cleanest ticket on the board."
+  },
+  {
+    "identifier": "VGC-347",
+    "title": "Delete the dead-code batch (~558 LOC, mostly orphaned i18n keys) once #91/#92 land",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-347/delete-the-dead-code-batch-558-loc-mostly-orphaned-i18n-keys-once-9192",
+    "files_likely_to_change": [
+      "src/lib/i18n/translations/en.ts",
+      "src/lib/i18n/translations/es.ts",
+      "src/lib/i18n/translations/fr.ts",
+      "src/lib/i18n/translations/it.ts",
+      "src/lib/i18n/translations/ja.ts",
+      "src/lib/i18n/translations/ko.ts",
+      "src/lib/i18n/translations/zh.ts"
+    ],
+    "new_files": [],
+    "scope_estimate": "M",
+    "priority": "P3",
+    "conflict_risk": false,
+    "partial": true,
+    "notes": "i18n portion ONLY. The ~47 LOC non-i18n half was verified to live in owned files (damage-calculator.ts, dex-subset.ts, discord-bot.ts, url-codec.ts, ExploreFilters.tsx) - do not attempt it. NEW TRAP found tonight and NOT in the ticket: src/components/report/CommonModesSlide.tsx (owned) reads i18n keys through a dynamic index helper `tr(key, fallback)`, so a static t.<key> scan reports them as orphans while they are live at runtime and the TranslationKeys type-lock cannot catch the deletion. DO NOT DELETE these 14: addCombination, combinationBack, combinationLabel, combinationLeads, combinationStrategy, combinationStrategyPlaceholder, commonCombinationsDesc, commonCombinationsTitle, commonModesEmpty, commonModesTitle, legacyLeadsLabel, legacyModesLabel, legacyNotesTitle, removeCombination. src/hooks/useSlideSystem.ts:56 reads commonModesTitle the same way. Also honour the ticket's own two traps (parseMetricCursor/serializeMetricCursor/MetricCursor in src/lib/explore/chronological-cursor.ts; _removed in src/lib/utils/normalize-report.ts). My independent scan found 90 statically-unreferenced keys of en.ts's 314; minus the 14 dynamic ones = 76 vs the audit's 73, so re-derive the list rather than trusting either number. One commit per file keeps tsc as the guard. Do not run this in parallel with VGC-122/VGC-123 - same files."
+  },
+  {
+    "identifier": "VGC-122",
+    "title": "i18n: Japanese (ja) translation pass",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-122/i18n-japanese-ja-translation-pass",
+    "files_likely_to_change": ["src/lib/i18n/translations/ja.ts"],
+    "new_files": [],
+    "scope_estimate": "S",
+    "priority": "P2",
+    "conflict_risk": false,
+    "partial": false,
+    "notes": "Not ~600 strings: ja.ts already ships 309 of en.ts's 314 keys. The real remainder is 50 keys shipped as empty strings - an md5-identical key set in all six non-English locales - which src/lib/i18n/index.ts:78-86 silently falls back to English for, so Japanese users see English (mostly the whole shareModal* family, plus hero/CTA strings). All 50 were individually confirmed to have live call sites, and the set is DISJOINT from VGC-347's orphan list (verified), so the two tickets are semantically compatible. Caveat: VGC-342 / backlog-staleness-16-11-26.md lists VGC-122 as closeable-as-shipped; that is ~86% true, and filling these 50 makes it honestly closeable. Keep the TranslationKeys shape untouched - no key added or removed. Do not run in parallel with VGC-347/VGC-123."
+  },
+  {
+    "identifier": "VGC-330",
+    "title": "[Ruling needed] Is 248 EVs worth 31 or 32 SP? The tree currently asserts both",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-330/ruling-needed-is-248-evs-worth-31-or-32-sp-the-tree-currently-asserts",
+    "files_likely_to_change": [
+      "public/llms-full.txt",
+      "src/lib/analysis/__tests__/sp-docs-drift.test.ts"
+    ],
+    "new_files": [],
+    "scope_estimate": "S",
+    "priority": "P1",
+    "conflict_risk": false,
+    "partial": true,
+    "notes": "PARTIAL that deliberately does NOT resolve the ruling. public/llms-full.txt:92 asserts `SP = ceil(EVs / 8)` and `248 EVs = 32 SP` in one sentence; ceil(248/8)=31, so the sentence is arithmetically impossible and is being served to allow-listed AI crawlers. Cause: the sentence describes the implementation incompletely. evToChampionsSp (src/lib/analysis/stat-calculator.ts:139) is ceil(ev/8) with a floor of 1 PLUS an explicit `if (ev >= 248) return 32` clamp. So the doc can be made self-consistent with the code as shipped by stating the clamp, which rules on nothing. COVERS: the contradiction in llms-full.txt, plus the boundary assertion the ticket's item 3 asks for in the free drift test (it already computes CAP_EV_COST = championsSpToEv(32) but never pins the doc's ladder endpoint to it). DOES NOT COVER: whether the 248-EV clamp is correct against the official Champions ruleset - that is still a human ruling, and the ticket must stay open. HARD LIMITS: do not touch stat-calculator.ts (owned, ruling open), do not flip any existing assertion, do not change any EV-to-SP number anywhere else (public/llms.txt:29 and llms-full.txt:116 are consistent already - leave them), and say in the commit message that the ruling remains open. Verified free: no PR branch touches public/llms*.txt; public/ appears in pr-owned-files.txt only as five *.svg. Fallback if the owner prefers silence until the ruling: delete the formula clause and keep the ladder."
+  },
+  {
+    "identifier": "VGC-123",
+    "title": "i18n: Spanish (es) + French (fr) + German (de) translations",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-123/i18n-spanish-es-french-fr-german-de-translations",
+    "files_likely_to_change": [
+      "src/lib/i18n/translations/es.ts",
+      "src/lib/i18n/translations/fr.ts",
+      "src/lib/i18n/index.ts",
+      "src/components/ui/LanguageSelector.tsx"
+    ],
+    "new_files": ["src/lib/i18n/translations/de.ts"],
+    "scope_estimate": "M",
+    "priority": "P3",
+    "conflict_risk": false,
+    "partial": true,
+    "notes": "Two separable pieces, both free. (a) Fill the same 50 empty-string stubs in es.ts and fr.ts that VGC-122 fills in ja.ts - small and safe. (b) German has no locale file at all, although src/lib/i18n/index.ts:9 calls the list 'the 7 official Pokemon game languages' and German is one; adding it is a brand-new de.ts plus the LANGUAGES array and translationLoaders map in index.ts and the free LanguageSelector.tsx. Marked partial because the ticket asks for AI draft PLUS native review and only the draft is possible here, and because (b) alone is a 314-key draft - the largest item on this shortlist. Prefer (a) if time is short. The TranslationKeys type derived from en.ts will fail tsc on any missing key, which is the safety net. Do not run in parallel with VGC-347/VGC-122 - same files."
+  },
+  {
+    "identifier": "VGC-124",
+    "title": "i18n: Localize Pokemon names + move names per locale",
+    "url": "https://linear.app/vgc-team-report/issue/VGC-124/i18n-localize-pokemon-names-move-names-per-locale",
+    "files_likely_to_change": [
+      "src/components/report/pokemon-detail/PokemonSlideHeader.tsx",
+      "src/components/report/TournamentMode.tsx",
+      "src/components/report/PokemonDropdown.tsx"
+    ],
+    "new_files": [
+      "scripts/generate-pokemon-names.mjs",
+      "src/lib/data/pokemon-names.ts",
+      "src/lib/utils/translate-species.ts",
+      "src/lib/utils/__tests__/translate-species.test.ts"
+    ],
+    "scope_estimate": "M",
+    "priority": "P2",
+    "conflict_risk": false,
+    "partial": true,
+    "notes": "The move-name half ALREADY SHIPS (src/lib/data/move-names.ts + src/lib/utils/translate-move.ts) - only species names are missing. Feasible tonight because raw.githubusercontent.com is reachable from this container (verified HTTP 200) on the same pinned PokeAPI commit e21557dd4cd0fefe7cb1f946bf9080e38a2e3ba4 that scripts/generate-move-names.mjs already uses, and data/v2/csv/pokemon_species_names.csv carries all 1025 species per language (verified 12,301 rows). Mirror the existing generator exactly, including its language-id map (3 ko, 5 fr, 7 es, 8 it, 9 en, 11 ja, 12 zh) and its 'Generated by ... do not edit by hand' header. PARTIAL because the ticket says 'show in the user's locale on report cards' and the overview card (PokemonCard.tsx) plus SpeedTierChart.tsx are PR-owned, so only the free surfaces can be wired, leaving non-English users with localized names on the detail slide and English on the overview card. That split already exists for moves (translateMove is live in free MovesPanel/TournamentMode and in owned PokemonCard/OTSSheetModal), so it is consistent with the repo - but decide explicitly and record which surfaces were wired, because shipping the data file with no consumer would itself be the dead code VGC-347 is cleaning up. Handle species forms the same way translate-move normalises names (NFKC + strip non-alphanumerics); Showdown form suffixes like '-Therian' have no PokeAPI species row and must fall back to English."
+  }
+]
