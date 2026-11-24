@@ -391,7 +391,12 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
         key: `${e.speciesKey}-opponent`,
         speed: calcSpeed(e.baseSpe, 1, new Set()),
       })),
-    ].sort((a, b) => b.speed - a.speed);
+      // Sort the baseline in the SAME turn-order frame as the displayed list.
+      // Trick Room reverses turn order for everyone, so comparing a
+      // fastest-first baseline against a slowest-first display made every row
+      // report a position change when Trick Room alone was active. Keeping both
+      // lists in one frame isolates what the speed modifiers actually did.
+    ].sort((a, b) => compareTurnOrder(a.speed, b.speed, trickRoom));
 
     // Build modified order
     const modified = allEntries.map(e => ({
@@ -406,7 +411,7 @@ export function SpeedTierChart({ pokemon, speciesKeys, getSpriteConfig, isPresen
       }
     });
     return changes;
-  }, [hasAnyModifiers, teamEntries, teamMegaEntries, metaEntries, allEntries]);
+  }, [hasAnyModifiers, teamEntries, teamMegaEntries, metaEntries, allEntries, trickRoom]);
 
   // Group entries by their final displayed speed so we can mark every
   // member of a tie group, not just the second-and-later rows. The

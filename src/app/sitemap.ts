@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { getDb } from "@/lib/db";
 import { isDatabaseConfigured, warnDatabaseUnavailableOnce } from "@/lib/db-availability";
 import { getRegMCMegasWithSprites } from "@/lib/data/mega-pokemon";
+import { blogSitemapEntries } from "@/lib/data/blog-posts";
+import { getSpeciesWithSpreadData } from "@/lib/spreads/species-spreads";
 
 const BASE = "https://pokemonvgcteamreport.com";
 
@@ -37,6 +39,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),
+    // Blog index plus every published post. Sourced from the post module so a
+    // new post needs no sitemap edit. (VGC-227)
+    ...blogSitemapEntries(),
   ];
 
   // Without a connection string there is nothing to add and `getDb()` would
@@ -47,6 +52,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     warnDatabaseUnavailableOnce("sitemap");
     return staticPages;
   }
+
+  // VGC-217 — per-species EV-spread pages. Only species with enough public
+  // reports to be worth indexing; the page serves noindex below that
+  // threshold, so listing thin ones would contradict it. This self-catches to
+  // [] on any DB failure, so it sits outside the try below and survives a
+  // shares/creators failure.
+  const spreadPages: MetadataRoute.Sitemap = (
+    await getSpeciesWithSpreadData()
+  ).map((slug) => ({
+    url: `${BASE}/explore/spreads/${slug}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
 
   try {
     const sql = getDb();
@@ -76,9 +94,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.6,
     }));
-    return [...staticPages, ...sharePages, ...creatorPages];
+    return [...staticPages, ...spreadPages, ...sharePages, ...creatorPages];
   } catch (e) {
     console.error("Sitemap generation error:", e);
-    return staticPages;
+    return [...staticPages, ...spreadPages];
   }
 }

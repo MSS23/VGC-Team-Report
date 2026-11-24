@@ -20,14 +20,28 @@
 
 export type PrivateField = "evs" | "ivs" | "nature" | "item";
 
-const VALID_FIELDS: ReadonlySet<string> = new Set(["evs", "ivs", "nature", "item"]);
+const ALL_PRIVATE_FIELDS: readonly PrivateField[] = ["evs", "ivs", "nature", "item"];
 
-/** Filter user input to known fields and dedupe — defends against URL-injected garbage. */
-export function normalizePrivateFields(input: readonly string[] | undefined): PrivateField[] {
-  if (!input || input.length === 0) return [];
+const VALID_FIELDS: ReadonlySet<string> = new Set(ALL_PRIVATE_FIELDS);
+
+/**
+ * Filter user input to known fields and dedupe — defends against URL-injected
+ * garbage.
+ *
+ * `input` is typed `unknown` on purpose: it arrives from a JSONB column and
+ * from URL state, so it can be anything. Absent/empty means "nothing private".
+ * A present-but-malformed value (a string, a number, an object) must NOT
+ * degrade to "nothing is private" — that silently disabled redaction for the
+ * whole report, leaking exactly what the creator chose to hide. We fail closed
+ * instead and treat every redactable field as private.
+ */
+export function normalizePrivateFields(input: unknown): PrivateField[] {
+  if (input === undefined || input === null) return [];
+  if (!Array.isArray(input)) return [...ALL_PRIVATE_FIELDS];
+  if (input.length === 0) return [];
   const out = new Set<PrivateField>();
   for (const f of input) {
-    if (VALID_FIELDS.has(f)) out.add(f as PrivateField);
+    if (typeof f === "string" && VALID_FIELDS.has(f)) out.add(f as PrivateField);
   }
   return Array.from(out);
 }
@@ -83,4 +97,30 @@ export function redactPasteFields(paste: string, fields: readonly PrivateField[]
   }
 
   return out.join("\n");
+}
+
+/**
+ * Apply tiered-publishing redaction (VGC-142) to a report's data object.
+ * If the data declares `privateFields`, strip those fields from the paste so
+ * callers who are not entitled to the full report never see hidden spreads or
+ * items. Returns the (copied, never mutated) data plus the list of fields that
+ * were redacted, so the caller can show a "Some fields hidden by creator"
+ * banner.
+ *
+ * This lives here rather than in a route so every reader of a report goes
+ * through one call shape — the share GET, the team graphic and the fork route
+ * each have to honour the same promise.
+ */
+export function applyPrivateFieldRedaction(data: Record<string, unknown>): {
+  data: Record<string, unknown>;
+  redactedFields: PrivateField[];
+} {
+  const fields = normalizePrivateFields(data.privateFields);
+  if (fields.length === 0) return { data, redactedFields: [] };
+  const paste = (data.paste as string) ?? "";
+  const redacted = redactPasteFields(paste, fields);
+  return {
+    data: { ...data, paste: redacted },
+    redactedFields: fields,
+  };
 }

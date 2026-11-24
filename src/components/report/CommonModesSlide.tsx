@@ -235,7 +235,7 @@ export function CommonModesSlide({
                         onChange={(e) => setKey(block.key, e.target.value)}
                         placeholder={tr(block.placeholderKey, "")}
                         aria-label={label}
-                        className="w-full min-h-[3.5rem] sm:min-h-[5rem] p-3 sm:p-4 bg-surface border-2 border-border rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+                        className="w-full min-h-[3.5rem] sm:min-h-[5rem] p-3 sm:p-4 bg-surface border-2 border-border rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus:border-accent leading-relaxed transition-shadow"
                         spellCheck={false}
                       />
                     )}
@@ -386,7 +386,15 @@ function CombinationsTable({
   const spriteSize = isPresentationMode ? 48 : 40;
 
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-border bg-surface shadow-sm presenting:bg-surface-alt presenting:border-border-subtle">
+    // The grid overflows on phones, and its content is plain text with no
+    // focusable children, so a keyboard-only user could not scroll to the
+    // clipped columns (WCAG 2.1.1). Same pattern as ThreatMatrix.
+    <div
+      role="region"
+      tabIndex={0}
+      aria-label={tr("combinationsTableLabel", "Common combinations, scroll horizontally for all columns")}
+      className="w-full overflow-x-auto rounded-xl border border-border bg-surface shadow-sm presenting:bg-surface-alt presenting:border-border-subtle"
+    >
       {/* Header row — hidden on mobile, shown sm+ */}
       <div className="hidden sm:grid sm:grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)] gap-3 px-4 py-2.5 border-b border-border-subtle bg-surface-alt/60 presenting:text-sm">
         <span className="text-[10px] font-extrabold uppercase tracking-widest text-text-tertiary">#</span>
@@ -571,7 +579,7 @@ function CombinationEditor({
             onChange={(e) => onStrategyChange(e.target.value)}
             placeholder={tr("combinationStrategyPlaceholder", "When to bring this combo and how to play it out.")}
             aria-label={`${tr("combinationLabel", "Combination")} ${index + 1} ${tr("combinationStrategy", "Strategy")}`}
-            className="w-full min-h-[3.5rem] sm:min-h-[4.5rem] p-3 sm:p-4 bg-surface border-2 border-border rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+            className="w-full min-h-[3.5rem] sm:min-h-[4.5rem] p-3 sm:p-4 bg-surface border-2 border-border rounded-xl text-sm sm:text-base text-text-primary placeholder:text-text-tertiary resize-y focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus:border-accent leading-relaxed transition-shadow"
             spellCheck={false}
           />
         </div>

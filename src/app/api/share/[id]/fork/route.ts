@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { getClientIp } from "@/lib/security/input-validation";
 import { cacheInvalidatePrefix } from "@/lib/cache";
+import { applyPrivateFieldRedaction } from "@/lib/sharing/redact-paste";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -30,6 +31,8 @@ function generateEditToken(): string {
  * The new report:
  *   - is private (unlisted) by default — the forker can publish it later
  *   - keeps the team paste, notes, calcs, roles, summary, matchup plans, tags
+ *   - redacts any fields the source creator marked private, unless the forker
+ *     is the source owner (tiered publishing, VGC-142)
  *   - clears event-specific fields (tournament name, placement, record, rental code)
  *   - clears the creator name (forker should set their own)
  *   - tracks the original via the `forked_from_id` column for attribution
@@ -86,10 +89,23 @@ export async function POST(
 
     const sourceData = sourceRows[0].data as Record<string, unknown>;
 
+    // Tiered publishing (VGC-142): the creator may have hidden items, EVs, IVs
+    // or nature on the source before an event. A fork may only carry what the
+    // forker was already entitled to see — the fork is owned by the forker, so
+    // GET /api/share/{forkId} serves it through the owner branch, which does
+    // not redact. Copying the raw paste here would turn one click on Fork into
+    // a full bypass of the creator's hidden fields (the same control
+    // `team-graphic` was fixed to honour). The owner forking their own report
+    // keeps full fidelity.
+    const isSelfFork = (sourceRows[0].owner_id as string | null) === userId;
+    const { data: copyableData, redactedFields } = isSelfFork
+      ? { data: sourceData, redactedFields: [] as string[] }
+      : applyPrivateFieldRedaction(sourceData);
+
     // Build the forked state: preserve team-building content, clear event-specific fields
     // and the original creator name so the new owner can populate their own.
     const forkedData: Record<string, unknown> = {
-      ...sourceData,
+      ...copyableData,
       creatorName: "",
       tournamentName: "",
       placement: "",
@@ -98,6 +114,14 @@ export async function POST(
       // Reset MVP since the new owner may pick a different one
       mvpIndex: null,
     };
+
+    // The redacted values are gone from this copy, so there is nothing left to
+    // hide: inheriting the source's privateFields would make the forker's own
+    // report claim to conceal fields it no longer contains (and show them a
+    // "hidden fields" banner over an empty promise).
+    if (redactedFields.length > 0) {
+      delete forkedData.privateFields;
+    }
 
     const newId = generateId();
     const newEditToken = generateEditToken();
@@ -147,6 +171,9 @@ export async function POST(
       id: newId,
       editToken: newEditToken,
       forkedFromId: sourceId,
+      // Which fields the source creator kept private and the fork therefore
+      // does not contain, so the UI can say so instead of silently losing them.
+      redactedFields,
     });
   } catch (e) {
     console.error("Fork error:", e);

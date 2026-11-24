@@ -505,12 +505,17 @@ function GamePlanSection({
 
   return (
     <div className={`bg-surface border border-border rounded-2xl border-l-[3px] ${color.accent} shadow-sm transition-shadow hover:shadow-md`}>
-      {/* Header — always visible */}
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 sm:px-5 py-3.5 hover:bg-surface-alt/30 transition-colors rounded-t-2xl"
-      >
+      {/* Header — always visible. The collapse toggle and the delete control are
+          siblings: the delete used to be a <span onClick> nested INSIDE this
+          button, which made deleting a game plan impossible by keyboard and
+          invisible to assistive tech (WCAG 2.1.1 / 4.1.2). */}
+      <div className="w-full flex items-center justify-between rounded-t-2xl">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={!isCollapsed}
+          className="flex-1 min-w-0 flex items-center gap-3 px-4 sm:px-5 py-3.5 text-left hover:bg-surface-alt/30 transition-colors rounded-tl-2xl"
+        >
         <div className="flex items-center gap-3">
           <svg
             width="10"
@@ -558,15 +563,18 @@ function GamePlanSection({
             </div>
           )}
         </div>
+        </button>
         {!isReadOnly && canDelete && (
-          <span
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="text-text-tertiary hover:text-red-400 text-xs px-2 py-1 rounded-md hover:bg-red-400/10 transition-colors"
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label={`${t.delete} ${t.gameN} ${index + 1}`}
+            className="flex-shrink-0 min-h-11 min-w-11 mr-2 sm:mr-3 inline-flex items-center justify-center text-text-tertiary hover:text-danger text-xs px-2 rounded-md hover:bg-danger/10 transition-colors"
           >
             {t.delete}
-          </span>
+          </button>
         )}
-      </button>
+      </div>
 
       {/* Content — collapsible */}
       {!isCollapsed && (
@@ -686,7 +694,7 @@ function GamePlanSection({
                     onChange={(e) => onNotesChange(e.target.value)}
                     aria-label={`${t.notesLabel} for game plan ${index + 1}`}
                     placeholder={t.gamePlanNotesPlaceholder}
-                    className="w-full min-h-[7rem] sm:min-h-[6rem] p-3 sm:p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-tertiary resize-y focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent leading-relaxed transition-shadow"
+                    className="w-full min-h-[7rem] sm:min-h-[6rem] p-3 sm:p-4 bg-surface-alt border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-tertiary resize-y focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface-alt focus:border-accent leading-relaxed transition-shadow"
                     spellCheck={false}
                   />
                 )}

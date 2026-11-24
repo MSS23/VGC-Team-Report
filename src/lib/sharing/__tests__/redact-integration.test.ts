@@ -1,39 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { normalizePrivateFields, redactPasteFields } from "@/lib/sharing/redact-paste";
+import { applyPrivateFieldRedaction } from "@/lib/sharing/redact-paste";
 
 // ---------------------------------------------------------------------------
 // Boundary / integration coverage for VGC-142 tiered publishing.
 //
 // The privacy-critical redaction lives in redact-paste.ts (unit-tested in
-// redact-paste.test.ts). What this file guards is the *composition* the share
-// route (src/app/api/share/[id]/route.ts) applies for non-owner viewers:
+// redact-paste.test.ts). What this file guards is the *composition* every
+// reader of a report shares — `applyPrivateFieldRedaction`, used by the share
+// GET (src/app/api/share/[id]/route.ts) for non-owner viewers and by the fork
+// route for a fork made by anyone but the source owner.
 //
-//   const fields = normalizePrivateFields(data.privateFields);
-//   if (fields.length === 0) return { data, redactedFields: [] };
-//   const paste = (data.paste as string) ?? "";
-//   const redacted = redactPasteFields(paste, fields);
-//   return { data: { ...data, paste: redacted }, redactedFields: fields };
-//
-// The route's `applyPrivateFieldRedaction` is not exported, so we reproduce it
-// here EXACTLY and assert the observable contract: private EVs/IVs/items/natures
-// are stripped from the paste a bare-link viewer receives, everything else is
-// preserved, and non-paste fields on the data object survive untouched.
+// The observable contract: private EVs/IVs/items/natures are stripped from the
+// paste a bare-link viewer receives, everything else is preserved, and
+// non-paste fields on the data object survive untouched.
 // ---------------------------------------------------------------------------
-
-/** Faithful copy of the route's non-exported applyPrivateFieldRedaction. */
-function applyPrivateFieldRedaction(data: Record<string, unknown>): {
-  data: Record<string, unknown>;
-  redactedFields: string[];
-} {
-  const fields = normalizePrivateFields(data.privateFields as string[] | undefined);
-  if (fields.length === 0) return { data, redactedFields: [] };
-  const paste = (data.paste as string) ?? "";
-  const redacted = redactPasteFields(paste, fields);
-  return {
-    data: { ...data, paste: redacted },
-    redactedFields: fields,
-  };
-}
 
 const TEAM_PASTE = `Garchomp @ Life Orb
 Ability: Rough Skin

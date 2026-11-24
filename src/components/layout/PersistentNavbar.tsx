@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { PageNavbar } from "@/components/layout/PageNavbar";
@@ -33,7 +33,6 @@ function getActivePage(pathname: string): ActivePage {
  */
 export function PersistentNavbar() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [hasHashShare, setHasHashShare] = useState(false);
 
@@ -53,17 +52,40 @@ export function PersistentNavbar() {
   // visible URL to /s/{id}. Hide the global navbar for both phases so the
   // report's purpose-built navigation is the only header on screen.
   const isShareContext =
-    !!searchParams.get("s") ||
     hasHashShare ||
     (typeof window !== "undefined" && window.location.pathname.startsWith("/s/"));
 
   if (isShareContext || HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
-  return (
+  const navbar = (
     <PageNavbar
       darkMode={darkMode}
       onToggleDarkMode={toggleDarkMode}
       activePage={getActivePage(pathname)}
     />
   );
+
+  // The remaining half of the share context — the `?s={id}` query — needs
+  // useSearchParams, which bails its nearest Suspense boundary to the
+  // fallback during static prerendering. Giving that read its own boundary
+  // keeps the bailout off the navbar itself, so every route prerenders its
+  // nav links into the static HTML instead of an empty root-layout fallback.
+  //
+  // `?s=` share links only ever land on "/", so only "/" has to prerender
+  // the empty fallback. Prerendering the navbar there too would paint a
+  // global header over every incoming share link until hydration removed it
+  // again (SEO-NAVBAR-SSR) — the double header that this share-context check
+  // exists to prevent.
+  return (
+    <Suspense fallback={pathname === "/" ? null : navbar}>
+      <HideWhenShareParam>{navbar}</HideWhenShareParam>
+    </Suspense>
+  );
+}
+
+/** Renders `children` unless the current URL carries a `?s={id}` share id. */
+function HideWhenShareParam({ children }: { children: ReactNode }) {
+  const searchParams = useSearchParams();
+  if (searchParams.get("s")) return null;
+  return <>{children}</>;
 }
