@@ -199,7 +199,7 @@ export function SlideNavControls({
             onClick={() => jumpToPhysical(tab.target)}
             className={`${compact ? "px-4 text-xs" : "flex-auto min-w-0 px-1.5 text-[11px]"} min-h-[44px] sm:pointer-fine:min-h-0 sm:py-1.5 rounded-full font-bold transition-colors active:scale-[0.97] ${
               active
-                ? "bg-accent text-white shadow-sm shadow-accent/30"
+                ? "bg-accent text-accent-foreground shadow-sm shadow-accent/30"
                 : "text-text-secondary hover:text-text-primary"
             } ${!tab.avail ? "opacity-40 pointer-events-none" : ""}`}
           >
@@ -308,7 +308,7 @@ export function SlideNavControls({
               onClick={() => displayToggle.onChange("base")}
               className={`flex-1 h-full rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                 displayToggle.mode === "base"
-                  ? "bg-accent text-white shadow-sm"
+                  ? "bg-accent text-accent-foreground shadow-sm"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >

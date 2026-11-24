@@ -1,7 +1,7 @@
 import { getDb } from "@/lib/db";
 import { cacheDel, cacheInvalidatePrefix, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
-import { removeShareOgImage } from "@/lib/sharing/og-image";
+import { removeShareOgImage, schedulePublishShareOgImage } from "@/lib/sharing/og-image";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -85,16 +85,29 @@ export async function PATCH(
             is_unlisted = COALESCE(${newIsUnlisted ?? null}::boolean, is_unlisted),
             updated_at = NOW()
         WHERE id = ${shareId} AND owner_id = ${userId} AND deleted_at IS NULL
-        RETURNING id, is_public, is_unlisted
+        RETURNING id, is_public, is_unlisted, data
       `;
       if (rows.length === 0) {
         return NextResponse.json({ error: "Not found or not owned" }, { status: 404 });
       }
+      // The unfurl card is served from a public, constructible Blob URL, so a
+      // flip to Private must revoke it — the resulting row state decides, not
+      // the requested partial (a PATCH may send only one of the two flags).
+      const nowPublic = rows[0].is_public === true;
+      const nowUnlisted = rows[0].is_unlisted === true;
       // Invalidate caches so the change is visible immediately
       await Promise.all([
         cacheDel(CacheKeys.share(shareId)),
         cacheInvalidatePrefix("explore:"),
+        ...(!nowPublic && !nowUnlisted ? [removeShareOgImage(shareId)] : []),
       ]);
+      if (nowPublic || nowUnlisted) {
+        // Re-published: render the card again (the private flip deleted it).
+        schedulePublishShareOgImage(shareId, (rows[0].data ?? {}) as Record<string, unknown>, {
+          isPublic: nowPublic,
+          isUnlisted: nowUnlisted,
+        });
+      }
       captureServerEvent(userId, "report_visibility_changed", {
         report_id: shareId,
         is_public: !!rows[0].is_public,

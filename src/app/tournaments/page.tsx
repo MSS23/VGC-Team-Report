@@ -3,7 +3,9 @@ import { TournamentsContent } from "./TournamentsContent";
 import { SportsEventJsonLd, BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
-  title: "VGC Tournament Results Archive | Team Reports 2026",
+  // <= 60 chars including the 18-char " | VGC Team Report" template suffix.
+  // No year: a hardcoded year ages badly on an evergreen archive page.
+  title: "VGC Tournament Results Archive",
   description:
     "Find team reports from top finishers at VGC Regionals, Internationals, and World Championships. Browse winning strategies and Pokémon usage from every major competitive event.",
   alternates: { canonical: "https://pokemonvgcteamreport.com/tournaments" },

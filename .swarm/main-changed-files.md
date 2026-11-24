@@ -1,133 +1,145 @@
-# Conflict-risk file list — swarm 26-10-26
-
-Branch `swarm-nightly-2026-10-26` was cut fresh from `origin/main` (68796c5),
-so `git diff origin/main..HEAD` is empty at run start. The list below is files
-touched on `main` in the last 14 days — edit these only when a ticket requires it.
-
-- .gitignore
-- .hallmark/.gitignore
-- .hallmark/log.json
-- AGENTS.md
-- design.md
-- next.config.ts
-- package-lock.json
-- package.json
-- src/app/base.css
-- src/app/champions/ChampionsContent.tsx
-- src/app/champions/[pokemon]/MegaLandingContent.tsx
-- src/app/champions/[pokemon]/page.tsx
-- src/app/champions/page.tsx
-- src/app/changelog/ChangelogContent.tsx
-- src/app/changelog/page.tsx
-- src/app/compare/page.tsx
-- src/app/dashboard/DashboardContent.tsx
-- src/app/dashboard/loading.tsx
-- src/app/dashboard/privacy/page.tsx
-- src/app/dashboard/profile/page.tsx
-- src/app/embed/[id]/page.tsx
-- src/app/error.tsx
-- src/app/explore/loading.tsx
-- src/app/explore/page.tsx
-- src/app/faq/page.tsx
-- src/app/feedback/FeedbackContent.tsx
-- src/app/global-error.tsx
-- src/app/globals.css
-- src/app/layout.tsx
-- src/app/not-found.tsx
-- src/app/notifications/NotificationsContent.tsx
-- src/app/privacy/page.tsx
-- src/app/s/[id]/loading.tsx
-- src/app/s/[id]/page.tsx
-- src/app/support/page.tsx
-- src/app/terms/page.tsx
-- src/app/tokens.css
-- src/app/tools/ev-to-sp/EvToSpConverter.tsx
-- src/app/tools/ev-to-sp/page.tsx
-- src/app/tournaments/TournamentsContent.tsx
-- src/app/tournaments/page.tsx
-- src/components/champions/MetaSnapshot.tsx
-- src/components/compare/CompareContent.tsx
-- src/components/explore/ExploreContent.tsx
-- src/components/explore/ExploreEmpty.tsx
-- src/components/explore/ExploreFilters.tsx
-- src/components/explore/ExploreHero.tsx
-- src/components/explore/ReportCard.tsx
-- src/components/explore/SpotlightCard.tsx
-- src/components/home/HomePageClient.tsx
-- src/components/home/HomePageServer.tsx
-- src/components/input/LimitlessImport.tsx
-- src/components/input/PasteInput.tsx
-- src/components/input/QuickShare.tsx
-- src/components/layout/Navbar.tsx
-- src/components/layout/PageFooter.tsx
-- src/components/layout/PageNavbar.tsx
-- src/components/match-tracker/MatchTracker.tsx
-- src/components/providers/CookieBanner.tsx
-- src/components/report/AddOpponentInput.tsx
-- src/components/report/CalcInput.tsx
-- src/components/report/CommonModesSlide.tsx
-- src/components/report/DefensiveCoverageChart.tsx
-- src/components/report/InlinePokemonEditor.tsx
-- src/components/report/MatchupPlanSlide.tsx
-- src/components/report/MatchupSheet.tsx
-- src/components/report/MatchupSheetRow.tsx
-- src/components/report/OffensiveCoverageChart.tsx
-- src/components/report/PokemonCard.tsx
-- src/components/report/PokemonDropdown.tsx
-- src/components/report/PokemonSprite.tsx
-- src/components/report/SlideNavControls.tsx
-- src/components/report/SpeedTierChart.tsx
-- src/components/report/SpreadBuilder.tsx
-- src/components/report/StatColorNote.tsx
-- src/components/report/TeamCardCTA.tsx
-- src/components/report/TeamOverview.tsx
-- src/components/report/TeamReport.tsx
-- src/components/report/TeamStats.tsx
-- src/components/report/ThreatMatrix.tsx
-- src/components/report/TournamentMode.tsx
-- src/components/report/TypeBadge.tsx
-- src/components/report/pokemon-detail/CalcEntryGroup.tsx
-- src/components/report/pokemon-detail/CalcsPanel.tsx
-- src/components/report/pokemon-detail/MovesPanel.tsx
-- src/components/report/pokemon-detail/NotesPanel.tsx
-- src/components/report/pokemon-detail/PokemonDetailLayout.tsx
-- src/components/report/pokemon-detail/PokemonSlideHeader.tsx
-- src/components/report/pokemon-detail/StatsPanel.tsx
-- src/components/seo/JsonLd.tsx
-- src/components/social/CollaboratorPanel.tsx
-- src/components/social/CommentSection.tsx
-- src/components/social/CreatorProfile.tsx
-- src/components/social/DoubleTapLikeOverlay.tsx
-- src/components/social/EditChangelog.tsx
-- src/components/social/FollowButton.tsx
-- src/components/social/VersionHistoryPanel.tsx
-- src/components/ui/Button.tsx
-- src/components/ui/Card.tsx
-- src/components/ui/ConnectivityStatus.tsx
-- src/components/ui/DeferredLayoutExtras.tsx
-- src/components/ui/DiffNavigator.tsx
-- src/components/ui/EditFab.tsx
-- src/components/ui/InstallPrompt.tsx
-- src/components/ui/LanguageSelector.tsx
-- src/components/ui/NotificationBell.tsx
-- src/components/ui/OTSSheetModal.tsx
-- src/components/ui/PdfExport.tsx
-- src/components/ui/PullToRefresh.tsx
-- src/components/ui/ServiceWorkerRegistration.tsx
-- src/components/ui/ShareModal.tsx
-- src/components/ui/ShareViewCTA.tsx
-- src/components/ui/ShortcutHintOverlay.tsx
-- src/components/ui/SwipeHint.tsx
-- src/components/ui/TeamCardExport.tsx
-- src/components/ui/ThemePicker.tsx
-- src/components/ui/Toggle.tsx
-- src/components/ui/WalkthroughOverlay.tsx
-- src/components/ui/WhatsNewModal.tsx
-- src/components/ui/icons.tsx
-- src/hooks/useHomePage.ts
-- src/hooks/useTheme.ts
-- src/lib/accent-themes.ts
-- src/lib/utils/__tests__/sprite-url.test.ts
-- src/lib/utils/random-accent.ts
-- src/lib/utils/sprite-url.ts
-- src/lib/utils/type-colors.ts
+.github/workflows/ci.yml
+.swarm/c1-dead-code-26-10-26.md
+.swarm/c2-typescript-26-10-26.md
+.swarm/c3-perf-26-10-26.md
+.swarm/c4-security-26-10-26.md
+.swarm/c5-commit-review-26-10-26.md
+.swarm/claimed-files.md
+.swarm/drafts/r-competitors-outreach.md
+.swarm/drafts/r-ux-community-posts.md
+.swarm/drafts/r6-seo-metadata.md
+.swarm/drafts/r7-aeo-copy.md
+.swarm/l0-bug-verification-26-10-26.md
+.swarm/late-findings-26-10-26.md
+.swarm/main-changed-files.md
+.swarm/posthog-insights.md
+.swarm/r-competitors-26-10-26.md
+.swarm/r-ux-sentiment-26-10-26.md
+.swarm/r6-seo-26-10-26.md
+.swarm/r7-aeo-26-10-26.md
+.swarm/r8-accessibility-26-10-26.md
+.swarm/research-synthesis-26-10-26.md
+.swarm/run-meta.md
+.swarm/unfiled-ticket-bodies/1-perf-compare-client-bundle.md
+.swarm/unfiled-ticket-bodies/2-bug-matchup-wl-never-saves.md
+.swarm/unfiled-ticket-bodies/3-bug-template-picker-inert.md
+.swarm/unfiled-ticket-bodies/4-perf-pkmn-dex-devdep.md
+.swarm/unfiled-ticket-bodies/5-a11y-slidenav-focus-trap.md
+.swarm/unfiled-ticket-bodies/6-ci-eslint-not-a-gate.md
+.swarm/unfiled-ticket-bodies/7-ts-nouncheckedindexedaccess.md
+.swarm/unfiled-tickets-26-10-26.md
+.swarm/webhook-investigation.md
+package-lock.json
+package.json
+public/llms-full.txt
+src/app/api/cleanup/route.ts
+src/app/api/comments/flag/__tests__/route.test.ts
+src/app/api/comments/flag/route.ts
+src/app/api/cron/weekly-digest/route.ts
+src/app/api/explore/route.ts
+src/app/api/oembed/route.ts
+src/app/api/share/[id]/route.ts
+src/app/api/share/__tests__/fork-lineage.test.ts
+src/app/api/share/__tests__/route.test.ts
+src/app/api/share/__tests__/share-flow.test.ts
+src/app/api/share/route.ts
+src/app/api/team-graphic/__tests__/route.test.ts
+src/app/api/team-graphic/route.tsx
+src/app/api/user/delete/__tests__/creator-profiles.test.ts
+src/app/api/user/delete/__tests__/route.test.ts
+src/app/api/user/delete/route.ts
+src/app/api/user/reports/[shareId]/route.ts
+src/app/api/webhooks/clerk/route.ts
+src/app/api/webhooks/linear/__tests__/route.test.ts
+src/app/api/webhooks/linear/route.ts
+src/app/champions/[pokemon]/page.tsx
+src/app/changelog/data.ts
+src/app/dashboard/DashboardContent.tsx
+src/app/globals.css
+src/app/q/[id]/page.tsx
+src/app/s/[id]/__tests__/metadata.test.ts
+src/app/s/[id]/opengraph-image.tsx
+src/app/s/[id]/page.tsx
+src/app/sitemap.ts
+src/components/compare/CompareContent.tsx
+src/components/home/HomePageClient.tsx
+src/components/input/PasteInput.tsx
+src/components/layout/Navbar.tsx
+src/components/providers/ClarityProvider.tsx
+src/components/providers/__tests__/ClarityProvider.test.tsx
+src/components/report/DefensiveCoverageChart.tsx
+src/components/report/InlinePokemonEditor.tsx
+src/components/report/MatchupPlanSlide.tsx
+src/components/report/OffensiveCoverageChart.tsx
+src/components/report/PokemonSprite.tsx
+src/components/report/SpeedTierChart.tsx
+src/components/report/TeamReport.tsx
+src/components/report/TeamStats.tsx
+src/components/report/TournamentMode.tsx
+src/components/report/TypeBadge.tsx
+src/components/report/__tests__/PokemonSprite.test.tsx
+src/components/report/__tests__/TypeBadge.test.tsx
+src/components/social/DoubleTapLikeOverlay.tsx
+src/components/ui/ConnectivityStatus.tsx
+src/components/ui/DiffNavigator.tsx
+src/components/ui/InstallPrompt.tsx
+src/components/ui/OTSSheetModal.tsx
+src/components/ui/PdfExport.tsx
+src/components/ui/ShareModal.tsx
+src/components/ui/ShareViewCTA.tsx
+src/components/ui/WhatsNewModal.tsx
+src/components/ui/__tests__/ShareViewCTA.test.tsx
+src/components/ui/__tests__/icons.a11y.test.tsx
+src/components/ui/icons.tsx
+src/hooks/__tests__/render-hook.ts
+src/hooks/__tests__/useShareUrl-collaboration.test.ts
+src/hooks/useDamageCalcs.ts
+src/hooks/useHiddenSlides.ts
+src/hooks/useMatchupPlans.ts
+src/hooks/useNotifications.ts
+src/hooks/usePokemonNotes.ts
+src/hooks/useSessionId.ts
+src/hooks/useShareUrl.ts
+src/hooks/useSlideNavigation.ts
+src/hooks/useSlideSystem.ts
+src/hooks/useTeamMeta.ts
+src/hooks/useWalkthrough.ts
+src/lib/analysis/__tests__/sp-docs-drift.test.ts
+src/lib/analysis/__tests__/spread-builder.test.ts
+src/lib/analysis/__tests__/stat-calculator.test.ts
+src/lib/analysis/spread-builder.ts
+src/lib/analysis/stat-calculator.ts
+src/lib/data/__tests__/mega-slug-redirect.test.ts
+src/lib/data/__tests__/natures.test.ts
+src/lib/data/__tests__/pkmn-dex-fallback.test.ts
+src/lib/data/mega-pokemon.ts
+src/lib/data/natures.ts
+src/lib/data/pkmn-dex-fallback.ts
+src/lib/db/__tests__/purge-satellites.test.ts
+src/lib/db/purge-satellites.ts
+src/lib/email.ts
+src/lib/explore/__tests__/chronological-cursor.test.ts
+src/lib/explore/chronological-cursor.ts
+src/lib/parser/__tests__/showdown-parser.test.ts
+src/lib/parser/showdown-parser.ts
+src/lib/security/__tests__/api-guard.test.ts
+src/lib/security/__tests__/no-hardcoded-secrets.test.ts
+src/lib/security/api-guard.ts
+src/lib/sharing/__tests__/fetched-share-state.test.ts
+src/lib/sharing/__tests__/og-image.test.ts
+src/lib/sharing/og-image.ts
+src/lib/sharing/team-graphic-image.tsx
+src/lib/types/pokemon.ts
+src/lib/utils/__tests__/effective-form.test.ts
+src/lib/utils/__tests__/effective-typing.test.ts
+src/lib/utils/__tests__/extract-species.test.ts
+src/lib/utils/__tests__/random-accent.test.ts
+src/lib/utils/__tests__/sprite-url.test.ts
+src/lib/utils/effective-form.ts
+src/lib/utils/effective-typing.ts
+src/lib/utils/extract-species.ts
+src/lib/utils/random-accent.ts
+src/lib/utils/sprite-url.ts
+src/lib/utils/type-colors.ts
+src/lib/validation/__tests__/champions-legality.test.ts
+src/lib/validation/champions-legality.ts

@@ -10,7 +10,15 @@ let hook: ReturnType<typeof renderHook<ReturnType<typeof useShareUrl>>>;
 beforeEach(async () => {
   window.history.replaceState({}, "", "/?s=abcd1234");
   vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ ...state, _editable: true, _isOwner: true, _isUnlisted: true, _isPublic: false, _editToken: "token", _version: 1 }))));
-  await act(async () => { hook = renderHook(useShareUrl); await new Promise(resolve => setTimeout(resolve, 50)); });
+  hook = renderHook(useShareUrl);
+  // Wait for the fetch path to actually settle rather than sleeping a fixed
+  // interval: it `await import()`s the zod schemas before it validates the
+  // body and seeds the conflict baseline (BUG-SHARE-BASELINE-ORDER), and a
+  // cold vitest worker transforms zod in well over 50ms.
+  for (let i = 0; i < 100; i++) {
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
+    if (hook.current.isSharedView || hook.current.decodeFailed) break;
+  }
 });
 afterEach(() => { hook.unmount(); vi.unstubAllGlobals(); });
 it("preserves unsaved local edits when a newer remote version arrives", () => {

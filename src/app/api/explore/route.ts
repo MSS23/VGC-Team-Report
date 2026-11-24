@@ -8,7 +8,9 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import {
   parseChronologicalCursor,
+  parseMetricCursor,
   serializeChronologicalCursor,
+  serializeMetricCursor,
 } from "@/lib/explore/chronological-cursor";
 
 export const dynamic = "force-dynamic";
@@ -155,28 +157,29 @@ export async function GET(request: Request) {
       ${rentalCondition}
     `;
 
-    // Composite cursors for popular / views: the sort key has heavy ties
-    // (most teams have 0 likes / 0 views), so a single-column `<` cursor
-    // skips the entire tied tail. Encode both the metric value AND
-    // created_at, then paginate via tuple comparison so ties are walked
-    // by created_at DESC just like the ORDER BY does.
-    const parseCompositeCursor = (raw: string | null): { value: number; createdAt: string } | null => {
-      if (!raw) return null;
-      const sep = raw.indexOf(":");
-      if (sep < 0) {
-        // Legacy single-int cursor — treat as value-only with no created_at tiebreak
-        const v = parseInt(raw, 10);
-        return Number.isFinite(v) ? { value: v, createdAt: new Date(0).toISOString() } : null;
-      }
-      const value = parseInt(raw.slice(0, sep), 10);
-      const createdAt = raw.slice(sep + 1);
-      if (!Number.isFinite(value) || !createdAt) return null;
-      return { value, createdAt };
-    };
+    // VGC-295 — keyset pagination needs a TOTAL order, in both halves.
+    //
+    // The sort metrics tie constantly (most teams have 0 likes and 0 views) and
+    // created_at/updated_at can collide to the millisecond, so every ORDER BY
+    // below ends in `s.id DESC` and every cursor carries `(value, timestamp, id)`
+    // via `serializeMetricCursor` / `serializeChronologicalCursor`.
+    //
+    // Cursor timestamps are ISO strings minted from the driver's JS `Date`, i.e.
+    // millisecond precision, while the stored timestamptz holds microseconds —
+    // so the predicate AND the ORDER BY both compare
+    // `date_trunc('milliseconds', …)`. They have to agree *exactly*: a raw
+    // column on one side and a truncated one on the other is what skipped and
+    // duplicated rows across page boundaries. The truncation also keeps the
+    // sort key stable between the row we emit the cursor from and the row the
+    // next page's predicate compares against.
+    //
+    // Legacy cursors (no id component) still parse — `parseMetricCursor` yields
+    // `id: null` — and fall back to the old 2-column predicate for that one
+    // request rather than throwing or resetting the reader to page 1.
 
     if (sort === "popular") {
-      const c = parseCompositeCursor(cursor);
-      // Sort by total reaction (like) count, with created_at as deterministic tiebreaker.
+      const c = parseMetricCursor(cursor);
+      // Sort by like count, then created_at, then id — a total order.
       rows = await sql`
         SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count,
                COALESCE(rc.like_count, 0) as like_count
@@ -190,13 +193,17 @@ export async function GET(request: Request) {
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${c ? sql`AND (COALESCE(rc.like_count, 0), date_trunc('milliseconds', s.created_at)) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
-        ORDER BY COALESCE(rc.like_count, 0) DESC, s.created_at DESC
+          ${c?.id
+            ? sql`AND (COALESCE(rc.like_count, 0), date_trunc('milliseconds', s.created_at), s.id) < (${c.value}, ${c.timestamp}::timestamptz, ${c.id})`
+            : c
+              ? sql`AND (COALESCE(rc.like_count, 0), date_trunc('milliseconds', s.created_at)) < (${c.value}, ${c.timestamp}::timestamptz)`
+              : sql``}
+        ORDER BY COALESCE(rc.like_count, 0) DESC, date_trunc('milliseconds', s.created_at) DESC, s.id DESC
         LIMIT ${limit + 1}
       `;
     } else if (sort === "views") {
-      const c = parseCompositeCursor(cursor);
-      // Sort by view count, with created_at tiebreaker for tied counts (e.g. 0 views).
+      const c = parseMetricCursor(cursor);
+      // Sort by view count, then created_at, then id — a total order.
       rows = await sql`
         SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
         FROM shares s
@@ -204,8 +211,12 @@ export async function GET(request: Request) {
           ${searchCondition}
           ${tagFilters}
           ${followingCondition}
-          ${c ? sql`AND (COALESCE(s.view_count, 0), date_trunc('milliseconds', s.created_at)) < (${c.value}, ${c.createdAt}::timestamptz)` : sql``}
-        ORDER BY COALESCE(s.view_count, 0) DESC, s.created_at DESC
+          ${c?.id
+            ? sql`AND (COALESCE(s.view_count, 0), date_trunc('milliseconds', s.created_at), s.id) < (${c.value}, ${c.timestamp}::timestamptz, ${c.id})`
+            : c
+              ? sql`AND (COALESCE(s.view_count, 0), date_trunc('milliseconds', s.created_at)) < (${c.value}, ${c.timestamp}::timestamptz)`
+              : sql``}
+        ORDER BY COALESCE(s.view_count, 0) DESC, date_trunc('milliseconds', s.created_at) DESC, s.id DESC
         LIMIT ${limit + 1}
       `;
     } else {
@@ -224,7 +235,7 @@ export async function GET(request: Request) {
             : chronologicalCursor
               ? sql`AND date_trunc('milliseconds', ${col}) < ${chronologicalCursor.timestamp}::timestamptz`
               : sql``}
-        ORDER BY ${col} DESC, s.id DESC
+        ORDER BY date_trunc('milliseconds', ${col}) DESC, s.id DESC
         LIMIT ${limit + 1}
       `;
     }
@@ -336,9 +347,8 @@ export async function GET(request: Request) {
     let nextCursor: string | null = null;
     if (hasMore) {
       const last = items[items.length - 1];
-      const lastCreatedAt = (last.created_at as Date).toISOString();
-      if (sort === "popular") nextCursor = `${last.like_count ?? 0}:${lastCreatedAt}`;
-      else if (sort === "views") nextCursor = `${last.view_count ?? 0}:${lastCreatedAt}`;
+      if (sort === "popular") nextCursor = serializeMetricCursor((last.like_count as number) ?? 0, last.created_at as Date, last.id as string);
+      else if (sort === "views") nextCursor = serializeMetricCursor((last.view_count as number) ?? 0, last.created_at as Date, last.id as string);
       else if (sort === "updated") nextCursor = serializeChronologicalCursor(last.updated_at as Date, last.id as string);
       else nextCursor = serializeChronologicalCursor(last.created_at as Date, last.id as string);
     }

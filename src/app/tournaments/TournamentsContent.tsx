@@ -298,7 +298,7 @@ export function TournamentsContent() {
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-accent-foreground text-sm font-bold rounded-xl hover:brightness-110 shadow-lg shadow-accent/30 transition-all"
           >
             <svg
               width="16"

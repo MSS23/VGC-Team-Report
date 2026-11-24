@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { normalizeReportData } from "@/lib/utils/normalize-report";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -109,7 +110,18 @@ export async function GET(
               SELECT data, COALESCE(version, 1) AS version FROM shares WHERE id = ${shareId} AND deleted_at IS NULL
             `;
             if (dataRows.length > 0) {
-              const data = dataRows[0].data as Record<string, unknown>;
+              // Normalize before it goes on the wire. `/api/sync` is the THIRD
+              // access path to `shares.data`, alongside `GET /api/share/{id}`
+              // (route.ts:172/236) and the batch migration route — both of
+              // which run `normalizeReportData` on the row. Shipping the raw
+              // jsonb here meant a legacy row (string `calcs`, pre-`gamePlans`
+              // `planA`/`planB`, un-merged `spreadNotes`) reached the live
+              // editor unmigrated and was then saved back in that shape,
+              // silently reverting the migration. Normalizing server side
+              // makes the wire format canonical for every client, including
+              // ones we cannot update, and costs no extra DB round trip —
+              // it is a pure transform of the row we already fetched.
+              const data = normalizeReportData(dataRows[0].data as Record<string, unknown>);
               knownVersion = Number(dataRows[0].version);
               send("version", {
                 version: knownVersion,

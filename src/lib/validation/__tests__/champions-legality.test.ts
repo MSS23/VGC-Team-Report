@@ -222,6 +222,45 @@ describe("validateChampionsTeam", () => {
     });
   });
 
+  describe("regression: a real EV line under the 32 cap was read verbatim as SP", () => {
+    // Unit detection briefly used per-stat magnitude alone, so an ordinary EV
+    // line whose every value sat at or below 32 was read as SP whatever its
+    // total. `EVs: 28 HP / 28 Def / 20 SpD` is 76 EVs — a legal, if frugal,
+    // EV spread — and it was reported as "76/66 SP — over budget by 10 SP".
+    it("does not accuse a 76-EV spread of being 10 SP over budget", () => {
+      const team = makeTeam();
+      team[0] = makePokemon({ evs: { hp: 28, atk: 0, def: 28, spa: 0, spd: 20, spe: 0 } });
+      const result = validateChampionsTeam(team);
+      expect(result.legal).toBe(true);
+      const incineroar = result.issues.filter((i) => i.pokemon === "Incineroar");
+      expect(incineroar.some((i) => i.message.includes("over budget"))).toBe(false);
+      expect(incineroar.some((i) => i.message.includes("SP"))).toBe(false);
+      // It is validated as what it is: an under-invested EV spread.
+      expect(
+        incineroar.some(
+          (i) =>
+            i.severity === "info" &&
+            i.message.includes("76 EVs allocated") &&
+            i.message.includes("434 more available"),
+        ),
+      ).toBe(true);
+    });
+
+    it("still flags an over-budget spread that is recognisably SP", () => {
+      const team = makeTeam();
+      // 30 / 30 / 11 = 71. No stat on the 32 cap, but 11 is not a multiple of
+      // 4, so it cannot be a sensible EV figure — this is an SP spread.
+      team[0] = makePokemon({ evs: { hp: 30, atk: 30, def: 0, spa: 0, spd: 0, spe: 11 } });
+      const result = validateChampionsTeam(team);
+      expect(result.legal).toBe(false);
+      expect(
+        result.issues.some(
+          (i) => i.severity === "error" && i.message.includes("71/66 SP — over budget by 5 SP"),
+        ),
+      ).toBe(true);
+    });
+  });
+
   it("treats Mega forms as same species for Species Clause", () => {
     const team = makeTeam();
     team[0] = makePokemon({ species: "Kangaskhan", item: "Kangaskhanite" });

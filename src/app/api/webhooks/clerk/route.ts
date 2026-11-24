@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import { sendWelcomeEmail } from "@/lib/email";
-import { cacheDel, cacheSetIfAbsent } from "@/lib/cache";
+import { cacheDel, cacheSetIfAbsentResult } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -47,12 +47,29 @@ export async function POST(request: NextRequest) {
   }
 
   // Deduplicate: if we have already processed this svix-id, return 200 immediately.
-  // cacheSetIfAbsent returns true only on the first call within the TTL window.
+  //
+  // Only a confirmed "exists" is a duplicate. When Redis itself is unavailable
+  // the dedup state is UNKNOWN, and we deliberately FAIL OPEN and process the
+  // event: a 200 here is final (Clerk never retries a 200), so treating an
+  // Upstash blip as a duplicate dropped the welcome email permanently. At worst
+  // failing open sends one extra welcome email; failing closed loses it forever.
+  //
+  // We also do not answer non-2xx to force a Clerk retry: a prolonged Upstash
+  // outage would then fail every delivery and risk Clerk disabling the endpoint
+  // for all signups — the same terminal shape the Linear webhook's 200-on-error
+  // catch exists to avoid (VGC-WEBHOOK). Retries are still used where they
+  // actually help: a failed email send below releases the key and returns 500.
   if (svixId) {
-    const isNew = await cacheSetIfAbsent(`clerk:svix:${svixId}`, 300);
-    if (!isNew) {
+    const dedup = await cacheSetIfAbsentResult(`clerk:svix:${svixId}`, 300);
+    if (dedup === "exists") {
       console.info("Clerk webhook duplicate detected — skipping", { svixId });
       return NextResponse.json({ ok: true, deduped: true });
+    }
+    if (dedup === "error") {
+      console.error(
+        "Clerk webhook dedup check unavailable (Redis error) — processing anyway, a duplicate delivery may resend the welcome email",
+        { svixId, eventType: event.type },
+      );
     }
   }
 

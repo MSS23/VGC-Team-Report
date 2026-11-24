@@ -2,6 +2,16 @@
 
 @custom-variant creator (&:where([data-creator-mode] *));
 @custom-variant presenting (&:where([data-presentation-mode] *));
+/* Tailwind v4's built-in `dark` variant falls back to
+   `@media (prefers-color-scheme: dark)`, but this app themes off a
+   `data-dark-mode` attribute on <html> (useDarkMode.ts) with localStorage
+   overriding the OS. Without this declaration the two signals desync the
+   moment a user touches the toggle: app-dark/OS-light left 40 of 122
+   `dark:text-*` pairs rendering their LIGHT colour on #141428 (worst
+   1.87 : 1), and app-light/OS-dark made all 122 render their pale dark
+   colour on #FAF9F6 (worst 1.25 : 1). `:where()` keeps specificity at zero,
+   exactly as the two variants above do. (VGC-316) */
+@custom-variant dark (&:where([data-dark-mode], [data-dark-mode] *));
 
 :root {
   --nav-height: 6rem;
@@ -19,9 +29,20 @@
   --text-primary: #1A1A2E;
   --text-secondary: #4A4A68;
   --text-tertiary: #5E5E7A;
-  --accent: #E11D48;
+  --accent: #DF1D47;
   --accent-light: #FDA4AF;
   --accent-surface: #FFF1F2;
+  /* Ink for text and icons sitting ON --accent (`bg-accent
+     text-accent-foreground`). White cannot serve both modes: the dark
+     accents are pastels (#86efac … #fda4af) where white measures
+     1.40-2.72 : 1. #0B0B1A — the dark --background, so it reads as the
+     brand's own ink — clears 7.16 : 1 on the worst of the 17 dark accents
+     and 13.89 : 1 on the best. In light mode white is correct, but only
+     once the accents themselves are dark enough: #E11D48 → #DF1D47 and the
+     eight siblings in useTheme.ts / random-accent.ts were nudged so that
+     BOTH white-on-accent and accent-as-text-on-#FAF9F6 clear 4.5 : 1.
+     (VGC-315) */
+  --accent-foreground: #FFFFFF;
   --success: #16A34A;
   --warning: #D97706;
   --danger: #DC2626;
@@ -60,6 +81,7 @@
   --color-accent: var(--accent);
   --color-accent-light: var(--accent-light);
   --color-accent-surface: var(--accent-surface);
+  --color-accent-foreground: var(--accent-foreground);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
@@ -283,6 +305,7 @@ body {
   --accent: #FB7185;
   --accent-light: #FDA4AF;
   --accent-surface: #3B1525;
+  --accent-foreground: #0B0B1A;
   /* Dark-appropriate semantic status colors. The light values (#DC2626 /
      #16A34A / #D97706) only reach 4.04 / 5.92 / 6.12 : 1 on the #0B0B1A
      background and 3.75 / 5.49 / 5.68 : 1 on #141428, so `text-danger` —
@@ -337,9 +360,10 @@ body {
   --text-primary: #1A1A2E !important;
   --text-secondary: #4A4A68 !important;
   --text-tertiary: #5E5E7A !important;
-  --accent: #E11D48 !important;
+  --accent: #DF1D47 !important;
   --accent-light: #FDA4AF !important;
   --accent-surface: #FFF1F2 !important;
+  --accent-foreground: #FFFFFF !important;
   --color-background: #FAF9F6 !important;
   --color-foreground: #1A1A2E !important;
   --color-surface: #FFFFFF !important;
@@ -349,9 +373,10 @@ body {
   --color-text-primary: #1A1A2E !important;
   --color-text-secondary: #4A4A68 !important;
   --color-text-tertiary: #5E5E7A !important;
-  --color-accent: #E11D48 !important;
+  --color-accent: #DF1D47 !important;
   --color-accent-light: #FDA4AF !important;
   --color-accent-surface: #FFF1F2 !important;
+  --color-accent-foreground: #FFFFFF !important;
 }
 
 [data-export-theme="dark"],
@@ -368,6 +393,7 @@ body {
   --accent: #FB7185 !important;
   --accent-light: #FDA4AF !important;
   --accent-surface: #3B1525 !important;
+  --accent-foreground: #0B0B1A !important;
   --color-background: #0B0B1A !important;
   --color-foreground: #F0EDE6 !important;
   --color-surface: #141428 !important;
@@ -380,6 +406,7 @@ body {
   --color-accent: #FB7185 !important;
   --color-accent-light: #FDA4AF !important;
   --color-accent-surface: #3B1525 !important;
+  --color-accent-foreground: #0B0B1A !important;
 }
 
 @media print {
@@ -627,7 +654,7 @@ body {
   filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 40%, transparent));
 }
 
-.dark .walkthrough-spotlight {
+[data-dark-mode] .walkthrough-spotlight {
   outline-color: rgba(255, 255, 255, 0.6);
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
 }
@@ -752,9 +779,10 @@ body {
     --text-primary: #1A1A2E;
     --text-secondary: #4A4A68;
     --text-tertiary: #5E5E7A;
-    --accent: #E11D48;
+    --accent: #DF1D47;
     --accent-light: #FDA4AF;
     --accent-surface: #FFF1F2;
+    --accent-foreground: #FFFFFF;
     --success: #16A34A;
     --warning: #D97706;
     --danger: #DC2626;
@@ -800,8 +828,12 @@ body {
   }
 
   /* Accent colors */
-  .text-accent, [class*="text-accent"] {
-    color: #E11D48 !important;
+  /* `[class*="text-accent"]` also matches the new `text-accent-foreground`
+     utility, which is the INK ON an accent background — forcing the accent
+     colour there would paint accent-on-accent and make every CTA label
+     vanish in a PDF. Exclude it. (VGC-315) */
+  .text-accent, [class*="text-accent"]:not([class*="text-accent-foreground"]) {
+    color: #DF1D47 !important;
   }
 
   /* Stat bar backgrounds — force light mode */
@@ -852,7 +884,7 @@ body {
 }
 
 /* Visible focus rings for keyboard navigation.
-   Uses the theme accent color which resolves to #E11D48 (light) and
+   Uses the theme accent color which resolves to #DF1D47 (light) and
    #FB7185 (dark) — both high-contrast against their respective backgrounds.
    outline-offset ensures the ring doesn't overlap element borders. */
 @layer base {
@@ -918,7 +950,7 @@ body {
   animation: version-diff-pulse 2.5s ease-in-out infinite;
 }
 
-:is(.dark) .version-diff-border {
+:is([data-dark-mode]) .version-diff-border {
   border-color: #60a5fa;
   box-shadow:
     0 0 0 1px rgba(96, 165, 250, 0.15),
@@ -954,7 +986,7 @@ body {
   z-index: -1;
 }
 
-:is(.dark) .version-diff-highlight::before {
+:is([data-dark-mode]) .version-diff-highlight::before {
   background: rgba(96, 165, 250, 0.06);
 }
 

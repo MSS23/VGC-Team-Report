@@ -278,11 +278,33 @@ export function useShareUrl() {
           // Strip internal flags before treating as ShareableState
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { _editable, _isPublic: _ip, _isUnlisted: _iu, _editToken: _et, _isOwner: _io, _version: _v, _collaborators: _c, _forkedFrom: _ff, _redactedFields: _rf, ...state } = data;
-          versionRef.current = Number(_v) || 1; baselineRef.current = state as ShareableState;
           if (Array.isArray(_c)) setFetchedCollaborators(_c as string[]);
           // Runtime-validated instead of cast — a malformed body fails closed
           // into the same error screen a corrupt link already produces.
           const validated = await parseFetchedShareState(state);
+          // The conflict baseline is captured from the VALIDATED state, never
+          // from `state` (the raw body). `ShareableStateSchema` is a
+          // `z.object()`, so it strips unknown keys — a legacy `replays` array
+          // is the documented example — while `editorFingerprint` enumerates
+          // every key it is given. Seeding the baseline from the raw body
+          // therefore made baseline and working state differ by construction,
+          // and `receiveRemote` raised a conflict the user never caused on the
+          // first collaborative update to any report whose stored row carried
+          // an extra key. Assigning the parsed value keeps the two
+          // fingerprint-identical, and drops the unchecked cast with it.
+          //
+          // A rejected body leaves no baseline and no version at all: the
+          // viewer is on the "corrupt link" screen with nothing loaded, so
+          // there is no local state for a later remote update to be compared
+          // against. Leaving a half-set baseline behind that screen is what
+          // made the failure path poisonous.
+          if (validated) {
+            versionRef.current = Number(_v) || 1;
+            baselineRef.current = validated;
+          } else {
+            versionRef.current = 0;
+            baselineRef.current = null;
+          }
           // Set active edit session — only from server-provided token
           // (authenticated), and only for a report that actually validated: a
           // rejected body must not leave an editable session pointing at that

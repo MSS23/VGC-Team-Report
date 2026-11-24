@@ -99,6 +99,13 @@ export async function ensureTable(): Promise<void> {
   await run(sql`ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT TRUE`);
   await run(sql`ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS accent_theme TEXT`);
   await run(sql`ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT`);
+  // VGC-253: bind each profile to the Clerk account that owns it. The table is
+  // keyed on a user-editable display name, so without this column any account
+  // could overwrite another creator's public page by copying their name.
+  // Nullable with no backfill: legacy rows stay unclaimed (NULL) and are
+  // claimed by the first authenticated save under that name — guessing which
+  // Clerk user owns a legacy display name would be worse than leaving it open.
+  await run(sql`ALTER TABLE creator_profiles ADD COLUMN IF NOT EXISTS user_id TEXT`);
 
   // Feedback / feature requests table
   await run(sql`

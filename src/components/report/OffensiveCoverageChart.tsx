@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { PokemonType } from "@/lib/types/pokemon";
 import { getEffectiveness } from "@/lib/data/type-chart";
@@ -147,11 +147,33 @@ function offensiveLabel(mult: number): string {
   return `${mult}x`;
 }
 
-export function OffensiveCoverageChart({ pokemon, speciesKeys, megaStates }: OffensiveCoverageChartProps) {
-  const { language } = useTranslation();
-  const [highlightedType, setHighlightedType] = useState<PokemonType | null>(null);
+export interface OffensiveCoverageRow {
+  species: string;
+  profile: Record<PokemonType, MoveCoverageResult>;
+  hasTypeChangingAbility: boolean;
+}
 
-  const profiles = pokemon.map((mon, i) => {
+export interface OffensiveCoverageData {
+  rows: OffensiveCoverageRow[];
+  teamSummary: { type: PokemonType; seCount: number }[];
+}
+
+/**
+ * Derive the entire offensive heatmap from the team alone.
+ *
+ * Pure and module-level on purpose: one call costs a form resolution per
+ * Pokemon (each a `lookupPokemon` pair), a move lookup per move, and ~300
+ * `getEffectiveness` calls for a full team, so the chart memoises a single
+ * call keyed on the team. The highlight state is a purely presentational
+ * overlay and deliberately never reaches this function — tapping a type
+ * header must not rebuild the heatmap.
+ */
+export function buildOffensiveCoverage(
+  pokemon: AnalyzedPokemon[],
+  speciesKeys?: string[],
+  megaStates?: Record<number, boolean>,
+): OffensiveCoverageData {
+  const rows = pokemon.map((mon, i) => {
     const { types, ability } = resolveEffectiveTyping(
       mon,
       speciesKeys?.[i] ?? mon.parsed.species,
@@ -171,11 +193,25 @@ export function OffensiveCoverageChart({ pokemon, speciesKeys, megaStates }: Off
   // Team-wide coverage summary: how many Pokemon hit each type SE
   const teamSummary = ALL_TYPES.map((defType) => {
     let seCount = 0; // super-effective coverage count
-    for (const p of profiles) {
+    for (const p of rows) {
       if (p.profile[defType].mult >= 2) seCount++;
     }
     return { type: defType, seCount };
   });
+
+  return { rows, teamSummary };
+}
+
+export function OffensiveCoverageChart({ pokemon, speciesKeys, megaStates }: OffensiveCoverageChartProps) {
+  const { language } = useTranslation();
+  const [highlightedType, setHighlightedType] = useState<PokemonType | null>(null);
+
+  // Keyed on the team data only — `highlightedType` is absent by design, so a
+  // highlight tap re-renders the cells without recomputing any coverage.
+  const { rows: profiles, teamSummary } = useMemo(
+    () => buildOffensiveCoverage(pokemon, speciesKeys, megaStates),
+    [pokemon, speciesKeys, megaStates],
+  );
 
   const gaps = teamSummary.filter((s) => s.seCount === 0);
   const strong = teamSummary.filter((s) => s.seCount >= 4);

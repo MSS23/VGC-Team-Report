@@ -16,7 +16,6 @@ import { PokemonSprite } from "@/components/report/PokemonSprite";
 import { TypeBadge } from "@/components/report/TypeBadge";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { isPokePasteUrl, fetchPokePaste } from "@/lib/utils/pokepaste";
-import { resolveEffectiveForm } from "@/lib/utils/effective-form";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { PokemonType } from "@/lib/types/pokemon";
 
@@ -143,7 +142,40 @@ function looksLikeChampionsTeam(pokemon: { evs: import("@/lib/types/pokemon").St
   return true;
 }
 
-function analyzePaste(paste: string): CompareAnalyzedPokemon[] | null {
+/**
+ * `resolveEffectiveForm`, loaded lazily.
+ *
+ * VGC-293 moved the Compare page's dex lookups behind
+ * `@/lib/utils/effective-form`, but kept importing it statically — and that
+ * module's first two lines pull in `@/lib/data/pokemon` and
+ * `@/lib/utils/mega-detect`, so the dex tables (`pokemon.ts` +
+ * `dex-subset.json` + `mega-pokemon.ts`, 357 KB raw / 81 KB gzipped) stayed in
+ * /compare's First Load JS. The route opens with two empty textareas and only
+ * needs the dex once a team is actually compared, so the import is dynamic and
+ * the tables land in an async chunk instead.
+ *
+ * The promise is memoised at module scope so every compare shares one chunk,
+ * and `CompareContent` warms it as soon as either box has content — the dex is
+ * already resolved by the time Compare is pressed, so the click never waits on
+ * it, while a visitor who never pastes anything downloads none of it.
+ */
+type ResolveEffectiveForm = typeof import("@/lib/utils/effective-form").resolveEffectiveForm;
+
+let effectiveFormPromise: Promise<ResolveEffectiveForm> | null = null;
+
+function loadResolveEffectiveForm(): Promise<ResolveEffectiveForm> {
+  if (!effectiveFormPromise) {
+    effectiveFormPromise = import("@/lib/utils/effective-form").then(
+      (m) => m.resolveEffectiveForm,
+    );
+  }
+  return effectiveFormPromise;
+}
+
+function analyzePaste(
+  paste: string,
+  resolveEffectiveForm: ResolveEffectiveForm,
+): CompareAnalyzedPokemon[] | null {
   if (!paste.trim()) return null;
   const parsed = parseShowdownPaste(paste);
   if (parsed.pokemon.length === 0) return null;
@@ -292,6 +324,32 @@ export function CompareContent() {
   const [selectedIdA, setSelectedIdA] = useState<string | null>(null);
   const [selectedIdB, setSelectedIdB] = useState<string | null>(null);
   const { reports, loading: reportsLoading, isSignedIn } = useMyReports();
+  const [resolveForm, setResolveForm] = useState<ResolveEffectiveForm | null>(null);
+
+  // Warm the lazy dex chunk on the first sign the user intends to compare —
+  // any content in either box, typed, pasted or loaded from a saved report.
+  // That is always many seconds before the Compare click, so the click itself
+  // never waits on the import, and a visitor who only looks at the page never
+  // downloads the dex at all. Stored in state (not just the module promise) so
+  // the memos below re-run when it lands.
+  const dexWanted = pasteA.length > 0 || pasteB.length > 0;
+  useEffect(() => {
+    if (!dexWanted) return;
+    let cancelled = false;
+    void loadResolveEffectiveForm().then((fn) => {
+      if (!cancelled) setResolveForm(() => fn);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [dexWanted]);
+
+  /** Guarantee the resolver is in state before `compared` flips to true. */
+  const ensureResolveForm = useCallback(async (): Promise<ResolveEffectiveForm> => {
+    const fn = await loadResolveEffectiveForm();
+    setResolveForm(() => fn);
+    return fn;
+  }, []);
 
   const handleSelectReport = useCallback(async (shareId: string, setter: (v: string) => void, setSelectedId: (id: string) => void) => {
     setFetchError(null);
@@ -311,8 +369,8 @@ export function CompareContent() {
     }
   }, []);
 
-  const teamA = useMemo<CompareAnalyzedPokemon[] | null>(() => compared ? analyzePaste(pasteA) : null, [pasteA, compared]);
-  const teamB = useMemo<CompareAnalyzedPokemon[] | null>(() => compared ? analyzePaste(pasteB) : null, [pasteB, compared]);
+  const teamA = useMemo<CompareAnalyzedPokemon[] | null>(() => compared && resolveForm ? analyzePaste(pasteA, resolveForm) : null, [pasteA, compared, resolveForm]);
+  const teamB = useMemo<CompareAnalyzedPokemon[] | null>(() => compared && resolveForm ? analyzePaste(pasteB, resolveForm) : null, [pasteB, compared, resolveForm]);
 
   const sharedSpecies = useMemo(() => {
     if (!teamA || !teamB) return new Set<string>();
@@ -352,7 +410,13 @@ export function CompareContent() {
     const needsFetchB = isUrl(pasteB);
 
     if (!needsFetchA && !needsFetchB) {
-      if (pasteA.trim() && pasteB.trim()) setCompared(true);
+      if (pasteA.trim() && pasteB.trim()) {
+        // Awaiting the (already-warm) dex chunk keeps the input → results
+        // transition a single render, exactly as it was when the dex shipped
+        // eagerly.
+        await ensureResolveForm();
+        setCompared(true);
+      }
       return;
     }
 
@@ -361,6 +425,7 @@ export function CompareContent() {
       const [resolvedA, resolvedB] = await Promise.all([
         resolvePaste(pasteA),
         resolvePaste(pasteB),
+        ensureResolveForm(),
       ]);
       setPasteA(resolvedA);
       setPasteB(resolvedB);
@@ -443,7 +508,7 @@ export function CompareContent() {
               <button
                 onClick={handleCompare}
                 disabled={!pasteA.trim() || !pasteB.trim() || fetching}
-                className="px-8 py-3 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide"
+                className="px-8 py-3 bg-accent text-accent-foreground rounded-xl text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide"
               >
                 {fetching ? (
                   <span className="flex items-center gap-2">

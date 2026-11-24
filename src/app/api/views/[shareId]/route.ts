@@ -34,6 +34,9 @@ export async function POST(
     // scale-to-zero) and was per-instance anyway, so cold-instance hits
     // double-counted views. The dedup-hit branch still returns the
     // current count via a PK lookup so the UI badge stays accurate.
+    // cacheSetIfAbsent is the fail-CLOSED wrapper on purpose here: if Redis
+    // errors we skip the increment rather than letting an Upstash outage turn
+    // every pageview into a dedup-free DB write. A lost view count is cheap.
     const isFirstView = await cacheSetIfAbsent(`view:${shareId}:${parsed.data.sessionId}`, 600);
     const sql = getDb();
     if (!isFirstView) {

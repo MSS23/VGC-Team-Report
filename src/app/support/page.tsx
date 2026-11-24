@@ -12,6 +12,10 @@ export const metadata: Metadata = {
     url: "https://pokemonvgcteamreport.com/support",
     type: "website",
     siteName: "VGC Team Report",
+    // Next does not merge this block with the root `openGraph`, so declaring
+    // it here dropped og:image entirely. Reuse the root opengraph-image route,
+    // same as the other static pages.
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "VGC Team Report" }],
   },
 };
 
@@ -74,7 +78,7 @@ export default function SupportPage() {
                   href={donationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-white shadow-sm shadow-accent/20 transition-all hover:brightness-110 active:scale-[0.98]"
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-foreground shadow-sm shadow-accent/20 transition-all hover:brightness-110 active:scale-[0.98]"
                 >
                   Donate securely
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

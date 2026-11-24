@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { MEGA_BY_SLUG, megaSlugForSpecies, getMegaRegulation, getMegaLegalInLabel, getRegMCMegasWithSprites } from "@/lib/data/mega-pokemon";
 import { lookupPokemon } from "@/lib/data/pokemon";
-import { getDb } from "@/lib/db";
-import { extractSpecies } from "@/lib/utils/extract-species";
+import { getFeaturedTeamsForMega } from "@/lib/data/featured-teams";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { MegaLandingContent } from "./MegaLandingContent";
-import type { ExploreReport } from "@/components/explore/ReportCard";
 
 // Revalidate every hour. New public teams for any given mega don't appear
 // fast enough to justify a 10-minute window, and each revalidation runs
@@ -61,9 +59,11 @@ export async function generateMetadata({
   if (!mega) return {};
 
   // Title targets the highest-volume long-tail queries: "{Pokemon} VGC",
-  // "{Pokemon} SP spread", "{Pokemon} moveset". Keeping it under ~60 chars
-  // so Google doesn't truncate in SERPs.
-  const title = `${mega.displayName} VGC Guide — SP Spreads, Movesets & Teams`;
+  // "{Pokemon} SP spread". Budget is ~60 chars INCLUDING the 18-char
+  // " | VGC Team Report" template suffix from layout.tsx, so the string below
+  // must stay <= ~42 chars for the longest displayName (Mega Crabominable).
+  // It used to read "— SP Spreads, Movesets & Teams", which rendered at 78.
+  const title = `${mega.displayName} VGC Guide — SP Spreads`;
   const reg = regulationCopy(mega.dataKey);
   const description = `Complete ${mega.displayName} VGC guide for Pokemon Champions ${reg.legalIn}: best SP spreads, movesets, damage calcs, and top competitive teams. ${mega.ability} with ${mega.megaStone}.`;
 
@@ -108,86 +108,6 @@ export async function generateMetadata({
   };
 }
 
-async function getTeamsForPokemon(
-  dataKey: string,
-  megaStone: string,
-): Promise<ExploreReport[]> {
-  try {
-    const sql = getDb();
-    // Two valid pieces of evidence that this team uses the Pokemon AS its
-    // Mega:
-    //   1. The paste contains the Mega Stone (e.g. "Scizorite") — base+stone
-    //   2. The paste contains the EXACT Mega species form name
-    //
-    // The species pattern must be the FULL form name ("Charizard-Mega-Y"),
-    // NOT just "{baseName}-Mega". The shorter pattern was matching every
-    // Charizard-Mega-X paste on the Mega-Charizard-Y page (and vice versa,
-    // and the same for Mewtwo-X/Y) because PostgreSQL ILIKE with a trailing
-    // wildcard treats "Charizard-Mega" as a prefix of "Charizard-Mega-X".
-    //
-    // Derive the Showdown-format species form from dataKey (which is the
-    // canonical lowercased form, e.g. "charizard-mega-y") by title-casing
-    // each hyphen-separated segment → "Charizard-Mega-Y". ILIKE is
-    // case-insensitive so casing only affects readability of the pattern.
-    const megaSpeciesForm = dataKey
-      .split("-")
-      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-      .join("-");
-    const stonePattern = `%${megaStone}%`;
-    const megaSpeciesPattern = `%${megaSpeciesForm}%`;
-    const rows = await sql`
-      SELECT s.id, s.data, s.created_at, s.updated_at, COALESCE(s.view_count, 0) as view_count
-      FROM shares s
-      WHERE s.is_public = TRUE
-        AND s.deleted_at IS NULL
-        AND (
-          s.data->>'paste' ILIKE ${stonePattern}
-          OR s.data->>'paste' ILIKE ${megaSpeciesPattern}
-        )
-      ORDER BY s.updated_at DESC
-      LIMIT 9
-    `;
-
-    // Batch fetch like counts
-    const shareIds = rows.map((r) => r.id as string);
-    const likeMap: Record<string, number> = {};
-    if (shareIds.length > 0) {
-      const likeRows = await sql`
-        SELECT share_id, COUNT(*)::int as count
-        FROM reactions
-        WHERE share_id = ANY(${shareIds})
-        GROUP BY share_id
-      `;
-      for (const r of likeRows) {
-        likeMap[r.share_id as string] = r.count as number;
-      }
-    }
-
-    return rows.map((row) => {
-      const data = row.data as Record<string, unknown>;
-      const paste = (data.paste as string) ?? "";
-      const sid = row.id as string;
-      return {
-        id: sid,
-        species: extractSpecies(paste),
-        tournamentName: (data.tournamentName as string) || undefined,
-        creatorName: (data.creatorName as string) || undefined,
-        placement: (data.placement as string) || undefined,
-        teamSummary: (data.teamSummary as string) || undefined,
-        createdAt: (row.created_at as Date).toISOString(),
-        updatedAt: (row.updated_at as Date).toISOString(),
-        viewCount: row.view_count as number,
-        likeCount: likeMap[sid] ?? 0,
-        tags: (data.tags as Record<string, unknown>) || undefined,
-        collaborators: [],
-      };
-    });
-  } catch (e) {
-    console.error("Failed to fetch teams for", dataKey, e);
-    return [];
-  }
-}
-
 export default async function MegaPokemonPage({
   params,
 }: {
@@ -213,7 +133,11 @@ export default async function MegaPokemonPage({
   // Fetch teams using the exact Mega species form (via dataKey) AND the
   // Mega Stone — searching by base name alone would pull in any team
   // containing the un-Mega'd base species.
-  const teams = await getTeamsForPokemon(mega.dataKey, mega.megaStone);
+  //
+  // One batched, memoised query covers every Mega: this page is statically
+  // generated for 81 Megas, and a query per page meant 81 Neon round-trips per
+  // build. The rows for this Mega are unchanged — see src/lib/data/featured-teams.ts.
+  const teams = await getFeaturedTeamsForMega(mega.dataKey, mega.megaStone);
 
   // Pick up to 8 related Megas (excluding current). Filter to "legal AND
   // sprited" so we never link to a broken-image page.
@@ -231,49 +155,7 @@ export default async function MegaPokemonPage({
     (_, i) => relatedPool[(selfIndex + i) % relatedPool.length],
   ).map((m) => ({ slug: m.slug, displayName: m.displayName, types: m.types as string[] }));
 
-  const bst = pokemonData.baseStats.hp + pokemonData.baseStats.atk + pokemonData.baseStats.def +
-    pokemonData.baseStats.spa + pokemonData.baseStats.spd + pokemonData.baseStats.spe;
-  const typeLine = mega.types.join(" / ");
-
-  // FAQ schema — Google surfaces these as rich snippets for long-tail
-  // queries. Every answer below is grounded in first-party data (stats,
-  // ability, mega stone, live team count) — NO hallucinated "best spread"
-  // claims that we can't back up. Adding fake answers here would be a
-  // manual-action risk for structured-data spam.
   const reg = regulationCopy(mega.dataKey);
-  const faqItems = [
-    {
-      q: `What ability does ${mega.displayName} have?`,
-      a: `${mega.displayName} has the ability ${mega.ability}. ${mega.description}`,
-    },
-    {
-      q: `What Mega Stone does ${mega.baseName} need to Mega Evolve?`,
-      a: `${mega.baseName} needs to hold ${mega.megaStone} to Mega Evolve into ${mega.displayName} during battle.`,
-    },
-    {
-      q: `What type is ${mega.displayName}?`,
-      a: `${mega.displayName} is a ${typeLine}-type Pokemon in VGC ${reg.legalIn}.`,
-    },
-    {
-      q: `What are ${mega.displayName}'s base stats?`,
-      a: `${mega.displayName} has base stats of ${pokemonData.baseStats.hp} HP / ${pokemonData.baseStats.atk} Atk / ${pokemonData.baseStats.def} Def / ${pokemonData.baseStats.spa} SpA / ${pokemonData.baseStats.spd} SpD / ${pokemonData.baseStats.spe} Spe, for a Base Stat Total of ${bst}.`,
-    },
-    // Legality must be derived, never asserted. Regs are nested (M-A ⊂ M-B ⊂
-    // M-C): a Mega is legal from the rotation that introduced it onward, and
-    // saying otherwise would be a false claim baked into prerendered HTML.
-    {
-      q: `Is ${mega.displayName} legal in VGC 2026 Regulation M-C?`,
-      a: reg.since === "M-A"
-        ? `Yes — ${mega.displayName} has been legal since Regulation M-A, the Pokemon Champions launch format, and remains legal in Regulation M-B and the current Regulation M-C.`
-        : `Yes — ${mega.displayName} is legal in ${reg.legalIn}. It was added in the Regulation ${reg.since} rotation and is not legal in earlier Champions regulations.`,
-    },
-    ...(teams.length > 0
-      ? [{
-          q: `Where can I find competitive ${mega.displayName} VGC teams?`,
-          a: `VGC Team Report hosts ${teams.length} public competitive team${teams.length === 1 ? "" : "s"} featuring ${mega.displayName}, with full SP spreads, movesets, and matchup notes. Browse them on this page or create your own report by pasting your Showdown team.`,
-        }]
-      : []),
-  ];
 
   return (
     <>
@@ -281,7 +163,7 @@ export default async function MegaPokemonPage({
         data={{
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: `${mega.displayName} VGC Guide — SP Spreads, Movesets & Teams`,
+          name: `${mega.displayName} VGC Guide — SP Spreads`,
           description: mega.description,
           url: `https://pokemonvgcteamreport.com/champions/${mega.slug}`,
           isPartOf: {
@@ -306,20 +188,6 @@ export default async function MegaPokemonPage({
               },
             ],
           },
-        }}
-      />
-      <JsonLd
-        data={{
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          mainEntity: faqItems.map((item) => ({
-            "@type": "Question",
-            name: item.q,
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: item.a,
-            },
-          })),
         }}
       />
       <MegaLandingContent

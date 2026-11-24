@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { PokemonType } from "@/lib/types/pokemon";
 import { getDefensiveProfile } from "@/lib/data/type-chart";
@@ -40,10 +40,39 @@ function effectivenessCell(mult: number): { bg: string; text: string; ring?: str
   return { bg: "", text: "" };
 }
 
-export function DefensiveCoverageChart({ pokemon, speciesKeys, megaStates }: DefensiveCoverageChartProps) {
-  const [highlightedType, setHighlightedType] = useState<PokemonType | null>(null);
+export interface DefensiveCoverageRow {
+  species: string;
+  types: PokemonType[];
+  profile: Record<PokemonType, number>;
+}
 
-  const profiles = pokemon.map((mon, i) => {
+export interface DefensiveTeamSummaryEntry {
+  type: PokemonType;
+  weakCount: number;
+  resistCount: number;
+  immuneCount: number;
+}
+
+export interface DefensiveCoverageData {
+  rows: DefensiveCoverageRow[];
+  teamSummary: DefensiveTeamSummaryEntry[];
+}
+
+/**
+ * Derive the entire defensive heatmap from the team alone.
+ *
+ * Pure and module-level on purpose: one call costs a form resolution per
+ * Pokemon (each a `lookupPokemon` pair) plus 18 type-chart lookups each, so
+ * the chart memoises a single call keyed on the team. The highlight state is
+ * a purely presentational overlay and deliberately never reaches this
+ * function — tapping a type header must not rebuild the heatmap.
+ */
+export function buildDefensiveCoverage(
+  pokemon: AnalyzedPokemon[],
+  speciesKeys?: string[],
+  megaStates?: Record<number, boolean>,
+): DefensiveCoverageData {
+  const rows = pokemon.map((mon, i) => {
     // Mega Evolution can change both typing and ability, so resolve the form
     // that is actually on screen before building the profile.
     const { types, ability } = resolveEffectiveTyping(
@@ -63,7 +92,7 @@ export function DefensiveCoverageChart({ pokemon, speciesKeys, megaStates }: Def
     let weakCount = 0;
     let resistCount = 0;
     let immuneCount = 0;
-    for (const p of profiles) {
+    for (const p of rows) {
       const mult = p.profile[attackType];
       if (mult === 0) immuneCount++;
       else if (mult >= 2) weakCount++;
@@ -71,6 +100,19 @@ export function DefensiveCoverageChart({ pokemon, speciesKeys, megaStates }: Def
     }
     return { type: attackType, weakCount, resistCount, immuneCount };
   });
+
+  return { rows, teamSummary };
+}
+
+export function DefensiveCoverageChart({ pokemon, speciesKeys, megaStates }: DefensiveCoverageChartProps) {
+  const [highlightedType, setHighlightedType] = useState<PokemonType | null>(null);
+
+  // Keyed on the team data only — `highlightedType` is absent by design, so a
+  // highlight tap re-renders the cells without recomputing any coverage.
+  const { rows: profiles, teamSummary } = useMemo(
+    () => buildDefensiveCoverage(pokemon, speciesKeys, megaStates),
+    [pokemon, speciesKeys, megaStates],
+  );
 
   const blindspots = teamSummary.filter((s) => s.weakCount >= 3 && s.immuneCount === 0);
   const strengths = teamSummary.filter((s) => s.resistCount + s.immuneCount >= 4);

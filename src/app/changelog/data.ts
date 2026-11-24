@@ -16,6 +16,31 @@ export interface ChangelogEntry {
 
 export const ENTRIES: ChangelogEntry[] = [
   {
+    date: "November 2026",
+    version: "5.30",
+    title: "Private Previews, Readable Accents & Correct Mega Speeds",
+    emoji: "\u{1F512}",
+    highlight: true,
+    items: [
+      { type: "fixed", text: "Switching a shared team report back to Private now also takes down its link preview image. That preview card — which showed your six Pokémon, their items, abilities, Tera types and your event placement — was published to a public address when you first shared the report and stayed reachable there even after you made the report private; it is now deleted the moment you flip the toggle, and re-created if you choose to share the report again." },
+      { type: "fixed", text: "Your creator page is now locked to your account. Anyone who changed their display name to match yours could previously overwrite your public creator page — your bio, your socials and your avatar — and it would still show under your verified badge. Creator pages are now tied to the account that made them, so only you can edit yours." },
+      { type: "fixed", text: "Buttons in your accent colour are readable again — on the dark theme the white label sat on a pastel accent and all but disappeared, and seven of the nine game themes were too pale for white text in light mode too, so the accents were deepened a shade and labels now switch to dark ink on the dark theme. Dark mode also stops disagreeing with your device: parts of the page were being coloured from your phone or computer's own light/dark setting instead of the toggle you chose, so flipping the theme left some text stuck in the wrong mode's colour." },
+      { type: "fixed", text: "Champions teams whose stat spread is written in small numbers are read correctly again — a spread like 28 HP / 28 Def / 20 SpD was being mistaken for Stat Points, which inflated every stat and speed tier on the report and wrongly flagged the team as over the 66 SP budget, while a spread genuinely written in Stat Points is still shown as over budget when it is." },
+      { type: "fixed", text: "Mega speed tiers now use the Mega's own ability instead of the base form's, so a Venusaurite Venusaur's Mega row no longer doubles off Chlorophyll (Mega Venusaur has Thick Fat) and a Swampertite Swampert's Mega row finally doubles in rain off Mega Swampert's Swift Swim." },
+      { type: "fixed", text: "Older shared reports now open in their up-to-date form when you edit them live with a teammate, instead of being loaded in an out-of-date shape and saved back that way." },
+      { type: "fixed", text: "A teammate's edit to a shared report no longer warns you that it clashes with your own changes when you haven't made any — reports saved by older releases carried a leftover field that made the check think the report had drifted." },
+      { type: "fixed", text: "Your welcome email no longer goes missing when a background service has a brief hiccup — a momentary outage in the system that stops duplicate emails was being read as \"we already sent this one\", so a brand-new account could end up with no welcome email at all." },
+      { type: "fixed", text: "Browsing Explore by Popular or Most viewed no longer skips teams or shows you the same team twice as you scroll — teams tied on likes or views (which is most of them) now hold a stable order across pages." },
+      { type: "fixed", text: "Search engines are now given an accurate picture of the Mega guide pages and the homepage — they no longer advertise a question-and-answer section that those pages don't actually show (the FAQ page still has all those answers), and shorter page titles mean search results stop cutting them off." },
+      { type: "improved", text: "The team comparison page now loads about 75 KB less JavaScript up front — roughly a quarter of the page — because the Pokémon database is only fetched once you actually paste a team in." },
+      { type: "improved", text: "Tapping a type on the offensive or defensive coverage chart now highlights it instantly — the report was rebuilding your whole team's type coverage on every single tap, which you could feel on a phone at an event." },
+      { type: "improved", text: "Every page now loads a little lighter — the cookie notice and its styling no longer ship with the rest of the site on first load, they arrive a moment later on their own, so a team report opens faster on phone data at an event. The notice still shows up for first-time visitors, and analytics still stay switched off until you say yes." },
+      { type: "improved", text: "Mega guide pages are now built with a single batched database lookup instead of one per Pokémon, so the site rebuilds faster and more cheaply with no change to what you see." },
+      { type: "improved", text: "Security: the last out-of-date copy of the library that checks saved reports has been folded onto the patched version, and four more parts of a report — match-up plans, hidden slides, archetype tags and your hidden-field choices — now have sensible upper limits instead of none." },
+      { type: "improved", text: "Housekeeping: deleted five leftover template graphics that shipped with the site but were never shown, plus a handful of unused bits of code." },
+    ],
+  },
+  {
     date: "October 2026",
     version: "5.29",
     title: "Correct Champions Speeds, a Readable Dark Mode & Private Team Graphics",

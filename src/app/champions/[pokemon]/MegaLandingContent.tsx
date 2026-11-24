@@ -78,7 +78,8 @@ interface MegaLandingContentProps {
   regulationLabel: string;
   /** Matching `regulation` filter value for /explore deep links. */
   exploreRegulation: string;
-  // faqs removed from the visible UI — JSON-LD still generated server-side.
+  // faqs removed from the visible UI; the FAQPage JSON-LD was removed with
+  // it (VGC-317) — see the note in the render body below.
 }
 
 export function MegaLandingContent({
@@ -207,8 +208,12 @@ export function MegaLandingContent({
             and pushed the actually useful Featured Teams section down.
             Google deprecated FAQ rich snippets for non-authoritative sites
             in Aug 2023, so the SEO justification is gone. The FAQPage
-            JSON-LD in <head> is still emitted for AI scrapers and other
-            structured-data consumers — it just isn't rendered visibly. */}
+            JSON-LD was deleted alongside it (VGC-317): Google's
+            structured-data policy requires FAQPage markup to describe Q&A
+            that is visible on the page, so emitting it for a section that
+            isn't rendered is a manual-action risk. /faq is the canonical
+            home for visible Q&A. Do not re-add the schema without also
+            rendering the questions here. */}
 
         {/* Related Megas */}
         {relatedMegas.length > 0 && (

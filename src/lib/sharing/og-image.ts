@@ -68,9 +68,12 @@ export async function getShareOgCard(shareId: string): Promise<OgCard | null> {
 export async function removeShareOgImage(shareId: string): Promise<void> {
   if (!ogImageEnabled()) return;
   const card = await getShareOgCard(shareId);
-  if (!card) return;
+  // The Blob is the source of truth for exposure, so delete it by constructed
+  // path when the Redis pointer is missing (expired OG_TTL_SECONDS, Upstash
+  // unconfigured, or a cacheSet that never landed) instead of returning early
+  // and leaving a public PNG behind.
   try {
-    await del(card.url.split("?")[0]);
+    await del(card ? card.url.split("?")[0] : blobPath(shareId));
   } catch (err) {
     console.error("og image delete failed:", err);
   }

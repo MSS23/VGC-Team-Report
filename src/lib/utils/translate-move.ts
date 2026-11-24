@@ -1,5 +1,3 @@
-"use client";
-
 import { MOVE_NAMES } from "@/lib/data/move-names";
 import type { LanguageCode } from "@/lib/i18n";
 

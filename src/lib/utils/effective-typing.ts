@@ -15,6 +15,29 @@ export interface EffectiveTyping {
 }
 
 /**
+ * Resolve the ability of a displayed Mega form, falling back to the pasted
+ * ability only when the Mega form has no ability of its own recorded.
+ *
+ * A paste only ever names ONE ability, and for `Venusaur @ Venusaurite` that
+ * ability is Chlorophyll — the BASE form's. Mega Venusaur's ability is Thick
+ * Fat, and it cannot have Chlorophyll. Reading `parsed.ability` for a row that
+ * is labelled as the Mega is therefore always wrong when the two differ, in
+ * both directions: it invented a x2 Chlorophyll boost for Mega Venusaur, and
+ * it hid Mega Swampert's own Swift Swim behind base Swampert's Torrent.
+ *
+ * Accepts either a display species ("Venusaur-Mega") or a POKEMON_DATA key
+ * ("venusaur-mega") — both normalise to the same MEGA_BY_KEY entry — so every
+ * caller that already knows which Mega it is rendering can share this one
+ * resolution instead of growing its own lookup.
+ */
+export function resolveMegaAbility(
+  megaSpecies: string,
+  pastedAbility: string | null,
+): string | null {
+  return getMegaEntryFromSpecies(megaSpecies)?.ability || pastedAbility;
+}
+
+/**
  * Resolve the types + ability that defensive/offensive calculations should use
  * for a report row, honouring the report-wide Mega toggle.
  *
@@ -42,7 +65,7 @@ export function resolveEffectiveTyping(
   if (form.isMega && megaEntry) {
     return {
       types: form.data?.types ?? megaEntry.types,
-      ability: megaEntry.ability || pokemon.parsed.ability,
+      ability: resolveMegaAbility(form.speciesKey, pokemon.parsed.ability),
       isMega: true,
     };
   }

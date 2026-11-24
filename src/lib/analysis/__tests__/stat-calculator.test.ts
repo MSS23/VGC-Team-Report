@@ -497,3 +497,113 @@ describe("regression: an over-budget SP spread was silently re-converted as EVs"
     expect(convertToChampionsSp(spread({ hp: 33, atk: 10 }))).toEqual(spread({ hp: 5, atk: 2 }));
   });
 });
+
+describe("regression: a real EV line under the 32 cap was read verbatim as SP", () => {
+  // The fix above dropped the `total <= 66` clause entirely, which opened the
+  // mirror-image hole: an ordinary EV line whose every value happens to sit at
+  // or below 32 and whose total exceeds 66 was returned verbatim as SP. The
+  // report then computed every stat and every speed tier from EV-sized numbers
+  // read as Stat Points, and the legality sheet accused the author of being
+  // over budget for a spread that is perfectly legal as EVs.
+  //
+  // `isSpFormSpread` now requires the 66-point budget as well as the
+  // 32-per-stat cap before it will read a line as SP, and keeps the SP reading
+  // of an over-budget line only on positive evidence of SP units.
+
+  it("reads EVs: 28 HP / 28 Def / 20 SpD (76) as EVs, not as 76 SP", () => {
+    const evs = spread({ hp: 28, def: 28, spd: 20 });
+    expect(totalOf(evs)).toBe(76);
+    expect(isSpFormSpread(evs)).toBe(false);
+
+    // 28 EVs buy 4 SP, 20 EVs buy 3 SP — 11 SP in total, well inside budget.
+    const sp = convertToChampionsSp(evs);
+    expect(sp).toEqual(spread({ hp: 4, def: 4, spd: 3 }));
+    expect(totalOf(sp)).toBe(11);
+  });
+
+  it("pins the Incineroar stats that spread actually produces", () => {
+    // Incineroar base 95 / 115 / 90 / 80 / 90 / 60, Careful (+SpD, -SpA).
+    const sp = convertToChampionsSp(spread({ hp: 28, def: 28, spd: 20 }));
+    expect(calculateChampionsStat("hp", 95, sp.hp, "Careful")).toBe(174);
+    expect(calculateChampionsStat("def", 90, sp.def, "Careful")).toBe(114);
+    expect(calculateChampionsStat("spd", 90, sp.spd, "Careful")).toBe(124);
+
+    // The shipped bug read the line as SP and rendered these instead.
+    expect(calculateChampionsStat("hp", 95, 28, "Careful")).toBe(198);
+    expect(calculateChampionsStat("def", 90, 28, "Careful")).toBe(138);
+    expect(calculateChampionsStat("spd", 90, 20, "Careful")).toBe(143);
+  });
+
+  it("still reads a genuine over-budget SP spread as SP (keeps the earlier fix)", () => {
+    // A stat pinned to the 32 SP cap is the SP author's fingerprint.
+    expect(isSpFormSpread(spread({ hp: 32, atk: 32, spe: 3 }))).toBe(true); // 67
+    expect(isSpFormSpread(spread({ hp: 32, atk: 32, def: 32, spa: 32 }))).toBe(true); // 128
+    expect(isSpFormSpread(spread({ hp: 32, atk: 32, spe: 32 }))).toBe(true); // 96
+    // So is a value that is not a multiple of 4: EVs only pay out in fours,
+    // so 11 Def cannot be a sensible EV figure but is an ordinary SP one.
+    expect(isSpFormSpread(spread({ hp: 30, atk: 30, spe: 11 }))).toBe(true); // 71
+    for (const evs of [
+      spread({ hp: 32, atk: 32, spe: 3 }),
+      spread({ hp: 30, atk: 30, spe: 11 }),
+    ]) {
+      expect(convertToChampionsSp(evs)).toEqual(evs);
+      expect(totalOf(convertToChampionsSp(evs))).toBeGreaterThan(CHAMPIONS_TOTAL_SP);
+    }
+  });
+
+  it("reads an over-budget line with no SP tell as EVs", () => {
+    // Every value a multiple of 4, none on the 32 cap: an EV line.
+    expect(isSpFormSpread(spread({ hp: 28, atk: 28, spe: 12 }))).toBe(false); // 68
+    expect(isSpFormSpread(spread({ hp: 24, def: 24, spd: 20 }))).toBe(false); // 68
+    expect(convertToChampionsSp(spread({ hp: 24, def: 24, spd: 20 }))).toEqual(
+      spread({ hp: 3, def: 3, spd: 3 })
+    );
+  });
+
+  describe("boundaries", () => {
+    it("treats a total of exactly 66 as in budget, so SP", () => {
+      const onBudget = spread({ hp: 32, atk: 32, spe: 2 });
+      expect(totalOf(onBudget)).toBe(CHAMPIONS_TOTAL_SP);
+      expect(isSpFormSpread(onBudget)).toBe(true);
+      expect(convertToChampionsSp(onBudget)).toEqual(onBudget);
+      // One point over is still SP here, via the 32-cap tell.
+      expect(isSpFormSpread(spread({ hp: 32, atk: 32, spe: 3 }))).toBe(true);
+    });
+
+    it("treats a single value of exactly 32 as inside the per-stat cap", () => {
+      expect(isSpFormSpread(spread({ hp: 32, def: 4 }))).toBe(true);
+      expect(convertToChampionsSp(spread({ hp: 32, def: 4 }))).toEqual(
+        spread({ hp: 32, def: 4 })
+      );
+      // 33 is over the cap, so it proves EV units — the documented residual.
+      expect(isSpFormSpread(spread({ hp: 33, def: 4 }))).toBe(false);
+    });
+
+    it("leaves an all-zero spread (a paste with no EVs line) at zero", () => {
+      expect(isSpFormSpread(spread())).toBe(false);
+      expect(convertToChampionsSp(spread())).toEqual(spread());
+      expect(totalOf(convertToChampionsSp(spread()))).toBe(0);
+    });
+
+    it("resolves a spread legal under both readings to SP", () => {
+      // 22 / 11 / 24 / 4 / 5 is a legal 66 SP spread and also a legal (if
+      // tiny) 66 EV spread. Inside a Champions report the SP reading is the
+      // author's: reading it as EVs would collapse 5 Spe to 1 SP and move the
+      // Pokemon down the speed tiers.
+      const both = spread({ hp: 22, def: 11, spa: 24, spd: 4, spe: 5 });
+      expect(totalOf(both)).toBe(CHAMPIONS_TOTAL_SP);
+      expect(isSpFormSpread(both)).toBe(true);
+      expect(convertToChampionsSp(both)).toEqual(both);
+    });
+
+    it("resolves an over-budget spread that carries a cap tell to SP", () => {
+      // 32 HP / 28 Def / 20 SpD (80) is ambiguous from the numbers alone. It
+      // resolves to SP and is reported as over budget, which is the honest
+      // answer: the author is told the spread is illegal rather than shown
+      // numbers nobody built.
+      const tell = spread({ hp: 32, def: 28, spd: 20 });
+      expect(isSpFormSpread(tell)).toBe(true);
+      expect(convertToChampionsSp(tell)).toEqual(tell);
+    });
+  });
+});

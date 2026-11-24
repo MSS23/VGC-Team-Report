@@ -136,7 +136,7 @@ function FeedbackInner() {
               We require sign-in so we can follow up on your feedback and keep submissions high quality.
             </p>
             <SignInButton mode="modal">
-              <button className="min-h-11 px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide">
+              <button className="min-h-11 px-6 py-2.5 bg-accent text-accent-foreground text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all cursor-pointer tracking-wide">
                 Sign in
               </button>
             </SignInButton>
@@ -163,7 +163,7 @@ function FeedbackInner() {
               Your feedback has been submitted. We review every submission and use it to improve VGC Team Report.
             </p>
             <div className="flex items-center justify-center gap-3">
-              <Link href="/" className="inline-flex min-h-11 items-center px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
+              <Link href="/" className="inline-flex min-h-11 items-center px-6 py-2.5 bg-accent text-accent-foreground text-sm font-bold rounded-xl hover:brightness-110 active:scale-[0.97] shadow-md shadow-accent/30 transition-all tracking-wide">
                 Back to Home
               </Link>
               <button

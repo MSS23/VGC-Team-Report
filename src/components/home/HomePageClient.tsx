@@ -799,7 +799,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
             </p>
           </div>
           <SignUpButton mode="modal">
-            <button className="w-full px-6 py-2.5 bg-accent text-white text-sm font-bold rounded-xl hover:brightness-110 transition-all cursor-pointer shadow-md shadow-accent/25">
+            <button className="w-full px-6 py-2.5 bg-accent text-accent-foreground text-sm font-bold rounded-xl hover:brightness-110 transition-all cursor-pointer shadow-md shadow-accent/25">
               Sign up to collaborate
             </button>
           </SignUpButton>
@@ -834,7 +834,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
             <p className="text-text-secondary text-sm max-w-xs">{t.sharedLinkCorrupt}</p>
             <button
               onClick={handleDecodeFailed}
-              className="mt-2 px-5 py-2 bg-accent text-white rounded-xl font-semibold text-sm hover:bg-accent/90 transition-colors"
+              className="mt-2 px-5 py-2 bg-accent text-accent-foreground rounded-xl font-semibold text-sm hover:bg-accent/90 transition-colors"
             >
               {t.buildYourOwn}
             </button>
@@ -994,7 +994,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                     handleShareClick();
                     dismissRestoreBanner();
                   }}
-                  className="px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-white hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
+                  className="px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-accent-foreground hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
                 >
                   Get my link
                 </button>
@@ -1047,7 +1047,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                 <SignUpButton mode="modal">
                   <button
                     type="button"
-                    className="px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-white hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
+                    className="px-3 py-1.5 text-[11px] font-extrabold rounded-lg bg-accent text-accent-foreground hover:brightness-110 transition-all cursor-pointer shadow-sm shadow-accent/25"
                   >
                     Sign up to save
                   </button>
@@ -1455,7 +1455,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                   // eslint-disable-next-line @next/next/no-html-link-for-pages -- shared reports render on "/?s=…", so going home needs a full load to reset the report state
                   <a
                     href="/"
-                    className="inline-flex min-h-11 items-center px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30"
+                    className="inline-flex min-h-11 items-center px-3.5 py-2 bg-accent text-accent-foreground text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30"
                   >
                     Create yours
                   </a>
@@ -1463,7 +1463,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
                   <SignUpButton mode="modal">
                     <button
                       type="button"
-                      className="px-3.5 py-2 bg-accent text-white text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer"
+                      className="px-3.5 py-2 bg-accent text-accent-foreground text-xs font-bold rounded-lg hover:brightness-110 active:scale-[0.97] transition-all shadow-md shadow-accent/30 cursor-pointer"
                     >
                       Sign up free
                     </button>
@@ -1764,7 +1764,7 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
           <button
             type="button"
             onClick={confirmExportTheme}
-            className="w-full py-2.5 rounded-xl bg-accent text-white font-bold text-sm hover:bg-accent/90 transition-colors cursor-pointer"
+            className="w-full py-2.5 rounded-xl bg-accent text-accent-foreground font-bold text-sm hover:bg-accent/90 transition-colors cursor-pointer"
           >
             Download PNG {pendingExportMode === "tournament-stats" ? "(Stats)" : "(EVs)"}
           </button>
@@ -1808,22 +1808,26 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
             "--border": "#2A2A52", "--border-subtle": "#222244",
             "--text-primary": "#F0EDE6", "--text-secondary": "#C0C0D8", "--text-tertiary": "#9898B8",
             "--accent": "#FB7185", "--accent-light": "#FDA4AF", "--accent-surface": "#3B1525",
+            "--accent-foreground": "#0B0B1A",
             "--color-background": "#0B0B1A", "--color-foreground": "#F0EDE6",
             "--color-surface": "#141428", "--color-surface-alt": "#1C1C38",
             "--color-border": "#2A2A52", "--color-border-subtle": "#222244",
             "--color-text-primary": "#F0EDE6", "--color-text-secondary": "#C0C0D8", "--color-text-tertiary": "#9898B8",
             "--color-accent": "#FB7185", "--color-accent-light": "#FDA4AF", "--color-accent-surface": "#3B1525",
+            "--color-accent-foreground": "#0B0B1A",
           } as React.CSSProperties : {
             "--background": "#FAF9F6", "--foreground": "#1A1A2E",
             "--surface": "#FFFFFF", "--surface-alt": "#F2F0EB",
             "--border": "#E0DDD5", "--border-subtle": "#F0EDE6",
             "--text-primary": "#1A1A2E", "--text-secondary": "#4A4A68", "--text-tertiary": "#6E6E8A",
-            "--accent": "#E11D48", "--accent-light": "#FDA4AF", "--accent-surface": "#FFF1F2",
+            "--accent": "#DF1D47", "--accent-light": "#FDA4AF", "--accent-surface": "#FFF1F2",
+            "--accent-foreground": "#FFFFFF",
             "--color-background": "#FAF9F6", "--color-foreground": "#1A1A2E",
             "--color-surface": "#FFFFFF", "--color-surface-alt": "#F2F0EB",
             "--color-border": "#E0DDD5", "--color-border-subtle": "#F0EDE6",
             "--color-text-primary": "#1A1A2E", "--color-text-secondary": "#4A4A68", "--color-text-tertiary": "#6E6E8A",
-            "--color-accent": "#E11D48", "--color-accent-light": "#FDA4AF", "--color-accent-surface": "#FFF1F2",
+            "--color-accent": "#DF1D47", "--color-accent-light": "#FDA4AF", "--color-accent-surface": "#FFF1F2",
+            "--color-accent-foreground": "#FFFFFF",
           } as React.CSSProperties,
         } : undefined}
       >
