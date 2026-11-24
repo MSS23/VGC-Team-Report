@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
-import { generateAlphanumericId, generateEditToken } from "@/lib/api/ids";
+import { generateAlphanumericId, generateEditToken, ShareIdSchema } from "@/lib/api/ids";
 import { readJsonBody } from "@/lib/api/json-body";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
@@ -152,10 +152,15 @@ export async function DELETE(request: NextRequest) {
 
     const json = await readJsonBody(request);
     if ("error" in json) return json.error;
-    const { draftId } = json.body as { draftId?: string };
-    if (!draftId) {
+    const raw = json.body as { draftId?: unknown };
+    if (!raw.draftId) {
       return NextResponse.json({ error: "Missing draftId" }, { status: 400 });
     }
+    const parsedId = ShareIdSchema.safeParse(raw.draftId);
+    if (!parsedId.success) {
+      return NextResponse.json({ error: "Invalid draftId" }, { status: 400 });
+    }
+    const draftId = parsedId.data;
 
     const sql = getDb();
     await sql`

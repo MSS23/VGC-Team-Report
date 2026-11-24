@@ -1,8 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
+import { apiGuard } from "@/lib/security/api-guard";
 
 export const runtime = "edge";
 
 const ALLOWED_HOSTS = new Set(["play.pokemonshowdown.com"]);
+const MAX_REDIRECTS = 3;
+// Largest animated sprites are a few hundred KB; 5 MB is far above any real one.
+const MAX_SPRITE_BYTES = 5 * 1024 * 1024;
+// Sprites are PNG or GIF. Not image/*: an SVG can carry script, and these
+// bytes are served from our own origin.
+const ALLOWED_TYPES = new Set(["image/png", "image/gif", "image/webp"]);
+
+/** Why a URL may not be proxied, or null when it may. Applied to every hop. */
+function rejectTarget(target: URL): string | null {
+  if (target.protocol !== "https:") return "Protocol not allowed";
+  if (!ALLOWED_HOSTS.has(target.hostname) || target.port !== "") return "Host not allowed";
+  // An encoded separator survives URL normalisation and may be decoded upstream.
+  if (!target.pathname.startsWith("/sprites/") || /%2f|%5c/i.test(target.pathname)) return "Path not allowed";
+  return null;
+}
+
+/** Read a body, giving up (null) as soon as it exceeds the cap. */
+async function readCapped(res: Response, max: number): Promise<ArrayBuffer | null> {
+  if (Number(res.headers.get("content-length")) > max) return null;
+  if (!res.body) return new ArrayBuffer(0);
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > max) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out.buffer;
+}
 
 /**
  * Same-origin proxy for Pokemon Showdown sprite images.
@@ -23,6 +65,13 @@ const ALLOWED_HOSTS = new Set(["play.pokemonshowdown.com"]);
  * GET /api/sprite?u=https://play.pokemonshowdown.com/sprites/home/incineroar.png
  */
 export async function GET(req: NextRequest) {
+  // The proxy skips this route, so it needs its own limit. Generous on purpose:
+  // an all-slides export loads every sprite here, 404 fallbacks are never
+  // CDN-cached, and a tripped limit leaves blank sprites in the export. It only
+  // has to stop bulk abuse.
+  const guard = await apiGuard(req, { rateLimit: { key: "sprite", max: 600 } });
+  if (guard) return guard;
+
   const url = req.nextUrl.searchParams.get("u");
   if (!url) {
     return new NextResponse("Missing u", { status: 400 });
@@ -37,32 +86,59 @@ export async function GET(req: NextRequest) {
 
   // Host + path allowlist — never fetch arbitrary URLs on behalf of a
   // client, that's an SSRF on a silver platter. Only Showdown sprites.
-  if (!ALLOWED_HOSTS.has(target.hostname)) {
-    return new NextResponse("Host not allowed", { status: 400 });
-  }
-  if (!target.pathname.startsWith("/sprites/")) {
-    return new NextResponse("Path not allowed", { status: 400 });
+  const rejected = rejectTarget(target);
+  if (rejected) {
+    return new NextResponse(rejected, { status: 400 });
   }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 3000);
 
   try {
-    const upstream = await fetch(target.href, {
-      headers: { "User-Agent": "VGC-Team-Report/1.0" },
-      // Hint Vercel's edge cache — sprites are effectively immutable so
-      // a day of freshness at the origin is fine; we add a long
-      // Cache-Control below for the client + CDN.
-      next: { revalidate: 86400 },
-      signal: controller.signal,
-    });
+    // Redirects are followed by hand so each hop is re-checked: a redirect
+    // followed automatically would leave the allowlist after the first URL.
+    let upstream: Response;
+    for (let hop = 0; ; hop++) {
+      upstream = await fetch(target.href, {
+        headers: { "User-Agent": "VGC-Team-Report/1.0" },
+        // Hint Vercel's edge cache — sprites are effectively immutable so
+        // a day of freshness at the origin is fine; we add a long
+        // Cache-Control below for the client + CDN.
+        next: { revalidate: 86400 },
+        redirect: "manual",
+        signal: controller.signal,
+      });
+      const location = upstream.status >= 300 && upstream.status < 400 ? upstream.headers.get("location") : null;
+      if (!location) break;
+      if (hop >= MAX_REDIRECTS) {
+        return new NextResponse("Too many redirects", { status: 502 });
+      }
+      let next: URL;
+      try {
+        next = new URL(location, target);
+      } catch {
+        return new NextResponse("Redirect not allowed", { status: 502 });
+      }
+      if (rejectTarget(next)) {
+        return new NextResponse("Redirect not allowed", { status: 502 });
+      }
+      target = next;
+    }
 
     if (!upstream.ok) {
       return new NextResponse("Upstream error", { status: upstream.status });
     }
 
-    const buf = await upstream.arrayBuffer();
+    // Served from our origin, so only ever pass an image through.
     const contentType = upstream.headers.get("content-type") ?? "image/png";
+    if (!ALLOWED_TYPES.has(contentType.split(";")[0].trim().toLowerCase())) {
+      return new NextResponse("Upstream is not an image", { status: 502 });
+    }
+
+    const buf = await readCapped(upstream, MAX_SPRITE_BYTES);
+    if (!buf) {
+      return new NextResponse("Sprite too large", { status: 502 });
+    }
 
     return new NextResponse(buf, {
       status: 200,
