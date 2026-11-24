@@ -17,6 +17,16 @@ export interface ChangelogEntry {
 export const ENTRIES: ChangelogEntry[] = [
   {
     date: "November 2026",
+    version: "5.33",
+    title: "Broken Share Links Fail Gracefully",
+    emoji: "🔗",
+    items: [
+      { type: "fixed", text: "A damaged or tampered-with share link no longer takes the whole report down. If the damage calcs in a link arrived garbled, opening it showed a blank page instead of the team \u2014 they are now cleaned up, or quietly skipped if there is nothing readable in them, so the rest of the report opens normally." },
+      { type: "improved", text: "Internal safety work with no visible change: the check that stops credentials ever being committed now catches three kinds it used to miss, and the test covering how reports are written to the database now runs on every build instead of being silently skipped." },
+    ],
+  },
+  {
+    date: "November 2026",
     version: "5.32",
     title: "Hidden Spreads Stay Hidden, Shared Links Open Instantly & a New Blog",
     emoji: "🔒",

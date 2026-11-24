@@ -1,18 +1,32 @@
 /**
  * Integration tests for the shares INSERT/UPDATE/dedup flow.
  *
- * These tests connect to the real database and verify column-level correctness.
+ * These tests verify column-level SQL correctness against an embedded Postgres
+ * (PGlite, already used by src/app/api/collaboration/__tests__/postgres.test.ts
+ * and src/app/api/quick-share/__tests__/postgres.test.ts). They run in-process
+ * on every `vitest run`, including CI.
+ *
+ * This suite was previously `describe.skipIf(!process.env.DATABASE_URL)`:
+ * CI sets no DATABASE_URL, so it never ran there and read as coverage it was
+ * not providing, while a local run with a real DATABASE_URL inserted
+ * `owner_id = "vitest-share-flow-owner"` rows into whatever that pointed at —
+ * for this project, the production Neon database. There is no live-database
+ * path left: `@/lib/db` is mocked, so DATABASE_URL is never read.
+ *
+ * The CREATE TABLE below mirrors the real `shares` table — `ensureTable()` in
+ * src/lib/db.ts plus src/lib/db/migrations/add-species-column.sql. Keep it in
+ * step when the real table changes; a column that exists here but not in Neon
+ * (or vice versa) is the one thing this suite cannot catch.
+ *
  * Two past regressions motivate this suite:
  *   - 17-05: INSERT column/value mismatch silently corrupted owner_id
  *   - 24-05: dedup SELECT omitted is_unlisted, silently demoting unlisted → private
- *
- * Skipped automatically when DATABASE_URL is not set (e.g. local unit-only runs).
  */
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from "vitest";
+vi.mock("@/lib/db", () => ({ getDb: vi.fn() }));
+import { PGlite } from "@electric-sql/pglite";
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
-
-const SKIP = !process.env.DATABASE_URL;
 
 const SAMPLE_PASTE = `Garchomp @ Life Orb
 Ability: Rough Skin
@@ -57,21 +71,48 @@ function makeToken(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-describe.skipIf(SKIP)("shares INSERT/UPDATE/dedup — SQL column correctness", () => {
-  // getDb() must be lazy: calling it during module evaluation throws when
-  // DATABASE_URL is not set, even though the describe block is marked skipIf.
-  let sql: ReturnType<typeof getDb>;
-  const cleanupIds: string[] = [];
+const db = new PGlite();
 
-  beforeAll(() => {
+describe("shares INSERT/UPDATE/dedup — SQL column correctness", () => {
+  let sql: ReturnType<typeof getDb>;
+
+  beforeAll(async () => {
+    await db.exec(`CREATE TABLE shares (
+      id TEXT PRIMARY KEY,
+      edit_token TEXT NOT NULL,
+      data JSONB NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      version INTEGER DEFAULT 1,
+      is_public BOOLEAN DEFAULT FALSE,
+      is_unlisted BOOLEAN NOT NULL DEFAULT FALSE,
+      view_count INTEGER DEFAULT 0,
+      owner_id TEXT,
+      forked_from_id TEXT,
+      deleted_at TIMESTAMPTZ,
+      is_draft BOOLEAN DEFAULT FALSE,
+      species TEXT[] DEFAULT NULL
+    )`);
+
+    // Neon's tagged-template client, backed by PGlite. Same adapter shape as
+    // the collaboration and quick-share postgres tests.
+    vi.mocked(getDb).mockReturnValue((async (strings: TemplateStringsArray, ...values: unknown[]) => {
+      const query = strings.reduce((acc, fragment, i) => acc + (i ? `$${i}` : "") + fragment, "");
+      return (await db.query(query, values)).rows;
+    }) as never);
+
     sql = getDb();
+  }, 30000);
+
+  // Each test owns the table outright: the dedup SELECT below is reproduced
+  // verbatim from route.ts, so it must not be able to match a row another test
+  // in this file left behind.
+  beforeEach(async () => {
+    await db.exec("TRUNCATE shares");
   });
 
   afterAll(async () => {
-    if (cleanupIds.length > 0) {
-      // Targeted cleanup — only rows this test suite created
-      await sql`DELETE FROM shares WHERE id = ANY(${cleanupIds}::text[]) AND owner_id = ${TEST_OWNER}`;
-    }
+    await db.close();
   });
 
   // ── 1. INSERT ──────────────────────────────────────────────────────────────
@@ -93,7 +134,6 @@ describe.skipIf(SKIP)("shares INSERT/UPDATE/dedup — SQL column correctness", (
         ${species}
       )
     `;
-    cleanupIds.push(id);
 
     const rows = await sql`
       SELECT id, edit_token, version, is_public, is_unlisted, owner_id, species,
@@ -133,7 +173,6 @@ describe.skipIf(SKIP)("shares INSERT/UPDATE/dedup — SQL column correctness", (
         1, false, false, ${TEST_OWNER}, ${extractSpecies(SAMPLE_PASTE)}
       )
     `;
-    cleanupIds.push(id);
 
     const updatedState = { ...BASE_STATE, teamSummary: "Updated summary" };
     await sql`
@@ -183,7 +222,6 @@ describe.skipIf(SKIP)("shares INSERT/UPDATE/dedup — SQL column correctness", (
         1, false, true, ${TEST_OWNER}, ${extractSpecies(SAMPLE_PASTE)}
       )
     `;
-    cleanupIds.push(id);
 
     // Replicate the dedup query from route.ts exactly, including is_unlisted
     const dupRows = await sql`

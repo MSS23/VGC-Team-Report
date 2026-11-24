@@ -1,81 +1,50 @@
-# Linear webhook health check — 09-11-26 (Step 0C)
+# Linear webhook health check — run 2026-11-23
 
-Run **inline** by the orchestrator (not delegated), so it cost 0 of the 25 subagent slots.
+## Verdict: handler code is HEALTHY. No code fix needed this run.
 
-## Verdict: handler code is HEALTHY. No code fix needed, no new ticket filed.
+Handler: `src/app/api/webhooks/linear/route.ts` (+ `__tests__/route.test.ts`)
 
-CLAUDE.md states plainly: *"The Linear-webhook-fix P0 is stale: it has been merged on
-main since May; don't re-verify it."* The audit below confirms that, so no commit was
-made for it and the Wave 2 ticket work was not displaced.
-
-## Audit of `src/app/api/webhooks/linear/route.ts`
-
-Every Step 0C check passes:
+Audited against every item in the Step 0C checklist:
 
 | Check | Result |
 |---|---|
-| Secret read from `process.env.LINEAR_WEBHOOK_SIGNING_SECRET` | PASS (line 34) |
-| No literal secret in source | PASS — nothing hardcoded |
-| Raw body read via `await request.text()` before `JSON.parse` | PASS (line 26) |
-| HMAC-SHA256 over the raw body | PASS (line 51) |
-| `linear-signature` header verified | PASS (line 43, with `x-linear-signature` fallback) |
-| Constant-time compare via `timingSafeEqual` | PASS (line 58), with a length guard first — `timingSafeEqual` throws on unequal lengths, so the guard is required and present |
-| 200 valid / 401 invalid signature / 400 missing header | PASS |
-| 200 (not 500) for unknown event types | PASS — falls through to `{ ok: true }` |
-| Setup-time verification ping / empty body handled | PASS (line 29) and `url_verification` challenge echoed (line 88) |
-| No secret, signature or PII logged | PASS — the handler logs nothing at all |
-| App Router: exports `POST`, `dynamic = "force-dynamic"` | PASS (lines 4, 24) and `runtime = "nodejs"` for `node:crypto` |
+| Reads `process.env.LINEAR_WEBHOOK_SIGNING_SECRET` | ✅ (line 34; legacy `LINEAR_WEBHOOK_SECRET` accepted as documented fallback) |
+| No literal secret in source | ✅ nothing hardcoded anywhere in the route or tests |
+| Raw body read via `await request.text()` before `JSON.parse` | ✅ line 26, parse at line 62 |
+| `linear-signature` header, HMAC-SHA256 hex | ✅ lines 40–52 |
+| Constant-time compare via `timingSafeEqual` | ✅ lines 53–60, with the required length guard before the compare |
+| 200 valid / 401 invalid / 400 missing header | ✅ |
+| 200 (not 500) for unknown event types | ✅ line 92 falls through to `{ ok: true }` |
+| Setup-time verification ping / empty body | ✅ lines 28–31, plus `url_verification` challenge at line 88 |
+| No secret / signature / PII logging | ✅ no logging at all in the route |
+| App Router: exports `POST`, `force-dynamic` | ✅ lines 4, 24 (also `runtime = "nodejs"`, needed for `crypto`) |
 
-`GET` correctly returns 405 with an `Allow: POST` header. Unit tests exist at
-`src/app/api/webhooks/linear/__tests__/route.test.ts` and pass (part of tonight's green
-784-test baseline).
+Unit tests: the route's own suite passes (see run output above).
 
-## Vercel-side checks: NOT POSSIBLE this run
+## Root cause of the historical failures: already fixed and already ticketed
 
-`VERCEL_TOKEN` is unset and no Vercel MCP server is attached to this session, so the
-Step 0C requirements to confirm the Production env var and pull the last 50 invocations
-could not be performed. Not retried, per the CLAUDE.md preflight rule. Env-var changes
-are human-only from the swarm regardless.
+`src/app/changelog/data.ts` records the fix shipping twice (wrong header name,
+wrong env var name, missing `force-dynamic`, empty-body handling). The handler on
+`main` today is the fixed version. The replay-window comment (lines 64–86)
+documents the second-order fix: stale retries used to answer 401, which drove the
+failure count up until Linear auto-disabled the webhook — they now answer 200 and
+drop the event.
 
-## No new P0 ticket — three already exist
+**What remains is a human action in the Linear dashboard, not code.** Two tickets
+already cover it, so this run files NO duplicate:
 
-Step 0C says to file a P0 if the root cause is env configuration. **Deliberately not
-done**, because that would be a fourth duplicate of work already on the board:
+- **VGC-213** — `[INFRA] Verify Linear webhook delivery + re-enable in Linear settings after handler fix`
+- **VGC-222** — `[INFRA] Linear webhook handler header bug fixed — re-enable in Linear settings after deploy`
 
-- **VGC-213** (P2) — "[INFRA] Verify Linear webhook delivery + re-enable in Linear settings after handler fix"
-- **VGC-222** (P2) — "[INFRA] Linear webhook handler header bug fixed — re-enable in Linear settings after deploy"
-- **VGC-236** (P2) — "[INFRA] Standardise on LINEAR_WEBHOOK_SIGNING_SECRET, drop the legacy LINEAR_WEBHOOK_SECRET fallback"
+Related, also already ticketed: **VGC-236** — drop the legacy `LINEAR_WEBHOOK_SECRET` name.
 
-Comments were added to these instead. Filing more tickets about an already-fixed
-handler is the exact re-discovery loop VGC-265 describes.
+## Not verifiable this run
 
-## Why VGC-236 was NOT implemented tonight
+- **Vercel env var check** — no `VERCEL_TOKEN` in this container, so the Production
+  value of `LINEAR_WEBHOOK_SIGNING_SECRET` could not be read. Per CLAUDE.md the
+  missing integration is skipped for the whole run rather than retried. Env-var
+  changes are human-only anyway.
+- **Vercel invocation logs / PostHog exceptions** — same reason (`POSTHOG_API_KEY`
+  and `POSTHOG_PROJECT_ID` are both unset). Already ticketed as **VGC-220**.
 
-It looks like a one-line deletion (`?? process.env.LINEAR_WEBHOOK_SECRET`, lines 34-35),
-but the ticket's own body gates it on a human step:
-
-> **Human action required.** In Vercel -> Settings -> Environment Variables (Production):
-> confirm `LINEAR_WEBHOOK_SIGNING_SECRET` exists and matches the secret on Linear's
-> webhook config. ... *Then* open a PR removing the fallback.
-
-With no Vercel visibility, removing the fallback blind would break signature
-verification outright if production currently only sets the legacy `LINEAR_WEBHOOK_SECRET`
-name — turning a working webhook into a 401 on every delivery. The ticket stays in
-Backlog awaiting the human's env-var check.
-
-## One observation for the human (not changed tonight)
-
-The replay guard at lines 82-87 drops any payload whose `webhookTimestamp` is more than
-60s from `Date.now()`, answering **200 + `{ignored: "stale"}`**. The 200 is deliberate
-and well-reasoned in the comment (a 401 on retries is what previously drove Linear to
-auto-disable the webhook).
-
-The side effect worth knowing: if the *serverless clock skews* or Linear's delivery is
-slow, events are silently discarded while Linear's dashboard shows delivery succeeding.
-So "webhook looks healthy but nothing happens" is a reachable state that this endpoint
-cannot distinguish from working.
-
-That is a security-relevant trade-off (loosening the window weakens replay protection),
-so the swarm did not touch it. If webhook-driven behaviour appears to do nothing despite
-200s, this is the first place to look. Not ticketed to avoid adding a fourth webhook
-ticket; raised here and in the PR body.
+No secret material was read, echoed, or written anywhere during this check.

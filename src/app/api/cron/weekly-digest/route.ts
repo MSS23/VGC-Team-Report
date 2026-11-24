@@ -358,6 +358,25 @@ export async function GET(request: Request) {
       }
 
       // CAN-SPAM / Gmail bulk-sender: point mail clients at the preferences page.
+      //
+      // Deliberately NO `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
+      // RFC 8058 one-click means the mail provider POSTs to the
+      // List-Unsubscribe URL and the unsubscribe happens with no further
+      // interaction. This URL is /dashboard/notifications, a Clerk-protected
+      // page: an unauthenticated POST from Gmail or Yahoo cannot unsubscribe
+      // anyone. Advertising One-Click against it would tell the provider the
+      // opt-out succeeded while the user kept receiving the digest — worse
+      // than omitting the header, because the next step for that user is
+      // "report spam". Without the -Post header, providers treat this as a
+      // plain RFC 2369 unsubscribe link the user clicks (signing in first),
+      // which is honest.
+      //
+      // To claim one-click, this must point at an unauthenticated endpoint
+      // that accepts POST and carries a signed per-user token, which then sets
+      // the existing opt-out (Clerk publicMetadata.digestUnsubscribed, read at
+      // step b above, or user_preferences.weeklyDigest, filtered in step 2).
+      // That endpoint needs its own token scheme and review — see the
+      // follow-up ticket. The invariant is pinned in __tests__/route.test.ts.
       emailJobs.push({ to: email, subject, html, headers: { "List-Unsubscribe": `<${APP_URL}/dashboard/notifications>` } });
     } catch (e) {
       console.error(`[weekly-digest] Error preparing email for ${userId}:`, e);

@@ -32,9 +32,16 @@ const BINARY_EXTENSIONS = /\.(png|jpe?g|gif|webp|avif|ico|woff2?|ttf|eot|pdf|zip
  * deliberately NOT path-excluded — they are exactly where a real value gets pasted by
  * accident — so instead we recognise the fake shapes they legitimately contain:
  * `xxxx`, `<your-clerk-webhook-signing-secret>`, `your-posthog-webhook-secret`, `...`.
+ *
+ * GAP-3 (security audit, 23 Nov 2026): the `abcdef` and `1234567890` alternatives used to
+ * be UNANCHORED, so any real token that merely *contained* one of those runs was silently
+ * whitelisted — a `lin_api_` key with `abcdef` somewhere in the middle returned true here
+ * and was skipped. Both are now `\b`-anchored, so they only match filler that stands as
+ * its own word (`abcdef-abcdef-…`, `id-1234567890`), which is the only form documentation
+ * actually uses. Every other alternative is already either anchored or unambiguous.
  */
 const PLACEHOLDER =
-  /x{4,}|\.\.\.|<[^>]{0,80}>|\byour[-_]|\bchange[-_]?me\b|\bplaceholder\b|\bexample\b|\bredacted\b|\bdummy\b|\bfake\b|\bsample\b|\bhere\b|\bTODO\b|process\.env|0{8,}|1234567890|abcdef/i;
+  /x{4,}|\.\.\.|<[^>]{0,80}>|\byour[-_]|\bchange[-_]?me\b|\bplaceholder\b|\bexample\b|\bredacted\b|\bdummy\b|\bfake\b|\bsample\b|\bhere\b|\bTODO\b|process\.env|0{8,}|\b1234567890\b|\babcdef\b/i;
 
 /**
  * Rules are deliberately shape-specific. There is NO generic "long hex string" rule,
@@ -63,6 +70,21 @@ const RULES: ReadonlyArray<{ name: string; pattern: RegExp; verify?: (m: RegExpE
   { name: "aws-access-key-id", pattern: /\bAKIA[0-9A-Z]{16}\b/g },
   { name: "github-token", pattern: /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{50,})\b/g },
   {
+    // VGC-350. `web-push` is a prod dependency (src/lib/web-push.ts reads this key from
+    // the env; src/app/api/user/push/* sends with it), so a committed VAPID private key
+    // would let anyone push notifications to every subscriber.
+    //
+    // A VAPID private key is a P-256 scalar: 32 bytes base64url == exactly 43 chars (44
+    // with `=` padding). The matching PUBLIC key is 65 bytes == 87-88 chars and is
+    // legitimately shipped to the browser, so the length is PINNED rather than open-ended
+    // and the identifier must itself say `private` — a public key can reach neither half
+    // of this rule. `VAPID_PRIVATE_KEY=` (empty, as in .env.example) has no value to
+    // match, and the quote is optional because env files write `NAME=value` bare.
+    name: "vapid-private-key",
+    pattern: /vapid[_-]?private[_-]?key[A-Za-z0-9_-]*\s*[:=]\s*["'`]?([A-Za-z0-9_-]{43}=?)(?![A-Za-z0-9_-])/gi,
+    verify: (m) => looksHighEntropy(m[1]),
+  },
+  {
     // Requires header AND payload to start with the base64 of `{"` — a JWT, not prose.
     name: "jwt-literal",
     pattern: /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g,
@@ -81,11 +103,23 @@ const RULES: ReadonlyArray<{ name: string; pattern: RegExp; verify?: (m: RegExpE
     // secret word may sit anywhere in the identifier, so `authToken` and `DISCORD_SECRET`
     // both match. The alternation deliberately excludes a bare `key`, which in this repo
     // means an HTTP header name (next.config.ts: `key: "X-Permitted-Cross-Domain-Policies"`)
-    // or a React key far more often than a credential.
+    // or a React key far more often than a credential. `private[_-]?key` IS included
+    // (VGC-350): `VAPID_PRIVATE_KEY` contains none of the other words, so before it was
+    // added this rule could not see the one secret the repo names that way. It cannot
+    // match a PEM banner (`-----BEGIN PRIVATE KEY-----`) because of the space.
+    //
+    // GAP-2 (security audit, 23 Nov 2026): the value used to REQUIRE quotes, so every
+    // `.env`-shaped line — `NAME=value`, which is exactly the form a real value gets
+    // pasted in, and the form `.env.example` is deliberately kept in scope for — was
+    // invisible to the only rule that can catch an unprefixed secret. There are now two
+    // value forms: quoted anywhere (group 1), or bare and running to end of line / to a
+    // `#` comment (group 2). The bare form is line-anchored on purpose: unanchored it
+    // would match any long run of value characters following a colon in prose. Both forms
+    // stay gated on `looksHighEntropy`, so placeholders still fall out.
     name: "hardcoded-credential-literal",
     pattern:
-      /[A-Za-z0-9_]*(?:api[_-]?key|secret|token|password|passwd|bearer|credential)[A-Za-z0-9_-]*\s*[:=]\s*["'`]([A-Za-z0-9_\-+/=.]{32,})["'`]/gi,
-    verify: (m) => looksHighEntropy(m[1]),
+      /[A-Za-z0-9_]*(?:api[_-]?key|secret|token|password|passwd|bearer|credential|private[_-]?key)[A-Za-z0-9_-]*\s*[:=]\s*(?:["'`]([A-Za-z0-9_\-+/=.]{32,})["'`]|([A-Za-z0-9_\-+/=.]{32,})[ \t\r]*(?=$|#))/gim,
+    verify: (m) => looksHighEntropy(m[1] || m[2]),
   },
 ];
 
@@ -166,8 +200,29 @@ function scanTrackedTree(): SecretFinding[] {
   return findings;
 }
 
-// Fixtures are assembled from fragments at runtime so that this file does not itself
-// contain a credential-shaped literal — the scanner runs over its own source.
+// Every value below is invented filler with the SHAPE of the credential it stands in for
+// and none of its meaning: no real key, current or expired, appears in this file. They are
+// assembled from fragments at runtime so that this file does not itself contain a
+// credential-shaped literal — the scanner runs over its own source.
+
+/** 43 base64url chars: the exact length of a VAPID (P-256) private key. Synthetic. */
+const VAPID_SHAPED =
+  "7hQ2" + "mZx9" + "Lp4R" + "vB6t" + "Nk1D" + "sY8f" + "Jc3W" + "gT5n" + "wE2u" + "Ri7b" + "zK9";
+/** 87 base64url chars: the matching PUBLIC key shape, which is not a secret. Synthetic. */
+const VAPID_PUBLIC_SHAPED =
+  "B7" + "qZ4mXt9" + "Lw2Rn6Vy" + "Hc1Ps8Kd" + "Jf3Gb5Tz" + "Mq7Nx0Yr" +
+  "Wv4Lk2Sd" + "Pe9Hb6Tn" + "Zc3Xm1Qy" + "Rg8Jw5Vk" + "Fd2Ls7Bp" + "Tq4Nz9";
+/** Two high-entropy fillers for the unquoted env-assignment fixtures. Synthetic. */
+const ENV_SHAPED = "4Tz7" + "qMv2" + "Hb9s" + "Xn5L" + "pR3d" + "Wy8k" + "Ge1c" + "Ju6a";
+const ENV_SHAPED_ALT = "6Nf2" + "kQw8" + "Zr4m" + "Ds9t" + "Bv1y" + "Lh7p" + "Xc3g" + "Ae5j" + "Tu0q";
+/**
+ * Documentation filler in which `abcdef` and `1234567890` stand as their own words — the
+ * only form real docs use, and the form the PLACEHOLDER filter must still recognise. It
+ * passes `looksHighEntropy`, so a test asserting it is ignored exercises the placeholder
+ * filter itself rather than the entropy gate.
+ */
+const WORD_BOUNDED_FILLER = "abcdef-abcdef-abcdef-1234567890-abcdef";
+
 const FAKE = {
   discord: "https://discord.com/api/webhooks/" + ("41159" + "2088173" + "20401") + "/" + "A1b2".repeat(17),
   linear: "lin_" + "api_" + "9f3c7d2e" + "4b1a6058" + "c7e29d41" + "8ab35f6027d1",
@@ -176,6 +231,7 @@ const FAKE = {
   jwt: ["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9", "eyJzdWIiOiI5MDIxNzc0MSIsIm5hbWUiOiJhIn0", "K7dQ2mXpR4vB9nT6"].join("."),
   postgres: "postgres" + "ql://neondb_owner:" + "npg_8Kq2VxR7mTd4" + "@ep-cool-frost-a4x9.us-east-2.aws.neon.tech/neondb",
   literal: 'const authToken = "' + "9c4Ba7Xq2Ln6Ptv3Rd8Kf1Zy5Mw0Ej7Hs4Qb2Uc6" + '";',
+  vapid: "VAPID_PRIVATE_" + "KEY=" + VAPID_SHAPED,
 };
 
 describe("no hardcoded secrets in the tracked tree", () => {
@@ -212,5 +268,81 @@ describe("no hardcoded secrets in the tracked tree", () => {
       'const secretLabel = "team-report-share-visibility-control";',
     ].join("\n");
     expect(scanContent("sample.ts", sample)).toEqual([]);
+  });
+
+  // ── Regression fixtures for the three gaps the 23 Nov 2026 audit reproduced ─────────
+  // Each gap let the gate stay green while blind, so each gets a fixture that fails if the
+  // gap reopens: a realistic-shaped synthetic secret that MUST be reported, plus a genuine
+  // placeholder of the same shape that must NOT be.
+  const rulesFor = (text: string) => scanContent("scratch.ts", text).map((f) => f.rule);
+
+  // GAP-1 / VGC-350: there was no VAPID rule at all, so a committed push private key was
+  // invisible — and its name matches none of the generic rule's other words either.
+  it("detects a hardcoded VAPID private key without firing on the public key", () => {
+    expect(rulesFor("VAPID_PRIVATE_" + "KEY=" + VAPID_SHAPED)).toContain("vapid-private-key");
+    expect(rulesFor('const vapidPrivateKey = "' + VAPID_SHAPED + '";')).toContain("vapid-private-key");
+
+    // The 87-char public key is served to the browser on purpose (api/user/push), and
+    // .env.example carries both names with empty values. Neither may be reported.
+    expect(scanContent(".env.example", "VAPID_PUBLIC_" + "KEY=" + VAPID_PUBLIC_SHAPED)).toEqual([]);
+    expect(
+      scanContent(
+        ".env.example",
+        ["VAPID_PUBLIC_KEY=", "VAPID_PRIVATE_KEY=", "VAPID_SUBJECT=https://pokemonvgcteamreport.com"].join("\n"),
+      ),
+    ).toEqual([]);
+    expect(scanContent(".env.example", "VAPID_PRIVATE_" + "KEY=<your-vapid-private-key>")).toEqual([]);
+  });
+
+  // GAP-2: the generic rule required quotes, so `NAME=value` — the shape a real secret is
+  // pasted in, and the shape .env.example is deliberately left in scope for — matched
+  // nothing. All five names below returned no match before the fix.
+  it("detects unquoted env-shaped secret assignments", () => {
+    const names = [
+      "CLERK_WEBHOOK_SIGNING_SECRET",
+      "POSTHOG_PERSONAL_API_KEY",
+      "UPSTASH_REDIS_REST_TOKEN",
+      "RESEND_API_KEY",
+      "VAPID_PRIVATE_KEY",
+    ];
+    const missed = names.filter(
+      (name) => !rulesFor(name + "=" + ENV_SHAPED_ALT).includes("hardcoded-credential-literal"),
+    );
+    expect(missed).toEqual([]);
+    // Shell `export`, and a trailing inline comment, are both still the same shape.
+    expect(rulesFor("export CRON_SECRET=" + ENV_SHAPED + "   # production value")).toContain(
+      "hardcoded-credential-literal",
+    );
+
+    // The real unquoted placeholders in .env.example must stay silent.
+    expect(
+      scanContent(
+        ".env.example",
+        [
+          "CLERK_WEBHOOK_SIGNING_SECRET=<your-clerk-webhook-signing-secret>",
+          "UPSTASH_REDIS_REST_TOKEN=your-upstash-rest-token",
+          "POSTHOG_PERSONAL_API_KEY=<your-posthog-personal-api-key>",
+          "POSTHOG_WEBHOOK_SECRET=your-posthog-webhook-secret",
+          "CRON_SECRET=your-cron-secret-here",
+          "NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=phc_xxxxxxxxxxxxxxxxxxxxxxxx",
+          "DISCORD_BOT_TOKEN=your-discord-bot-token",
+        ].join("\n"),
+      ),
+    ).toEqual([]);
+  });
+
+  // GAP-3: `abcdef` / `1234567890` were unanchored in PLACEHOLDER, so any real token
+  // CONTAINING either run was silently whitelisted. The audit reproduced it with a
+  // Linear-shaped key; this fixture is the same shape with invented digits.
+  it("does not whitelist a real-shaped token that merely contains abcdef", () => {
+    const linearWithEmbeddedFiller =
+      "lin_" + "api_" + "5d82f7c3" + "9b41e60a" + "abcdef72" + "c4e19d38" + "8af25b61";
+    expect(rulesFor('const key = "' + linearWithEmbeddedFiller + '";')).toContain("linear-api-key");
+    const tokenWithEmbeddedDigits = "AUTH_TOKEN=" + "Kq7" + "1234567890" + "Ve4Rm9Zt2Ls6Bx3Pn8Wd5Yj";
+    expect(rulesFor(tokenWithEmbeddedDigits)).toContain("hardcoded-credential-literal");
+
+    // Filler standing as its own word is still documentation, and still ignored.
+    expect(scanContent("docs/setup.md", "AUTH_TOKEN=" + WORD_BOUNDED_FILLER)).toEqual([]);
+    expect(scanContent("docs/setup.md", 'const apiKey = "' + WORD_BOUNDED_FILLER + '";')).toEqual([]);
   });
 });

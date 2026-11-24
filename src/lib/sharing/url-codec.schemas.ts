@@ -16,10 +16,84 @@
  */
 import { z } from "zod";
 
-// CalcEntry comes from a hook in the bundle; we accept it as `unknown[]` at
-// the schema boundary and trust the existing CalcEntry consumers downstream.
-// This keeps the schema decoupled from rapidly-evolving damage-calc shapes.
-const CalcEntrySchema = z.unknown();
+/**
+ * Calc entries (VGC-343).
+ *
+ * This used to be `z.unknown()`, which let anything through: a `#data=` link
+ * carrying `calcs: { Garchomp: [null] }` validated clean, got cast to
+ * `CalcEntry[]`, and then `calcs.filter((c) => c.category === "offensive")`
+ * threw inside the render pass — a white screen instead of a degraded report.
+ *
+ * The stored-report path already normalises instead of trusting: see
+ * `migrateCalcs` in `src/hooks/useDamageCalcs.ts`. This schema is the URL
+ * path's equivalent choke point, so both entry points now hand consumers the
+ * same guaranteed shape: `{ text: string; category: CalcCategory }`.
+ *
+ * The three category literals are duplicated here on purpose. The source of
+ * truth is `CalcCategory` in `src/hooks/useDamageCalcs.ts`, but that module is
+ * a `"use client"` hook: importing it would drag React and the hook's graph
+ * into this module, which exists precisely to keep zod (and anything else)
+ * out of the eager client bundle — see the rules block at the top of the file.
+ * Three string literals are a cheaper duplication than that import.
+ */
+const CALC_CATEGORIES = ["offensive", "defensive", "speed"] as const;
+type CalcCategoryLiteral = (typeof CALC_CATEGORIES)[number];
+
+interface NormalizedCalcEntry {
+  text: string;
+  category: CalcCategoryLiteral;
+}
+
+function normalizeCalcCategory(value: unknown): CalcCategoryLiteral {
+  return (CALC_CATEGORIES as readonly string[]).includes(value as string)
+    ? (value as CalcCategoryLiteral)
+    : "offensive";
+}
+
+/**
+ * Normalise one entry, or return `null` for one that cannot be rendered.
+ *
+ * Deliberate divergence from `migrateCalcs`: it ends with a
+ * `String(entry)` fallback, so `null` becomes the calc `"null"`, `{}` becomes
+ * `"[object Object]"`, and `42` becomes `"42"`. That is reasonable for
+ * localStorage, where the data is the user's own and a visible oddity is a
+ * clue. A share link is attacker-controllable and arrives from someone else,
+ * so printing `null` as a "notable calc" in a stranger's report is worse than
+ * simply not showing it. Unusable entries (no text, or text that is blank once
+ * trimmed) are therefore dropped here rather than turned into placeholders.
+ * Everything that *does* carry text is migrated exactly as `migrateCalcs`
+ * migrates it, so a legitimate legacy link loses nothing.
+ */
+function normalizeCalcEntry(entry: unknown): NormalizedCalcEntry | null {
+  if (typeof entry === "string") {
+    return entry.trim() ? { text: entry, category: "offensive" } : null;
+  }
+  if (entry && typeof entry === "object" && "text" in entry) {
+    const e = entry as Record<string, unknown>;
+    const text = String(e.text ?? "");
+    if (!text.trim()) return null;
+    return { text, category: normalizeCalcCategory(e.category) };
+  }
+  // null / undefined / numbers / booleans / {} / arrays — nothing renderable.
+  return null;
+}
+
+/**
+ * A species' calc list. Anything that is not an array (`calcs: { X: "oops" }`)
+ * becomes an empty list rather than failing the whole parse: `migrateCalcs`
+ * skips such a key, and one corrupt species must not cost the viewer an
+ * otherwise valid report. A non-object `calcs` is still a structural mismatch
+ * and still fails closed, like every other field in this schema.
+ */
+const CalcEntryListSchema = z
+  .unknown()
+  .transform((list) =>
+    Array.isArray(list)
+      ? list
+          .map(normalizeCalcEntry)
+          .filter((entry): entry is NormalizedCalcEntry => entry !== null)
+      : [],
+  );
 
 const NullableIndex = z.number().int().nullable();
 
@@ -57,7 +131,7 @@ export const SerializedMatchupPlanSchema = z.object({
 export const ShareableStateSchema = z.object({
   paste: z.string(),
   notes: z.record(z.string(), z.string()),
-  calcs: z.record(z.string(), z.array(CalcEntrySchema)).optional(),
+  calcs: z.record(z.string(), CalcEntryListSchema).optional(),
   roles: z.record(z.string(), z.string()).optional(),
   teamSummary: z.string().optional(),
   commonModes: z
