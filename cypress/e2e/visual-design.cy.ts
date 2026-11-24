@@ -2,7 +2,7 @@ describe("Visual Design System", () => {
   beforeEach(() => {
     cy.visit("/", {
       onBeforeLoad(win) {
-        win.localStorage.setItem("vgc-whats-new-v3", "1");
+        win.localStorage.setItem("vgc-whats-new-v10", "1");
       },
     });
   });
@@ -16,7 +16,8 @@ describe("Visual Design System", () => {
   });
 
   it("has accent color on primary buttons (not indigo)", () => {
-    cy.contains("button", "Load sample").click();
+    // No "Load sample" button any more; any text enables (and accent-colours) Analyze.
+    cy.get("textarea").type("Incineroar @ Sitrus Berry", { delay: 0 });
     cy.contains("button", "Analyze Team").then(($btn) => {
       const bg = window.getComputedStyle($btn[0]).backgroundColor;
       expect(bg).to.not.match(/rgb\(99,\s*102,\s*241\)/);
@@ -35,7 +36,8 @@ describe("Visual Design System", () => {
   describe("Dark Mode", () => {
     beforeEach(() => {
       cy.loadSampleTeam();
-      cy.get("[role='switch']").first().click();
+      cy.openSettingsMenu();
+      cy.get("[role='switch'][aria-label='Dark mode']").click();
     });
 
     it("applies dark background", () => {
@@ -50,7 +52,7 @@ describe("Visual Design System", () => {
   describe("Pokemon Stat Colors", () => {
     beforeEach(() => {
       cy.loadSampleTeam();
-      cy.nextSlide();
+      cy.goToSlide("Incineroar");
     });
 
     it("uses distinct colors per stat bar (not all the same)", () => {
@@ -74,7 +76,7 @@ describe("Visual Design System", () => {
 
     it("uses monospace font for stat numbers", () => {
       cy.loadSampleTeam();
-      cy.nextSlide();
+      cy.goToSlide("Incineroar");
       cy.get(".tabular-nums").first().should("have.css", "font-family").and("match", /JetBrains/i);
     });
   });

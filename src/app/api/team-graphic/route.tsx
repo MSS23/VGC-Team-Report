@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { renderTeamGraphic } from "@/lib/sharing/team-graphic-image";
 import { apiGuard } from "@/lib/security/api-guard";
+import { isAcceptedCollaborator } from "@/lib/collaboration-access";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -78,11 +79,7 @@ export async function GET(request: Request) {
       if (rows[0].owner_id === userId) {
         privileged = true;
       } else {
-        const collabRows = await sql`
-          SELECT 1 FROM collaborators WHERE share_id = ${shareId} AND user_id = ${userId}
-            AND COALESCE(status, 'accepted') = 'accepted'
-        `;
-        privileged = collabRows.length > 0;
+        privileged = await isAcceptedCollaborator(sql, shareId, userId);
       }
     }
     if (!privileged) {

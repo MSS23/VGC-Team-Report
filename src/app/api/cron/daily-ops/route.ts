@@ -1,10 +1,11 @@
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
 import { postToBuildsChannel, COLORS } from "@/lib/discord-webhook";
+import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
+import { linearFetch } from "@/lib/linear";
 import { NextResponse } from "next/server";
 
 const SITE_URL = "https://pokemonvgcteamreport.com";
-const LINEAR_API = "https://api.linear.app/graphql";
 const STALE_DAYS = 7;
 const OPS_LABEL_NAME = "ops-report";
 
@@ -29,21 +30,19 @@ async function runHealthCheck() {
       if (isApiRoute && process.env.CRON_SECRET) {
         headers["Authorization"] = `Bearer ${process.env.CRON_SECRET}`;
       }
-      const hcController = new AbortController();
-      const hcTimeout = setTimeout(() => hcController.abort(), 5000);
-      const res = await fetch(`${SITE_URL}${ep.path}`, {
+      const res = await fetchWithTimeout(`${SITE_URL}${ep.path}`, {
         method: "GET",
         headers,
         redirect: "follow",
-        signal: hcController.signal,
-      }).finally(() => clearTimeout(hcTimeout));
+      }, 5000);
       // For API routes without CRON_SECRET, a 401 means the endpoint is alive
       // (auth is working correctly) — don't flag it as down
       const isAlive = isApiRoute && !process.env.CRON_SECRET
         ? res.status === 401 || res.status < 400
         : res.status < 400;
       results.push({ name: ep.name, status: res.status, ok: isAlive, ms: Date.now() - start });
-    } catch {
+    } catch (e) {
+      console.warn(`[daily-ops] Health check failed for ${ep.path}:`, e);
       results.push({ name: ep.name, status: 0, ok: false, ms: Date.now() - start });
     }
   }
@@ -75,17 +74,11 @@ async function runStaleTicketCheck() {
   if (!apiKey || !teamId) return { stale: 0, summary: "Linear not configured" };
 
   try {
-    const staleController = new AbortController();
-    const staleTimeout = setTimeout(() => staleController.abort(), 5000);
-    const res = await fetch(LINEAR_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: apiKey },
-      body: JSON.stringify({
-        query: `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title updatedAt } } } }`,
-        variables: { teamId },
-      }),
-      signal: staleController.signal,
-    }).finally(() => clearTimeout(staleTimeout));
+    const res = await linearFetch(
+      `query($teamId: String!) { team(id: $teamId) { issues(filter: { state: { name: { eq: "In Progress" } } }, first: 50) { nodes { identifier title updatedAt } } } }`,
+      { teamId },
+      5000,
+    );
     const data = await res.json();
     const now = Date.now();
     const threshold = STALE_DAYS * 24 * 60 * 60 * 1000;
@@ -100,7 +93,8 @@ async function runStaleTicketCheck() {
     }).join("\n");
 
     return { stale: stale.length, summary: `**${stale.length} stale (${STALE_DAYS}d+):**\n${list}` };
-  } catch {
+  } catch (e) {
+    console.warn("[daily-ops] Stale ticket check failed:", e);
     return { stale: 0, summary: "Failed to check Linear" };
   }
 }
@@ -113,12 +107,9 @@ async function runSeoCheck() {
 
   for (const path of pages) {
     try {
-      const seoController = new AbortController();
-      const seoTimeout = setTimeout(() => seoController.abort(), 5000);
-      const res = await fetch(`${SITE_URL}${path}`, {
+      const res = await fetchWithTimeout(`${SITE_URL}${path}`, {
         headers: { "User-Agent": "VGC-SEO/1.0" },
-        signal: seoController.signal,
-      }).finally(() => clearTimeout(seoTimeout));
+      }, 5000);
       if (!res.ok) { issues.push(`${path}: HTTP ${res.status}`); continue; }
       const html = await res.text();
       const missing: string[] = [];
@@ -126,7 +117,8 @@ async function runSeoCheck() {
       if (!html.includes('name="description"')) missing.push("meta desc");
       if (!html.includes('property="og:image"')) missing.push("og:image");
       if (missing.length > 0) issues.push(`${path}: missing ${missing.join(", ")}`);
-    } catch {
+    } catch (e) {
+      console.warn(`[daily-ops] SEO check failed for ${path}:`, e);
       issues.push(`${path}: fetch failed`);
     }
   }
@@ -143,7 +135,8 @@ async function runDbCheck() {
     const [sizeResult] = await sql`SELECT pg_size_pretty(pg_database_size(current_database())) as db_size`;
     const tables = await sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`;
     return { ok: true, summary: `${tables.length} tables, ${sizeResult.db_size}` };
-  } catch {
+  } catch (e) {
+    console.warn("[daily-ops] DB health check failed:", e);
     return { ok: false, summary: "Database connection failed" };
   }
 }
@@ -154,14 +147,7 @@ async function linearGql(query: string, variables?: Record<string, unknown>) {
   const apiKey = process.env.LINEAR_API_KEY;
   if (!apiKey) return null;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-  const res = await fetch(LINEAR_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: apiKey },
-    body: JSON.stringify({ query, variables }),
-    signal: controller.signal,
-  }).finally(() => clearTimeout(timeoutId));
+  const res = await linearFetch(query, variables, 5000);
   return res.json();
 }
 
@@ -248,8 +234,9 @@ async function createOpsTickets(issues: OpsIssue[]): Promise<string[]> {
 
       const ticket = result?.data?.issueCreate?.issue;
       if (ticket) created.push(`${ticket.identifier}: ${issue.title}`);
-    } catch {
+    } catch (e) {
       // Don't let ticket creation failure block the ops report
+      console.warn(`[daily-ops] Linear ticket creation failed for "${issue.title}":`, e);
     }
   }
 

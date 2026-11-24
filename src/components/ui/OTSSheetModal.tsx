@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { teamToOpenSheet } from "@/lib/utils/export-paste";
-import { resolveSlug, getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { resolveSlug } from "@/lib/utils/sprite-slug";
+import { FallbackSprite } from "@/components/report/FallbackSprite";
 import { getHtml2Canvas } from "@/lib/dynamic-imports/html2canvas";
 import { useTranslation } from "@/lib/i18n";
 import type { LanguageCode } from "@/lib/i18n";
@@ -178,21 +179,14 @@ async function generateOtsPdf(
 }
 
 function SpriteImg({ species }: { species: string }) {
-  const slug = resolveSlug(species);
-  const urls = getSpriteUrls(species).map(
-    (u) => `/api/sprite?u=${encodeURIComponent(u)}`,
-  );
-  const [idx, setIdx] = useState(0);
-  const src = urls[Math.min(idx, urls.length - 1)];
   return (
-    <img
-      src={src}
-      alt={slug}
-      width={72}
-      height={72}
-      crossOrigin="anonymous"
+    <FallbackSprite
+      species={species}
+      size={72}
       className="w-16 h-16 sm:w-[72px] sm:h-[72px] object-contain drop-shadow-sm"
-      onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
+      alt={resolveSlug(species)}
+      crossOrigin="anonymous"
+      proxied
     />
   );
 }

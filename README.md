@@ -25,7 +25,7 @@ npm ci                         # set CYPRESS_INSTALL_BINARY=0 to skip the Cypres
 npm run dev                    # http://localhost:3000
 ```
 
-Minimum env vars to boot: `DATABASE_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`. The Clerk middleware returns a 500 on every route without them. Upstash, PostHog, Resend, Discord, Linear and VAPID are optional, and their features degrade or turn off without them. `.env.example` documents every variable.
+Minimum env vars to boot: `DATABASE_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`. The Clerk proxy (`src/proxy.ts`, Next 16's name for middleware) returns a 500 on every route without them. Upstash, PostHog, Resend, Discord, Linear and VAPID are optional, and their features degrade or turn off without them. `.env.example` documents every variable.
 
 To create the database schema on a fresh database, call `GET /api/setup` with `Authorization: Bearer $MIGRATE_SECRET` (or `$CRON_SECRET`).
 
@@ -35,7 +35,7 @@ To create the database schema on a fresh database, call `GET /api/setup` with `A
 |---|---|
 | `npm run dev` / `build` / `start` | Next.js dev server / production build / serve the build |
 | `npm run typecheck` | `tsc --noEmit --incremental false` (cold, the same check CI runs) |
-| `npm run lint` | ESLint. There are about 36 known react-hooks errors, so CI treats lint as non-blocking |
+| `npm run lint` | ESLint. CI runs it and fails on errors |
 | `npm test` | vitest unit tests (`src/**/__tests__`) |
 | `npm run test:e2e` | Cypress against `next dev` |
 | `npm run generate:move-names` | Regenerate `src/lib/data/move-names.ts` |
@@ -44,7 +44,7 @@ To create the database schema on a fresh database, call `GET /api/setup` with `A
 
 ## Deploy
 
-Vercel builds every push to `main` as a **preview**. Production updates only when that deployment is **promoted** (dashboard or `vercel promote`). The crons are defined in `vercel.json` and authenticate with `CRON_SECRET`. CI (`.github/workflows/ci.yml`) runs typecheck, lint (non-blocking) and tests on every push and PR. It does not run `next build`.
+Vercel builds every push to `main` as a **preview**. Production updates only when that deployment is **promoted** (dashboard or `vercel promote`). The crons are defined in `vercel.json` and authenticate with `CRON_SECRET`. CI (`.github/workflows/ci.yml`) runs typecheck, lint and tests on every push to `main` and every PR. It does not run `next build`.
 
 ## Docs
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { I18nProvider } from "@/lib/i18n";
 
-import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { useRandomAccent } from "@/hooks/useRandomAccent";
 import { useClerk, Show, SignInButton } from "@clerk/nextjs";
 
 import { PageFooter } from "@/components/layout/PageFooter";
@@ -18,7 +18,7 @@ export default function PrivacyDashboardPage() {
 
 function PrivacyDashboardInner() {
   const { signOut } = useClerk();
-  useEffect(() => { applyRandomAccent(); }, []);
+  useRandomAccent();
 
   // Download state
   const [downloading, setDownloading] = useState(false);

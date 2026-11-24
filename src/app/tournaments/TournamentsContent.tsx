@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { JsonLd, SportsEventJsonLd } from "@/components/seo/JsonLd";
-import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { useRandomAccent } from "@/hooks/useRandomAccent";
 
 interface Tournament {
   id: string;
@@ -203,8 +203,8 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
 
 export function TournamentsContent() {
   const posthog = usePostHog();
+  useRandomAccent(posthog);
   useEffect(() => {
-    applyRandomAccent();
     posthog?.capture("tournaments_page_visited");
   }, [posthog]);
 

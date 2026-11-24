@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { postDiscordWebhook, resolveDiscordWebhook } from "@/lib/discord-webhook";
+import { LINEAR_LABEL_IDS as LABELS, linearFetch } from "@/lib/linear";
 
 export const dynamic = "force-dynamic";
 
@@ -223,18 +224,10 @@ export async function POST(request: Request) {
     }
 
     // Create Linear issue with Bug label
-    const linearController = new AbortController();
-    const linearTimeoutId = setTimeout(() => linearController.abort(), 5000);
     let linearRawRes: Response | null = null;
     try {
-      linearRawRes = await fetch("https://api.linear.app/graphql", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: linearApiKey,
-        },
-        body: JSON.stringify({
-          query: `mutation($title: String!, $description: String!, $teamId: String!, $priority: Int!, $labelIds: [String!]) {
+      linearRawRes = await linearFetch(
+        `mutation($title: String!, $description: String!, $teamId: String!, $priority: Int!, $labelIds: [String!]) {
           issueCreate(input: {
             teamId: $teamId,
             title: $title,
@@ -246,18 +239,15 @@ export async function POST(request: Request) {
             issue { identifier url }
           }
         }`,
-          variables: { title, description, teamId, priority, labelIds },
-        }),
-        signal: linearController.signal,
-      });
+        { title, description, teamId, priority, labelIds },
+        5000,
+      );
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         console.warn("PostHog webhook: Linear request timed out");
         return NextResponse.json({ ok: false, error: "timeout" }, { status: 200 });
       }
       throw err;
-    } finally {
-      clearTimeout(linearTimeoutId);
     }
 
     const linearRes = await linearRawRes.json();
@@ -415,16 +405,6 @@ function inferPriority(event: string, properties: Record<string, unknown>): numb
   if ((properties.severity as string) === "high") return 2;
   return 3; // default medium
 }
-
-// Linear label IDs (from team labels)
-const LABELS = {
-  bug: "bbd03f4e-be6f-4617-ad7d-b9fdc596ce5c",
-  improvement: "06d28974-98c3-457a-bbab-ab85456e51f0",
-  webApp: "1f355942-6143-47a8-93be-4a5cbe0de0b0",
-  mobile: "5389312c-66f8-4ced-a840-ff3cd46b68aa",
-  analytics: "a13703f8-0865-4a6d-b74c-56a7abc2f563",
-  infrastructure: "a0e2ddf6-557d-4164-b049-a4ee36ee342f",
-} as const;
 
 function inferLabels(event: string, properties: Record<string, unknown>): string[] {
   const labels: string[] = [];

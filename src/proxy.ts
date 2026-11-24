@@ -28,10 +28,15 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
     return NextResponse.next();
   }
 
+  // Three exemption lists follow. They are deliberately different sets and
+  // must not be merged: each lists only the routes that need that one check
+  // skipped.
+
   // ── Bot detection: block known scrapers and suspicious requests ──
-  // Skip for cron/webhook routes (authenticated by secrets, not browsers)
-  const isCronOrWebhook = pathname.startsWith('/api/cron') || pathname.startsWith('/api/webhooks') || pathname === '/api/keep-alive' || pathname === '/api/setup';
-  if (!isCronOrWebhook) {
+  // Exempt: server-to-server callers authenticated by a secret (cron, webhooks,
+  // keep-alive, setup), whose user agents are not browsers.
+  const skipsBotDetection = pathname.startsWith('/api/cron') || pathname.startsWith('/api/webhooks') || pathname === '/api/keep-alive' || pathname === '/api/setup';
+  if (!skipsBotDetection) {
     const userAgent = request.headers.get('user-agent') ?? '';
     if (isBlockedBot(userAgent)) {
       return NextResponse.json(
@@ -87,7 +92,9 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
   // no longer exists. It was removed — a pre-authorised prefix that nothing owns
   // means any future route added under it would silently ship with cross-origin
   // checks disabled. Don't re-add an exemption for a route that isn't here yet.
-  if (isApiRoute && !pathname.startsWith('/api/discord') && !pathname.startsWith('/api/webhooks/') && pathname !== '/api/setup' && !isAllowedOrigin(request)) {
+  // (/api/discord is already returned early above and excluded by the matcher.)
+  const skipsCorsOriginCheck = pathname.startsWith('/api/discord') || pathname.startsWith('/api/webhooks/') || pathname === '/api/setup';
+  if (isApiRoute && !skipsCorsOriginCheck && !isAllowedOrigin(request)) {
     return NextResponse.json(
       { error: 'Origin not allowed' },
       { status: 403 },
@@ -100,7 +107,10 @@ export default clerkMiddleware(async (_auth, request: NextRequest) => {
   // request comes from an allowed origin. Same-origin requests (no Origin
   // header) are inherently safe and don't require the CSRF header, which
   // keeps existing fetch() calls working without modification.
-  if (isApiRoute && !pathname.startsWith('/api/sync') && !pathname.startsWith('/api/keep-alive')) {
+  // Exempt: /api/sync and /api/keep-alive. Both are GET-only today, so this
+  // list only matters if a state-changing method is added under them.
+  const skipsCsrfCheck = pathname.startsWith('/api/sync') || pathname.startsWith('/api/keep-alive');
+  if (isApiRoute && !skipsCsrfCheck) {
     const method = request.method.toUpperCase();
     const origin = request.headers.get('origin');
     // Only enforce CSRF for truly cross-origin requests (origin present but NOT in our allowed list)

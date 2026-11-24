@@ -7,6 +7,11 @@ import { detectChangedSections } from "@/lib/utils/diff-state";
 import { cacheInvalidatePrefix, cacheDel, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { schedulePublishShareOgImage } from "@/lib/sharing/og-image";
+import { generateAlphanumericId, generateEditToken } from "@/lib/api/ids";
+import { clerkDisplayName } from "@/lib/api/display-name";
+import { weightedSearchVector } from "@/lib/api/search-vector";
+import { readJsonBody } from "@/lib/api/json-body";
+import { isAcceptedCollaborator } from "@/lib/collaboration-access";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -118,21 +123,6 @@ const ShareBodySchema = z.object({
   isPublish: z.boolean().optional(),
 });
 
-
-function generateId(): string {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const bytes = new Uint8Array(8);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => chars[b % chars.length]).join("");
-}
-
-function generateEditToken(): string {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 export async function POST(request: Request) {
   try {
     // Rate limit + body size guard
@@ -141,8 +131,9 @@ export async function POST(request: Request) {
 
     const ip = getClientIp(request);
 
-    const raw = await request.json();
-    const parsed = ShareBodySchema.safeParse(raw);
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const parsed = ShareBodySchema.safeParse(json.body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request body", details: parsed.error.flatten().fieldErrors },
@@ -185,10 +176,12 @@ export async function POST(request: Request) {
     const sql = getDb();
 
     // Build search vector text from state fields
-    const searchCreator = (state.creatorName as string) ?? "";
-    const searchTournament = (state.tournamentName as string) ?? "";
-    const searchPaste = (state.paste as string) ?? "";
-    const searchSummary = (state.teamSummary as string) ?? "";
+    const searchFields = {
+      creator: (state.creatorName as string) ?? "",
+      tournament: (state.tournamentName as string) ?? "",
+      paste: (state.paste as string) ?? "",
+      summary: (state.teamSummary as string) ?? "",
+    };
 
     // Update existing share (increment version for collaborative sync)
     if (existingId && editToken) {
@@ -207,12 +200,7 @@ export async function POST(request: Request) {
       const isOwner = oldRows[0].owner_id === authedUserId;
       let isCollaborator = false;
       if (!isOwner) {
-        const collaboratorRows = await sql`
-          SELECT 1 FROM collaborators
-          WHERE share_id = ${existingId} AND user_id = ${authedUserId}
-            AND COALESCE(status, 'accepted') = 'accepted'
-        `;
-        isCollaborator = collaboratorRows.length > 0;
+        isCollaborator = await isAcceptedCollaborator(sql, existingId, authedUserId);
       }
       if (!isOwner && !isCollaborator) {
         return NextResponse.json(
@@ -269,9 +257,7 @@ export async function POST(request: Request) {
           try {
             const { userId } = await auth();
             const user = userId ? await currentUser() : null;
-            const editorName = user?.firstName
-              ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-              : user?.username ?? null;
+            const editorName = clerkDisplayName(user, null);
             // Awaited so the snapshot actually completes before the Vercel lambda freezes
             // after responding (bare .catch() on Neon HTTP queries can be cancelled).
             // Non-fatal — log on failure but don't break the main update.
@@ -379,11 +365,7 @@ export async function POST(request: Request) {
             version = COALESCE(version, 1) + ${reportFingerprint(oldState) !== reportFingerprint(state) || visibilityChanged ? 1 : 0},
             is_public = ${effectiveIsPublic},
             is_unlisted = ${effectiveIsUnlisted},
-            search_vector =
-              setweight(to_tsvector('english', ${searchCreator}), 'A') ||
-              setweight(to_tsvector('english', ${searchTournament}), 'A') ||
-              setweight(to_tsvector('english', ${searchPaste}), 'B') ||
-              setweight(to_tsvector('english', ${searchSummary}), 'C')
+            search_vector = ${weightedSearchVector(sql, searchFields)}
         WHERE id = ${existingId} AND edit_token = ${editToken} AND deleted_at IS NULL
           AND COALESCE(version, 1) = ${observedVersion}
         RETURNING id, COALESCE(version, 1) AS version, is_public, is_unlisted
@@ -397,9 +379,7 @@ export async function POST(request: Request) {
             const { userId } = await auth();
             if (userId) {
               const user = await currentUser();
-              const editorName = user?.firstName
-                ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-                : user?.username ?? "Unknown";
+              const editorName = clerkDisplayName(user, "Unknown");
               try {
                 await sql`
                   INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)
@@ -500,11 +480,7 @@ export async function POST(request: Request) {
             version = COALESCE(version, 1) + 1,
             is_public = ${effectiveIsPublic},
             is_unlisted = ${effectiveIsUnlistedDup},
-            search_vector =
-              setweight(to_tsvector('english', ${searchCreator}), 'A') ||
-              setweight(to_tsvector('english', ${searchTournament}), 'A') ||
-              setweight(to_tsvector('english', ${searchPaste}), 'B') ||
-              setweight(to_tsvector('english', ${searchSummary}), 'C')
+            search_vector = ${weightedSearchVector(sql, searchFields)}
         WHERE id = ${dup.id}
       `;
       await Promise.all([
@@ -533,17 +509,14 @@ export async function POST(request: Request) {
       });
     }
 
-    const id = generateId();
+    const id = generateAlphanumericId(8);
     const newEditToken = generateEditToken();
 
     await sql`
       INSERT INTO shares (id, edit_token, data, version, is_public, is_unlisted, owner_id, search_vector)
       VALUES (
         ${id}, ${newEditToken}, ${JSON.stringify(state)}::jsonb, 1, ${isPublic ?? false}, ${isUnlisted ?? false}, ${ownerId},
-        setweight(to_tsvector('english', ${searchCreator}), 'A') ||
-        setweight(to_tsvector('english', ${searchTournament}), 'A') ||
-        setweight(to_tsvector('english', ${searchPaste}), 'B') ||
-        setweight(to_tsvector('english', ${searchSummary}), 'C')
+        ${weightedSearchVector(sql, searchFields)}
       )
     `;
 
@@ -552,9 +525,7 @@ export async function POST(request: Request) {
     if (ownerId) {
       try {
         const user = await currentUser();
-        const editorName = user?.firstName
-          ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-          : user?.username ?? "Unknown";
+        const editorName = clerkDisplayName(user, "Unknown");
         try {
           await sql`
             INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections, is_published)

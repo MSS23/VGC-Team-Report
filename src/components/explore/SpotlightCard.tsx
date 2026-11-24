@@ -2,26 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { relativeTime } from "@/lib/utils/relative-time";
-import { getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { FallbackSprite } from "@/components/report/FallbackSprite";
 import type { ExploreReport } from "./ReportCard";
 
 // (reaction emojis removed — using unified like system)
-
-function AnimatedSprite({ species, size = 56 }: { species: string; size?: number }) {
-  const urls = getSpriteUrls(species);
-  const [srcIdx, setSrcIdx] = useState(0);
-  return (
-    <img
-      src={urls[Math.min(srcIdx, urls.length - 1)]}
-      alt={species}
-      width={size}
-      height={size}
-      className="object-contain"
-      loading="lazy"
-      onError={() => setSrcIdx((i) => Math.min(i + 1, urls.length - 1))}
-    />
-  );
-}
 
 export function SpotlightCard({ report }: { report: ExploreReport }) {
 
@@ -99,7 +83,7 @@ export function SpotlightCard({ report }: { report: ExploreReport }) {
 
 
             >
-              <AnimatedSprite species={species} size={52} />
+              <FallbackSprite species={species} size={52} className="object-contain" loading="lazy" />
               <span className="text-[10px] font-semibold text-text-tertiary text-center leading-tight max-w-[56px] sm:max-w-[72px] truncate">
                 {species}
               </span>

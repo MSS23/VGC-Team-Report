@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { readStorage, removeStorage, STORAGE_KEYS } from "@/lib/utils/safe-storage";
 
 export function ServiceWorkerRegistration() {
   const { userId, isLoaded } = useAuth();
@@ -13,12 +14,12 @@ export function ServiceWorkerRegistration() {
     let disposed = false;
     async function detachPreviousAccount() {
       try {
-        const owner = localStorage.getItem("vgc-push-owner");
+        const owner = readStorage(STORAGE_KEYS.pushOwner);
         if (!owner || owner === userId) return;
         const subscription = await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();
-        if (disposed || localStorage.getItem("vgc-push-owner") !== owner) return;
+        if (disposed || readStorage(STORAGE_KEYS.pushOwner) !== owner) return;
         await subscription?.unsubscribe();
-        localStorage.removeItem("vgc-push-owner");
+        removeStorage(STORAGE_KEYS.pushOwner);
       } catch { /* Generic push copy contains no private report information. */ }
     }
     void detachPreviousAccount();

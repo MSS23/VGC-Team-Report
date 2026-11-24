@@ -6,6 +6,7 @@ import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { Card } from "@/components/ui/Card";
 import { PokemonSprite } from "./PokemonSprite";
 import { StatColorNote } from "./StatColorNote";
+import { STAT_COLORS } from "./pokemon-detail/StatsPanel";
 import { useIsPrintMode } from "@/components/ui/print-context";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 
@@ -46,15 +47,6 @@ interface PokemonCardProps {
   /** When true, hints the browser to load this card's sprite with high fetch priority (LCP optimization). */
   priority?: boolean;
 }
-
-const STAT_COLORS: Record<string, string> = {
-  hp: "var(--stat-hp)",
-  atk: "var(--stat-atk)",
-  def: "var(--stat-def)",
-  spa: "var(--stat-spa)",
-  spd: "var(--stat-spd)",
-  spe: "var(--stat-spe)",
-};
 
 export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOnly, isMvp, onToggleMvp, shiny = false, animated = true, isMega, onToggleMega, regulation, onReplaceSpecies, priority = false }: PokemonCardProps) {
   const { t, language } = useTranslation();

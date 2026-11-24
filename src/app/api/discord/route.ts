@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
+import { linearFetch } from "@/lib/linear";
 import nacl from "tweetnacl";
 
-const LINEAR_API = "https://api.linear.app/graphql";
 const DISCORD_PUBLIC_KEY = "44b2cb02932ad5b5eae681352246314ffb23ecd299c2490d7875d5883e5596ae";
 
 // Discord interaction types
@@ -13,23 +12,12 @@ const APPLICATION_COMMAND = 2;
 const PONG = 1;
 const CHANNEL_MESSAGE = 4;
 
-function getLinearAuth() {
-  return process.env.LINEAR_API_KEY ?? "";
-}
 function getTeamId() {
   return process.env.LINEAR_TEAM_ID ?? "";
 }
 
 async function linearQuery(query: string, variables?: Record<string, unknown>) {
-  const res = await fetchWithTimeout(
-    LINEAR_API,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: getLinearAuth() },
-      body: JSON.stringify({ query, ...(variables ? { variables } : {}) }),
-    },
-    10000,
-  );
+  const res = await linearFetch(query, variables, 10000);
   return res.json();
 }
 

@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { readJsonBody } from "@/lib/api/json-body";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
@@ -34,8 +35,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const raw = await request.json();
-    const parsed = MatchLogBody.safeParse(raw);
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const parsed = MatchLogBody.safeParse(json.body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parsed.error.flatten().fieldErrors },

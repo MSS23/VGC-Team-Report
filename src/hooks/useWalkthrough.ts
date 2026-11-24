@@ -13,7 +13,7 @@ export interface WalkthroughStep {
   mobileTab?: "set" | "stats" | "notes" | "calcs";
 }
 
-export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
+const WALKTHROUGH_STEPS: WalkthroughStep[] = [
   // --- Welcome ---
   {
     target: null,

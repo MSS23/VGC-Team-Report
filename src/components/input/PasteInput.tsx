@@ -8,8 +8,9 @@ import { useTranslation } from "@/lib/i18n";
 
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
-import { applyRandomAccent } from "@/lib/utils/random-accent";
-import { getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { useRandomAccent } from "@/hooks/useRandomAccent";
+import { FallbackSprite } from "@/components/report/FallbackSprite";
+import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/utils/safe-storage";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 import { QuickShare } from "./QuickShare";
 
@@ -102,32 +103,19 @@ function looksLikeShowdownPaste(text: string): boolean {
 
 
 function PopularCardSprite({ species }: { species: string }) {
-  const urls = getSpriteUrls(species);
-  const [idx, setIdx] = useState(0);
-  return (
-    <img
-      src={urls[Math.min(idx, urls.length - 1)]}
-      alt={species}
-      width={28}
-      height={28}
-      className="w-7 h-7 object-contain"
-      loading="lazy"
-      onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
-    />
-  );
+  return <FallbackSprite species={species} size={28} className="w-7 h-7 object-contain" loading="lazy" />;
 }
 
-export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onAnalyze, selectedTemplate, onTemplateSelect }: PasteInputProps) {
+export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onAnalyze }: PasteInputProps) {
   const { t } = useTranslation();
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [loadWhatsNew, setLoadWhatsNew] = useState(false);
   useEffect(() => {
-    try {
-      const eligible = !!localStorage.getItem("vgc-has-visited") && !localStorage.getItem("vgc-whats-new-v10");
-      if (eligible) setLoadWhatsNew(true);
-      else localStorage.setItem("vgc-has-visited", "1");
-    } catch { /* Storage can be blocked in private browsing. */ }
+    // Storage can be blocked in private browsing; the helpers swallow that.
+    const eligible = !!readStorage(STORAGE_KEYS.hasVisited) && !readStorage(STORAGE_KEYS.whatsNewSeen);
+    if (eligible) setLoadWhatsNew(true);
+    else writeStorage(STORAGE_KEYS.hasVisited, "1");
   }, []);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -135,7 +123,7 @@ export function PasteInput({ sprites, steps, feedback, paste, onPasteChange, onA
   const [pasteHintSeen, setPasteHintSeen] = useState(false);
 
   // Random accent color on landing page
-  useEffect(() => { applyRandomAccent(); }, []);
+  useRandomAccent();
 
   // Collapse "How it works" for returning users
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);

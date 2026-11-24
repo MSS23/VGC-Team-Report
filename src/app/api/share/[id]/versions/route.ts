@@ -1,10 +1,11 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { ShareIdSchema } from "@/lib/api/ids";
+import { clerkDisplayName } from "@/lib/api/display-name";
+import { readJsonBody } from "@/lib/api/json-body";
+import { isAcceptedCollaborator } from "@/lib/collaboration-access";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-
-const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
 
 /**
  * GET /api/share/{id}/versions
@@ -25,7 +26,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const idResult = IdSchema.safeParse(id);
+    const idResult = ShareIdSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -41,15 +42,8 @@ export async function GET(
     }
 
     const isOwner = shareRows[0].owner_id === userId;
-    if (!isOwner) {
-      const collabRows = await sql`
-        SELECT 1 FROM collaborators
-        WHERE share_id = ${id} AND user_id = ${userId}
-          AND COALESCE(status, 'accepted') = 'accepted'
-      `;
-      if (collabRows.length === 0) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
+    if (!isOwner && !(await isAcceptedCollaborator(sql, id, userId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Fetch version history (metadata only — no full data blobs)
@@ -97,12 +91,14 @@ export async function POST(
     }
 
     const { id } = await params;
-    const idResult = IdSchema.safeParse(id);
+    const idResult = ShareIdSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const body = await request.json();
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const body = json.body as { version: unknown };
     const targetVersion = Number(body.version);
     if (!Number.isInteger(targetVersion) || targetVersion < 1) {
       return NextResponse.json({ error: "Invalid version" }, { status: 400 });
@@ -120,15 +116,8 @@ export async function POST(
     }
 
     const isOwner = shareRows[0].owner_id === userId;
-    if (!isOwner) {
-      const collabRows = await sql`
-        SELECT 1 FROM collaborators
-        WHERE share_id = ${id} AND user_id = ${userId}
-          AND COALESCE(status, 'accepted') = 'accepted'
-      `;
-      if (collabRows.length === 0) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
+    if (!isOwner && !(await isAcceptedCollaborator(sql, id, userId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Fetch the target version snapshot
@@ -144,9 +133,7 @@ export async function POST(
 
     // Snapshot current state before reverting
     const user = await currentUser();
-    const editorName = user?.firstName
-      ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-      : user?.username ?? "Unknown";
+    const editorName = clerkDisplayName(user, "Unknown");
 
     // Snapshot the current state AND apply the revert atomically. Previously the
     // snapshot INSERT was fire-and-forget (swallowed .catch) and the UPDATE ran
@@ -179,8 +166,9 @@ export async function POST(
       return NextResponse.json({ error: "Failed to revert" }, { status: 500 });
     }
 
-    // Record revert in changelog (non-critical, fire-and-forget)
-    sql`
+    // Record revert in changelog (non-critical). Awaited so the lambda can't
+    // freeze mid-write; the catch keeps a failure from failing the revert.
+    await sql`
       INSERT INTO edit_changelog (share_id, version, editor_id, editor_name, sections)
       VALUES (${id}, ${newVersion}, ${userId}, ${editorName}, ${JSON.stringify([`Reverted to version ${targetVersion}`])}::jsonb)
     `.catch(() => {});

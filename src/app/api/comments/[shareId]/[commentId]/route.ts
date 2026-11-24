@@ -3,6 +3,8 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { hasEditorAccess } from "@/lib/collaboration-access";
+import { readJsonBody } from "@/lib/api/json-body";
 
 const DeleteBody = z.object({
   sessionId: z.string().optional(),
@@ -17,7 +19,9 @@ export async function DELETE(
 
   try {
     const { shareId, commentId } = await params;
-    const raw = await request.json();
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const raw = json.body;
     const parsed = DeleteBody.safeParse(raw);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
@@ -36,22 +40,7 @@ export async function DELETE(
       ({ userId } = await auth());
     } catch { /* signed out */ }
 
-    let canModerate = false;
-    if (userId) {
-      const accessRows = await sql`
-        SELECT 1 FROM shares s
-        WHERE s.id = ${shareId} AND s.deleted_at IS NULL
-          AND (
-            s.owner_id = ${userId}
-            OR EXISTS (
-              SELECT 1 FROM collaborators c
-              WHERE c.share_id = s.id AND c.user_id = ${userId}
-                AND COALESCE(c.status, 'accepted') = 'accepted'
-            )
-          )
-      `;
-      canModerate = accessRows.length > 0;
-    }
+    const canModerate = userId ? await hasEditorAccess(sql, shareId, userId) : false;
 
     if (canModerate) {
       // Owners and accepted collaborators can moderate report comments.

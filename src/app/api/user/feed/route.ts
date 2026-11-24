@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { extractSpecies } from "@/lib/utils/extract-species";
+import { reportSummaryFields } from "@/lib/api/report-summary";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -26,19 +26,11 @@ export async function GET(request: Request) {
       LIMIT 20
     `;
 
-    const reports = rows.map((row) => {
-      const data = row.data as Record<string, unknown>;
-      const paste = (data.paste as string) ?? "";
-      return {
-        id: row.id as string,
-        species: extractSpecies(paste),
-        tournamentName: (data.tournamentName as string) || undefined,
-        creatorName: (data.creatorName as string) || undefined,
-        placement: (data.placement as string) || undefined,
-        createdAt: (row.created_at as Date).toISOString(),
-        viewCount: row.view_count as number,
-      };
-    });
+    const reports = rows.map((row) => ({
+      ...reportSummaryFields(row),
+      createdAt: (row.created_at as Date).toISOString(),
+      viewCount: row.view_count as number,
+    }));
 
     return NextResponse.json({ reports });
   } catch (e) {

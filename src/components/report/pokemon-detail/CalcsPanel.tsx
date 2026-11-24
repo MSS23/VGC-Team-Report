@@ -39,7 +39,6 @@ const { parsed, spriteSpecies, displayAbility } = model;
 
     return (
       <CollapsibleCalcGroup
-        category={category}
         cfg={cfg}
         entries={entries}
         globalCalcs={globalCalcs}

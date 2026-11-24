@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { extractSpecies } from "@/lib/utils/extract-species";
+import { reportSummaryFields } from "@/lib/api/report-summary";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
@@ -41,13 +41,8 @@ export async function GET(request: NextRequest) {
 
     const reports = rows.map((row) => {
       const data = row.data as Record<string, unknown>;
-      const paste = (data.paste as string) ?? "";
       return {
-        id: row.id as string,
-        species: extractSpecies(paste),
-        tournamentName: (data.tournamentName as string) || undefined,
-        creatorName: (data.creatorName as string) || undefined,
-        placement: (data.placement as string) || undefined,
+        ...reportSummaryFields(row),
         teamSummary: (data.teamSummary as string) || undefined,
         createdAt: (row.created_at as Date).toISOString(),
         updatedAt: (row.updated_at as Date).toISOString(),

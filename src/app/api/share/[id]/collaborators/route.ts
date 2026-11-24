@@ -3,6 +3,8 @@ import { apiGuard } from "@/lib/security/api-guard";
 import { createNotification } from "@/lib/notifications";
 import { cacheDel, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { clerkDisplayName } from "@/lib/api/display-name";
+import { generateEditToken } from "@/lib/api/ids";
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -110,9 +112,7 @@ export async function POST(
     try {
       const client = await clerkClient();
       const targetUser = await client.users.getUser(targetUserId);
-      targetName = targetUser.firstName
-        ? `${targetUser.firstName}${targetUser.lastName ? ` ${targetUser.lastName}` : ""}`
-        : targetUser.username ?? "Unknown";
+      targetName = clerkDisplayName(targetUser, "Unknown");
     } catch {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -126,9 +126,7 @@ export async function POST(
 
     // Send notification (fire-and-forget)
     const owner = await currentUser();
-    const ownerName = owner?.firstName
-      ? `${owner.firstName}${owner.lastName ? ` ${owner.lastName}` : ""}`
-      : owner?.username ?? "Someone";
+    const ownerName = clerkDisplayName(owner, "Someone");
 
     const reportRows = await sql`SELECT data FROM shares WHERE id = ${shareId}`;
     const reportName = (reportRows[0]?.data as Record<string, unknown>)?.tournamentName as string || "a team report";
@@ -177,8 +175,7 @@ export async function PATCH(
     }
 
     // Generate new edit token
-    const crypto = await import("crypto");
-    const newToken = crypto.randomBytes(32).toString("hex");
+    const newToken = generateEditToken();
 
     const sql = getDb();
     await sql`UPDATE shares SET edit_token = ${newToken} WHERE id = ${shareId}`;

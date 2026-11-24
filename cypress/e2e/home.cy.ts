@@ -2,7 +2,7 @@ describe("Home / Paste Input", () => {
   beforeEach(() => {
     cy.visit("/", {
       onBeforeLoad(win) {
-        win.localStorage.setItem("vgc-whats-new-v3", "1");
+        win.localStorage.setItem("vgc-whats-new-v10", "1");
       },
     });
   });
@@ -13,7 +13,8 @@ describe("Home / Paste Input", () => {
   });
 
   it("has animated pokemon sprites", () => {
-    cy.get("img[src*='sprites/ani']").should("have.length", 6);
+    // Only the landing hero uses <picture>; the sample-team cards also load ani sprites.
+    cy.get("picture img[src*='sprites/ani']").should("have.length", 6);
   });
 
   it("shows disabled analyze button when textarea is empty", () => {
@@ -21,13 +22,15 @@ describe("Home / Paste Input", () => {
       .should("have.class", "cursor-not-allowed");
   });
 
-  it("loads sample paste on button click", () => {
-    cy.get("button").contains(/sample|load/i).click();
-    cy.get("textarea").should("contain.value", "Incineroar @ Sitrus Berry");
-    cy.get("textarea").should("contain.value", "Landorus-Therian @ Life Orb");
+  it("loads a sample team from the sample picker", () => {
+    cy.get("button[aria-label='Try Mega Kangaskhan Goodstuffs sample team']").click();
+    cy.get("[data-walkthrough='slide-nav']", { timeout: 15000 }).should("be.visible");
+    cy.contains("Arcanine").should("be.visible");
   });
 
-  it("enables analyze button after loading sample", () => {
+  // Skipped: the "Load sample" button that filled the textarea without analyzing is gone;
+  // the sample-team cards analyze immediately.
+  it.skip("enables analyze button after loading sample", () => {
     cy.get("button").contains(/sample|load/i).click();
     cy.get("button").contains(/analyze|submit/i)
       .should("not.have.class", "cursor-not-allowed");
@@ -50,12 +53,14 @@ describe("Home / Paste Input", () => {
     cy.get("a[href='/privacy']").should("exist");
   });
 
-  it("shows community section with Explore link", () => {
+  // Skipped: the home page no longer has a "Community" section (the /explore link now lives in the navbar).
+  it.skip("shows community section with Explore link", () => {
     cy.contains("Community").should("be.visible");
     cy.get("a[href='/explore']").should("exist");
   });
 
-  it("shows feature pills", () => {
+  // Skipped: the feature pills ("Team Analysis", "Share & Explore", "Matchup Plans") were removed from the home page.
+  it.skip("shows feature pills", () => {
     cy.contains("Team Analysis").should("be.visible");
     cy.contains("Share & Explore").should("be.visible");
     cy.contains("Matchup Plans").should("be.visible");

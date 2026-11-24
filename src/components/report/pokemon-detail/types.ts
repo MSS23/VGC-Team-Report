@@ -1,4 +1,3 @@
-"use client";
 import type { ParsedPokemon, StatSpread } from "@/lib/types/pokemon";
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import type { CalcEntry, CalcCategory } from "@/hooks/useDamageCalcs";

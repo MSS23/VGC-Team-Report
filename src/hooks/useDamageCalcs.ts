@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { DEFAULT_CALC_CATEGORY, toCalcCategory, type CalcCategory } from "@/lib/utils/calc-category";
+import { writeStorageJSON, STORAGE_KEY_BUILDERS } from "@/lib/utils/safe-storage";
+import { isSharePath } from "@/hooks/share-path";
 
 // `CalcCategory` now lives in `@/lib/utils/calc-category` so the server-side
 // report normalizer can share the same validated list; re-exported here
@@ -13,11 +15,6 @@ export interface CalcEntry {
   category: CalcCategory;
 }
 
-// v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
-function buildCalcsKey(speciesKeys: string[]): string {
-  const sorted = [...speciesKeys].sort();
-  return `vgc-calcs-v2-${sorted.join(",")}`;
-}
 
 /** Per-Pokémon array of notable calc entries. */
 export type DamageCalcsMap = Record<string, CalcEntry[]>;
@@ -46,7 +43,8 @@ function migrateCalcs(raw: unknown): DamageCalcsMap {
 }
 
 export function useDamageCalcs(speciesKeys: string[], persist = true) {
-  const teamKey = buildCalcsKey(speciesKeys);
+  // v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
+  const teamKey = STORAGE_KEY_BUILDERS.calcs(speciesKeys);
   const prevTeamKey = useRef(teamKey);
 
   const [calcs, setCalcs] = useState<DamageCalcsMap>(() => {
@@ -84,12 +82,9 @@ export function useDamageCalcs(speciesKeys: string[], persist = true) {
   // Belt-and-suspenders: also block writes when the URL is /s/{id}.
   useEffect(() => {
     if (!persist || speciesKeys.length === 0) return;
-    if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) return;
-    try {
-      localStorage.setItem(teamKey, JSON.stringify(calcs));
-    } catch {
-      // localStorage quota exceeded — calcs work in-memory
-    }
+    if (isSharePath()) return;
+    // localStorage quota exceeded — calcs work in-memory
+    writeStorageJSON(teamKey, calcs);
   }, [calcs, teamKey, speciesKeys.length, persist]);
 
   const addCalc = useCallback((species: string, text: string, category: CalcCategory) => {

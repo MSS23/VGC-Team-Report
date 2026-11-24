@@ -6,7 +6,7 @@ import { useAuth, useUser, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
 import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
-import { getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { FallbackSprite } from "@/components/report/FallbackSprite";
 
 export interface ExploreReport {
   id: string;
@@ -43,22 +43,6 @@ function getPlacementStyle(placement: string): string {
     return "bg-orange-500/15 text-orange-600 dark:text-orange-400 ring-1 ring-orange-500/25";
   }
   return "bg-accent-surface text-accent";
-}
-
-function CardSprite({ species }: { species: string }) {
-  const urls = getSpriteUrls(species);
-  const [idx, setIdx] = useState(0);
-  return (
-    <img
-      src={urls[Math.min(idx, urls.length - 1)]}
-      alt={species}
-      width={48}
-      height={48}
-      className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
-      loading="lazy"
-      onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
-    />
-  );
 }
 
 export function ReportCard({
@@ -188,7 +172,7 @@ export function ReportCard({
         <div className="bg-surface-alt/30 rounded-lg py-2">
           <div className="flex items-center justify-center gap-0.5 sm:gap-1">
             {report.species.map((species, i) => (
-              <CardSprite key={i} species={species} />
+              <FallbackSprite key={i} species={species} size={48} className="w-10 h-10 sm:w-12 sm:h-12 object-contain" loading="lazy" />
             ))}
             {Array.from({ length: Math.max(0, 6 - report.species.length) }).map(
               (_, i) => (

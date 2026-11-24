@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { readJsonBody } from "@/lib/api/json-body";
 import { cacheDel, cacheInvalidatePrefix, CacheKeys } from "@/lib/cache";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { removeShareOgImage, schedulePublishShareOgImage } from "@/lib/sharing/og-image";
@@ -28,8 +29,9 @@ export async function PATCH(
     }
 
     const { shareId } = await params;
-    const raw = await request.json();
-    const parsed = UpdateBody.safeParse(raw);
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const parsed = UpdateBody.safeParse(json.body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }

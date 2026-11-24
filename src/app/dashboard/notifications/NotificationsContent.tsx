@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { Show, SignInButton, useAuth } from "@clerk/nextjs";
 import { I18nProvider } from "@/lib/i18n";
-import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { useRandomAccent } from "@/hooks/useRandomAccent";
+import { readStorageJSON, removeStorage, STORAGE_KEYS } from "@/lib/utils/safe-storage";
 import { PageFooter } from "@/components/layout/PageFooter";
 import { BrowserPushSettings } from "@/components/ui/BrowserPushSettings";
 import { DEFAULT_NOTIFICATION_PREFS, readNotificationPrefs, type NotificationPrefs } from "@/lib/notification-preferences";
 
-const LEGACY_KEY = "vgc-notification-preferences";
 const choices: { key: keyof NotificationPrefs; title: string; description: string }[] = [
   { key: "welcomeSeries", title: "Welcome Series", description: "Onboarding emails when you first join" },
   { key: "weeklyDigest", title: "Weekly Digest", description: "Weekly meta updates and trending teams" },
@@ -35,7 +35,7 @@ function NotificationsInner({ userId }: { userId: string | null | undefined }) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
-  useEffect(() => { applyRandomAccent(); }, []);
+  useRandomAccent();
   useEffect(() => {
     if (!userId) return;
     const controller = new AbortController();
@@ -48,17 +48,13 @@ function NotificationsInner({ userId }: { userId: string | null | undefined }) {
         let preferences = readNotificationPrefs(data.preferences);
         // Migrate existing device choices once. Saved account choices always win.
         if (!data.initialized) {
-          let legacy: string | null = null;
-          try { legacy = localStorage.getItem(LEGACY_KEY); } catch { /* Storage is optional. */ }
-          if (legacy) {
-            let value: unknown;
-            try { value = JSON.parse(legacy); } catch { value = null; }
-            if (value && typeof value === "object" && !Array.isArray(value)) preferences = await savePreferences(readNotificationPrefs(value), controller.signal, true);
-          }
+          // Storage is optional: missing, unreadable or unparseable all read as null.
+          const value = readStorageJSON<unknown>(STORAGE_KEYS.notificationPreferencesLegacy, null);
+          if (value && typeof value === "object" && !Array.isArray(value)) preferences = await savePreferences(readNotificationPrefs(value), controller.signal, true);
         }
         if (controller.signal.aborted) return;
         setPrefs(preferences); setReady(true);
-        try { localStorage.removeItem(LEGACY_KEY); } catch { /* Account preferences are authoritative. */ }
+        removeStorage(STORAGE_KEYS.notificationPreferencesLegacy); // Account preferences are authoritative.
       } catch (error) {
         if (!controller.signal.aborted) setError(error instanceof Error ? error.message : "Could not load preferences.");
       } finally { if (!controller.signal.aborted) setLoading(false); }

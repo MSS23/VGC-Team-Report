@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import { writeStorage, STORAGE_KEYS } from "@/lib/utils/safe-storage";
 
 // ─── Shared external store so ALL useDarkMode() callers share state ────
 
-const STORAGE_KEY = "vgc-dark-mode";
+const STORAGE_KEY = STORAGE_KEYS.darkMode;
 const listeners = new Set<() => void>();
 
 let darkModeValue = false;
@@ -46,7 +47,7 @@ function applyDarkMode(dark: boolean) {
 function setDarkModeValue(dark: boolean) {
   if (dark === darkModeValue) return;
   darkModeValue = dark;
-  try { localStorage.setItem(STORAGE_KEY, String(dark)); } catch {}
+  writeStorage(STORAGE_KEY, String(dark));
   if (typeof document !== "undefined") applyDarkMode(dark);
   listeners.forEach((fn) => fn());
 }

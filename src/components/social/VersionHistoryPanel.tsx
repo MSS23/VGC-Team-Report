@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { relativeTime } from "@/lib/utils/relative-time";
 
 interface VersionEntry {
   version: number;
@@ -115,20 +116,11 @@ export function VersionHistoryPanel({
     }
   };
 
-  const formatTime = (iso: string) => {
-    const d = new Date(iso);
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    const diffHrs = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMin < 1) return "just now";
-    if (diffMin < 60) return `${diffMin}m ago`;
-    if (diffHrs < 24) return `${diffHrs}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
+  const formatTime = (iso: string) =>
+    relativeTime(iso, {
+      justNow: "just now",
+      formatOlder: (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    });
 
   const formatFullDate = (iso: string) => {
     return new Date(iso).toLocaleString("en-US", {

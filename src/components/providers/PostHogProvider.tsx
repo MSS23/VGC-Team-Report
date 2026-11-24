@@ -4,6 +4,7 @@ import { useEffect, Suspense, useState, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { hasAnalyticsConsent, onConsentChange } from "@/lib/consent";
+import { readStorage, writeStorage, removeStorage, STORAGE_KEYS } from "@/lib/utils/safe-storage";
 
 import type { PostHog } from "posthog-js";
 import type {
@@ -42,7 +43,7 @@ function PostHogIdentify() {
   useEffect(() => {
     if (!posthog || !hasAnalyticsConsent()) return;
     if (userId && INTERNAL_USER_IDS.has(userId)) {
-      try { window.localStorage.setItem(INTERNAL_FLAG_KEY, "1"); } catch {}
+      writeStorage(INTERNAL_FLAG_KEY, "1");
       posthog.opt_out_capturing();
       return;
     }
@@ -83,21 +84,18 @@ function shouldIgnoreSource(source: string): boolean {
   return IGNORED_EXCEPTION_SOURCES.some((re) => re.test(source));
 }
 
-const INTERNAL_FLAG_KEY = "vgc-internal-user";
+const INTERNAL_FLAG_KEY = STORAGE_KEYS.internalUser;
 
 function isFlaggedInternal(): boolean {
-  if (typeof window === "undefined") return false;
-  try { return window.localStorage.getItem(INTERNAL_FLAG_KEY) === "1"; } catch { return false; }
+  return readStorage(INTERNAL_FLAG_KEY) === "1";
 }
 
 function maybeSetInternalFlagFromQuery() {
   if (typeof window === "undefined") return;
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const flag = params.get("internal");
-    if (flag === "1") { window.localStorage.setItem(INTERNAL_FLAG_KEY, "1"); }
-    else if (flag === "0") { window.localStorage.removeItem(INTERNAL_FLAG_KEY); }
-  } catch {}
+  const params = new URLSearchParams(window.location.search);
+  const flag = params.get("internal");
+  if (flag === "1") { writeStorage(INTERNAL_FLAG_KEY, "1"); }
+  else if (flag === "0") { removeStorage(INTERNAL_FLAG_KEY); }
 }
 
 const INTERNAL_USER_IDS = new Set(

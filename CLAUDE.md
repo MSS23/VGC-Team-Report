@@ -29,9 +29,15 @@ node node_modules/next/dist/bin/next build        # prod build
 | `src/lib/analysis/stat-calculator.ts` | Stat formulas + Champions SP: `convertToChampionsSp` (EV→SP, passthrough for SP-form pastes), budget constants. |
 | `src/lib/validation/champions-legality.ts` | Reg M-A/M-B/M-C legality (`getChampionsDex(reg)`): dex, per-reg Mega Stones, restricted (max 2), item/species clauses, SP/EV budgets. |
 | `src/lib/data/` | Champions dexes, mega list, natures, base stats. |
-| `src/components/report/` | Report UI — `PokemonCard`, `PokemonDetailSlide`, `SpeedTierChart` all derive SP via `convertToChampionsSp`. |
+| `src/components/report/` | Report UI — `PokemonCard`, `PokemonDetailSlide` (via `pokemon-detail/`), `SpeedTierChart` all derive SP via `convertToChampionsSp`. |
+| `src/components/report/PokemonSprite.tsx`, `FallbackSprite.tsx` | `PokemonSprite` follows the gen theme and print mode; `FallbackSprite` (own file, so it never loads `useTheme`) is the theme-independent sprite with the URL fallback chain (`proxied` for canvas capture). Use one of these, not a local `<img>` fallback copy. |
 | `src/app/champions/[pokemon]/` | SSG mega guide pages (SEO-critical). |
-| `src/app/api/cron/` | `daily-ops` (9am), `weekly-report` (Fri 5pm) → Discord #builds. Keep crons daily/weekly max. |
+| `src/app/api/cron/`, `src/app/api/cleanup/` | Crons in `vercel.json` (UTC): `cleanup` daily 03:00 (purge soft-deleted/stale shares), `daily-ops` daily 09:00 and `weekly-report` Fri 17:00 → Discord #builds, `posthog-errors` Mon 08:00 (PostHog errors → Linear tickets), `weekly-digest` Mon 09:00 (user emails via Resend). Keep crons daily/weekly max. |
+| `src/lib/db.ts` | Neon client + the whole schema in `ensureTable()` (run by `GET /api/setup`). `src/lib/db/migrations/*.sql` are hand-applied; nothing runs them. |
+| `src/lib/api/` | Shared route helpers — use instead of a local copy: `ids.ts` (share/collection ids, edit tokens, `STRICT_SHARE_ID_RE`/`ShareIdSchema`), `display-name.ts` (`clerkDisplayName`), `search-vector.ts` (`weightedSearchVector` for share INSERT/UPDATE), `json-body.ts` (`readJsonBody`: malformed JSON → 400), `report-summary.ts` (`reportSummaryFields` for `user/*` list rows). |
+| `src/lib/collaboration-access.ts` | Editor checks: `hasEditorAccess` (owner or accepted collaborator), `isAcceptedCollaborator` (share row already loaded), `collaborationAccess(id)` (id + auth + editor check → 400/401/403 for collaboration routes). |
+| `src/hooks/useRandomAccent.ts` | `useRandomAccent(...deps)` — the post-mount random accent palette for pages; use instead of an inline `applyRandomAccent()` effect. |
+| `src/lib/utils/safe-storage.ts` | SSR-safe localStorage (`readStorage`/`writeStorage`/`readStorageJSON`/…) and every key in `STORAGE_KEYS`/`STORAGE_KEY_BUILDERS`. Use for all localStorage access; never rename a key. |
 | `.claude/scripts/linear.sh` | All Linear/Discord API helpers. `source` it first. |
 
 ## Git & deploy policy
@@ -53,7 +59,7 @@ Cost guardrails: no doc-only or speculative pushes (piggyback on the next real p
 
 ## CI
 
-`.github/workflows/ci.yml` runs `tsc --noEmit`, `eslint`, and `vitest` on every push to `main` and every PR. It deliberately does not run `next build` (needs prod secrets; Vercel builds on push) — the local build stays the pre-commit gate.
+`.github/workflows/ci.yml` runs `npm run typecheck`, `npm run lint` (eslint; errors fail CI, warnings do not), and `npm test` (vitest) on every push to `main` and every PR. It deliberately does not run `next build` (needs prod secrets; Vercel builds on push) — the local build stays the pre-commit gate.
 
 ## Linear workflow
 

@@ -1,5 +1,3 @@
-"use client";
-
 import type { AnalyzedPokemon } from "@/lib/types/analysis";
 import { isChampionsFormat } from "@/lib/data/tags";
 import { displayStats } from "@/lib/analysis/spread-builder";

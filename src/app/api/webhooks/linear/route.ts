@@ -90,7 +90,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (e) {
+    // Name only: a JSON.parse message can quote the payload, which may carry user data.
+    console.error("Linear webhook handler error:", e instanceof Error ? e.name : typeof e);
     // Return 200 so Linear does not auto-disable the webhook on a transient error.
     return NextResponse.json({ ok: true });
   }

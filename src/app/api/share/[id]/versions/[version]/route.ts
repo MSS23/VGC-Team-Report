@@ -1,10 +1,9 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { ShareIdSchema } from "@/lib/api/ids";
+import { isAcceptedCollaborator } from "@/lib/collaboration-access";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
 
 /**
  * GET /api/share/{id}/versions/{version}
@@ -25,7 +24,7 @@ export async function GET(
     }
 
     const { id, version: versionStr } = await params;
-    const idResult = IdSchema.safeParse(id);
+    const idResult = ShareIdSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -46,15 +45,8 @@ export async function GET(
     }
 
     const isOwner = shareRows[0].owner_id === userId;
-    if (!isOwner) {
-      const collabRows = await sql`
-        SELECT 1 FROM collaborators
-        WHERE share_id = ${id} AND user_id = ${userId}
-          AND COALESCE(status, 'accepted') = 'accepted'
-      `;
-      if (collabRows.length === 0) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
+    if (!isOwner && !(await isAcceptedCollaborator(sql, id, userId))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Fetch the version snapshot with editor info

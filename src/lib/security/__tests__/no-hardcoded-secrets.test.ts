@@ -48,7 +48,7 @@ const PLACEHOLDER =
 /**
  * Rules are deliberately shape-specific. There is NO generic "long hex string" rule,
  * because that shape is not a credential in this repo and never can be trusted:
- *   - src/app/api/discord/route.ts:7 holds DISCORD_PUBLIC_KEY, a 64-hex Ed25519
+ *   - src/app/api/discord/route.ts holds DISCORD_PUBLIC_KEY, a 64-hex Ed25519
  *     *public* verification key. It is published by Discord, is meant to be in source,
  *     and is not a credential.
  *   - src/lib/data/__tests__/dex-subset.test.ts holds three 64-hex SHA-256 fixtures.

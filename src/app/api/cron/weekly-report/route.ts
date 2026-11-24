@@ -1,9 +1,9 @@
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db";
 import { postToBuildsChannel, COLORS } from "@/lib/discord-webhook";
+import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
+import { linearFetch } from "@/lib/linear";
 import { NextResponse } from "next/server";
-
-const LINEAR_API = "https://api.linear.app/graphql";
 
 // ── Linear Weekly Summary ────────────────────────────────────────────────────
 
@@ -15,14 +15,7 @@ async function runLinearDigest() {
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   async function query(q: string, variables?: Record<string, unknown>) {
-    const linearController = new AbortController();
-    const linearTimeout = setTimeout(() => linearController.abort(), 5000);
-    const res = await fetch(LINEAR_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: apiKey! },
-      body: JSON.stringify({ query: q, variables }),
-      signal: linearController.signal,
-    }).finally(() => clearTimeout(linearTimeout));
+    const res = await linearFetch(q, variables, 5000);
     return (await res.json()).data;
   }
 
@@ -52,7 +45,8 @@ async function runLinearDigest() {
       `**In Review (${review.length}):**\n${format(review)}`,
       `**In Progress (${wip.length}):**\n${format(wip)}`,
     ].join("\n\n");
-  } catch {
+  } catch (e) {
+    console.warn("[weekly-report] Linear digest failed:", e);
     return "Failed to fetch Linear data";
   }
 }
@@ -91,7 +85,8 @@ async function runGrowthDigest() {
       `Comments: **${ct}**${trend(ct, cl)}`,
       `Total reports: ${total.c}`,
     ].join("\n");
-  } catch {
+  } catch (e) {
+    console.warn("[weekly-report] Growth digest query failed:", e);
     return "Failed to query database";
   }
 }
@@ -111,11 +106,7 @@ async function runDependencyCheck() {
     for (const name of keyDeps) {
       if (!allDeps[name]) continue;
       try {
-        const npmController = new AbortController();
-        const npmTimeout = setTimeout(() => npmController.abort(), 5000);
-        const res = await fetch(`https://registry.npmjs.org/${name}/latest`, {
-          signal: npmController.signal,
-        }).finally(() => clearTimeout(npmTimeout));
+        const res = await fetchWithTimeout(`https://registry.npmjs.org/${name}/latest`, {}, 5000);
         if (!res.ok) continue;
         const data = await res.json();
         const current = allDeps[name].replace(/^[\^~]/, "");
@@ -128,7 +119,8 @@ async function runDependencyCheck() {
     return outdated.length > 0
       ? `**${outdated.length} updates:**\n${outdated.map((o) => `- ${o}`).join("\n")}`
       : "Key dependencies up to date";
-  } catch {
+  } catch (e) {
+    console.warn("[weekly-report] Dependency check failed:", e);
     return "Failed to check dependencies";
   }
 }

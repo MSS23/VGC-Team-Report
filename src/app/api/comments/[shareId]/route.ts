@@ -8,8 +8,8 @@ import { captureServerEvent } from "@/lib/posthog-server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse, after } from "next/server";
 import { z } from "zod";
-
-const SHARE_ID_RE = /^[a-zA-Z0-9_-]{6,16}$/;
+import { LOOSE_SHARE_ID_RE } from "@/lib/api/ids";
+import { readJsonBody } from "@/lib/api/json-body";
 
 const CommentBody = z.object({
   displayName: z.string().max(50).optional(),
@@ -23,7 +23,7 @@ export async function GET(
 ) {
   try {
     const { shareId } = await params;
-    if (!SHARE_ID_RE.test(shareId)) {
+    if (!LOOSE_SHARE_ID_RE.test(shareId)) {
       return NextResponse.json({ error: "Invalid share ID" }, { status: 400 });
     }
     const guard = await apiGuard(request, { rateLimit: { key: "comments-read", max: 60 } });
@@ -94,13 +94,15 @@ export async function POST(
 ) {
   try {
     const { shareId } = await params;
-    if (!SHARE_ID_RE.test(shareId)) {
+    if (!LOOSE_SHARE_ID_RE.test(shareId)) {
       return NextResponse.json({ error: "Invalid share ID" }, { status: 400 });
     }
     const guard = await apiGuard(request, { rateLimit: { key: "comments", max: 5 } });
     if (guard) return guard;
 
-    const raw = await request.json();
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const raw = json.body;
     const parsed = CommentBody.safeParse(raw);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid comment", details: parsed.error.flatten().fieldErrors }, { status: 400 });
