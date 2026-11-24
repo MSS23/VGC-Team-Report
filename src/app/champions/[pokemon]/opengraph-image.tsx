@@ -1,47 +1,9 @@
 import { ImageResponse } from "next/og";
+import { megaGuideSpriteUrl } from "./og-sprite";
 
 export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-
-// Mirrors the slug logic from src/lib/utils/sprite-slug.ts — duplicated here
-// because the edge runtime cannot import from @/lib (no Node.js modules, and
-// the import chain may pull in neon or other non-edge-compatible code).
-const SLUG_MAP: Record<string, string> = {
-  "ho-oh": "hooh", "type-null": "typenull", "mr-mime": "mrmime", "mr-rime": "mrrime",
-  "mime-jr": "mimejr", "jangmo-o": "jangmoo", "hakamo-o": "hakamoo", "kommo-o": "kommoo",
-  "tapu-koko": "tapukoko", "tapu-lele": "tapulele",
-  "tapu-bulu": "tapubulu", "tapu-fini": "tapufini",
-  "flutter-mane": "fluttermane", "iron-hands": "ironhands", "iron-bundle": "ironbundle",
-  "iron-valiant": "ironvaliant", "iron-moth": "ironmoth", "iron-thorns": "ironthorns",
-  "iron-jugulis": "ironjugulis", "iron-leaves": "ironleaves", "iron-boulder": "ironboulder",
-  "iron-crown": "ironcrown", "great-tusk": "greattusk", "brute-bonnet": "brutebonnet",
-  "scream-tail": "screamtail", "sandy-shocks": "sandyshocks", "slither-wing": "slitherwing",
-  "roaring-moon": "roaringmoon", "walking-wake": "walkingwake", "gouging-fire": "gougingfire",
-  "raging-bolt": "ragingbolt", "chien-pao": "chienpao", "chi-yu": "chiyu",
-  "ting-lu": "tinglu", "wo-chien": "wochien",
-  "urshifu-rapid-strike": "urshifu-rapidstrike",
-  "necrozma-dusk-mane": "necrozma-duskmane", "necrozma-dawn-wings": "necrozma-dawnwings",
-  "oricorio-pom-pom": "oricorio-pompom", "mr-mime-galar": "mrmime-galar",
-  "tauros-paldea-combat": "tauros-paldeacombat", "tauros-paldea-blaze": "tauros-paldeablaze",
-  "tauros-paldea-aqua": "tauros-paldeaaqua",
-  "bloodmoon-ursaluna": "ursaluna-bloodmoon",
-  "charizard-mega-x": "charizard-megax", "charizard-mega-y": "charizard-megay",
-  "mewtwo-mega-x": "mewtwo-megax", "mewtwo-mega-y": "mewtwo-megay",
-};
-
-function toSpriteSlug(species: string): string {
-  const slug = species
-    .toLowerCase()
-    .replace(/♂/g, "m")
-    .replace(/♀/g, "f")
-    .replace(/[éè]/g, "e")
-    .replace(/[''.:']/g, "")
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-  return SLUG_MAP[slug] ?? slug;
-}
 
 /** Convert a URL slug like "kangaskhan-mega" to a display name like "Kangaskhan-Mega". */
 function slugToDisplayName(slug: string): string {
@@ -58,9 +20,7 @@ export default async function Image({
 }) {
   const { pokemon } = await params;
   const displayName = slugToDisplayName(pokemon);
-  const spriteSlug = toSpriteSlug(pokemon);
-  const SPRITE_BASE = "https://play.pokemonshowdown.com/sprites/home";
-  const spriteUrl = `${SPRITE_BASE}/${spriteSlug}.png`;
+  const spriteUrl = megaGuideSpriteUrl(pokemon);
 
   return new ImageResponse(
     (

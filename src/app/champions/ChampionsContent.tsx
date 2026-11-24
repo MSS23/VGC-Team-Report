@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { usePostHog } from "@/components/providers/PostHogProvider";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 import { INDY_TOP_CUT } from "@/data/indy-top-cut";
+import { homeSpriteUrl } from "@/lib/utils/sprite-slug";
 
 import {
   CHAMPIONS_REG_MB_ONLY_MEGAS,
@@ -381,14 +382,13 @@ export function ChampionsContent() {
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1.5 items-center">
                         {entry.species.map((name) => {
-                          const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
                           return (
                             <span
                               key={name}
                               className="inline-flex items-center gap-1 text-[10px] font-bold text-text-secondary bg-surface-alt border border-border px-2 py-0.5 rounded-full"
                             >
                               <img
-                                src={`https://play.pokemonshowdown.com/sprites/home/${slug}.png`}
+                                src={homeSpriteUrl(name)}
                                 alt={name}
                                 width={20}
                                 height={20}

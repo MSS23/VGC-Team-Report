@@ -59,6 +59,11 @@ export const STATIC_ONLY_SLUGS = new Set<string>([
   "wochien",
 ]);
 
+/** Static HOME sprite URL for a species or form name. */
+export function homeSpriteUrl(species: string): string {
+  return `${BASE}/home/${resolveSlug(species)}.png`;
+}
+
 /** Ordered sprite URLs: animated GIF first, then static PNG fallbacks.
  *
  * No silent base-form fallback for Megas — pretending a base-form
