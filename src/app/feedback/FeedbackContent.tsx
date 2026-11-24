@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { I18nProvider } from "@/lib/i18n";
 
-import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { useRandomAccent } from "@/hooks/useRandomAccent";
 import { getSessionId } from "@/lib/utils/session-id";
 
 import { PageFooter } from "@/components/layout/PageFooter";
@@ -55,7 +55,7 @@ export function FeedbackContent() {
 
 function FeedbackInner() {
   const { isLoaded, isSignedIn } = useAuth();
-  useEffect(() => { applyRandomAccent(); }, []);
+  useRandomAccent();
 
   const [type, setType] = useState<string>("feature");
   const [title, setTitle] = useState("");

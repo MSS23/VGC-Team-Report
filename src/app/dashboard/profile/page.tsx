@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { I18nProvider } from "@/lib/i18n";
 
-import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { useRandomAccent } from "@/hooks/useRandomAccent";
 import { applyAccentTheme, ACCENT_THEMES } from "@/lib/accent-themes";
 import { Show, SignInButton } from "@clerk/nextjs";
 
@@ -157,7 +157,7 @@ function ProfilePreview({
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 function ProfileInner() {
-  useEffect(() => { applyRandomAccent(); }, []);
+  useRandomAccent();
 
   const [creatorName, setCreatorName] = useState("");
   const [clerkImageUrl, setClerkImageUrl] = useState<string | null>(null);

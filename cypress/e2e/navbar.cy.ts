@@ -1,12 +1,7 @@
 describe("Navbar", () => {
   beforeEach(() => {
+    // loadSampleTeam pre-marks the walkthrough as seen, so no overlay to dismiss.
     cy.loadSampleTeam();
-    // Dismiss walkthrough if it appears
-    cy.get("body").then(($body) => {
-      if ($body.text().includes("Skip tour") || $body.text().includes("Skip")) {
-        cy.contains("button", /skip/i).click({ force: true });
-      }
-    });
     cy.wait(300);
   });
 
@@ -22,36 +17,45 @@ describe("Navbar", () => {
     cy.get("[data-walkthrough='share-button']").should("be.visible").and("be.disabled");
   });
 
+  // Dark mode, editing and Present now live in the overflow menu (aria-label "Settings").
   it("shows dark mode toggle", () => {
-    cy.get("[role='switch']").should("be.visible");
+    cy.openSettingsMenu();
+    cy.get("[role='switch'][aria-label='Dark mode']").should("be.visible");
   });
 
   it("toggles dark mode", () => {
-    cy.get("[role='switch']").click();
-    cy.get("[data-dark-mode]").should("exist");
-    cy.get("[role='switch']").click();
-    cy.get("[data-dark-mode]").should("not.exist");
+    cy.openSettingsMenu();
+    cy.get("[role='switch'][aria-label='Dark mode']").click();
+    cy.get("html").should("have.attr", "data-dark-mode");
+    cy.get("[role='switch'][aria-label='Dark mode']").click();
+    cy.get("html").should("not.have.attr", "data-dark-mode");
   });
 
   it("shows creator mode toggle", () => {
-    cy.get("[data-walkthrough='creator-toggle']").should("be.visible");
+    cy.openSettingsMenu();
+    cy.contains("button", "Unlock Editing").should("be.visible");
   });
 
   it("toggles creator mode to show editing UI", () => {
-    cy.get("[data-walkthrough='creator-toggle'] button").click();
+    cy.openSettingsMenu();
+    cy.contains("button", "Unlock Editing").click();
     cy.get("[data-walkthrough='tournament-info']").should("be.visible");
-    cy.get("[data-walkthrough='creator-toggle'] button").click();
+    cy.openSettingsMenu();
+    cy.contains("button", "Lock Editing").click();
   });
 
   it("shows present button", () => {
-    cy.get("[data-walkthrough='present-button']").should("be.visible");
+    cy.openSettingsMenu();
+    cy.contains("button", /^\s*Present\s*$/).should("be.visible");
   });
 
   it("enters and exits presentation mode", () => {
-    cy.get("[data-walkthrough='present-button']").click();
-    cy.contains("button", "Exit").should("be.visible");
-    cy.contains("button", "Exit").click();
-    cy.get("[data-walkthrough='present-button']").should("be.visible");
+    cy.openSettingsMenu();
+    cy.contains("button", /^\s*Present\s*$/).click();
+    // A local draft's presentation exit is the "Edit" button (it also unlocks editing).
+    cy.contains("button", /^\s*Edit\s*$/).should("be.visible");
+    cy.contains("button", /^\s*Edit\s*$/).click();
+    cy.contains("button", "New Team").should("be.visible");
   });
 
   it("navigates back to paste input on New Team click", () => {

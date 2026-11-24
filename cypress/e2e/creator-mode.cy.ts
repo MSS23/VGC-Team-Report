@@ -1,15 +1,11 @@
 describe("Creator Mode", () => {
   beforeEach(() => {
+    // loadSampleTeam pre-marks the walkthrough as seen, so no overlay to dismiss.
     cy.loadSampleTeam();
-    // Dismiss walkthrough if it appears
-    cy.get("body").then(($body) => {
-      if ($body.text().includes("Skip tour") || $body.text().includes("Skip")) {
-        cy.contains("button", /skip/i).click({ force: true });
-      }
-    });
     cy.wait(300);
-    // Enable creator mode
-    cy.get("[data-walkthrough='creator-toggle'] button").click();
+    // Enable creator mode (now the "Unlock Editing" item in the navbar's Settings menu)
+    cy.openSettingsMenu();
+    cy.contains("button", "Unlock Editing").click();
     cy.wait(300);
   });
 
@@ -74,7 +70,8 @@ describe("Creator Mode", () => {
 
   describe("Pokemon Detail Editing", () => {
     beforeEach(() => {
-      cy.nextSlide();
+      // The slide after the overview is Common Modes now, so jump to a Pokemon by name.
+      cy.goToSlide("Incineroar");
       cy.wait(500);
     });
 
@@ -88,16 +85,21 @@ describe("Creator Mode", () => {
     });
   });
 
+  // The visibility toggle moved into the slide nav's "More slide options" popover.
   describe("Slide Visibility", () => {
+    beforeEach(() => {
+      cy.get("button[aria-label='More slide options']").click();
+    });
+
     it("shows visibility toggle in nav", () => {
-      cy.contains("Visible").should("be.visible");
+      cy.contains("Visible to viewers").should("be.visible");
     });
 
     it("can hide and show a slide", () => {
-      cy.contains("button", "Visible").click();
-      cy.contains("button", "Hidden").should("be.visible");
-      cy.contains("button", "Hidden").click();
-      cy.contains("button", "Visible").should("be.visible");
+      cy.contains("button", "Visible to viewers").click();
+      cy.contains("button", "Hidden from viewers").should("be.visible");
+      cy.contains("button", "Hidden from viewers").click();
+      cy.contains("button", "Visible to viewers").should("be.visible");
     });
   });
 });
