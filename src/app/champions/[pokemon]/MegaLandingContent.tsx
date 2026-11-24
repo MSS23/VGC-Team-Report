@@ -1,24 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 
-import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { useRandomAccent } from "@/hooks/useRandomAccent";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
-import { getSpriteUrls } from "@/lib/utils/sprite-slug";
+import { FallbackSprite } from "@/components/report/PokemonSprite";
+import { CHAMPIONS_TYPE_COLORS as TYPE_COLORS } from "@/components/champions/type-colors";
 import type { MegaPokemonEntry } from "@/lib/data/mega-pokemon";
 import type { StatSpread } from "@/lib/types/pokemon";
-
-const TYPE_COLORS: Record<string, string> = {
-  Normal: "#A8A878", Fire: "#F08030", Water: "#6890F0", Electric: "#F8D030",
-  Grass: "#78C850", Ice: "#98D8D8", Fighting: "#C03028", Poison: "#A040A0",
-  Ground: "#E0C068", Flying: "#A890F0", Psychic: "#F85888", Bug: "#A8B820",
-  Rock: "#B8A038", Ghost: "#705898", Dragon: "#7038F8", Dark: "#705848",
-  Steel: "#B8B8D0", Fairy: "#EE99AC",
-};
 
 const STAT_LABELS: { key: keyof StatSpread; label: string; color: string }[] = [
   { key: "hp", label: "HP", color: "#FF5959" },
@@ -45,23 +37,6 @@ function StatBar({ label, value, color, max = 230 }: { label: string; value: num
       </div>
       <span className="w-8 text-xs font-bold text-text-primary text-right">{value}</span>
     </div>
-  );
-}
-
-function MegaSprite({ species }: { species: string }) {
-  const urls = getSpriteUrls(species);
-  const [idx, setIdx] = useState(0);
-  return (
-    <img
-      src={urls[Math.min(idx, urls.length - 1)]}
-      alt={species}
-      width={120}
-      height={120}
-      loading="eager"
-      fetchPriority="high"
-      className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-lg"
-      onError={() => setIdx((i) => Math.min(i + 1, urls.length - 1))}
-    />
   );
 }
 
@@ -92,9 +67,7 @@ export function MegaLandingContent({
 }: MegaLandingContentProps) {
   const bst = Object.values(baseStats).reduce((a, b) => a + b, 0);
 
-  useEffect(() => {
-    applyRandomAccent();
-  }, []);
+  useRandomAccent();
 
   return (
     <>
@@ -115,7 +88,13 @@ export function MegaLandingContent({
               <div className="flex-shrink-0">
                 <div className="relative">
                   <div className="absolute inset-0 bg-accent/10 rounded-full blur-2xl" />
-                  <MegaSprite species={mega.dataKey} />
+                  <FallbackSprite
+                    species={mega.dataKey}
+                    size={120}
+                    className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-lg"
+                    loading="eager"
+                    fetchPriority="high"
+                  />
                 </div>
               </div>
 

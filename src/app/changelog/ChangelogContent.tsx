@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { I18nProvider } from "@/lib/i18n";
 
-import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { useRandomAccent } from "@/hooks/useRandomAccent";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 import type { ChangelogEntry, EntryType } from "./data";
@@ -57,9 +57,7 @@ export function ChangelogContent({ entries }: ChangelogContentProps) {
 }
 
 function ChangelogInner({ entries }: ChangelogContentProps) {
-  useEffect(() => {
-    applyRandomAccent();
-  }, []);
+  useRandomAccent();
 
   const [filter, setFilter] = useState<FilterType>("all");
   const [query, setQuery] = useState("");

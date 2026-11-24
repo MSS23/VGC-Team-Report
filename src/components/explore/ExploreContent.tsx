@@ -14,7 +14,7 @@ import { ExploreFilters } from "./ExploreFilters";
 import { SpotlightSection } from "./SpotlightCard";
 import { ReportCard, type ExploreReport } from "./ReportCard";
 import { ExploreEmpty } from "./ExploreEmpty";
-import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { useRandomAccent } from "@/hooks/useRandomAccent";
 import { useExploreUrlSync } from "@/hooks/useExploreUrlSync";
 
 export function ExploreContent() {
@@ -28,7 +28,8 @@ export function ExploreContent() {
 function ExploreInner() {
   const { t } = useTranslation();
   const posthog = usePostHog();
-  useEffect(() => { applyRandomAccent(); posthog?.capture("explore_visited"); }, [posthog]);
+  useRandomAccent(posthog);
+  useEffect(() => { posthog?.capture("explore_visited"); }, [posthog]);
 
   const [reports, setReports] = useState<ExploreReport[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
