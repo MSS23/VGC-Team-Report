@@ -5,6 +5,7 @@ import { captureServerEvent } from "@/lib/posthog-server";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { readJsonBody } from "@/lib/api/json-body";
 
 // Auto-REMOVE (a hard delete, not a hide) after this many unique flags.
 // Counted over signed-in flaggers only — see the note at the count query.
@@ -20,7 +21,9 @@ export async function POST(request: Request) {
     const guard = await apiGuard(request, { rateLimit: { key: "flag", max: 10 } });
     if (guard) return guard;
 
-    const raw = await request.json();
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const raw = json.body;
     const parsed = FlagBody.safeParse(raw);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });

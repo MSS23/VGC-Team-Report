@@ -1,8 +1,8 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { NextResponse } from "next/server";
+import { LOOSE_SHARE_ID_RE } from "@/lib/api/ids";
 
-const SHARE_ID_RE = /^[a-zA-Z0-9_-]{6,16}$/;
 const MAX_IDS = 60;
 
 /**
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     const sessionId = url.searchParams.get("sessionId") ?? "";
     const ids = (url.searchParams.get("ids") ?? "")
       .split(",")
-      .filter((id) => SHARE_ID_RE.test(id))
+      .filter((id) => LOOSE_SHARE_ID_RE.test(id))
       .slice(0, MAX_IDS);
 
     if (!sessionId || ids.length === 0) {

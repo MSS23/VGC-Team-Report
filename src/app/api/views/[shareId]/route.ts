@@ -7,8 +7,9 @@ import { after } from "next/server";
 import { getLogger, flushLogs } from "@/instrumentation";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { LOOSE_SHARE_ID_RE } from "@/lib/api/ids";
+import { readJsonBody } from "@/lib/api/json-body";
 
-const SHARE_ID_RE = /^[a-zA-Z0-9_-]{6,16}$/;
 const ViewBody = z.object({ sessionId: z.string().min(1) });
 
 export async function POST(
@@ -17,13 +18,15 @@ export async function POST(
 ) {
   try {
     const { shareId } = await params;
-    if (!SHARE_ID_RE.test(shareId)) {
+    if (!LOOSE_SHARE_ID_RE.test(shareId)) {
       return NextResponse.json({ error: "Invalid share ID" }, { status: 400 });
     }
     const guard = await apiGuard(request, { rateLimit: { key: "views", max: 60 } });
     if (guard) return guard;
 
-    const raw = await request.json();
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const raw = json.body;
     const parsed = ViewBody.safeParse(raw);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });

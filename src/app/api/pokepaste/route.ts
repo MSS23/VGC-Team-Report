@@ -1,5 +1,6 @@
 import { apiGuard } from "@/lib/security/api-guard";
 import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
+import { readJsonBody } from "@/lib/api/json-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -116,14 +117,10 @@ export async function POST(request: NextRequest) {
   const guard = await apiGuard(request, { rateLimit: { key: "pokepaste-create", max: 20 } });
   if (guard) return guard;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
+  const json = await readJsonBody(request);
+  if ("error" in json) return json.error;
 
-  const parsed = PokePasteCreateSchema.safeParse(body);
+  const parsed = PokePasteCreateSchema.safeParse(json.body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? "Invalid input" },
