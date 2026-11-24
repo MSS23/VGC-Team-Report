@@ -77,7 +77,7 @@ export async function POST(request: Request) {
 
     const json = await readJsonBody(request);
     if ("error" in json) return json.error;
-    // Shape is checked per action below; `delete` reads collectionId unvalidated.
+    // Shape is checked per action below.
     const raw = json.body as { action?: string; collectionId?: string };
     const action = raw.action;
     const sql = getDb();
@@ -143,8 +143,10 @@ export async function POST(request: Request) {
     }
 
     if (action === "delete") {
-      const collectionId = raw.collectionId;
-      if (!collectionId) return NextResponse.json({ error: "Missing collectionId" }, { status: 400 });
+      if (!raw.collectionId) return NextResponse.json({ error: "Missing collectionId" }, { status: 400 });
+      const parsedId = CollectionIdSchema.safeParse(raw.collectionId);
+      if (!parsedId.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+      const collectionId = parsedId.data;
       await sql`DELETE FROM collections WHERE id = ${collectionId} AND user_id = ${userId}`;
       captureServerEvent(userId, "collection_deleted", { collection_id: collectionId });
       return NextResponse.json({ deleted: true });

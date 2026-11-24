@@ -39,3 +39,35 @@ describe("POST /api/user/collections", () => {
     await expect(res.json()).resolves.toEqual({ error: "Failed" });
   });
 });
+
+describe("POST /api/user/collections delete (regression: unvalidated collectionId reached SQL)", () => {
+  it.each([
+    ["an object", { $ne: null }],
+    ["an array", ["abcdefghij"]],
+    ["a number", 1234567890],
+    ["the wrong length", "abc"],
+    ["illegal characters", "abcde-ghij"],
+  ])("rejects a collectionId that is %s without touching the DB", async (_label, collectionId) => {
+    const sql = vi.fn(async () => []);
+    vi.mocked(getDb).mockReturnValue(sql as never);
+    const res = await POST(req(JSON.stringify({ action: "delete", collectionId })));
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: "Invalid body" });
+    expect(sql).not.toHaveBeenCalled();
+  });
+
+  it("keeps the Missing collectionId response", async () => {
+    const res = await POST(req(JSON.stringify({ action: "delete" })));
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: "Missing collectionId" });
+  });
+
+  it("deletes a well-formed collection id, scoped to the owner", async () => {
+    const sql = vi.fn(async () => []);
+    vi.mocked(getDb).mockReturnValue(sql as never);
+    const res = await POST(req(JSON.stringify({ action: "delete", collectionId: "abcdefghij" })));
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ deleted: true });
+    expect(sql.mock.calls[0].slice(1)).toEqual(["abcdefghij", "user_1"]);
+  });
+});
