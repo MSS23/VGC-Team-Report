@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { apiGuard } from "@/lib/security/api-guard";
 
-export const runtime = "edge";
+// Node, not edge: fetches to play.pokemonshowdown.com from edge functions time out in production.
+export const runtime = "nodejs";
 
 const ALLOWED_HOSTS = new Set(["play.pokemonshowdown.com"]);
 const MAX_REDIRECTS = 3;
