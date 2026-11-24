@@ -1,29 +1,17 @@
 /**
  * Keyset-pagination cursors for the Explore feed.
  *
- * ──────────────────────────────────────────────────────────────────────────
- * VGC-295 IS ONLY HALF-FIXED. DO NOT ASSUME THE BUG IS GONE.
+ * VGC-295 (rows sharing a timestamp millisecond skipped or duplicated across
+ * a page boundary) is fixed in two halves:
  *
- * The bug: rows sharing a created_at/updated_at millisecond can be skipped
- * or returned twice across a page boundary, because
- * `src/app/api/explore/route.ts` compares a millisecond-truncated timestamp
- * in its WHERE clause while ORDER BY sorts the RAW column — so the filter
- * order and the sort order disagree on ties. The `popular` and `views`
- * branches are worse: they tuple-compare on (metric, created_at) with no id
- * tiebreaker at all, so tied rows have no total order.
+ *   - This module: every cursor carries a full `(timestamp, id)` pair.
+ *   - The SQL in `src/app/api/explore/route.ts` (the `popular`, `views` and
+ *     chronological branches of the feed query): WHERE and ORDER BY both use
+ *     `date_trunc('milliseconds', …)` and break ties on `s.id`, using
+ *     `parseMetricCursor().id` / `parseChronologicalCursor().id`.
  *
- * This module is the cursor half of the fix: every cursor now carries a
- * full `(timestamp, id)` pair, so the route *can* filter unambiguously.
- *
- * STILL OUTSTANDING: the SQL half. The WHERE/ORDER BY mismatch in
- * `route.ts` (~L194-195 popular, ~L208-209 views, ~L217-227 chronological)
- * is UNCHANGED and still mispaginates. The ticket gates that edit on an
- * `EXPLAIN` against a real database — Explore is a hot, cached path and
- * index behaviour matters, so it must not be a blind edit. No DATABASE_URL
- * was available when this landed. Whoever has a database next: run the
- * EXPLAIN, then make WHERE and ORDER BY agree on `(timestamp, id)` using
- * `parseMetricCursor().id` / `parseChronologicalCursor().id`.
- * ──────────────────────────────────────────────────────────────────────────
+ * Keep the two in step: a cursor field the route does not compare on, or a
+ * WHERE that truncates while ORDER BY does not, brings the bug back.
  *
  * Wire formats (all parsers stay tolerant of the older, shorter forms —
  * `route.ts` keys its response cache on the cursor STRING, so cursors in
