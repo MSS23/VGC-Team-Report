@@ -89,22 +89,22 @@ function calcSpeed(baseSpe: number, boostMultiplier: number, mod: Set<SpeedModif
 
 /** Calculate max speed at level 50 for a given base stat (31 IV, 252 EV, +nature) */
 function maxSpeed(baseSpe: number): number {
-  return Math.floor(((Math.floor(((2 * baseSpe + 31 + Math.floor(252 / 4)) * 50) / 100) + 5) * 1.1));
+  return calculateStat("spe", baseSpe, 31, 252, 50, "Jolly");
 }
 
 /** Calculate min speed at level 50 (0 IV, 0 EV, -nature) */
 function minSpeed(baseSpe: number): number {
-  return Math.floor(((Math.floor(((2 * baseSpe + 0) * 50) / 100) + 5) * 0.9));
+  return calculateStat("spe", baseSpe, 0, 0, 50, "Brave");
 }
 
 /** Champions max speed: 31 IV always, 32 SP, +nature */
 function championsMaxSpeed(baseSpe: number): number {
-  return Math.floor((Math.floor((2 * baseSpe + 31) * 50 / 100) + 5 + 32) * 1.1);
+  return calculateChampionsStat("spe", baseSpe, 32, "Jolly");
 }
 
 /** Champions min speed: 31 IV always, 0 SP, -nature */
 function championsMinSpeed(baseSpe: number): number {
-  return Math.floor((Math.floor((2 * baseSpe + 31) * 50 / 100) + 5) * 0.9);
+  return calculateChampionsStat("spe", baseSpe, 0, "Brave");
 }
 
 /** Modifier toggle pill for a specific side */

@@ -184,7 +184,6 @@ function EditableCalcEntry({
 }
 
 export function CollapsibleCalcGroup({
-  category,
   cfg,
   entries,
   globalCalcs,
@@ -195,7 +194,6 @@ export function CollapsibleCalcGroup({
   categories,
   translatedLabel,
 }: {
-  category: CalcCategory;
   cfg: CategoryCfg;
   entries: CalcEntry[];
   globalCalcs: CalcEntry[];

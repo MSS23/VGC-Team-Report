@@ -4,7 +4,7 @@ import { isChampionsFormat } from "@/lib/data/tags";
 import { convertToChampionsSp, CHAMPIONS_TOTAL_SP, CHAMPIONS_MAX_SP_PER_STAT } from "@/lib/analysis/stat-calculator";
 import { StatColorNote } from "../StatColorNote";
 import type { PokemonDetailModel } from "./usePokemonDetailModel";
-const STAT_COLORS: Record<string, string> = {
+export const STAT_COLORS: Record<string, string> = {
   hp: "var(--stat-hp)",
   atk: "var(--stat-atk)",
   def: "var(--stat-def)",
