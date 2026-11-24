@@ -9,7 +9,7 @@ import { useTranslation } from "@/lib/i18n";
 import { SpotlightCard } from "@/components/explore/SpotlightCard";
 import type { ExploreReport } from "@/components/explore/ReportCard";
 import { useRandomAccent } from "@/hooks/useRandomAccent";
-import { FallbackSprite } from "@/components/report/PokemonSprite";
+import { FallbackSprite } from "@/components/report/FallbackSprite";
 import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/utils/safe-storage";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
 import { QuickShare } from "./QuickShare";

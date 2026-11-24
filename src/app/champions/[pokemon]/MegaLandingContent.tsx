@@ -7,7 +7,7 @@ import { useRandomAccent } from "@/hooks/useRandomAccent";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
-import { FallbackSprite } from "@/components/report/PokemonSprite";
+import { FallbackSprite } from "@/components/report/FallbackSprite";
 import { CHAMPIONS_TYPE_COLORS as TYPE_COLORS } from "@/components/champions/type-colors";
 import type { MegaPokemonEntry } from "@/lib/data/mega-pokemon";
 import type { StatSpread } from "@/lib/types/pokemon";

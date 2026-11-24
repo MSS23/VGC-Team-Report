@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { relativeTime } from "@/lib/utils/relative-time";
-import { FallbackSprite } from "@/components/report/PokemonSprite";
+import { FallbackSprite } from "@/components/report/FallbackSprite";
 import type { ExploreReport } from "./ReportCard";
 
 // (reaction emojis removed — using unified like system)

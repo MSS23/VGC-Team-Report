@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import type { ParsedPokemon } from "@/lib/types/pokemon";
 import { teamToOpenSheet } from "@/lib/utils/export-paste";
 import { resolveSlug } from "@/lib/utils/sprite-slug";
-import { FallbackSprite } from "@/components/report/PokemonSprite";
+import { FallbackSprite } from "@/components/report/FallbackSprite";
 import { getHtml2Canvas } from "@/lib/dynamic-imports/html2canvas";
 import { useTranslation } from "@/lib/i18n";
 import type { LanguageCode } from "@/lib/i18n";

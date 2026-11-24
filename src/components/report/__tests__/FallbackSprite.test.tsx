@@ -2,7 +2,7 @@
 import { act, createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it } from "vitest";
-import { FallbackSprite } from "../PokemonSprite";
+import { FallbackSprite } from "../FallbackSprite";
 import { getSpriteUrls } from "@/lib/utils/sprite-slug";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

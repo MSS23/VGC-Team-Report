@@ -6,7 +6,7 @@ import { useAuth, useUser, SignInButton } from "@clerk/nextjs";
 import { useSessionId } from "@/hooks/useSessionId";
 import { useTranslation } from "@/lib/i18n";
 import { relativeTime } from "@/lib/utils/relative-time";
-import { FallbackSprite } from "@/components/report/PokemonSprite";
+import { FallbackSprite } from "@/components/report/FallbackSprite";
 
 export interface ExploreReport {
   id: string;
