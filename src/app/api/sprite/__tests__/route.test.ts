@@ -37,7 +37,7 @@ describe("GET /api/sprite", () => {
     vi.mocked(apiGuard).mockResolvedValue(NextResponse.json({ error: "Too many requests" }, { status: 429 }));
     const res = await GET(req(SPRITE));
     expect(res.status).toBe(429);
-    expect(apiGuard).toHaveBeenCalledWith(expect.anything(), { rateLimit: { key: "sprite", max: 120 } });
+    expect(apiGuard).toHaveBeenCalledWith(expect.anything(), { rateLimit: { key: "sprite", max: 600 } });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -52,6 +52,9 @@ describe("GET /api/sprite", () => {
     ["another host", "https://evil.example/sprites/home/x.png", "Host not allowed"],
     ["a path outside /sprites/", "https://play.pokemonshowdown.com/action.php", "Path not allowed"],
     ["a traversal out of /sprites/", "https://play.pokemonshowdown.com/sprites/../action.php", "Path not allowed"],
+    ["an encoded traversal", "https://play.pokemonshowdown.com/sprites/..%2Faction.php", "Path not allowed"],
+    ["another port on the allowed host", "https://play.pokemonshowdown.com:8443/sprites/home/x.png", "Host not allowed"],
+    ["the allowed host as userinfo", "https://play.pokemonshowdown.com@evil.example/sprites/home/x.png", "Host not allowed"],
   ])("rejects %s", async (_label, url, message) => {
     const res = await GET(req(url));
     expect(res.status).toBe(400);
@@ -71,7 +74,9 @@ describe("GET /api/sprite", () => {
 
   it.each([
     ["another host", "https://evil.example/sprites/home/x.png"],
-    ["an internal address", "http://169.254.169.254/latest/meta-data/"],
+    ["an internal address", "https://169.254.169.254/sprites/meta-data"],
+    ["plain http on the allowed host", "http://play.pokemonshowdown.com/sprites/home/x.png"],
+    ["an unparseable location", "https://["],
     ["a path outside /sprites/", "https://play.pokemonshowdown.com/action.php"],
   ])("does not follow a redirect to %s", async (_label, location) => {
     fetchMock.mockResolvedValueOnce(redirect(location));
@@ -111,11 +116,19 @@ describe("GET /api/sprite", () => {
     await expect(res.text()).resolves.toBe("Sprite too large");
   });
 
-  it("does not serve a non-image from our origin", async () => {
-    fetchMock.mockResolvedValue(new Response("<script>1</script>", { status: 200, headers: { "content-type": "text/html" } }));
+  it.each([
+    ["HTML", "text/html"],
+    ["an SVG, which can carry script", "image/svg+xml"],
+  ])("does not serve %s from our origin", async (_label, type) => {
+    fetchMock.mockResolvedValue(new Response("<script>1</script>", { status: 200, headers: { "content-type": type } }));
     const res = await GET(req(SPRITE));
     expect(res.status).toBe(502);
     await expect(res.text()).resolves.toBe("Upstream is not an image");
+  });
+
+  it("accepts a content type with parameters", async () => {
+    fetchMock.mockResolvedValue(png(4, { "content-type": "image/gif; charset=binary" }));
+    expect((await GET(req(SPRITE))).status).toBe(200);
   });
 
   it("keeps the existing 400 for a missing or unparseable url", async () => {
