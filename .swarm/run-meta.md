@@ -1,59 +1,49 @@
-# Swarm run meta — 02-11-26
+# Swarm run meta — Mon Nov  9 00:12:00 GMT 2026
 
-- Branch: `swarm-nightly-2026-11-02` (cut fresh from `origin/main` @ 10dfd74)
-- REMOTE_EXISTS at start: **0** — branch did not exist on origin. Fresh history until first push.
-- Existing open PR for this branch at start: **none**
-- AHEAD=0 BEHIND=0 vs origin/main at run start. Working tree clean.
-- Linear: ✅ LINEAR_API_KEY present. Discord: ✅ DISCORD_BUILDS_WEBHOOK present.
-- PostHog: ❌ no POSTHOG_API_KEY / POSTHOG_PROJECT_ID, and app.posthog.com is egress-blocked.
-- Vercel: ❌ no VERCEL_TOKEN and no Vercel MCP — deployment/env/log checks impossible.
+- Branch: swarm-nightly-2026-11-09
+- REMOTE_EXISTS at start: 0 (fresh branch cut from origin/main @ 10dfd74)
+- Mode: fresh branch, never pushed yet (rebase allowed until first push)
+- Existing PR for branch: none
+- PostHog: credentials ABSENT (POSTHOG_API_KEY/POSTHOG_PROJECT_ID unset) -> integration SKIPPED for whole run per CLAUDE.md preflight rule
+- Vercel: VERCEL_TOKEN unset and no Vercel MCP server attached -> Vercel checks SKIPPED for whole run
+- Linear: LINEAR_API_KEY present
+- Discord: DISCORD_BUILDS_WEBHOOK present
 
-## Egress policy finding (drives Wave 1 sizing)
+## Run outcome — 09-11-26
 
-The agent proxy gateway answers **403 to CONNECT** for every host outside a narrow
-allowlist. Probed and denied: `www.reddit.com`, `app.posthog.com`, `pikalytics.com`,
-and even `pokemonvgcteamreport.com` (our own production site). Reachable:
-`api.linear.app`, `registry.npmjs.org`, GitHub via the preconfigured `gh` CLI.
+- Branch: `swarm-nightly-2026-11-09`, cut fresh from `origin/main` @ `10dfd74`.
+- Pushes to `main`: **zero**. Every push used the guarded explicit refspec
+  `git push origin "$BRANCH:refs/heads/$BRANCH"`.
+- Clone was **shallow** (78 commits) at start; `git fetch --unshallow` brought it to 834.
+  This materially changed two conclusions — see `.swarm/conflicts.md`.
 
-Consequence: Wave 1 research agents R1, R2, R3, R4, R5 and R7 (competitor teardowns,
-Reddit/Twitter sentiment, mobile-UX benchmarking, AEO/GEO citation scan) **cannot
-reach any of their data sources**. Running them would have produced recollection
-dressed as research, and filed Backlog tickets on top of a board that already holds
-63 `auto-research` items. They were deliberately NOT dispatched.
+### Subagents dispatched: 11 of the 25 cap
 
-The budget was reallocated to implementation, consistent with the run's stated
-priority (GOAL A — drain the board — above GOAL B — compound it). This is tracked
-by existing P1 ticket **VGC-255** ("Swarm container egress policy blocks every
-external data source").
+Research/audit (7): C1 dead code, C2 TypeScript, C3 bundle/perf, C4 security,
+C5 commit review, R8 accessibility, R6 SEO (repository-only).
+Implementation (4): VGC-291, VGC-226 (redirected to VGC-260), VGC-261, dead-code apply.
 
-## Board state at run start
+**Not dispatched (6): R1, R2, R3, R4, R5, R7** — all require external web access, and
+egress is blocked (`000` on every host). Reasoning in `.swarm/egress-check-09-11-26.md`.
+The remaining budget was deliberately left unspent rather than used to generate volume:
+three of the four tickets dispatched turned out to be already complete, so more
+implementation agents would mostly have added unreviewable work to a queue that already
+has 38 finished tickets waiting.
 
-- 129 open issues: 71 Backlog, 56 In Review, 1 Todo, 1 Duplicate.
-- **0 open Bug-labelled tickets in Backlog/Todo. 0 In Progress.**
-- 22 Backlog/Todo tickets carry `no-claude` and are non-bugs → skipped entirely.
-- 56 tickets sit In Review from prior runs while `origin` holds only `main`
-  (every prior nightly branch has been merged and deleted). Those tickets are
-  almost certainly shipped but were never moved to Done. Per the status-integrity
-  guardrail the swarm does NOT move them; this is the human transition, and it is
-  what P1 ticket **VGC-265** is about.
+### Commit order note
 
-## Wave 1 dispatched (7 agents)
+The `.swarm/` notes commit is placed **before** the changelog commit, not after. CLAUDE.md
+warns that Vercel's Ignored Build Step diffs only the push's tip commit and excludes
+`*.md`, so a tip carrying only `.swarm/*.md` would cancel the whole preview build. The
+changelog (`src/app/changelog/data.ts`) is therefore the tip.
 
-C1 dead code · C2 TypeScript strictness · C3 bundle/perf · C4 security ·
-C5 last-20-commit review · R6 SEO (repo-only, live site unreachable) ·
-R8 accessibility (static analysis).
+### Integrations
 
-## History state change — 02-11-26 00:20 UTC
-
-The branch was pushed early (commit `f73802c`, pre-flight notes) to satisfy the
-repository's stop-hook check that no uncommitted work is left sitting locally.
-
-**`swarm-nightly-2026-11-02` is therefore PUBLISHED from this point on.** For the
-remainder of the run: bring in `origin/main` with `git merge` only. No rebase, no
-`--force`, no `--force-with-lease`, per the run's history guardrail.
-
-## Linear issue-creation BLOCKED (see linear-issue-limit-02-11-26.md)
-
-`activeIssueCount` free-plan cap reached. VGC-330 filed; 10 further tickets
-written to `.swarm/unfiled-ticket-bodies/02-11-26-*.md` instead. Comments and
-status transitions are unaffected and were used normally.
+| Integration | State |
+|---|---|
+| Linear reads | working (GraphQL, 130 open issues pulled) |
+| Linear **writes** | **BLOCKED** — see `.swarm/linear-pending-09-11-26.md` §Why |
+| Discord | `DISCORD_BUILDS_WEBHOOK` present; send attempted at end of run |
+| PostHog | SKIPPED all run — credentials absent (VGC-220) |
+| Vercel | SKIPPED all run — no token, no MCP |
+| Egress | BLOCKED except api.github.com, api.linear.app, registry.npmjs.org |

@@ -177,7 +177,6 @@ export function PokemonCard({ pokemon, creatorMode, role, onRoleChange, isReadOn
   const displayStats = championsStats
     ?? (showMega ? megaStats : baseFormStats)
     ?? calculatedStats;
-  const displayData = showMega ? megaData : effectiveBaseData;
   // Sprite uses data key for mega form (e.g. "kangaskhan-mega"); for base
   // it uses the resolved base species name so already-Mega cards flip to
   // the real base sprite, not the mega slug.

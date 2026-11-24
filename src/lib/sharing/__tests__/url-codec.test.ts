@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import zlib from "node:zlib";
 

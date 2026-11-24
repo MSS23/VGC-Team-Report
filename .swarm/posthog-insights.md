@@ -1,26 +1,30 @@
-# PostHog data pull — 02-11-26
+# PostHog insights — 09-11-26
 
-**Status: ❌ UNAVAILABLE. No data pulled. Run continued as instructed.**
+## STATUS: SKIPPED (credentials absent)
 
-Two independent blockers:
+`POSTHOG_API_KEY` and `POSTHOG_PROJECT_ID` are both unset in this container. There is
+no `.env.local` in the clone (it is gitignored and not provisioned), so there is no
+fallback source.
 
-1. **Credentials absent.** Neither `POSTHOG_API_KEY` nor `POSTHOG_PROJECT_ID` is
-   present in the container environment. The container injects only
-   `LINEAR_API_KEY` and `DISCORD_BUILDS_WEBHOOK`.
-2. **Egress blocked.** `app.posthog.com:443` is refused by the agent proxy gateway
-   with `403 to CONNECT (policy denial)`. Even with credentials the API would be
-   unreachable from this container.
+Per the CLAUDE.md swarm rule — "If the preflight reports an integration missing, skip
+it for the whole run and say so in the report — do not retry it" — PostHog was skipped
+for the entire run. No API calls were attempted.
 
-Therefore, for this run:
-- No error-event ranking, rage-click list, funnel drop-off, route popularity or
-  survey data was available.
-- No PostHog context could be passed to R3/R5/C4/C5 (the agents that would have
-  consumed it).
-- No `posthog-signal` Bug tickets were filed, because filing them would require
-  inventing the event names and counts. Zero is the honest number here.
-- Wave 2 prioritisation fell back to Linear priority + age + code-level evidence
-  from the C1–C5 audits.
+## Consequences for this run
 
-Already tracked by existing P3 ticket **VGC-220** ("[INFRA] Populate
-POSTHOG_API_KEY + DISCORD_WEBHOOK_URL in swarm container so future runs can
-cross-reference analytics").
+- No error-event, rage-click, dead-click, funnel drop-off, or route-popularity data.
+- Wave 1 agents that were specified to cross-reference PostHog (C4, C5, and the UX
+  research agents) ran without it.
+- No `posthog-signal` Bug tickets could be filed, and no PostHog-based priority
+  elevation was applied.
+- `posthog_signal` is therefore `false` for every ticket considered tonight — absence
+  of evidence, not evidence of absence.
+
+## Already ticketed
+
+VGC-220 (P3, Backlog) — "[INFRA] Populate POSTHOG_API_KEY + DISCORD_WEBHOOK_URL in
+swarm container". This is the third consecutive run to hit it. A comment was added to
+that ticket tonight confirming it is still unresolved.
+
+Note: `DISCORD_BUILDS_WEBHOOK` *is* present this run, so the Discord half of VGC-220
+is satisfied under that variable name; only the PostHog half remains.

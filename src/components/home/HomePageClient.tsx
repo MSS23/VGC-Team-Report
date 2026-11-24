@@ -5,7 +5,6 @@ import { LimitlessImport } from "@/components/input/LimitlessImport";
 import { type ReactNode, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useHomePage } from "@/hooks/useHomePage";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { CHAMPIONS_SAMPLE_TEAMS } from "@/data/champions-sample-teams";
@@ -51,7 +50,7 @@ import { createPokePaste } from "@/lib/utils/pokepaste";
 import { replacePokemonSpecies, replacePokemonSpread } from "@/lib/utils/paste-edit";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { VersionDiffProvider } from "@/lib/contexts/VersionDiffContext";
-import { computeVersionDiff, summarizeChangedFields, getNavigableChanges, type VersionDiff, type DiffChange } from "@/lib/utils/version-diff";
+import { computeVersionDiff, getNavigableChanges, type VersionDiff, type DiffChange } from "@/lib/utils/version-diff";
 const DiffNavigator = dynamic(() => import("@/components/ui/DiffNavigator").then(m => ({ default: m.DiffNavigator })));
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import { usePostHog } from "@/components/providers/PostHogProvider";
@@ -155,7 +154,6 @@ export default function HomePageClient({ sprites, steps, feedback }: { sprites: 
     setTags,
     privateFields,
     setPrivateFields,
-    megaStates,
     toggleMega,
     globalMegaDefault,
     setGlobalMegaDefaultAndReset,

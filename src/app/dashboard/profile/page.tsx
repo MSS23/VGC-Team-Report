@@ -6,7 +6,7 @@ import { I18nProvider } from "@/lib/i18n";
 
 import { applyRandomAccent } from "@/lib/utils/random-accent";
 import { applyAccentTheme, ACCENT_THEMES } from "@/lib/accent-themes";
-import { UserButton, Show, SignInButton } from "@clerk/nextjs";
+import { Show, SignInButton } from "@clerk/nextjs";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ThemePicker } from "@/components/ui/ThemePicker";

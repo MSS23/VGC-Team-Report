@@ -10,7 +10,7 @@ import { I18nProvider, useTranslation } from "@/lib/i18n";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ExploreHero } from "./ExploreHero";
-import { ExploreFilters, type SearchCategory } from "./ExploreFilters";
+import { ExploreFilters } from "./ExploreFilters";
 import { SpotlightSection } from "./SpotlightCard";
 import { ReportCard, type ExploreReport } from "./ReportCard";
 import { ExploreEmpty } from "./ExploreEmpty";
