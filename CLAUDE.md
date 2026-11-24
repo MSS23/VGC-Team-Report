@@ -92,3 +92,17 @@ For genuine prod breakage: `git revert <commit>`, treat the user's "revert it" a
 - VGC is always level 50 — ignore pasted Level lines.
 - New logic in `src/lib/` gets a vitest test beside it (`__tests__/`); regressions get a test that names the bug.
 - `AGENTS.md` (for Codex/other agents) is a pointer to this file — don't duplicate content there.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in this repo's GitHub Issues via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
