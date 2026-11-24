@@ -54,7 +54,7 @@ describe("PersistentNavbar static prerendering", () => {
     const source = readFileSync(
       path.resolve(__dirname, "../PersistentNavbar.tsx"),
       "utf-8",
-    );
+    ).replace(/\r\n/g, "\n"); // Windows checkouts (autocrlf) would defeat the "\n}\n" slice below
     const body = source.slice(source.indexOf("export function PersistentNavbar"));
     const topLevel = body
       .slice(0, body.indexOf("\n}\n"))
