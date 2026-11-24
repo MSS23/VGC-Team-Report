@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { readJsonBody } from "@/lib/api/json-body";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -83,7 +84,9 @@ export async function PATCH(request: Request) {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const rawBody = await request.json();
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const rawBody = json.body;
     const patchSchema = z.object({
       markAllRead: z.boolean().optional(),
       ids: z.array(z.number().int().positive()).min(1).max(100).optional(),

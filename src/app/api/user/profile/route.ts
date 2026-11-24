@@ -1,4 +1,6 @@
 import { getDb } from "@/lib/db";
+import { clerkDisplayName } from "@/lib/api/display-name";
+import { readJsonBody } from "@/lib/api/json-body";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { apiGuard } from "@/lib/security/api-guard";
 import { currentUser } from "@clerk/nextjs/server";
@@ -33,9 +35,7 @@ export async function GET(request: Request) {
     const user = await currentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const creatorName = user.firstName
-      ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-      : user.username || "Unknown";
+    const creatorName = clerkDisplayName(user, "Unknown", { emptyUsernameFallsBack: true });
 
     const sql = getDb();
     // VGC-253: `name` is stored at the user's own casing but matched case
@@ -78,12 +78,11 @@ export async function PUT(request: Request) {
     const user = await currentUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const creatorName = user.firstName
-      ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-      : user.username || "Unknown";
+    const creatorName = clerkDisplayName(user, "Unknown", { emptyUsernameFallsBack: true });
 
-    const raw = await request.json();
-    const parsed = ProfileBody.safeParse(raw);
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const parsed = ProfileBody.safeParse(json.body);
     if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
     const { bio, twitter, discord, youtube, isPublic, accentTheme, avatarUrl } = parsed.data;

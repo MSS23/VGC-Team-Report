@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { readJsonBody } from "@/lib/api/json-body";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
@@ -44,8 +45,9 @@ export async function POST(request: Request) {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const raw = await request.json();
-    const parsed = FollowBody.safeParse(raw);
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const parsed = FollowBody.safeParse(json.body);
     if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
     const sql = getDb();
@@ -71,8 +73,9 @@ export async function DELETE(request: Request) {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const raw = await request.json();
-    const parsed = FollowBody.safeParse(raw);
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const parsed = FollowBody.safeParse(json.body);
     if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
     const sql = getDb();

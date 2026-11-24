@@ -1,5 +1,7 @@
 import { getDb } from "@/lib/db";
 import { extractSpecies } from "@/lib/utils/extract-species";
+import { generateAlphanumericId, generateEditToken } from "@/lib/api/ids";
+import { readJsonBody } from "@/lib/api/json-body";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
@@ -15,19 +17,6 @@ const DraftBodySchema = z.object({
   state: ShareableStateSchema,
   draftId: z.string().optional(),
 });
-
-function generateId(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const bytes = new Uint8Array(8);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => chars[b % chars.length]).join("");
-}
-
-function generateEditToken(): string {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 /** GET /api/user/drafts — list user's draft reports */
 export async function GET(request: NextRequest) {
@@ -104,8 +93,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const raw = await request.json();
-    const parsed = DraftBodySchema.safeParse(raw);
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const parsed = DraftBodySchema.safeParse(json.body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }
@@ -134,7 +124,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new draft
-    const id = generateId();
+    const id = generateAlphanumericId(8);
     const editToken = generateEditToken();
 
     await sql`
@@ -160,7 +150,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { draftId } = await request.json();
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const { draftId } = json.body as { draftId?: string };
     if (!draftId) {
       return NextResponse.json({ error: "Missing draftId" }, { status: 400 });
     }

@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
-import { extractSpecies } from "@/lib/utils/extract-species";
+import { reportSummaryFields } from "@/lib/api/report-summary";
+import { readJsonBody } from "@/lib/api/json-body";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
@@ -37,20 +38,12 @@ export async function GET(request: Request) {
       LIMIT 100
     `;
 
-    const reports = rows.map((row) => {
-      const data = row.data as Record<string, unknown>;
-      const paste = (data.paste as string) ?? "";
-      return {
-        id: row.id as string,
-        species: extractSpecies(paste),
-        tournamentName: (data.tournamentName as string) || undefined,
-        creatorName: (data.creatorName as string) || undefined,
-        placement: (data.placement as string) || undefined,
-        createdAt: (row.created_at as Date).toISOString(),
-        updatedAt: (row.updated_at as Date).toISOString(),
-        viewCount: row.view_count as number,
-      };
-    });
+    const reports = rows.map((row) => ({
+      ...reportSummaryFields(row),
+      createdAt: (row.created_at as Date).toISOString(),
+      updatedAt: (row.updated_at as Date).toISOString(),
+      viewCount: row.view_count as number,
+    }));
 
     return NextResponse.json({ reports });
   } catch (e) {
@@ -72,8 +65,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const raw = await request.json();
-    const parsed = SaveBody.safeParse(raw);
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const parsed = SaveBody.safeParse(json.body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }
@@ -125,8 +119,9 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const raw = await request.json();
-    const parsed = SaveBody.safeParse(raw);
+    const json = await readJsonBody(request);
+    if ("error" in json) return json.error;
+    const parsed = SaveBody.safeParse(json.body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }

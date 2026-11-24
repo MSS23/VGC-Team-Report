@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { extractSpecies } from "@/lib/utils/extract-species";
+import { reportSummaryFields } from "@/lib/api/report-summary";
 import { getPostHogServer } from "@/lib/posthog-server";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth } from "@clerk/nextjs/server";
@@ -124,20 +124,12 @@ export async function GET(request: Request) {
     const [saveTotals] = saveTotalsRows;
     const [followerCount] = followerCountRows;
 
-    const formatReport = (row: Record<string, unknown>) => {
-      const data = row.data as Record<string, unknown>;
-      const paste = (data.paste as string) ?? "";
-      return {
-        id: row.id as string,
-        species: extractSpecies(paste),
-        tournamentName: (data.tournamentName as string) || undefined,
-        creatorName: (data.creatorName as string) || undefined,
-        placement: (data.placement as string) || undefined,
-        viewCount: row.view_count as number,
-        isPublic: row.is_public as boolean,
-        createdAt: (row.created_at as Date).toISOString(),
-      };
-    };
+    const formatReport = (row: Record<string, unknown>) => ({
+      ...reportSummaryFields(row),
+      viewCount: row.view_count as number,
+      isPublic: row.is_public as boolean,
+      createdAt: (row.created_at as Date).toISOString(),
+    });
 
     // Enrich PostHog user profile with latest stats (fire-and-forget)
     const ph = getPostHogServer();

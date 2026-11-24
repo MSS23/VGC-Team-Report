@@ -1,3 +1,4 @@
+import { clerkDisplayName } from "@/lib/api/display-name";
 import { apiGuard } from "@/lib/security/api-guard";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -27,9 +28,7 @@ export async function GET(request: Request) {
       .filter((u) => u.id !== userId) // Exclude self
       .map((u) => ({
         id: u.id,
-        name: u.firstName
-          ? `${u.firstName}${u.lastName ? ` ${u.lastName}` : ""}`
-          : u.username ?? "Unknown",
+        name: clerkDisplayName(u, "Unknown"),
         imageUrl: u.imageUrl,
       }));
 
