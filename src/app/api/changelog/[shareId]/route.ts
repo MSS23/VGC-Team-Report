@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { hasEditorAccess } from "@/lib/collaboration-access";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -24,19 +25,7 @@ export async function GET(
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const accessRows = await sql`
-      SELECT 1 FROM shares s
-      WHERE s.id = ${shareId} AND s.deleted_at IS NULL
-        AND (
-          s.owner_id = ${userId}
-          OR EXISTS (
-            SELECT 1 FROM collaborators c
-            WHERE c.share_id = s.id AND c.user_id = ${userId}
-              AND COALESCE(c.status, 'accepted') = 'accepted'
-          )
-        )
-    `;
-    if (accessRows.length === 0) {
+    if (!(await hasEditorAccess(sql, shareId, userId))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

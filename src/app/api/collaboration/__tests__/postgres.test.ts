@@ -25,9 +25,26 @@ beforeEach(async () => {
   await db.exec("TRUNCATE shares, collaborators, collaboration_presence, collaboration_comments RESTART IDENTITY");
   await db.query("INSERT INTO shares(id,owner_id,edit_token,data) VALUES ('abcd1234','owner','token',$1)", [JSON.stringify(state)]);
   vi.mocked(auth).mockResolvedValue({ userId: "owner" } as never);
-  vi.mocked(getDb).mockReturnValue((async (strings: TemplateStringsArray, ...values: unknown[]) => {
-    const query = strings.reduce((sql, fragment, i) => sql + (i ? `$${i}` : "") + fragment, "");
-    return (await db.query(query, values)).rows;
+  // Lazy like Neon's client: a query runs only when awaited, so a nested
+  // fragment (e.g. weightedSearchVector) is inlined into its parent instead.
+  type Fragment = { strings: TemplateStringsArray; values: unknown[] };
+  const compile = (f: Fragment, params: unknown[]): string => f.strings.reduce((sql, text, i) => {
+    if (i === 0) return text;
+    const v = f.values[i - 1];
+    if (v && typeof v === "object" && "strings" in v) return sql + compile(v as Fragment, params) + text;
+    params.push(v);
+    return sql + `$${params.length}` + text;
+  }, "");
+  vi.mocked(getDb).mockReturnValue(((strings: TemplateStringsArray, ...values: unknown[]) => {
+    const fragment: Fragment & PromiseLike<unknown[]> = {
+      strings, values,
+      then(resolve, reject) {
+        const params: unknown[] = [];
+        const query = compile(fragment, params);
+        return db.query(query, params).then((r) => r.rows).then(resolve, reject);
+      },
+    };
+    return fragment;
   }) as never);
 });
 afterAll(async () => { await db.close(); });

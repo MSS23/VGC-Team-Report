@@ -7,11 +7,10 @@ import { extractSpecies } from "@/lib/utils/extract-species";
 // @/lib/sharing/redact-paste so the share GET, the team graphic and the fork
 // route all honour the creator's hidden fields through one call shape.
 import { applyPrivateFieldRedaction } from "@/lib/sharing/redact-paste";
+import { ShareIdSchema } from "@/lib/api/ids";
+import { isAcceptedCollaborator } from "@/lib/collaboration-access";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
 
 type ForkedFromMeta = {
   id: string;
@@ -97,7 +96,7 @@ export async function GET(
     if (guard) return guard;
 
     const { id: rawId } = await params;
-    const idResult = IdSchema.safeParse(rawId);
+    const idResult = ShareIdSchema.safeParse(rawId);
     if (!idResult.success) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -134,11 +133,7 @@ export async function GET(
         const isOwner = ownerRows[0].owner_id === userId;
         let isCollaborator = false;
         if (!isOwner) {
-          const collabRows = await sql`
-            SELECT 1 FROM collaborators WHERE share_id = ${id} AND user_id = ${userId}
-              AND COALESCE(status, 'accepted') = 'accepted'
-          `;
-          isCollaborator = collabRows.length > 0;
+          isCollaborator = await isAcceptedCollaborator(sql, id, userId);
         }
 
         if (isOwner || isCollaborator) {

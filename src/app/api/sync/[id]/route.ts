@@ -1,11 +1,10 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
+import { ShareIdSchema } from "@/lib/api/ids";
+import { hasEditorAccess } from "@/lib/collaboration-access";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-const IdSchema = z.string().regex(/^[A-Za-z0-9]{8}$/, "Invalid share ID");
 
 // Cap each SSE stream. The client's EventSource reconnects automatically
 // (with ?since=version, so nothing is missed) — without a cap, a tab left
@@ -30,7 +29,7 @@ export async function GET(
   if (guard) return guard;
 
   const { id: rawId } = await params;
-  const idResult = IdSchema.safeParse(rawId);
+  const idResult = ShareIdSchema.safeParse(rawId);
   if (!idResult.success) {
     return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   }
@@ -47,19 +46,7 @@ export async function GET(
   // Presence and full-state sync are available only to the owner or an
   // accepted account collaborator. URL tokens are never authorization.
   const sql = getDb();
-  const authRows = await sql`
-    SELECT 1 FROM shares s
-    WHERE s.id = ${shareId} AND s.deleted_at IS NULL
-      AND (
-        s.owner_id = ${userId}
-        OR EXISTS (
-          SELECT 1 FROM collaborators c
-          WHERE c.share_id = s.id AND c.user_id = ${userId}
-            AND COALESCE(c.status, 'accepted') = 'accepted'
-        )
-      )
-  `;
-  if (authRows.length === 0) {
+  if (!(await hasEditorAccess(sql, shareId, userId))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -90,10 +77,7 @@ export async function GET(
         if (closed) { clearInterval(pollInterval); return; }
         try {
           // Recheck access throughout a long-lived stream after revocation.
-          const allowed = await sql`SELECT 1 FROM shares s WHERE s.id = ${shareId} AND s.deleted_at IS NULL
-            AND (s.owner_id = ${userId} OR EXISTS (SELECT 1 FROM collaborators c WHERE c.share_id = s.id
-              AND c.user_id = ${userId} AND COALESCE(c.status, 'accepted') = 'accepted'))`;
-          if (!allowed.length) { shutdown(); return; }
+          if (!(await hasEditorAccess(sql, shareId, userId))) { shutdown(); return; }
 
           const metaRows = await sql`
             SELECT COALESCE(version, 1) AS version, is_public

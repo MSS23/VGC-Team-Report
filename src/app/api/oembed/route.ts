@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { apiGuard } from "@/lib/security/api-guard";
+import { SHARE_URL_ID_RE } from "@/lib/api/ids";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -12,7 +13,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
   }
 
-  const match = targetUrl.match(/\/s\/([A-Za-z0-9]{6,12})/);
+  const match = targetUrl.match(SHARE_URL_ID_RE);
   if (!match) {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
   }
