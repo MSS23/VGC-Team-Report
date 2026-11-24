@@ -1,11 +1,12 @@
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { postToBuildsChannel, COLORS } from "@/lib/discord-webhook";
+import { LINEAR_LABEL_IDS as LABELS, linearFetch } from "@/lib/linear";
 import { NextResponse } from "next/server";
 
 /**
  * GET /api/cron/posthog-errors
  *
- * Daily cron that queries PostHog Error Tracking for new/active error groups
+ * Weekly cron (Mondays 08:00 UTC, see vercel.json) that queries PostHog Error Tracking for new/active error groups
  * and creates Linear tickets for any that don't already have one.
  *
  * Required env vars:
@@ -17,15 +18,6 @@ import { NextResponse } from "next/server";
  * If POSTHOG_PERSONAL_API_KEY (or the fallback POSTHOG_API_KEY) is not set,
  * the route exits gracefully with a 200 warning rather than erroring.
  */
-
-const LINEAR_API = "https://api.linear.app/graphql";
-
-// Linear label IDs (same as the webhook handler)
-const LABELS = {
-  bug: "bbd03f4e-be6f-4617-ad7d-b9fdc596ce5c",
-  analytics: "a13703f8-0865-4a6d-b74c-56a7abc2f563",
-  webApp: "1f355942-6143-47a8-93be-4a5cbe0de0b0",
-} as const;
 
 // ── PostHog API ─────────────────────────────────────────────────────────────
 
@@ -46,20 +38,8 @@ interface PostHogErrorResponse {
   results: PostHogErrorGroup[];
 }
 
-async function fetchPostHogErrors(): Promise<PostHogErrorGroup[] | null> {
-  const apiKey = process.env.POSTHOG_PERSONAL_API_KEY || process.env.POSTHOG_API_KEY;
-  const projectId = process.env.POSTHOG_PROJECT_ID;
-
-  if (!apiKey) {
-    console.warn("[posthog-errors] POSTHOG_PERSONAL_API_KEY is not set — skipping PostHog query");
-    return null;
-  }
-
-  if (!projectId) {
-    console.warn("[posthog-errors] POSTHOG_PROJECT_ID is not set — skipping PostHog query");
-    return null;
-  }
-
+// GET has already checked both credentials (and skips the run without them).
+async function fetchPostHogErrors(apiKey: string, projectId: string): Promise<PostHogErrorGroup[]> {
   const host = (process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com")
     .replace("eu.i.posthog.com", "eu.posthog.com")
     .replace(/\/$/, "");
@@ -95,11 +75,7 @@ async function linearGql(query: string, variables?: Record<string, unknown>) {
   const apiKey = process.env.LINEAR_API_KEY;
   if (!apiKey) return null;
 
-  const res = await fetch(LINEAR_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: apiKey },
-    body: JSON.stringify({ query, variables }),
-  });
+  const res = await linearFetch(query, variables);
   return res.json();
 }
 
@@ -221,17 +197,10 @@ export async function GET(request: Request) {
 
   try {
     // Fetch PostHog error groups and existing Linear tickets in parallel
-    const [errorGroupsOrNull, existingTickets] = await Promise.all([
-      fetchPostHogErrors(),
+    const [errorGroups, existingTickets] = await Promise.all([
+      fetchPostHogErrors(apiKey, projectId),
       getExistingPostHogTickets(),
     ]);
-
-    // Guard: if PostHog query was skipped (missing env vars), exit gracefully
-    if (errorGroupsOrNull === null) {
-      return NextResponse.json({ ok: true, skipped: true, reason: "PostHog credentials not configured" });
-    }
-
-    const errorGroups = errorGroupsOrNull;
 
     const created: { identifier: string; url: string; description: string; occurrences: number }[] = [];
     const skipped: string[] = [];

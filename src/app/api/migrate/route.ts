@@ -1,4 +1,5 @@
 import { verifyBearer } from "@/lib/auth/verify-bearer";
+import { weightedSearchVector } from "@/lib/api/search-vector";
 import { getDb } from "@/lib/db";
 import { normalizeReportData } from "@/lib/utils/normalize-report";
 import { NextResponse } from "next/server";
@@ -56,20 +57,18 @@ export async function POST(request: Request) {
 
           // Check if search_vector needs backfill
           const needsSearchVector = row.is_public && !row.search_vector;
-          const searchCreator = (normalized.creatorName as string) ?? "";
-          const searchTournament = (normalized.tournamentName as string) ?? "";
-          const searchPaste = (normalized.paste as string) ?? "";
-          const searchSummary = (normalized.teamSummary as string) ?? "";
+          const searchFields = {
+            creator: (normalized.creatorName as string) ?? "",
+            tournament: (normalized.tournamentName as string) ?? "",
+            paste: (normalized.paste as string) ?? "",
+            summary: (normalized.teamSummary as string) ?? "",
+          };
 
           if (changed && needsSearchVector) {
             await sql`
               UPDATE shares
               SET data = ${JSON.stringify(normalized)}::jsonb,
-                  search_vector =
-                    setweight(to_tsvector('english', ${searchCreator}), 'A') ||
-                    setweight(to_tsvector('english', ${searchTournament}), 'A') ||
-                    setweight(to_tsvector('english', ${searchPaste}), 'B') ||
-                    setweight(to_tsvector('english', ${searchSummary}), 'C')
+                  search_vector = ${weightedSearchVector(sql, searchFields)}
               WHERE id = ${row.id}
             `;
             stats.migrated++;
@@ -82,11 +81,7 @@ export async function POST(request: Request) {
           } else if (needsSearchVector) {
             await sql`
               UPDATE shares
-              SET search_vector =
-                setweight(to_tsvector('english', ${searchCreator}), 'A') ||
-                setweight(to_tsvector('english', ${searchTournament}), 'A') ||
-                setweight(to_tsvector('english', ${searchPaste}), 'B') ||
-                setweight(to_tsvector('english', ${searchSummary}), 'C')
+              SET search_vector = ${weightedSearchVector(sql, searchFields)}
               WHERE id = ${row.id}
             `;
             stats.searchVectorBackfilled++;

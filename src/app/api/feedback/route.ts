@@ -1,3 +1,5 @@
+import { clerkDisplayName } from "@/lib/api/display-name";
+import { readJsonBody } from "@/lib/api/json-body";
 import { getDb } from "@/lib/db";
 import { isRateLimitedAsync } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/utils/sanitize";
@@ -86,8 +88,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Too many submissions. Please wait a minute." }, { status: 429 });
     }
 
-    const raw = await request.json();
-    const parsed = FeedbackBody.safeParse(raw);
+    const body = await readJsonBody(request);
+    if ("error" in body) return body.error;
+    const parsed = FeedbackBody.safeParse(body.body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid submission", details: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
@@ -103,9 +106,7 @@ export async function POST(request: Request) {
 
     // Get the user's real name from Clerk
     const user = await currentUser();
-    const submitterName = user?.firstName
-      ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-      : user?.username ?? "Unknown User";
+    const submitterName = clerkDisplayName(user, "Unknown User");
     const submitterEmail = user?.emailAddresses?.[0]?.emailAddress ?? undefined;
 
     const sql = getDb();

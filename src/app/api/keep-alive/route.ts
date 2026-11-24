@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 
 /**
  * Lightweight ping to keep the Neon database warm.
- * Called by Vercel cron every 5 minutes.
+ * Not a Vercel cron (absent from vercel.json): its only caller is the
+ * daily-ops cron health check, once a day.
  * Requires a valid CRON_SECRET bearer token.
  */
 export async function GET(request: Request) {
