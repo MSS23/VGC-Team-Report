@@ -3,39 +3,41 @@
 import { useState, useCallback, useEffect } from "react";
 import type { ParsedTeam } from "@/lib/types/pokemon";
 import type { TeamAnalysis } from "@/lib/types/analysis";
+import { readStorage, writeStorage, removeStorage, STORAGE_KEYS } from "@/lib/utils/safe-storage";
+import { isSharePath } from "@/hooks/share-path";
 
 // v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
 // The pre-v2 keys could contain leaked content from someone else's shared
 // report under a "user" marker due to a pre-fix race window. Reading from
 // the v2 keys guarantees we never see any of that legacy state. Old keys
 // are evicted by the legacy-cleanup effect in useHomePage on mount.
-const STORAGE_KEY = "vgc-team-paste-v2";
-const STORAGE_SOURCE_KEY = "vgc-team-paste-source-v2";
+const STORAGE_KEY = STORAGE_KEYS.teamPaste;
+const STORAGE_SOURCE_KEY = STORAGE_KEYS.teamPasteSource;
 // Exact copy of the paste as of the last publish from this device. Restore
 // compares against it: a stored paste identical to the published copy is not
 // a draft (the canonical version lives on the server) and must not resurface
 // as "this draft only lives on this device" — even if a later persist-effect
 // run re-marked the source "user".
-const STORAGE_PUBLISHED_KEY = "vgc-team-paste-published-v2";
+const STORAGE_PUBLISHED_KEY = STORAGE_KEYS.teamPastePublished;
 // When the draft was last saved. Doubles as a generation marker: entries
 // written before this key existed can't prove they were never published
 // (pre-2026-08 publishes didn't flip the source marker), so restore treats
 // a missing timestamp as not restorable.
-const STORAGE_SAVED_AT_KEY = "vgc-team-paste-saved-at-v2";
+const STORAGE_SAVED_AT_KEY = STORAGE_KEYS.teamPasteSavedAt;
 // ponytail: 30-day draft TTL — a publish from another device/browser can't
 // flip this device's marker, so age is the only bound on how long such a
 // team keeps resurfacing as a "draft". Server-side check if this ever hurts.
 const DRAFT_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 /** Remove every stored-draft key (paste, markers, timestamps). */
-export function evictStoredDraft() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(STORAGE_SOURCE_KEY);
-    localStorage.removeItem(STORAGE_PUBLISHED_KEY);
-    localStorage.removeItem(STORAGE_SAVED_AT_KEY);
-  } catch {
-    // ignore
+function evictStoredDraft() {
+  // Chained so the first failed remove skips the rest, as the old try block did.
+  if (
+    removeStorage(STORAGE_KEY) &&
+    removeStorage(STORAGE_SOURCE_KEY) &&
+    removeStorage(STORAGE_PUBLISHED_KEY)
+  ) {
+    removeStorage(STORAGE_SAVED_AT_KEY);
   }
 }
 
@@ -90,15 +92,13 @@ export function useTeamReport(persist = true) {
   // write at the very last possible moment so the leak can't reopen.
   useEffect(() => {
     if (!persist) return;
-    if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) return;
-    try {
-      if (parsedTeam && parsedTeam.pokemon.length > 0) {
-        localStorage.setItem(STORAGE_KEY, paste);
-        localStorage.setItem(STORAGE_SOURCE_KEY, "user");
-        localStorage.setItem(STORAGE_SAVED_AT_KEY, String(Date.now()));
+    if (isSharePath()) return;
+    if (parsedTeam && parsedTeam.pokemon.length > 0) {
+      // localStorage quota exceeded — paste works in-memory only. Chained so
+      // the first failed write skips the rest, as the old try block did.
+      if (writeStorage(STORAGE_KEY, paste) && writeStorage(STORAGE_SOURCE_KEY, "user")) {
+        writeStorage(STORAGE_SAVED_AT_KEY, String(Date.now()));
       }
-    } catch {
-      // localStorage quota exceeded — paste works in-memory only
     }
   }, [paste, parsedTeam, persist]);
 
@@ -149,14 +149,9 @@ export function useTeamReport(persist = true) {
   // differs — restore it) from a marker clobbered without a real content
   // change (paste identical — evict it).
   const markPastePublished = useCallback(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        localStorage.setItem(STORAGE_SOURCE_KEY, "published");
-        localStorage.setItem(STORAGE_PUBLISHED_KEY, stored);
-      }
-    } catch {
-      // ignore
+    const stored = readStorage(STORAGE_KEY);
+    if (stored && writeStorage(STORAGE_SOURCE_KEY, "published")) {
+      writeStorage(STORAGE_PUBLISHED_KEY, stored);
     }
   }, []);
 

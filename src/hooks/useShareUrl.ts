@@ -8,6 +8,7 @@ import {
   decodeShareState,
   type ShareableState,
 } from "@/lib/sharing/url-codec";
+import { removeStorage, STORAGE_KEYS } from "@/lib/utils/safe-storage";
 
 type ShareStatus = "idle" | "copying" | "copied" | "error";
 
@@ -19,7 +20,7 @@ export interface ForkedFromMeta {
   deleted: boolean;
 }
 
-const SHARE_TOKENS_KEY = "vgc-share-tokens";
+const SHARE_TOKENS_KEY = STORAGE_KEYS.shareTokens;
 
 interface StoredShareInfo {
   shareId: string;
@@ -183,9 +184,7 @@ export function useShareUrl() {
   // version, and clearing it avoids leaving obsolete edit credentials in a
   // shared browser profile.
   useEffect(() => {
-    try {
-      localStorage.removeItem(SHARE_TOKENS_KEY);
-    } catch { /* storage may be unavailable */ }
+    removeStorage(SHARE_TOKENS_KEY); // storage may be unavailable
   }, []);
 
   // Clear session state when URL no longer points at a share.
@@ -530,11 +529,7 @@ export function useShareUrl() {
 
   /** Clear active share session so the next Share creates a fresh link. */
   const clearStoredShare = useCallback(() => {
-    try {
-      localStorage.removeItem(SHARE_TOKENS_KEY);
-    } catch {
-      // ignore
-    }
+    removeStorage(SHARE_TOKENS_KEY);
     activeEditTokenRef.current = null;
     activeShareIdRef.current = null;
     versionRef.current = 0; baselineRef.current = null; setConflict(null);

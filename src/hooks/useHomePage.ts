@@ -29,6 +29,8 @@ import type { SpriteConfig } from "@/lib/types/sprites";
 // detect-archetype / detect-regulation pull the dex subset (~130KB raw) via
 // mega-detect — imported lazily in their effects to keep it off first paint.
 import { isDifferentTeam } from "@/lib/utils/extract-species";
+import { buildSpeciesKeys, shareStateToMeta, LEGACY_PREFIXES } from "@/hooks/home-page-helpers";
+import { isSharePath } from "@/hooks/share-path";
 
 export function useHomePage() {
   const { t } = useTranslation();
@@ -64,7 +66,7 @@ export function useHomePage() {
   const searchParams = useSearchParams();
   const hashShareId = typeof window !== "undefined" && window.location.hash.startsWith("#id=");
   const hashInlineData = typeof window !== "undefined" && window.location.hash.startsWith("#data=");
-  const pathIsShare = typeof window !== "undefined" && window.location.pathname.startsWith("/s/");
+  const pathIsShare = isSharePath();
   const isInShareContext = !!searchParams.get("s") || hashShareId || hashInlineData || pathIsShare;
 
   // ── Core team data ───────────────────────────────────────────────
@@ -94,12 +96,7 @@ export function useHomePage() {
   // ── Species keys ─────────────────────────────────────────────────
   const speciesKeys = useMemo(() => {
     if (!analysis) return [];
-    const counts: Record<string, number> = {};
-    return analysis.pokemon.map((mon) => {
-      const species = mon.parsed.species;
-      counts[species] = (counts[species] ?? 0) + 1;
-      return counts[species] > 1 ? `${species}-${counts[species]}` : species;
-    });
+    return buildSpeciesKeys(analysis.pokemon);
   }, [analysis]);
 
   // ── Team content hooks ───────────────────────────────────────────
@@ -345,14 +342,6 @@ export function useHomePage() {
     if (legacyEvicted.current) return;
     legacyEvicted.current = true;
     try {
-      const LEGACY_PREFIXES = [
-        "vgc-team-paste",          // exact match: vgc-team-paste, vgc-team-paste-source
-        "vgc-notes-",              // species-keyed notes
-        "vgc-calcs-",              // species-keyed damage calcs
-        "vgc-meta-",               // species-keyed team meta
-        "vgc-matchup-plans-",      // species-keyed matchup plans
-        "vgc-hidden-slides-",      // species-keyed hidden slides
-      ];
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -450,21 +439,7 @@ export function useHomePage() {
     parseTeam(state.paste);
     setNotesFull(state.notes ?? {});
     setCalcsFull(state.calcs ?? {});
-    setMetaFull({
-      roles: state.roles ?? {},
-      summary: state.teamSummary ?? "",
-      commonModes: state.commonModes ?? undefined,
-      teamName: state.teamName ?? undefined,
-      tournamentName: state.tournamentName ?? undefined,
-      placement: state.placement ?? undefined,
-      record: state.record ?? undefined,
-      mvpIndex: state.mvpIndex ?? null,
-      rentalCode: state.rentalCode ?? undefined,
-      creatorName: state.creatorName ?? undefined,
-      tags: state.tags ?? undefined,
-      templateId: state.templateId ?? undefined,
-      privateFields: state.privateFields ?? undefined,
-    });
+    setMetaFull(shareStateToMeta(state));
     const rawPlans = Array.isArray(state.matchupPlans) ? state.matchupPlans : [];
     // Reuse existing plan/gamePlan IDs by position instead of minting fresh
     // crypto.randomUUID() values on every remote apply. Regenerating IDs made
@@ -604,21 +579,7 @@ export function useHomePage() {
     hasHydrated.current = true;
     setNotesFull(share.sharedState.notes ?? {});
     setCalcsFull(share.sharedState.calcs ?? {});
-    setMetaFull({
-      roles: share.sharedState.roles ?? {},
-      summary: share.sharedState.teamSummary ?? "",
-      commonModes: share.sharedState.commonModes ?? undefined,
-      teamName: share.sharedState.teamName ?? undefined,
-      tournamentName: share.sharedState.tournamentName ?? undefined,
-      placement: share.sharedState.placement ?? undefined,
-      record: share.sharedState.record ?? undefined,
-      mvpIndex: share.sharedState.mvpIndex ?? null,
-      rentalCode: share.sharedState.rentalCode ?? undefined,
-      creatorName: share.sharedState.creatorName ?? undefined,
-      tags: share.sharedState.tags ?? undefined,
-      templateId: share.sharedState.templateId ?? undefined,
-      privateFields: share.sharedState.privateFields ?? undefined,
-    });
+    setMetaFull(shareStateToMeta(share.sharedState));
     const rawPlans = Array.isArray(share.sharedState.matchupPlans) ? share.sharedState.matchupPlans : [];
     setPlansFull(
       rawPlans.map((p) => ({
@@ -742,21 +703,7 @@ export function useHomePage() {
     draftHydrated.current = true;
     setNotesFull(state.notes ?? {});
     setCalcsFull(state.calcs ?? {});
-    setMetaFull({
-      roles: state.roles ?? {},
-      summary: state.teamSummary ?? "",
-      commonModes: state.commonModes ?? undefined,
-      teamName: state.teamName ?? undefined,
-      tournamentName: state.tournamentName ?? undefined,
-      placement: state.placement ?? undefined,
-      record: state.record ?? undefined,
-      mvpIndex: state.mvpIndex ?? null,
-      rentalCode: state.rentalCode ?? undefined,
-      creatorName: state.creatorName ?? undefined,
-      tags: state.tags ?? undefined,
-      templateId: state.templateId ?? undefined,
-      privateFields: state.privateFields ?? undefined,
-    });
+    setMetaFull(shareStateToMeta(state));
     const rawPlans = Array.isArray(state.matchupPlans) ? state.matchupPlans : [];
     setPlansFull(
       rawPlans.map((p) => ({

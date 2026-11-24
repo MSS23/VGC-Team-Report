@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { readStorageJSON, writeStorageJSON, STORAGE_KEY_BUILDERS } from "@/lib/utils/safe-storage";
+import { isSharePath } from "@/hooks/share-path";
 
 export interface ReportTags {
   tournamentUrl?: string;
@@ -74,26 +76,16 @@ interface TeamMeta {
   privateFields?: string[];
 }
 
-// v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
-function buildTeamKey(speciesKeys: string[]): string {
-  const sorted = [...speciesKeys].sort();
-  return `vgc-meta-v2-${sorted.join(",")}`;
-}
-
 const EMPTY_META: TeamMeta = { roles: {}, summary: "" };
 
 export function useTeamMeta(speciesKeys: string[], persist = true) {
-  const teamKey = buildTeamKey(speciesKeys);
+  // v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
+  const teamKey = STORAGE_KEY_BUILDERS.meta(speciesKeys);
   const prevTeamKey = useRef(teamKey);
 
   const [meta, setMeta] = useState<TeamMeta>(() => {
     if (!persist || speciesKeys.length === 0) return EMPTY_META;
-    try {
-      const stored = localStorage.getItem(teamKey);
-      return stored ? JSON.parse(stored) : EMPTY_META;
-    } catch {
-      return EMPTY_META;
-    }
+    return readStorageJSON(teamKey, EMPTY_META);
   });
 
   // When team changes, load meta for the new team
@@ -109,24 +101,16 @@ export function useTeamMeta(speciesKeys: string[], persist = true) {
 
     if (!persist) return;
 
-    try {
-      const stored = localStorage.getItem(teamKey);
-      setMeta(stored ? JSON.parse(stored) : EMPTY_META);
-    } catch {
-      setMeta(EMPTY_META);
-    }
+    setMeta(readStorageJSON(teamKey, EMPTY_META));
   }, [teamKey, speciesKeys.length, persist]);
 
   // Persist to localStorage on change.
   // Belt-and-suspenders: also block writes when the URL is /s/{id}.
   useEffect(() => {
     if (!persist || speciesKeys.length === 0) return;
-    if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) return;
-    try {
-      localStorage.setItem(teamKey, JSON.stringify(meta));
-    } catch {
-      // localStorage quota exceeded or private browsing — works in-memory
-    }
+    if (isSharePath()) return;
+    // localStorage quota exceeded or private browsing — works in-memory
+    writeStorageJSON(teamKey, meta);
   }, [meta, teamKey, speciesKeys.length, persist]);
 
   const roles = meta.roles;

@@ -3,8 +3,8 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { ShareableState } from "@/lib/sharing/url-codec";
 import type { TeamAnalysis } from "@/lib/types/analysis";
+import { readStorage, writeStorage, removeStorage, STORAGE_KEYS } from "@/lib/utils/safe-storage";
 
-const DRAFT_ID_KEY = "vgc-draft-id";
 const DRAFT_DEBOUNCE_MS = 4000;
 const SAVED_STATUS_MS = 3000;
 
@@ -25,12 +25,7 @@ interface AutoDraftOptions {
 }
 
 function readStoredDraftId(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return localStorage.getItem(DRAFT_ID_KEY);
-  } catch {
-    return null;
-  }
+  return readStorage(STORAGE_KEYS.draftId);
 }
 
 /**
@@ -51,10 +46,9 @@ export function useAutoDraft({ isSignedIn, analysis, isSampleTeam, isSharedView,
   const setActiveDraft = useCallback((id: string | null) => {
     draftIdRef.current = id;
     setDraftIdState(id);
-    try {
-      if (id) localStorage.setItem(DRAFT_ID_KEY, id);
-      else localStorage.removeItem(DRAFT_ID_KEY);
-    } catch { /* local persistence is best-effort */ }
+    // Local persistence is best-effort.
+    if (id) writeStorage(STORAGE_KEYS.draftId, id);
+    else removeStorage(STORAGE_KEYS.draftId);
   }, []);
 
   const clearDraft = useCallback(() => {

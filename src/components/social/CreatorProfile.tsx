@@ -8,7 +8,7 @@ import { I18nProvider, useTranslation } from "@/lib/i18n";
 
 import { PageFooter } from "@/components/layout/PageFooter";
 import { ReportCard, type ExploreReport } from "@/components/explore/ReportCard";
-import { applyRandomAccent } from "@/lib/utils/random-accent";
+import { useRandomAccent } from "@/hooks/useRandomAccent";
 import { FollowButton } from "@/components/social/FollowButton";
 import { SpinnerIcon, UserIcon, EyeIcon, UsersIcon } from "@/components/ui/icons";
 
@@ -42,7 +42,8 @@ export function CreatorProfileWrapper({ name }: { name: string }) {
 function CreatorProfileInner({ name }: { name: string }) {
   const { t } = useTranslation();
   const posthog = usePostHog();
-  useEffect(() => { applyRandomAccent(); posthog?.capture("creator_profile_visited", { creator_name: name }); }, [name, posthog]);
+  useRandomAccent(name, posthog);
+  useEffect(() => { posthog?.capture("creator_profile_visited", { creator_name: name }); }, [name, posthog]);
   const [data, setData] = useState<CreatorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<"newest" | "views">("newest");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import { readStorage, writeStorage, STORAGE_KEYS } from "@/lib/utils/safe-storage";
 
 export type GenTheme = "gen1" | "gen2" | "gen3" | "gen4" | "gen5" | "gen6" | "gen7" | "gen8" | "gen9";
 
@@ -112,7 +113,7 @@ export const GEN_THEMES: { id: GenTheme; abbr: string; label: string; badge: str
 
 // ─── Shared external store so ALL useTheme() callers share state ────
 
-const STORAGE_KEY = "vgc-gen-theme";
+const STORAGE_KEY = STORAGE_KEYS.genTheme;
 const listeners = new Set<() => void>();
 
 let currentTheme: GenTheme = "gen9";
@@ -125,10 +126,8 @@ let viewOverrideTheme: GenTheme | null = null;
 
 // Load from localStorage on module init (client only)
 if (typeof window !== "undefined") {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && stored in GEN_PRESETS) currentTheme = stored as GenTheme;
-  } catch {}
+  const stored = readStorage(STORAGE_KEY);
+  if (stored && stored in GEN_PRESETS) currentTheme = stored as GenTheme;
 }
 
 function subscribe(listener: () => void) {
@@ -179,7 +178,7 @@ export function reapplyCurrentTheme() {
 function setTheme(theme: GenTheme) {
   if (theme === currentTheme) return;
   currentTheme = theme;
-  try { localStorage.setItem(STORAGE_KEY, theme); } catch {}
+  writeStorage(STORAGE_KEY, theme);
   if (typeof document !== "undefined") applyTheme(theme);
   listeners.forEach((fn) => fn());
 }

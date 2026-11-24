@@ -1,22 +1,18 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-
-// v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
-function buildKey(speciesKeys: string[]): string {
-  const sorted = [...speciesKeys].sort();
-  return `vgc-hidden-slides-v2-${sorted.join(",")}`;
-}
+import { readStorageJSON, writeStorageJSON, STORAGE_KEY_BUILDERS } from "@/lib/utils/safe-storage";
+import { isSharePath } from "@/hooks/share-path";
 
 export function useHiddenSlides(speciesKeys: string[], persist = true) {
-  const storageKey = buildKey(speciesKeys);
+  // v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
+  const storageKey = STORAGE_KEY_BUILDERS.hiddenSlides(speciesKeys);
   const prevKey = useRef(storageKey);
 
   const [hidden, setHidden] = useState<Set<string>>(() => {
     if (!persist || speciesKeys.length === 0) return new Set();
     try {
-      const stored = localStorage.getItem(storageKey);
-      return stored ? new Set(JSON.parse(stored)) : new Set();
+      return new Set(readStorageJSON<string[]>(storageKey, []));
     } catch {
       return new Set();
     }
@@ -32,8 +28,7 @@ export function useHiddenSlides(speciesKeys: string[], persist = true) {
     }
     if (!persist) return;
     try {
-      const stored = localStorage.getItem(storageKey);
-      setHidden(stored ? new Set(JSON.parse(stored)) : new Set());
+      setHidden(new Set(readStorageJSON<string[]>(storageKey, [])));
     } catch {
       setHidden(new Set());
     }
@@ -42,12 +37,8 @@ export function useHiddenSlides(speciesKeys: string[], persist = true) {
   // Belt-and-suspenders: also block writes when the URL is /s/{id}.
   useEffect(() => {
     if (!persist || speciesKeys.length === 0) return;
-    if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) return;
-    try {
-      localStorage.setItem(storageKey, JSON.stringify([...hidden]));
-    } catch {
-      /* quota exceeded */
-    }
+    if (isSharePath()) return;
+    writeStorageJSON(storageKey, [...hidden]); // false on quota exceeded
   }, [hidden, storageKey, speciesKeys.length, persist]);
 
   const toggleSlide = useCallback((key: string) => {

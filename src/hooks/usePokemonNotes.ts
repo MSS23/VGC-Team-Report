@@ -1,27 +1,19 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-
-// v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
-// Reading from the v2 keys guarantees we never see legacy state that could
-// have been written by a pre-fix code path.
-function buildTeamKey(speciesKeys: string[]): string {
-  const sorted = [...speciesKeys].sort();
-  return `vgc-notes-v2-${sorted.join(",")}`;
-}
+import { readStorageJSON, writeStorageJSON, STORAGE_KEY_BUILDERS } from "@/lib/utils/safe-storage";
+import { isSharePath } from "@/hooks/share-path";
 
 export function usePokemonNotes(speciesKeys: string[], persist = true) {
-  const teamKey = buildTeamKey(speciesKeys);
+  // v2 namespace — bumped after the localStorage leak incident on 2026-04-10.
+  // Reading from the v2 keys guarantees we never see legacy state that could
+  // have been written by a pre-fix code path.
+  const teamKey = STORAGE_KEY_BUILDERS.notes(speciesKeys);
   const prevTeamKey = useRef(teamKey);
 
   const [notes, setNotes] = useState<Record<string, string>>(() => {
     if (!persist || speciesKeys.length === 0) return {};
-    try {
-      const stored = localStorage.getItem(teamKey);
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
+    return readStorageJSON<Record<string, string>>(teamKey, {});
   });
 
   // When team changes, load notes for the new team
@@ -37,12 +29,7 @@ export function usePokemonNotes(speciesKeys: string[], persist = true) {
 
     if (!persist) return;
 
-    try {
-      const stored = localStorage.getItem(teamKey);
-      setNotes(stored ? JSON.parse(stored) : {});
-    } catch {
-      setNotes({});
-    }
+    setNotes(readStorageJSON<Record<string, string>>(teamKey, {}));
   }, [teamKey, speciesKeys.length, persist]);
 
   // Persist to localStorage on change.
@@ -50,12 +37,9 @@ export function usePokemonNotes(speciesKeys: string[], persist = true) {
   // persist somehow flipped true during a shared-report view.
   useEffect(() => {
     if (!persist || speciesKeys.length === 0) return;
-    if (typeof window !== "undefined" && window.location.pathname.startsWith("/s/")) return;
-    try {
-      localStorage.setItem(teamKey, JSON.stringify(notes));
-    } catch {
-      // localStorage quota exceeded or private browsing — notes work in-memory
-    }
+    if (isSharePath()) return;
+    // localStorage quota exceeded or private browsing — notes work in-memory
+    writeStorageJSON(teamKey, notes);
   }, [notes, teamKey, speciesKeys.length, persist]);
 
   const setNote = useCallback((species: string, text: string) => {
