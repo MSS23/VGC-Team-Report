@@ -1,7 +1,8 @@
 import { ImageResponse } from "next/og";
 import { megaGuideSpriteUrl } from "./og-sprite";
 
-export const runtime = "edge";
+// Node, not edge: fetches to play.pokemonshowdown.com from edge functions time out in production.
+export const runtime = "nodejs";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
